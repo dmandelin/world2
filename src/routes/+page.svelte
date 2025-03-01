@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import { world } from '../model/world';
+    import PopulationPyramid from '../components/PopulationPyramid.svelte';
 </script>
 
 <style>
@@ -31,3 +32,8 @@
             </tr>
         {/each}
 </table>
+
+{#each world.clans as clan}
+<h2>{clan.name}</h2>
+<PopulationPyramid {clan} />
+{/each}
