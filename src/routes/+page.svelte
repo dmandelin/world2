@@ -1,2 +1,9 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<h1>world2</h1>
+
+<script lang="ts">
+    import { world } from '../model/world';
+</script>
+
+{#each world.clans as clan}
+    <h2>{clan.name}</h2>
+{/each}
