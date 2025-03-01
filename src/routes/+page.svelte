@@ -18,6 +18,7 @@
     <thead>
         <tr>
             <th>Clan</th>
+            <th class="ra">Size</th>
             <th class="ra">Skill</th>
         </tr>
     </thead>
@@ -25,6 +26,7 @@
         {#each world.clans as clan}
             <tr>
                 <td>{clan.name}</td>
+                <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.skill}</td>
             </tr>
         {/each}
