@@ -68,7 +68,7 @@ export class Clan {
 }
 
 function exp_basicPopChange() {
-    const clan = new Clan('Test', 100);
+    const clan = new Clan('Test', 20);
     for (let i = 0; i < 20; ++i) {
         const eb = BASE_BIRTH_RATE * clan.slices[1][0];
         const ed = clan.slices.reduce((acc, slice, i) => 
@@ -84,4 +84,29 @@ function exp_basicPopChange() {
     }
 }
 
-exp_basicPopChange();
+function exp_meanClanLifetime() {
+    const lifetimes = [];
+    for (let i = 0; i < 1000; ++i) {
+        const clan = new Clan('Test', 20);
+        let years = 0;
+        while (clan.size > 0) {
+            clan.advance();
+            years += 20;
+            if (years > 10000) break;
+        }
+        lifetimes.push(years);
+    }
+
+    const meanLifetime = lifetimes.reduce((acc, lifetime) => acc + lifetime, 0) / lifetimes.length;
+    console.log('mean', meanLifetime);
+    const variance = lifetimes.reduce((acc, lifetime) => acc + (lifetime - meanLifetime) ** 2, 0) / lifetimes.length;
+    console.log('var', variance);
+    const stdDev = Math.sqrt(variance);
+    console.log('stdDev', stdDev);
+    const coefficientOfVariation = stdDev / meanLifetime;
+    console.log('cov', coefficientOfVariation);
+    const median = lifetimes.sort((a, b) => a - b)[Math.floor(lifetimes.length / 2)];
+    console.log('median', median);
+}
+
+exp_meanClanLifetime();
