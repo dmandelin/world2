@@ -127,6 +127,23 @@ export class Clan {
         this.size = this.slicesTotal;
     }
 
+    get expectedPopulationChange() {
+        let quality = this.effectiveQuality;
+        if (quality < 0) quality = 0;
+        if (quality > 100) quality = 100;
+        const qbrm = 1 + (quality - 50) / 1000;
+        const qdrm = 1 + (50 - quality) / 1000;
+
+        const ebr = BASE_BIRTH_RATE * qbrm * this.slices[1][0] / this.size;
+
+        let ed = 0;
+        for (let i = 0; i < this.slices.length - 1; ++i) {
+            ed += this.slices[i][0] * qdrm * BASE_DEATH_RATES[i] + this.slices[i][1] * qdrm * 1.1 * BASE_DEATH_RATES[i];
+        }
+        const edr = ed / this.size;
+        return [ebr, edr, ebr - edr].map(r => Math.round(r * 1000));
+    }
+
     advanceTraits() {
         this.skill += Math.round(normal(2));
         this.knowledge += Math.round(normal(2));

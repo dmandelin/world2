@@ -95,6 +95,9 @@
             <th class="ra">EQual</th>
             <th class="ra">Pres</th>
             <th class="ra">Hap</th>
+            <th class="ra">EBR</th>
+            <th class="ra">EDR</th>
+            <th class="ra">EPC</th>
         </tr>
     </thead>
     <tbody>
@@ -109,6 +112,9 @@
                 <td class="ra">{clan.effectiveQuality}</td>
                 <td class="ra">{clan.prestige}</td>
                 <td class="ra">{clan.happiness}</td>
+                <td class="ra">{clan.expectedPopulationChange[0]}</td>
+                <td class="ra">{clan.expectedPopulationChange[1]}</td>
+                <td class="ra">{clan.expectedPopulationChange[2]}</td>
             </tr>
         {/each}
 </table>
