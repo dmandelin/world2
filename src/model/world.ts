@@ -44,6 +44,10 @@ export class World {
 
         this.timeline.push(new TimePoint(this));
     }
+
+    get totalPopulation() {
+        return this.clans.reduce((acc, clan) => acc + clan.size, 0);
+    }
 }
 
 export const world = new World();
