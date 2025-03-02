@@ -59,8 +59,12 @@ export class Clan {
         return Math.round(2/(1/this.skill + 1/this.knowledge));
     }
 
+    get effectiveQuality() {
+        return this.quality + this.interactionModifier;
+    }
+
     get prestige() {
-        return Math.round(Math.log2(this.size) * this.quality / 6);
+        return Math.round(Math.log2(this.size) * this.effectiveQuality / 6);
     }
 
     c() {
@@ -94,7 +98,7 @@ export class Clan {
     advancePopulation() {
         const prevSlices = this.slices.map(slice => slice.slice());
 
-        let quality = this.quality;
+        let quality = this.effectiveQuality;
         if (quality < 0) quality = 0;
         if (quality > 100) quality = 100;
         const qbrm = 1 + (quality - 50) / 1000;
@@ -132,7 +136,7 @@ export class Clan {
         const skillModifier = (this.skill - 50) / 10;
         const knowledgeModifier = (this.knowledge - 50) / 10;
         const luckModifier = normal(0, 5);
-        this.happiness = Math.round(50 + skillModifier + knowledgeModifier + luckModifier);
+        this.happiness = Math.round(50 + skillModifier + knowledgeModifier + luckModifier + this.interactionModifier * 2);
     }
 
     absorb(other: Clan) {
