@@ -67,6 +67,16 @@ export class Clan {
     }
 }
 
+export class Clans extends Array<Clan> {
+    constructor(...clans: Clan[]) {
+      super(...clans);
+    }
+  
+    get population(): number {
+      return this.reduce((total, clan) => total + clan.size, 0);
+    }
+}
+
 function exp_basicPopChange() {
     const clan = new Clan('Test', 20);
     for (let i = 0; i < 20; ++i) {

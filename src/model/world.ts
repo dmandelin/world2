@@ -1,4 +1,4 @@
-import { Clan } from "./people";
+import { Clan, Clans } from "./people";
 import { TimePoint } from "./timeline";
 
 export class Year {
@@ -26,11 +26,11 @@ export class World {
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
-    readonly clans = [
+    readonly clans = new Clans(...[
         new Clan('Abgal', 20, 60),
         new Clan('Ninshubur', 30, 50),
         new Clan('Didanu', 20, 40),
-    ];
+    ]);
 
     readonly timeline: TimePoint[] = [];
 
@@ -39,10 +39,15 @@ export class World {
     }
 
     advance() {
-        for (const clan of this.clans) clan.advance();
+        this.advanceClans();
         this.year.advance(this.yearsPerTurn);
 
         this.timeline.push(new TimePoint(this));
+    }
+
+    advanceClans() {
+        for (const clan of this.clans) clan.advance();
+
     }
 }
 
