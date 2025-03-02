@@ -9,6 +9,17 @@
         clans = $state<Clan[]>([]);
         timeline = $state<[string, number][]>([]);
 
+        popData = $derived.by(() => {
+            return {
+                labels: this.timeline.map(([year, _]) => year),
+                datasets: [{
+                    label: 'Population',
+                    data: this.timeline.map(([_, population]) => population),
+                    color: 'blue'
+                }]
+            };
+        });
+
         constructor() {
             this.update();
         }
@@ -90,13 +101,6 @@
     {/each}
 </div>
 
-{#each data.timeline as [year, population]}
-    <div>{year}: {population}</div>
-{/each}
-
 <div class="line-graph-container">
-<LineGraph data={{labels: ['a', 'b', 'c'], datasets: [{label: 'x', data: [4, 8, 7] ,color: 'blue'}]}} />
-<!-- 
-<LineGraph {data: data.timeline.map(([year, population]) => population), color: 'blue'} />
- -->
+    <LineGraph data={data.popData} />
 </div>
