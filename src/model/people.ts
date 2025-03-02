@@ -1,4 +1,4 @@
-import { normal } from "./distributions";
+import { normal, poisson } from "./distributions";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.1;
@@ -36,6 +36,7 @@ export class Clan {
     static maxDesiredSize = 100;
 
     public happiness = 50;
+    public interactionModifier = 0;
 
     constructor(
         public name: string,
@@ -69,6 +70,7 @@ export class Clan {
             c.slices[i][1] = this.slices[i][1];
         }
         c.happiness = this.happiness;
+        c.interactionModifier = this.interactionModifier;
         return c;
     }
 
@@ -195,6 +197,35 @@ export class Clans extends Array<Clan> {
     interact() {
         // Each pair of clans may have some zero-sum interactions,
         // typically embedded in a positive- or negative-sum context.
+        // Those contexts are assumed to be part of the general model,
+        // so we only need to consider the zero-sum interactions here.
+        //
+        // The interaction transfers happiness and 'temporary quality'
+        // (representing resources, tangble or otherwise) between the
+        // two.
+        for (const c of this) {
+            c.interactionModifier = 0;
+        }
+
+        for (let i = 0; i < this.length; ++i) {
+            for (let j = i + 1; j < this.length; ++j) {
+                const stakes = poisson(1);
+                if (stakes == 0) continue;
+
+                const a = this[i];
+                const b = this[j];
+                
+                // Use the Elo formula but with 10 points instead of 400.
+                const aWinProb = 1 / (1 + Math.pow(10, (b.prestige - a.prestige) / 10));
+                if (Math.random() < aWinProb) {
+                    a.interactionModifier += stakes;
+                    b.interactionModifier -= stakes;
+                } else {
+                    a.interactionModifier -= stakes;
+                    b.interactionModifier += stakes;
+                }
+            }
+        }
     }
 
     split() {
