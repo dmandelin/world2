@@ -1,8 +1,18 @@
-<h1>world2</h1>
-
 <script lang="ts">
     import { world } from '../model/world';
     import PopulationPyramid from '../components/PopulationPyramid.svelte';
+    import { onDestroy, onMount } from 'svelte';
+
+    let ws = $state(world);
+    let y = $state(world.year);
+    let z = $state('l');
+
+    function click() {
+        world.advance();
+        y = world.year.c();
+        z = y.toString();
+        ws = world;
+    }
 </script>
 
 <style>
@@ -13,7 +23,21 @@
     .ra {
         text-align: right;
     }
+
+    button {
+        width: 150px;
+        height: 50px;
+        margin-bottom: 20px;
+        font-size: 20px;
+    }
 </style>
+
+<h1>world2</h1>
+<h3>{y}</h3>
+
+<div>
+    <button onclick={click}>Advance</button>
+</div>
 
 <table>
     <thead>
@@ -24,7 +48,7 @@
         </tr>
     </thead>
     <tbody>
-        {#each world.clans as clan}
+        {#each ws.clans as clan}
             <tr>
                 <td>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
@@ -33,7 +57,7 @@
         {/each}
 </table>
 
-{#each world.clans as clan}
+{#each ws.clans as clan}
 <h2>{clan.name}</h2>
 <PopulationPyramid {clan} />
 {/each}
