@@ -26,6 +26,13 @@
 </script>
 
 <style>
+    button {
+        width: 150px;
+        height: 50px;
+        margin-bottom: 20px;
+        font-size: 20px;
+    }
+    
     th, td {
         text-align: left;
     }
@@ -34,11 +41,9 @@
         text-align: right;
     }
 
-    button {
-        width: 150px;
-        height: 50px;
-        margin-bottom: 20px;
-        font-size: 20px;
+    .pyramids {
+        display: flex;
+        justify-content: space-around;
     }
 </style>
 
@@ -67,7 +72,11 @@
         {/each}
 </table>
 
-{#each data.clans as clan}
-<h2>{clan.name}</h2>
-<PopulationPyramid {clan} />
-{/each}
+<div class="pyramids">
+    {#each data.clans as clan}
+    <div>
+        <h2>{clan.name}</h2>
+        <PopulationPyramid {clan} />
+    </div>
+    {/each}
+</div>
