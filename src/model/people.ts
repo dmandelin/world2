@@ -14,8 +14,8 @@ export class Clan {
         public skill: number = 2,
     ) {
         const share = size / 30;
-        this.slices[0][0] = this.slices[0][1] = Math.floor(8 * share);
-        this.slices[1][0] = this.slices[1][1] = Math.floor(4 * share);
+        this.slices[0][0] = this.slices[0][1] = Math.floor(7 * share);
+        this.slices[1][0] = this.slices[1][1] = Math.floor(5 * share);
         this.slices[2][0] = this.slices[2][1] = Math.floor(2 * share);
         this.slices[3][0] = this.slices[3][1] = Math.floor(1 * share);
         const remainder = size - this.slicesTotal;
@@ -110,6 +110,10 @@ export class Clans extends Array<Clan> {
             sortedClans[1].absorb(sortedClans[0]);
             this.splice(this.indexOf(sortedClans[0]), 1);
         }
+    }
+
+    split() {
+
     }
 }
 
