@@ -13,11 +13,6 @@ export class Year {
     toString() {
         return this.value < 0 ? `${-this.value} BC` : `${this.value} AD`;
     }
-    c() {
-        const y = new Year();
-        y.value = this.value;
-        return y;
-    }
 }
 
 export class World {
@@ -31,6 +26,7 @@ export class World {
     ];
 
     advance() {
+        for (const clan of this.clans) clan.advance();
         this.year.advance(this.yearsPerTurn);
     }
 }

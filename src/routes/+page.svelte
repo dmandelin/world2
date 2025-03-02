@@ -1,17 +1,27 @@
 <script lang="ts">
     import { world } from '../model/world';
+    import type { Clan } from '../model/people';
     import PopulationPyramid from '../components/PopulationPyramid.svelte';
-    import { onDestroy, onMount } from 'svelte';
+    
+    class Data {
+        year = $state('');
+        clans = $state<Clan[]>([]);
 
-    let ws = $state(world);
-    let y = $state(world.year);
-    let z = $state('l');
+        constructor() {
+            this.update();
+        }
+
+        update() {
+            this.year = world.year.toString();
+            this.clans = world.clans.map(clan => clan.c());
+        }
+    }
+
+    let data = $state(new Data());
 
     function click() {
         world.advance();
-        y = world.year.c();
-        z = y.toString();
-        ws = world;
+        data.update();
     }
 </script>
 
@@ -33,7 +43,7 @@
 </style>
 
 <h1>world2</h1>
-<h3>{y}</h3>
+<h3>{data.year}</h3>
 
 <div>
     <button onclick={click}>Advance</button>
@@ -48,7 +58,7 @@
         </tr>
     </thead>
     <tbody>
-        {#each ws.clans as clan}
+        {#each data.clans as clan}
             <tr>
                 <td>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
@@ -57,7 +67,7 @@
         {/each}
 </table>
 
-{#each ws.clans as clan}
+{#each data.clans as clan}
 <h2>{clan.name}</h2>
 <PopulationPyramid {clan} />
 {/each}
