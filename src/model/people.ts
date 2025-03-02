@@ -10,11 +10,11 @@ export class Clan {
         public size: number,
         public skill: number = 2,
     ) {
-        const share = Math.floor(size / 6);
-        this.slices[0][0] = this.slices[0][1] = share;
-        this.slices[1][0] = this.slices[1][1] = Math.floor(0.8 * share);
-        this.slices[2][0] = this.slices[2][1] = Math.floor(0.7 * share);
-        this.slices[3][0] = this.slices[3][1] = Math.floor(0.5 * share);
+        const share = size / 30;
+        this.slices[0][0] = this.slices[0][1] = Math.floor(8 * share);
+        this.slices[1][0] = this.slices[1][1] = Math.floor(4 * share);
+        this.slices[2][0] = this.slices[2][1] = Math.floor(2 * share);
+        this.slices[3][0] = this.slices[3][1] = Math.floor(1 * share);
         const remainder = size - this.slicesTotal;
         this.slices[0][0] += Math.floor(remainder / 2);
         this.slices[0][1] += Math.floor((remainder + 1) / 2);
@@ -66,3 +66,22 @@ export class Clan {
         this.size = this.slicesTotal;
     }
 }
+
+function exp_basicPopChange() {
+    const clan = new Clan('Test', 100);
+    for (let i = 0; i < 20; ++i) {
+        const eb = BASE_BIRTH_RATE * clan.slices[1][0];
+        const ed = clan.slices.reduce((acc, slice, i) => 
+            acc + slice[0] * BASE_DEATH_RATES[i] + slice[1] * 1.1 * BASE_DEATH_RATES[i], 0);
+
+        const ebr = eb / clan.size;
+        const edr = ed / clan.size;
+
+        console.log(i*20, clan.size, 
+            ebr.toFixed(2), edr.toFixed(2), (ebr - edr).toFixed(2));
+        
+        clan.advance();
+    }
+}
+
+exp_basicPopChange();
