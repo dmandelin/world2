@@ -2,6 +2,7 @@
     import { world } from '../model/world';
     import type { Clan } from '../model/people';
     import PopulationPyramid from '../components/PopulationPyramid.svelte';
+    import LineGraph from '../components/LineGraph.svelte';
     
     class Data {
         year = $state('');
@@ -47,6 +48,12 @@
         display: flex;
         justify-content: space-around;
     }
+
+    .line-graph-container {
+        width: 80%;
+        height: 150px;
+        margin: 20px auto;
+    }
 </style>
 
 <h1>world2</h1>
@@ -86,3 +93,10 @@
 {#each data.timeline as [year, population]}
     <div>{year}: {population}</div>
 {/each}
+
+<div class="line-graph-container">
+<LineGraph data={{labels: ['a', 'b', 'c'], datasets: [{label: 'x', data: [4, 8, 7] ,color: 'blue'}]}} />
+<!-- 
+<LineGraph {data: data.timeline.map(([year, population]) => population), color: 'blue'} />
+ -->
+</div>
