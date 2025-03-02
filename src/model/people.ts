@@ -4,6 +4,21 @@ const BASE_BIRTH_RATE = 3.1;
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
+const CLAN_NAMES: string[] = [
+    "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
+    "Huzir", "Ibgal", "Idnin", "Imdug", "Imiru", "Ishmu", "Kigdu", "Kudul", "Lilum",
+    "Lugal", "Namzu", "Nammu", "Nigir", "Nidaba", "Pabil", "Puzur", "Saba", "Shagir",
+    "Shaku", "Shara", "Shuba", "Shudu", "Sulgi", "Tabra", "Tarzu", "Teshk", "Tirum",
+    "Tugul", "Tukki", "Ubara", "Unug", "Urdu", "Urnin", "Ursag", "Ursim", "Zalki",
+    "Zamug", "Zudil", "Zudu", "Zuzu"
+];
+
+export function randomClanName(exclude: string[]|Set<String>): string {
+    if (Array.isArray(exclude)) exclude = new Set(exclude);
+    const available = CLAN_NAMES.filter(name => !exclude.has(name));
+    return available[Math.floor(Math.random() * available.length)];
+}
+  
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -70,7 +85,7 @@ export class Clan {
     }
 
     absorb(other: Clan) {
-        if (true || other.size >= this.size * 0.5) {
+        if (other.size >= this.size * 0.5) {
             this.name = `${this.name}-${other.name}`;
         }
 
@@ -86,6 +101,22 @@ export class Clan {
             (this.skill * origSize + other.skill * other.size) / 
             (this.size + other.size));
     }
+
+    splitOff(clans: Clans): Clan {
+        const fraction = 0.3 + 0.15 * (Math.random() + Math.random());
+        const newSize = Math.round(this.size * fraction);
+
+        const name = randomClanName(clans.map(clan => clan.name));
+        const newClan = new Clan(name, newSize, this.skill);
+        this.size -= newSize;
+        for (let i = 0; i < this.slices.length; ++i) {
+            newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
+            newClan.slices[i][1] = Math.round(this.slices[i][1] * fraction);
+            this.slices[i][0] -= newClan.slices[i][0];
+            this.slices[i][1] -= newClan.slices[i][1];
+        }
+        return newClan;
+    }
 }
 
 export class Clans extends Array<Clan> {
@@ -99,7 +130,19 @@ export class Clans extends Array<Clan> {
 
     advance() {
         for (const clan of this) clan.advance();
+        this.split();
         this.merge();
+    }
+
+    split() {
+        const newClans = [];
+        for (const clan of this) {
+            newClans.push(clan);
+            if (clan.size > Clan.maxDesiredSize) {
+                newClans.push(clan.splitOff(this));
+            }
+        }
+        this.splice(0, this.length, ...newClans);
     }
 
     merge() {
@@ -110,10 +153,6 @@ export class Clans extends Array<Clan> {
             sortedClans[1].absorb(sortedClans[0]);
             this.splice(this.indexOf(sortedClans[0]), 1);
         }
-    }
-
-    split() {
-
     }
 }
 
