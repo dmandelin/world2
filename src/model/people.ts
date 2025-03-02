@@ -1,5 +1,5 @@
 // Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 3;
+const BASE_BIRTH_RATE = 3.1;
 
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
@@ -109,4 +109,22 @@ function exp_meanClanLifetime() {
     console.log('median', median);
 }
 
-exp_meanClanLifetime();
+function exp_clanGrowthRate() {
+    const growthRates = [];
+    for (let i = 0; i < 100; ++i) {
+        const clan = new Clan('Test', 20);
+        const priming = 20;
+        const periods = 10;
+
+        for (let j = 0; j < priming; ++j) clan.advance();
+        const origSize = clan.size;
+        if (origSize == 0) continue;
+        
+        for (let j = 0; j < periods; ++j) clan.advance();
+        growthRates.push(Math.pow(clan.size / origSize, 1 / periods) - 1);
+    } 
+
+    console.log('median growth rate', growthRates.sort((a, b) => a - b)[Math.floor(growthRates.length / 2)]);
+    console.log('min growth rate', growthRates.reduce((acc, rate) => Math.min(acc, rate)));
+    console.log('max growth rate', growthRates.reduce((acc, rate) => Math.max(acc, rate)));
+}
