@@ -35,6 +35,8 @@ export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
 
+    public happiness = 50;
+
     constructor(
         public name: string,
         public color: string,
@@ -66,6 +68,7 @@ export class Clan {
             c.slices[i][0] = this.slices[i][0];
             c.slices[i][1] = this.slices[i][1];
         }
+        c.happiness = this.happiness;
         return c;
     }
 
@@ -83,6 +86,7 @@ export class Clan {
     advance() {
         this.advancePopulation();
         this.advanceTraits();
+        this.advanceHappiness();
     }
 
     advancePopulation() {
@@ -114,6 +118,13 @@ export class Clan {
     advanceTraits() {
         this.skill += Math.round(normal(2));
         this.knowledge += Math.round(normal(2));
+    }
+
+    advanceHappiness() {
+        const skillModifier = (this.skill - 50) / 10;
+        const knowledgeModifier = (this.knowledge - 50) / 10;
+        const luckModifier = normal(0, 5);
+        this.happiness = Math.round(50 + skillModifier + knowledgeModifier + luckModifier);
     }
 
     absorb(other: Clan) {
@@ -167,11 +178,17 @@ export class Clans extends Array<Clan> {
     }
 
     advance() {
+        this.interact();
         for (const clan of this) clan.advance();
         this.split();
         this.merge();
 
         this.sort((a, b) => b.prestige - a.prestige);
+    }
+
+    interact() {
+        // Each pair of clans may have some zero-sum interactions,
+        // typically embedded in a positive- or negative-sum context.
     }
 
     split() {

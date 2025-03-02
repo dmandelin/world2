@@ -86,6 +86,7 @@
             <th class="ra">Know</th>
             <th class="ra">Qual</th>
             <th class="ra">Pres</th>
+            <th class="ra">Hap</th>
         </tr>
     </thead>
     <tbody>
@@ -97,6 +98,7 @@
                 <td class="ra">{clan.knowledge}</td>
                 <td class="ra">{clan.quality}</td>
                 <td class="ra">{clan.prestige}</td>
+                <td class="ra">{clan.happiness}</td>
             </tr>
         {/each}
 </table>
