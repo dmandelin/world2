@@ -39,15 +39,10 @@ export class World {
     }
 
     advance() {
-        this.advanceClans();
+        this.clans.advance();
         this.year.advance(this.yearsPerTurn);
 
         this.timeline.push(new TimePoint(this));
-    }
-
-    advanceClans() {
-        for (const clan of this.clans) clan.advance();
-
     }
 }
 

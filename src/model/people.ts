@@ -5,8 +5,11 @@ const BASE_BIRTH_RATE = 3.1;
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
 export class Clan {
+    static minDesiredSize = 10;
+    static maxDesiredSize = 100;
+
     constructor(
-        readonly name: string,
+        public name: string,
         public size: number,
         public skill: number = 2,
     ) {
@@ -65,6 +68,24 @@ export class Clan {
 
         this.size = this.slicesTotal;
     }
+
+    absorb(other: Clan) {
+        if (true || other.size >= this.size * 0.5) {
+            this.name = `${this.name}-${other.name}`;
+        }
+
+        const origSize = this.size;
+        this.size += other.size;
+
+        for (let i = 0; i < this.slices.length; ++i) {
+            this.slices[i][0] += other.slices[i][0];
+            this.slices[i][1] += other.slices[i][1];
+        }
+
+        this.skill = Math.round(
+            (this.skill * origSize + other.skill * other.size) / 
+            (this.size + other.size));
+    }
 }
 
 export class Clans extends Array<Clan> {
@@ -74,6 +95,21 @@ export class Clans extends Array<Clan> {
   
     get population(): number {
       return this.reduce((total, clan) => total + clan.size, 0);
+    }
+
+    advance() {
+        for (const clan of this) clan.advance();
+        this.merge();
+    }
+
+    merge() {
+        while (true) {
+            if (this.length < 2) return;
+            const sortedClans = this.toSorted((a, b) => a.size - b.size);
+            if (sortedClans[0].size >= Clan.minDesiredSize) return;
+            sortedClans[1].absorb(sortedClans[0]);
+            this.splice(this.indexOf(sortedClans[0]), 1);
+        }
     }
 }
 
