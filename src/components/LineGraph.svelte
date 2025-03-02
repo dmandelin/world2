@@ -1,17 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
   
-    interface Dataset {
-      label: string;
-      data: number[];
-      color: string;
-    }
-  
-    interface LineGraphData {
-      labels: string[];
-      datasets: Dataset[];
-    }
-  
     let {data} = $props();
   
     let width = $state(0);

@@ -27,9 +27,9 @@ export class World {
     readonly yearsPerTurn = 20;
 
     readonly clans = new Clans(...[
-        new Clan('Abgal', 26, 60, 50),
-        new Clan('Ninshubur', 36, 50, 60),
-        new Clan('Didanu', 31, 40, 40),
+        new Clan('Abgal', 'green', 26, 60, 50),
+        new Clan('Ninshubur', 'blue', 36, 50, 60),
+        new Clan('Didanu', 'black', 31, 40, 40),
     ]);
 
     readonly timeline: TimePoint[] = [];

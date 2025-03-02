@@ -15,9 +15,19 @@ const CLAN_NAMES: string[] = [
     "Zamug", "Zudil", "Zudu", "Zuzu"
 ];
 
+const CLAN_COLORS: string[] = [
+    'red', 'orange', 'green', 'blue', 'purple', 'brown', 'black', 'gray', 'pink', 'cyan'
+];
+
 export function randomClanName(exclude: string[]|Set<String>): string {
     if (Array.isArray(exclude)) exclude = new Set(exclude);
     const available = CLAN_NAMES.filter(name => !exclude.has(name));
+    return available[Math.floor(Math.random() * available.length)];
+}
+
+export function randomClanColor(exclude: string[]|Set<String>): string {
+    if (Array.isArray(exclude)) exclude = new Set(exclude);
+    const available = CLAN_COLORS.filter(color => !exclude.has(color));
     return available[Math.floor(Math.random() * available.length)];
 }
   
@@ -27,6 +37,7 @@ export class Clan {
 
     constructor(
         public name: string,
+        public color: string,
         public size: number,
         public skill: number = 50,
         public knowledge: number = 50,
@@ -50,7 +61,7 @@ export class Clan {
     }
 
     c() {
-        const c = new Clan(this.name, this.size, this.skill, this.knowledge);
+        const c = new Clan(this.name, this.color, this.size, this.skill, this.knowledge);
         for (let i = 0; i < this.slices.length; ++i) {
             c.slices[i][0] = this.slices[i][0];
             c.slices[i][1] = this.slices[i][1];
@@ -132,7 +143,8 @@ export class Clan {
         const newSize = Math.round(this.size * fraction);
 
         const name = randomClanName(clans.map(clan => clan.name));
-        const newClan = new Clan(name, newSize, this.skill, this.knowledge);
+        const color = randomClanColor(clans.map(clan => clan.color));
+        const newClan = new Clan(name, color, newSize, this.skill, this.knowledge);
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
@@ -185,7 +197,7 @@ export class Clans extends Array<Clan> {
 }
 
 function exp_basicPopChange() {
-    const clan = new Clan('Test', 20);
+    const clan = new Clan('Test', 'blue', 20);
     for (let i = 0; i < 20; ++i) {
         const eb = BASE_BIRTH_RATE * clan.slices[1][0];
         const ed = clan.slices.reduce((acc, slice, i) => 
@@ -204,7 +216,7 @@ function exp_basicPopChange() {
 function exp_meanClanLifetime() {
     const lifetimes = [];
     for (let i = 0; i < 1000; ++i) {
-        const clan = new Clan('Test', 20);
+        const clan = new Clan('Test', 'blue', 20);
         let years = 0;
         while (clan.size > 0) {
             clan.advance();
@@ -229,7 +241,7 @@ function exp_meanClanLifetime() {
 function exp_clanGrowthRate() {
     const growthRates = [];
     for (let i = 0; i < 100; ++i) {
-        const clan = new Clan('Test', 20);
+        const clan = new Clan('Test', 'blue', 20);
         const priming = 20;
         const periods = 10;
 

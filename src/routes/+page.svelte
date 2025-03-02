@@ -3,11 +3,13 @@
     import type { Clan } from '../model/people';
     import PopulationPyramid from '../components/PopulationPyramid.svelte';
     import LineGraph from '../components/LineGraph.svelte';
+    import { rankings } from '../model/timeline';
     
     class Data {
         year = $state('');
         clans = $state<Clan[]>([]);
         timeline = $state<[string, number][]>([]);
+        rankings = $state<LineGraphData>({ labels: [], datasets: [] });
 
         popData = $derived.by(() => {
             return {
@@ -28,6 +30,7 @@
             this.year = world.year.toString();
             this.clans = world.clans.map(clan => clan.c());
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
+            this.rankings = rankings(world);
         }
     }
 
@@ -88,7 +91,7 @@
     <tbody>
         {#each data.clans as clan}
             <tr>
-                <td>{clan.name}</td>
+                <td style:color={clan.color}>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.skill}</td>
                 <td class="ra">{clan.knowledge}</td>
@@ -109,4 +112,8 @@
 
 <div class="line-graph-container">
     <LineGraph data={data.popData} />
+</div>
+
+<div class="line-graph-container">
+    <LineGraph data={data.rankings} />
 </div>
