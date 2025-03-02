@@ -92,7 +92,13 @@ export class Clan {
     advancePopulation() {
         const prevSlices = this.slices.map(slice => slice.slice());
 
-        const births = Math.round(this.slices[1][0] * BASE_BIRTH_RATE);
+        let quality = this.quality;
+        if (quality < 0) quality = 0;
+        if (quality > 100) quality = 100;
+        const qbrm = 1 + (quality - 50) / 1000;
+        const qdrm = 1 + (50 - quality) / 1000;
+
+        const births = Math.round(this.slices[1][0] * BASE_BIRTH_RATE * qbrm);
         let femaleBirths = 0;
         for (let i = 0; i < births; ++i) {
             if (Math.random() < 0.48) ++femaleBirths;
@@ -105,9 +111,9 @@ export class Clan {
         for (let i = 0; i < this.slices.length - 1; ++i) {
             let [fSurvivors, mSurvivors] = [0, 0];
             for (let j = 0; j < this.slices[i][0]; ++j)
-                if (Math.random() >= BASE_DEATH_RATES[i]) ++fSurvivors;
+                if (Math.random() >= BASE_DEATH_RATES[i] * qdrm) ++fSurvivors;
             for (let j = 0; j < this.slices[i][1]; ++j)
-                if (Math.random() >= 1.1 * BASE_DEATH_RATES[i]) ++mSurvivors;
+                if (Math.random() >= 1.1 * BASE_DEATH_RATES[i] * qdrm) ++mSurvivors;
             this.slices[i+1][0] = fSurvivors;
             this.slices[i+1][1] = mSurvivors;
         }
