@@ -26,7 +26,8 @@ export class Clan {
     constructor(
         public name: string,
         public size: number,
-        public skill: number = 2,
+        public skill: number = 50,
+        public knowledge: number = 50,
     ) {
         const share = size / 30;
         this.slices[0][0] = this.slices[0][1] = Math.floor(7 * share);
@@ -38,8 +39,16 @@ export class Clan {
         this.slices[0][1] += Math.floor((remainder + 1) / 2);
     }
 
+    get quality() {
+        return Math.round(2/(1/this.skill + 1/this.knowledge));
+    }
+
+    get prestige() {
+        return Math.round(Math.log2(this.size) * this.quality / 6);
+    }
+
     c() {
-        const c = new Clan(this.name, this.size, this.skill);
+        const c = new Clan(this.name, this.size, this.skill, this.knowledge);
         for (let i = 0; i < this.slices.length; ++i) {
             c.slices[i][0] = this.slices[i][0];
             c.slices[i][1] = this.slices[i][1];
@@ -100,6 +109,10 @@ export class Clan {
         this.skill = Math.round(
             (this.skill * origSize + other.skill * other.size) / 
             (this.size + other.size));
+
+        this.knowledge = Math.round(
+            (this.knowledge * origSize + other.knowledge * other.size) /
+            (this.size + other.size));
     }
 
     splitOff(clans: Clans): Clan {
@@ -107,7 +120,7 @@ export class Clan {
         const newSize = Math.round(this.size * fraction);
 
         const name = randomClanName(clans.map(clan => clan.name));
-        const newClan = new Clan(name, newSize, this.skill);
+        const newClan = new Clan(name, newSize, this.skill, this.knowledge);
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
@@ -122,6 +135,7 @@ export class Clan {
 export class Clans extends Array<Clan> {
     constructor(...clans: Clan[]) {
       super(...clans);
+      this.sort((a, b) => b.prestige - a.prestige);
     }
   
     get population(): number {
@@ -132,6 +146,8 @@ export class Clans extends Array<Clan> {
         for (const clan of this) clan.advance();
         this.split();
         this.merge();
+
+        this.sort((a, b) => b.prestige - a.prestige);
     }
 
     split() {

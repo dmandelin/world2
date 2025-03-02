@@ -80,6 +80,9 @@
             <th>Clan</th>
             <th class="ra">Size</th>
             <th class="ra">Skill</th>
+            <th class="ra">Know</th>
+            <th class="ra">Qual</th>
+            <th class="ra">Pres</th>
         </tr>
     </thead>
     <tbody>
@@ -88,6 +91,9 @@
                 <td>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.skill}</td>
+                <td class="ra">{clan.knowledge}</td>
+                <td class="ra">{clan.quality}</td>
+                <td class="ra">{clan.prestige}</td>
             </tr>
         {/each}
 </table>
