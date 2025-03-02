@@ -8,6 +8,7 @@
     class Data {
         year = $state('');
         totalPopulation = $state(0);
+        message = $state('');
         clans = $state<Clan[]>([]);
         timeline = $state<[string, number][]>([]);
         rankings = $state<LineGraphData>({ labels: [], datasets: [] });
@@ -30,6 +31,7 @@
         update() {
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
+            this.message = world.message;
             this.clans = world.clans.map(clan => clan.c());
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
@@ -78,6 +80,8 @@
 <div>
     <button onclick={click}>Advance</button>
 </div>
+
+<h4>{data.message}</h4>
 
 <table>
     <thead>

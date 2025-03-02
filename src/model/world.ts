@@ -26,6 +26,11 @@ export class World {
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
+    static doomLimit = 5;
+    doomClock = World.doomLimit;
+
+    message = '';
+
     readonly clans = new Clans(...[
         new Clan('Abgal', 'green', 26, 60, 50),
         new Clan('Ninshubur', 'blue', 36, 50, 60),
@@ -41,6 +46,18 @@ export class World {
     advance() {
         this.clans.advance();
         this.year.advance(this.yearsPerTurn);
+
+        if (this.totalPopulation > 500) {
+            this.doomClock -= 1;
+            if (this.doomClock === 0) {
+                this.message = 'The people all moved out to escape overcrowding.';
+                this.clans.splice(0, this.clans.length);
+            } else {
+                this.message = `Too many people for this area! Will emigrate in ${this.doomClock * this.yearsPerTurn} years.`;
+            }
+        } else {
+            this.doomClock = World.doomLimit;
+        }
 
         this.timeline.push(new TimePoint(this));
     }
