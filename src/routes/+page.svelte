@@ -6,6 +6,7 @@
     class Data {
         year = $state('');
         clans = $state<Clan[]>([]);
+        timeline = $state<[string, number][]>([]);
 
         constructor() {
             this.update();
@@ -14,6 +15,7 @@
         update() {
             this.year = world.year.toString();
             this.clans = world.clans.map(clan => clan.c());
+            this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
         }
     }
 
@@ -80,3 +82,7 @@
     </div>
     {/each}
 </div>
+
+{#each data.timeline as [year, population]}
+    <div>{year}: {population}</div>
+{/each}

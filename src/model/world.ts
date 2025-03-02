@@ -1,8 +1,15 @@
 import { Clan } from "./people";
+import { TimePoint } from "./timeline";
 
 export class Year {
     // Negative is BC, positive is AD, zero is unused.
     private value = -6500;
+
+    clone(): Year {
+        const year = new Year();
+        year.value = this.value;
+        return year;
+    }
 
     advance(years: number) {
         let newValue = this.value + years;
@@ -25,9 +32,17 @@ export class World {
         new Clan('Didanu', 20, 40),
     ];
 
+    readonly timeline: TimePoint[] = [];
+
+    constructor() {
+        this.timeline.push(new TimePoint(this));
+    }
+
     advance() {
         for (const clan of this.clans) clan.advance();
         this.year.advance(this.yearsPerTurn);
+
+        this.timeline.push(new TimePoint(this));
     }
 }
 
