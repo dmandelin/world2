@@ -1,3 +1,5 @@
+import { normal } from "./distributions";
+
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.1;
 
@@ -68,6 +70,11 @@ export class Clan {
     }
 
     advance() {
+        this.advancePopulation();
+        this.advanceTraits();
+    }
+
+    advancePopulation() {
         const prevSlices = this.slices.map(slice => slice.slice());
 
         const births = Math.round(this.slices[1][0] * BASE_BIRTH_RATE);
@@ -91,6 +98,11 @@ export class Clan {
         }
 
         this.size = this.slicesTotal;
+    }
+
+    advanceTraits() {
+        this.skill += Math.round(normal(2));
+        this.knowledge += Math.round(normal(2));
     }
 
     absorb(other: Clan) {
