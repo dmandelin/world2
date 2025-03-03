@@ -10,6 +10,7 @@
         totalPopulation = $state(0);
         message = $state('');
         clans = $state<Clan[]>([]);
+        festivalMessage = $state('');
         timeline = $state<[string, number][]>([]);
         rankings = $state<LineGraphData>({ labels: [], datasets: [] });
 
@@ -32,6 +33,7 @@
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
             this.message = world.message;
+            this.festivalMessage = world.clans.festival.message;
             this.clans = world.clans.map(clan => clan.c());
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
@@ -47,6 +49,16 @@
 </script>
 
 <style>
+    .topPanel {
+        display: flex;
+        gap: 2em;
+    }
+
+    .topPanel h3 {
+        margin-top: 0;
+        margin-bottom: 1em;
+    }
+
     button {
         width: 150px;
         height: 50px;
@@ -74,11 +86,15 @@
     }
 </style>
 
-<h1>world2</h1>
-<h3>{data.year} - {data.totalPopulation} people</h3>
-
-<div>
-    <button onclick={click}>Advance</button>
+<div class="topPanel">
+    <div>
+        <h3>{data.year} - {data.totalPopulation} people</h3>
+        <button onclick={click}>Advance</button>
+    </div>
+    <div>
+        <h3 style="text-align: center">{data.festivalMessage}</h3>
+        <img src="/festival.webp" alt="Festival" height="120" width="200"/>
+    </div>
 </div>
 
 <h4>{data.message}</h4>
@@ -92,6 +108,7 @@
             <th class="ra">Know</th>
             <th class="ra">Qual</th>
             <th class="ra">Int</th>
+            <th class="ra">Fes</th>
             <th class="ra">EQual</th>
             <th class="ra">Pres</th>
             <th class="ra">Hap</th>
@@ -109,6 +126,7 @@
                 <td class="ra">{clan.knowledge}</td>
                 <td class="ra">{clan.quality}</td>
                 <td class="ra">{clan.interactionModifier}</td>
+                <td class="ra">{clan.festivalModifier}</td>
                 <td class="ra">{clan.effectiveQuality}</td>
                 <td class="ra">{clan.prestige}</td>
                 <td class="ra">{clan.happiness}</td>

@@ -1,4 +1,5 @@
 import { normal, poisson } from "./distributions";
+import { Festival } from "./festival";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.1;
@@ -37,6 +38,7 @@ export class Clan {
 
     public happiness = 50;
     public interactionModifier = 0;
+    public festivalModifier = 0;
 
     constructor(
         public name: string,
@@ -60,7 +62,7 @@ export class Clan {
     }
 
     get effectiveQuality() {
-        return this.quality + this.interactionModifier;
+        return this.quality + this.interactionModifier + this.festivalModifier;
     }
 
     get prestige() {
@@ -75,6 +77,7 @@ export class Clan {
         }
         c.happiness = this.happiness;
         c.interactionModifier = this.interactionModifier;
+        c.festivalModifier = this.festivalModifier;
         return c;
     }
 
@@ -153,7 +156,13 @@ export class Clan {
         const skillModifier = (this.skill - 50) / 10;
         const knowledgeModifier = (this.knowledge - 50) / 10;
         const luckModifier = normal(0, 5);
-        this.happiness = Math.round(50 + skillModifier + knowledgeModifier + luckModifier + this.interactionModifier * 2);
+        this.happiness = Math.round(50 + 
+            skillModifier + 
+            knowledgeModifier + 
+            luckModifier +
+            this.interactionModifier +
+            this.festivalModifier
+        );
     }
 
     absorb(other: Clan) {
@@ -197,6 +206,8 @@ export class Clan {
 }
 
 export class Clans extends Array<Clan> {
+    festival: Festival = new Festival(undefined);
+
     constructor(...clans: Clan[]) {
       super(...clans);
       this.sort((a, b) => b.prestige - a.prestige);
@@ -207,6 +218,8 @@ export class Clans extends Array<Clan> {
     }
 
     advance() {
+        this.festival = new Festival(this);
+
         this.interact();
         for (const clan of this) clan.advance();
         this.split();
