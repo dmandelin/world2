@@ -57,7 +57,10 @@ export class Festival {
         const modifiedBenefit = baseBenefit * knowledgeModifier;
 
         let resultModifier;
-        const result = plusOrMinus(0.167) + plusOrMinus(0.167);
+        const resultKnowledgeModifier = 0.07 * (knowledge - 50) / 50;
+        const plusProb = Math.min(0.167 + resultKnowledgeModifier, 0.333);
+        const minusProb = Math.max(0.167 - resultKnowledgeModifier, 0.05);
+        const result = plusOrMinus(plusProb, minusProb, 2);
         switch (result) {
             case -2: // disaster
                 resultModifier = 0;

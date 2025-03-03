@@ -18,10 +18,13 @@ export function poisson(lambda: number): number {
     return k - 1;
 }
 
-export function plusOrMinus(plusProb: number, minusProb?: number): number {
+export function plusOrMinus(plusProb: number, minusProb?: number, n: number = 1): number {
     if (minusProb === undefined) minusProb = plusProb;
-    const r = Math.random();
-    if (r < plusProb) return 1;
-    if (r < plusProb + minusProb) return -1;
-    return 0;
+    let total = 0;
+    for (let i = 0; i < n; i++) {
+        const r = Math.random();
+        if (r < plusProb) total += 1;
+        else if (r < plusProb + minusProb) total -= 1;
+    }
+    return total;
 }
