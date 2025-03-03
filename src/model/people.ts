@@ -309,9 +309,6 @@ function exp_basicPopChange() {
         const ebr = eb / clan.size;
         const edr = ed / clan.size;
 
-        console.log(i*20, clan.size, 
-            ebr.toFixed(2), edr.toFixed(2), (ebr - edr).toFixed(2));
-        
         clan.advance();
     }
 }

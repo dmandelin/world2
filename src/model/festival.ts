@@ -44,11 +44,15 @@ export class Festival {
         }
 
         // We'll start with a super-simple average result.
+        const highBenefitClans = Math.min(5, this.clans.length);
+        const lowBenefitClans = Math.max(0, Math.min(25, this.clans.length - 5));
+        const benefit = 10 + highBenefitClans * 2 + lowBenefitClans / 5;
+
         for (const clan of this.clans) {
-            clan.festivalModifier += 20;
+            clan.festivalModifier += benefit;
         }
 
-        this.message = 'Seasonal festival!'
+        this.message = `Seasonal festival with ${this.clans.length} clans!`;
     }
 }
 
