@@ -26,6 +26,7 @@
 //     usually the clans with the most knowledge, usually small
 //     increments.
 
+import { plusOrMinus } from "./distributions";
 import type { Clan, Clans } from "./people";
 
 export class Festival {
@@ -53,13 +54,37 @@ export class Festival {
             (acc, clan) => acc + clan.knowledge * clan.size, 0);
         const knowledge = weightedSumKnowledge / people;
         const knowledgeModifier = 1 + (knowledge - 50) / 100;
-        const benefit = Math.round(baseBenefit * knowledgeModifier);
+        const modifiedBenefit = baseBenefit * knowledgeModifier;
 
-        for (const clan of this.clans) {
-            clan.festivalModifier += benefit;
+        let resultModifier;
+        const result = plusOrMinus(0.167) + plusOrMinus(0.167);
+        switch (result) {
+            case -2: // disaster
+                resultModifier = 0;
+                this.message = 'Disastrous festival!';
+                break;
+            case -1: // poor results
+                resultModifier = 0.5;
+                this.message = 'Poor festival.';
+                break;
+            case 0:  // average results
+                resultModifier = 1;
+                this.message = 'Seasonal festival!';
+                break;
+            case 1:  // above-average results
+                resultModifier = 1.5;
+                this.message = 'Great festival!!';
+                break;
+            case 2:  // exceptional result
+                resultModifier = 2;
+                this.message = 'Epic festival!!!';
+                break;
+            default:
+                throw('Invalid result');
         }
-
-        this.message = `Seasonal festival with ${this.clans.length} clans!`;
+        for (const clan of this.clans) {
+            clan.festivalModifier += Math.round(modifiedBenefit * resultModifier);
+        }
     }
 }
 
