@@ -1,5 +1,5 @@
 import { normal, poisson } from "./distributions";
-import { Festival } from "./festival";
+import { Behaviors, Festival, FestivalBehavior, mutate } from "./festival";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.1;
@@ -44,6 +44,7 @@ export class Clan {
         public name: string,
         public color: string,
         public size: number,
+        public festivalBehavior: FestivalBehavior = Behaviors.reliable,
         public skill: number = 50,
         public knowledge: number = 50,
     ) {
@@ -70,7 +71,7 @@ export class Clan {
     }
 
     c() {
-        const c = new Clan(this.name, this.color, this.size, this.skill, this.knowledge);
+        const c = new Clan(this.name, this.color, this.size, this.festivalBehavior, this.skill, this.knowledge);
         for (let i = 0; i < this.slices.length; ++i) {
             c.slices[i][0] = this.slices[i][0];
             c.slices[i][1] = this.slices[i][1];
@@ -193,7 +194,7 @@ export class Clan {
 
         const name = randomClanName(clans.map(clan => clan.name));
         const color = randomClanColor(clans.map(clan => clan.color));
-        const newClan = new Clan(name, color, newSize, this.skill, this.knowledge);
+        const newClan = new Clan(name, color, newSize, this.festivalBehavior, this.skill, this.knowledge);
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
@@ -206,7 +207,7 @@ export class Clan {
 }
 
 export class Clans extends Array<Clan> {
-    festival: Festival = new Festival(undefined);
+    festival: Festival = new Festival(this);
 
     constructor(...clans: Clan[]) {
       super(...clans);
@@ -218,14 +219,28 @@ export class Clans extends Array<Clan> {
     }
 
     advance() {
-        this.festival = new Festival(this);
-
+        this.runFestival();
         this.interact();
         for (const clan of this) clan.advance();
         this.split();
         this.merge();
 
         this.sort((a, b) => b.prestige - a.prestige);
+    }
+
+    runFestival() {
+        for (const clan of this) {
+            clan.festivalBehavior = mutate(clan.festivalBehavior);
+            clan.festivalModifier = 0;
+        }
+        const participants = [];
+        for (const clan of this) {
+            if (clan.festivalBehavior.willParticipate()) {
+                participants.push(clan);
+            }
+        }
+        this.festival = new Festival(participants);
+        this.festival.process();
     }
 
     interact() {

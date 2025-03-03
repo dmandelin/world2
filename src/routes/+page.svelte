@@ -108,6 +108,7 @@
             <th class="ra">Know</th>
             <th class="ra">Qual</th>
             <th class="ra">Int</th>
+            <th class="ra">FesB</th>
             <th class="ra">Fes</th>
             <th class="ra">EQual</th>
             <th class="ra">Pres</th>
@@ -126,6 +127,7 @@
                 <td class="ra">{clan.knowledge}</td>
                 <td class="ra">{clan.quality}</td>
                 <td class="ra">{clan.interactionModifier}</td>
+                <td class="ra">{clan.festivalBehavior.name}</td>
                 <td class="ra">{clan.festivalModifier}</td>
                 <td class="ra">{clan.effectiveQuality}</td>
                 <td class="ra">{clan.prestige}</td>

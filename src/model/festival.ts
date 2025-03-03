@@ -31,17 +31,16 @@ import type { Clan, Clans } from "./people";
 export class Festival {
     message: string = '';
 
-    constructor(readonly clans: Clans|undefined) {
-        this.process();
+    constructor(readonly clans: readonly Clan[]) {
     }
 
-    private process() {
+    process() {
         if (!this.clans) return;
 
         // Pay the cost of the festival. It's substantial: people
         // are putting a lot into this.
         for (const clan of this.clans) {
-            clan.festivalModifier = -10;
+            clan.festivalModifier -= 10;
         }
 
         // We'll start with a super-simple average result.
@@ -51,4 +50,63 @@ export class Festival {
 
         this.message = 'Seasonal festival!'
     }
+}
+
+export abstract class FestivalBehavior {
+    abstract get name(): string;
+    abstract willParticipate(): boolean;
+}
+
+class Reliable extends FestivalBehavior {
+    name = 'reliable';
+    willParticipate() { return Math.random() < 0.99; }
+}
+
+class Flaky extends FestivalBehavior {
+    name = 'flaky';
+    willParticipate() { return Math.random() < 0.9; }
+}
+
+class Rare extends FestivalBehavior {
+    name = 'rare';
+    willParticipate() { return Math.random() < 0.1; }
+}
+
+class Out extends FestivalBehavior {
+    name = 'out';
+    willParticipate() { return Math.random() < 0.01; }
+}
+
+export const Behaviors = {
+    reliable: new Reliable(),
+    flaky: new Flaky(),
+    rare: new Rare(),
+    out: new Out(),
+}
+
+const behaviorList = Object.values(Behaviors);
+
+const MUTATION_TABLE = [
+    [0.83, 0.15, 0.00, 0.02],
+    [0.15, 0.79, 0.05, 0.01],
+    [0.01, 0.05, 0.79, 0.15],
+    [0.01, 0.01, 0.15, 0.83],
+];
+
+for (const row of MUTATION_TABLE) {
+    let sum = 0;
+    for (const x of row) sum += x;
+    if (Math.abs(sum - 1) > 0.001) throw new Error('Mutation table must sum to 1');
+}
+
+export function mutate(b: FestivalBehavior): FestivalBehavior {
+    const i = behaviorList.indexOf(b);
+    const row = MUTATION_TABLE[i];
+    const r = Math.random();
+    let sum = 0;
+    for (let j = 0; j < row.length; ++j) {
+        sum += row[j];
+        if (r < sum) return behaviorList[j];
+    }
+    return b;
 }
