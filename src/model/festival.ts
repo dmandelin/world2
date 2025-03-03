@@ -46,7 +46,14 @@ export class Festival {
         // We'll start with a super-simple average result.
         const highBenefitClans = Math.min(5, this.clans.length);
         const lowBenefitClans = Math.max(0, Math.min(25, this.clans.length - 5));
-        const benefit = 10 + highBenefitClans * 2 + lowBenefitClans / 5;
+        const baseBenefit = 10 + highBenefitClans * 2 + lowBenefitClans / 5;
+
+        const people = this.clans.reduce((acc, clan) => acc + clan.size, 0);
+        const weightedSumKnowledge = this.clans.reduce(
+            (acc, clan) => acc + clan.knowledge * clan.size, 0);
+        const knowledge = weightedSumKnowledge / people;
+        const knowledgeModifier = 1 + (knowledge - 50) / 100;
+        const benefit = Math.round(baseBenefit * knowledgeModifier);
 
         for (const clan of this.clans) {
             clan.festivalModifier += benefit;
