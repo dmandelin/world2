@@ -1,5 +1,6 @@
 import { Behaviors } from "./festival";
 import { Clan, Clans } from "./people";
+import { Settlement } from "./settlement";
 import { TimePoint } from "./timeline";
 
 export class Year {
@@ -37,6 +38,10 @@ export class World {
         new Clan('Ninshubur', 'blue', 36, Behaviors.reliable, 50, 60),
         new Clan('Didanu', 'black', 31, Behaviors.flaky, 40, 40),
     ]);
+
+    readonly settlements = [
+        new Settlement('Ur', 350, 350, this.clans),
+    ];
 
     readonly timeline: TimePoint[] = [];
 

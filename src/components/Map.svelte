@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { world } from '../model/world';
 
     let canvas: HTMLCanvasElement|null;
     let context: CanvasRenderingContext2D|null;
@@ -15,6 +16,11 @@
     }
 
     function draw() {
+        drawRivers();
+        drawSettlements();
+    }
+
+    function drawRivers() {
         context!.strokeStyle = '#0185bb';
         context!.lineWidth = 5;
         context!.fillStyle = '#A0D8F0';
@@ -43,7 +49,18 @@
         context!.lineTo(310, 495);
         context!.fill();
         context!.stroke();
+    }
 
+    function drawSettlements() {
+        context!.fillStyle = '#333';
+        context!.font = '14px sans-serif';
+        for (const settlement of world.settlements) {
+            const x = settlement.x;
+            const y = settlement.y;
+            const s = 3;
+            context!.fillRect(x - s, y - s, s * 2, s * 2);
+            context!.fillText(settlement.name, x - 7, y + s + 15);
+        }
     }
 
     onMount(() => {
