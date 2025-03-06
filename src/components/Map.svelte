@@ -82,7 +82,8 @@
             const y = settlement.y;
             const s = 3;
             context!.fillRect(x - s, y - s, s * 2, s * 2);
-            context!.fillText(settlement.name, x - 7, y + s + 15);
+            const textWidth = context!.measureText(settlement.name).width;
+            context!.fillText(settlement.name, x - textWidth / 2, y + s + 15);
         }
     }
 
