@@ -10,7 +10,12 @@ export class Settlement {
         readonly name: string, 
         readonly x: number,
         readonly y: number,
-        readonly clans: Clans) {}
+        readonly clans: Clans) {
+        
+        for (const clan of clans) {
+            clan.settlement = this;
+        }
+    }
 
     get size() {
         return this.clans.reduce((acc, clan) => acc + clan.size, 0);

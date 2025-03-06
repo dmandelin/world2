@@ -62,6 +62,8 @@ export class World {
 
     readonly timeline: TimePoint[] = [];
 
+    readonly watchers = new Set<(world: World) => void>();
+
     constructor() {
         this.timeline.push(new TimePoint(this));
     }
@@ -72,6 +74,7 @@ export class World {
 
         this.year.advance(this.yearsPerTurn);
         this.timeline.push(new TimePoint(this));
+        this.notify();
     }
 
     get totalPopulation() {
@@ -86,6 +89,19 @@ export class World {
         return this.settlements
             .filter(s => s.message)
             .map(s => new Message(s.name, s.message));
+    }
+
+    watch(watcher: (world: World) => void) {
+        this.watchers.add(watcher);
+    }
+
+    unwatch(watcher: (world: World) => void) {
+        this.watchers.delete(watcher);
+    }
+
+    notify() {
+        for (const watcher of this.watchers) 
+            watcher(this);
     }
 }
 

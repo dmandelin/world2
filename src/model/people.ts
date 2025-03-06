@@ -1,5 +1,7 @@
+import { clamp } from "./basics";
 import { normal, poisson } from "./distributions";
 import { Behaviors, Festival, FestivalBehavior, mutate } from "./festival";
+import type { Settlement } from "./settlement";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.1;
@@ -31,6 +33,10 @@ export function randomClanColor(exclude: string[]|Set<String>): string {
     const available = CLAN_COLORS.filter(color => !exclude.has(color));
     return available[Math.floor(Math.random() * available.length)];
 }
+
+function randomStat(): number {
+    return clamp(Math.round(normal(50, 20)), 0, 100);
+}
   
 export class Clan {
     static minDesiredSize = 10;
@@ -40,13 +46,15 @@ export class Clan {
     public interactionModifier = 0;
     public festivalModifier = 0;
 
+    settlement: Settlement|undefined;
+
     constructor(
         public name: string,
         public color: string,
         public size: number,
         public festivalBehavior: FestivalBehavior = Behaviors.reliable,
-        public skill: number = 50,
-        public knowledge: number = 50,
+        public skill: number = randomStat(),
+        public knowledge: number = randomStat(),
     ) {
         const share = size / 30;
         this.slices[0][0] = this.slices[0][1] = Math.floor(7 * share);

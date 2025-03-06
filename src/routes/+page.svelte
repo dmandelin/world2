@@ -9,6 +9,7 @@
     import Map from '../components/Map.svelte';
     import { Settlement } from '../model/settlement';
     import Society from '../components/Society.svelte';
+    import Notables from '../components/Notables.svelte';
     
     class Data {
         year = $state('');
@@ -117,7 +118,10 @@
     </div>
 </div>
 
-<Society />
+<div style="display: flex; align-items: flex-start; gap: 5.5em">
+    <Society />
+    <Notables />
+</div>
 
 <div class="line-graph-container">
     <LineGraph data={data.popData} />
