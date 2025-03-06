@@ -1,12 +1,25 @@
 <script lang="ts">
+    import { clamp } from "../model/basics";
     import PopulationPyramid from "./PopulationPyramid.svelte";
 
     let { clans } = $props();
+
+    function r(trait: number) {
+        const grade = 'ABCDE'[4 - clamp(Math.floor(trait / 20), 0, 4)];
+        return `${grade} (${trait})`;
+    }
 </script>
 
 <style>
+    .grade_A { color: #0f0; }
+    .grade_B { color: #8f8; }
+    .grade_C { color: #ff8; }
+    .grade_D { color: #f88; }
+    .grade_E { color: #f00; }
+
     th, td {
         text-align: left;
+        padding: 0 0.25em;
     }
 
     .ra {
@@ -22,7 +35,7 @@
 <table>
     <thead>
         <tr>
-            <th>Clan</th>
+            <th class="grade_A">Clan</th>
             <th class="ra">Size</th>
             <th class="ra">Skill</th>
             <th class="ra">Know</th>
@@ -43,15 +56,15 @@
             <tr>
                 <td style:color={clan.color}>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
-                <td class="ra">{clan.skill}</td>
-                <td class="ra">{clan.knowledge}</td>
-                <td class="ra">{clan.quality}</td>
+                <td class="ra">{r(clan.skill)}</td>
+                <td class="ra">{r(clan.knowledge)}</td>
+                <td class="ra">{r(clan.quality)}</td>
                 <td class="ra">{clan.interactionModifier}</td>
                 <td class="ra">{clan.festivalBehavior.name}</td>
                 <td class="ra">{clan.festivalModifier}</td>
-                <td class="ra">{clan.effectiveQuality}</td>
-                <td class="ra">{clan.prestige}</td>
-                <td class="ra">{clan.happiness}</td>
+                <td class="ra">{r(clan.effectiveQuality)}</td>
+                <td class="ra">{r(clan.prestige)}</td>
+                <td class="ra">{r(clan.happiness)}</td>
                 <td class="ra">{clan.expectedPopulationChange[0]}</td>
                 <td class="ra">{clan.expectedPopulationChange[1]}</td>
                 <td class="ra">{clan.expectedPopulationChange[2]}</td>
