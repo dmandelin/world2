@@ -211,6 +211,7 @@ export class Clan {
         const name = randomClanName(clans.map(clan => clan.name));
         const color = randomClanColor(clans.map(clan => clan.color));
         const newClan = new Clan(name, color, newSize, this.festivalBehavior, this.skill, this.knowledge);
+        newClan.settlement = this.settlement;
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
