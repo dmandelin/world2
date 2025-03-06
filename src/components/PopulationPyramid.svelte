@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { Clan } from '../model/people';
-  
     let { clan } = $props();
   </script>
   
