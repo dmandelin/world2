@@ -8,6 +8,7 @@
     import LineGraph from '../components/LineGraph.svelte';
     import Map from '../components/Map.svelte';
     import { Settlement } from '../model/settlement';
+    import Society from '../components/Society.svelte';
     
     class Data {
         year = $state('');
@@ -115,6 +116,8 @@
         <ClanList clans={selectedSettlement ? selectedSettlement.clans : []} />
     </div>
 </div>
+
+<Society />
 
 <div class="line-graph-container">
     <LineGraph data={data.popData} />
