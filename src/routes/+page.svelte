@@ -4,6 +4,7 @@
     import PopulationPyramid from '../components/PopulationPyramid.svelte';
     import LineGraph from '../components/LineGraph.svelte';
     import { rankings } from '../model/timeline';
+    import Map from '../components/Map.svelte';
     
     class Data {
         year = $state('');
@@ -49,6 +50,11 @@
 </script>
 
 <style>
+    .mapRow {
+        display: flex;
+        gap: 1em;
+    }
+
     .topPanel {
         display: flex;
         gap: 2em;
@@ -86,18 +92,20 @@
     }
 </style>
 
-<div class="topPanel">
-    <div>
-        <h3>{data.year} - {data.totalPopulation} people</h3>
-        <button onclick={click}>Advance</button>
-    </div>
-    <div>
-        <h3 style="text-align: center">{data.festivalMessage}</h3>
-        <img src="/festival.webp" alt="Festival" height="120" width="200"/>
+<div class="mapRow">
+    <Map />
+    <div class="topPanel">
+        <div>
+            <h3>{data.year} - {data.totalPopulation} people</h3>
+            <button onclick={click}>Advance</button>
+        </div>
+        <div>
+            <h3 style="text-align: center">{data.festivalMessage}</h3>
+            <img src="/festival.webp" alt="Festival" height="120" width="200"/>
+        </div>
+        <h4>{data.message}</h4>
     </div>
 </div>
-
-<h4>{data.message}</h4>
 
 <table>
     <thead>

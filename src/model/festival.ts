@@ -72,6 +72,7 @@ export class Festival {
                 break;
             case 0:  // average results
                 resultModifier = 1;
+
                 this.message = 'Seasonal festival!';
                 break;
             case 1:  // above-average results
@@ -87,6 +88,7 @@ export class Festival {
         }
         for (const clan of this.clans) {
             clan.festivalModifier += Math.round(modifiedBenefit * resultModifier);
+            clan.knowledge += result;
         }
     }
 }
