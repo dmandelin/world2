@@ -7,6 +7,7 @@
     import ClanList from '../components/ClanList.svelte';
     import LineGraph from '../components/LineGraph.svelte';
     import Map from '../components/Map.svelte';
+    import { Settlement } from '../model/settlement';
     
     class Data {
         year = $state('');
@@ -42,11 +43,15 @@
     }
 
     let data = $state(new Data());
-    const selectedSettlement = $state(world.settlements[0]);
+    let selectedSettlement = $state(world.settlements[0]);
 
     function click() {
         world.advance();
         data.update();
+    }
+
+    function selectSettlement(settlement: Settlement) {
+        selectedSettlement = settlement;
     }
 </script>
 
@@ -82,13 +87,14 @@
 </style>
 
 <div class="mapRow">
-    <Map />
+    <Map bind:selection={selectedSettlement} />
     <div>
         <div class="topPanel">
             <div>
                 <h3 style="text-align: center">
                     {selectedSettlement.clans.festival.message}
                     </h3>
+                <h3>{selectedSettlement?.name}</h3>
                 <img src="/festival.webp" alt="Festival" height="120" width="200"/>
             </div>
             <div>

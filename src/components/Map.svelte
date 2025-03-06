@@ -2,11 +2,34 @@
     import { onMount } from 'svelte';
     import { world } from '../model/world';
 
+    let { selection = $bindable() } = $props();
+
     let canvas: HTMLCanvasElement|null;
     let context: CanvasRenderingContext2D|null;
 
     function click(e: MouseEvent) {
-        console.log(e.offsetX, e.offsetY);
+        console.log('click', e.offsetX, e.offsetY);
+
+        const clickX = e.offsetX;
+        const clickY = e.offsetY;
+
+        let best = null;
+        let bestds = 50 * 50;
+        for (const settlement of world.settlements) {
+            const dx = settlement.x - clickX;
+            const dy = settlement.y - clickY;
+            const ds = dx * dx + dy * dy;
+
+            if (ds < bestds) {
+                bestds = ds;
+                best = settlement;
+            }
+        }
+
+        if (best) {
+            console.log('select', best.name, event);
+            selection = best;
+        }
     }
 
     function resizeCanvas() {
