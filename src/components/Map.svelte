@@ -86,7 +86,7 @@
             const textWidth = context!.measureText(settlement.name).width;
             context!.fillText(settlement.name, x - textWidth / 2, y + s + 15);
 
-            const popLabel = settlement.size.toString();
+            const popLabel = `${settlement.size} (${settlement.lastSizeChange})`;
             const popWidth = context!.measureText(popLabel).width;
             context!.fillText(popLabel, x - popWidth / 2 - 1, y + s + 32);
         }

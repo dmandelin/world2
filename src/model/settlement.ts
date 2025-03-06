@@ -21,8 +21,16 @@ export class Settlement {
         return this.clans.reduce((acc, clan) => acc + clan.size, 0);
     }
 
+    private lastSizeChange_ = 0;
+
+    get lastSizeChange() {
+        return this.lastSizeChange_;
+    }
+
     advance() {
+        const sizeBefore = this.size;
         this.clans.advance();
+        this.lastSizeChange_ = this.size - sizeBefore;
 
         if (this.size > 300) {
             this.doomClock -= 1;
