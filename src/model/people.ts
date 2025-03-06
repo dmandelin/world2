@@ -84,6 +84,7 @@ export class Clan {
             c.slices[i][0] = this.slices[i][0];
             c.slices[i][1] = this.slices[i][1];
         }
+        c.settlement = this.settlement;
         c.happiness = this.happiness;
         c.interactionModifier = this.interactionModifier;
         c.festivalModifier = this.festivalModifier;
@@ -147,7 +148,6 @@ export class Clan {
         const qdrm = 1 + (50 - quality) / 1000;
 
         const ebr = BASE_BIRTH_RATE * qbrm * this.slices[1][0] / this.size;
-
         let ed = 0;
         for (let i = 0; i < this.slices.length - 1; ++i) {
             ed += this.slices[i][0] * qdrm * BASE_DEATH_RATES[i] + this.slices[i][1] * qdrm * 1.1 * BASE_DEATH_RATES[i];

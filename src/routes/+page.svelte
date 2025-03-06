@@ -37,14 +37,17 @@
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
             this.messages = world.messages;
-            this.clans = selectedSettlement.clans.map(clan => clan.c());
+            this.clans = world.allClans.map(clan => clan.c());
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
         }
     }
 
-    let selectedSettlement = $state(world.settlements[0]);
     let data = $state(new Data());
+    let selectedSettlement = $state(world.settlements[0]);
+    let selectedClans = $derived.by(() =>
+        data.clans.filter(clan => clan.settlement === selectedSettlement)
+    );
 
     function click() {
         world.advance();
@@ -109,7 +112,7 @@
             </div>
         </div>
         <div style="font-weight: bold; margin-bottom: 1em">{selectedSettlement.message}</div>
-        <ClanList clans={data.clans} />
+        <ClanList clans={selectedClans} />
     </div>
 </div>
 
