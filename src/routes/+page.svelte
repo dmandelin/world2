@@ -91,21 +91,21 @@
     <div>
         <div class="topPanel">
             <div>
+                <h2>{selectedSettlement?.name} &ndash; {selectedSettlement?.size}</h2>
                 <h3 style="text-align: center">
                     {selectedSettlement.clans.festival.message}
                     </h3>
-                <h3>{selectedSettlement?.name}</h3>
                 <img src="/festival.webp" alt="Festival" height="120" width="200"/>
             </div>
             <div>
-                <h3>{data.year} - {data.totalPopulation} people</h3>
+                <h2>{data.year} - {data.totalPopulation} people</h2>
                 <button onclick={click}>Advance</button>
             </div>
         </div>
         {#each data.messages as message}
             <h4>{message.from}: {message.text}</h4>
         {/each}
-        <ClanList clans={data.clans} />
+        <ClanList clans={selectedSettlement ? selectedSettlement.clans : []} />
     </div>
 </div>
 
