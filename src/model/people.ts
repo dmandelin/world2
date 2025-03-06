@@ -254,7 +254,9 @@ export class Clans extends Array<Clan> {
             if (clan.festivalBehavior.willParticipate()) {
                 participants.push(clan);
             } else {
-                clan.knowledge = Math.round(clan.knowledge * 0.9);
+                const t = 30;
+                if (clan.knowledge > t)
+                    clan.knowledge = t + Math.round((clan.knowledge - t) * 0.9);
             }
         }
         this.festival = new Festival(participants);

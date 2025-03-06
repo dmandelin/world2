@@ -57,6 +57,7 @@ export class Festival {
         const modifiedBenefit = baseBenefit * knowledgeModifier;
 
         let resultModifier;
+        let knowledgeChange;
         const resultKnowledgeModifier = 0.07 * (knowledge - 50) / 50;
         const plusProb = Math.min(0.167 + resultKnowledgeModifier, 0.333);
         const minusProb = Math.max(0.167 - resultKnowledgeModifier, 0.05);
@@ -64,23 +65,28 @@ export class Festival {
         switch (result) {
             case -2: // disaster
                 resultModifier = 0;
+                knowledgeChange = 1;
                 this.message = 'Disastrous festival!';
                 break;
             case -1: // poor results
                 resultModifier = 0.5;
+                knowledgeChange = 0;
                 this.message = 'Poor festival.';
                 break;
             case 0:  // average results
                 resultModifier = 1;
 
+                knowledgeChange = 0;
                 this.message = 'Seasonal festival!';
                 break;
             case 1:  // above-average results
                 resultModifier = 1.5;
+                knowledgeChange = 0;
                 this.message = 'Great festival!!';
                 break;
             case 2:  // exceptional result
                 resultModifier = 2;
+                knowledgeChange = 2;
                 this.message = 'Epic festival!!!';
                 break;
             default:
@@ -88,7 +94,7 @@ export class Festival {
         }
         for (const clan of this.clans) {
             clan.festivalModifier += Math.round(modifiedBenefit * resultModifier);
-            clan.knowledge += result;
+            clan.knowledge += knowledgeChange;
         }
     }
 }
