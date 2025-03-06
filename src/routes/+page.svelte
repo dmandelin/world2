@@ -87,7 +87,12 @@
 </style>
 
 <div class="mapRow">
-    <Map bind:selection={selectedSettlement} />
+    <div>
+        <Map bind:selection={selectedSettlement} />
+        {#each data.messages as message}
+            <h4>{message.from}: {message.text}</h4>
+        {/each}
+    </div>
     <div>
         <div class="topPanel">
             <div>
@@ -102,9 +107,7 @@
                 <button onclick={click}>Advance</button>
             </div>
         </div>
-        {#each data.messages as message}
-            <h4>{message.from}: {message.text}</h4>
-        {/each}
+        <div style="font-weight: bold; margin-bottom: 1em">{selectedSettlement.message}</div>
         <ClanList clans={selectedSettlement ? selectedSettlement.clans : []} />
     </div>
 </div>
