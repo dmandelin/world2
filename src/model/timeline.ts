@@ -8,8 +8,8 @@ export class TimePoint {
     
     constructor(world: World) {
         this.year = world.year.clone();
-        this.totalPopulation = world.clans.reduce((acc, clan) => acc + clan.size, 0);
-        this.clans = world.clans.map(clan => ({
+        this.totalPopulation = world.totalPopulation;
+        this.clans = world.allClans.map(clan => ({
             name: clan.name,
             color: clan.color,
             size: clan.size,

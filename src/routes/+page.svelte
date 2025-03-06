@@ -2,7 +2,8 @@
     import { rankings } from '../model/timeline';
     import { world } from '../model/world';
     import type { Clan } from '../model/people';
-
+    import type { Message } from '../model/message';
+    
     import ClanList from '../components/ClanList.svelte';
     import LineGraph from '../components/LineGraph.svelte';
     import Map from '../components/Map.svelte';
@@ -10,9 +11,8 @@
     class Data {
         year = $state('');
         totalPopulation = $state(0);
-        message = $state('');
+        messages = $state<Message[]>([]);
         clans = $state<Clan[]>([]);
-        festivalMessage = $state('');
         timeline = $state<[string, number][]>([]);
         rankings = $state<LineGraphData>({ labels: [], datasets: [] });
 
@@ -34,15 +34,15 @@
         update() {
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
-            this.message = world.message;
-            this.festivalMessage = world.clans.festival.message;
-            this.clans = world.clans.map(clan => clan.c());
+            this.messages = world.messages;
+            this.clans = world.allClans.map(clan => clan.c());
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
         }
     }
 
     let data = $state(new Data());
+    const selectedSettlement = $state(world.settlements[0]);
 
     function click() {
         world.advance();
@@ -86,7 +86,9 @@
     <div>
         <div class="topPanel">
             <div>
-                <h3 style="text-align: center">{data.festivalMessage}</h3>
+                <h3 style="text-align: center">
+                    {selectedSettlement.clans.festival.message}
+                    </h3>
                 <img src="/festival.webp" alt="Festival" height="120" width="200"/>
             </div>
             <div>
@@ -94,7 +96,9 @@
                 <button onclick={click}>Advance</button>
             </div>
         </div>
-        <h4>{data.message}</h4>
+        {#each data.messages as message}
+            <h4>{message.from}: {message.text}</h4>
+        {/each}
         <ClanList clans={data.clans} />
     </div>
 </div>

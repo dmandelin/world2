@@ -1,5 +1,5 @@
-import { Behaviors } from "./festival";
-import { Clan, Clans } from "./people";
+import { Message } from "./message";
+import { Clan, Clans, randomClanColor, randomClanName } from "./people";
 import { Settlement } from "./settlement";
 import { TimePoint } from "./timeline";
 
@@ -24,24 +24,41 @@ export class Year {
     }
 }
 
+class SettlementsBuilder {
+    private clanNames: Set<string> = new Set();
+    private clanColors: Set<string> = new Set();
+
+    createSettlement(name: string, x: number, y: number, clanCount: number) {
+        const clans = [];
+        for (let i = 0; i < clanCount; i++) {
+            const clan = new Clan(
+                randomClanName(this.clanNames), 
+                randomClanColor(this.clanColors),
+                Math.floor(Math.random() * 37) + 15);
+            clans.push(clan);
+
+            this.clanNames.add(clan.name);
+            this.clanColors.add(clan.color);
+        }
+
+        return new Settlement(name, x, y, new Clans(...clans));
+    }
+
+    createSettlements(params: readonly [string, number, number, number][]) {
+        return params.map(([name, x, y, clanCount]) => 
+            this.createSettlement(name, x, y, clanCount));
+    }
+}
+
 export class World {
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
-    static doomLimit = 5;
-    doomClock = World.doomLimit;
-
-    message = '';
-
-    readonly clans = new Clans(...[
-        new Clan('Abgal', 'green', 26, Behaviors.reliable, 60, 50),
-        new Clan('Ninshubur', 'blue', 36, Behaviors.reliable, 50, 60),
-        new Clan('Didanu', 'black', 31, Behaviors.flaky, 40, 40),
+    readonly settlements = new SettlementsBuilder().createSettlements([
+        ['Eridu', 290, 425, 3],
+        ['Ur', 350, 350, 3],
+        ['Uruk', 200, 287, 3],
     ]);
-
-    readonly settlements = [
-        new Settlement('Ur', 350, 350, this.clans),
-    ];
 
     readonly timeline: TimePoint[] = [];
 
@@ -50,26 +67,25 @@ export class World {
     }
 
     advance() {
-        this.clans.advance();
+        for (const s of this.settlements) 
+            s.advance();
+
         this.year.advance(this.yearsPerTurn);
-
-        if (this.totalPopulation > 500) {
-            this.doomClock -= 1;
-            if (this.doomClock === 0) {
-                this.message = 'The people all moved out to escape overcrowding.';
-                this.clans.splice(0, this.clans.length);
-            } else {
-                this.message = `Too many people for this area! Will emigrate in ${this.doomClock * this.yearsPerTurn} years.`;
-            }
-        } else {
-            this.doomClock = World.doomLimit;
-        }
-
         this.timeline.push(new TimePoint(this));
     }
 
     get totalPopulation() {
-        return this.clans.reduce((acc, clan) => acc + clan.size, 0);
+        return this.settlements.reduce((acc, s) => acc + s.size, 0);
+    }
+
+    get allClans() {
+        return this.settlements.flatMap(s => s.clans);
+    }
+
+    get messages(): Message[] {
+        return this.settlements
+            .filter(s => s.message)
+            .map(s => new Message(s.name, s.message));
     }
 }
 
