@@ -11,12 +11,6 @@
 </script>
 
 <style>
-    .grade_A { color: #0f0; }
-    .grade_B { color: #8f8; }
-    .grade_C { color: #ff8; }
-    .grade_D { color: #f88; }
-    .grade_E { color: #f00; }
-
     th, td {
         text-align: left;
         padding: 0 0.25em;
@@ -35,7 +29,7 @@
 <table>
     <thead>
         <tr>
-            <th class="grade_A">Clan</th>
+            <th>Clan</th>
             <th class="ra">Size</th>
             <th class="ra">Skill</th>
             <th class="ra">Know</th>
