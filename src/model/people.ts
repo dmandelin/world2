@@ -157,8 +157,16 @@ export class Clan {
     }
 
     advanceTraits() {
-        this.skill += Math.round(normal(2));
-        this.knowledge += Math.round(normal(2));
+        this.skill = this.advancedTrait(this.skill);
+        this.knowledge = this.advancedTrait(this.knowledge);
+    }
+
+    advancedTrait(value: number) {
+        const incr = Math.round(normal(2));
+        if (incr > 0 && value > 50 || incr < 0 && value < 50) {
+            if (Math.random() < Math.abs(value - 50) / 50) return value;
+        }
+        return clamp(value + incr, 0, 100);
     }
 
     advanceHappiness() {

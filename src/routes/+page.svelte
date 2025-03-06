@@ -7,7 +7,6 @@
     import ClanList from '../components/ClanList.svelte';
     import LineGraph from '../components/LineGraph.svelte';
     import Map from '../components/Map.svelte';
-    import { Settlement } from '../model/settlement';
     import Society from '../components/Society.svelte';
     import Notables from '../components/Notables.svelte';
     
@@ -38,22 +37,18 @@
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
             this.messages = world.messages;
-            this.clans = world.allClans.map(clan => clan.c());
+            this.clans = selectedSettlement.clans.map(clan => clan.c());
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
         }
     }
 
-    let data = $state(new Data());
     let selectedSettlement = $state(world.settlements[0]);
+    let data = $state(new Data());
 
     function click() {
         world.advance();
         data.update();
-    }
-
-    function selectSettlement(settlement: Settlement) {
-        selectedSettlement = settlement;
     }
 </script>
 
@@ -114,7 +109,7 @@
             </div>
         </div>
         <div style="font-weight: bold; margin-bottom: 1em">{selectedSettlement.message}</div>
-        <ClanList clans={selectedSettlement ? selectedSettlement.clans : []} />
+        <ClanList clans={data.clans} />
     </div>
 </div>
 
