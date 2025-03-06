@@ -56,6 +56,10 @@
 </script>
 
 <style>
+    :global(body) {
+        font-family: Arial, sans-serif;
+    }
+
     .mapRow {
         display: flex;
         gap: 1em;
