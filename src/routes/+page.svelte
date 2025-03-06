@@ -101,6 +101,7 @@
         <div class="topPanel">
             <div>
                 <h2>{selectedSettlement?.name} &ndash; {selectedSettlement?.size}</h2>
+                <h3>{selectedSettlement.technai.irrigationDescription}</h3>
                 <h3 style="text-align: center">
                     {selectedSettlement.clans.festival.message}
                     </h3>

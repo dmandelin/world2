@@ -1,6 +1,9 @@
-import type { Clan, Clans } from "./people";
+import type { Clans } from "./people";
+import { Technai } from "./tech";
 
 export class Settlement {
+    readonly technai = new Technai();
+
     static doomLimit = 5;
     doomClock = Settlement.doomLimit;
 
@@ -29,6 +32,7 @@ export class Settlement {
 
     advance() {
         const sizeBefore = this.size;
+        this.technai.advance(this.size);
         this.clans.advance();
         this.lastSizeChange_ = this.size - sizeBefore;
 

@@ -70,8 +70,13 @@ export class Clan {
         return Math.round(2/(1/this.skill + 1/this.knowledge));
     }
 
+    get techModifier() {
+        const techOutputFactor = this.settlement?.technai.outputFactor ?? 1;
+        return Math.round((techOutputFactor - 1) * 20);
+    }
+
     get effectiveQuality() {
-        return this.quality + this.interactionModifier + this.festivalModifier;
+        return this.quality + this.interactionModifier + this.festivalModifier + this.techModifier;
     }
 
     get prestige() {

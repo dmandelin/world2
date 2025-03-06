@@ -37,6 +37,7 @@
             <th class="ra">Int</th>
             <th class="ra">FesB</th>
             <th class="ra">Fes</th>
+            <th class="ra">Tech</th>
             <th class="ra">EQual</th>
             <th class="ra">Pres</th>
             <th class="ra">Hap</th>
@@ -56,6 +57,7 @@
                 <td class="ra">{clan.interactionModifier}</td>
                 <td class="ra">{clan.festivalBehavior.name}</td>
                 <td class="ra">{clan.festivalModifier}</td>
+                <td class="ra">{clan.techModifier}</td>
                 <td class="ra">{r(clan.effectiveQuality)}</td>
                 <td class="ra">{r(clan.prestige)}</td>
                 <td class="ra">{r(clan.happiness)}</td>
