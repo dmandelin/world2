@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
 
     let { selection = $bindable() } = $props();
@@ -39,6 +39,7 @@
     }
 
     function draw() {
+        context!.clearRect(0, 0, canvas!.width, canvas!.height);
         drawRivers();
         drawSettlements();
     }
@@ -84,12 +85,18 @@
             context!.fillRect(x - s, y - s, s * 2, s * 2);
             const textWidth = context!.measureText(settlement.name).width;
             context!.fillText(settlement.name, x - textWidth / 2, y + s + 15);
+
+            const popLabel = settlement.size.toString();
+            const popWidth = context!.measureText(popLabel).width;
+            context!.fillText(popLabel, x - popWidth / 2 - 1, y + s + 32);
         }
     }
 
     onMount(() => {
         canvas = document.querySelector('canvas');
         context = canvas!.getContext('2d');
+
+        world.watch(draw);
         draw();
 
         //resizeCanvas();
@@ -98,6 +105,10 @@
         return () => {
             window.removeEventListener('resize', resizeCanvas);
         };
+    });
+
+    onDestroy(() => {
+        world.unwatch(draw);
     });
 </script>
 
