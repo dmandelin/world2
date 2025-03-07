@@ -1,5 +1,5 @@
 import { clamp } from "./basics";
-import { normal, poisson } from "./distributions";
+import { normal, poisson, weightedRandInt } from "./distributions";
 import { Behaviors, Festival, FestivalBehavior, mutate } from "./festival";
 import type { Settlement } from "./settlement";
 
@@ -243,6 +243,7 @@ export class Clans extends Array<Clan> {
     advance() {
         this.runFestival();
         this.interact();
+        this.marry();
         for (const clan of this) clan.advance();
         this.split();
         this.merge();
@@ -299,6 +300,37 @@ export class Clans extends Array<Clan> {
                     a.interactionModifier -= stakes;
                     b.interactionModifier += stakes;
                 }
+            }
+        }
+    }
+
+    marry() {
+        // Young women marrying into their husbands' clans was the
+        // most common pattern. We don't simulate every pairing.
+        // The key point is that without this, once a clan gets down
+        // to a small number of young women, it will rapidly die out.
+        // But in reality they would of course try to marry.
+
+        const husbandWeights = this.map(clan => 
+            Math.pow(10, clan.effectiveQuality / 100));
+        
+        let women = 0;
+        for (const clan of this) {
+            women += clan.slices[1][0];
+            clan.slices[1][0] = 0;
+        }
+
+        for (let i = 0; i < women; ++i) {
+            const husbandIndex = weightedRandInt(husbandWeights);
+            // If same clan selected: don't marry, stay in the clan.
+            // Note that women from properous clans are less likely
+            // to marry in this model. However, they still can
+            // give birth, and we assume in part they may form a
+            // matrilocal marriage.
+            const husbandClan = this[husbandIndex];
+            ++husbandClan.slices[1][0];
+            if (husbandClan.slices[1][0] >= husbandClan.slices[1][1]) {
+                husbandWeights[husbandIndex] = 0;
             }
         }
     }

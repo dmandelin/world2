@@ -28,3 +28,14 @@ export function plusOrMinus(plusProb: number, minusProb?: number, n: number = 1)
     }
     return total;
 }
+
+export function weightedRandInt(weights: number[]): number {
+    const total = weights.reduce((a, b) => a + b);
+    const r = Math.random() * total;
+    let sum = 0;
+    for (let i = 0; i < weights.length; i++) {
+        sum += weights[i];
+        if (r < sum) return i;
+    }
+    return weights.length - 1;
+}
