@@ -9,6 +9,7 @@
     import Map from '../components/Map.svelte';
     import Society from '../components/Society.svelte';
     import Notables from '../components/Notables.svelte';
+    import { SocietyView } from '../components/societyview';
     
     class Data {
         year = $state('');
@@ -48,6 +49,7 @@
     let selectedClans = $derived.by(() =>
         data.clans.filter(clan => clan.settlement === selectedSettlement)
     );
+    let society = $derived((data.year, new SocietyView(selectedSettlement)));
 
     function click() {
         world.advance();
@@ -101,7 +103,9 @@
         <div class="topPanel">
             <div>
                 <h2>{selectedSettlement?.name} &ndash; {selectedSettlement?.size}</h2>
-                <h3>{selectedSettlement.technai.irrigationDescription}</h3>
+                {#each society.description as item}
+                    <h4>{item}</h4>
+                {/each}
                 <h3 style="text-align: center">
                     {selectedSettlement.clans.festival.message}
                     </h3>
@@ -118,7 +122,7 @@
 </div>
 
 <div style="display: flex; align-items: flex-start; gap: 5.5em">
-    <Society />
+    <Society society={society} />
     <Notables />
 </div>
 

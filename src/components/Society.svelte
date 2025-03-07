@@ -1,3 +1,7 @@
+<script>
+    let {society} = $props();
+</script>
+
 <style>
     .top {
         max-width: 60ex;
@@ -52,13 +56,7 @@
 
     <h3>Subsistence</h3>
 
-    <p>During the growing season, people stay near naturally occurring stands
-       of barley, lentils, and other plants, to tend and harvest them.
-    </p>
-
-    <p>During the other season, people move to other semipermanent residences
-       nearer hunting grounds, fishing spots, and other resources.
-    </p>
+    <p>{society.irrigation}</p>
 
     <p>There is no land ownership: ritual leaders, with community assent,
        direct work to tend and harvest plants and the sharing out of the
