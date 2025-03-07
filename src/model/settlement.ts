@@ -20,6 +20,10 @@ export class Settlement {
         }
     }
 
+    get abandoned() {
+        return this.clans.length === 0;
+    }
+
     get size() {
         return this.clans.reduce((acc, clan) => acc + clan.size, 0);
     }

@@ -76,20 +76,36 @@
     }
 
     function drawSettlements() {
-        context!.fillStyle = '#333';
         context!.font = '14px sans-serif';
         for (const settlement of world.settlements) {
             const x = settlement.x;
             const y = settlement.y;
             const s = 3;
-            context!.fillRect(x - s, y - s, s * 2, s * 2);
-            const textWidth = context!.measureText(settlement.name).width;
-            context!.fillText(settlement.name, x - textWidth / 2, y + s + 15);
 
-            const popLabel = `${settlement.size} (${settlement.lastSizeChange})`;
-            const popWidth = context!.measureText(popLabel).width;
-            context!.fillText(popLabel, x - popWidth / 2 - 1, y + s + 32);
+            // Symbol
+            if (settlement.abandoned) {
+                context!.fillStyle = '#777';
+                fillTextCentered('x', x, y);
+            } else {
+                context!.fillStyle = '#333';
+                context!.fillRect(x - s, y - s, s * 2, s * 2);
+            }
+
+            // Name
+            fillTextCentered(settlement.name, x, y + s + 15);
+
+            // Population
+            if (!settlement.abandoned) {
+                const popLabel = `${settlement.size} (${settlement.lastSizeChange})`;
+                const popWidth = context!.measureText(popLabel).width;
+                fillTextCentered(popLabel, x, y + s + 32);
+            }
         }
+    }
+
+    function fillTextCentered(text: string, x: number, y: number) {
+        const textWidth = context!.measureText(text).width;
+        context!.fillText(text, x - textWidth / 2, y);
     }
 
     onMount(() => {

@@ -247,6 +247,7 @@ export class Clans extends Array<Clan> {
         for (const clan of this) clan.advance();
         this.split();
         this.merge();
+        this.prune()
 
         this.sort((a, b) => b.prestige - a.prestige);
     }
@@ -354,6 +355,10 @@ export class Clans extends Array<Clan> {
             sortedClans[1].absorb(sortedClans[0]);
             this.splice(this.indexOf(sortedClans[0]), 1);
         }
+    }
+
+    prune() {
+        this.splice(0, this.length, ...this.filter(clan => clan.size > 0));
     }
 }
 
