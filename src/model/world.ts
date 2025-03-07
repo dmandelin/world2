@@ -86,7 +86,7 @@ export class World {
     }
 
     get messages(): Message[] {
-        return this.settlements
+        return this.settlements     
             .filter(s => s.message)
             .map(s => new Message(s.name, s.message));
     }

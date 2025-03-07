@@ -8,10 +8,14 @@
     let mostSkilledClan = $state(world.allClans[0]);
 
     function update() {
-        biggestSettlement = world.settlements.reduce((a, b) => a.size > b.size ? a : b);
-        biggestClan = world.allClans.reduce((a, b) => a.size > b.size ? a : b);
-        mostKnowledgeableClan = world.allClans.reduce((a, b) => a.knowledge > b.knowledge ? a : b);
-        mostSkilledClan = world.allClans.reduce((a, b) => a.skill > b.skill ? a : b);
+        try {
+            biggestSettlement = world.settlements.reduce((a, b) => a.size > b.size ? a : b);
+            biggestClan = world.allClans.reduce((a, b) => a.size > b.size ? a : b);
+            mostKnowledgeableClan = world.allClans.reduce((a, b) => a.knowledge > b.knowledge ? a : b);
+            mostSkilledClan = world.allClans.reduce((a, b) => a.skill > b.skill ? a : b);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     onMount(() => {
