@@ -76,11 +76,12 @@
     }
 
     function drawSettlements() {
-        context!.font = '14px sans-serif';
         for (const settlement of world.settlements) {
             const x = settlement.x;
             const y = settlement.y;
             const s = 3;
+
+            context!.font = '14px sans-serif';
 
             // Symbol
             if (settlement.abandoned) {
@@ -97,8 +98,15 @@
             // Population
             if (!settlement.abandoned) {
                 const popLabel = `${settlement.size} (${settlement.lastSizeChange})`;
-                const popWidth = context!.measureText(popLabel).width;
                 fillTextCentered(popLabel, x, y + s + 32);
+            }
+
+            // Warning
+            if (settlement.populationPressureModifier < 0) {
+                context!.fillStyle = '#d22';
+                context!.font = '12px sans-serif';
+                const label = `Hunger! (${settlement.populationPressureModifier})`;
+                fillTextCentered(label, x, y + s + 49);
             }
         }
     }
