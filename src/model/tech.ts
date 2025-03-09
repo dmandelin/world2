@@ -75,7 +75,7 @@ export class Technai {
         }).filter(s => s.length > 0);
     }
 
-    get outputFactor() {
+    get outputBoost() {
         return (this.xp.get(DITCHING.name) || 0) >= DITCHING.xpRequired ? 1.5 : 1;
     }
 }
