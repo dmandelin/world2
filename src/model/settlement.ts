@@ -1,11 +1,10 @@
+import { clamp } from "./basics";
 import type { Clans } from "./people";
 import { Technai } from "./tech";
 
 export class Settlement {
     readonly technai = new Technai();
-
-    static doomLimit = 5;
-    doomClock = Settlement.doomLimit;
+    readonly popLimit = 300;
 
     message = '';
 
@@ -28,6 +27,10 @@ export class Settlement {
         return this.clans.reduce((acc, clan) => acc + clan.size, 0);
     }
 
+    get populationPressureModifier() {
+        return clamp(Math.round(-20 * Math.log2(2 * this.size / this.popLimit)), -100, 0);
+    }
+
     private lastSizeChange_ = 0;
 
     get lastSizeChange() {
@@ -39,17 +42,5 @@ export class Settlement {
         this.technai.advance(this.size);
         this.clans.advance();
         this.lastSizeChange_ = this.size - sizeBefore;
-
-        if (this.size > 300) {
-            this.doomClock -= 1;
-            if (this.doomClock === 0) {
-                this.message = 'The people all moved out to escape overcrowding.';
-                this.clans.splice(0, this.clans.length);
-            } else {
-                this.message = `Too many people for this area! Will emigrate in ${this.doomClock} turns.`;
-            }
-        } else {
-            this.doomClock = Settlement.doomLimit;
-        }
     }
 }

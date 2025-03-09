@@ -4,7 +4,7 @@ import { Behaviors, Festival, FestivalBehavior, mutate } from "./festival";
 import type { Settlement } from "./settlement";
 
 // Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 3.1;
+const BASE_BIRTH_RATE = 3.0;
 
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
@@ -37,7 +37,14 @@ export function randomClanColor(exclude: string[]|Set<String>): string {
 function randomStat(): number {
     return clamp(Math.round(normal(50, 20)), 0, 100);
 }
-  
+
+const INITIAL_POPULATION_RATIOS = [
+    [0.2157, 0.2337],
+    [0.1541, 0.1598],
+    [0.0908, 0.0879],
+    [0.0324, 0.0256],
+];
+
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -56,14 +63,10 @@ export class Clan {
         public skill: number = randomStat(),
         public knowledge: number = randomStat(),
     ) {
-        const share = size / 30;
-        this.slices[0][0] = this.slices[0][1] = Math.floor(7 * share);
-        this.slices[1][0] = this.slices[1][1] = Math.floor(5 * share);
-        this.slices[2][0] = this.slices[2][1] = Math.floor(2 * share);
-        this.slices[3][0] = this.slices[3][1] = Math.floor(1 * share);
-        const remainder = size - this.slicesTotal;
-        this.slices[0][0] += Math.floor(remainder / 2);
-        this.slices[0][1] += Math.floor((remainder + 1) / 2);
+        for (let i = 0; i < 4; ++i) {
+            this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * size);
+            this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * size);
+        }
     }
 
     get quality() {
@@ -75,12 +78,16 @@ export class Clan {
         return Math.round((techOutputFactor - 1) * 20);
     }
 
-    get effectiveQuality() {
-        return this.quality + this.interactionModifier + this.festivalModifier + this.techModifier;
+    get qol() {
+        return this.quality + 
+            this.interactionModifier + 
+            this.festivalModifier + 
+            this.techModifier +
+            (this.settlement?.populationPressureModifier || 0);
     }
 
     get prestige() {
-        return Math.round(Math.log2(this.size) * this.effectiveQuality / 6);
+        return Math.round(Math.log2(this.size) * this.qol / 6);
     }
 
     c() {
@@ -116,7 +123,7 @@ export class Clan {
     advancePopulation() {
         const prevSlices = this.slices.map(slice => slice.slice());
 
-        let quality = this.effectiveQuality;
+        let quality = this.qol;
         if (quality < 0) quality = 0;
         if (quality > 100) quality = 100;
         const qbrm = 1 + (quality - 50) / 1000;
@@ -146,7 +153,7 @@ export class Clan {
     }
 
     get expectedPopulationChange() {
-        let quality = this.effectiveQuality;
+        let quality = this.qol;
         if (quality < 0) quality = 0;
         if (quality > 100) quality = 100;
         const qbrm = 1 + (quality - 50) / 1000;
@@ -313,7 +320,7 @@ export class Clans extends Array<Clan> {
         // But in reality they would of course try to marry.
 
         const husbandWeights = this.map(clan => 
-            Math.pow(10, clan.effectiveQuality / 100));
+            Math.pow(10, clan.qol / 100));
         
         let women = 0;
         for (const clan of this) {
