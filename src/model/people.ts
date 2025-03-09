@@ -74,8 +74,7 @@ export class Clan {
     }
 
     get techModifier() {
-        const techOutputFactor = this.settlement?.technai.outputFactor ?? 1;
-        return Math.round((techOutputFactor - 1) * 20);
+        return this.settlement?.technai.outputBoost ?? 0;
     }
 
     get qol() {
