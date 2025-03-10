@@ -1,5 +1,6 @@
 <script lang="ts">
     import { clamp } from "../model/basics";
+    import { PersonalityTrait } from "../model/people";
     import PopulationPyramid from "./PopulationPyramid.svelte";
 
     let { clans } = $props();
@@ -31,17 +32,17 @@
         <tr>
             <th>Clan</th>
             <th class="ra">Size</th>
-            <th class="ra">Skill</th>
-            <th class="ra">Know</th>
-            <th class="ra">Qual</th>
+            <th class="ra">Traits</th>
+            <th class="ra">Str</th>
             <th class="ra">Int</th>
-            <th class="ra">FesB</th>
+            <th class="ra">Farm</th>
+            <th class="ra">Inx</th>
             <th class="ra">Fes</th>
             <th class="ra">Tech</th>
+            <th class="ra">Ten</th>
             <th class="ra">PPM</th>
             <th class="ra">QOL</th>
             <th class="ra">Pres</th>
-            <th class="ra">Hap</th>
             <th class="ra">EBR</th>
             <th class="ra">EDR</th>
             <th class="ra">EPC</th>
@@ -52,17 +53,17 @@
             <tr>
                 <td style:color={clan.color}>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
-                <td class="ra">{r(clan.skill)}</td>
-                <td class="ra">{r(clan.knowledge)}</td>
-                <td class="ra">{r(clan.quality)}</td>
+                <td class="ra">{[...clan.traits].map((t: PersonalityTrait) => t.name).join(' ')}</td>
+                <td class="ra">{r(clan.strength)}</td>
+                <td class="ra">{r(clan.intelligence)}</td>
+                <td class="ra">{r(clan.productionAbility)}</td>
                 <td class="ra">{clan.interactionModifier}</td>
-                <td class="ra">{clan.festivalBehavior.name}</td>
                 <td class="ra">{clan.festivalModifier}</td>
                 <td class="ra">{clan.techModifier}</td>
+                <td class="ra">{clan.tenureModifier} ({clan.tenure})</td>
                 <td class="ra">{clan.settlement.populationPressureModifier}</td>
                 <td class="ra">{r(clan.qol)}</td>
                 <td class="ra">{r(clan.prestige)}</td>
-                <td class="ra">{r(clan.happiness)}</td>
                 <td class="ra">{clan.expectedPopulationChange[0]}</td>
                 <td class="ra">{clan.expectedPopulationChange[1]}</td>
                 <td class="ra">{clan.expectedPopulationChange[2]}</td>

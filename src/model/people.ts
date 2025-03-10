@@ -1,6 +1,6 @@
 import { clamp } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
-import { Behaviors, Festival, FestivalBehavior, mutate } from "./festival";
+import { Festival } from "./festival";
 import type { Settlement } from "./settlement";
 
 // Per 20-year turn, for childbearing-age women.
@@ -45,23 +45,35 @@ const INITIAL_POPULATION_RATIOS = [
     [0.0324, 0.0256],
 ];
 
+export class PersonalityTrait {
+    constructor(readonly name: string) {}
+}
+
+export const PersonalityTraits = {
+    GRINCH: new PersonalityTrait('Grinch'),
+    SETTLED: new PersonalityTrait('Settled'),
+    MOBILE: new PersonalityTrait('Mobile'),
+}
+
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
 
-    public happiness = 50;
     public interactionModifier = 0;
     public festivalModifier = 0;
 
     settlement: Settlement|undefined;
+    tenure: number = 0;
+
+    // The initial population had been temporary residents.
+    readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
 
     constructor(
         public name: string,
         public color: string,
         public size: number,
-        public festivalBehavior: FestivalBehavior = Behaviors.reliable,
-        public skill: number = randomStat(),
-        public knowledge: number = randomStat(),
+        public strength: number = randomStat(),
+        public intelligence: number = randomStat(),
     ) {
         for (let i = 0; i < 4; ++i) {
             this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * size);
@@ -69,19 +81,24 @@ export class Clan {
         }
     }
 
-    get quality() {
-        return Math.round(2/(1/this.skill + 1/this.knowledge));
+    get productionAbility() {
+        return Math.round(2/(1/this.strength + 1/this.intelligence));
     }
 
     get techModifier() {
         return this.settlement?.technai.outputBoost ?? 0;
     }
 
+    get tenureModifier() {
+        return [-10, 0, 5, 7, 8, 9, 9, 10][clamp(this.tenure, 0, 7)];
+    }
+
     get qol() {
-        return this.quality + 
+        return this.productionAbility + 
             this.interactionModifier + 
             this.festivalModifier + 
             this.techModifier +
+            this.tenureModifier +
             (this.settlement?.populationPressureModifier || 0);
     }
 
@@ -90,15 +107,17 @@ export class Clan {
     }
 
     c() {
-        const c = new Clan(this.name, this.color, this.size, this.festivalBehavior, this.skill, this.knowledge);
+        const c = new Clan(this.name, this.color, this.size);
         for (let i = 0; i < this.slices.length; ++i) {
             c.slices[i][0] = this.slices[i][0];
             c.slices[i][1] = this.slices[i][1];
         }
+        c.strength = this.strength;
+        c.intelligence = this.intelligence;
         c.settlement = this.settlement;
-        c.happiness = this.happiness;
         c.interactionModifier = this.interactionModifier;
         c.festivalModifier = this.festivalModifier;
+        c.tenure = this.tenure;
         return c;
     }
 
@@ -116,7 +135,7 @@ export class Clan {
     advance() {
         this.advancePopulation();
         this.advanceTraits();
-        this.advanceHappiness();
+        ++this.tenure;
     }
 
     advancePopulation() {
@@ -168,8 +187,41 @@ export class Clan {
     }
 
     advanceTraits() {
-        this.skill = this.advancedTrait(this.skill);
-        this.knowledge = this.advancedTrait(this.knowledge);
+        this.strength = this.advancedTrait(this.strength);
+        this.intelligence = this.advancedTrait(this.intelligence);
+
+        // Grinch trait
+        if (this.festivalModifier < 0 && !this.traits.has(PersonalityTraits.GRINCH)) {
+            // Clans might become grinches if they have a bad festival.
+            if (Math.random() < -0.05 * this.festivalModifier) 
+                this.traits.add(PersonalityTraits.GRINCH);
+        } else if (this.traits.has(PersonalityTraits.GRINCH)) {
+            // Clans might join in again if others had good festivals
+            if (this.settlement?.clans.every(clan => clan.festivalModifier > 0)) {
+                if (Math.random() < 0.5) 
+                    this.traits.delete(PersonalityTraits.GRINCH);
+            }
+        }
+
+        // Mobility traits
+        if (this.traits.has(PersonalityTraits.MOBILE)) {
+            // If they've been here a while they might cease to be mobile.
+            if (this.tenure >= 1 && Math.random() < 0.3) {
+                this.traits.delete(PersonalityTraits.MOBILE);
+            }
+        } else if (this.traits.has(PersonalityTraits.SETTLED)) {
+            // They might get a little sick of the place.
+            if (Math.random() < 0.1) {
+                this.traits.delete(PersonalityTraits.SETTLED);
+            }
+        } else {
+            const r = Math.random();
+            if (this.tenure >= 1 && Math.random() < 0.3) {
+                this.traits.add(PersonalityTraits.SETTLED);
+            } else if (r >= 0.9) {
+                this.traits.add(PersonalityTraits.MOBILE);
+            }   
+        }
     }
 
     advancedTrait(value: number) {
@@ -178,19 +230,6 @@ export class Clan {
             if (Math.random() < Math.abs(value - 50) / 50) return value;
         }
         return clamp(value + incr, 0, 100);
-    }
-
-    advanceHappiness() {
-        const skillModifier = (this.skill - 50) / 10;
-        const knowledgeModifier = (this.knowledge - 50) / 10;
-        const luckModifier = normal(0, 5);
-        this.happiness = Math.round(50 + 
-            skillModifier + 
-            knowledgeModifier + 
-            luckModifier +
-            this.interactionModifier +
-            this.festivalModifier
-        );
     }
 
     absorb(other: Clan) {
@@ -206,13 +245,9 @@ export class Clan {
             this.slices[i][1] += other.slices[i][1];
         }
 
-        this.skill = Math.round(
-            (this.skill * origSize + other.skill * other.size) / 
-            (this.size + other.size));
-
-        this.knowledge = Math.round(
-            (this.knowledge * origSize + other.knowledge * other.size) /
-            (this.size + other.size));
+        this.intelligence = Math.round(
+            (this.intelligence * origSize + other.intelligence * other.size) / 
+            (origSize + other.size));
     }
 
     splitOff(clans: Clans): Clan {
@@ -221,7 +256,9 @@ export class Clan {
 
         const name = randomClanName(clans.map(clan => clan.name));
         const color = randomClanColor(clans.map(clan => clan.color));
-        const newClan = new Clan(name, color, newSize, this.festivalBehavior, this.skill, this.knowledge);
+        const newClan = new Clan(name, color, newSize);
+        newClan.strength = this.strength;
+        newClan.intelligence = this.intelligence;
         newClan.settlement = this.settlement;
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
@@ -246,6 +283,10 @@ export class Clans extends Array<Clan> {
       return this.reduce((total, clan) => total + clan.size, 0);
     }
 
+    remove(clan: Clan) {
+        this.splice(this.indexOf(clan), 1);
+    }
+
     advance() {
         this.runFestival();
         this.interact();
@@ -259,22 +300,15 @@ export class Clans extends Array<Clan> {
     }
 
     runFestival() {
-        for (const clan of this) {
-            clan.festivalBehavior = mutate(clan.festivalBehavior);
-            clan.festivalModifier = 0;
-        }
         const participants = [];
         for (const clan of this) {
-            if (clan.festivalBehavior.willParticipate()) {
+            clan.festivalModifier = 0;
+            if (!clan.traits.has(PersonalityTraits.GRINCH)) {
                 participants.push(clan);
-            } else {
-                const t = 30;
-                if (clan.knowledge > t)
-                    clan.knowledge = t + Math.round((clan.knowledge - t) * 0.9);
             }
         }
         this.festival = new Festival(participants);
-        this.festival.process();
+        this.festival.process(); 
     }
 
     interact() {

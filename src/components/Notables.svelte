@@ -4,15 +4,15 @@
 
     let biggestSettlement = $state(world.settlements[0]);
     let biggestClan = $state(world.allClans[0]);
-    let mostKnowledgeableClan = $state(world.allClans[0]);
-    let mostSkilledClan = $state(world.allClans[0]);
+    let mostIntelligentClan = $state(world.allClans[0]);
+    let strongestClan = $state(world.allClans[0]);
 
     function update() {
         try {
             biggestSettlement = world.settlements.reduce((a, b) => a.size > b.size ? a : b);
             biggestClan = world.allClans.reduce((a, b) => a.size > b.size ? a : b);
-            mostKnowledgeableClan = world.allClans.reduce((a, b) => a.knowledge > b.knowledge ? a : b);
-            mostSkilledClan = world.allClans.reduce((a, b) => a.skill > b.skill ? a : b);
+            mostIntelligentClan = world.allClans.reduce((a, b) => a.intelligence > b.intelligence ? a : b);
+            strongestClan = world.allClans.reduce((a, b) => a.strength > b.strength ? a : b);
         } catch (e) {
             console.error(e);
         }
@@ -54,14 +54,14 @@
                 <td>{biggestClan.size} people</td>
             </tr>
             <tr>
-                <th>Most Knowledgeable Clan</th>
-                <td>{mostKnowledgeableClan.name} of {mostKnowledgeableClan.settlement?.name}</td>
-                <td>{mostKnowledgeableClan.knowledge} knowledge</td>
+                <th>Most Intelligent Clan</th>
+                <td>{mostIntelligentClan.name} of {mostIntelligentClan.settlement?.name}</td>
+                <td>{mostIntelligentClan.intelligence} intelligence</td>
             </tr>
             <tr>
-                <th>Most Skilled Clan</th>
-                <td>{mostSkilledClan.name} of {mostSkilledClan.settlement?.name}</td>
-                <td>{mostSkilledClan.skill} skill</td>
+                <th>Strongest Clan</th>
+                <td>{strongestClan.name} of {strongestClan.settlement?.name}</td>
+                <td>{strongestClan.strength} strength</td>
             </tr>
         </tbody>
     </table>

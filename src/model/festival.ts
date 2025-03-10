@@ -51,13 +51,14 @@ export class Festival {
 
         const people = this.clans.reduce((acc, clan) => acc + clan.size, 0);
         const weightedSumKnowledge = this.clans.reduce(
-            (acc, clan) => acc + clan.knowledge * clan.size, 0);
+            (acc, clan) => acc + clan.intelligence * clan.size, 0);
         const knowledge = weightedSumKnowledge / people;
         const knowledgeModifier = 1 + (knowledge - 50) / 100;
         const modifiedBenefit = baseBenefit * knowledgeModifier;
 
+        console.log(modifiedBenefit);
+
         let resultModifier;
-        let knowledgeChange;
         const resultKnowledgeModifier = 0.07 * (knowledge - 50) / 50;
         const plusProb = Math.min(0.167 + resultKnowledgeModifier, 0.333);
         const minusProb = Math.max(0.167 - resultKnowledgeModifier, 0.05);
@@ -65,28 +66,22 @@ export class Festival {
         switch (result) {
             case -2: // disaster
                 resultModifier = 0;
-                knowledgeChange = 1;
                 this.message = 'Disastrous festival!';
                 break;
             case -1: // poor results
                 resultModifier = 0.5;
-                knowledgeChange = 0;
                 this.message = 'Poor festival.';
                 break;
             case 0:  // average results
                 resultModifier = 1;
-
-                knowledgeChange = 0;
                 this.message = 'Seasonal festival!';
                 break;
             case 1:  // above-average results
                 resultModifier = 1.5;
-                knowledgeChange = 0;
                 this.message = 'Great festival!!';
                 break;
             case 2:  // exceptional result
                 resultModifier = 2;
-                knowledgeChange = 2;
                 this.message = 'Epic festival!!!';
                 break;
             default:
@@ -94,66 +89,8 @@ export class Festival {
         }
         for (const clan of this.clans) {
             clan.festivalModifier += Math.round(modifiedBenefit * resultModifier);
-            clan.knowledge += knowledgeChange;
         }
     }
 }
 
-export abstract class FestivalBehavior {
-    abstract get name(): string;
-    abstract willParticipate(): boolean;
-}
 
-class Reliable extends FestivalBehavior {
-    name = 'reliable';
-    willParticipate() { return Math.random() < 0.99; }
-}
-
-class Flaky extends FestivalBehavior {
-    name = 'flaky';
-    willParticipate() { return Math.random() < 0.9; }
-}
-
-class Rare extends FestivalBehavior {
-    name = 'rare';
-    willParticipate() { return Math.random() < 0.1; }
-}
-
-class Out extends FestivalBehavior {
-    name = 'out';
-    willParticipate() { return Math.random() < 0.01; }
-}
-
-export const Behaviors = {
-    reliable: new Reliable(),
-    flaky: new Flaky(),
-    rare: new Rare(),
-    out: new Out(),
-}
-
-const behaviorList = Object.values(Behaviors);
-
-const MUTATION_TABLE = [
-    [0.83, 0.15, 0.00, 0.02],
-    [0.15, 0.79, 0.05, 0.01],
-    [0.01, 0.05, 0.79, 0.15],
-    [0.01, 0.01, 0.15, 0.83],
-];
-
-for (const row of MUTATION_TABLE) {
-    let sum = 0;
-    for (const x of row) sum += x;
-    if (Math.abs(sum - 1) > 0.001) throw new Error('Mutation table must sum to 1');
-}
-
-export function mutate(b: FestivalBehavior): FestivalBehavior {
-    const i = behaviorList.indexOf(b);
-    const row = MUTATION_TABLE[i];
-    const r = Math.random();
-    let sum = 0;
-    for (let j = 0; j < row.length; ++j) {
-        sum += row[j];
-        if (r < sum) return behaviorList[j];
-    }
-    return b;
-}

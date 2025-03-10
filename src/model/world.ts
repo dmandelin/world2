@@ -1,3 +1,4 @@
+import { chooseFrom, maxby, minby } from "./basics";
 import { Message } from "./message";
 import { Clan, Clans, randomClanColor, randomClanName } from "./people";
 import { Settlement } from "./settlement";
@@ -71,10 +72,40 @@ export class World {
     advance() {
         for (const s of this.settlements) 
             s.advance();
+        this.emigrate();
 
         this.year.advance(this.yearsPerTurn);
         this.timeline.push(new TimePoint(this));
         this.notify();
+    }
+
+    emigrate() {
+        // People may move from a place with QoL issues to a better place.
+        // More than one group may want to move to the same place, but
+        // they wouldn't want to crowd in, so we'll have to see who gets
+        // to move first.
+
+        if (this.settlements.length < 2) return;
+
+        while (true) {
+            // Determine a source and target.
+            const target = maxby(this.settlements, s => s.localQOLModifier);
+
+            const candidates = this.allClans.filter(c =>
+                c.settlement!.localQOLModifier < 0 && 
+                c.settlement!.localQOLModifier + c.tenureModifier + 3 < target.localQOLModifier &&
+                c.settlement !== target);
+            if (!candidates.length) break;
+            const sourceClan = chooseFrom(candidates);
+            const source = sourceClan.settlement!;
+
+            // Move the clan.
+            sourceClan.tenure = 0;
+            source.clans.remove(sourceClan);
+            target.clans.push(sourceClan);
+            source.message = `${sourceClan.name} moved to ${target.name}`;
+            target.message = `${sourceClan.name} moved from ${source.name}`;
+        }
     }
 
     get totalPopulation() {

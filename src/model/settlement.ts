@@ -28,7 +28,11 @@ export class Settlement {
     }
 
     get populationPressureModifier() {
-        return clamp(Math.round(-20 * Math.log2(this.size / this.popLimit)), -100, 20);
+        return clamp(Math.round(-20 * Math.log2(2 / this.size / this.popLimit)), -100, 0);
+    }
+    
+    get localQOLModifier() {
+        return this.populationPressureModifier + this.technai.outputBoost;
     }
 
     private lastSizeChange_ = 0;
