@@ -64,6 +64,8 @@ export class Clan {
 
     settlement: Settlement|undefined;
     tenure: number = 0;
+    
+    lastSizeChange_: number = 0;
 
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
@@ -118,6 +120,7 @@ export class Clan {
         c.interactionModifier = this.interactionModifier;
         c.festivalModifier = this.festivalModifier;
         c.tenure = this.tenure;
+        c.lastSizeChange_ = this.lastSizeChange;
         return c;
     }
 
@@ -139,6 +142,7 @@ export class Clan {
     }
 
     advancePopulation() {
+        const origSize = this.size;
         const prevSlices = this.slices.map(slice => slice.slice());
 
         let quality = this.qol;
@@ -168,6 +172,7 @@ export class Clan {
         }
 
         this.size = this.slicesTotal;
+        this.lastSizeChange_ = this.size - origSize;
     }
 
     get expectedPopulationChange() {
@@ -184,6 +189,10 @@ export class Clan {
         }
         const edr = ed / this.size;
         return [ebr, edr, ebr - edr].map(r => Math.round(r * 1000));
+    }
+
+    get lastSizeChange() {
+        return this.lastSizeChange_;
     }
 
     advanceTraits() {

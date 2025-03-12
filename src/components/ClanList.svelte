@@ -32,6 +32,7 @@
         <tr>
             <th>Clan</th>
             <th class="ra">Size</th>
+            <th class="ra">+/-</th>
             <th class="ra">Traits</th>
             <th class="ra">Str</th>
             <th class="ra">Int</th>
@@ -43,9 +44,6 @@
             <th class="ra">PPM</th>
             <th class="ra">QOL</th>
             <th class="ra">Pres</th>
-            <th class="ra">EBR</th>
-            <th class="ra">EDR</th>
-            <th class="ra">EPC</th>
         </tr>
     </thead>
     <tbody>
@@ -53,6 +51,7 @@
             <tr>
                 <td style:color={clan.color}>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
+                <td class="ra">{clan.lastSizeChange}</td>
                 <td class="ra">{[...clan.traits].map((t: PersonalityTrait) => t.name).join(' ')}</td>
                 <td class="ra">{r(clan.strength)}</td>
                 <td class="ra">{r(clan.intelligence)}</td>
@@ -64,9 +63,6 @@
                 <td class="ra">{clan.settlement.populationPressureModifier}</td>
                 <td class="ra">{r(clan.qol)}</td>
                 <td class="ra">{r(clan.prestige)}</td>
-                <td class="ra">{clan.expectedPopulationChange[0]}</td>
-                <td class="ra">{clan.expectedPopulationChange[1]}</td>
-                <td class="ra">{clan.expectedPopulationChange[2]}</td>
             </tr>
         {/each}
 </table>

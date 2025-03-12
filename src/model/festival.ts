@@ -56,8 +56,6 @@ export class Festival {
         const knowledgeModifier = 1 + (knowledge - 50) / 100;
         const modifiedBenefit = baseBenefit * knowledgeModifier;
 
-        console.log(modifiedBenefit);
-
         let resultModifier;
         const resultKnowledgeModifier = 0.07 * (knowledge - 50) / 50;
         const plusProb = Math.min(0.167 + resultKnowledgeModifier, 0.333);
