@@ -26,11 +26,19 @@ export class Settlement {
     }
 
     get populationPressureModifier() {
-        return clamp(Math.round(-20 * Math.log2(2 * this.size / this.popLimit)), -100, 0);
+        return this.populationPressureModifierWith(0);
+    }
+
+    populationPressureModifierWith(additionalPeople: number) {
+        return clamp(Math.round(-15 * Math.log2(2 * (this.size + additionalPeople) / this.popLimit)), -100, 0);
     }
     
     get localQOLModifier() {
         return this.populationPressureModifier + this.technai.outputBoost;
+    }
+
+    localQOLModifierWith(additionalPeople: number) {
+        return this.populationPressureModifierWith(additionalPeople) + this.technai.outputBoost;
     }
 
     private lastSizeChange_ = 0;

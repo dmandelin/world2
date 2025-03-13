@@ -72,6 +72,7 @@ export class World {
 
         if (this.settlements.length < 2) return;
 
+        const moved = new Set<Clan>();
         let rounds = 0;
         while (true) {
             if (++rounds > 10) {
@@ -82,8 +83,9 @@ export class World {
             const target = maxby(this.settlements, s => s.localQOLModifier);
 
             const candidates = this.allClans.filter(c =>
+                !moved.has(c) &&
                 c.settlement!.localQOLModifier < 0 && 
-                c.settlement!.localQOLModifier + c.tenureModifier + 3 < target.localQOLModifier &&
+                c.settlement!.localQOLModifier + c.tenureModifier + 3 < target.localQOLModifierWith(c.size) &&
                 c.settlement !== target);
             if (!candidates.length) break;
             const sourceClan = chooseFrom(candidates);
@@ -92,6 +94,7 @@ export class World {
             // Move the clan.
             sourceClan.tenure = 0;
             sourceClan.moveTo(target);
+            moved.add(sourceClan);
 
             this.annals.log(
                 `Clan ${sourceClan.name} moved from ${source.name} to ${target.name}`,
