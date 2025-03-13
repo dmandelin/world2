@@ -58,9 +58,10 @@
 
     <p>{society.irrigation}</p>
 
-    <p>There is no land ownership: ritual leaders, with community assent,
-       direct work to tend and harvest plants and the sharing out of the
-       harvest.
+    <p>{society.agricultureDescription}</p>
+
+    <p>Land is owned by villages, which apportion land to each clan each year
+    based on need. But clans harvest their own produce and store it at home.
     </p>
 
     <h3>Peace</h3>

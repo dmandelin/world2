@@ -1,4 +1,5 @@
 import { normal } from "./distributions";
+import type { Settlement } from "./settlement";
 
 // Ditching and canals next steps:
 //
@@ -41,9 +42,23 @@ const TECHS = new Map(TECHLIST.map(tech => [tech.name, tech]));
 export class Technai {
     readonly xp = new Map<String, number>();
 
+    constructor(readonly settlement: Settlement) {}
+
     advance(population: number) {
-        this.addXP(DITCHING.name, this.randomGain(population));
-        this.addXP(IRRIGATION.name, this.randomGain(population, 0.1));
+        this.addXP(DITCHING.name, this.randomGain(population, this.advanceFactor(DITCHING.name)));
+
+        this.addXP(IRRIGATION.name, this.randomGain(population, this.advanceFactor(IRRIGATION.name)));
+    }
+
+    advanceFactor(tech: string) {
+        switch (tech) {
+            case DITCHING.name:
+                return 1.0;
+            case IRRIGATION.name:
+                return this.settlement.populationPressureModifier < 0 ? 1.0 : 0.1;
+            default:
+                return 1.0;
+        }
     }
 
     addXP(tech: string, xp: number) {
@@ -62,7 +77,10 @@ export class Technai {
         return TECHLIST.map(tech => {
             const xp = this.xp.get(tech.name) || 0;
             if (xp == 0) return '';
-            if (xp < tech.xpRequired) return `Learning: ${tech.description} (${xp}/${tech.xpRequired})`;
+            if (xp < tech.xpRequired) {
+                const tag = this.advanceFactor(tech.name) < 1.0 ? ' Slowly learning' : 'Focusing on';
+                return `${tag}: ${tech.description} (${xp}/${tech.xpRequired})`;
+            }
             return tech.description;
         }).filter(s => s.length > 0);
     }
@@ -73,6 +91,10 @@ export class Technai {
             if (xp < tech.xpRequired) return '';
             return tech.longDescription;
         }).filter(s => s.length > 0);
+    }
+
+    get hasIrrigation() {
+        return (this.xp.get(IRRIGATION.name) || 0) >= IRRIGATION.xpRequired;
     }
 
     get outputBoost() {

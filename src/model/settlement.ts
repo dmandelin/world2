@@ -3,8 +3,7 @@ import type { Clans } from "./people";
 import { Technai } from "./tech";
 
 export class Settlement {
-    readonly technai = new Technai();
-    readonly popLimit = 300;
+    readonly technai = new Technai(this);
 
     constructor(
         readonly name: string, 
@@ -23,6 +22,24 @@ export class Settlement {
 
     get size() {
         return this.clans.reduce((acc, clan) => acc + clan.size, 0);
+    }
+
+    get popLimit() {
+        // Initially we assume people are taking advantage of small natural
+        // fields of barley, lentils, and such, for a population limit of 300.
+        //
+        // Once there is irrigation, we'll assume people can irrigate a wide
+        // area and are willing to commute up to 1.5 km to work in the fields.
+        // This gives a population limit of 1000.
+        return this.technai.hasIrrigation ? 1000 : 300;
+    }
+
+    get agricultureDescription() {
+        if (this.size < 300 || !this.technai.hasIrrigation) {
+            return 'We\'re farming small fields of barley and lentils we found by the river.';
+        } else {
+            return 'We\'re farming fields we irrigated using canals.';
+        }
     }
 
     get populationPressureModifier() {
