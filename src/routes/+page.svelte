@@ -2,7 +2,7 @@
     import { rankings } from '../model/timeline';
     import { world } from '../model/world';
     import type { Clan } from '../model/people';
-    import type { Message } from '../model/message';
+    import type { Record } from '../model/annals';
     
     import ClanList from '../components/ClanList.svelte';
     import LineGraph from '../components/LineGraph.svelte';
@@ -14,7 +14,7 @@
     class Data {
         year = $state('');
         totalPopulation = $state(0);
-        messages = $state<Message[]>([]);
+        annals = $state<Record[]>([]);
         clans = $state<Clan[]>([]);
         timeline = $state<[string, number][]>([]);
         rankings = $state<LineGraphData>({ labels: [], datasets: [] });
@@ -37,7 +37,7 @@
         update() {
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
-            this.messages = world.messages;
+            this.annals = [...world.annals.records];
             this.clans = world.allClans.map(clan => clan.c());
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
@@ -95,8 +95,8 @@
 <div class="mapRow">
     <div>
         <Map bind:selection={selectedSettlement} />
-        {#each data.messages as message}
-            <h4>{message.from}: {message.text}</h4>
+        {#each data.annals as record}
+            <h4>{record.year}: {record.text}</h4>
         {/each}
     </div>
     <div>
@@ -116,7 +116,6 @@
                 <button onclick={click}>Advance</button>
             </div>
         </div>
-        <div style="font-weight: bold; margin-bottom: 1em">{selectedSettlement.message}</div>
         <ClanList clans={selectedClans} />
     </div>
 </div>

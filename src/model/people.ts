@@ -1,7 +1,9 @@
+import { Annals } from "./annals";
 import { clamp } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
 import type { Settlement } from "./settlement";
+import type { World } from "./world";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.0;
@@ -71,6 +73,7 @@ export class Clan {
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
 
     constructor(
+        readonly annals: Annals,
         public name: string,
         public color: string,
         public size: number,
@@ -109,7 +112,7 @@ export class Clan {
     }
 
     c() {
-        const c = new Clan(this.name, this.color, this.size);
+        const c = new Clan(this.annals, this.name, this.color, this.size);
         for (let i = 0; i < this.slices.length; ++i) {
             c.slices[i][0] = this.slices[i][0];
             c.slices[i][1] = this.slices[i][1];
@@ -257,6 +260,8 @@ export class Clan {
         this.intelligence = Math.round(
             (this.intelligence * origSize + other.intelligence * other.size) / 
             (origSize + other.size));
+
+        this.annals.log(`Clan ${other.name} joined into clan ${this.name}`);
     }
 
     splitOff(clans: Clans): Clan {
@@ -265,7 +270,7 @@ export class Clan {
 
         const name = randomClanName(clans.map(clan => clan.name));
         const color = randomClanColor(clans.map(clan => clan.color));
-        const newClan = new Clan(name, color, newSize);
+        const newClan = new Clan(this.annals, name, color, newSize);
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;
         newClan.settlement = this.settlement;
@@ -276,6 +281,8 @@ export class Clan {
             this.slices[i][0] -= newClan.slices[i][0];
             this.slices[i][1] -= newClan.slices[i][1];
         }
+
+        this.annals.log(`Clan ${newClan.name} split off from clan ${this.name}`);
         return newClan;
     }
 }
@@ -412,7 +419,7 @@ export class Clans extends Array<Clan> {
 }
 
 function exp_basicPopChange() {
-    const clan = new Clan('Test', 'blue', 20);
+    const clan = new Clan(new Annals(), 'Test', 'blue', 20);
     for (let i = 0; i < 20; ++i) {
         const eb = BASE_BIRTH_RATE * clan.slices[1][0];
         const ed = clan.slices.reduce((acc, slice, i) => 
@@ -428,7 +435,7 @@ function exp_basicPopChange() {
 function exp_meanClanLifetime() {
     const lifetimes = [];
     for (let i = 0; i < 1000; ++i) {
-        const clan = new Clan('Test', 'blue', 20);
+        const clan = new Clan(new Annals(), 'Test', 'blue', 20);
         let years = 0;
         while (clan.size > 0) {
             clan.advance();
@@ -453,7 +460,7 @@ function exp_meanClanLifetime() {
 function exp_clanGrowthRate() {
     const growthRates = [];
     for (let i = 0; i < 100; ++i) {
-        const clan = new Clan('Test', 'blue', 20);
+        const clan = new Clan(new Annals(), 'Test', 'blue', 20);
         const priming = 20;
         const periods = 10;
 

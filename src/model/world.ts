@@ -1,38 +1,21 @@
+import { Annals } from "./annals";
 import { chooseFrom, maxby, minby } from "./basics";
-import { Message } from "./message";
 import { Clan, Clans, randomClanColor, randomClanName } from "./people";
 import { Settlement } from "./settlement";
 import { TimePoint } from "./timeline";
-
-export class Year {
-    // Negative is BC, positive is AD, zero is unused.
-    private value = -6500;
-
-    clone(): Year {
-        const year = new Year();
-        year.value = this.value;
-        return year;
-    }
-
-    advance(years: number) {
-        let newValue = this.value + years;
-        if (this.value < 0 && newValue >= 0) ++newValue;
-        this.value = newValue;
-    }
-
-    toString() {
-        return this.value < 0 ? `${-this.value} BC` : `${this.value} AD`;
-    }
-}
+import { Year } from "./year";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
     private clanColors: Set<string> = new Set();
 
+    constructor(readonly world: World) {}
+
     createSettlement(name: string, x: number, y: number, clanCount: number) {
         const clans = [];
         for (let i = 0; i < clanCount; i++) {
             const clan = new Clan(
+                this.world.annals,
                 randomClanName(this.clanNames), 
                 randomClanColor(this.clanColors),
                 Math.floor(Math.random() * 37) + 15);
@@ -55,13 +38,15 @@ export class World {
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
-    readonly settlements = new SettlementsBuilder().createSettlements([
+    readonly timeline: TimePoint[] = [];
+    // This has to be initialized before the clans because we pass it to them.
+    readonly annals = new Annals(this);
+
+    readonly settlements = new SettlementsBuilder(this).createSettlements([
         ['Eridu', 290, 425, 3],
         ['Ur', 350, 350, 3],
         ['Uruk', 200, 287, 3],
     ]);
-
-    readonly timeline: TimePoint[] = [];
 
     readonly watchers = new Set<(world: World) => void>();
 
@@ -103,8 +88,9 @@ export class World {
             sourceClan.tenure = 0;
             source.clans.remove(sourceClan);
             target.clans.push(sourceClan);
-            source.message = `${sourceClan.name} moved to ${target.name}`;
-            target.message = `${sourceClan.name} moved from ${source.name}`;
+
+            this.annals.log(`Clan ${sourceClan.name} moved from ${source.name} to ${target.name}`);
+
         }
     }
 
@@ -114,12 +100,6 @@ export class World {
 
     get allClans() {
         return this.settlements.flatMap(s => s.clans);
-    }
-
-    get messages(): Message[] {
-        return this.settlements     
-            .filter(s => s.message)
-            .map(s => new Message(s.name, s.message));
     }
 
     watch(watcher: (world: World) => void) {

@@ -1,3 +1,4 @@
+import { Annals } from "./annals";
 import { Clan } from "./people";
 
 // Population is roughly constant with this birth rate.
@@ -49,7 +50,7 @@ const STABLE_BIRTH_RATE = 2.97;
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
 export function calibrate() {
-    const clan = new Clan('test', 'test', 30);
+    const clan = new Clan(new Annals(), 'test', 'test', 30);
 
     // Look for a stationary distribution.
     let slices = clan.slices;

@@ -6,8 +6,6 @@ export class Settlement {
     readonly technai = new Technai();
     readonly popLimit = 300;
 
-    message = '';
-
     constructor(
         readonly name: string, 
         readonly x: number,

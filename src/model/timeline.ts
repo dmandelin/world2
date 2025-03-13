@@ -1,5 +1,6 @@
 import { randomClanColor } from "./people";
-import type { World, Year } from "./world";
+import type { World } from "./world";
+import type { Year } from "./year";
 
 export class TimePoint {
     readonly year: Year;
