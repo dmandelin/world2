@@ -244,6 +244,14 @@ export class Clan {
         return clamp(value + incr, 0, 100);
     }
 
+    moveTo(settlement: Settlement) {
+        if (this.settlement) {
+            this.settlement.clans.remove(this);
+        }
+        settlement.clans.push(this);
+        this.settlement = settlement;
+    }
+
     absorb(other: Clan) {
         if (other.size >= this.size * 0.5) {
             this.name = `${this.name}-${other.name}`;

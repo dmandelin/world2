@@ -86,14 +86,12 @@ export class World {
 
             // Move the clan.
             sourceClan.tenure = 0;
-            source.clans.remove(sourceClan);
-            target.clans.push(sourceClan);
+            sourceClan.moveTo(target);
 
             this.annals.log(
                 `Clan ${sourceClan.name} moved from ${source.name} to ${target.name}`,
                 sourceClan.settlement,
             );
-
         }
     }
 
