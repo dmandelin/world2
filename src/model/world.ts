@@ -89,7 +89,10 @@ export class World {
             source.clans.remove(sourceClan);
             target.clans.push(sourceClan);
 
-            this.annals.log(`Clan ${sourceClan.name} moved from ${source.name} to ${target.name}`);
+            this.annals.log(
+                `Clan ${sourceClan.name} moved from ${source.name} to ${target.name}`,
+                sourceClan.settlement,
+            );
 
         }
     }

@@ -1,3 +1,4 @@
+import type { Settlement } from "./settlement";
 import type { World } from "./world";
 import { Year } from "./year";
 
@@ -10,11 +11,11 @@ export class Annals {
         return this.world?.year ?? new Year();
     }
 
-    log(text: string) {
-        this.records.push(new Record(this.year, text));
+    log(text: string, settlement?: Settlement) {
+        this.records.push(new Record(this.year, text, settlement));
     }
 }
 
 export class Record {
-    constructor(readonly year: Year, readonly text: string) {}
+    constructor(readonly year: Year, readonly text: string, readonly settlement?: Settlement) {}
 }

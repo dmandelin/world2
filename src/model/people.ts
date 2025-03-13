@@ -261,7 +261,7 @@ export class Clan {
             (this.intelligence * origSize + other.intelligence * other.size) / 
             (origSize + other.size));
 
-        this.annals.log(`Clan ${other.name} joined into clan ${this.name}`);
+        this.annals.log(`Clan ${other.name} (${other.size}) joined into clan ${this.name} (${this.size})`, this.settlement);
     }
 
     splitOff(clans: Clans): Clan {
@@ -282,7 +282,7 @@ export class Clan {
             this.slices[i][1] -= newClan.slices[i][1];
         }
 
-        this.annals.log(`Clan ${newClan.name} split off from clan ${this.name}`);
+        this.annals.log(`Clan ${newClan.name} (${newClan.size}) split off from clan ${this.name} (${this.size})`, this.settlement);
         return newClan;
     }
 }

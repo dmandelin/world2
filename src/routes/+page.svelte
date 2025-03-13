@@ -10,6 +10,7 @@
     import Society from '../components/Society.svelte';
     import Notables from '../components/Notables.svelte';
     import { SocietyView } from '../components/societyview';
+    import { Settlement } from '../model/settlement';
     
     class Data {
         year = $state('');
@@ -96,7 +97,7 @@
     <div>
         <Map bind:selection={selectedSettlement} />
         {#each data.annals as record}
-            <h4>{record.year}: {record.text}</h4>
+            <h4>{record.year}{record.settlement ? ` (${record.settlement.name})` : ''}: {record.text}</h4>
         {/each}
     </div>
     <div>
