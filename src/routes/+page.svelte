@@ -96,8 +96,8 @@
 <div class="mapRow">
     <div>
         <Map bind:selection={selectedSettlement} />
-        {#each data.annals as record}
-            <h4>{record.year}{record.settlement ? ` (${record.settlement.name})` : ''}: {record.text}</h4>
+        {#each data.annals.toReversed() as record}
+            <div class="record">{record.year}{record.settlement ? ` (${record.settlement.name})` : ''}: {record.text}</div>
         {/each}
     </div>
     <div>

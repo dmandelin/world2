@@ -8,7 +8,7 @@ export class Annals {
     constructor(readonly world?: World) {}
 
     get year() {
-        return this.world?.year ?? new Year();
+        return this.world?.year.clone() ?? new Year();
     }
 
     log(text: string, settlement?: Settlement) {
