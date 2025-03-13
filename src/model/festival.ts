@@ -41,20 +41,20 @@ export class Festival {
         // Pay the cost of the festival. It's substantial: people
         // are putting a lot into this.
         for (const clan of this.clans) {
-            clan.festivalModifier -= 10;
+            clan.festivalModifier -= 5;
         }
 
         // We'll start with a super-simple average result.
         const highBenefitClans = Math.min(5, this.clans.length);
         const lowBenefitClans = Math.max(0, Math.min(25, this.clans.length - 5));
-        const baseBenefit = 10 + highBenefitClans * 2 + lowBenefitClans / 5;
+        const baseBenefit = 5 + highBenefitClans + lowBenefitClans / 10;
 
         const people = this.clans.reduce((acc, clan) => acc + clan.size, 0);
         const weightedSumKnowledge = this.clans.reduce(
             (acc, clan) => acc + clan.intelligence * clan.size, 0);
         const knowledge = weightedSumKnowledge / people;
-        const knowledgeModifier = 1 + (knowledge - 50) / 100;
-        const modifiedBenefit = baseBenefit * knowledgeModifier;
+        const knowledgeModifier = 1 + (knowledge - 50) / 10;
+        const modifiedBenefit = baseBenefit + knowledgeModifier;
 
         let resultModifier;
         const resultKnowledgeModifier = 0.07 * (knowledge - 50) / 50;

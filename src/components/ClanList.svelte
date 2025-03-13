@@ -37,6 +37,7 @@
             <th class="ra">Str</th>
             <th class="ra">Int</th>
             <th class="ra">Farm</th>
+            <th class="ra">Inc</th>
             <th class="ra">Inx</th>
             <th class="ra">Fes</th>
             <th class="ra">Tech</th>
@@ -56,6 +57,7 @@
                 <td class="ra">{r(clan.strength)}</td>
                 <td class="ra">{r(clan.intelligence)}</td>
                 <td class="ra">{r(clan.productionAbility)}</td>
+                <td class="ra">{r(clan.income)}</td>
                 <td class="ra">{clan.interactionModifier}</td>
                 <td class="ra">{clan.festivalModifier}</td>
                 <td class="ra">{clan.techModifier}</td>

@@ -37,7 +37,9 @@ export function randomClanColor(exclude: string[]|Set<String>): string {
 }
 
 function randomStat(): number {
-    return clamp(Math.round(normal(50, 20)), 0, 100);
+    // Standard deviation for individuals is 15, so it should be
+    // somewhat less for an entire clan.
+    return clamp(Math.round(normal(50, 12)), 0, 100);
 }
 
 const INITIAL_POPULATION_RATIOS = [
@@ -90,16 +92,25 @@ export class Clan {
         return Math.round(2/(1/this.strength + 1/this.intelligence));
     }
 
+    get income() {
+        return Math.round(50 + 0.25 * (this.productionAbility - 50));
+    }
+
     get techModifier() {
         return this.settlement?.technai.outputBoost ?? 0;
     }
 
     get tenureModifier() {
-        return [-10, 0, 5, 7, 8, 9, 9, 10][clamp(this.tenure, 0, 7)];
+        return [-5, 0, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5][clamp(this.tenure, 0, 12)];
     }
 
     get qol() {
-        return this.productionAbility + 
+        // We'll define quality of life like a normal(50, 15) stat for income
+        // where going up one standard deviation doubles the income. At the
+        // beginning, incomes will be much more compressed (like 1.25x per SD),
+        // so production ability initially has 1/4 effect.
+
+        return this.income + 
             this.interactionModifier + 
             this.festivalModifier + 
             this.techModifier +

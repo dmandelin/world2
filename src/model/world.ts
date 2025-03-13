@@ -72,7 +72,12 @@ export class World {
 
         if (this.settlements.length < 2) return;
 
+        let rounds = 0;
         while (true) {
+            if (++rounds > 10) {
+                console.log('emigration ilooping');
+                break;
+            }
             // Determine a source and target.
             const target = maxby(this.settlements, s => s.localQOLModifier);
 
