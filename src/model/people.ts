@@ -1,5 +1,5 @@
 import { Annals } from "./annals";
-import { clamp } from "./basics";
+import { clamp, remove } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
 import type { Settlement } from "./settlement";
@@ -74,6 +74,10 @@ export class Clan {
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
 
+    // Relationships
+    parent: Clan|undefined;
+    cadets: Clan[] = [];
+
     constructor(
         readonly annals: Annals,
         public name: string,
@@ -135,6 +139,8 @@ export class Clan {
         c.festivalModifier = this.festivalModifier;
         c.tenure = this.tenure;
         c.lastSizeChange_ = this.lastSizeChange;
+        c.parent = this.parent;
+        c.cadets = this.cadets;
         return c;
     }
 
@@ -280,6 +286,16 @@ export class Clan {
             (this.intelligence * origSize + other.intelligence * other.size) / 
             (origSize + other.size));
 
+        // Cadets of the absorbed clan become cadets of the absorbing clan.
+        for (const cadet of other.cadets) {
+            cadet.parent = this;
+            this.cadets.push(cadet);
+        }
+        // Remove any previous parent of the old clan.
+        if (other.parent) {
+            remove(other.parent.cadets, other);
+        }
+
         this.annals.log(`Clan ${other.name} (${other.size}) joined into clan ${this.name} (${this.size})`, this.settlement);
     }
 
@@ -300,6 +316,10 @@ export class Clan {
             this.slices[i][0] -= newClan.slices[i][0];
             this.slices[i][1] -= newClan.slices[i][1];
         }
+
+        // New clan starts as a cadet.
+        newClan.parent = this;
+        this.cadets.push(newClan);
 
         this.annals.log(`Clan ${newClan.name} (${newClan.size}) split off from clan ${this.name} (${this.size})`, this.settlement);
         return newClan;

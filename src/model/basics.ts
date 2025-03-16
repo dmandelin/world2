@@ -13,3 +13,10 @@ export function minby<T>(arr: T[], key: (t: T) => number): T {
 export function chooseFrom<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
 }
+
+export function remove<T>(arr: T[], elem: T) {
+    const index = arr.indexOf(elem);
+    if (index >= 0) {
+        arr.splice(index, 1);
+    }
+}
