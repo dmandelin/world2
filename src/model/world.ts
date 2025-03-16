@@ -58,6 +58,7 @@ export class World {
         for (const s of this.settlements) 
             s.advance();
         this.emigrate();
+        this.rank();
 
         this.year.advance(this.yearsPerTurn);
         this.timeline.push(new TimePoint(this));
@@ -100,6 +101,15 @@ export class World {
                 `Clan ${sourceClan.name} moved from ${source.name} to ${target.name}`,
                 sourceClan.settlement,
             );
+        }
+    }
+
+    rank() {
+        const work = this.allClans.filter(c => !c.parent);
+        while (work.length) {
+            const clan = work.pop()!;
+            clan.seniority = clan.parent ? clan.parent.seniority + 1 : 0;
+            work.push(...clan.cadets);
         }
     }
 

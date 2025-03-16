@@ -78,6 +78,9 @@ export class Clan {
     parent: Clan|undefined;
     cadets: Clan[] = [];
 
+    // 0 = most senior, +1 per cadet link
+    seniority: number = 0;
+
     constructor(
         readonly annals: Annals,
         public name: string,
@@ -123,7 +126,7 @@ export class Clan {
     }
 
     get prestige() {
-        return Math.round(Math.log2(this.size) * this.qol / 6);
+        return Math.round(Math.log2(this.size) * this.qol / 6) - this.seniority;
     }
 
     c() {
@@ -141,6 +144,7 @@ export class Clan {
         c.lastSizeChange_ = this.lastSizeChange;
         c.parent = this.parent;
         c.cadets = this.cadets;
+        c.seniority = this.seniority;
         return c;
     }
 

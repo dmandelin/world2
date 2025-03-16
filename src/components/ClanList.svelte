@@ -31,6 +31,7 @@
     <thead>
         <tr>
             <th>Clan</th>
+            <th>Sen</th>
             <th class="ra">Size</th>
             <th class="ra">+/-</th>
             <th class="ra">Traits</th>
@@ -51,6 +52,7 @@
         {#each clans as clan}
             <tr onclick={() => selectedClan = clan}>
                 <td style:color={clan.color}>{clan.name}</td>
+                <td class="ra">{String.fromCharCode(65 + clan.seniority)}</td>
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.lastSizeChange}</td>
                 <td class="ra">{[...clan.traits].map((t: PersonalityTrait) => t.name).join(' ')}</td>
