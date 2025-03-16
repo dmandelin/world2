@@ -1,9 +1,10 @@
 <script lang="ts">
     import { clamp } from "../model/basics";
     import { PersonalityTrait } from "../model/people";
-    import PopulationPyramid from "./PopulationPyramid.svelte";
+    import Clan from "./Clan.svelte";
 
     let { clans } = $props();
+    let selectedClan = $state(undefined);
 
     function r(trait: number) {
         const grade = 'ABCDE'[4 - clamp(Math.floor(trait / 20), 0, 4)];
@@ -21,9 +22,8 @@
         text-align: right;
     }
 
-    .pyramids {
-        display: flex;
-        justify-content: space-around;
+    table {
+        cursor: pointer;
     }
 </style>
 
@@ -49,7 +49,7 @@
     </thead>
     <tbody>
         {#each clans as clan}
-            <tr>
+            <tr onclick={() => selectedClan = clan}>
                 <td style:color={clan.color}>{clan.name}</td>
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.lastSizeChange}</td>
@@ -69,11 +69,4 @@
         {/each}
 </table>
 
-<div class="pyramids">
-    {#each clans as clan}
-    <div>
-        <h2>{clan.name}</h2>
-        <PopulationPyramid {clan} />
-    </div>
-    {/each}
-</div>
+<Clan clan={selectedClan} />

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
+    import { Clan } from '../model/people';
 
     let { selection = $bindable() } = $props();
 
@@ -101,12 +102,22 @@
                 fillTextCentered(popLabel, x, y + s + 32);
             }
 
-            // Warning
+            // Warnings
+            const warnings = [];
             if (settlement.populationPressureModifier < 0) {
+                warnings.push(`Hunger! (${settlement.populationPressureModifier})`);
+            }
+            const minQOL = Math.min(...settlement.clans.map(c => c.qol));
+            if (minQOL < 40) {
+                warnings.push(`Low QoL! (${minQOL})`);
+            }
+
+            let yo = 49;
+            for (const w of warnings) {
                 context!.fillStyle = '#d22';
                 context!.font = '12px sans-serif';
-                const label = `Hunger! (${settlement.populationPressureModifier})`;
-                fillTextCentered(label, x, y + s + 49);
+                fillTextCentered(w, x, y + s + yo);
+                yo += 17;
             }
         }
     }
