@@ -145,6 +145,8 @@ export class Clan {
         c.parent = this.parent;
         c.cadets = this.cadets;
         c.seniority = this.seniority;
+        c.traits.clear();
+        for (const trait of this.traits) c.traits.add(trait);
         return c;
     }
 
@@ -313,6 +315,8 @@ export class Clan {
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;
         newClan.settlement = this.settlement;
+        newClan.traits.clear();
+        for (const trait of this.traits) newClan.traits.add(trait);
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
