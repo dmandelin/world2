@@ -47,6 +47,7 @@ export class Settlement {
     }
 
     populationPressureModifierWith(additionalPeople: number) {
+        if (this.size == 0) return 0;
         return clamp(Math.round(-15 * Math.log2(2 * (this.size + additionalPeople) / this.popLimit)), -100, 0);
     }
     

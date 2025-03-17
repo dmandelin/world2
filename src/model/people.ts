@@ -3,7 +3,6 @@ import { clamp, remove } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
 import type { Settlement } from "./settlement";
-import type { World } from "./world";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.05;

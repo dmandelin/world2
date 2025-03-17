@@ -1,6 +1,6 @@
 import { Annals } from "./annals";
-import { chooseFrom, maxby, minby } from "./basics";
-import { Clan, Clans, randomClanColor, randomClanName } from "./people";
+import { chooseFrom, maxby, maxbyWithValue, minby, shuffled } from "./basics";
+import { Clan, Clans, PersonalityTrait, PersonalityTraits, randomClanColor, randomClanName } from "./people";
 import { Settlement } from "./settlement";
 import { TimePoint } from "./timeline";
 import { Year } from "./year";
@@ -73,34 +73,25 @@ export class World {
 
         if (this.settlements.length < 2) return;
 
-        const moved = new Set<Clan>();
-        let rounds = 0;
-        while (true) {
-            if (++rounds > 10) {
-                console.log('emigration ilooping');
-                break;
-            }
-            // Determine a source and target.
-            const target = maxby(this.settlements, s => s.localQOLModifier);
-
-            const candidates = this.allClans.filter(c =>
-                !moved.has(c) &&
-                c.settlement!.localQOLModifier < 0 && 
-                c.settlement!.localQOLModifier + c.tenureModifier + 3 < target.localQOLModifierWith(c.size) &&
-                c.settlement !== target);
-            if (!candidates.length) break;
-            const sourceClan = chooseFrom(candidates);
-            const source = sourceClan.settlement!;
+        for (const clan of shuffled(this.allClans)) {
+            // See if there are settlements worth moving to.
+            const [best, value] = maxbyWithValue(this.settlements, s =>
+                s.localQOLModifierWith(clan.size) - ( 
+                    clan.settlement!.localQOLModifier +
+                    clan.tenureModifier + 
+                    clan.interactionModifier));
+            if (best == clan.settlement) continue;
+            if (value < 2) break;
 
             // Move the clan.
-            sourceClan.tenure = 0;
-            sourceClan.moveTo(target);
-            moved.add(sourceClan);
+            const source = clan.settlement!;
+            clan.tenure = 0;
+            clan.moveTo(best);
+            clan.traits.delete(PersonalityTraits.SETTLED);
+            clan.traits.add(PersonalityTraits.MOBILE);
 
             this.annals.log(
-                `Clan ${sourceClan.name} moved from ${source.name} to ${target.name}`,
-                sourceClan.settlement,
-            );
+                `Clan ${clan.name} moved from ${source.name} to ${best.name}`, source);
         }
     }
 
