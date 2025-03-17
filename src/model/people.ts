@@ -6,7 +6,7 @@ import type { Settlement } from "./settlement";
 import type { World } from "./world";
 
 // Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 3.0;
+const BASE_BIRTH_RATE = 3.05;
 
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
