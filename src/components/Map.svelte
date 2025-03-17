@@ -41,6 +41,18 @@
 
     function draw() {
         context!.clearRect(0, 0, canvas!.width, canvas!.height);
+
+        for (const settlement of world.settlements) {
+            const x = settlement.x;
+            const y = settlement.y;
+            const fieldsRadius = 0.5 * Math.sqrt(settlement.size)
+            const fieldsColor = settlement.abandoned ? '#eee' : '#dfd';
+            context!.fillStyle = fieldsColor;
+            context!.beginPath();
+            context!.arc(x, y, fieldsRadius, 0, 2 * Math.PI);
+            context!.fill();
+        }
+
         drawRivers();
         drawSettlements();
     }
