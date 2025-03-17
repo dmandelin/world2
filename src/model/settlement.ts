@@ -5,6 +5,9 @@ import { Technai } from "./tech";
 export class Settlement {
     readonly technai = new Technai(this);
 
+    parent: Settlement|undefined;
+    daughters: Settlement[] = [];
+
     constructor(
         readonly name: string, 
         readonly x: number,

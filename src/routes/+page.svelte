@@ -104,6 +104,12 @@
         <div class="topPanel">
             <div>
                 <h2>{selectedSettlement?.name} &ndash; {selectedSettlement?.size}</h2>
+                {#if selectedSettlement?.parent}
+                    <p>Founded from {selectedSettlement.parent.name}</p>
+                {/if}
+                {#if selectedSettlement.daughters.length > 0}
+                    <p>Daughters: {selectedSettlement.daughters.map(d => d.name).join(', ')}</p>
+                {/if}
                 {#each society.description as item}
                     <h4>{item}</h4>
                 {/each}

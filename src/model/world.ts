@@ -74,14 +74,48 @@ export class World {
         if (this.settlements.length < 2) return;
 
         for (const clan of shuffled(this.allClans)) {
-            // See if there are settlements worth moving to.
-            const [best, value] = maxbyWithValue(this.settlements, s =>
-                s.localQOLModifierWith(clan.size) - ( 
-                    clan.settlement!.localQOLModifier +
+            const inertia = clan.traits.has(PersonalityTraits.MOBILE) 
+                ? 0
+                : clan.traits.has(PersonalityTraits.SETTLED)
+                ? 2
+                : 1;
+
+            const moveValue = (settlement: Settlement|'new') => {
+                // Base newValue is assuming no tech kit at the new settlement.
+                const newValue = settlement == 'new'
+                    ? -5 : settlement.localQOLModifierWith(clan.size);
+                const inertiaValue = settlement == 'new'
+                    ? inertia * 2 + 1 : inertia;
+                const oldValue = clan.settlement!.localQOLModifier +
                     clan.tenureModifier + 
-                    clan.interactionModifier));
+                    clan.interactionModifier;
+                return newValue - (oldValue + inertiaValue);
+            }
+
+            // See if there are settlements worth moving to.
+            const targets: Array<Settlement|'new'> = [...this.settlements, 'new'];
+            let [best, value] = maxbyWithValue(targets, s => moveValue(s));
             if (best == clan.settlement) continue;
-            if (value < 2) break;
+            if (value <= 0) break;
+
+            // Create a new settlement if needed.
+            const isNew = best == 'new';
+            if (best == 'new') {
+                const dir = Math.random() * 2 * Math.PI;
+                const distance = Math.random() * 10 + 20;
+                const x = clan.settlement!.x + Math.round(Math.cos(dir) * distance);
+                const y = clan.settlement!.y + Math.round(Math.sin(dir) * distance);
+                const newSettlement = new Settlement(`Hamlet ${this.settlements.length + 1}`,
+                    x, y, new Clans());
+                this.settlements.push(newSettlement);
+
+                newSettlement.parent = clan.settlement;
+                clan.settlement!.daughters.push(newSettlement);
+
+                best = newSettlement;
+                this.annals.log(
+                    `Clan ${clan.name} founded ${newSettlement.name}`, newSettlement);
+            }
 
             // Move the clan.
             const source = clan.settlement!;
@@ -90,8 +124,10 @@ export class World {
             clan.traits.delete(PersonalityTraits.SETTLED);
             clan.traits.add(PersonalityTraits.MOBILE);
 
-            this.annals.log(
-                `Clan ${clan.name} moved from ${source.name} to ${best.name}`, source);
+            if (!isNew) {
+                this.annals.log(
+                    `Clan ${clan.name} moved from ${source.name} to ${best.name}`, source);
+            }
         }
     }
 

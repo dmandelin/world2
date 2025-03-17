@@ -88,9 +88,13 @@
             if (settlement.abandoned) {
                 context!.fillStyle = '#777';
                 fillTextCentered('x', x, y);
-            } else {
+            } else if (!settlement.parent) {
                 context!.fillStyle = '#333';
                 context!.fillRect(x - s, y - s, s * 2, s * 2);
+            } else {
+                context!.fillStyle = '#333';
+                context!.fillRect(x - 2, y - 2, 4, 4);
+                continue;
             }
 
             // Name
