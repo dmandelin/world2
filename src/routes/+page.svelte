@@ -11,6 +11,7 @@
     import Notables from '../components/Notables.svelte';
     import { SocietyView } from '../components/societyview';
     import { Settlement } from '../model/settlement';
+    import LocalAssessments from '../components/LocalAssessments.svelte';
     
     class Data {
         year = $state('');
@@ -124,6 +125,7 @@
             </div>
         </div>
         <ClanList clans={selectedClans} />
+        <LocalAssessments settlement={selectedSettlement} />
     </div>
 </div>
 

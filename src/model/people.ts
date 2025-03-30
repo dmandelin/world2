@@ -2,7 +2,7 @@ import { Annals } from "./annals";
 import { clamp, remove } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
-import { exchangeGifts, resolveDisputes } from "./interactions";
+import { Assessments, exchangeGifts, resolveDisputes } from "./interactions";
 import type { Settlement } from "./settlement";
 
 // Per 20-year turn, for childbearing-age women.
@@ -80,6 +80,9 @@ export class Clan {
 
     // 0 = most senior, +1 per cadet link
     seniority: number = 0;
+
+    // Assessments
+    readonly assessments = new Assessments(this);
 
     constructor(
         readonly annals: Annals,
