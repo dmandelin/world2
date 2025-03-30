@@ -3,7 +3,7 @@
     import { PersonalityTrait } from "../model/people";
     import Clan from "./Clan.svelte";
 
-    let { clans } = $props();
+    let { clans, updateTrigger = $bindable() } = $props();
     let selectedClan = $state(undefined);
 
     function r(trait: number) {
@@ -24,6 +24,7 @@
 
     table {
         cursor: pointer;
+        white-space: nowrap;
     }
 </style>
 
@@ -56,7 +57,7 @@
                 <td class="ra">{String.fromCharCode(65 + clan.seniority)}</td>
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.lastSizeChange}</td>
-                <td>{clan.agent.defaultGiftStrategy}</td>
+                <td>{clan.giftStrategy}</td>
                 <td class="ra">{[...clan.traits].map((t: PersonalityTrait) => t.name).join(' ')}</td>
                 <td class="ra">{r(clan.strength)}</td>
                 <td class="ra">{r(clan.intelligence)}</td>
@@ -73,4 +74,4 @@
         {/each}
 </table>
 
-<Clan clan={selectedClan} />
+<Clan clan={selectedClan} bind:updateTrigger={updateTrigger}/>

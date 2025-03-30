@@ -2,12 +2,11 @@
     import { GiftStrategy } from "../model/interactions";
     import PopulationPyramid from "./PopulationPyramid.svelte";
 
-    let { clan } = $props();
-    let giftStrategy = $state(clan?.agent.defaultGiftStrategy);
+    let { clan, updateTrigger = $bindable() } = $props();
 
     function setGiftStrategy(strategy: GiftStrategy) {
-        clan.agent.defaultGiftStrategy = strategy;
-        giftStrategy = strategy;
+        clan.ref.agent.defaultGiftStrategy = strategy;
+        ++updateTrigger;
     }
 </script>
 
@@ -35,7 +34,7 @@
 
 <div style="display: flex">
     <div>
-        Gift strategy: {giftStrategy}
+        Gift strategy: {clan.giftStrategy}
         <button onclick={() => setGiftStrategy(GiftStrategy.Cooperate)}>Cooperative</button>
         <button onclick={() => setGiftStrategy(GiftStrategy.Reciprocate)}>Reciprocal</button>
         <button onclick={() => setGiftStrategy(GiftStrategy.Defect)}>Defecting</button>

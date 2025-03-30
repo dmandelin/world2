@@ -12,12 +12,13 @@
     import { SocietyView } from '../components/societyview';
     import { Settlement } from '../model/settlement';
     import LocalAssessments from '../components/LocalAssessments.svelte';
+    import { clanDTO, type ClanDTO } from '../components/dtos';
     
     class Data {
         year = $state('');
         totalPopulation = $state(0);
         annals = $state<Record[]>([]);
-        clans = $state<Clan[]>([]);
+        clans = $state<ClanDTO[]>([]);
         timeline = $state<[string, number][]>([]);
         rankings = $state<LineGraphData>({ labels: [], datasets: [] });
 
@@ -40,11 +41,18 @@
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
             this.annals = [...world.annals.records];
-            this.clans = world.allClans.map(clan => clan.c());
+            this.clans = world.allClans.map(clan => clanDTO(clan));
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
         }
     }
+
+    let updateTrigger = $state(0);
+    $effect(() => {
+        if (updateTrigger > 0) {
+            data.update();
+        }
+    });
 
     let data = $state(new Data());
     let selectedSettlement = $state(world.settlements[0]);
@@ -124,7 +132,7 @@
                 <button onclick={click}>Advance</button>
             </div>
         </div>
-        <ClanList clans={selectedClans} />
+        <ClanList clans={selectedClans} bind:updateTrigger={updateTrigger} />
         <LocalAssessments settlement={selectedSettlement} />
     </div>
 </div>

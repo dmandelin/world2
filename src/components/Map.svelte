@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
-    import { Clan } from '../model/people';
 
     let { selection = $bindable() } = $props();
 
