@@ -16,7 +16,7 @@ export function resolveDisputes(c: Clan, d: Clan) {
 
 // One clan's assessment of other clans.
 export class Assessments {
-    readonly defaultAssessment = 50; // Neutral
+    readonly defaultAssessment = 0; // Neutral
     private assessments = new Map<Clan, number>();
 
     constructor(private clan: Clan) {}

@@ -22,7 +22,7 @@
             {#if c === d}
             -
             {:else}
-            {c.assessments.get(d) ?? 50}
+            {c.assessments.get(d)}
             {/if}
         </td>
     {/each}
