@@ -3,12 +3,11 @@
     import PopulationPyramid from "./PopulationPyramid.svelte";
 
     let { clan } = $props();
-    let giftStrategy = $derived(clan?.agent?.defaultGiftStrategy);
+    let giftStrategy = $state(clan?.agent.defaultGiftStrategy);
 
     function setGiftStrategy(strategy: GiftStrategy) {
-        console.log('YYY', clan?.name, clan?.agent?.defaultGiftStrategy);
         clan.agent.defaultGiftStrategy = strategy;
-        console.log(clan.agent.defaultGiftStrategy);
+        giftStrategy = strategy;
     }
 </script>
 
