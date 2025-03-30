@@ -6,8 +6,6 @@
 
 <h4>Assessments</h4>
 
-{clans.map((c: ClanDTO) => [...c.assessments.assessments])}
-
 <table><tbody>
 <tr>
     <td></td>
