@@ -2,6 +2,7 @@ import { Annals } from "./annals";
 import { clamp, remove } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
+import { exchangeGifts, resolveDisputes } from "./interactions";
 import type { Settlement } from "./settlement";
 
 // Per 20-year turn, for childbearing-age women.
@@ -373,7 +374,29 @@ export class Clans extends Array<Clan> {
         this.festival.process(); 
     }
 
+    *pairs() {
+        for (let i = 0; i < this.length; ++i) {
+            for (let j = i + 1; j < this.length; ++j) {
+                yield [this[i], this[j]];
+            }
+        }
+    }
+
     interact() {
+        for (const clan of this) {
+            clan.interactionModifier = 0;
+        }
+
+        for (const [c, d] of this.pairs()) {
+            exchangeGifts(c, d);
+        }
+
+        for (const [c, d] of this.pairs()) {
+            resolveDisputes(c, d);
+        }
+    }
+
+    interact2() {
         // Each pair of clans may have some zero-sum interactions,
         // typically embedded in a positive- or negative-sum context.
         // Those contexts are assumed to be part of the general model,
