@@ -83,8 +83,8 @@ export class Clan {
     seniority: number = 0;
 
     // Agent for the clan. This is used to determine how the clan interacts.
-    readonly agent = new ClanAgent(this);
-    readonly assessments = new Assessments(this);
+    agent = new ClanAgent(this);
+    assessments = new Assessments(this);
 
     constructor(
         readonly annals: Annals,
@@ -152,6 +152,8 @@ export class Clan {
         c.seniority = this.seniority;
         c.traits.clear();
         for (const trait of this.traits) c.traits.add(trait);
+        c.assessments = this.assessments;
+        c.agent = this.agent;
         return c;
     }
 

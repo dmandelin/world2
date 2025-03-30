@@ -34,6 +34,7 @@
             <th>Sen</th>
             <th class="ra">Size</th>
             <th class="ra">+/-</th>
+            <th>GS</th>
             <th class="ra">Traits</th>
             <th class="ra">Str</th>
             <th class="ra">Int</th>
@@ -55,6 +56,7 @@
                 <td class="ra">{String.fromCharCode(65 + clan.seniority)}</td>
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.lastSizeChange}</td>
+                <td>{clan.agent.defaultGiftStrategy}</td>
                 <td class="ra">{[...clan.traits].map((t: PersonalityTrait) => t.name).join(' ')}</td>
                 <td class="ra">{r(clan.strength)}</td>
                 <td class="ra">{r(clan.intelligence)}</td>
