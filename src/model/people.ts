@@ -1,3 +1,4 @@
+import { ClanAgent } from "./agents";
 import { Annals } from "./annals";
 import { clamp, remove } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
@@ -81,7 +82,8 @@ export class Clan {
     // 0 = most senior, +1 per cadet link
     seniority: number = 0;
 
-    // Assessments
+    // Agent for the clan. This is used to determine how the clan interacts.
+    readonly agent = new ClanAgent(this);
     readonly assessments = new Assessments(this);
 
     constructor(

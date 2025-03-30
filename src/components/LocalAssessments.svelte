@@ -22,7 +22,7 @@
             {#if c === d}
             -
             {:else}
-            {c.assessments.get(d)}
+            {c.assessments.get(d)}/{c.agent.getLastGiftStrategy(d)}
             {/if}
         </td>
     {/each}

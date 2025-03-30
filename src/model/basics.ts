@@ -1,3 +1,9 @@
+export function assert(condition: boolean, message?: string): asserts condition {
+    if (!condition) {
+        throw new Error(message || "Assertion failed");
+    }
+}
+
 export function clamp(value: number, min: number = 0.0, max: number = 1.0) {
     return Math.min(Math.max(value, min), max);
 }
