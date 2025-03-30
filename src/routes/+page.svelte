@@ -133,7 +133,7 @@
             </div>
         </div>
         <ClanList clans={selectedClans} bind:updateTrigger={updateTrigger} />
-        <LocalAssessments settlement={selectedSettlement} />
+        <LocalAssessments clans={selectedClans} />
     </div>
 </div>
 

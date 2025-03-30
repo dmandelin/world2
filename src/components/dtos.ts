@@ -1,4 +1,5 @@
 import type { ClanAgent } from "../model/agents";
+import type { Assessments } from "../model/interactions";
 import type { Clan } from "../model/people";
 import type { Settlement } from "../model/settlement";
 
@@ -11,6 +12,9 @@ export type ClanDTO = {
     parent: Clan|undefined;
     settlement: Settlement;
     slices: number[][];
+
+    agent: ClanAgent;
+    assessments: Assessments;
     
     festivalModifier: number;
     giftStrategy: string;
@@ -35,6 +39,9 @@ export function clanDTO(clan: Clan) {
         ref: clan,
         name: clan.name,
         color: clan.color,
+
+        agent: clan.agent.clone(),
+        assessments: clan.assessments.clone(),
 
         cadets: clan.cadets,
         parent: clan.parent,
