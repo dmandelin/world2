@@ -152,8 +152,8 @@ export class Clan {
         c.seniority = this.seniority;
         c.traits.clear();
         for (const trait of this.traits) c.traits.add(trait);
-        c.assessments = this.assessments;
-        c.agent = this.agent;
+        c.assessments = this.assessments.clone();
+        c.agent = this.agent.clone();
         return c;
     }
 
@@ -324,6 +324,8 @@ export class Clan {
         newClan.settlement = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
+        newClan.assessments = this.assessments.clone();
+        newClan.agent = this.agent.clone();
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);

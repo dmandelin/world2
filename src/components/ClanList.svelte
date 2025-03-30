@@ -62,7 +62,7 @@
                 <td class="ra">{r(clan.intelligence)}</td>
                 <td class="ra">{r(clan.productionAbility)}</td>
                 <td class="ra">{r(clan.income)}</td>
-                <td class="ra">{clan.interactionModifier}</td>
+                <td class="ra">{clan.interactionModifier.toFixed(1)}</td>
                 <td class="ra">{clan.festivalModifier}</td>
                 <td class="ra">{clan.techModifier}</td>
                 <td class="ra">{clan.tenureModifier} ({clan.tenure})</td>

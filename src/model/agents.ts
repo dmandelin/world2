@@ -15,4 +15,12 @@ export class ClanAgent {
     getLastGiftStrategy(other: Clan): GiftStrategy {
         return this.lastGiftStrategy.get(other) ?? this.defaultGiftStrategy;
     }
+
+    clone() {
+        const clone = new ClanAgent(this.clan, this.defaultGiftStrategy);
+        for (const [other, strategy] of this.lastGiftStrategy) {
+            clone.lastGiftStrategy.set(other, strategy);
+        }
+        return clone;
+    }
 }
