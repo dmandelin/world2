@@ -1,6 +1,7 @@
 import { Annals } from "./annals";
 import { chooseFrom, maxby, maxbyWithValue, minby, shuffled } from "./basics";
-import { Clan, Clans, PersonalityTrait, PersonalityTraits, randomClanColor, randomClanName } from "./people";
+import { Clans } from "./clans";
+import { Clan, PersonalityTrait, PersonalityTraits, randomClanColor, randomClanName } from "./people";
 import { Settlement } from "./settlement";
 import { TimePoint } from "./timeline";
 import { Year } from "./year";

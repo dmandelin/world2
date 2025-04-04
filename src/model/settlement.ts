@@ -1,5 +1,5 @@
 import { clamp } from "./basics";
-import type { Clans } from "./people";
+import type { Clans } from "./clans";
 import { Technai } from "./tech";
 
 export class Settlement {

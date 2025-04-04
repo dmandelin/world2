@@ -10,8 +10,8 @@
     import Notables from '../components/Notables.svelte';
     import { SocietyView } from '../components/societyview';
     import LocalAssessments from '../components/LocalAssessments.svelte';
-    import { clanDTO, type ClanDTO, ClansDTO } from '../components/dtos';
-    import { Clans } from '../model/people';
+    import { ClansDTO } from '../components/dtos';
+    import { Clans } from '../model/clans';
     
     class Data {
         year = $state('');

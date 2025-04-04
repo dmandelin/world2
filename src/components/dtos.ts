@@ -1,6 +1,7 @@
 import type { ClanAgent } from "../model/agents";
+import type { Clans } from "../model/clans";
 import type { Assessments } from "../model/interactions";
-import type { Clan, Clans, EconomicPolicy } from "../model/people";
+import type { Clan, EconomicPolicy } from "../model/people";
 import type { Settlement } from "../model/settlement";
 
 export type ClanDTO = {
