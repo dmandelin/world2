@@ -5,14 +5,14 @@ ability.
 x Initially they are collectors with 1.2x income per SD.
 - Technologies can raise this (and in some cases lower it),
   generally within the range 1.1-1.5x.
-- There is a scale bonus to production of ^(1/3-1/6) per
+x There is a scale bonus to production of ^(1/3-1/6) per
   capita contributing to a pot. Thus, there is a positive
   incentive to contribute as long as there is not too much
   defection or productivity difference.
 
 Clans then decide whether to:
 - Consume individually
-- Contribute to an equal-sharing pot
+x Contribute to an equal-sharing pot
 - Contribute to an equal-sharing pot, but with lower effort
 
 Shirking can be deterred, but there is a monitoring cost
