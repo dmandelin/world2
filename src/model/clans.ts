@@ -19,6 +19,14 @@ export class Clans extends Array<Clan> {
       return this.reduce((total, clan) => total + clan.size, 0);
     }
 
+    // How much defection people can get away with, 0-1.
+    get slippage(): number {
+        const cap = 2.2;
+        const req = Math.pow(this.population, 1/6);
+        if (cap >= req) return 0.0;
+        return 1 - cap / req;
+    }
+
     remove(clan: Clan) {
         this.splice(this.indexOf(clan), 1);
     }

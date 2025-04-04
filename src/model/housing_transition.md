@@ -11,7 +11,7 @@ x There is a scale bonus to production of ^(1/3-1/6) per
   defection or productivity difference.
 
 Clans then decide whether to:
-- Consume individually
+x Consume individually
 x Contribute to an equal-sharing pot
 - Contribute to an equal-sharing pot, but with lower effort
 
@@ -26,18 +26,19 @@ something that depends on the social network structure.
 
 The basic sequence is then:
 x Clans generate subsistence
-- Clans select their move: I, C, D
+x Clans select their move: I, C, D
   - % of shirking allowed determines impact of D, may be 0
-  - Clans select their strategy based on inclusive benefit,
+  x Clans select their strategy based on inclusive benefit,
     which can include both relatedness and desire for growth
-- Subsistence is placed into collective and individual pots
+x Subsistence is placed into collective and individual pots
   per move
-- Subsistence is distributed from collective and individual
+x Subsistence is distributed from collective and individual
   pots per move
-- Welfare and population change computed from distributions
+x Welfare and population change computed from distributions
 
-We'll want to clearly visualize their moves and the relevant
-metrics. Also probably the history of moves.
+x We'll want to clearly visualize their moves and the relevant
+metrics. 
+- Also probably the history of moves.
 
 Once the base model is running, we could add personality traits
 for clans to give them more variability in strategy.

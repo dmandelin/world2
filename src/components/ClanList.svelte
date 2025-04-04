@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { spct } from "../model/format";
+    import { pct, spct } from "../model/format";
     import { PersonalityTrait } from "../model/people";
     import Clan from "./Clan.svelte";
 
@@ -39,6 +39,8 @@
         white-space: nowrap;
     }
 </style>
+
+<p>Slippage: {pct(clans.slippage)}</p>
 
 <table style="margin-bottom: 1em">
     <thead>

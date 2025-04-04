@@ -85,6 +85,8 @@ export function clanDTO(clan: Clan) {
 
 export class ClansDTO extends Array<ClanDTO> {
     population: number;
+    slippage: number;
+
     pot: { 
         contributors: number; 
         input: number; 
@@ -98,6 +100,7 @@ export class ClansDTO extends Array<ClanDTO> {
     constructor(clans: Clans) {
         super(...clans.map(clanDTO));
         this.population = clans.population;
+        this.slippage = clans.slippage;
         this.pot = {
             contributors: clans.pot.contributors,
             input: clans.pot.input,
