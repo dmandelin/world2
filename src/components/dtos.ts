@@ -16,17 +16,19 @@ export type ClanDTO = {
     agent: ClanAgent;
     assessments: Assessments;
     
+    lastSizeChange: number;
+    productionAbility: number;
+    productitity: number;
+    seniority: number;
+    size: number;
+
     festivalModifier: number;
     giftStrategy: string;
     income: number,
     intelligence: number;
     interactionModifier: number;
-    lastSizeChange: number;
     prestige: number;
-    productionAbility: number;
     qol: number;
-    seniority: number;
-    size: number;
     strength: number;
     techModifier: number;
     tenure: number;
@@ -48,17 +50,19 @@ export function clanDTO(clan: Clan) {
         settlement: clan.settlement!,
         slices: clan.slices,
 
-        festivalModifier: clan.festivalModifier,
-        giftStrategy: clan.agent.defaultGiftStrategy,
-        income: clan.income,
-        intelligence: clan.intelligence,
-        interactionModifier: clan.interactionModifier,
         lastSizeChange: clan.lastSizeChange,
-        prestige: clan.prestige,
         productionAbility: clan.productionAbility,
-        qol: clan.qol,
+        productivity: clan.productivity,
         seniority: clan.seniority,
         size: clan.size,
+
+        festivalModifier: clan.festivalModifier,
+        giftStrategy: clan.agent.defaultGiftStrategy,
+        income: clan.incomeOld,
+        intelligence: clan.intelligence,
+        interactionModifier: clan.interactionModifier,
+        prestige: clan.prestige,
+        qol: clan.qol,
         strength: clan.strength,
         techModifier: clan.techModifier,
         tenure: clan.tenure,

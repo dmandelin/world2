@@ -2,7 +2,7 @@
 
 Clans produce subsistence by a lognormal distribution on
 ability.
-- Initially they are collectors with 1.2x income per SD.
+x Initially they are collectors with 1.2x income per SD.
 - Technologies can raise this (and in some cases lower it),
   generally within the range 1.1-1.5x.
 - There is a scale bonus to production of ^(1/3-1/6) per

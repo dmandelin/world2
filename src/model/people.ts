@@ -104,7 +104,14 @@ export class Clan {
         return Math.round(2/(1/this.strength + 1/this.intelligence));
     }
 
-    get income() {
+    get productivity() {
+        const z = (this.productionAbility - 50) / 15;
+        console.log(z);
+        return Math.pow(1.2, z);
+    }
+
+    // YYY
+    get incomeOld() {
         return Math.round(50 + 0.25 * (this.productionAbility - 50));
     }
 
@@ -122,7 +129,7 @@ export class Clan {
         // beginning, incomes will be much more compressed (like 1.25x per SD),
         // so production ability initially has 1/4 effect.
 
-        return this.income + 
+        return this.incomeOld + 
             this.interactionModifier + 
             this.festivalModifier + 
             this.techModifier +
