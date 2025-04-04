@@ -90,6 +90,7 @@ export class Clan {
     // Individual clan economy.
     pot = new Pot([this]);
     consumption = 0;
+    perCapitaConsumption = 0;
 
     constructor(
         readonly annals: Annals,
@@ -115,11 +116,6 @@ export class Clan {
         return Math.pow(1.2, z);
     }
 
-    // YYY
-    get incomeOld() {
-        return Math.round(50 + 0.25 * (this.productionAbility - 50));
-    }
-
     get techModifier() {
         return this.settlement?.technai.outputBoost ?? 0;
     }
@@ -128,13 +124,19 @@ export class Clan {
         return [-5, 0, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5][clamp(this.tenure, 0, 12)];
     }
 
-    get qol() {
-        // We'll define quality of life like a normal(50, 15) stat for income
-        // where going up one standard deviation doubles the income. At the
-        // beginning, incomes will be much more compressed (like 1.25x per SD),
-        // so production ability initially has 1/4 effect.
+    get qolFromConsumption() {
+        return 40 + Math.log2(this.perCapitaConsumption) * 15;
+    }
 
-        return this.incomeOld + 
+    get qolFromAbility() {
+        const zi = (this.intelligence - 50) / 15;
+        const zs = (this.strength - 50) / 15;
+        return zi * 3 + zs * 3;
+    }
+
+    get qol() {
+        return this.qolFromConsumption +
+            this.qolFromAbility + 
             this.interactionModifier + 
             this.festivalModifier + 
             this.techModifier +
@@ -144,29 +146,6 @@ export class Clan {
 
     get prestige() {
         return Math.round(Math.log2(this.size) * this.qol / 6) - this.seniority;
-    }
-
-    c() {
-        const c = new Clan(this.annals, this.name, this.color, this.size);
-        for (let i = 0; i < this.slices.length; ++i) {
-            c.slices[i][0] = this.slices[i][0];
-            c.slices[i][1] = this.slices[i][1];
-        }
-        c.strength = this.strength;
-        c.intelligence = this.intelligence;
-        c.settlement = this.settlement;
-        c.interactionModifier = this.interactionModifier;
-        c.festivalModifier = this.festivalModifier;
-        c.tenure = this.tenure;
-        c.lastSizeChange_ = this.lastSizeChange;
-        c.parent = this.parent;
-        c.cadets = this.cadets;
-        c.seniority = this.seniority;
-        c.traits.clear();
-        for (const trait of this.traits) c.traits.add(trait);
-        c.assessments = this.assessments.clone();
-        c.agent = this.agent.clone();
-        return c;
     }
 
     readonly slices: number[][] = [
@@ -193,8 +172,8 @@ export class Clan {
         let quality = this.qol;
         if (quality < 0) quality = 0;
         if (quality > 100) quality = 100;
-        const qbrm = 1 + (quality - 50) / 1000;
-        const qdrm = 1 + (50 - quality) / 1000;
+        const qbrm = 1 + (quality - 30) / 1000;
+        const qdrm = 1 + (30 - quality) / 1000;
 
         const births = Math.round(this.slices[1][0] * BASE_BIRTH_RATE * qbrm);
         let femaleBirths = 0;
@@ -350,6 +329,10 @@ export class Clan {
         newClan.parent = this;
         this.cadets.push(newClan);
 
+        newClan.perCapitaConsumption = this.perCapitaConsumption;
+        newClan.consumption = Math.round(this.consumption * fraction);
+        this.consumption -= newClan.consumption;
+
         this.annals.log(`Clan ${newClan.name} (${newClan.size}) split off from clan ${this.name} (${this.size})`, this.settlement);
         return newClan;
     }
@@ -399,6 +382,9 @@ export class Clans extends Array<Clan> {
     distribute() {
         for (const clan of this) { clan.consumption = 0; }
         this.pot.distribute();
+        for (const clan of this) {
+            clan.perCapitaConsumption = clan.consumption / clan.size;
+        }
     }
 
     runFestival() {

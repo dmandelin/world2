@@ -19,7 +19,8 @@
     }
 
     function r(trait: number) {
-        return `${grade(trait)} (${trait})`;
+        if (trait === undefined) return 'N/A';
+        return `${grade(trait)} (${trait.toFixed()})`;
     }
 </script>
 
@@ -49,7 +50,9 @@
             <th class="ra">Farm</th>
             <th class="ra">Prod</th>
             <th class="ra">Cons</th>
-            <th class="ra">PCC</th>
+            <th class="ra">Qc</th>
+            <th class="ra">Qa</th>
+            <th class="ra">QoL</th>
         </tr>
     </thead>
     <tbody>
@@ -61,8 +64,10 @@
                 <td class="ra">{clan.lastSizeChange}</td>
                 <td class="ra">{r(clan.productionAbility)}</td>
                 <td class="ra">{spct(clan.productivity)}</td>
-                <td class="ra">{clan.consumption.toFixed()}</td>
-                <td class="ra">{clan.perCapitaConsumption.toFixed(2)}</td>
+                <td class="ra">{spct(clan.perCapitaConsumption)}</td>
+                <td class="ra">{clan.qolFromConsumption.toFixed()}</td>
+                <td class="ra">{clan.qolFromAbility.toFixed()}</td>
+                <td class="ra">{r(clan.qol)}</td>
             </tr>
         {/each}
 </table>
