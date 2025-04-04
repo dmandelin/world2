@@ -73,7 +73,15 @@ export function clanDTO(clan: Clan) {
 
 export class ClansDTO extends Array<ClanDTO> {
     population: number;
-    pot: { contributors: number; input: number; };
+    pot: { 
+        contributors: number; 
+        input: number; 
+        output: number;
+
+        baseProductivity: number;
+        scaleFactor: number;
+        tfp: number;
+    };
 
     constructor(clans: Clans) {
         super(...clans.map(clanDTO));
@@ -81,6 +89,10 @@ export class ClansDTO extends Array<ClanDTO> {
         this.pot = {
             contributors: clans.pot.contributors,
             input: clans.pot.input,
+            output: clans.pot.output,
+            baseProductivity: clans.pot.baseProductivity,
+            scaleFactor: clans.pot.scaleFactor,
+            tfp: clans.pot.tfp,
         }
     }
 }

@@ -21,6 +21,22 @@ export class Pot {
         return this.input_;
     }
 
+    get baseProductivity() {
+        return this.contributors / this.input;
+    }
+
+    get scaleFactor() {
+        return Math.pow(this.contributors_ / 50, 1/6);
+    }
+
+    get output() {
+        return this.scaleFactor * this.input_;
+    }
+
+    get tfp() {
+        return this.baseProductivity * this.scaleFactor;
+    }
+
     clear() {
         this.contributors_ = 0;
         this.input_ = 0;

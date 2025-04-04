@@ -74,7 +74,16 @@
             <td>Base collection:</td><td>{clans.pot.input.toFixed()}</td>
         </tr>
         <tr>
-            <td>Base productivity:</td><td>{spct(clans.pot.input / clans.pot.contributors)}</td>
+            <td>Base productivity:</td><td>{spct(clans.pot.baseProductivity)}</td>
+        </tr>
+        <tr>
+            <td>Scale boost:</td><td>{spct(clans.pot.scaleFactor)}</td>
+        </tr>
+        <tr>
+            <td>TFP:</td><td>{spct(clans.pot.tfp)}</td>
+        </tr>
+        <tr>
+            <td>Output:</td><td>{clans.pot.output.toFixed()}</td>
         </tr>
     </tbody>
 </table>
