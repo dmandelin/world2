@@ -58,8 +58,9 @@ export class World {
     initialize() {
         for (const s of this.settlements) {
             const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
+            const slippage = s.clans.slippage;
             for (const clan of s.clans) {
-                clan.chooseEconomicPolicy(snapshot);
+                clan.chooseEconomicPolicy(snapshot, slippage);
             }
             s.clans.produce();
             s.clans.distribute();

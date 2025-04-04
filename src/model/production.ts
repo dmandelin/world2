@@ -39,6 +39,13 @@ export class Pot {
         return this.baseProductivity * this.scaleFactor;
     }
 
+    clone() {
+        const c = new Pot(this.receivers);
+        c.contributors_ = this.contributors_;
+        c.input_ = this.input_;
+        return c;
+    }
+
     clear() {
         this.contributors_ = 0;
         this.input_ = 0;

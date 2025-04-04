@@ -36,10 +36,15 @@
 
 <table style="margin-bottom: 1em">
     <tbody>
-        <tr><td>Keep return</td><td>{clan.economicPolicyDecision.keepReturn.toFixed()}</td></tr>
+        <tr><th>Keep return</th><th>{clan.economicPolicyDecision.keepReturn.toFixed()}</th></tr>
         <tr><td>Share self return</td><td>{clan.economicPolicyDecision.shareSelfReturn.toFixed()}</td></tr>
         <tr><td>Share others return</td><td>{clan.economicPolicyDecision.shareOthersReturn.toFixed()}</td></tr>
-        <tr><td>Share return</td><td>{clan.economicPolicyDecision.shareReturn.toFixed()}</td></tr>
+        <tr><th>Share return</th><th>{clan.economicPolicyDecision.shareReturn.toFixed()}</th></tr>
+        <tr><td>Cheat keep return</td><td>{clan.economicPolicyDecision.cheatKeepReturn.toFixed()}</td></tr>
+        <tr><td>Cheat shared return</td><td>{clan.economicPolicyDecision.cheatPotReturn.toFixed()}</td></tr>
+        <tr><td>Cheat others return</td><td>{clan.economicPolicyDecision.cheatOthersReturn.toFixed()}</td></tr>
+        <tr><th>Cheat return</th><th>{clan.economicPolicyDecision.cheatReturn.toFixed()}</th></tr>
+
     </tbody>
 </table>
 

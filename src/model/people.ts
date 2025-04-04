@@ -76,6 +76,10 @@ export type EconomicPolicyDecision = {
     shareSelfReturn: number;
     shareOthersReturn: number;
     shareReturn: number;
+    cheatPotReturn: number;
+    cheatKeepReturn: number;
+    cheatOthersReturn: number;
+    cheatReturn: number;
 };
 
 export class Clan {
@@ -111,6 +115,10 @@ export class Clan {
         shareSelfReturn: 0,
         shareOthersReturn: 0,
         shareReturn: 0,
+        cheatPotReturn: 0,
+        cheatKeepReturn: 0,
+        cheatOthersReturn: 0,
+        cheatReturn: 0,
     }
     pot = new Pot([this]);
     consumption = 0;
@@ -130,10 +138,7 @@ export class Clan {
         }
     }
 
-    chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>) {
-        // Compare inclusive return of the choices. For now, we won't allow
-        // cheating, only sharing and hoarding.
-
+    chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
         // Consumption from keeping.
         const testKeepPot = new Pot([]);
         testKeepPot.accept(this.size, this.size * this.productivity);
@@ -141,13 +146,20 @@ export class Clan {
 
         // Consumption from sharing.
         // First see what the pot is without us.
-        const testSharePot = new Pot([]);
+        const testShareBasePot = new Pot([]);
         for (const clan of policies.keys()) {
-            if (clan == this || policies.get(clan) !== EconomicPolicies.Share) continue;
-            testSharePot.accept(clan.size, clan.size * clan.productivity);
+            if (clan == this) continue;
+            const policy = policies.get(clan);
+            const input = clan.size * clan.productivity;
+            if (policy === EconomicPolicies.Share) {
+                testShareBasePot.accept(clan.size, input);
+            } else if (policy === EconomicPolicies.Cheat) {
+                testShareBasePot.accept(clan.size, input * (1 - slippage));
+            }
         }
-        const shareOthersBaseReturn = testSharePot.output;
+        const shareOthersBaseReturn = testShareBasePot.output;
         // Now add us to the pot.
+        const testSharePot = testShareBasePot.clone();
         testSharePot.accept(this.size, this.size * this.productivity);
         const shareSelfReturn = testSharePot.output * this.size / testSharePot.contributors;
         // Determine a net return to others for sharing.
@@ -155,10 +167,23 @@ export class Clan {
         // For now simply assume a small prosocial bias giving r = 0.1.
         const shareOthersReturn = 0.1 * shareOthersNetReturn;
         const shareReturn = shareSelfReturn + shareOthersReturn;
-        
-        // Choose the best policy.
-        if (shareReturn > keepReturn) {
+
+        // Consumption from cheating. Here we effectively reserve the slippage.
+        const testCheatPot = testShareBasePot.clone();
+        testCheatPot.accept(this.size, this.size * this.productivity * (1 - slippage));
+        const cheatPotReturn = testCheatPot.output * this.size / testCheatPot.contributors;
+        const cheatKeepReturn = this.size * this.productivity * slippage;
+        // Net to others for this reduced level of sharing.
+        const cheatOthersNetReturn = (testCheatPot.output - cheatPotReturn) - shareOthersBaseReturn;
+        const cheatOthersReturn = 0.1 * cheatOthersNetReturn;
+        const cheatReturn = cheatKeepReturn + cheatPotReturn + cheatOthersReturn;
+
+        // Choose the best policy. Bias a little toward sharing so the decision
+        // to stop is meaningful.
+        if (shareReturn + 2 >= keepReturn && shareReturn + 2 >= cheatReturn) {
             this.economicPolicy = EconomicPolicies.Share;
+        } else if (cheatReturn >= keepReturn && cheatReturn > shareReturn) {
+            this.economicPolicy = EconomicPolicies.Cheat;
         } else {
             this.economicPolicy = EconomicPolicies.Hoard;
         }
@@ -168,6 +193,10 @@ export class Clan {
             shareSelfReturn: shareSelfReturn,
             shareOthersReturn: shareOthersReturn,
             shareReturn: shareReturn,
+            cheatPotReturn: cheatPotReturn,
+            cheatKeepReturn: cheatKeepReturn,
+            cheatOthersReturn: cheatOthersReturn,
+            cheatReturn: cheatReturn,
         };
     }
 

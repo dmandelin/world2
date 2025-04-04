@@ -33,8 +33,9 @@ export class Clans extends Array<Clan> {
 
     advance() {
         const policySnapshot = new Map(this.map(clan => [clan, clan.economicPolicy]));
+        const slippage = this.slippage;
         for (const clan of this) {
-            clan.chooseEconomicPolicy(policySnapshot);
+            clan.chooseEconomicPolicy(policySnapshot, slippage);
         }
         this.produce();
         this.distribute();
@@ -60,6 +61,9 @@ export class Clans extends Array<Clan> {
             const input = clan.size * clan.productivity;
             if (clan.economicPolicy === EconomicPolicies.Share) {
                 this.pot.accept(clan.size, input);
+            } else if (clan.economicPolicy === EconomicPolicies.Cheat) {
+                this.pot.accept(clan.size, input * (1 - this.slippage));
+                clan.pot.accept(clan.size, input * this.slippage);
             } else {
                 clan.pot.accept(clan.size, input);
             }
