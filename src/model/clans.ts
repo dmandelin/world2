@@ -21,8 +21,8 @@ export class Clans extends Array<Clan> {
 
     // How much defection people can get away with, 0-1.
     get slippage(): number {
-        const cap = 2.2;
-        const req = Math.pow(this.population, 1/6);
+        const cap = 120;
+        const req = this.population;
         if (cap >= req) return 0.0;
         return 1 - cap / req;
     }
@@ -62,8 +62,8 @@ export class Clans extends Array<Clan> {
             if (clan.economicPolicy === EconomicPolicies.Share) {
                 this.pot.accept(clan.size, input);
             } else if (clan.economicPolicy === EconomicPolicies.Cheat) {
-                this.pot.accept(clan.size, input * (1 - this.slippage));
-                clan.pot.accept(clan.size, input * this.slippage);
+                this.pot.accept(clan.size * (1 - this.slippage), input * (1 - this.slippage));
+                clan.pot.accept(clan.size * this.slippage, input * this.slippage);
             } else {
                 clan.pot.accept(clan.size, input);
             }

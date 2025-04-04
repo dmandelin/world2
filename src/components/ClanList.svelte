@@ -83,7 +83,7 @@
 <table style="margin-bottom: 1em">
     <tbody>
         <tr>
-            <td>People:</td><td>{clans.pot.contributors}</td>
+            <td>People:</td><td>{clans.pot.contributors.toFixed()}</td>
         </tr>
         <tr>
             <td>Base collection:</td><td>{clans.pot.input.toFixed()}</td>
