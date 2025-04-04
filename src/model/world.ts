@@ -53,8 +53,14 @@ export class World {
 
     constructor() {
         this.timeline.push(new TimePoint(this));
+    }
 
+    initialize() {
         for (const s of this.settlements) {
+            const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
+            for (const clan of s.clans) {
+                clan.chooseEconomicPolicy(snapshot);
+            }
             s.clans.produce();
             s.clans.distribute();
         }
@@ -169,3 +175,4 @@ export class World {
 }
 
 export const world = new World();
+world.initialize();

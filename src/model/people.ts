@@ -71,6 +71,13 @@ export const EconomicPolicies = {
     Hoard: new EconomicPolicy('hoard', 'H'), // Contribute nothing to communal sharing pot.
 };
 
+export type EconomicPolicyDecision = {
+    keepReturn: number;
+    shareSelfReturn: number;
+    shareOthersReturn: number;
+    shareReturn: number;
+};
+
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -99,6 +106,12 @@ export class Clan {
 
     // Individual clan economy.
     economicPolicy = EconomicPolicies.Share;
+    economicPolicyDecision: EconomicPolicyDecision = {
+        keepReturn: 0,
+        shareSelfReturn: 0,
+        shareOthersReturn: 0,
+        shareReturn: 0,
+    }
     pot = new Pot([this]);
     consumption = 0;
     perCapitaConsumption = 0;
@@ -117,8 +130,45 @@ export class Clan {
         }
     }
 
-    chooseEconomicPolicy() {
+    chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>) {
+        // Compare inclusive return of the choices. For now, we won't allow
+        // cheating, only sharing and hoarding.
 
+        // Consumption from keeping.
+        const testKeepPot = new Pot([]);
+        testKeepPot.accept(this.size, this.size * this.productivity);
+        const keepReturn = testKeepPot.output;
+
+        // Consumption from sharing.
+        // First see what the pot is without us.
+        const testSharePot = new Pot([]);
+        for (const clan of policies.keys()) {
+            if (clan == this || policies.get(clan) !== EconomicPolicies.Share) continue;
+            testSharePot.accept(clan.size, clan.size * clan.productivity);
+        }
+        const shareOthersBaseReturn = testSharePot.output;
+        // Now add us to the pot.
+        testSharePot.accept(this.size, this.size * this.productivity);
+        const shareSelfReturn = testSharePot.output * this.size / testSharePot.contributors;
+        // Determine a net return to others for sharing.
+        const shareOthersNetReturn = (testSharePot.output - shareSelfReturn) - shareOthersBaseReturn;
+        // For now simply assume a small prosocial bias giving r = 0.1.
+        const shareOthersReturn = 0.1 * shareOthersNetReturn;
+        const shareReturn = shareSelfReturn + shareOthersReturn;
+        
+        // Choose the best policy.
+        if (shareReturn > keepReturn) {
+            this.economicPolicy = EconomicPolicies.Share;
+        } else {
+            this.economicPolicy = EconomicPolicies.Hoard;
+        }
+
+        this.economicPolicyDecision = {
+            keepReturn: keepReturn,
+            shareSelfReturn: shareSelfReturn,
+            shareOthersReturn: shareOthersReturn,
+            shareReturn: shareReturn,
+        };
     }
 
     get productionAbility() {
@@ -127,7 +177,6 @@ export class Clan {
 
     get productivity() {
         const z = (this.productionAbility - 50) / 15;
-        console.log(z);
         return Math.pow(1.2, z);
     }
 

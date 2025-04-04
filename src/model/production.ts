@@ -24,7 +24,7 @@ export class Pot {
     }
 
     get baseProductivity() {
-        return this.contributors / this.input;
+        return this.input / this.contributors;
     }
 
     get scaleFactor() {

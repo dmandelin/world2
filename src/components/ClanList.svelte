@@ -48,9 +48,9 @@
             <th class="ra">Size</th>
             <th class="ra">+/-</th>
             <th class="ra">Farm</th>
-            <th class="ra">Prod</th>
+            <th class="ra" colspan="2">Prod</th>
             <th class="ra">Strat</th>
-            <th class="ra">Cons</th>
+            <th class="ra" colspan="2">Cons</th>
             <th class="ra">Qc</th>
             <th class="ra">Qa</th>
             <th class="ra">QoL</th>
@@ -65,8 +65,10 @@
                 <td class="ra">{clan.lastSizeChange}</td>
                 <td class="ra">{r(clan.productionAbility)}</td>
                 <td class="ra">{spct(clan.productivity)}</td>
+                <td class="ra">{(clan.size * clan.productivity).toFixed()}</td>
                 <td class="ra">{clan.economicPolicy.c}</td>
                 <td class="ra">{spct(clan.perCapitaConsumption)}</td>
+                <td class="ra">{clan.consumption.toFixed()}</td>
                 <td class="ra">{clan.qolFromConsumption.toFixed()}</td>
                 <td class="ra">{clan.qolFromAbility.toFixed()}</td>
                 <td class="ra">{r(clan.qol)}</td>

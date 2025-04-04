@@ -1,7 +1,7 @@
 import { poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
 import { exchangeGifts, resolveDisputes } from "./interactions";
-import { Clan, PersonalityTraits } from "./people";
+import { Clan, EconomicPolicies, PersonalityTraits } from "./people";
 import { Pot } from "./production";
 
 export class Clans extends Array<Clan> {
@@ -24,8 +24,9 @@ export class Clans extends Array<Clan> {
     }
 
     advance() {
+        const policySnapshot = new Map(this.map(clan => [clan, clan.economicPolicy]));
         for (const clan of this) {
-            clan.chooseEconomicPolicy();
+            clan.chooseEconomicPolicy(policySnapshot);
         }
         this.produce();
         this.distribute();
@@ -42,15 +43,29 @@ export class Clans extends Array<Clan> {
     }
 
     produce() {
-        this.pot.clear();
         for (const clan of this) {
-            this.pot.accept(clan.size, clan.size * clan.productivity);
+            clan.pot.clear();
+        }
+        this.pot.clear();
+
+        for (const clan of this) {
+            const input = clan.size * clan.productivity;
+            if (clan.economicPolicy === EconomicPolicies.Share) {
+                this.pot.accept(clan.size, input);
+            } else {
+                clan.pot.accept(clan.size, input);
+            }
         }
     }
 
     distribute() {
         for (const clan of this) { clan.consumption = 0; }
+
+        for (const clan of this) {
+            clan.pot.distribute();
+        }
         this.pot.distribute();
+
         for (const clan of this) {
             clan.perCapitaConsumption = clan.consumption / clan.size;
         }

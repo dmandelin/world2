@@ -32,6 +32,17 @@
 </ul>
 {/if}
 
+<p><b>Economic policy decision</b></p>
+
+<table style="margin-bottom: 1em">
+    <tbody>
+        <tr><td>Keep return</td><td>{clan.economicPolicyDecision.keepReturn.toFixed()}</td></tr>
+        <tr><td>Share self return</td><td>{clan.economicPolicyDecision.shareSelfReturn.toFixed()}</td></tr>
+        <tr><td>Share others return</td><td>{clan.economicPolicyDecision.shareOthersReturn.toFixed()}</td></tr>
+        <tr><td>Share return</td><td>{clan.economicPolicyDecision.shareReturn.toFixed()}</td></tr>
+    </tbody>
+</table>
+
 <div style="display: flex">
     <div>
         Gift strategy: {clan.giftStrategy}
