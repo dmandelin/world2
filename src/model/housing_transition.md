@@ -25,7 +25,7 @@ something that depends on the social network structure.
 - a = 0.166 looks good.
 
 The basic sequence is then:
-- Clans generate subsistence
+x Clans generate subsistence
 - Clans select their move: I, C, D
   - % of shirking allowed determines impact of D, may be 0
   - Clans select their strategy based on inclusive benefit,

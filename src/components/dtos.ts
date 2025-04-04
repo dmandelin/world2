@@ -1,6 +1,6 @@
 import type { ClanAgent } from "../model/agents";
 import type { Assessments } from "../model/interactions";
-import type { Clan, Clans } from "../model/people";
+import type { Clan, Clans, EconomicPolicy } from "../model/people";
 import type { Settlement } from "../model/settlement";
 
 export type ClanDTO = {
@@ -17,6 +17,7 @@ export type ClanDTO = {
     assessments: Assessments;
     
     consumption: number;
+    economicPolicy: EconomicPolicy;
     lastSizeChange: number;
     productionAbility: number;
     productivity: number;
@@ -54,6 +55,7 @@ export function clanDTO(clan: Clan) {
         slices: clan.slices,
 
         consumption: clan.consumption,
+        economicPolicy: clan.economicPolicy,
         perCapitaConsumption: clan.perCapitaConsumption,
         lastSizeChange: clan.lastSizeChange,
         productionAbility: clan.productionAbility,

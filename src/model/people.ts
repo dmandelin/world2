@@ -59,7 +59,17 @@ export const PersonalityTraits = {
     GRINCH: new PersonalityTrait('Grinch'),
     SETTLED: new PersonalityTrait('Settled'),
     MOBILE: new PersonalityTrait('Mobile'),
+};
+
+export class EconomicPolicy {
+    constructor(readonly name: string, readonly c: string) {}
 }
+
+export const EconomicPolicies = {
+    Share: new EconomicPolicy('share', 'S'), // Contribute to communal sharing pot.
+    Cheat: new EconomicPolicy('cheat', 'C'), // Contribute minimum acceptable to communal sharing pot.
+    Hoard: new EconomicPolicy('hoard', 'H'), // Contribute nothing to communal sharing pot.
+};
 
 export class Clan {
     static minDesiredSize = 10;
@@ -88,6 +98,7 @@ export class Clan {
     assessments = new Assessments(this);
 
     // Individual clan economy.
+    economicPolicy = EconomicPolicies.Share;
     pot = new Pot([this]);
     consumption = 0;
     perCapitaConsumption = 0;
