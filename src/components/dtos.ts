@@ -16,6 +16,7 @@ export type ClanDTO = {
     agent: ClanAgent;
     assessments: Assessments;
     
+    consumption: number;
     lastSizeChange: number;
     productionAbility: number;
     productivity: number;
@@ -50,6 +51,8 @@ export function clanDTO(clan: Clan) {
         settlement: clan.settlement!,
         slices: clan.slices,
 
+        consumption: clan.consumption,
+        perCapitaConsumption: clan.consumption / (clan.size - clan.lastSizeChange),
         lastSizeChange: clan.lastSizeChange,
         productionAbility: clan.productionAbility,
         productivity: clan.productivity,

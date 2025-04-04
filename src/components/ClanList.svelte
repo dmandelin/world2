@@ -48,6 +48,8 @@
             <th class="ra">+/-</th>
             <th class="ra">Farm</th>
             <th class="ra">Prod</th>
+            <th class="ra">Cons</th>
+            <th class="ra">PCC</th>
         </tr>
     </thead>
     <tbody>
@@ -59,6 +61,8 @@
                 <td class="ra">{clan.lastSizeChange}</td>
                 <td class="ra">{r(clan.productionAbility)}</td>
                 <td class="ra">{spct(clan.productivity)}</td>
+                <td class="ra">{clan.consumption.toFixed()}</td>
+                <td class="ra">{clan.perCapitaConsumption.toFixed(2)}</td>
             </tr>
         {/each}
 </table>

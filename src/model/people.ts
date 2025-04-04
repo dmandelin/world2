@@ -89,6 +89,7 @@ export class Clan {
 
     // Individual clan economy.
     pot = new Pot([this]);
+    consumption = 0;
 
     constructor(
         readonly annals: Annals,
@@ -396,7 +397,8 @@ export class Clans extends Array<Clan> {
     }
 
     distribute() {
-        
+        for (const clan of this) { clan.consumption = 0; }
+        this.pot.distribute();
     }
 
     runFestival() {

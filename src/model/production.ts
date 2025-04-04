@@ -3,6 +3,8 @@
 // receivers.
 
 type Receiver = {
+    size: number;
+    consumption: number;
 }
 
 export class Pot {
@@ -45,5 +47,14 @@ export class Pot {
     accept(contributors: number, input: number) {
         this.contributors_ += contributors;
         this.input_ += input;
+    }
+
+    distribute() {
+        const output = this.output;
+        const total = this.receivers.reduce((acc, clan) => acc + clan.size, 0);
+        for (const clan of this.receivers) {
+            const share = output * clan.size / total;
+            clan.consumption += share;
+        }
     }
 }

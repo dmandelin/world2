@@ -52,6 +52,11 @@ export class World {
 
     constructor() {
         this.timeline.push(new TimePoint(this));
+
+        for (const s of this.settlements) {
+            s.clans.produce();
+            s.clans.distribute();
+        }
     }
 
     advance() {
