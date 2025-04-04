@@ -1,7 +1,6 @@
 <script lang="ts">
     import { rankings } from '../model/timeline';
     import { world } from '../model/world';
-    import type { Clan } from '../model/people';
     import type { Record } from '../model/annals';
     
     import ClanList from '../components/ClanList.svelte';
@@ -10,15 +9,15 @@
     import Society from '../components/Society.svelte';
     import Notables from '../components/Notables.svelte';
     import { SocietyView } from '../components/societyview';
-    import { Settlement } from '../model/settlement';
     import LocalAssessments from '../components/LocalAssessments.svelte';
-    import { clanDTO, type ClanDTO } from '../components/dtos';
+    import { clanDTO, type ClanDTO, ClansDTO } from '../components/dtos';
+    import { Clans } from '../model/people';
     
     class Data {
         year = $state('');
         totalPopulation = $state(0);
         annals = $state<Record[]>([]);
-        clans = $state<ClanDTO[]>([]);
+        clans = $state<ClansDTO>(new ClansDTO(new Clans()));
         timeline = $state<[string, number][]>([]);
         rankings = $state<LineGraphData>({ labels: [], datasets: [] });
 
@@ -34,16 +33,20 @@
         });
 
         constructor() {
-            this.update();
+            this.initialUpdate();
         }
 
-        update() {
+        initialUpdate() {
             this.year = world.year.toString();
             this.totalPopulation = world.totalPopulation;
             this.annals = [...world.annals.records];
-            this.clans = world.allClans.map(clan => clanDTO(clan));
             this.timeline = world.timeline.map((p) => [p.year.toString(), p.totalPopulation]);
             this.rankings = rankings(world);
+        }
+
+        update() {
+            this.initialUpdate();
+            this.clans = new ClansDTO(selectedSettlement.clans);
         }
     }
 
@@ -56,9 +59,12 @@
 
     let data = $state(new Data());
     let selectedSettlement = $state(world.settlements[0]);
-    let selectedClans = $derived.by(() =>
-        data.clans.filter(clan => clan.settlement === selectedSettlement)
-    );
+    $effect(() => {
+        if (selectedSettlement) {
+            data.clans = new ClansDTO(selectedSettlement.clans);
+        }
+    });
+
     let society = $derived((data.year, new SocietyView(selectedSettlement)));
 
     function click() {
@@ -132,8 +138,8 @@
                 <button onclick={click}>Advance</button>
             </div>
         </div>
-        <ClanList clans={selectedClans} bind:updateTrigger={updateTrigger} />
-        <LocalAssessments clans={selectedClans} />
+        <ClanList clans={data.clans} bind:updateTrigger={updateTrigger} />
+        <LocalAssessments clans={data.clans} />
     </div>
 </div>
 

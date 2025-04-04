@@ -63,6 +63,23 @@
         {/each}
 </table>
 
+{#if clans.pot.contributors > 0}
+<p><b>Communal sharing:</b></p>
+<table style="margin-bottom: 1em">
+    <tbody>
+        <tr>
+            <td>People:</td><td>{clans.pot.contributors}</td>
+        </tr>
+        <tr>
+            <td>Base collection:</td><td>{clans.pot.input.toFixed()}</td>
+        </tr>
+        <tr>
+            <td>Base productivity:</td><td>{spct(clans.pot.input / clans.pot.contributors)}</td>
+        </tr>
+    </tbody>
+</table>
+{/if}
+
 <table>
     <thead>
         <tr>

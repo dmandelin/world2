@@ -1,6 +1,6 @@
 import type { ClanAgent } from "../model/agents";
 import type { Assessments } from "../model/interactions";
-import type { Clan } from "../model/people";
+import type { Clan, Clans } from "../model/people";
 import type { Settlement } from "../model/settlement";
 
 export type ClanDTO = {
@@ -18,7 +18,7 @@ export type ClanDTO = {
     
     lastSizeChange: number;
     productionAbility: number;
-    productitity: number;
+    productivity: number;
     seniority: number;
     size: number;
 
@@ -69,4 +69,18 @@ export function clanDTO(clan: Clan) {
         tenureModifier: clan.tenureModifier,
         traits: [...clan.traits].map(t => t.name),
     };
+}
+
+export class ClansDTO extends Array<ClanDTO> {
+    population: number;
+    pot: { contributors: number; input: number; };
+
+    constructor(clans: Clans) {
+        super(...clans.map(clanDTO));
+        this.population = clans.population;
+        this.pot = {
+            contributors: clans.pot.contributors,
+            input: clans.pot.input,
+        }
+    }
 }

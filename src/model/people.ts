@@ -4,6 +4,7 @@ import { clamp, remove } from "./basics";
 import { normal, poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
 import { Assessments, exchangeGifts, resolveDisputes } from "./interactions";
+import { Pot } from "./production";
 import type { Settlement } from "./settlement";
 
 // Per 20-year turn, for childbearing-age women.
@@ -85,6 +86,9 @@ export class Clan {
     // Agent for the clan. This is used to determine how the clan interacts.
     agent = new ClanAgent(this);
     assessments = new Assessments(this);
+
+    // Individual clan economy.
+    pot = new Pot([this]);
 
     constructor(
         readonly annals: Annals,
@@ -353,6 +357,9 @@ export class Clan {
 export class Clans extends Array<Clan> {
     festival: Festival = new Festival(this);
 
+    // Communal sharing economy.
+    pot = new Pot(this);
+
     constructor(...clans: Clan[]) {
       super(...clans);
       this.sort((a, b) => b.prestige - a.prestige);
@@ -367,6 +374,9 @@ export class Clans extends Array<Clan> {
     }
 
     advance() {
+        this.produce();
+        this.distribute();
+
         this.runFestival();
         this.interact();
         this.marry();
@@ -376,6 +386,17 @@ export class Clans extends Array<Clan> {
         this.prune()
 
         this.sort((a, b) => b.prestige - a.prestige);
+    }
+
+    produce() {
+        this.pot.clear();
+        for (const clan of this) {
+            this.pot.accept(clan.size, clan.size * clan.productivity);
+        }
+    }
+
+    distribute() {
+        
     }
 
     runFestival() {
