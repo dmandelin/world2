@@ -168,21 +168,20 @@ export class Clan {
         const shareOthersReturn = 0.1 * shareOthersNetReturn;
         const shareReturn = shareSelfReturn + shareOthersReturn;
 
-        // Consumption from cheating. Here we effectively reserve the slippage.
+        // Consumption from cheating.
         const testCheatPot = testShareBasePot.clone();
         testCheatPot.accept(this.size, this.size * this.productivity * (1 - slippage));
         const cheatPotReturn = testCheatPot.output * this.size / testCheatPot.contributors;
-        const cheatKeepReturn = this.size * this.productivity * slippage;
+        const cheatKeepReturn = this.size * this.productivity * slippage * 0.5;
         // Net to others for this reduced level of sharing.
         const cheatOthersNetReturn = (testCheatPot.output - cheatPotReturn) - shareOthersBaseReturn;
         const cheatOthersReturn = 0.1 * cheatOthersNetReturn;
         const cheatReturn = cheatKeepReturn + cheatPotReturn + cheatOthersReturn;
 
-        // Choose the best policy. Bias a little toward sharing so the decision
-        // to stop is meaningful.
-        if (shareReturn + 2 >= keepReturn && shareReturn + 2 >= cheatReturn) {
+        // Choose the best policy.
+        if (shareReturn > keepReturn && shareReturn >= cheatReturn) {
             this.economicPolicy = EconomicPolicies.Share;
-        } else if (cheatReturn >= keepReturn && cheatReturn > shareReturn) {
+        } else if (cheatReturn > keepReturn && cheatReturn > shareReturn) {
             this.economicPolicy = EconomicPolicies.Cheat;
         } else {
             this.economicPolicy = EconomicPolicies.Hoard;
@@ -425,6 +424,9 @@ export class Clan {
         newClan.perCapitaConsumption = this.perCapitaConsumption;
         newClan.consumption = Math.round(this.consumption * fraction);
         this.consumption -= newClan.consumption;
+
+        newClan.economicPolicy = this.economicPolicy;
+        newClan.economicPolicyDecision = this.economicPolicyDecision;
 
         this.annals.log(`Clan ${newClan.name} (${newClan.size}) split off from clan ${this.name} (${this.size})`, this.settlement);
         return newClan;

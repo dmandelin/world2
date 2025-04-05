@@ -63,7 +63,9 @@ export class Clans extends Array<Clan> {
                 this.pot.accept(clan.size, input);
             } else if (clan.economicPolicy === EconomicPolicies.Cheat) {
                 this.pot.accept(clan.size * (1 - this.slippage), input * (1 - this.slippage));
-                clan.pot.accept(clan.size * this.slippage, input * this.slippage);
+                // The idea is that we work less by the slippage, but gain some
+                // benefit in increased leisure.
+                clan.pot.accept(clan.size * this.slippage, input * this.slippage * 0.5);
             } else {
                 clan.pot.accept(clan.size, input);
             }
