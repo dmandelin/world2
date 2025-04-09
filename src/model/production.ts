@@ -5,6 +5,9 @@
 type Receiver = {
     size: number;
     consumption: number;
+
+    consumptionFromCommons: number;
+    shareOfCommons: number;
 }
 
 export class Pot {
@@ -60,8 +63,11 @@ export class Pot {
         const output = this.output;
         const total = this.receivers.reduce((acc, clan) => acc + clan.size, 0);
         for (const clan of this.receivers) {
-            const share = output * clan.size / total;
-            clan.consumption += share;
+            const share = clan.size / total;
+            const outputShare = output * share;
+            clan.shareOfCommons = share;
+            clan.consumptionFromCommons = outputShare;
+            clan.consumption += outputShare;
         }
     }
 }

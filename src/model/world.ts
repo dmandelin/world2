@@ -64,12 +64,22 @@ export class World {
             }
             s.clans.produce();
             s.clans.distribute();
+
+            for (const clan of s.clans) {
+                clan.assessments.update();
+            }
         }
     }
 
     advance() {
-        for (const s of this.settlements) 
+        for (const s of this.settlements) {
             s.advance();
+        }
+        for (const s of this.settlements) {
+            for (const clan of s.clans) {
+                clan.assessments.update();
+            }
+        }
         this.emigrate();
         this.rank();
 

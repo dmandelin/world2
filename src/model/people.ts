@@ -124,6 +124,9 @@ export class Clan {
     consumption = 0;
     perCapitaConsumption = 0;
 
+    consumptionFromCommons = 0;
+    shareOfCommons = 0;
+
     constructor(
         readonly annals: Annals,
         public name: string,

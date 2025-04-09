@@ -28,9 +28,7 @@ export function exchangeGifts(c: Clan, d: Clan) {
     const [cPayoff, dPayoff] = giftPayoffs[key];
 
     c.interactionModifier += cPayoff;
-    c.assessments.updateForGiftStrategy(d, ds, cPayoff, dPayoff);
     d.interactionModifier += dPayoff;
-    d.assessments.updateForGiftStrategy(c, cs, dPayoff, cPayoff);
 }
 
 export function resolveDisputes(c: Clan, d: Clan) {

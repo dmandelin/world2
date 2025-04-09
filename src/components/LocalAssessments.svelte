@@ -21,7 +21,7 @@
             {#if c === d}
             -
             {:else}
-            {c.assessments.get(d.ref)}/{c.agent.getLastGiftStrategy(d)}
+            {(c.assessments.alignment(d.ref) * 100).toFixed()}
             {/if}
         </td>
     {/each}
