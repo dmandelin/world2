@@ -3,7 +3,7 @@ import { Annals } from "./annals";
 import { clamp, remove } from "./basics";
 import type { Clans } from "./clans";
 import { normal } from "./distributions";
-import { Assessments } from "./interactions";
+import { Assessments } from "./agents";
 import { Pot } from "./production";
 import type { Settlement } from "./settlement";
 
