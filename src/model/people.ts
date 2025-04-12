@@ -150,7 +150,7 @@ export class Clan {
 
         if (this.parent?.parent === other) return rStep * rStep;
         if (other.parent?.parent === this) return rStep * rStep;
-        if (this.parent === other.parent) return rStep * rStep;
+        if (this.parent === other.parent && this.parent !== undefined) return rStep * rStep;
 
         return 0.01;
     }

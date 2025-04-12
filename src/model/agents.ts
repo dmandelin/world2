@@ -27,7 +27,7 @@ export class ClanAgent {
 }
 
 export class Assessment {
-    readonly rFamily: number;
+    rFamily: number;
     rSharedCommons: number = 0;
     rScale: number = 0;
 
@@ -65,9 +65,17 @@ export class Assessment {
         }
         return this.rResidence == 0.0;
     }
+
+    clone() {
+        const clone = new Assessment(this.subject, this.target, this.rResidence, this.rBlowup);
+        clone.rFamily = this.rFamily;
+        clone.rSharedCommons = this.rSharedCommons;
+        clone.rScale = this.rScale;
+        return clone;
+    }
 }
 
-export class Assessments {
+export class Assessments implements Iterable<Assessment> {
     constructor(readonly clan: Clan) {}
 
     private readonly map_ = new Map<Clan, Assessment>();
@@ -160,8 +168,12 @@ export class Assessments {
     clone(): Assessments {
         const clone = new Assessments(this.clan);
         for (const [clan, a] of this.map_) {
-            clone.map_.set(clan, a);
+            clone.map_.set(clan, a.clone());
         }
         return clone;
+    }
+
+    [Symbol.iterator](): Iterator<Assessment> {
+        return this.map_.values();
     }
 }

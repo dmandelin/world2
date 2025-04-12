@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { rpct } from "../model/format";
     import { GiftStrategy } from "../model/interactions";
     import PopulationPyramid from "./PopulationPyramid.svelte";
 
@@ -17,6 +18,14 @@
         width: 120px;
         height: 24px;
     }
+
+    .la {
+        text-align: left;
+    }
+
+    .ra {
+        text-align: right;
+    }
 </style>
 
 {#if clan !== undefined}
@@ -32,7 +41,7 @@
 </ul>
 {/if}
 
-<p><b>Economic policy decision</b></p>
+<h4>Economic policy decision</h4>
 
 <table style="margin-bottom: 1em">
     <tbody>
@@ -45,6 +54,61 @@
         <tr><td>Cheat others return</td><td>{clan.economicPolicyDecision.cheatOthersReturn.toFixed()}</td></tr>
         <tr><th>Cheat return</th><th>{clan.economicPolicyDecision.cheatReturn.toFixed()}</th></tr>
 
+    </tbody>
+</table>
+
+<h4>Relationships</h4>
+
+<table style="margin-bottom: 1em">
+    <tbody>
+        <tr>
+            <th></th>
+            {#each clan.assessments as a}
+            <th class="ra">{a.target.name}</th>
+            {/each}
+        </tr>
+
+        <tr>
+            <th class="la">Kinship</th>
+            {#each clan.assessments as a}
+            <td class="ra">{rpct(a.rFamily)}</td>
+            {/each}
+        </tr>
+
+        <tr>
+            <th class="la">Proximity</th>
+            {#each clan.assessments as a}
+            <td class="ra">{rpct(a.rResidence)}</td>
+            {/each}
+        </tr>
+
+        <tr>
+            <th class="la">Sharing</th>
+            {#each clan.assessments as a}
+            <td class="ra">{rpct(a.rResidence)}</td>
+            {/each}
+        </tr>
+
+        <tr>
+            <th class="la">Scale</th>
+            {#each clan.assessments as a}
+            <td class="ra">{rpct(a.rScale)}</td>
+            {/each}
+        </tr>
+
+        <tr>
+            <th class="la">Overpopulation</th>
+            {#each clan.assessments as a}
+            <td class="ra">{rpct(a.rBlowup)}</td>
+            {/each}
+        </tr>
+
+        <tr>
+            <th class="la">Relatedness</th>
+            {#each clan.assessments as a}
+            <th class="ra">{rpct(a.r)}</th>
+            {/each}
+        </tr>
     </tbody>
 </table>
 
