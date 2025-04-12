@@ -141,6 +141,20 @@ export class Clan {
         }
     }
 
+    kinshipTo(other: Clan): number {
+        const rStep = 0.25;
+        if (this === other) return 1;
+
+        if (this.parent === other) return rStep;
+        if (other.parent === this) return rStep;
+
+        if (this.parent?.parent === other) return rStep * rStep;
+        if (other.parent?.parent === this) return rStep * rStep;
+        if (this.parent === other.parent) return rStep * rStep;
+
+        return 0.01;
+    }
+
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
         // Consumption from keeping.
         const testKeepPot = new Pot([]);
