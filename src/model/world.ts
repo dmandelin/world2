@@ -1,3 +1,4 @@
+import { WorldDTO } from "../components/dtos";
 import { Annals } from "./annals";
 import { chooseFrom, maxby, maxbyWithValue, minby, shuffled } from "./basics";
 import { Clans } from "./clans";
@@ -50,6 +51,8 @@ export class World {
     ]);
 
     readonly watchers = new Set<(world: World) => void>();
+
+    dto = new WorldDTO(this);
 
     constructor() {
         this.timeline.push(new TimePoint(this));
@@ -180,6 +183,8 @@ export class World {
     }
 
     notify() {
+        this.dto = new WorldDTO(this);
+
         for (const watcher of this.watchers) 
             watcher(this);
     }

@@ -2,6 +2,7 @@ import type { Assessments, ClanAgent } from "../model/agents";
 import type { Clans } from "../model/clans";
 import type { Clan, EconomicPolicy, EconomicPolicyDecision } from "../model/people";
 import type { Settlement } from "../model/settlement";
+import type { World } from "../model/world";
 
 export type ClanDTO = {
     ref: Clan,
@@ -108,5 +109,35 @@ export class ClansDTO extends Array<ClanDTO> {
             scaleFactor: clans.pot.scaleFactor,
             tfp: clans.pot.tfp,
         }
+    }
+}
+
+export class SettlementDTO {
+    readonly name: string;
+    readonly size: number;
+    readonly lastSizeChange: number;
+
+    readonly clans: ClansDTO;
+
+    constructor(settlement: Settlement) {
+        this.name = settlement.name;
+        this.size = settlement.size;
+        this.lastSizeChange = settlement.lastSizeChange;
+
+        this.clans = new ClansDTO(settlement.clans);
+    }
+}
+
+export class WorldDTO {
+    readonly year: string;
+    readonly settlements: SettlementDTO[];
+
+    constructor(private readonly world: World) {
+        this.year = this.world.year.toString();
+        this.settlements = this.world.settlements.map(s => new SettlementDTO(s));
+    }
+
+    advance() {
+        this.world.advance();
     }
 }

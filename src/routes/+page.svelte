@@ -2,9 +2,19 @@
     import Land from '../components/Land.svelte';
     import Map from '../components/Map.svelte';
     import Settlement from '../components/Settlement.svelte';
-    import { world } from '../model/world';
+    import Sidebar from '../components/Sidebar.svelte';
+    import { world as _world } from '../model/world';
 
-    let selectedSettlement = $state(world.settlements[0]);
+    let world = $state(_world.dto);
+    let _selectedSettlement = $state(_world.settlements[0]);
+    let selectedSettlement = $derived.by(() => 
+        _selectedSettlement
+            ? world.settlements.find(s => s.name === _selectedSettlement.name) || undefined
+            : undefined);
+
+    _world.watch(() => {
+        world = _world.dto;
+    });
 </script>
 
 <style>
@@ -16,10 +26,11 @@
 </style>
 
 <div style="display: flex;">
-    <Map bind:selection={selectedSettlement} />
+    <Map bind:selection={_selectedSettlement} />
     {#if selectedSettlement}
     <Settlement settlement={selectedSettlement} />
     {:else}
     <Land world={world}/>
     {/if}
+    <Sidebar world={world} />
 </div>
