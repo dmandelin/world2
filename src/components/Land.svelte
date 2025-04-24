@@ -8,6 +8,11 @@
     }
 </style>
 
+<script>
+    let { world } = $props();
+</script>
+
 <div id="top">
 <h1>𒌦 &centerdot; The Land</h1>
+<h3>{world.totalPopulation} people</h3>
 </div>

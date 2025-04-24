@@ -3,7 +3,7 @@
     import Map from '../components/Map.svelte';
     import { world } from '../model/world';
 
-    let selectedSettlement = $state(world.settlements[0]);
+    let selectedSettlement = $state(undefined);
 </script>
 
 <style>
@@ -19,6 +19,6 @@
     {#if selectedSettlement}
     <div>{selectedSettlement?.name}</div>
     {:else}
-    <Land />
+    <Land world={world}/>
     {/if}
 </div>
