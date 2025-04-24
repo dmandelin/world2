@@ -76,6 +76,7 @@
 <style>
     :global(body) {
         font-family: Arial, sans-serif;
+        background-color: #f9f6eb;
     }
 
     .mapRow {

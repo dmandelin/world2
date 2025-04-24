@@ -165,6 +165,7 @@
 <style>
     canvas {
         display: block;
+        border: 4px solid #62531d;
     }
 </style>
 
