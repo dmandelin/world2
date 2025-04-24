@@ -1,4 +1,6 @@
 <script>
+    import { spct } from "../model/format";
+
     let { clan } = $props();
 </script>
 
@@ -12,6 +14,10 @@
 
     table {
         width: 120px;
+    }
+
+    td:not(first-child) {
+        text-align: right;
     }
 </style>
 
@@ -27,9 +33,19 @@
                 <td>({clan.lastSizeChange})</td>
             </tr>
             <tr>
-                <td>QoL</td>
-                <td>{clan.qol.toFixed()}</td>
+                <td>Prod</td>
                 <td></td>
+                <td>{spct(clan.productivity)}</td>
+            </tr>
+            <tr>
+                <td>Cons</td>
+                <td></td>
+                <td>{spct(clan.perCapitaConsumption)}</td>
+            </tr>
+            <tr>
+                <td>QoL</td>
+                <td></td>
+                <td>{clan.qol.toFixed()}</td>
             </tr>
         </tbody>
     </table>
