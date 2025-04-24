@@ -1,9 +1,10 @@
 <script>
     import Land from '../components/Land.svelte';
     import Map from '../components/Map.svelte';
+    import Settlement from '../components/Settlement.svelte';
     import { world } from '../model/world';
 
-    let selectedSettlement = $state(undefined);
+    let selectedSettlement = $state(world.settlements[0]);
 </script>
 
 <style>
@@ -17,7 +18,7 @@
 <div style="display: flex;">
     <Map bind:selection={selectedSettlement} />
     {#if selectedSettlement}
-    <div>{selectedSettlement?.name}</div>
+    <Settlement settlement={selectedSettlement} />
     {:else}
     <Land world={world}/>
     {/if}
