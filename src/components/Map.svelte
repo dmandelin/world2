@@ -29,6 +29,8 @@
         if (best) {
             console.log('select', best.name, event);
             selection = best;
+        } else {
+            selection = undefined;
         }
     }
 
