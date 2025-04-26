@@ -29,3 +29,9 @@ export function wg(trait: number) {
   if (trait === undefined) return 'N/A';
   return `${trait.toFixed()} (${grade(trait)})`;
 }
+
+export function npl(n: number, s: string) {
+  if (n === 0) return `no ${s}s`;
+  if (n === 1) return `${n} ${s}`;
+  return `${n} ${s}s`;
+}

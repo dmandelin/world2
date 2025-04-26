@@ -1,5 +1,5 @@
 <script>
-    import { spct, wg } from "../model/format";
+    import { npl, spct, wg } from "../model/format";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
@@ -27,6 +27,17 @@
         <tbody>
             <tr>
                 <td colspan="3" style:color={clan.color} style:font-weight="bold" style:text-align="center">{clan.name}</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">{npl(clan.cadets.length, 'cadet')}</td>
+            </tr>
+            <tr>
+                <td>Seniority</td>
+                <td></td>
+                <td>{String.fromCharCode(65 + clan.seniority)}</td>
             </tr>
             <tr>
                 <td>People</td>
