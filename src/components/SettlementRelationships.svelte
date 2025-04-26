@@ -1,4 +1,5 @@
 <script lang="ts">
+    import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { settlement } = $props();
@@ -36,17 +37,7 @@
                 <Tooltip>
                     {(c.assessments.alignment(d.ref) * 100).toFixed()}
                     <div slot="tooltip">
-                        <table>
-                            <tbody>
-                                {#each c.assessments.get(d.ref).asTable as row}
-                                <tr>
-                                    {#each row as cell}
-                                    <td>{cell}</td>
-                                    {/each}
-                                </tr>
-                                {/each}
-                            </tbody>
-                        </table>
+                        <DataTable rows={c.assessments.get(d.ref).asTable} />
                     </div>
                 </Tooltip>
                 {/if}

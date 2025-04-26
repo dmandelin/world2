@@ -1,5 +1,7 @@
 import type { Assessments, ClanAgent } from "../model/agents";
+import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/basics";
 import type { Clans } from "../model/clans";
+import { pct } from "../model/format";
 import type { Clan, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people";
 import type { Settlement } from "../model/settlement";
 import type { World } from "../model/world";
@@ -141,6 +143,47 @@ export class WorldDTO {
 
     get population() {
         return this.settlements.reduce((acc, s) => acc + s.size, 0);
+    }
+
+    get consumption() {
+        const totalConsumption = this.settlements.reduce((acc, s) => acc + s.clans.reduce((acc, clan) => acc + clan.consumption, 0), 0);
+        return totalConsumption / this.population;
+    }
+
+    get qol() {
+        const totalQol = this.settlements.reduce((acc, s) => acc + s.clans.reduce((acc, clan) => acc + clan.qol * clan.size, 0), 0);
+        return totalQol / this.population;
+    }
+
+    get stats() {
+        return [
+            ['Productivity', pct(this.consumption)],
+            ['Quality of life', this.qol.toFixed()],
+        ];
+    }
+
+    *clans() {
+        for (const settlement of this.settlements) {
+            for (const clan of settlement.clans) {
+                yield clan;
+            }
+        }
+    }
+
+    get notableClans() {
+        const items: [string, OptByWithValue<ClanDTO>, (clan: ClanDTO) => number, (n: number) => string][] = [
+            ['Biggest', maxbyWithValue, clan => clan.size, n => n.toFixed()],
+            ['Smallest', minbyWithValue,  clan => clan.size, n => n.toFixed()],
+            ['Most productive', maxbyWithValue, clan => clan.productivity, pct],
+            ['Least productive', minbyWithValue, clan => clan.productivity, pct],
+            ['Highest QoL', maxbyWithValue, clan => clan.qol, n => n.toFixed()],
+            ['Lowest QoL', minbyWithValue, clan => clan.qol, n => n.toFixed()],
+        ]
+        const clans = [...this.clans()];
+        return items.map(([name, opt, key, fmt]) => {
+            const [clan, value] = opt(clans, key);
+            return [name, `${clan.name} of ${clan.settlement!.name}`, fmt(value)];
+        });
     }
 
     advance() {
