@@ -169,6 +169,28 @@ export class Clan {
         return 0.01;
     }
 
+    get benevolence() {
+        let r = 0;
+        let n = 0;
+        for (const clan of this.settlement?.clans ?? []) {
+            if (clan === this) continue;
+            r += this.assessments.alignment(clan) * clan.size;
+            n += clan.size;
+        }
+        return r / n;
+    }
+
+    get reputation() {
+        let r = 0;
+        let n = 0;
+        for (const clan of this.settlement?.clans ?? []) {
+            if (clan === this) continue;
+            r += clan.assessments.alignment(this) * clan.size;
+            n += clan.size;
+        }
+        return r / n;
+    }
+
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
         // Consumption from keeping.
         const testKeepPot = new Pot([]);

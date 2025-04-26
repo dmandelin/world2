@@ -18,6 +18,8 @@ export type ClanDTO = {
 
     agent: ClanAgent;
     assessments: Assessments;
+    benevolence: number;
+    reputation: number;
     
     consumption: number;
     economicPolicy: EconomicPolicy;
@@ -54,6 +56,8 @@ export function clanDTO(clan: Clan) {
 
         agent: clan.agent.clone(),
         assessments: clan.assessments.clone(),
+        benevolence: clan.benevolence,
+        reputation: clan.reputation,
 
         cadets: clan.cadets,
         parent: clan.parent,
@@ -180,6 +184,11 @@ export class WorldDTO {
             ['Least productive', minbyWithValue, clan => clan.productivity, pct],
             ['Highest QoL', maxbyWithValue, clan => clan.qol, n => n.toFixed()],
             ['Lowest QoL', minbyWithValue, clan => clan.qol, n => n.toFixed()],
+            ['Most benevolent', maxbyWithValue, clan => clan.benevolence, n => (100*n).toFixed()],
+            ['Least benevolent', minbyWithValue, clan => clan.benevolence, n => (100*n).toFixed()],
+            ['Best reputation', maxbyWithValue, clan => clan.reputation, n => (100*n).toFixed()],
+            ['Worst reputation', minbyWithValue, clan => clan.reputation, n => (100*n).toFixed()],
+
         ]
         const clans = [...this.clans()];
         return items.map(([name, opt, key, fmt]) => {

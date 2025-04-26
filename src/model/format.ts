@@ -13,14 +13,12 @@ export function spct(x: number, places: number = 0): string {
 
 export function grade(t: number) {
   switch (true) {
-      case t > 98: return 'S';
-      case t > 90: return 'A';
-      case t > 70: return 'B';
-      case t > 60: return 'C+';
-      case t > 40: return 'C';
-      case t > 30: return 'C-';
-      case t > 10: return 'D';
-      case t >  2: return 'E';
+      case t > 87.5: return 'S';
+      case t > 72.5: return 'A';
+      case t > 57.5: return 'B';
+      case t > 42.5: return 'C';
+      case t > 27.5: return 'D';
+      case t > 12.5: return 'E';
       default: return 'F';
   }
 }

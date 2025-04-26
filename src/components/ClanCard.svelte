@@ -41,6 +41,16 @@
                 <td>{String.fromCharCode(65 + clan.seniority)}</td>
             </tr>
             <tr>
+                <td>Benevolence</td>
+                <td></td>
+                <td>{(100 * clan.benevolence).toFixed()}</td>
+            </tr>
+            <tr>
+                <td>Reputation</td>
+                <td></td>
+                <td>{(100 * clan.reputation).toFixed()}</td>
+            </tr>
+            <tr>
                 <td>People</td>
                 <td>{clan.size}</td>
                 <td>({clan.lastSizeChange})</td>
