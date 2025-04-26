@@ -209,15 +209,25 @@ export class Clan {
         const cheatOthersReturn = 0.1 * cheatOthersNetReturn;
         const cheatReturn = cheatKeepReturn + cheatPotReturn + cheatOthersReturn;
 
-        // Choose the best policy.
-        if (shareReturn > keepReturn && shareReturn >= cheatReturn) {
-            this.economicPolicy = EconomicPolicies.Share;
-        } else if (cheatReturn > keepReturn && cheatReturn > shareReturn) {
-            this.economicPolicy = EconomicPolicies.Cheat;
-        } else {
-            this.economicPolicy = EconomicPolicies.Hoard;
-        }
+        // Determine the best policy, but require a little extra for selfish policies,
+        // because we don't want a clan to switch to hoarding over a 0.1% difference.
+        // Once they're there, though, they can stay there as long as there's any benefit.
+        let returns: [EconomicPolicy, number][] = [
+            [EconomicPolicies.Share, shareReturn],
+            [EconomicPolicies.Cheat, cheatReturn],
+            [EconomicPolicies.Hoard, keepReturn],
+        ];
+        returns.sort((a, b) => b[1] - a[1]);
+        const [bestPolicy, bestReturn] = returns[0];
+        const [curPolicy, curReturn] = returns.find(([p, r]) => p === this.economicPolicy) ?? [this.economicPolicy, 0];
 
+        if (bestPolicy !== curPolicy) {
+            let frictionFactor = curPolicy === EconomicPolicies.Share ? 0.1 : 0.02;
+            if (bestReturn - curReturn >= frictionFactor * bestReturn) {
+                this.economicPolicy = bestPolicy;
+            }
+        }
+        
         this.economicPolicyDecision = {
             keepReturn: keepReturn,
             shareSelfReturn: shareSelfReturn,
