@@ -1,9 +1,23 @@
 <script>
     import ClanCard from "./ClanCard.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
+    import TabbedView from "./TabbedView.svelte";
 
     let { settlement } = $props();
+
+    const tabs = [
+        { label: "Production", snippet: economyTab },
+        { label: "Relationships", snippet: relationshipsTab }
+    ];
 </script>
+
+{#snippet economyTab()}
+    <SettlementEconomy settlement={settlement} />
+{/snippet}
+
+{#snippet relationshipsTab()}
+RELATIONSHIPS
+{/snippet}
 
 <style>
     #top {
@@ -30,5 +44,5 @@
     {/each}
 </div>
 
-<SettlementEconomy settlement={settlement} />
+<TabbedView tabs={tabs} />
 </div>

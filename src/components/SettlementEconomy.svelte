@@ -1,6 +1,7 @@
 <script lang="ts">
     import { spct } from "../model/format";
     import ClanProductionCard from "./ClanProductionCard.svelte";
+    import Tabs from "./TabbedView.svelte";
 
     let { settlement } = $props();
 </script>
