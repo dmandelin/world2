@@ -32,5 +32,5 @@
     {:else}
     <Land world={world}/>
     {/if}
-    <Sidebar world={world} />
 </div>
+<Sidebar world={world} />
