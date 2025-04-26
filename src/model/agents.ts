@@ -119,28 +119,23 @@ export class Assessments implements Iterable<Assessment> {
             if (!a) this.map_.set(clan, a = new Assessment(this.clan, clan));
 
             a.updateResidenceToward(one_over_n);
-            this.updateAlignmentForSharedCommons(a);
+            this.updateAlignmentForSharedCommons(a, clan);
             this.updateAlignmentForScaleEffects(a);
             this.updateEffect(a);
         }
     }
 
-    private updateAlignmentForSharedCommons(a: Assessment) {
-        // Update for usage of shared commons.
-        const baseta = this.clan.shareOfCommons * (this.clan.consumptionFromCommons / this.clan.consumption);
-        let ta;
-        switch (a.target.economicPolicy) {
-            case EconomicPolicies.Share:
-                ta = baseta;
-                break;
-            case EconomicPolicies.Cheat:
-                ta = baseta * (1 - a.target.settlement!.clans.slippage);
-                break;
-            default:
-                ta = 0;
-                break;
-        }
-        a.updateSharedCommonsToward(ta);
+    private updateAlignmentForSharedCommons(a: Assessment, target: Clan) {
+        a.updateSharedCommonsToward(this.getTargetAlignmentForSharedCommons(a, target));
+    }
+        
+    private getTargetAlignmentForSharedCommons(a: Assessment, target: Clan) {
+        // The idea is, what happens if we help the target clan produce
+        // something instead of ourselves? Their commmon fraction of
+        // production will go back into the pot, and we'll get our share.
+        const commonBack = target.economicReport.commonFraction * target.productivity;
+        const ourShare = this.clan.size / this.clan.settlement!.size;
+        return commonBack * ourShare;
     }
 
     private updateAlignmentForScaleEffects(a: Assessment) {
