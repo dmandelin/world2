@@ -1,12 +1,9 @@
 <script lang="ts">
     import { spct } from "../model/format";
     import ClanProductionCard from "./ClanProductionCard.svelte";
-    import Tabs from "./TabbedView.svelte";
 
     let { settlement } = $props();
 </script>
-
-<h4 style="text-align: center;">Production</h4>
 
 <div style="display: flex; gap: 0.5rem;">
     {#each settlement.clans as clan}

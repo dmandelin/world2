@@ -48,6 +48,17 @@ export class Assessment {
         return r;
     }
 
+    get asTable() {
+        const data: [string, number][] = [
+            ['Kinship', this.rFamily],
+            ['Neighborliness', this.rResidence],
+            ['Shared Commons', this.rSharedCommons],
+            ['Growth Interest', this.rScale],
+            ['Overall', this.r],
+        ];
+        return data.map(([k, v]) => [k, (v * 100).toFixed()]);
+    }
+
     updateResidenceToward(rTarget: number) {
         this.rResidence = this.rResidence * 0.5 + rTarget * 0.5;
     }
@@ -157,6 +168,10 @@ export class Assessments implements Iterable<Assessment> {
         // Effect is related to size and disposable income
         // of partner. 
         // TODO - fill this out
+    }
+
+    get(clan: Clan): Assessment | undefined {
+        return this.map_.get(clan);
     }
 
     alignment(clan: Clan): number {

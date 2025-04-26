@@ -1,6 +1,7 @@
 <script>
     import ClanCard from "./ClanCard.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
+    import SettlementRelationships from "./SettlementRelationships.svelte";
     import TabbedView from "./TabbedView.svelte";
 
     let { settlement } = $props();
@@ -16,7 +17,7 @@
 {/snippet}
 
 {#snippet relationshipsTab()}
-RELATIONSHIPS
+    <SettlementRelationships settlement={settlement} />
 {/snippet}
 
 <style>
