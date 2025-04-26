@@ -22,13 +22,14 @@
     bottom: 125%;
     left: 50%;
     transform: translateX(-50%);
-    background: black;
-    color: white;
     padding: 6px 12px;
+    background-color: #f9f6eb;
     border-radius: 4px;
     white-space: nowrap;
-    opacity: 0.9;
+    opacity: 0.95;
     z-index: 10;
+    border: 2px solid #62531d;
+    border-radius: 2px;
   }
   </style>
   

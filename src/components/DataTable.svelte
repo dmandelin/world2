@@ -9,9 +9,15 @@
     }
 
     td {
-        padding: 0.5em;
-        text-align: center;
-        border: 1px solid #ccc;
+        padding: 0.1em 0.5em;
+    }
+
+    td:first-child {
+        text-align: left;
+    }
+
+    td:not(:first-child) {
+        text-align: right;
     }
 </style>
 

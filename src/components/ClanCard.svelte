@@ -1,5 +1,6 @@
 <script>
     import { npl, spct, wg } from "../model/format";
+    import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
@@ -80,7 +81,14 @@
             <tr>
                 <td>QoL</td>
                 <td></td>
-                <td>{clan.qol.toFixed()}</td>
+                <td>
+                    <Tooltip>
+                        {clan.qol.toFixed()}
+                        <div slot="tooltip">
+                            <DataTable rows={clan.qolTable} />
+                        </div>
+                    </Tooltip>
+                </td>
             </tr>
         </tbody>
     </table>

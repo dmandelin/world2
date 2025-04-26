@@ -227,7 +227,7 @@ export class Clan {
                 this.economicPolicy = bestPolicy;
             }
         }
-        
+
         this.economicPolicyDecision = {
             keepReturn: keepReturn,
             shareSelfReturn: shareSelfReturn,
@@ -275,6 +275,19 @@ export class Clan {
             this.techModifier +
             this.tenureModifier +
             (this.settlement?.populationPressureModifier || 0);
+    }
+
+    get qolTable() {
+        return [
+            ['Ability', this.qolFromAbility.toFixed(1) ],
+            ['Consumption', this.qolFromConsumption.toFixed(1) ],
+            ['Interaction', this.interactionModifier.toFixed(1) ],
+            ['Festival', this.festivalModifier.toFixed(1) ],
+            ['Tenure', this.tenureModifier.toFixed(1) ],
+            ['Tech', this.techModifier.toFixed(1) ],
+            ['Crowding', (this.settlement?.populationPressureModifier || 0).toFixed(1)],
+            ['Total', this.qol.toFixed(1)],
+        ];
     }
 
     get prestige() {

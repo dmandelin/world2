@@ -31,6 +31,7 @@ export type ClanDTO = {
 
     qolFromAbility: number;
     qolFromConsumption: number;
+    qolTable: [string, number][];
     qol: number;
 
     festivalModifier: number;
@@ -72,6 +73,7 @@ export function clanDTO(clan: Clan) {
 
         qolFromConsumption: clan.qolFromConsumption,
         qolFromAbility: clan.qolFromAbility,
+        qolTable: clan.qolTable,
         qol: clan.qol,
 
         festivalModifier: clan.festivalModifier,
