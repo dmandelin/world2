@@ -14,5 +14,5 @@
 
 <div id="top">
 <h1>𒌦 &centerdot; The Land</h1>
-<h3>{world.totalPopulation} people</h3>
+<h3>{world.population} people</h3>
 </div>

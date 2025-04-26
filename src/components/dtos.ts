@@ -139,6 +139,10 @@ export class WorldDTO {
         this.settlements = this.world.settlements.map(s => new SettlementDTO(s));
     }
 
+    get population() {
+        return this.settlements.reduce((acc, s) => acc + s.size, 0);
+    }
+
     advance() {
         this.world.advance();
     }
