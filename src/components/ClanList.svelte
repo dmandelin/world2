@@ -1,27 +1,10 @@
 <script lang="ts">
-    import { pct, spct } from "../model/format";
+    import { pct, spct, wg } from "../model/format";
     import { PersonalityTrait } from "../model/people";
     import Clan from "./Clan.svelte";
 
     let { clans, updateTrigger = $bindable() } = $props();
     let selectedClan = $state(undefined);
-
-    function grade(t: number) {
-        switch (true) {
-            case t > 95: return 'S';
-            case t > 80: return 'A';
-            case t > 65: return 'B';
-            case t > 50: return 'C';
-            case t > 35: return 'D';
-            case t > 20: return 'E';
-            default: return 'F';
-        }
-    }
-
-    function r(trait: number) {
-        if (trait === undefined) return 'N/A';
-        return `${grade(trait)} (${trait.toFixed()})`;
-    }
 </script>
 
 <style>
@@ -65,7 +48,7 @@
                 <td class="ra">{String.fromCharCode(65 + clan.seniority)}</td>
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.lastSizeChange}</td>
-                <td class="ra">{r(clan.productionAbility)}</td>
+                <td class="ra">{wg(clan.productionAbility)}</td>
                 <td class="ra">{spct(clan.productivity)}</td>
                 <td class="ra">{(clan.size * clan.productivity).toFixed()}</td>
                 <td class="ra">{clan.economicPolicy.c}</td>
@@ -73,7 +56,7 @@
                 <td class="ra">{clan.consumption.toFixed()}</td>
                 <td class="ra">{clan.qolFromConsumption.toFixed()}</td>
                 <td class="ra">{clan.qolFromAbility.toFixed()}</td>
-                <td class="ra">{r(clan.qol)}</td>
+                <td class="ra">{wg(clan.qol)}</td>
             </tr>
         {/each}
 </table>
@@ -135,17 +118,17 @@
                 <td class="ra">{clan.lastSizeChange}</td>
                 <td>{clan.giftStrategy}</td>
                 <td class="ra">{[...clan.traits].map((t: PersonalityTrait) => t.name).join(' ')}</td>
-                <td class="ra">{r(clan.strength)}</td>
-                <td class="ra">{r(clan.intelligence)}</td>
-                <td class="ra">{r(clan.productionAbility)}</td>
-                <td class="ra">{r(clan.income)}</td>
+                <td class="ra">{wg(clan.strength)}</td>
+                <td class="ra">{wg(clan.intelligence)}</td>
+                <td class="ra">{wg(clan.productionAbility)}</td>
+                <td class="ra">{wg(clan.income)}</td>
                 <td class="ra">{clan.interactionModifier.toFixed(1)}</td>
                 <td class="ra">{clan.festivalModifier}</td>
                 <td class="ra">{clan.techModifier}</td>
                 <td class="ra">{clan.tenureModifier} ({clan.tenure})</td>
                 <td class="ra">{clan.settlement.populationPressureModifier}</td>
-                <td class="ra">{r(clan.qol)}</td>
-                <td class="ra">{r(clan.prestige)}</td>
+                <td class="ra">{wg(clan.qol)}</td>
+                <td class="ra">{wg(clan.prestige)}</td>
             </tr>
         {/each}
 </table>

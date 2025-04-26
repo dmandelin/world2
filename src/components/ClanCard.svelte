@@ -1,5 +1,6 @@
 <script>
-    import { spct } from "../model/format";
+    import { spct, wg } from "../model/format";
+    import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
 </script>
@@ -35,7 +36,30 @@
             <tr>
                 <td>Prod</td>
                 <td></td>
-                <td>{spct(clan.productivity)}</td>
+                <td>
+                    <Tooltip>
+                        {spct(clan.productivity)}
+                      
+                        <div slot="tooltip">
+                          <table>
+                            <tbody>
+                                <tr>
+                                    <td>Strength</td>
+                                    <td>{wg(clan.strength)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Intelligence</td>
+                                    <td>{wg(clan.intelligence)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Collecting</td>
+                                    <td>{wg(clan.productionAbility)}</td>
+                                </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                    </Tooltip>
+                </td>
             </tr>
             <tr>
                 <td>Cons</td>
