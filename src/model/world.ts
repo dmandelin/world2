@@ -72,6 +72,7 @@ export class World {
                 clan.assessments.update();
             }
         }
+        this.notify();
     }
 
     advance() {

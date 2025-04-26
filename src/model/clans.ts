@@ -58,16 +58,37 @@ export class Clans extends Array<Clan> {
         this.pot.clear();
 
         for (const clan of this) {
-            const input = clan.size * clan.productivity;
-            if (clan.economicPolicy === EconomicPolicies.Share) {
-                this.pot.accept(clan.size, input);
-            } else if (clan.economicPolicy === EconomicPolicies.Cheat) {
-                this.pot.accept(clan.size * (1 - this.slippage), input * (1 - this.slippage));
-                // The idea is that we work less by the slippage, but gain some
-                // benefit in increased leisure.
-                clan.pot.accept(clan.size * this.slippage, input * this.slippage * 0.5);
-            } else {
-                clan.pot.accept(clan.size, input);
+            let commonFraction = 0.0;
+            let cheatFraction = 0.0;
+            switch (clan.economicPolicy) {
+                case EconomicPolicies.Share:
+                    commonFraction = 1.0;
+                    break;
+                case EconomicPolicies.Cheat:
+                    commonFraction = 1.0 - this.slippage;
+                    // The clan can do something else with their time, but it will be
+                    // hard to garner full benefit.
+                    cheatFraction = 0.5 * this.slippage;
+                    break;
+            }
+
+            const baseProduce = clan.size * clan.productivity;
+            const commonProduce = baseProduce * commonFraction;
+            const cheatProduce = cheatFraction * baseProduce;
+            const clanProduce = baseProduce - commonProduce - cheatProduce;
+
+            if (commonProduce > 0) {
+                this.pot.accept(clan.size, commonProduce);
+            }
+            if (clanProduce > 0) {
+                clan.pot.accept(clan.size, clanProduce);
+            }
+
+            clan.economicReport = {
+                baseProduce,
+                commonFraction,
+                commonProduce,
+                clanProduce: clanProduce + cheatProduce,
             }
         }
     }

@@ -66,9 +66,9 @@ export class EconomicPolicy {
 }
 
 export const EconomicPolicies = {
-    Share: new EconomicPolicy('share', 'S'), // Contribute to communal sharing pot.
-    Cheat: new EconomicPolicy('cheat', 'C'), // Contribute minimum acceptable to communal sharing pot.
-    Hoard: new EconomicPolicy('hoard', 'H'), // Contribute nothing to communal sharing pot.
+    Share: new EconomicPolicy('Sharing', 'S'),  // Contribute to communal sharing pot.
+    Cheat: new EconomicPolicy('Shirking', 'C'), // Contribute minimum acceptable to communal sharing pot.
+    Hoard: new EconomicPolicy('Hoarding', 'H'), // Contribute nothing to communal sharing pot.
 };
 
 export type EconomicPolicyDecision = {
@@ -81,6 +81,13 @@ export type EconomicPolicyDecision = {
     cheatOthersReturn: number;
     cheatReturn: number;
 };
+
+export type EconomicReport = {
+    baseProduce: number;
+    commonFraction: number;
+    commonProduce: number;
+    clanProduce: number;
+}
 
 export class Clan {
     static minDesiredSize = 10;
@@ -120,6 +127,13 @@ export class Clan {
         cheatOthersReturn: 0,
         cheatReturn: 0,
     }
+    economicReport: EconomicReport = {
+        baseProduce: 0,
+        commonFraction: 0,
+        commonProduce: 0,
+        clanProduce: 0,
+    };
+
     pot = new Pot([this]);
     consumption = 0;
     perCapitaConsumption = 0;
