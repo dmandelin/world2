@@ -39,6 +39,7 @@
     {/each}
 </div>
 
+{#if settlement.clans.pot.contributors}
 <h4 style="text-align: center; margin-top: 1em;">Common Produce</h4>
 <table style="width: 200px; margin: 0 auto;">
     <tbody>
@@ -64,4 +65,5 @@
         </tr>
     </tbody>
 </table>
+{/if}
 </div>

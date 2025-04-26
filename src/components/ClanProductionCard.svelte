@@ -1,5 +1,6 @@
 <script>
     import { pct, spct, wg } from "../model/format";
+    import EconomicPolicyDecision from "./EconomicPolicyDecision.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
@@ -30,7 +31,12 @@
     <table>
         <tbody>
             <tr>
-                <td colspan="2" style:font-weight="bold" style:text-align="center">{clan.economicPolicy.name}</td>
+                <td colspan="2" style:font-weight="bold" style:text-align="center">
+                    <Tooltip>
+                        {clan.economicPolicy.name}
+                        <EconomicPolicyDecision slot="tooltip" decision={clan.economicPolicyDecision} />
+                    </Tooltip>
+                </td>
             </tr>
             {#if clan.economicReport.commonFraction != 0.0 && clan.economicReport.commonFraction != 1.0}
             <tr>
