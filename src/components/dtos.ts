@@ -33,7 +33,7 @@ export type ClanDTO = {
 
     qolFromAbility: number;
     qolFromConsumption: number;
-    qolTable: [string, number][];
+    qolTable: [string, string][];
     qol: number;
 
     festivalModifier: number;

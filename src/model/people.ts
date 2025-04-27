@@ -299,7 +299,7 @@ export class Clan {
             (this.settlement?.populationPressureModifier || 0);
     }
 
-    get qolTable() {
+    get qolTable(): [string, string][] {
         return [
             ['Ability', this.qolFromAbility.toFixed(1) ],
             ['Consumption', this.qolFromConsumption.toFixed(1) ],
