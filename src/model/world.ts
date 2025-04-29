@@ -1,7 +1,7 @@
 import { Annals } from "./annals";
 import { Clan, PersonalityTraits, randomClanColor, randomClanName } from "./people";
 import { Clans } from "./clans";
-import { maxbyWithValue, shuffled } from "./basics";
+import { chooseFrom, maxbyWithValue, shuffled } from "./basics";
 import { Settlement } from "./settlement";
 import { TimePoint } from "./timeline";
 import { TradeGood, TradeGoods } from "./trade";
@@ -62,12 +62,15 @@ export class World {
     initialize() {
         for (const s of this.settlements) {
             let localTradeGoods: TradeGood[] = [];
+            let e, u;
             switch (s.name) {
                 case 'Eridu':
                     localTradeGoods = [TradeGoods.Cereals, TradeGoods.Fish];
+                    e = s;
                     break;
                 case 'Ur':
                     localTradeGoods = [TradeGoods.Cereals, TradeGoods.ReedProducts];
+                    u = s;
                     break;
                 case 'Uruk':
                     localTradeGoods = [TradeGoods.Cereals, TradeGoods.Bitumen];
@@ -76,6 +79,7 @@ export class World {
             for (const g of localTradeGoods) {
                 s.localTradeGoods.add(g);
             }
+            chooseFrom(e!.clans).addKinBasedTradePartner(chooseFrom(u!.clans));
         }
 
         for (const s of this.settlements) {

@@ -133,6 +133,7 @@ export class Clan {
         commonProduce: 0,
         clanProduce: 0,
     };
+    tradePartners = new Set<Clan>();
 
     pot = new Pot([this]);
     consumption = 0;
@@ -189,6 +190,18 @@ export class Clan {
             n += clan.size;
         }
         return r / n;
+    }
+
+    addKinBasedTradePartner(clan: Clan) {
+        // In kin-based trade, one of the trade partners marries into
+        // the other (if not already related), providing the bonds of
+        // trust needed to facilitate trade. Thus clans have limited
+        // capacity for trade partners.
+        if (this.tradePartners.has(clan)) return;
+        if (this.tradePartners.size >= 2 || clan.tradePartners.size >= 2) return;
+        
+        this.tradePartners.add(clan);
+        clan.tradePartners.add(this);
     }
 
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {

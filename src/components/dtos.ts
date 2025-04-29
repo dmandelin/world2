@@ -14,6 +14,7 @@ export type ClanDTO = {
 
     cadets: Clan[];
     parent: Clan|undefined;
+    tradePartners: string[];
     settlement: Settlement;
     slices: number[][];
 
@@ -75,6 +76,7 @@ export function clanDTO(clan: Clan) {
         productivity: clan.productivity,
         seniority: clan.seniority,
         size: clan.size,
+        tradePartners: clan.tradePartners ? [...clan.tradePartners].map(c => c.name) : [],
 
         qolFromConsumption: clan.qolFromConsumption,
         qolFromAbility: clan.qolFromAbility,

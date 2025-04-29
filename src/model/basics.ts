@@ -40,6 +40,7 @@ export function minbyWithValue<T>(arr: T[], key: (t: T) => number): [T, number] 
     }, [arr[0], key(arr[0])]);
 }
 
+// A random element from the array. The array must not be empty.
 export function chooseFrom<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
 }
