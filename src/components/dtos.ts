@@ -4,6 +4,7 @@ import type { Clans } from "../model/clans";
 import { pct } from "../model/format";
 import type { Clan, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people";
 import type { Settlement } from "../model/settlement";
+import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 
 export type ClanDTO = {
@@ -128,6 +129,7 @@ export class SettlementDTO {
     readonly lastSizeChange: number;
 
     readonly clans: ClansDTO;
+    readonly localTradeGoods: TradeGood[];
 
     constructor(settlement: Settlement) {
         this.name = settlement.name;
@@ -135,6 +137,7 @@ export class SettlementDTO {
         this.lastSizeChange = settlement.lastSizeChange;
 
         this.clans = new ClansDTO(settlement.clans);
+        this.localTradeGoods = [...settlement.localTradeGoods];
     }
 }
 

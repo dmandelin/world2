@@ -1,10 +1,11 @@
-import { WorldDTO } from "../components/dtos";
 import { Annals } from "./annals";
-import { chooseFrom, maxby, maxbyWithValue, minby, shuffled } from "./basics";
+import { Clan, PersonalityTraits, randomClanColor, randomClanName } from "./people";
 import { Clans } from "./clans";
-import { Clan, PersonalityTrait, PersonalityTraits, randomClanColor, randomClanName } from "./people";
+import { maxbyWithValue, shuffled } from "./basics";
 import { Settlement } from "./settlement";
 import { TimePoint } from "./timeline";
+import { TradeGood, TradeGoods } from "./trade";
+import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 
 class SettlementsBuilder {
@@ -59,6 +60,24 @@ export class World {
     }
 
     initialize() {
+        for (const s of this.settlements) {
+            let localTradeGoods: TradeGood[] = [];
+            switch (s.name) {
+                case 'Eridu':
+                    localTradeGoods = [TradeGoods.Cereals, TradeGoods.Fish];
+                    break;
+                case 'Ur':
+                    localTradeGoods = [TradeGoods.Cereals, TradeGoods.ReedProducts];
+                    break;
+                case 'Uruk':
+                    localTradeGoods = [TradeGoods.Cereals, TradeGoods.Bitumen];
+                    break;
+            }
+            for (const g of localTradeGoods) {
+                s.localTradeGoods.add(g);
+            }
+        }
+
         for (const s of this.settlements) {
             const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
             const slippage = s.clans.slippage;

@@ -1,9 +1,11 @@
 import { clamp } from "./basics";
 import type { Clans } from "./clans";
 import { Technai } from "./tech";
+import type { TradeGood } from "./trade";
 
 export class Settlement {
     readonly technai = new Technai(this);
+    readonly localTradeGoods = new Set<TradeGood>();
 
     parent: Settlement|undefined;
     daughters: Settlement[] = [];
