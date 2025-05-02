@@ -60,9 +60,14 @@ export class World {
     }
 
     initialize() {
+        this.initializeTradeGoods();
+        this.preAdvance();
+    }
+
+    initializeTradeGoods() {
+        let e: Settlement, u: Settlement;
         for (const s of this.settlements) {
             let localTradeGoods: TradeGood[] = [];
-            let e, u;
             switch (s.name) {
                 case 'Eridu':
                     localTradeGoods = [TradeGoods.Cereals, TradeGoods.Fish];
@@ -79,9 +84,11 @@ export class World {
             for (const g of localTradeGoods) {
                 s.localTradeGoods.add(g);
             }
-            chooseFrom(e!.clans).addKinBasedTradePartner(chooseFrom(u!.clans));
         }
+        chooseFrom(e!.clans).addKinBasedTradePartner(chooseFrom(u!.clans));
+    }
 
+    preAdvance() {
         for (const s of this.settlements) {
             const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
             const slippage = s.clans.slippage;
