@@ -25,13 +25,13 @@
 </style>
 
 <div id="top">
-    {#if clan.tradePartners?.size}
+    {#if clan.tradePartners?.length}
     <table>
         <tbody>
             {#each clan.tradePartners as partner}
             <tr>
                 <td>
-                    Kin {partner.clan.name}
+                    Kin {partner}
                 </td>
             </tr>
             {/each}
