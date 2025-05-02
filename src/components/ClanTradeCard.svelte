@@ -15,12 +15,19 @@
         width: 134px;
     }
 
-    td:not(first-child) {
-        text-align: right;
+    #top table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
     td {
+        text-align: center;
         white-space: nowrap;
+    }
+
+    .sm {
+        font-size: smaller;
+        font-weight: bold;
     }
 </style>
 
@@ -28,16 +35,25 @@
     {#if clan.tradePartners?.length}
     <table>
         <tbody>
+            <tr class="sm"><td>Trading with kin</td></tr>
             {#each clan.tradePartners as partner}
-            <tr>
-                <td>
-                    Kin {partner}
-                </td>
-            </tr>
+            <tr><td>{partner.name} of {partner.settlement}</td></tr>
+            <tr class="sm"><td>Sending</td></tr>
+                {#each partner.sending as sending}
+                <tr><td>{sending}</td></tr>
+                {/each}
+            <tr class="sm"><td>Receiving</td></tr>
+                {#each partner.receiving as receiving}
+                <tr><td>{receiving}</td></tr>
+                {/each}
             {/each}
         </tbody>
     </table>
     {:else}
-    <div style="text-align: center">Not trading</div>
+    <table>
+        <tbody>
+            <tr class="sm"><td>No trade partners</td></tr>
+        </tbody>
+    </table>
     {/if}
 </div>

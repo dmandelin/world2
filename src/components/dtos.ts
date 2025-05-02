@@ -7,6 +7,21 @@ import type { Settlement } from "../model/settlement";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 
+export type TradePartnerDTO = {
+    name: string;
+    sending: string[];
+    receiving: string[];
+}
+
+function tradePartnersDTO(clan: Clan) {
+    return [...clan.tradePartners].map(partner => ({
+        name: partner.name,
+        settlement: partner.settlement!.name,
+        sending: [...clan.exportsTo(partner).map(t => t.name)],
+        receiving: [...clan.importsFrom(partner).map(t => t.name)],
+    }));
+}
+
 export type ClanDTO = {
     ref: Clan,
     name: string;
@@ -14,7 +29,7 @@ export type ClanDTO = {
 
     cadets: Clan[];
     parent: Clan|undefined;
-    tradePartners: string[];
+    tradePartners: TradePartnerDTO[];
     settlement: Settlement;
     slices: number[][];
 
@@ -76,7 +91,7 @@ export function clanDTO(clan: Clan) {
         productivity: clan.productivity,
         seniority: clan.seniority,
         size: clan.size,
-        tradePartners: clan.tradePartners ? [...clan.tradePartners].map(c => c.name) : [],
+        tradePartners: tradePartnersDTO(clan),
 
         qolFromConsumption: clan.qolFromConsumption,
         qolFromAbility: clan.qolFromAbility,

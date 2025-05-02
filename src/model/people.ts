@@ -6,6 +6,7 @@ import { normal } from "./distributions";
 import { Assessments } from "./agents";
 import { Pot } from "./production";
 import type { Settlement } from "./settlement";
+import type { TradeGood } from "./trade";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.05;
@@ -202,6 +203,16 @@ export class Clan {
         
         this.tradePartners.add(clan);
         clan.tradePartners.add(this);
+    }
+
+    exportsTo(clan: Clan): TradeGood[] {
+        // We'll export everything that they don't already have.
+        return [...this.settlement!.localTradeGoods]
+            .filter(good => !clan.settlement?.localTradeGoods.has(good));
+    }
+
+    importsFrom(clan: Clan): TradeGood[] {
+        return clan.exportsTo(this);
     }
 
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
