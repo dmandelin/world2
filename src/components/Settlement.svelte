@@ -1,5 +1,6 @@
 <script>
     import ClanCard from "./ClanCard.svelte";
+    import SettlementConsumption from "./SettlementConsumption.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
@@ -10,6 +11,7 @@
     const tabs = [
         { label: "Production", snippet: economyTab },
         { label: "Relationships", snippet: relationshipsTab },
+        { label: "Consumption", snippet: consumptionTab },
         { label: "Trade", snippet: tradeTab },
     ];
 </script>
@@ -20,6 +22,10 @@
 
 {#snippet tradeTab()}
     <SettlementTrade settlement={settlement} />
+{/snippet}
+
+{#snippet consumptionTab()}
+    <SettlementConsumption settlement={settlement} />
 {/snippet}
 
 {#snippet relationshipsTab()}
