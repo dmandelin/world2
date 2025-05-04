@@ -1,7 +1,7 @@
 import { poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
 import { exchangeGifts, resolveDisputes } from "./interactions";
-import { Clan, EconomicPolicies, PersonalityTraits } from "./people";
+import { Clan, ConsumptionCalc, EconomicPolicies, PersonalityTraits } from "./people";
 import { Pot } from "./production";
 
 export class Clans extends Array<Clan> {
@@ -52,10 +52,10 @@ export class Clans extends Array<Clan> {
     }
 
     produce() {
+        this.pot = new Pot(this);
         for (const clan of this) {
             clan.pot.clear();
         }
-        this.pot.clear();
 
         for (const clan of this) {
             let commonFraction = 0.0;
@@ -94,16 +94,9 @@ export class Clans extends Array<Clan> {
     }
 
     distribute() {
-        for (const clan of this) { clan.consumption = 0; }
-
-        for (const clan of this) {
-            clan.pot.distribute();
-        }
+        this.forEach(clan => clan.consumption = new ConsumptionCalc(clan.size));
         this.pot.distribute();
-
-        for (const clan of this) {
-            clan.perCapitaConsumption = clan.consumption / clan.size;
-        }
+        this.forEach(clan => clan.pot.distribute());
     }
 
     runFestival() {

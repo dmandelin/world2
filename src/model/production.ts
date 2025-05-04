@@ -2,20 +2,17 @@
 // various source go in, and products come out to different
 // receivers.
 
-type Receiver = {
-    size: number;
-    consumption: number;
-
-    consumptionFromCommons: number;
-    shareOfCommons: number;
-}
+import type { GoodsReceiver } from "./people";
+import { TradeGood, TradeGoods } from "./trade";
 
 export class Pot {
     private contributors_: number = 0;
     private input_: number = 0;
 
+    private tradeGoods_ = new Set<TradeGood>();
+
     constructor(
-        readonly receivers: Receiver[],
+        readonly receivers: GoodsReceiver[],
     ) {}
 
     get contributors() {
@@ -59,15 +56,14 @@ export class Pot {
         this.input_ += input;
     }
 
+    acceptTradeGood(good: TradeGood) {
+        this.tradeGoods_.add(good);
+    }
+
     distribute() {
         const output = this.output;
-        const total = this.receivers.reduce((acc, clan) => acc + clan.size, 0);
         for (const clan of this.receivers) {
-            const share = clan.size / total;
-            const outputShare = output * share;
-            clan.shareOfCommons = share;
-            clan.consumptionFromCommons = outputShare;
-            clan.consumption += outputShare;
+            clan.accept(TradeGoods.Subsistence, output * clan.share);
         }
     }
 }

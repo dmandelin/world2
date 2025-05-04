@@ -86,7 +86,7 @@
             <tr>
                 <td>Cons</td>
                 <td></td>
-                <td>{spct(clan.perCapitaConsumption)}</td>
+                <td>{spct(clan.perCapitaSubsistenceConsumption)}</td>
             </tr>
             <tr>
                 <td>QoL</td>

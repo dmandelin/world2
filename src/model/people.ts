@@ -6,7 +6,7 @@ import { normal } from "./distributions";
 import { Assessments } from "./agents";
 import { Pot } from "./production";
 import type { Settlement } from "./settlement";
-import type { TradeGood } from "./trade";
+import { TradeGoods, type TradeGood } from "./trade";
 
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.05;
@@ -90,6 +90,43 @@ export type EconomicReport = {
     clanProduce: number;
 }
 
+export interface GoodsReceiver {
+    share: number;
+
+    accept(good: TradeGood, amount: number): void;
+}
+
+export class ConsumptionCalc {
+    private bySource_: Map<TradeGood, number> = new Map();
+
+    constructor(readonly population: number) {
+    }
+
+    amount(good: TradeGood): number {
+        return this.bySource_.get(good) ?? 0;
+    }
+
+    perCapita(good: TradeGood): number {
+        const amount = this.amount(good);
+        if (this.population === 0) return amount;
+        return amount / this.population;
+    }
+
+    accept(good: TradeGood, amount: number) {
+        this.bySource_.set(good, this.amount(good) + amount);
+    }
+    
+    splitOff(newPopulation: number): ConsumptionCalc {
+        const newCalc = new ConsumptionCalc(newPopulation);
+        for (const [good, amount] of [...this.bySource_.entries()]) {
+            const splitAmount = amount * newPopulation / this.population;
+            newCalc.bySource_.set(good, splitAmount);
+            this.bySource_.set(good, this.amount(good) - splitAmount);
+        }
+        return newCalc;
+    }
+}
+
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -136,12 +173,8 @@ export class Clan {
     };
     tradePartners = new Set<Clan>();
 
+    consumption = new ConsumptionCalc(0);
     pot = new Pot([this]);
-    consumption = 0;
-    perCapitaConsumption = 0;
-
-    consumptionFromCommons = 0;
-    shareOfCommons = 0;
 
     constructor(
         readonly annals: Annals,
@@ -303,8 +336,24 @@ export class Clan {
         return [-5, 0, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5][clamp(this.tenure, 0, 12)];
     }
 
+    get share() {
+        return this.size / (this.settlement?.size ?? this.size);
+    }
+
+    accept(good: TradeGood, amount: number) {
+        this.consumption.accept(good, amount);
+    }
+
+    get subsistenceConsumption() {
+        return this.consumption.amount(TradeGoods.Subsistence);
+    }
+    
+    get perCapitaSubsistenceConsumption() {
+        return this.consumption.perCapita(TradeGoods.Subsistence);
+    }
+
     get qolFromConsumption() {
-        return 40 + Math.log2(this.perCapitaConsumption) * 15;
+        return 40 + Math.log2(this.perCapitaSubsistenceConsumption) * 15;
     }
 
     get qolFromAbility() {
@@ -521,12 +570,9 @@ export class Clan {
         newClan.parent = this;
         this.cadets.push(newClan);
 
-        newClan.perCapitaConsumption = this.perCapitaConsumption;
-        newClan.consumption = Math.round(this.consumption * fraction);
-        this.consumption -= newClan.consumption;
-
         newClan.economicPolicy = this.economicPolicy;
         newClan.economicPolicyDecision = this.economicPolicyDecision;
+        newClan.consumption = this.consumption.splitOff(newSize);
 
         this.annals.log(`Clan ${newClan.name} (${newClan.size}) split off from clan ${this.name} (${this.size})`, this.settlement);
         return newClan;

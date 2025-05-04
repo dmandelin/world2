@@ -3,6 +3,8 @@ export class TradeGood {
 }
 
 export const TradeGoods = {
+    Subsistence: new TradeGood('Subsistence', 1000),
+
     Cereals: new TradeGood('Cereals', 50),
     Livestock: new TradeGood('Livestock', 10),
     Fish: new TradeGood('Fish', 30),

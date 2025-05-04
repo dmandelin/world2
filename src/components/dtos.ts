@@ -38,7 +38,7 @@ export type ClanDTO = {
     benevolence: number;
     reputation: number;
     
-    consumption: number;
+    subsistenceConsumption: number;
     economicPolicy: EconomicPolicy;
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
@@ -81,11 +81,11 @@ export function clanDTO(clan: Clan) {
         settlement: clan.settlement!,
         slices: clan.slices,
 
-        consumption: clan.consumption,
+        subsistenceConsumption: clan.subsistenceConsumption,
         economicPolicy: clan.economicPolicy,
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,
-        perCapitaConsumption: clan.perCapitaConsumption,
+        perCapitaSubsistenceConsumption: clan.perCapitaSubsistenceConsumption,
         lastSizeChange: clan.lastSizeChange,
         productionAbility: clan.productionAbility,
         productivity: clan.productivity,
@@ -172,7 +172,7 @@ export class WorldDTO {
     }
 
     get consumption() {
-        const totalConsumption = this.settlements.reduce((acc, s) => acc + s.clans.reduce((acc, clan) => acc + clan.consumption, 0), 0);
+        const totalConsumption = this.settlements.reduce((acc, s) => acc + s.clans.reduce((acc, clan) => acc + clan.subsistenceConsumption, 0), 0);
         return totalConsumption / this.population;
     }
 
