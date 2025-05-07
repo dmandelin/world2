@@ -4,11 +4,13 @@ import { exchangeGifts, resolveDisputes } from "./interactions";
 import { Clan, ConsumptionCalc, EconomicPolicies, PersonalityTraits } from "./people";
 import { Pot } from "./production";
 
+const communalGoodsSource = 'communal';
+
 export class Clans extends Array<Clan> {
     festival: Festival = new Festival(this);
 
     // Communal sharing economy.
-    pot = new Pot(this);
+    pot = new Pot(communalGoodsSource, this);
 
     constructor(...clans: Clan[]) {
       super(...clans);
@@ -52,7 +54,7 @@ export class Clans extends Array<Clan> {
     }
 
     produce() {
-        this.pot = new Pot(this);
+        this.pot = new Pot(communalGoodsSource, this);
         for (const clan of this) {
             clan.pot.clear();
         }

@@ -12,6 +12,7 @@ export class Pot {
     private tradeGoods_ = new Set<TradeGood>();
 
     constructor(
+        readonly name: string,
         readonly receivers: GoodsReceiver[],
     ) {}
 
@@ -40,7 +41,7 @@ export class Pot {
     }
 
     clone() {
-        const c = new Pot(this.receivers);
+        const c = new Pot(this.name, this.receivers);
         c.contributors_ = this.contributors_;
         c.input_ = this.input_;
         return c;
@@ -63,7 +64,7 @@ export class Pot {
     distribute() {
         const output = this.output;
         for (const clan of this.receivers) {
-            clan.accept(TradeGoods.Subsistence, output * clan.share);
+            clan.accept(this.name, TradeGoods.Subsistence, output * clan.share);
         }
     }
 }

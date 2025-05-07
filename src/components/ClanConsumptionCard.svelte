@@ -1,4 +1,5 @@
 <script>
+    import { clamp } from "../model/basics";
     import { pct, spct, wg } from "../model/format";
     import EconomicPolicyDecision from "./EconomicPolicyDecision.svelte";
     import Tooltip from "./Tooltip.svelte";
@@ -31,35 +32,26 @@
     <table>
         <tbody>
             <tr>
-                <td colspan="2" style:font-weight="bold" style:text-align="center">
-                    <Tooltip>
-                        {clan.economicPolicy.name}
-                        <EconomicPolicyDecision slot="tooltip" decision={clan.economicPolicyDecision} />
-                    </Tooltip>
+                <td colspan="3" style:font-weight="bold" style:text-align="center">
+                    Goods
                 </td>
             </tr>
-            {#if clan.economicReport.commonFraction != 0.0 && clan.economicReport.commonFraction != 1.0}
+            {#each clan.consumption?.ledger as [good, sourceMap]}
             <tr>
-                <td>Base</td>
-                <td>{clan.economicReport.baseProduce.toFixed()}</td>
+                <td>{good.name}</td>
+                <td>
+                    <Tooltip>
+                        {clan.consumption?.amount(good).toFixed()}
+                        <div slot="tooltip">
+                            {#each sourceMap as [source, amount]}
+                                <div>{amount.toFixed()} from {source}</div>
+                            {/each}
+                        </div>
+                    </Tooltip>
+                </td>
+                <td>{spct(clan.consumption?.perCapita(good))}</td>
             </tr>
-            <tr>
-                <td>%Common</td>
-                <td>{pct(clan.economicReport.commonFraction)}</td>
-            </tr>
-            {/if}
-            {#if clan.economicReport.commonProduce != 0.0}
-            <tr>
-                <td>Common</td>
-                <td>{clan.economicReport.commonProduce.toFixed()}</td>
-            </tr>
-            {/if}
-            {#if clan.economicReport.clanProduce != 0.0}
-            <tr>
-                <td>Hoarded</td>
-                <td>{clan.economicReport.clanProduce.toFixed()}</td>
-            </tr>
-            {/if}
+            {/each}
         </tbody>
     </table>
 </div>

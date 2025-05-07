@@ -2,7 +2,7 @@ import type { Assessments, ClanAgent } from "../model/agents";
 import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/basics";
 import type { Clans } from "../model/clans";
 import { pct } from "../model/format";
-import type { Clan, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people";
+import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people";
 import type { Settlement } from "../model/settlement";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
@@ -38,7 +38,8 @@ export type ClanDTO = {
     benevolence: number;
     reputation: number;
     
-    subsistenceConsumption: number;
+    consumption: ConsumptionCalc;
+    subsistenceConsumption: number; // TODO - remove
     economicPolicy: EconomicPolicy;
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
@@ -81,6 +82,7 @@ export function clanDTO(clan: Clan) {
         settlement: clan.settlement!,
         slices: clan.slices,
 
+        consumption: clan.consumption.clone(),
         subsistenceConsumption: clan.subsistenceConsumption,
         economicPolicy: clan.economicPolicy,
         economicPolicyDecision: clan.economicPolicyDecision,

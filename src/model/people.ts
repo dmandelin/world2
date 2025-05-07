@@ -8,6 +8,8 @@ import { Pot } from "./production";
 import type { Settlement } from "./settlement";
 import { TradeGoods, type TradeGood } from "./trade";
 
+const clanGoodsSource = 'clan';
+
 // Per 20-year turn, for childbearing-age women.
 const BASE_BIRTH_RATE = 3.05;
 
@@ -93,17 +95,34 @@ export type EconomicReport = {
 export interface GoodsReceiver {
     share: number;
 
-    accept(good: TradeGood, amount: number): void;
+    accept(source: string, good: TradeGood, amount: number): void;
 }
 
 export class ConsumptionCalc {
-    private bySource_: Map<TradeGood, number> = new Map();
+    // good -> source -> amount
+    private ledger_: Map<TradeGood, Map<string, number>> = new Map();
 
     constructor(readonly population: number) {
     }
 
+    clone(): ConsumptionCalc {
+        const clone = new ConsumptionCalc(this.population);
+        for (const [good, sourceMap] of this.ledger_) {
+            const newSourceMap = new Map<string, number>();
+            for (const [source, amount] of sourceMap) {
+                newSourceMap.set(source, amount);
+            }
+            clone.ledger_.set(good, newSourceMap);
+        }
+        return clone;
+    }
+
+    get ledger(): IterableIterator<[TradeGood, Map<string, number>]> {
+        return this.ledger_.entries();
+    }
+
     amount(good: TradeGood): number {
-        return this.bySource_.get(good) ?? 0;
+        return this.ledger_.get(good)?.values().reduce((acc, amount) => acc + amount, 0) ?? 0;
     }
 
     perCapita(good: TradeGood): number {
@@ -112,16 +131,24 @@ export class ConsumptionCalc {
         return amount / this.population;
     }
 
-    accept(good: TradeGood, amount: number) {
-        this.bySource_.set(good, this.amount(good) + amount);
+    accept(source: string, good: TradeGood, amount: number) {
+        if (amount <= 0) return;
+        if (!this.ledger_.has(good)) this.ledger_.set(good, new Map<string, number>());
+        const sourceMap = this.ledger_.get(good)!;
+        const prevAmount = sourceMap.get(source) ?? 0;
+        sourceMap.set(source, prevAmount + amount);
     }
     
     splitOff(newPopulation: number): ConsumptionCalc {
         const newCalc = new ConsumptionCalc(newPopulation);
-        for (const [good, amount] of [...this.bySource_.entries()]) {
-            const splitAmount = amount * newPopulation / this.population;
-            newCalc.bySource_.set(good, splitAmount);
-            this.bySource_.set(good, this.amount(good) - splitAmount);
+        for (const [good, sourceMap] of this.ledger_) {
+            const newSourceMap = new Map<string, number>();
+            for (const [source, amount] of sourceMap) {
+                const newAmount = amount * newPopulation / this.population;
+                newSourceMap.set(source, newAmount);
+                this.ledger_.get(good)!.set(source, amount - newAmount);
+            }
+            newCalc.ledger_.set(good, newSourceMap);
         }
         return newCalc;
     }
@@ -174,7 +201,7 @@ export class Clan {
     tradePartners = new Set<Clan>();
 
     consumption = new ConsumptionCalc(0);
-    pot = new Pot([this]);
+    pot = new Pot(clanGoodsSource, [this]);
 
     constructor(
         readonly annals: Annals,
@@ -250,13 +277,13 @@ export class Clan {
 
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
         // Consumption from keeping.
-        const testKeepPot = new Pot([]);
+        const testKeepPot = new Pot('', []);
         testKeepPot.accept(this.size, this.size * this.productivity);
         const keepReturn = testKeepPot.output;
 
         // Consumption from sharing.
         // First see what the pot is without us.
-        const testShareBasePot = new Pot([]);
+        const testShareBasePot = new Pot('', []);
         for (const clan of policies.keys()) {
             if (clan == this) continue;
             const policy = policies.get(clan);
@@ -340,8 +367,8 @@ export class Clan {
         return this.size / (this.settlement?.size ?? this.size);
     }
 
-    accept(good: TradeGood, amount: number) {
-        this.consumption.accept(good, amount);
+    accept(source: string, good: TradeGood, amount: number) {
+        this.consumption.accept(source, good, amount);
     }
 
     get subsistenceConsumption() {
