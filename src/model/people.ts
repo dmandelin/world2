@@ -122,7 +122,9 @@ export class ConsumptionCalc {
     }
 
     amount(good: TradeGood): number {
-        return this.ledger_.get(good)?.values().reduce((acc, amount) => acc + amount, 0) ?? 0;
+        const sourceMap = this.ledger_.get(good);
+        if (!sourceMap) return 0;
+        return [...sourceMap.values()].reduce((acc, amount) => acc + amount, 0);
     }
 
     perCapita(good: TradeGood): number {
