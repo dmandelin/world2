@@ -14,7 +14,6 @@ export class Clans extends Array<Clan> {
 
     constructor(...clans: Clan[]) {
       super(...clans);
-      this.sort((a, b) => b.prestige - a.prestige);
     }
   
     get population(): number {
@@ -49,8 +48,6 @@ export class Clans extends Array<Clan> {
         this.split();
         this.merge();
         this.prune()
-
-        this.sort((a, b) => b.prestige - a.prestige);
     }
 
     produce() {
@@ -157,7 +154,7 @@ export class Clans extends Array<Clan> {
                 const b = this[j];
                 
                 // Use the Elo formula but with 10 points instead of 400.
-                const aWinProb = 1 / (1 + Math.pow(10, (b.prestige - a.prestige) / 10));
+                const aWinProb = 1 / (1 + Math.pow(10, (b.skill - a.skill) / 10));
                 if (Math.random() < aWinProb) {
                     a.interactionModifier += stakes;
                     b.interactionModifier -= stakes;

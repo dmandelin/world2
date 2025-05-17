@@ -2,16 +2,16 @@ import type { Assessments, ClanAgent } from "../model/agents";
 import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/basics";
 import type { Clans } from "../model/clans";
 import { pct } from "../model/format";
-import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people";
+import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, PrestigeCalc } from "../model/people";
 import type { Settlement } from "../model/settlement";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 
 function prestigeDTO(clan: Clan) {
-    const prestige = new Map<Clan, number>();
+    const prestige = new Map<Clan, PrestigeCalc>();
     for (const other of clan.settlement!.clans) {
         if (other === clan) continue;
-        prestige.set(other, clan.relativePrestige(other));
+        prestige.set(other, clan.prestigeSeenIn(other));
     }
     return prestige;
 }
@@ -46,7 +46,7 @@ export type ClanDTO = {
     assessments: Assessments;
     benevolence: number;
     reputation: number;
-    prestige: Map<Clan, number>;
+    prestige: Map<Clan, PrestigeCalc>;
     
     consumption: ConsumptionCalc;
     subsistenceConsumption: number; // TODO - remove

@@ -36,9 +36,9 @@
                 -
                 {:else}
                 <Tooltip>
-                    {(c.prestige.get(d.ref).toFixed())}
+                    {(c.prestige.get(d.ref).value.toFixed())}
                     <div slot="tooltip">
-                        Stuff
+                        <DataTable rows={c.prestige.get(d.ref).tooltip} />
                     </div>
                 </Tooltip>
                 {/if}

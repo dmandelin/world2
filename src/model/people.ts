@@ -193,6 +193,32 @@ export class ProductivityCalc {
     }
 }
 
+export class PrestigeCalc {
+    readonly items: [string, number][];
+
+    constructor(readonly clan: Clan, readonly other: Clan) {
+        if (clan.settlement!.size > 300) {
+            this.items = [['Strangers!', 35]];
+        } else {
+            this.items = [
+                ['Neighbors', 50],
+                [`Strength ${other.strength}`, (other.strength - 50) / 10],
+                [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 20],
+                [`Skill ${other.skill.toFixed()}`, (other.skill - 50) / 10],
+                [`Random`, normal(0, 2)],
+            ];
+        }
+    }
+
+    get value(): number {
+        return this.items.reduce((acc, [_, v]) => acc + v, 0);
+    }
+
+    get tooltip(): string[][] {
+        return this.items.map(([k, v]) => [k, v.toFixed(1)]);
+    }
+}
+
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -262,8 +288,8 @@ export class Clan {
         return this.skill_;
     }
 
-    relativePrestige(other: Clan): number {
-        return 50;
+    prestigeSeenIn(other: Clan) {
+        return new PrestigeCalc(this, other);
     }
 
     kinshipTo(other: Clan): number {
