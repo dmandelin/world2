@@ -1,3 +1,4 @@
+import { compareLexically } from "./basics";
 import { poisson, weightedRandInt } from "./distributions";
 import { Festival } from "./festival";
 import { exchangeGifts, resolveDisputes } from "./interactions";
@@ -5,6 +6,10 @@ import { Clan, ConsumptionCalc, EconomicPolicies, PersonalityTraits } from "./pe
 import { Pot } from "./production";
 
 const communalGoodsSource = 'communal';
+
+export class CondorcetCalc {
+    constructor(readonly clans: Clans, readonly leader: Clan|undefined, readonly wins: number[][]) {}
+}
 
 export class Clans extends Array<Clan> {
     festival: Festival = new Festival(this);
@@ -18,6 +23,52 @@ export class Clans extends Array<Clan> {
   
     get population(): number {
       return this.reduce((total, clan) => total + clan.size, 0);
+    }
+
+    // Condorcet leading clan by prestige.
+    get condorcetLeader(): CondorcetCalc {
+        // Precompute the PrestigeCalcs.
+        const prestigeCalcs = this.map(clan => this.map(other => clan.prestigeSeenIn(other).value));
+
+        // Fill out a 2D array with the number of times i wins against j.
+        const wins = new Array(this.length).fill(0).map(() => new Array(this.length).fill(0));
+        for (let i = 0; i < this.length; ++i) {
+            for (let j = i + 1; j < this.length; ++j) {
+                const a = this[i];
+                const b = this[j];
+
+                for (let k = 0; k < this.length; ++k) {
+                    if (k === i || k === j) continue;
+                    const ballot = prestigeCalcs[k];
+                    if (ballot[i] > ballot[j]) {
+                        ++wins[i][j];
+                    } else if (ballot[i] < ballot[j]) {
+                        ++wins[j][i];
+                    } else {
+                        wins[i][j] += 0.5;
+                        wins[j][i] += 0.5;
+                    }
+                }
+            }
+        }
+
+        // Look for a row that's greater than all the others.
+        for (let i = 0; i < this.length; ++i) {
+            let isAbove = true, isLeader = true;
+            for (let j = 0; j < this.length; ++j) {
+                if (i === j) continue;
+                if (wins[i][j] < wins[j][i]) {
+                    isLeader = false;
+                    break;
+                } else if (wins[i][j] == wins[j][i]) {
+                    isAbove = false;
+                }
+            }
+            if (isLeader && isAbove) return new CondorcetCalc(this, this[i], wins);
+        }
+
+        // For now, say there is no leader.
+        return new CondorcetCalc(this, undefined, wins);
     }
 
     // How much defection people can get away with, 0-1.

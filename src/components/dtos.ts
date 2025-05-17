@@ -1,6 +1,6 @@
 import type { Assessments, ClanAgent } from "../model/agents";
 import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/basics";
-import type { Clans } from "../model/clans";
+import type { Clans, CondorcetCalc } from "../model/clans";
 import { pct } from "../model/format";
 import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, PrestigeCalc } from "../model/people";
 import type { Settlement } from "../model/settlement";
@@ -125,6 +125,7 @@ export function clanDTO(clan: Clan) {
 
 export class ClansDTO extends Array<ClanDTO> {
     population: number;
+    condorcet: CondorcetCalc;
     slippage: number;
 
     pot: { 
@@ -140,6 +141,7 @@ export class ClansDTO extends Array<ClanDTO> {
     constructor(clans: Clans) {
         super(...clans.map(clanDTO));
         this.population = clans.population;
+        this.condorcet = clans.condorcetLeader;
         this.slippage = clans.slippage;
         this.pot = {
             contributors: clans.pot.contributors,

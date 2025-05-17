@@ -25,6 +25,10 @@ export function maxbyWithValue<T>(arr: T[], key: (t: T) => number): [T, number] 
     }, [arr[0], key(arr[0])]);
 }
 
+export function maxComparing<T>(arr: T[], compareFn: (a: T, b: T) => number): [number, T] {
+    return arr.entries().reduce((acc, cur) => compareFn(acc[1], cur[1]) >= 0 ? acc : cur);
+}
+
 export function minby<T>(arr: T[], key: (t: T) => number): T {
     return arr.reduce((acc, cur) => key(acc) < key(cur) ? acc : cur);
 }
@@ -55,10 +59,19 @@ export function shuffled<T>(arr: T[]): T[] {
     return result;
 }
 
-
 export function remove<T>(arr: T[], elem: T) {
     const index = arr.indexOf(elem);
     if (index >= 0) {
         arr.splice(index, 1);
     }
+}
+
+export function compareLexically<T>(aa: T[], bb: T[]): number {
+    for (let i = 0; i < Math.min(aa.length, bb.length); ++i) {
+        const a = aa[i];
+        const b = bb[i];
+        if (a < b) return -1;
+        if (a > b) return 1;
+    }
+    return aa.length - bb.length;
 }
