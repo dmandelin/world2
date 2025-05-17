@@ -467,10 +467,6 @@ export class Clan {
         ];
     }
 
-    get prestige() {
-        return Math.round(Math.log2(this.size) * this.qol / 6) - this.seniority;
-    }
-
     readonly slices: number[][] = [
         [0, 0], // Children, girls first (0-18)
         [0, 0], // Adults (18-35)
