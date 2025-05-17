@@ -51,10 +51,12 @@ x Add effects for farming skill
 - Add dynamics for prestige
   x Initial ratings based on observations and noise
   - Add something for seniority
-  - Add something for clan size
+  x Add something for clan size
   - Syncing of ratings with each other
+  - Persistence of ratings in history
 - Add dynamics for farming skill
 - Add remaining effects for prestige
+- Maybe something about clan elders
 
 ## Trade
 
