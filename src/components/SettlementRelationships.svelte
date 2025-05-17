@@ -4,6 +4,10 @@
 
     let { settlement } = $props();
     let clans = $derived(settlement.clans);
+
+    $effect(() => {
+        console.log(clans[0]);
+    });
 </script>
 
 <style>
@@ -47,9 +51,9 @@ No leading clan
                 -
                 {:else}
                 <Tooltip>
-                    {(c.prestige.get(d.ref).value.toFixed())}
+                    {(c.prestige.get(d.ref)?.value?.toFixed())}
                     <div slot="tooltip">
-                        <DataTable rows={c.prestige.get(d.ref).tooltip} />
+                        <DataTable rows={c.prestige.get(d.ref)?.tooltip} />
                     </div>
                 </Tooltip>
                 {/if}
@@ -77,7 +81,7 @@ No leading clan
                 -
                 {:else}
                 <Tooltip>
-                    {clans.condorcet.wins[i][j]}
+                    {clans.condorcet.wins[i] ? clans.condorcet.wins[i][j] : '?'}
                     <div slot="tooltip">
                         n/a
                     </div>

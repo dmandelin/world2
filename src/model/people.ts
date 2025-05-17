@@ -7,6 +7,7 @@ import { Assessments } from "./agents";
 import { Pot } from "./production";
 import type { Settlement } from "./settlement";
 import { TradeGoods, type TradeGood } from "./trade";
+import { PrestigeCalc } from "./prestige";
 
 const clanGoodsSource = 'clan';
 
@@ -193,33 +194,6 @@ export class ProductivityCalc {
     }
 }
 
-export class PrestigeCalc {
-    readonly items: [string, number][];
-
-    constructor(readonly clan: Clan, readonly other: Clan) {
-        if (clan.settlement!.size > 300) {
-            this.items = [['Strangers!', 35]];
-        } else {
-            this.items = [
-                ['Neighbors', 50],
-                [`Size ${other.size}`, Math.log2(other.size / 50) * 5],
-                [`Strength ${other.strength}`, (other.strength - 50) / 10],
-                [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 20],
-                [`Skill ${other.skill.toFixed()}`, (other.skill - 50) / 10],
-                [`Random`, normal(0, 2)],
-            ];
-        }
-    }
-
-    get value(): number {
-        return this.items.reduce((acc, [_, v]) => acc + v, 0);
-    }
-
-    get tooltip(): string[][] {
-        return this.items.map(([k, v]) => [k, v.toFixed(1)]);
-    }
-}
-
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -247,6 +221,8 @@ export class Clan {
     // Agent for the clan. This is used to determine how the clan interacts.
     agent = new ClanAgent(this);
     assessments = new Assessments(this);
+    
+    private prestigeViews_ = new Map<Clan, PrestigeCalc>();
 
     // Individual clan economy.
     economicPolicy = EconomicPolicies.Share;
@@ -289,8 +265,29 @@ export class Clan {
         return this.skill_;
     }
 
-    prestigeSeenIn(other: Clan) {
-        return new PrestigeCalc(this, other);
+    prestigeViewOf(other: Clan): PrestigeCalc {
+        return this.prestigeViews_.get(other) ?? new PrestigeCalc(this, other);
+    }
+
+    get prestigeViews(): Map<Clan, PrestigeCalc> {
+        return this.prestigeViews_;
+    }
+
+    updateOwnPrestigeViews() {
+        for (const clan of this.settlement!.clans) {
+            if (clan === this) continue;
+            if (!this.prestigeViews_.has(clan)) {
+                this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
+            } else {
+                this.prestigeViews_.get(clan)!.updateOwnPrestige();
+            }
+        }
+
+        for (const clan of this.prestigeViews_.keys()) {
+            if (!this.settlement?.clans.includes(clan)) {
+                this.prestigeViews_.delete(clan);
+            }
+        }
     }
 
     kinshipTo(other: Clan): number {

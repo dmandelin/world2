@@ -101,6 +101,7 @@ export class World {
             for (const clan of s.clans) {
                 clan.assessments.update();
             }
+            s.clans.updatePrestigeViews();
         }
         this.notify();
     }

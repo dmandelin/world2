@@ -27,8 +27,12 @@ export class Clans extends Array<Clan> {
 
     // Condorcet leading clan by prestige.
     get condorcetLeader(): CondorcetCalc {
-        // Precompute the PrestigeCalcs.
-        const prestigeCalcs = this.map(clan => this.map(other => clan.prestigeSeenIn(other).value));
+        if (this[0].prestigeViews.size == 0) {
+            return new CondorcetCalc(this, undefined, []);
+        }
+
+        // Get an array of the prestige values for each clan
+        const prestigeCalcs = this.map(clan => this.map(other => clan.prestigeViewOf(other)!.value));
 
         // Fill out a 2D array with the number of times i wins against j.
         const wins = new Array(this.length).fill(0).map(() => new Array(this.length).fill(0));
@@ -98,7 +102,9 @@ export class Clans extends Array<Clan> {
         for (const clan of this) clan.advance();
         this.split();
         this.merge();
-        this.prune()
+        this.prune();
+
+        this.updatePrestigeViews();
     }
 
     produce() {
@@ -271,5 +277,9 @@ export class Clans extends Array<Clan> {
 
     prune() {
         this.splice(0, this.length, ...this.filter(clan => clan.size > 0));
+    }
+
+    updatePrestigeViews() {
+        this.forEach(clan => clan.updateOwnPrestigeViews());
     }
 }

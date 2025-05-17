@@ -56,6 +56,7 @@ x Add effects for farming skill
   - Persistence of ratings in history
 - Add dynamics for farming skill
 - Add remaining effects for prestige
+- Some small benefit for being leading clan
 - Maybe something about clan elders
 
 ## Trade
