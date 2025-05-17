@@ -7,6 +7,15 @@ import type { Settlement } from "../model/settlement";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 
+function prestigeDTO(clan: Clan) {
+    const prestige = new Map<Clan, number>();
+    for (const other of clan.settlement!.clans) {
+        if (other === clan) continue;
+        prestige.set(other, clan.relativePrestige(other));
+    }
+    return prestige;
+}
+
 export type TradePartnerDTO = {
     name: string;
     sending: string[];
@@ -37,6 +46,7 @@ export type ClanDTO = {
     assessments: Assessments;
     benevolence: number;
     reputation: number;
+    prestige: Map<Clan, number>;
     
     consumption: ConsumptionCalc;
     subsistenceConsumption: number; // TODO - remove
@@ -58,7 +68,6 @@ export type ClanDTO = {
     giftStrategy: string;
     intelligence: number;
     interactionModifier: number;
-    prestige: number;
     skill: number;
     strength: number;
     techModifier: number;
@@ -77,6 +86,7 @@ export function clanDTO(clan: Clan) {
         assessments: clan.assessments.clone(),
         benevolence: clan.benevolence,
         reputation: clan.reputation,
+        prestige: prestigeDTO(clan),
 
         cadets: clan.cadets,
         parent: clan.parent,
@@ -105,7 +115,6 @@ export function clanDTO(clan: Clan) {
         giftStrategy: clan.agent.defaultGiftStrategy,
         intelligence: clan.intelligence,
         interactionModifier: clan.interactionModifier,
-        prestige: clan.prestige,
         skill: clan.skill,
         strength: clan.strength,
         techModifier: clan.techModifier,

@@ -225,6 +225,10 @@ export class Clan {
         return this.skill_;
     }
 
+    relativePrestige(other: Clan): number {
+        return 50;
+    }
+
     kinshipTo(other: Clan): number {
         const rStep = 0.25;
         if (this === other) return 1;

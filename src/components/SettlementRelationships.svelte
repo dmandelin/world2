@@ -19,6 +19,36 @@
     }
 </style>
 
+<h3>Prestige seen</h3>
+<table><tbody>
+    <tr>
+        <td></td>
+        {#each clans as c}
+            <td>{c.name}</td>
+        {/each}
+    </tr>
+    {#each clans as c}
+    <tr>
+        <td>{c.name}</td>
+        {#each clans as d}
+            <td>
+                {#if c === d}
+                -
+                {:else}
+                <Tooltip>
+                    {(c.prestige.get(d.ref).toFixed())}
+                    <div slot="tooltip">
+                        Stuff
+                    </div>
+                </Tooltip>
+                {/if}
+            </td>
+        {/each}
+    </tr>
+    {/each}
+    </tbody></table>
+
+<h3>Relatedness</h3>
 <table><tbody>
     <tr>
         <td></td>
