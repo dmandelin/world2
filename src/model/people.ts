@@ -156,6 +156,43 @@ export class ConsumptionCalc {
     }
 }
 
+export class ProductivityCalc {
+    readonly baseSkill: number;
+    readonly intelligenceSkillModifier: number = 1.0;
+    readonly effectiveSkill: number;
+
+    readonly skillFactor: number;
+    readonly strengthFactor: number;
+
+    readonly value: number;
+
+    constructor(readonly clan: Clan) {
+        this.baseSkill = clan.skill;
+
+        const baseIntelligenceModifier = (clan.intelligence - 50) / 2;
+        const intelligenceModifierFactor = (100 - clan.skill) / 100;
+        this.intelligenceSkillModifier = baseIntelligenceModifier * intelligenceModifierFactor;
+        this.effectiveSkill = this.baseSkill + this.intelligenceSkillModifier;
+        this.skillFactor = Math.pow(1.01, this.effectiveSkill - 50);
+
+        this.strengthFactor = Math.pow(1.01, (clan.strength - 50) / 4);
+
+        this.value = this.skillFactor * this.strengthFactor;
+    }
+
+    get tooltip(): string[][] {
+        return [
+            ['Base skill', this.baseSkill.toFixed(1)],
+            ['Intelligence', this.clan.intelligence.toFixed(1)],
+            ['Intelligence modifier', this.intelligenceSkillModifier.toFixed(1)],
+            ['Effective skill', this.effectiveSkill.toFixed(1)],
+            ['Skill factor', this.skillFactor.toFixed(2)],
+            ['Strength factor', this.strengthFactor.toFixed(2)],
+            ['Productivity', this.value.toFixed(2)],
+        ];
+    }
+}
+
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -358,13 +395,12 @@ export class Clan {
         };
     }
 
-    get productionAbility() {
-        return Math.round(2/(1/this.strength + 1/this.intelligence));
+    get productivity() {
+        return this.productivityCalc.value;
     }
 
-    get productivity() {
-        const z = (this.productionAbility - 50) / 15;
-        return Math.pow(1.2, z);
+    get productivityCalc() {
+        return new ProductivityCalc(this);
     }
 
     get techModifier() {
@@ -398,12 +434,18 @@ export class Clan {
     get qolFromAbility() {
         const zi = (this.intelligence - 50) / 15;
         const zs = (this.strength - 50) / 15;
-        return zi * 3 + zs * 3;
+        return zi + zs;
+    }
+
+    get qolFromSkill() {
+        const z = (this.skill - 50) / 15;
+        return z * 5;
     }
 
     get qol() {
         return this.qolFromConsumption +
             this.qolFromAbility + 
+            this.qolFromSkill +
             this.interactionModifier + 
             this.festivalModifier + 
             this.techModifier +
@@ -413,8 +455,9 @@ export class Clan {
 
     get qolTable(): [string, string][] {
         return [
-            ['Ability', this.qolFromAbility.toFixed(1) ],
             ['Consumption', this.qolFromConsumption.toFixed(1) ],
+            ['Skill', this.qolFromSkill.toFixed(1) ],
+            ['Ability', this.qolFromAbility.toFixed(1) ],
             ['Interaction', this.interactionModifier.toFixed(1) ],
             ['Festival', this.festivalModifier.toFixed(1) ],
             ['Tenure', this.tenureModifier.toFixed(1) ],

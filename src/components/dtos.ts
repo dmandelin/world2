@@ -54,7 +54,6 @@ export type ClanDTO = {
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
     lastSizeChange: number;
-    productionAbility: number;
     productivity: number;
     seniority: number;
     size: number;
@@ -100,8 +99,8 @@ export function clanDTO(clan: Clan) {
         economicReport: clan.economicReport,
         perCapitaSubsistenceConsumption: clan.perCapitaSubsistenceConsumption,
         lastSizeChange: clan.lastSizeChange,
-        productionAbility: clan.productionAbility,
         productivity: clan.productivity,
+        productivityTooltip: clan.productivityCalc.tooltip,
         seniority: clan.seniority,
         size: clan.size,
         tradePartners: tradePartnersDTO(clan),

@@ -45,9 +45,9 @@
 
 ### Items
 
-- Add farming skill stat and display with no initial effects or dynamics
-- Add prestige stat and display with no initial effects or dynamics
-- Add effects for farming skill
+x Add farming skill stat and display with no initial effects or dynamics
+x Add prestige stat and display with no initial effects or dynamics
+x Add effects for farming skill
 - Add dynamics for prestige
 - Add dynamics for farming skill
 - Add remaining effects for prestige

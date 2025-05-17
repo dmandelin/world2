@@ -65,24 +65,8 @@
                 <td>
                     <Tooltip>
                         {spct(clan.productivity)}
-                      
                         <div slot="tooltip">
-                          <table>
-                            <tbody>
-                                <tr>
-                                    <td>Strength</td>
-                                    <td>{wg(clan.strength)}</td>
-                                </tr>
-                                <tr>
-                                    <td>Intelligence</td>
-                                    <td>{wg(clan.intelligence)}</td>
-                                </tr>
-                                <tr>
-                                    <td>Collecting</td>
-                                    <td>{wg(clan.productionAbility)}</td>
-                                </tr>
-                            </tbody>
-                          </table>
+                            <DataTable rows={clan.productivityTooltip} />
                         </div>
                     </Tooltip>
                 </td>
