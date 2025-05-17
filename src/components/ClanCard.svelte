@@ -56,6 +56,10 @@
                 <td>({clan.lastSizeChange})</td>
             </tr>
             <tr>
+                <td>Skill</td>
+                <td colspan="2">{wg(clan.skill)}</td>
+            </tr>
+            <tr>
                 <td>Prod</td>
                 <td></td>
                 <td>

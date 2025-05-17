@@ -168,6 +168,8 @@ export class Clan {
     
     lastSizeChange_: number = 0;
 
+    private skill_: number = normal(30, 10);
+
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
 
@@ -217,6 +219,10 @@ export class Clan {
             this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * size);
             this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * size);
         }
+    }
+
+    get skill() {
+        return this.skill_;
     }
 
     kinshipTo(other: Clan): number {

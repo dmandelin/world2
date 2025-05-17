@@ -59,6 +59,7 @@ export type ClanDTO = {
     intelligence: number;
     interactionModifier: number;
     prestige: number;
+    skill: number;
     strength: number;
     techModifier: number;
     tenure: number;
@@ -105,6 +106,7 @@ export function clanDTO(clan: Clan) {
         intelligence: clan.intelligence,
         interactionModifier: clan.interactionModifier,
         prestige: clan.prestige,
+        skill: clan.skill,
         strength: clan.strength,
         techModifier: clan.techModifier,
         tenure: clan.tenure,
