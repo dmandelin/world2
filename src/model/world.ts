@@ -97,29 +97,27 @@ export class World {
             }
             s.clans.produce();
             s.clans.distribute();
-
-            for (const clan of s.clans) {
-                clan.assessments.update();
-            }
-            s.clans.updatePrestigeViews();
         }
+
+        this.updatePerceptions();
+
         this.notify();
     }
 
     advance() {
+        // Main advance phase.
         for (const s of this.settlements) {
             s.advance();
         }
-        for (const s of this.settlements) {
-            for (const clan of s.clans) {
-                clan.assessments.update();
-            }
-        }
         this.emigrate();
-        this.rank();
 
+        this.updatePerceptions();
+
+        // Update timeline.
         this.year.advance(this.yearsPerTurn);
         this.timeline.push(new TimePoint(this));
+
+        // Notify observers.
         this.notify();
     }
 
@@ -189,14 +187,15 @@ export class World {
         }
     }
 
-    rank() {
-        const work = this.allClans.filter(c => !c.parent);
-        while (work.length) {
-            const clan = work.pop()!;
-            clan.seniority = clan.parent ? clan.parent.seniority + 1 : 0;
-            work.push(...clan.cadets);
+    updatePerceptions() {
+        for (const s of this.settlements) {
+            for (const clan of s.clans) {
+                clan.assessments.update();
+            }
+            s.clans.updateSeniority();
+            s.clans.updatePrestigeViews();
         }
-    }
+    }        
 
     get totalPopulation() {
         return this.settlements.reduce((acc, s) => acc + s.size, 0);

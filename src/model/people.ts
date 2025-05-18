@@ -202,6 +202,7 @@ export class Clan {
     public festivalModifier = 0;
 
     settlement: Settlement|undefined;
+    seniority: number = -1;
     tenure: number = 0;
     
     lastSizeChange_: number = 0;
@@ -214,9 +215,6 @@ export class Clan {
     // Relationships
     parent: Clan|undefined;
     cadets: Clan[] = [];
-
-    // 0 = most senior, +1 per cadet link
-    seniority: number = 0;
 
     // Agent for the clan. This is used to determine how the clan interacts.
     agent = new ClanAgent(this);
@@ -672,6 +670,7 @@ export class Clan {
         const newClan = new Clan(this.annals, name, color, newSize);
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;
+        newClan.skill_ = this.skill_;
         newClan.settlement = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);

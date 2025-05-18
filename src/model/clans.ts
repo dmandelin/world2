@@ -103,8 +103,6 @@ export class Clans extends Array<Clan> {
         this.split();
         this.merge();
         this.prune();
-
-        this.updatePrestigeViews();
     }
 
     produce() {
@@ -277,6 +275,21 @@ export class Clans extends Array<Clan> {
 
     prune() {
         this.splice(0, this.length, ...this.filter(clan => clan.size > 0));
+    }
+
+    updateSeniority() {
+        const newClans = [];
+        let maxExistingSeniority = -1;
+        for (const clan of this) {
+            if (clan.seniority == -1) {
+                newClans.push(clan);
+            } else {
+                maxExistingSeniority = Math.max(maxExistingSeniority, clan.seniority);
+            }
+        }
+        for (const clan of newClans) {
+            clan.seniority = maxExistingSeniority + 1;
+        }
     }
 
     updatePrestigeViews() {
