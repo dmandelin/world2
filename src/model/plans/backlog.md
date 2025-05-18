@@ -53,11 +53,15 @@ x Add effects for farming skill
   - Add something for seniority
   x Add something for clan size
   x Syncing of ratings with each other
-  - Persistence of ratings in history
+  x Persistence of ratings in history
 - Add dynamics for farming skill
 - Add remaining effects for prestige
 - Some small benefit for being leading clan
 - Maybe something about clan elders
+
+Understanding results:
+- Historical graphs of key numbers
+- Visualization of leading clans over time
 
 ## Trade
 

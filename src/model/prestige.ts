@@ -30,17 +30,28 @@ export class OwnPrestigeCalc {
 
 export class PrestigeCalc {
     readonly imitiationRatio: number = 0.33;
+    readonly persistenceRatio: number = 0.33;
 
-    ownPrestige_: OwnPrestigeCalc;
+    inferredPrestige_: OwnPrestigeCalc;
     imitatedPrestige_: number|undefined;
     bufferedImitatedPrestige_: number|undefined;
+    previousPrestige_: number|undefined;
 
     constructor(readonly clan: Clan, readonly other: Clan) {
-        this.ownPrestige_ = new OwnPrestigeCalc(clan, other);
+        this.inferredPrestige_ = new OwnPrestigeCalc(clan, other);
     }
 
-    updateOwnPrestige() {
-        this.ownPrestige_ = new OwnPrestigeCalc(this.clan, this.other);
+    startUpdate() {
+        // Start the turn: set the previous value, clear things to be updated.
+        this.previousPrestige_ = this.value;
+        this.imitatedPrestige_ = undefined;
+        this.bufferedImitatedPrestige_ = undefined;
+
+        this.updateInferredPrestige();
+    }
+
+    private updateInferredPrestige() {
+        this.inferredPrestige_ = new OwnPrestigeCalc(this.clan, this.other);
     }
 
     bufferImitatedPrestigeUpdate() {
@@ -65,17 +76,28 @@ export class PrestigeCalc {
     }
 
     get value(): number {
-        if (this.imitatedPrestige_ === undefined) {
-            return this.ownPrestige_.value;
-        } else {
-            return this.imitatedPrestige_ * this.imitiationRatio + this.ownPrestige_.value * (1 - this.imitiationRatio);
+        let w = 1 - this.imitiationRatio - this.persistenceRatio;
+        let s = this.inferredPrestige_.value * (1 - this.imitiationRatio - this.persistenceRatio);
+
+        if (this.previousPrestige_ !== undefined) {
+            w += this.persistenceRatio;
+            s += this.previousPrestige_ * this.persistenceRatio;
         }
+
+        if (this.imitatedPrestige_ !== undefined) {
+            w += this.imitiationRatio;
+            s += this.imitatedPrestige_ * this.imitiationRatio;
+        }
+
+        return s / w;
     }
 
     get tooltip(): string[][] {
-        const items = this.ownPrestige_.tooltip;
+        const items = this.inferredPrestige_.tooltip;
         if (this.imitatedPrestige_ !== undefined) {
-            items.push(['Own Total', this.ownPrestige_.value.toFixed(1)]);
+            items.push(['Inherited',
+                 this.previousPrestige_ === undefined ? '-' : this.previousPrestige_.toFixed(1)]);
+            items.push(['Inferred', this.inferredPrestige_.value.toFixed(1)]);
             items.push(['Imitated', this.imitatedPrestige_.toFixed(1)]);
         }
         return items;

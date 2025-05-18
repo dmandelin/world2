@@ -273,13 +273,13 @@ export class Clan {
         return this.prestigeViews_;
     }
 
-    updateOwnPrestigeViews() {
+    startUpdatingPrestige() {
         for (const clan of this.settlement!.clans) {
             if (clan === this) continue;
             if (!this.prestigeViews_.has(clan)) {
                 this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
             } else {
-                this.prestigeViews_.get(clan)!.updateOwnPrestige();
+                this.prestigeViews_.get(clan)!.startUpdate();
             }
         }
 

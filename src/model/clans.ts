@@ -280,7 +280,7 @@ export class Clans extends Array<Clan> {
     }
 
     updatePrestigeViews() {
-        this.forEach(clan => clan.updateOwnPrestigeViews());
+        this.forEach(clan => clan.startUpdatingPrestige());
         this.forEach(clan => clan.bufferImitatedPrestigeUpdates());
         this.forEach(clan => clan.commitBufferedImitatedPrestigeUpdates());
     }
