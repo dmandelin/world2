@@ -309,8 +309,7 @@ export class Clans extends Array<Clan> {
 
     updatePrestigeViews() {
         this.forEach(clan => clan.startUpdatingPrestige());
-        this.forEach(clan => clan.bufferImitatedPrestigeUpdates());
-        this.forEach(clan => clan.commitBufferedImitatedPrestigeUpdates());
+        this.forEach(clan => clan.finishUpdatingPrestige());
 
         const totalExpPrestige = this.reduce((acc, clan) =>
              acc + Math.pow(1.05, clan.averagePrestige - 50), 0);

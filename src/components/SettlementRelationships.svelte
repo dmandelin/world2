@@ -53,7 +53,10 @@ No leading clan
                 <Tooltip>
                     {(c.prestige.get(d.ref)?.value?.toFixed())}
                     <div slot="tooltip">
+                        <b>Sources</b>
                         <DataTable rows={c.prestige.get(d.ref)?.tooltip} />
+                        <b>Inference</b>
+                        <DataTable rows={c.prestige.get(d.ref)?.inferenceTooltip} />
                     </div>
                 </Tooltip>
                 {/if}

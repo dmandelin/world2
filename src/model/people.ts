@@ -283,9 +283,8 @@ export class Clan {
             if (clan === this) continue;
             if (!this.prestigeViews_.has(clan)) {
                 this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
-            } else {
-                this.prestigeViews_.get(clan)!.startUpdate();
             }
+            this.prestigeViews_.get(clan)!.startUpdate();
         }
 
         for (const clan of this.prestigeViews_.keys()) {
@@ -295,20 +294,10 @@ export class Clan {
         }
     }
 
-    bufferImitatedPrestigeUpdates() {
+    finishUpdatingPrestige() {
         for (const clan of this.settlement!.clans) {
             if (clan === this) continue;
-            if (!this.prestigeViews_.has(clan)) {
-                this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
-            }
-            this.prestigeViews_.get(clan)!.bufferImitatedPrestigeUpdate();
-        }
-    }
-
-    commitBufferedImitatedPrestigeUpdates() {
-        for (const clan of this.settlement!.clans) {
-            if (clan === this) continue;
-            this.prestigeViews_.get(clan)!.commitBufferedImitatedPrestigeUpdate();
+            this.prestigeViews_.get(clan)!.commitUpdate();
         }
     }
 

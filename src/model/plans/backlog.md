@@ -54,7 +54,7 @@ x Add effects for farming skill
   x Add something for clan size
   x Syncing of ratings with each other
   x Persistence of ratings in history
-  - Make imitation coefficient depend on own relative prestige
+  x Make imitation coefficient depend on own relative prestige
 - Add dynamics for farming skill
 - Add remaining effects for prestige
 - Some small benefit for being leading clan

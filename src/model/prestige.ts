@@ -36,81 +36,71 @@ export class OwnPrestigeCalc {
 }
 
 export class PrestigeCalc {
-    readonly imitiationRatio: number = 0.33;
-    readonly persistenceRatio: number = 0.33;
+    readonly prestigeOfInheritance = 50;
+    readonly prestigeOfInference = 50;
 
-    inferredPrestige_: OwnPrestigeCalc;
-    imitatedPrestige_: number|undefined;
-    bufferedImitatedPrestige_: number|undefined;
-    previousPrestige_: number|undefined;
+    private inferredPrestige_: OwnPrestigeCalc;
+    private previousPrestige_: number|undefined;
+
+    private items_: [string, number, number, number, number][];
+    private bufferedItems_: [string, number, number, number, number][] = [];
 
     constructor(readonly clan: Clan, readonly other: Clan) {
         this.inferredPrestige_ = new OwnPrestigeCalc(clan, other);
+        this.items_ = [PrestigeCalc.createItem(
+            'Inferred', this.inferredPrestige_.value, this.prestigeOfInference)];
+    }
+
+    private buffer(name: string, value: number, sourcePrestige: number) {
+        this.bufferedItems_.push(PrestigeCalc.createItem(name, value, sourcePrestige));
+    }
+
+    private static createItem(name: string, value: number, sourcePrestige: number): [string, number, number, number, number] {
+        const weight = Math.pow(1.02, sourcePrestige - 50);
+        return [name, value, sourcePrestige, weight, value * weight];
     }
 
     startUpdate() {
-        // Start the turn: set the previous value, clear things to be updated.
         this.previousPrestige_ = this.value;
-        this.imitatedPrestige_ = undefined;
-        this.bufferedImitatedPrestige_ = undefined;
-
-        this.updateInferredPrestige();
-    }
-
-    private updateInferredPrestige() {
         this.inferredPrestige_ = new OwnPrestigeCalc(this.clan, this.other);
-    }
 
-    bufferImitatedPrestigeUpdate() {
-        // Calculate the average prestige assigned by other clans
-        // weighted by how much prestige we assign them.
-        let totalWeight = 0;
-        let total = 0;
-        for (const model of this.clan.prestigeViews.keys()) {
-            if (model === this.other || model === this.clan) continue;
-            const weight = Math.pow(1.02, this.clan.prestigeViewOf(model)!.value - 50);
-            totalWeight += weight;
-            total += model.prestigeViewOf(this.other)!.value * weight;
+        this.bufferedItems_ = [];
+        if (this.previousPrestige_ !== undefined) {
+            this.buffer('Inherited', this.previousPrestige_, this.prestigeOfInheritance);
         }
-        const imitatedPrestige = totalWeight ? total / totalWeight : undefined;
+        this.buffer('Inferred', this.inferredPrestige_.value, this.prestigeOfInference);
 
-        this.bufferedImitatedPrestige_ = imitatedPrestige;
+        if (this.clan.settlement!.size < 300) {
+            for (const model of this.clan.prestigeViews.keys()) {
+                if (model === this.other || model === this.clan) continue;
+                this.buffer(model.name, model.prestigeViewOf(this.other)!.value, this.clan.prestigeViewOf(model)!.value);
+            }
+        }
     }
 
-    commitBufferedImitatedPrestigeUpdate() {
-        this.imitatedPrestige_ = this.bufferedImitatedPrestige_;
-        this.bufferedImitatedPrestige_ = undefined;
+    commitUpdate() {
+        // Normalize weights.
+        const totalWeight = this.bufferedItems_.reduce((acc, [_, __, ___, w]) => acc + w, 0);
+        for (const [i, [_, __, ___, w]] of this.bufferedItems_.entries()) {
+            this.bufferedItems_[i][3] = w / totalWeight;
+            this.bufferedItems_[i][4] = this.bufferedItems_[i][1] * this.bufferedItems_[i][3];
+        }
+
+        this.items_ = this.bufferedItems_;
+        this.bufferedItems_ = [];
     }
 
     get value(): number {
-        if (this.clan.settlement!.size > 300) {
-            return 35;
-        }
-
-        let w = 1 - this.imitiationRatio - this.persistenceRatio;
-        let s = this.inferredPrestige_.value * (1 - this.imitiationRatio - this.persistenceRatio);
-
-        if (this.previousPrestige_ !== undefined) {
-            w += this.persistenceRatio;
-            s += this.previousPrestige_ * this.persistenceRatio;
-        }
-
-        if (this.imitatedPrestige_ !== undefined) {
-            w += this.imitiationRatio;
-            s += this.imitatedPrestige_ * this.imitiationRatio;
-        }
-
-        return s / w;
+        return this.items_.reduce((acc, [_, __, ___, ____, v]) => acc + v, 0);
     }
 
     get tooltip(): string[][] {
-        const items = this.inferredPrestige_.tooltip;
-        if (this.imitatedPrestige_ !== undefined) {
-            items.push(['Inherited',
-                 this.previousPrestige_ === undefined ? '-' : this.previousPrestige_.toFixed(1)]);
-            items.push(['Inferred', this.inferredPrestige_.value.toFixed(1)]);
-            items.push(['Imitated', this.imitatedPrestige_.toFixed(1)]);
-        }
-        return items;
+        const data = this.items_.map(([s, t, u, v, w]) => 
+            [s, t.toFixed(0), u.toFixed(0), v.toFixed(2), w.toFixed(1)]);
+        return [['Source', 'P', 'SP', 'w', 'wP'], ...data];
+    }
+
+    get inferenceTooltip(): string[][] {
+        return this.inferredPrestige_.tooltip;
     }
 }
