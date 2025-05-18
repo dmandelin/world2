@@ -52,7 +52,7 @@ x Add effects for farming skill
   x Initial ratings based on observations and noise
   - Add something for seniority
   x Add something for clan size
-  - Syncing of ratings with each other
+  x Syncing of ratings with each other
   - Persistence of ratings in history
 - Add dynamics for farming skill
 - Add remaining effects for prestige

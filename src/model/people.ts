@@ -290,6 +290,23 @@ export class Clan {
         }
     }
 
+    bufferImitatedPrestigeUpdates() {
+        for (const clan of this.settlement!.clans) {
+            if (clan === this) continue;
+            if (!this.prestigeViews_.has(clan)) {
+                this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
+            }
+            this.prestigeViews_.get(clan)!.bufferImitatedPrestigeUpdate();
+        }
+    }
+
+    commitBufferedImitatedPrestigeUpdates() {
+        for (const clan of this.settlement!.clans) {
+            if (clan === this) continue;
+            this.prestigeViews_.get(clan)!.commitBufferedImitatedPrestigeUpdate();
+        }
+    }
+
     kinshipTo(other: Clan): number {
         const rStep = 0.25;
         if (this === other) return 1;

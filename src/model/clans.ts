@@ -27,7 +27,7 @@ export class Clans extends Array<Clan> {
 
     // Condorcet leading clan by prestige.
     get condorcetLeader(): CondorcetCalc {
-        if (this[0].prestigeViews.size == 0) {
+        if (this.length && this[0].prestigeViews.size == 0) {
             return new CondorcetCalc(this, undefined, []);
         }
 
@@ -281,5 +281,7 @@ export class Clans extends Array<Clan> {
 
     updatePrestigeViews() {
         this.forEach(clan => clan.updateOwnPrestigeViews());
+        this.forEach(clan => clan.bufferImitatedPrestigeUpdates());
+        this.forEach(clan => clan.commitBufferedImitatedPrestigeUpdates());
     }
 }
