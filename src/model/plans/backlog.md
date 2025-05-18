@@ -50,10 +50,11 @@ x Add prestige stat and display with no initial effects or dynamics
 x Add effects for farming skill
 - Add dynamics for prestige
   x Initial ratings based on observations and noise
-  - Add something for seniority
+  x Add something for seniority
   x Add something for clan size
   x Syncing of ratings with each other
   x Persistence of ratings in history
+  - Make imitation coefficient depend on own relative prestige
 - Add dynamics for farming skill
 - Add remaining effects for prestige
 - Some small benefit for being leading clan
@@ -62,6 +63,7 @@ x Add effects for farming skill
 Understanding results:
 - Historical graphs of key numbers
 - Visualization of leading clans over time
+- Display clan moves again
 
 ## Trade
 

@@ -1,4 +1,5 @@
 import { normal } from "./distributions";
+import { signed } from "./format";
 import type { Clan } from "./people";
 
 export class OwnPrestigeCalc {
@@ -10,6 +11,7 @@ export class OwnPrestigeCalc {
         } else {
             this.items = [
                 ['Neighbors', 50],
+                this.seniorityItem,
                 [`Size ${other.size}`, Math.log2(other.size / 50) * 5],
                 [`Strength ${other.strength}`, (other.strength - 50) / 10],
                 [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 20],
@@ -17,6 +19,11 @@ export class OwnPrestigeCalc {
                 [`Random`, normal(0, 2)],
             ];
         }
+    }
+
+    private get seniorityItem(): [string, number] {
+        const diff = this.clan.seniority - this.other.seniority;
+        return [`Seniority ${signed(diff)}`, diff * 5];
     }
 
     get value(): number {
@@ -76,6 +83,10 @@ export class PrestigeCalc {
     }
 
     get value(): number {
+        if (this.clan.settlement!.size > 300) {
+            return 35;
+        }
+
         let w = 1 - this.imitiationRatio - this.persistenceRatio;
         let s = this.inferredPrestige_.value * (1 - this.imitiationRatio - this.persistenceRatio);
 

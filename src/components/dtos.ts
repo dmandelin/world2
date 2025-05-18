@@ -1,5 +1,5 @@
 import type { Assessments, ClanAgent } from "../model/agents";
-import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/basics";
+import { maxbyWithValue, minbyWithValue, sortedByKey, type OptByWithValue } from "../model/basics";
 import type { Clans, CondorcetCalc } from "../model/clans";
 import { pct } from "../model/format";
 import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people";
@@ -43,6 +43,8 @@ export type ClanDTO = {
     benevolence: number;
     reputation: number;
     prestige: Map<Clan, PrestigeCalc>;
+    averagePrestige: number;
+    influence: number;
     
     consumption: ConsumptionCalc;
     subsistenceConsumption: number; // TODO - remove
@@ -82,6 +84,8 @@ export function clanDTO(clan: Clan) {
         benevolence: clan.benevolence,
         reputation: clan.reputation,
         prestige: prestigeDTO(clan),
+        averagePrestige: clan.averagePrestige,
+        influence: clan.influence,
 
         cadets: clan.cadets,
         parent: clan.parent,
@@ -135,7 +139,7 @@ export class ClansDTO extends Array<ClanDTO> {
     };
 
     constructor(clans: Clans) {
-        super(...clans.map(clanDTO));
+        super(...sortedByKey(clans.map(clanDTO), clan => -clan.averagePrestige));
         this.population = clans.population;
         this.condorcet = clans.condorcetLeader;
         this.slippage = clans.slippage;

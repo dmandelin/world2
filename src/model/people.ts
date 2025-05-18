@@ -220,7 +220,10 @@ export class Clan {
     agent = new ClanAgent(this);
     assessments = new Assessments(this);
     
+    // This clan's views of others.
     private prestigeViews_ = new Map<Clan, PrestigeCalc>();
+    // Local prestige-generated share of influence.
+    influence = 0;
 
     // Individual clan economy.
     economicPolicy = EconomicPolicies.Share;
@@ -261,6 +264,10 @@ export class Clan {
 
     get skill() {
         return this.skill_;
+    }
+
+    get averagePrestige(): number {
+        return this.settlement!.clans.averagePrestige(this);
     }
 
     prestigeViewOf(other: Clan): PrestigeCalc {
@@ -629,6 +636,10 @@ export class Clan {
         }
         settlement.clans.push(this);
         this.settlement = settlement;
+
+        this.seniority = -1;
+        this.tenure = 0;
+        this.skill_ *= 0.9;
     }
 
     absorb(other: Clan) {

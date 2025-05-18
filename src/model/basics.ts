@@ -59,6 +59,16 @@ export function shuffled<T>(arr: T[]): T[] {
     return result;
 }
 
+export function sortedByKey<T>(arr: T[], key: (t: T) => number): T[] {
+    return arr.toSorted((a, b) => {
+        const aKey = key(a);
+        const bKey = key(b);
+        if (aKey < bKey) return -1;
+        if (aKey > bKey) return 1;
+        return 0;
+    });
+}
+
 export function remove<T>(arr: T[], elem: T) {
     const index = arr.indexOf(elem);
     if (index >= 0) {

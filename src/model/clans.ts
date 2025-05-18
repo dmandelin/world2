@@ -25,6 +25,21 @@ export class Clans extends Array<Clan> {
       return this.reduce((total, clan) => total + clan.size, 0);
     }
 
+    // Population-weighted average of other clans' views of this one.
+    averagePrestige(clan: Clan): number {
+        let totalPrestige = 0;
+        let totalWeight = 0;
+        for (const other of this) {
+            if (other === clan) continue;
+            const prestige = other.prestigeViewOf(clan);
+            if (prestige) {
+                totalPrestige += prestige.value * other.size;
+                totalWeight += other.size;
+            }
+        }
+        return totalWeight ? totalPrestige / totalWeight : 0;
+    }
+
     // Condorcet leading clan by prestige.
     get condorcetLeader(): CondorcetCalc {
         if (this.length && this[0].prestigeViews.size == 0) {
@@ -296,5 +311,12 @@ export class Clans extends Array<Clan> {
         this.forEach(clan => clan.startUpdatingPrestige());
         this.forEach(clan => clan.bufferImitatedPrestigeUpdates());
         this.forEach(clan => clan.commitBufferedImitatedPrestigeUpdates());
+
+        const totalExpPrestige = this.reduce((acc, clan) =>
+             acc + Math.pow(1.05, clan.averagePrestige - 50), 0);
+        for (const clan of this) {
+            const expPrestige = Math.pow(1.05, clan.averagePrestige - 50);
+            clan.influence = expPrestige / totalExpPrestige;
+        }
     }
 }

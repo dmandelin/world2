@@ -1,5 +1,5 @@
 <script>
-    import { npl, spct, wg } from "../model/format";
+    import { npl, pct, spct, wg } from "../model/format";
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 
@@ -36,19 +36,19 @@
                 <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">{npl(clan.cadets.length, 'cadet')}</td>
             </tr>
             <tr>
+                <td>Prestige</td>
+                <td></td>
+                <td>{clan.averagePrestige.toFixed()}</td>
+            </tr>
+            <tr>
+                <td>Influence</td>
+                <td></td>
+                <td>{pct(clan.influence)}</td>
+            </tr>
+            <tr>
                 <td>Seniority</td>
                 <td></td>
                 <td>{String.fromCharCode(65 + clan.seniority)}</td>
-            </tr>
-            <tr>
-                <td>Bene</td>
-                <td></td>
-                <td>{(100 * clan.benevolence).toFixed()}</td>
-            </tr>
-            <tr>
-                <td>Rep</td>
-                <td></td>
-                <td>{(100 * clan.reputation).toFixed()}</td>
             </tr>
             <tr>
                 <td>People</td>
