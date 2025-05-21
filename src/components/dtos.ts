@@ -2,7 +2,7 @@ import type { Assessments, ClanAgent } from "../model/agents";
 import { maxbyWithValue, minbyWithValue, sortedByKey, type OptByWithValue } from "../model/basics";
 import type { Clans, CondorcetCalc } from "../model/clans";
 import { pct } from "../model/format";
-import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people";
+import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, SkillChange } from "../model/people";
 import type { PrestigeCalc } from "../model/prestige";
 import type { Settlement } from "../model/settlement";
 import type { TradeGood } from "../model/trade";
@@ -66,6 +66,7 @@ export type ClanDTO = {
     intelligence: number;
     interactionModifier: number;
     skill: number;
+    skillChange: SkillChange;
     strength: number;
     techModifier: number;
     tenure: number;
@@ -115,6 +116,7 @@ export function clanDTO(clan: Clan) {
         intelligence: clan.intelligence,
         interactionModifier: clan.interactionModifier,
         skill: clan.skill,
+        skillChange: clan.skillChange,
         strength: clan.strength,
         techModifier: clan.techModifier,
         tenure: clan.tenure,

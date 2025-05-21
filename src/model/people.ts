@@ -2,12 +2,13 @@ import { ClanAgent } from "./agents";
 import { Annals } from "./annals";
 import { clamp, remove } from "./basics";
 import type { Clans } from "./clans";
-import { normal } from "./distributions";
+import { normal, poisson } from "./distributions";
 import { Assessments } from "./agents";
 import { Pot } from "./production";
 import type { Settlement } from "./settlement";
 import { TradeGoods, type TradeGood } from "./trade";
 import { PrestigeCalc } from "./prestige";
+import { traitWeightedAverage, WeightedValue } from "./modelbasics";
 
 const clanGoodsSource = 'clan';
 
@@ -194,6 +195,74 @@ export class ProductivityCalc {
     }
 }
 
+export interface SkillChange {
+    delta: number;
+}
+
+export class NilSkillChange implements SkillChange {
+    get delta(): number {
+        return 0;
+    }
+}
+
+export class ClanSkillChange implements SkillChange {
+    readonly imitationTarget: number;
+    readonly imitationTargetTable: readonly WeightedValue<string>[];
+    readonly imitationDelta: number;
+    readonly imitationError: number;
+
+    readonly learningDelta: number;
+
+    readonly innovationDelta: number;
+
+    readonly items: [string, number][] = [];
+
+    constructor(readonly clan: Clan) {
+        [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
+            [...clan.settlement!.clans],
+            c => c.name,
+            c => c === clan ? 50 : clan.prestigeViewOf(c).value,
+            c => c.skill,
+        );
+        // Imitation moves skill toward the target. Turns are about a
+        // generation, so we'll assume a substantial chunk of the gap
+        // can be closed in that time.
+        this.imitationDelta = (this.imitationTarget - this.clan.skill) / 2;
+        // Imitation error will tend to make things work less well, but
+        // occasionally it will result in an improvement.
+        this.imitationError = normal(-1, 1);
+
+        // Learning refers to incrementally improving skill from personal
+        // observation and experience. Not everyone attempts to learn in
+        // this way, and this can also result in loss of skill.
+        //
+        // We'll probably want to enrich this soon, but for now we'll start
+        // really simple with a standard effect for everyone that balances
+        // the imitation error.
+        this.learningDelta = normal(1, 1);
+
+        // Innovation refers to a more radical change in practices. These
+        // too can be good or bad, but a very bad one would usually be
+        // rejected immediately, so we'll have that low probability or nil
+        // for now. This is the main mechanism for improving long-term skill.
+        // TODO - Use a continuous distribution with a fat right tail, but
+        //        round down small items to 0.
+        this.innovationDelta = poisson(0.1);
+
+        this.items.push(
+            ['Imitation target', this.imitationTarget],
+            ['Imitation delta', this.imitationDelta],
+            ['Imitation error', this.imitationError],
+            ['Learning delta', this.learningDelta],
+            ['Innovation delta', this.innovationDelta],
+        );
+    }
+
+    get delta(): number {
+        return this.imitationDelta + this.learningDelta + this.innovationDelta;
+    }
+}
+
 export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
@@ -208,6 +277,7 @@ export class Clan {
     lastSizeChange_: number = 0;
 
     private skill_: number = normal(30, 10);
+    skillChange = new NilSkillChange();
 
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
@@ -576,6 +646,9 @@ export class Clan {
     advanceTraits() {
         this.strength = this.advancedTrait(this.strength);
         this.intelligence = this.advancedTrait(this.intelligence);
+
+        this.skillChange = new ClanSkillChange(this);
+        this.skill_ = this.skillChange.delta;
 
         // Grinch trait
         if (this.festivalModifier < 0 && !this.traits.has(PersonalityTraits.GRINCH)) {

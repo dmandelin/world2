@@ -48,7 +48,7 @@
 x Add farming skill stat and display with no initial effects or dynamics
 x Add prestige stat and display with no initial effects or dynamics
 x Add effects for farming skill
-- Add dynamics for prestige
+x Add dynamics for prestige
   x Initial ratings based on observations and noise
   x Add something for seniority
   x Add something for clan size
