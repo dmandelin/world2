@@ -47,8 +47,13 @@
 </style>
 
 <div id="top">
-<h1>{settlement.name}</h1>
-<h3>{settlement.size} people</h3>
+    <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
+        <img src="residents.png" alt="Residents" width="150" height="100" />
+        <div>
+            <h1>{settlement.name}</h1>
+            <h3>{settlement.size} people</h3>
+        </div>
+    </div>
 
 <h4 style="text-align: center; border-bottom: 1px solid grey">The {settlement.clans.length} clans</h4>
 <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
