@@ -60,9 +60,7 @@ x Add dynamics for farming skill
   x Fix bug in skill deltas
   x Reset skill somewhat when migrating
 x Add QoL effects for prestige
-- Display population delta info
-
-- Maybe something about clan elders
+x Display population delta info
 
 Understanding results:
 - Historical graphs of key numbers
@@ -78,6 +76,7 @@ Model refinements:
 - Maybe also do something will skill tending a bit more to pull upward,
   maybe a bigger prestige factor when using skill.
 - Some small benefit for being leading clan/clans depending on political system
+- Maybe something about clan elders
 
 ## Trade
 
