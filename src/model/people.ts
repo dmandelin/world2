@@ -9,14 +9,9 @@ import type { Settlement } from "./settlement";
 import { TradeGoods, type TradeGood } from "./trade";
 import { PrestigeCalc } from "./prestige";
 import { traitWeightedAverage, WeightedValue, zScore } from "./modelbasics";
+import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./calcs/population";
 
 const clanGoodsSource = 'clan';
-
-// Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 3.05;
-
-// Per 20-year turn by age tier.
-const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -48,13 +43,6 @@ function randomStat(): number {
     // somewhat less for an entire clan.
     return clamp(Math.round(normal(50, 12)), 0, 100);
 }
-
-const INITIAL_POPULATION_RATIOS = [
-    [0.2157, 0.2337],
-    [0.1541, 0.1598],
-    [0.0908, 0.0879],
-    [0.0324, 0.0256],
-];
 
 export class PersonalityTrait {
     constructor(readonly name: string) {}
@@ -298,7 +286,7 @@ export class Clan {
     seniority: number = -1;
     tenure: number = 0;
     
-    lastSizeChange_: number = 0;
+    lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 
     private skill_: number = normal(30, 10);
     skillChange = new NilSkillChange();
@@ -619,57 +607,12 @@ export class Clan {
     }
 
     advancePopulation() {
-        const origSize = this.size;
-        const prevSlices = this.slices.map(slice => slice.slice());
-
-        let quality = this.qol;
-        if (quality < 0) quality = 0;
-        if (quality > 100) quality = 100;
-        const qbrm = 1 + (quality - 30) / 1000;
-        const qdrm = 1 + (30 - quality) / 1000;
-
-        const births = Math.round(this.slices[1][0] * BASE_BIRTH_RATE * qbrm);
-        let femaleBirths = 0;
-        for (let i = 0; i < births; ++i) {
-            if (Math.random() < 0.48) ++femaleBirths;
+        this.lastPopulationChange = new PopulationChange(this);
+        for (let i = 0; i < this.slices.length; ++i) {
+            this.slices[i][0] = this.lastPopulationChange.newSlices[i][0];
+            this.slices[i][1] = this.lastPopulationChange.newSlices[i][1];
         }
-        const maleBirths = births - femaleBirths;
-
-        this.slices[0][0] = femaleBirths;
-        this.slices[0][1] = maleBirths;
-
-        for (let i = 0; i < this.slices.length - 1; ++i) {
-            let [fSurvivors, mSurvivors] = [0, 0];
-            for (let j = 0; j < this.slices[i][0]; ++j)
-                if (Math.random() >= BASE_DEATH_RATES[i] * qdrm) ++fSurvivors;
-            for (let j = 0; j < this.slices[i][1]; ++j)
-                if (Math.random() >= 1.1 * BASE_DEATH_RATES[i] * qdrm) ++mSurvivors;
-            this.slices[i+1][0] = fSurvivors;
-            this.slices[i+1][1] = mSurvivors;
-        }
-
         this.size = this.slicesTotal;
-        this.lastSizeChange_ = this.size - origSize;
-    }
-
-    get expectedPopulationChange() {
-        let quality = this.qol;
-        if (quality < 0) quality = 0;
-        if (quality > 100) quality = 100;
-        const qbrm = 1 + (quality - 50) / 1000;
-        const qdrm = 1 + (50 - quality) / 1000;
-
-        const ebr = BASE_BIRTH_RATE * qbrm * this.slices[1][0] / this.size;
-        let ed = 0;
-        for (let i = 0; i < this.slices.length - 1; ++i) {
-            ed += this.slices[i][0] * qdrm * BASE_DEATH_RATES[i] + this.slices[i][1] * qdrm * 1.1 * BASE_DEATH_RATES[i];
-        }
-        const edr = ed / this.size;
-        return [ebr, edr, ebr - edr].map(r => Math.round(r * 1000));
-    }
-
-    get lastSizeChange() {
-        return this.lastSizeChange_;
     }
 
     prepareTraitChanges() {

@@ -1,5 +1,6 @@
 import type { Assessments, ClanAgent } from "../model/agents";
 import { maxbyWithValue, minbyWithValue, sortedByKey, type OptByWithValue } from "../model/basics";
+import type { PopulationChange } from "../model/calcs/population";
 import type { Clans, CondorcetCalc } from "../model/clans";
 import { pct } from "../model/format";
 import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, SkillChange } from "../model/people";
@@ -51,9 +52,9 @@ export type ClanDTO = {
     economicPolicy: EconomicPolicy;
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
-    lastSizeChange: number;
     productivity: number;
     seniority: number;
+    lastPopulationChange: PopulationChange;
     size: number;
 
     qolFromAbility: number;
@@ -70,7 +71,6 @@ export type ClanDTO = {
     strength: number;
     techModifier: number;
     tenure: number;
-    tenureModifier: number;
     traits: string[];
 }
 
@@ -99,11 +99,11 @@ export function clanDTO(clan: Clan) {
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,
         perCapitaSubsistenceConsumption: clan.perCapitaSubsistenceConsumption,
-        lastSizeChange: clan.lastSizeChange,
         productivity: clan.productivity,
         productivityTooltip: clan.productivityCalc.tooltip,
         seniority: clan.seniority,
         size: clan.size,
+        lastPopulationChange: clan.lastPopulationChange,
         tradePartners: tradePartnersDTO(clan),
 
         qolFromConsumption: clan.qolFromConsumption,
@@ -120,7 +120,6 @@ export function clanDTO(clan: Clan) {
         strength: clan.strength,
         techModifier: clan.techModifier,
         tenure: clan.tenure,
-        tenureModifier: clan.tenureModifier,
         traits: [...clan.traits].map(t => t.name),
     };
 }

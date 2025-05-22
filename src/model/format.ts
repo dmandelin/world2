@@ -38,3 +38,7 @@ export function npl(n: number, s: string) {
   if (n === 1) return `${n} ${s}`;
   return `${n} ${s}s`;
 }
+
+export function dcr(r: number) {
+  return Math.round(r * 1000);
+}

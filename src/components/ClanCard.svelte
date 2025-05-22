@@ -1,6 +1,7 @@
 <script>
     import { npl, pct, spct, wg } from "../model/format";
     import DataTable from "./DataTable.svelte";
+    import PopulationChange from "./PopulationChange.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
@@ -59,7 +60,14 @@
             <tr>
                 <td>People</td>
                 <td>{clan.size}</td>
-                <td>({clan.lastSizeChange})</td>
+                <td>
+                    <Tooltip>
+                        ({clan.lastPopulationChange.change})
+                        <div slot="tooltip" style="text-align: left">
+                            <PopulationChange clan={clan} />
+                        </div>
+                    </Tooltip>
+                </td>
             </tr>
             <tr>
                 <td>Skill</td>
