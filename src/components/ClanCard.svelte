@@ -63,7 +63,7 @@
             </tr>
             <tr>
                 <td>Skill</td>
-                <td colspan="2">{clan.skill.toFixed()}</td>
+                <td>{clan.skill.toFixed()}</td>
                 <td>
                     <Tooltip>
                         ({clan.skillChange.delta.toFixed(1)})

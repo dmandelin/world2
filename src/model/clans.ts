@@ -114,10 +114,14 @@ export class Clans extends Array<Clan> {
         this.runFestival();
         this.interact();
         this.marry();
-        for (const clan of this) clan.advance();
+        for (const clan of this) clan.advancePopulation();
         this.split();
         this.merge();
         this.prune();
+
+        for (const clan of this) clan.prepareTraitChanges();
+        for (const clan of this) clan.commitTraitChanges();
+        for (const clan of this) ++clan.tenure;
     }
 
     produce() {

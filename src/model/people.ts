@@ -598,12 +598,6 @@ export class Clan {
         return this.slices.reduce((acc, slice) => acc + slice[0] + slice[1], 0);
     }
 
-    advance() {
-        this.advancePopulation();
-        this.advanceTraits();
-        ++this.tenure;
-    }
-
     advancePopulation() {
         const origSize = this.size;
         const prevSlices = this.slices.map(slice => slice.slice());
@@ -658,12 +652,15 @@ export class Clan {
         return this.lastSizeChange_;
     }
 
-    advanceTraits() {
+    prepareTraitChanges() {
+        this.skillChange = new ClanSkillChange(this);
+    }
+
+    commitTraitChanges() {
+        this.skill_ += this.skillChange.delta;
+
         this.strength = this.advancedTrait(this.strength);
         this.intelligence = this.advancedTrait(this.intelligence);
-
-        this.skillChange = new ClanSkillChange(this);
-        this.skill_ = this.skillChange.delta;
 
         // Grinch trait
         if (this.festivalModifier < 0 && !this.traits.has(PersonalityTraits.GRINCH)) {
@@ -783,63 +780,4 @@ export class Clan {
         this.annals.log(`Clan ${newClan.name} (${newClan.size}) split off from clan ${this.name} (${this.size})`, this.settlement);
         return newClan;
     }
-}
-
-function exp_basicPopChange() {
-    const clan = new Clan(new Annals(), 'Test', 'blue', 20);
-    for (let i = 0; i < 20; ++i) {
-        const eb = BASE_BIRTH_RATE * clan.slices[1][0];
-        const ed = clan.slices.reduce((acc, slice, i) => 
-            acc + slice[0] * BASE_DEATH_RATES[i] + slice[1] * 1.1 * BASE_DEATH_RATES[i], 0);
-
-        const ebr = eb / clan.size;
-        const edr = ed / clan.size;
-
-        clan.advance();
-    }
-}
-
-function exp_meanClanLifetime() {
-    const lifetimes = [];
-    for (let i = 0; i < 1000; ++i) {
-        const clan = new Clan(new Annals(), 'Test', 'blue', 20);
-        let years = 0;
-        while (clan.size > 0) {
-            clan.advance();
-            years += 20;
-            if (years > 10000) break;
-        }
-        lifetimes.push(years);
-    }
-
-    const meanLifetime = lifetimes.reduce((acc, lifetime) => acc + lifetime, 0) / lifetimes.length;
-    console.log('mean', meanLifetime);
-    const variance = lifetimes.reduce((acc, lifetime) => acc + (lifetime - meanLifetime) ** 2, 0) / lifetimes.length;
-    console.log('var', variance);
-    const stdDev = Math.sqrt(variance);
-    console.log('stdDev', stdDev);
-    const coefficientOfVariation = stdDev / meanLifetime;
-    console.log('cov', coefficientOfVariation);
-    const median = lifetimes.sort((a, b) => a - b)[Math.floor(lifetimes.length / 2)];
-    console.log('median', median);
-}
-
-function exp_clanGrowthRate() {
-    const growthRates = [];
-    for (let i = 0; i < 100; ++i) {
-        const clan = new Clan(new Annals(), 'Test', 'blue', 20);
-        const priming = 20;
-        const periods = 10;
-
-        for (let j = 0; j < priming; ++j) clan.advance();
-        const origSize = clan.size;
-        if (origSize == 0) continue;
-        
-        for (let j = 0; j < periods; ++j) clan.advance();
-        growthRates.push(Math.pow(clan.size / origSize, 1 / periods) - 1);
-    } 
-
-    console.log('median growth rate', growthRates.sort((a, b) => a - b)[Math.floor(growthRates.length / 2)]);
-    console.log('min growth rate', growthRates.reduce((acc, rate) => Math.min(acc, rate)));
-    console.log('max growth rate', growthRates.reduce((acc, rate) => Math.max(acc, rate)));
 }
