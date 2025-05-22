@@ -220,6 +220,8 @@ export class ClanSkillChange implements SkillChange {
 
     readonly innovationDelta: number;
 
+    readonly moveDelta: number|undefined;
+
     readonly items: [string, number][] = [];
 
     constructor(readonly clan: Clan) {
@@ -261,6 +263,13 @@ export class ClanSkillChange implements SkillChange {
             ['Learning delta', this.learningDelta],
             ['Innovation delta', this.innovationDelta],
         );
+
+        // Things may be a little different after a move, which might
+        // work out better or worse for us.
+        if (this.clan.tenure == 0) {
+            this.moveDelta = normal(-10, 5);
+            this.items.push(['Migration delta', this.moveDelta]);
+        }
     }
 
     get delta(): number {
@@ -527,10 +536,6 @@ export class Clan {
         return this.settlement?.technai.outputBoost ?? 0;
     }
 
-    get tenureModifier() {
-        return [-5, 0, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5][clamp(this.tenure, 0, 12)];
-    }
-
     get share() {
         return this.size / (this.settlement?.size ?? this.size);
     }
@@ -569,7 +574,6 @@ export class Clan {
             this.interactionModifier + 
             this.festivalModifier + 
             this.techModifier +
-            this.tenureModifier +
             (this.settlement?.populationPressureModifier || 0);
     }
 
@@ -580,7 +584,6 @@ export class Clan {
             ['Ability', this.qolFromAbility.toFixed(1) ],
             ['Interaction', this.interactionModifier.toFixed(1) ],
             ['Festival', this.festivalModifier.toFixed(1) ],
-            ['Tenure', this.tenureModifier.toFixed(1) ],
             ['Tech', this.techModifier.toFixed(1) ],
             ['Crowding', (this.settlement?.populationPressureModifier || 0).toFixed(1)],
             ['Total', this.qol.toFixed(1)],

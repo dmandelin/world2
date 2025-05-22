@@ -58,7 +58,7 @@ x Add dynamics for prestige
 - Add dynamics for farming skill
   x Display skill delta calc
   x Fix bug in skill deltas
-  - Reset skill somewhat when migrating
+  x Reset skill somewhat when migrating
 - Add remaining effects for prestige
 - Some small benefit for being leading clan
 - Display population delta info

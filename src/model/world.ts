@@ -93,6 +93,7 @@ export class World {
             const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
             const slippage = s.clans.slippage;
             for (const clan of s.clans) {
+                clan.tenure = 1;
                 clan.chooseEconomicPolicy(snapshot, slippage);
             }
             s.clans.produce();
@@ -143,7 +144,6 @@ export class World {
                 const inertiaValue = settlement == 'new'
                     ? inertia * 2 + 1 : inertia;
                 const oldValue = clan.settlement!.localQOLModifier +
-                    clan.tenureModifier + 
                     clan.interactionModifier;
                 return newValue - (oldValue + inertiaValue);
             }
