@@ -63,8 +63,9 @@ export class Pot {
 
     distribute() {
         const output = this.output;
+        const totalShare = this.receivers.reduce((acc, clan) => acc + clan.share, 0);
         for (const clan of this.receivers) {
-            clan.accept(this.name, TradeGoods.Subsistence, output * clan.share);
+            clan.accept(this.name, TradeGoods.Subsistence, output * clan.share / totalShare);
         }
     }
 }

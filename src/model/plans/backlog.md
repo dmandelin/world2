@@ -56,8 +56,8 @@ x Add dynamics for prestige
   x Persistence of ratings in history
   x Make imitation coefficient depend on own relative prestige
 - Add dynamics for farming skill
-  - Display skill delta calc
-  - Fix bug in skill deltas
+  x Display skill delta calc
+  x Fix bug in skill deltas
   - Reset skill somewhat when migrating
 - Add remaining effects for prestige
 - Some small benefit for being leading clan

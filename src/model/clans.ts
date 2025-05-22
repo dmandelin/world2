@@ -131,7 +131,7 @@ export class Clans extends Array<Clan> {
         }
 
         for (const clan of this) {
-            let commonFraction = 0.0;
+            let commonFraction = 0.0;   
             let cheatFraction = 0.0;
             switch (clan.economicPolicy) {
                 case EconomicPolicies.Share:
