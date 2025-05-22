@@ -2,15 +2,32 @@ export function traitFactor(trait: number, a = 1.05) {
     return Math.pow(a, trait - 50);
 }
 
-export class WeightedValue<T> {
+export class WeightedValue<T extends object> {
     constructor(
         readonly label: T,
+        readonly weight: number,
         readonly value: number,
-        readonly weight: number
     ) {}
+
+    get weightedValue(): number {
+        return this.value * this.weight;
+    }
+
+    static tooltip<T extends Object>(
+        wv: readonly WeightedValue<T>[],
+        header: string[] = []): string[][] {
+        const totalWeight = wv.reduce((acc, w) => acc + w.weight, 0);
+        const data = wv.map(w => [
+            w.label.toString(), 
+            (w.weight / totalWeight).toFixed(2),
+            w.value.toFixed(2), 
+            (w.weightedValue / totalWeight).toFixed(2),
+        ]);
+        return [header, ...data];
+    }
 }
 
-export function traitWeightedAverage<T, U>(
+export function traitWeightedAverage<T, U extends Object>(
     items: readonly T[],
     labelFun: (t: T) => U,
     traitFun: (t: T) => number,
@@ -28,7 +45,7 @@ export function traitWeightedAverage<T, U>(
         totalValue += value * weight;
 
         const label = labelFun(item);
-        weightedValues.push(new WeightedValue(label, value, weight));
+        weightedValues.push(new WeightedValue(label, weight, value));
     }
 
     return [totalValue / totalWeight, weightedValues];

@@ -21,6 +21,12 @@
     td:not(first-child) {
         text-align: right;
     }
+
+    .ttt {
+        text-align: left;
+        font-size: small;
+        margin: 0;
+    }
 </style>
 
 <div id="top">
@@ -57,7 +63,18 @@
             </tr>
             <tr>
                 <td>Skill</td>
-                <td colspan="2">{wg(clan.skill)}</td>
+                <td colspan="2">{clan.skill.toFixed()}</td>
+                <td>
+                    <Tooltip>
+                        ({clan.skillChange.delta.toFixed(1)})
+                        <div slot="tooltip" class="ttt">
+                            <h4>Imitiation sources</h4>
+                            <DataTable rows={clan.skillChange.imitationTooltip} />
+                            <h4>Skill changes</h4>
+                            <DataTable rows={clan.skillChange.changeSourcesTooltip} />
+                        </div>
+                    </Tooltip>
+                </td>
             </tr>
             <tr>
                 <td>Prod</td>
@@ -65,7 +82,7 @@
                 <td>
                     <Tooltip>
                         {spct(clan.productivity)}
-                        <div slot="tooltip">
+                        <div slot="tooltip" class="ttt">
                             <DataTable rows={clan.productivityTooltip} />
                         </div>
                     </Tooltip>

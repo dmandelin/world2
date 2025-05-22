@@ -197,17 +197,22 @@ export class ProductivityCalc {
 
 export interface SkillChange {
     delta: number;
+    imitationTooltip: string[][];
 }
 
 export class NilSkillChange implements SkillChange {
     get delta(): number {
         return 0;
     }
+
+    get imitationTooltip(): string[][] {
+        return [];
+    }
 }
 
 export class ClanSkillChange implements SkillChange {
     readonly imitationTarget: number;
-    readonly imitationTargetTable: readonly WeightedValue<string>[];
+    readonly imitationTargetTable: readonly WeightedValue<String>[];
     readonly imitationDelta: number;
     readonly imitationError: number;
 
@@ -259,7 +264,17 @@ export class ClanSkillChange implements SkillChange {
     }
 
     get delta(): number {
-        return this.imitationDelta + this.learningDelta + this.innovationDelta;
+        return this.imitationDelta + this.imitationError + this.learningDelta + this.innovationDelta;
+    }
+
+    get imitationTooltip(): string[][] {
+        return WeightedValue.tooltip(this.imitationTargetTable,
+            ['Model', 'W', 'Sk', 'W'],
+        );
+    }
+
+    get changeSourcesTooltip(): string[][] {
+        return this.items.map(([k, v]) => [k, v.toFixed(1)]);
     }
 }
 
