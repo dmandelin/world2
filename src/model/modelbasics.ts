@@ -50,3 +50,17 @@ export function traitWeightedAverage<T, U extends Object>(
 
     return [totalValue / totalWeight, weightedValues];
 }
+
+export function meanAndStdDev(values: readonly number[]): [number, number] {
+    const n = values.length;
+    if (n === 0) return [0, 0];
+    const mean = values.reduce((acc, v) => acc + v, 0) / n;
+    const stddev = Math.sqrt(values.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / n);
+    return [mean, stddev];
+}
+
+export function zScore(value: number, values: readonly number[]): number {
+    const [mean, stddev] = meanAndStdDev(values);
+    if (stddev === 0) return 0;
+    return (value - mean) / stddev;
+}

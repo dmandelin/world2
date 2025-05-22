@@ -55,12 +55,11 @@ x Add dynamics for prestige
   x Syncing of ratings with each other
   x Persistence of ratings in history
   x Make imitation coefficient depend on own relative prestige
-- Add dynamics for farming skill
+x Add dynamics for farming skill
   x Display skill delta calc
   x Fix bug in skill deltas
   x Reset skill somewhat when migrating
-- Add remaining effects for prestige
-- Some small benefit for being leading clan
+x Add QoL effects for prestige
 - Display population delta info
 
 - Maybe something about clan elders
@@ -69,6 +68,16 @@ Understanding results:
 - Historical graphs of key numbers
 - Visualization of leading clans over time
 - Display clan moves again
+
+Liveliness:
+- Thumbnails or backgrounds to represent settlement or clan
+
+Model refinements:
+- Better skill growth after migrants arrive
+  Probably want to pair this with making specific breakthroughs
+- Maybe also do something will skill tending a bit more to pull upward,
+  maybe a bigger prestige factor when using skill.
+- Some small benefit for being leading clan/clans depending on political system
 
 ## Trade
 

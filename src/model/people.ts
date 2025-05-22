@@ -8,7 +8,7 @@ import { Pot } from "./production";
 import type { Settlement } from "./settlement";
 import { TradeGoods, type TradeGood } from "./trade";
 import { PrestigeCalc } from "./prestige";
-import { traitWeightedAverage, WeightedValue } from "./modelbasics";
+import { traitWeightedAverage, WeightedValue, zScore } from "./modelbasics";
 
 const clanGoodsSource = 'clan';
 
@@ -356,6 +356,14 @@ export class Clan {
         }
     }
 
+    get neighbors(): Clan[] {
+        return [...this.settlement!.clans].filter(clan => clan !== this);
+    }
+
+    get selfAndNeighbors(): Clan[] {
+        return this.settlement!.clans;
+    }
+
     get skill() {
         return this.skill_;
     }
@@ -556,6 +564,13 @@ export class Clan {
         return 40 + Math.log2(this.perCapitaSubsistenceConsumption) * 15;
     }
 
+    get qolFromRelativePrestige() {
+        const localAveragePrestige = this.selfAndNeighbors.reduce((acc, clan) => 
+            acc + clan.averagePrestige, 0)
+         / this.selfAndNeighbors.length;
+        return (this.averagePrestige - localAveragePrestige) / 2;
+    }
+
     get qolFromAbility() {
         const zi = (this.intelligence - 50) / 15;
         const zs = (this.strength - 50) / 15;
@@ -569,6 +584,7 @@ export class Clan {
 
     get qol() {
         return this.qolFromConsumption +
+            this.qolFromRelativePrestige +
             this.qolFromAbility + 
             this.qolFromSkill +
             this.interactionModifier + 
@@ -580,6 +596,7 @@ export class Clan {
     get qolTable(): [string, string][] {
         return [
             ['Consumption', this.qolFromConsumption.toFixed(1) ],
+            ['Relative Prestige', this.qolFromRelativePrestige.toFixed(1) ],
             ['Skill', this.qolFromSkill.toFixed(1) ],
             ['Ability', this.qolFromAbility.toFixed(1) ],
             ['Interaction', this.interactionModifier.toFixed(1) ],
