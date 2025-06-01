@@ -2,6 +2,7 @@
     import { npl, pct, spct, wg } from "../model/format";
     import DataTable from "./DataTable.svelte";
     import PopulationChange from "./PopulationChange.svelte";
+    import PopulationPyramid from "./PopulationPyramid.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
@@ -59,7 +60,13 @@
             </tr>
             <tr>
                 <td>People</td>
-                <td>{clan.size}</td>
+                <td>
+                    <Tooltip>
+                    {clan.size}
+                    <div slot="tooltip" class="ttt">
+                        <PopulationPyramid clan={clan} />
+                    </Tooltip>
+                </td>
                 <td>
                     <Tooltip>
                         ({clan.lastPopulationChange.change})

@@ -7,9 +7,12 @@ export class QolCalc {
     readonly value: number;
 
     constructor(readonly clan: Clan) {
+        const ritualSat = clan.settlement!.clans.rites.quality
+            ? 50 + Math.log2(clan.settlement!.clans.rites.quality) * 15
+            : 10;
         const sats: [string, number][] = [
             ['Subsistence', 50 + Math.log2(clan.perCapitaSubsistenceConsumption) * 15],
-            ['Ritual', 50 + Math.log2(clan.settlement!.clans.rites.quality) * 15],
+            ['Ritual', ritualSat],
         ];
 
         this.sats = sats.map(([name, value]) => {

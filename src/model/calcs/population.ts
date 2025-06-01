@@ -9,7 +9,7 @@ export const INITIAL_POPULATION_RATIOS = [
 ];
 
 // Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 2.95;
+const BASE_BIRTH_RATE = 2.90;
 
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
@@ -60,7 +60,7 @@ export class PopulationChange {
 
         // Births.
         const pmbr = this.qbrf * BASE_BIRTH_RATE;
-        const eb = this.clan.slices[1][0] * pmbr;
+        const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
         let femaleBirths = 0;
         for (let i = 0; i < this.births; ++i) {
