@@ -212,17 +212,17 @@ export class ClanSkillChange implements SkillChange {
 
     readonly items: [string, number][] = [];
 
-    constructor(readonly clan: Clan) {
+    constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
             c => c === clan ? 50 : clan.prestigeViewOf(c).value,
-            c => c.skill,
+            c => trait(c),
         );
         // Imitation moves skill toward the target. Turns are about a
         // generation, so we'll assume a substantial chunk of the gap
         // can be closed in that time.
-        this.imitationDelta = (this.imitationTarget - this.clan.skill) / 2;
+        this.imitationDelta = (this.imitationTarget - trait(this.clan)) / 2;
         // Imitation error will tend to make things work less well, but
         // occasionally it will result in an improvement.
         this.imitationError = normal(-1, 1);
@@ -291,6 +291,9 @@ export class Clan {
     private skill_: number = normal(30, 10);
     skillChange = new NilSkillChange();
 
+    private ritualSkill_: number = normal(30, 10);
+    ritualSkillChange = new NilSkillChange();
+
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
 
@@ -354,6 +357,10 @@ export class Clan {
 
     get skill() {
         return this.skill_;
+    }
+
+    get ritualSkill() {
+        return this.ritualSkill_;
     }
 
     get averagePrestige(): number {
@@ -616,11 +623,13 @@ export class Clan {
     }
 
     prepareTraitChanges() {
-        this.skillChange = new ClanSkillChange(this);
+        this.skillChange = new ClanSkillChange(this, clan => clan.skill);
+        this.ritualSkillChange = new ClanSkillChange(this, clan => clan.ritualSkill);
     }
 
     commitTraitChanges() {
         this.skill_ += this.skillChange.delta;
+        this.ritualSkill_ += this.ritualSkillChange.delta;
 
         this.strength = this.advancedTrait(this.strength);
         this.intelligence = this.advancedTrait(this.intelligence);

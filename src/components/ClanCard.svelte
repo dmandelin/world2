@@ -70,7 +70,7 @@
                 </td>
             </tr>
             <tr>
-                <td>Skill</td>
+                <td>Hort</td>
                 <td>{clan.skill.toFixed()}</td>
                 <td>
                     <Tooltip>
@@ -80,6 +80,21 @@
                             <DataTable rows={clan.skillChange.imitationTooltip} />
                             <h4>Skill changes</h4>
                             <DataTable rows={clan.skillChange.changeSourcesTooltip} />
+                        </div>
+                    </Tooltip>
+                </td>
+            </tr>
+            <tr>
+                <td>Rite</td>
+                <td>{clan.ritualSkill.toFixed()}</td>
+                <td>
+                    <Tooltip>
+                        ({clan.ritualSkillChange.delta.toFixed(1)})
+                        <div slot="tooltip" class="ttt">
+                            <h4>Imitiation sources</h4>
+                            <DataTable rows={clan.ritualSkillChange.imitationTooltip} />
+                            <h4>Skill changes</h4>
+                            <DataTable rows={clan.ritualSkillChange.changeSourcesTooltip} />
                         </div>
                     </Tooltip>
                 </td>

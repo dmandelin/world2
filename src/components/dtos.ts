@@ -68,6 +68,8 @@ export type ClanDTO = {
     interactionModifier: number;
     skill: number;
     skillChange: SkillChange;
+    ritualSkill: number;
+    ritualSkillChange: SkillChange;
     strength: number;
     techModifier: number;
     tenure: number;
@@ -117,6 +119,8 @@ export function clanDTO(clan: Clan) {
         interactionModifier: clan.interactionModifier,
         skill: clan.skill,
         skillChange: clan.skillChange,
+        ritualSkill: clan.ritualSkill,
+        ritualSkillChange: clan.ritualSkillChange,
         strength: clan.strength,
         techModifier: clan.techModifier,
         tenure: clan.tenure,

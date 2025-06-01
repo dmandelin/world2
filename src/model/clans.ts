@@ -4,6 +4,7 @@ import { Festival } from "./festival";
 import { exchangeGifts, resolveDisputes } from "./interactions";
 import { Clan, ConsumptionCalc, EconomicPolicies, PersonalityTraits } from "./people";
 import { Pot } from "./production";
+import { Rites } from "./spirit";
 
 const communalGoodsSource = 'communal';
 
@@ -16,6 +17,9 @@ export class Clans extends Array<Clan> {
 
     // Communal sharing economy.
     pot = new Pot(communalGoodsSource, this);
+
+    // Community rites.
+    rites = new Rites(this);
 
     constructor(...clans: Clan[]) {
       super(...clans);
@@ -112,6 +116,8 @@ export class Clans extends Array<Clan> {
         this.distribute();
 
         this.runFestival();
+        this.advanceRites();
+
         this.interact();
         this.marry();
         for (const clan of this) clan.advancePopulation();
@@ -182,6 +188,11 @@ export class Clans extends Array<Clan> {
         }
         this.festival = new Festival(participants);
         this.festival.process(); 
+    }
+
+    advanceRites() {
+        this.rites = new Rites(this);
+        
     }
 
     *pairs() {
