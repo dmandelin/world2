@@ -1,6 +1,5 @@
 import { compareLexically } from "./basics";
 import { poisson, weightedRandInt } from "./distributions";
-import { Festival } from "./festival";
 import { exchangeGifts, resolveDisputes } from "./interactions";
 import { Clan, ConsumptionCalc, EconomicPolicies, PersonalityTraits } from "./people";
 import { Pot } from "./production";
@@ -13,8 +12,6 @@ export class CondorcetCalc {
 }
 
 export class Clans extends Array<Clan> {
-    festival: Festival = new Festival(this);
-
     // Communal sharing economy.
     pot = new Pot(communalGoodsSource, this);
 
@@ -115,8 +112,7 @@ export class Clans extends Array<Clan> {
         this.produce();
         this.distribute();
 
-        this.runFestival();
-        this.advanceRites();
+        this.performRites();
 
         this.interact();
         this.marry();
@@ -178,21 +174,9 @@ export class Clans extends Array<Clan> {
         this.forEach(clan => clan.pot.distribute());
     }
 
-    runFestival() {
-        const participants = [];
-        for (const clan of this) {
-            clan.festivalModifier = 0;
-            if (!clan.traits.has(PersonalityTraits.GRINCH)) {
-                participants.push(clan);
-            }
-        }
-        this.festival = new Festival(participants);
-        this.festival.process(); 
-    }
-
-    advanceRites() {
+    performRites() {
         this.rites = new Rites(this);
-        
+
     }
 
     *pairs() {
