@@ -312,7 +312,6 @@ export class Clan {
     static maxDesiredSize = 100;
 
     public interactionModifier = 0;
-    public festivalModifier = 0;
 
     settlement: Settlement|undefined;
     seniority: number = -1;
@@ -623,7 +622,6 @@ export class Clan {
             this.qolFromAbility + 
             this.qolFromSkill +
             this.interactionModifier + 
-            this.festivalModifier + 
             this.techModifier +
             (this.settlement?.populationPressureModifier || 0);
     }
@@ -635,7 +633,6 @@ export class Clan {
             ['Skill', this.qolFromSkill.toFixed(1) ],
             ['Ability', this.qolFromAbility.toFixed(1) ],
             ['Interaction', this.interactionModifier.toFixed(1) ],
-            ['Festival', this.festivalModifier.toFixed(1) ],
             ['Tech', this.techModifier.toFixed(1) ],
             ['Crowding', (this.settlement?.populationPressureModifier || 0).toFixed(1)],
             ['Total', this.qol.toFixed(1)],
@@ -673,19 +670,6 @@ export class Clan {
 
         this.strength = this.advancedTrait(this.strength);
         this.intelligence = this.advancedTrait(this.intelligence);
-
-        // Grinch trait
-        if (this.festivalModifier < 0 && !this.traits.has(PersonalityTraits.GRINCH)) {
-            // Clans might become grinches if they have a bad festival.
-            if (Math.random() < -0.05 * this.festivalModifier) 
-                this.traits.add(PersonalityTraits.GRINCH);
-        } else if (this.traits.has(PersonalityTraits.GRINCH)) {
-            // Clans might join in again if others had good festivals
-            if (this.settlement?.clans.every(clan => clan.festivalModifier > 0)) {
-                if (Math.random() < 0.5) 
-                    this.traits.delete(PersonalityTraits.GRINCH);
-            }
-        }
 
         // Mobility traits
         if (this.traits.has(PersonalityTraits.MOBILE)) {
