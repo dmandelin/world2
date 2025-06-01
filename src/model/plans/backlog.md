@@ -43,6 +43,18 @@
     nominally changeable society features, to help fill
     out that idea.
 
+- More on rituals and trade goods
+  - Split out to two needs gauges: subsistence and spirit
+    - Display values
+    - Compute values
+    - Show some effects
+      - Most important effect is too low on either =>
+        some kind of outmigration
+      - Show those outmigrations in the UI
+  - Now add trade goods, rituals, etc to affect these
+    - Village rituals: +health, +relatedness, +monitoring, +learning
+  - For learning might need to update the skill model
+
 ### Items
 
 x Add farming skill stat and display with no initial effects or dynamics
