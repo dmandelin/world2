@@ -3,7 +3,7 @@ import { maxbyWithValue, minbyWithValue, sortedByKey, type OptByWithValue } from
 import type { PopulationChange } from "../model/calcs/population";
 import type { Clans, CondorcetCalc } from "../model/clans";
 import { pct } from "../model/format";
-import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, SkillChange } from "../model/people";
+import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, ProductivityCalc, RitualEffectivenessCalc, SkillChange } from "../model/people";
 import type { PrestigeCalc } from "../model/prestige";
 import type { Settlement } from "../model/settlement";
 import type { TradeGood } from "../model/trade";
@@ -53,6 +53,9 @@ export type ClanDTO = {
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
     productivity: number;
+    productivityTooltip: string[][];
+    ritualEffectiveness: number;
+    ritualEffectivenessTooltip: string[][];
     seniority: number;
     lastPopulationChange: PopulationChange;
     size: number;
@@ -103,6 +106,8 @@ export function clanDTO(clan: Clan) {
         perCapitaSubsistenceConsumption: clan.perCapitaSubsistenceConsumption,
         productivity: clan.productivity,
         productivityTooltip: clan.productivityCalc.tooltip,
+        ritualEffectiveness: clan.ritualEffectiveness,
+        ritualEffectivenessTooltip: clan.ritualEffectivenessCalc.tooltip,
         seniority: clan.seniority,
         size: clan.size,
         lastPopulationChange: clan.lastPopulationChange,

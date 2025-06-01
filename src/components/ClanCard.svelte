@@ -85,21 +85,6 @@
                 </td>
             </tr>
             <tr>
-                <td>Rite</td>
-                <td>{clan.ritualSkill.toFixed()}</td>
-                <td>
-                    <Tooltip>
-                        ({clan.ritualSkillChange.delta.toFixed(1)})
-                        <div slot="tooltip" class="ttt">
-                            <h4>Imitiation sources</h4>
-                            <DataTable rows={clan.ritualSkillChange.imitationTooltip} />
-                            <h4>Skill changes</h4>
-                            <DataTable rows={clan.ritualSkillChange.changeSourcesTooltip} />
-                        </div>
-                    </Tooltip>
-                </td>
-            </tr>
-            <tr>
                 <td>Prod</td>
                 <td></td>
                 <td>
@@ -115,6 +100,33 @@
                 <td>Cons</td>
                 <td></td>
                 <td>{spct(clan.perCapitaSubsistenceConsumption)}</td>
+            </tr>
+            <tr>
+                <td>Rite</td>
+                <td>{clan.ritualSkill.toFixed()}</td>
+                <td>
+                    <Tooltip>
+                        ({clan.ritualSkillChange.delta.toFixed(1)})
+                        <div slot="tooltip" class="ttt">
+                            <h4>Imitiation sources</h4>
+                            <DataTable rows={clan.ritualSkillChange.imitationTooltip} />
+                            <h4>Skill changes</h4>
+                            <DataTable rows={clan.ritualSkillChange.changeSourcesTooltip} />
+                        </div>
+                    </Tooltip>
+                </td>
+            </tr>
+            <tr>
+                <td>REff</td>
+                <td></td>
+                <td>
+                    <Tooltip>
+                        {spct(clan.ritualEffectiveness)}
+                        <div slot="tooltip" class="ttt">
+                            <DataTable rows={clan.ritualEffectivenessTooltip} />
+                        </div>
+                    </Tooltip>
+                </td>
             </tr>
             <tr>
                 <td>QoL</td>
