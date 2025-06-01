@@ -128,6 +128,9 @@
             if (minQOL < 30) {
                 warnings.push(`Low QoL! (${minQOL.toFixed()})`);
             }
+            if (settlement.clans.rites.quality < 0.7) {
+                warnings.push(`Bad rites! (${(settlement.clans.rites.quality * 100).toFixed(1)}%)`);
+            }
 
             let yo = 49;
             for (const w of warnings) {

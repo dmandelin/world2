@@ -11,6 +11,10 @@ export function spct(x: number, places: number = 0): string {
   return `${sgn}${((x - 1) * 100).toFixed(places)}%`;
 }
 
+export function xm(x: number, places: number = 2): string {
+    return `x${x.toFixed(places)}`;
+}
+
 export function signed(x: number, places: number = 0): string {
     const sgn = x < 0 ? '' : '+';
     return `${sgn}${x.toFixed(places)}`;

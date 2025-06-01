@@ -1,5 +1,5 @@
-import { harmonicMean } from "./basics";
-import { pct, spct } from "./format";
+import { clamp, harmonicMean } from "./basics";
+import { pct, spct, xm } from "./format";
 import type { Clan } from "./people";
 
 export class SpiritCalc {
@@ -20,14 +20,15 @@ export class Rites {
 
         const baseEffectiveness = harmonicMean(
             [...this.participants].map(c => c.ritualEffectivenessCalc.value));
-        const scale = 1 + Math.max(Math.log2(this.participants.length / 3) / 2, 0.1);
-        const coordination = Math.max(1 - 0.03 * Math.pow(this.participants.length, 1.5), 0);
-
+        const scale = [0.5, 0.8, 1, 1.2, 1.3, 1.35, 1.4, 1.45, 1.5]
+            [clamp(this.participants.length, 1, 9) - 1];
+        const coordination = [1.1, 1.05, 1, 0.9, 0.7, 0.5, 0.3, 0.1, 0.01]
+            [clamp(this.participants.length, 1, 9) - 1];
         this.quality = baseEffectiveness * scale * coordination;
         this.items = [
             ['Base effectiveness', pct(baseEffectiveness)],
-            ['Scale', spct(scale)],
-            ['Coordination', spct(coordination)],
+            ['Scale', xm(scale)],
+            ['Coordination', xm(coordination)],
         ];
     }
 }

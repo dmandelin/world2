@@ -55,34 +55,34 @@
     - Village rituals: +health, +relatedness, +monitoring, +learning
   - For learning might need to update the skill model
 
+- Time to improve the learning model some more
+  - Basic effects to have
+    - Turnover of generations causes loss of skill
+    - But the new people imitate the clan and others
+      - The maximum amount they can gain this way is limited
+        by information systems
+      - Imitation is imperfect, so there tends to be
+        loss of skill if this is all that happens
+    - People also make incremental improvements based
+      on experience (though they can also get worse)
+    - Those two effects will tend to balance at a certain
+      skill level
+    - Breakthroughs will instead be new named things
+      that improve output but may cost skill and other
+      things to use
+      - We'll need a bunch of these for ritual to
+        power faster improvements
+
 ### Items
 
-x Add farming skill stat and display with no initial effects or dynamics
-x Add prestige stat and display with no initial effects or dynamics
-x Add effects for farming skill
-x Add dynamics for prestige
-  x Initial ratings based on observations and noise
-  x Add something for seniority
-  x Add something for clan size
-  x Syncing of ratings with each other
-  x Persistence of ratings in history
-  x Make imitation coefficient depend on own relative prestige
-x Add dynamics for farming skill
-  x Display skill delta calc
-  x Fix bug in skill deltas
-  x Reset skill somewhat when migrating
-x Add QoL effects for prestige
-x Display population delta info
+x Make stresses much clearer
+  x food stress: verify display on the map
+  x interaction stress: show ritual problems on the map
+    x make rites break down sooner
 
-x basic rituals
-x further stuff on rituals
-  x bigger could be higher quality, if people want that
-  x but also harder to run -- something breaks down with too many ppl
-x figure out why population oscillates so much and fix that
-x figure out why population keeps growing with super-low QoL and fix that
-x move-out if values get too low
-
-- interaction stress and justice: will need to replace this with something real soon
+- Fix up learning model
+  - verify tuning of basic changes
+  - add breakthroughs
 
 Understanding results:
 - Historical graphs of key numbers
