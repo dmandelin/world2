@@ -226,13 +226,12 @@ export class WorldDTO {
             ['Smallest', minbyWithValue,  clan => clan.size, n => n.toFixed()],
             ['Most productive', maxbyWithValue, clan => clan.productivity, pct],
             ['Least productive', minbyWithValue, clan => clan.productivity, pct],
+            ['Most correct', maxbyWithValue, clan => clan.ritualEffectiveness, pct],
+            ['Least correct', minbyWithValue, clan => clan.ritualEffectiveness, pct],
             ['Highest QoL', maxbyWithValue, clan => clan.qol, n => n.toFixed()],
             ['Lowest QoL', minbyWithValue, clan => clan.qol, n => n.toFixed()],
-            ['Most benevolent', maxbyWithValue, clan => clan.benevolence, n => (100*n).toFixed()],
-            ['Least benevolent', minbyWithValue, clan => clan.benevolence, n => (100*n).toFixed()],
-            ['Best reputation', maxbyWithValue, clan => clan.reputation, n => (100*n).toFixed()],
-            ['Worst reputation', minbyWithValue, clan => clan.reputation, n => (100*n).toFixed()],
-
+            ['Most influential', maxbyWithValue, clan => clan.influence, pct],
+            ['Least influential', minbyWithValue, clan => clan.influence, pct],
         ]
         const clans = [...this.clans()];
         return items.map(([name, opt, key, fmt]) => {
