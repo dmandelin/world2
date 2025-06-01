@@ -26,6 +26,7 @@ export class QolCalc {
             ['Status', (clan.averagePrestige - localAveragePrestige) / 2],
             ['Intelligence', (clan.intelligence - 50) / 15],
             ['Strength', (clan.intelligence - 50) / 15],
+            ['Crowding', clan.settlement!.populationPressureModifier],
         ];
 
         this.items = items.map(([name, value]) => {
