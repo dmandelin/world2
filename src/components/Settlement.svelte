@@ -3,6 +3,7 @@
     import SettlementConsumption from "./SettlementConsumption.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
+    import SettlementRites from "./SettlementRites.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
     import TabbedView from "./TabbedView.svelte";
 
@@ -10,6 +11,7 @@
 
     const tabs = [
         { label: "Production", snippet: economyTab },
+        { label: "Rites", snippet: ritesTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Consumption", snippet: consumptionTab },
         { label: "Trade", snippet: tradeTab },
@@ -18,6 +20,10 @@
 
 {#snippet economyTab()}
     <SettlementEconomy settlement={settlement} />
+{/snippet}
+
+{#snippet ritesTab()}
+    <SettlementRites settlement={settlement} />
 {/snippet}
 
 {#snippet tradeTab()}
