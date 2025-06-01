@@ -121,6 +121,11 @@ export class Clans extends Array<Clan> {
         for (const clan of this) clan.prepareTraitChanges();
         for (const clan of this) clan.commitTraitChanges();
         for (const clan of this) ++clan.tenure;
+
+        if (this.rites.quality < 0.20) {
+            console.log('Terrible rites, dispersing!');
+            this.splice(0, this.length);
+        }
     }
 
     produce() {

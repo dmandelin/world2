@@ -74,6 +74,7 @@ export class Settlement {
         const sizeBefore = this.size;
         this.technai.advance(this.size);
         this.clans.advance();
+
         this.lastSizeChange_ = this.size - sizeBefore;
     }
 }

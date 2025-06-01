@@ -78,9 +78,11 @@ x basic rituals
 x further stuff on rituals
   x bigger could be higher quality, if people want that
   x but also harder to run -- something breaks down with too many ppl
-- figure out why population oscillates so much and fix that
+x figure out why population oscillates so much and fix that
+x figure out why population keeps growing with super-low QoL and fix that
+x move-out if values get too low
+
 - interaction stress and justice: will need to replace this with something real soon
-- move-out if values get too low
 
 Understanding results:
 - Historical graphs of key numbers
