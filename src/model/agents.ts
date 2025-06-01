@@ -1,5 +1,5 @@
 import { clamp } from "./basics";
-import { EconomicPolicies, type Clan } from "./people";
+import { type Clan } from "./people";
 
 export class Assessment {
     rFamily: number;

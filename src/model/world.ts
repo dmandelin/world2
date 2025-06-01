@@ -98,6 +98,7 @@ export class World {
             }
             s.clans.produce();
             s.clans.distribute();
+            s.clans.performRites();
         }
 
         this.updatePerceptions();

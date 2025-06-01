@@ -75,9 +75,10 @@ x Add QoL effects for prestige
 x Display population delta info
 
 x basic rituals
-- further stuff on rituals
-  - bigger could be higher quality, if people want that
-  - but also harder to run -- something breaks down with too many ppl
+x further stuff on rituals
+  x bigger could be higher quality, if people want that
+  x but also harder to run -- something breaks down with too many ppl
+- figure out why population oscillates so much and fix that
 - interaction stress and justice: will need to replace this with something real soon
 - move-out if values get too low
 

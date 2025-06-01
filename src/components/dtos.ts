@@ -140,10 +140,11 @@ export class ClansDTO extends Array<ClanDTO> {
     rites: {
         participants: string[];
         quality: number;
+        items: string[][];
     }
 
     constructor(clans: Clans) {
-        super(...sortedByKey(clans.map(clanDTO), clan => -clan.averagePrestige));
+        super(...sortedByKey([...clans].map(clanDTO), clan => -clan.averagePrestige));
         this.population = clans.population;
         this.condorcet = clans.condorcetLeader;
         this.slippage = clans.slippage;
@@ -158,6 +159,7 @@ export class ClansDTO extends Array<ClanDTO> {
         this.rites = {
             participants: clans.rites.participants.map(c => c.name),
             quality: clans.rites.quality,
+            items: clans.rites.items,
         }
     }
 }

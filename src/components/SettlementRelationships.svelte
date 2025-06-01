@@ -4,10 +4,6 @@
 
     let { settlement } = $props();
     let clans = $derived(settlement.clans);
-
-    $effect(() => {
-        console.log(clans[0]);
-    });
 </script>
 
 <style>
