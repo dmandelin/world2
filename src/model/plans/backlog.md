@@ -74,6 +74,10 @@ x Add dynamics for farming skill
 x Add QoL effects for prestige
 x Display population delta info
 
+- basic rituals
+- interaction stress and justice: will need to replace this with something real soon
+- move-out if values get too low
+
 Understanding results:
 - Historical graphs of key numbers
 - Visualization of leading clans over time

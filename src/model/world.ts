@@ -143,8 +143,7 @@ export class World {
                     ? -5 : settlement.localQOLModifierWith(clan.size);
                 const inertiaValue = settlement == 'new'
                     ? inertia * 2 + 1 : inertia;
-                const oldValue = clan.settlement!.localQOLModifier +
-                    clan.interactionModifier;
+                const oldValue = clan.settlement!.localQOLModifier;
                 return newValue - (oldValue + inertiaValue);
             }
 

@@ -1,7 +1,5 @@
-import { compareLexically } from "./basics";
-import { poisson, weightedRandInt } from "./distributions";
-import { exchangeGifts, resolveDisputes } from "./interactions";
-import { Clan, ConsumptionCalc, EconomicPolicies, PersonalityTraits } from "./people";
+import { weightedRandInt } from "./distributions";
+import { Clan, ConsumptionCalc, EconomicPolicies } from "./people";
 import { Pot } from "./production";
 import { Rites } from "./spirit";
 
@@ -114,7 +112,6 @@ export class Clans extends Array<Clan> {
 
         this.performRites();
 
-        this.interact();
         this.marry();
         for (const clan of this) clan.advancePopulation();
         this.split();
@@ -187,54 +184,6 @@ export class Clans extends Array<Clan> {
         }
     }
 
-    interact() {
-        for (const clan of this) {
-            clan.interactionModifier = 0;
-        }
-
-        for (const [c, d] of this.pairs()) {
-            exchangeGifts(c, d);
-        }
-
-        for (const [c, d] of this.pairs()) {
-            resolveDisputes(c, d);
-        }
-    }
-
-    interact2() {
-        // Each pair of clans may have some zero-sum interactions,
-        // typically embedded in a positive- or negative-sum context.
-        // Those contexts are assumed to be part of the general model,
-        // so we only need to consider the zero-sum interactions here.
-        //
-        // The interaction transfers happiness and 'temporary quality'
-        // (representing resources, tangble or otherwise) between the
-        // two.
-        for (const c of this) {
-            c.interactionModifier = 0;
-        }
-
-        for (let i = 0; i < this.length; ++i) {
-            for (let j = i + 1; j < this.length; ++j) {
-                const stakes = poisson(1);
-                if (stakes == 0) continue;
-
-                const a = this[i];
-                const b = this[j];
-                
-                // Use the Elo formula but with 10 points instead of 400.
-                const aWinProb = 1 / (1 + Math.pow(10, (b.skill - a.skill) / 10));
-                if (Math.random() < aWinProb) {
-                    a.interactionModifier += stakes;
-                    b.interactionModifier -= stakes;
-                } else {
-                    a.interactionModifier -= stakes;
-                    b.interactionModifier += stakes;
-                }
-            }
-        }
-    }
-
     marry() {
         // Young women marrying into their husbands' clans was the
         // most common pattern. We don't simulate every pairing.
@@ -243,7 +192,7 @@ export class Clans extends Array<Clan> {
         // But in reality they would of course try to marry.
 
         const husbandWeights = this.map(clan => 
-            Math.pow(10, clan.qol / 100));
+            Math.pow(10, clan.averagePrestige / 100));
         
         let women = 0;
         for (const clan of this) {

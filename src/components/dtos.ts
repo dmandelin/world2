@@ -1,10 +1,11 @@
-import type { Assessments, ClanAgent } from "../model/agents";
+import type { Assessments } from "../model/agents";
 import { maxbyWithValue, minbyWithValue, sortedByKey, type OptByWithValue } from "../model/basics";
 import type { PopulationChange } from "../model/calcs/population";
 import type { Clans, CondorcetCalc } from "../model/clans";
 import { pct } from "../model/format";
 import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, ProductivityCalc, RitualEffectivenessCalc, SkillChange } from "../model/people";
 import type { PrestigeCalc } from "../model/prestige";
+import type { QolCalc } from "../model/qol";
 import type { Settlement } from "../model/settlement";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
@@ -39,7 +40,6 @@ export type ClanDTO = {
     settlement: Settlement;
     slices: number[][];
 
-    agent: ClanAgent;
     assessments: Assessments;
     benevolence: number;
     reputation: number;
@@ -60,15 +60,10 @@ export type ClanDTO = {
     lastPopulationChange: PopulationChange;
     size: number;
 
-    qolFromAbility: number;
-    qolFromConsumption: number;
-    qolTable: [string, string][];
     qol: number;
+    qolCalc: QolCalc;
 
-    festivalModifier: number;
-    giftStrategy: string;
     intelligence: number;
-    interactionModifier: number;
     skill: number;
     skillChange: SkillChange;
     ritualSkill: number;
@@ -85,7 +80,6 @@ export function clanDTO(clan: Clan) {
         name: clan.name,
         color: clan.color,
 
-        agent: clan.agent.clone(),
         assessments: clan.assessments.clone(),
         benevolence: clan.benevolence,
         reputation: clan.reputation,
@@ -113,15 +107,10 @@ export function clanDTO(clan: Clan) {
         lastPopulationChange: clan.lastPopulationChange,
         tradePartners: tradePartnersDTO(clan),
 
-        qolFromConsumption: clan.qolFromConsumption,
-        qolFromAbility: clan.qolFromAbility,
-        qolTable: clan.qolTable,
         qol: clan.qol,
+        qolCalc: clan.qolCalc,
 
-        festivalModifier: clan.festivalModifier,
-        giftStrategy: clan.agent.defaultGiftStrategy,
         intelligence: clan.intelligence,
-        interactionModifier: clan.interactionModifier,
         skill: clan.skill,
         skillChange: clan.skillChange,
         ritualSkill: clan.ritualSkill,

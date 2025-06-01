@@ -1,4 +1,3 @@
-import { ClanAgent } from "./agents";
 import { Annals } from "./annals";
 import { clamp, remove } from "./basics";
 import type { Clans } from "./clans";
@@ -10,6 +9,7 @@ import { TradeGoods, type TradeGood } from "./trade";
 import { PrestigeCalc } from "./prestige";
 import { traitWeightedAverage, WeightedValue, zScore } from "./modelbasics";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./calcs/population";
+import { QolCalc } from "./qol";
 
 const clanGoodsSource = 'clan';
 
@@ -311,8 +311,6 @@ export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
 
-    public interactionModifier = 0;
-
     settlement: Settlement|undefined;
     seniority: number = -1;
     tenure: number = 0;
@@ -332,8 +330,6 @@ export class Clan {
     parent: Clan|undefined;
     cadets: Clan[] = [];
 
-    // Agent for the clan. This is used to determine how the clan interacts.
-    agent = new ClanAgent(this);
     assessments = new Assessments(this);
     
     // This clan's views of others.
@@ -392,6 +388,14 @@ export class Clan {
 
     get ritualSkill() {
         return this.ritualSkill_;
+    }
+
+    get qolCalc() {
+        return new QolCalc(this);
+    }
+
+    get qol(): number {
+        return this.qolCalc.value;
     }
 
     get averagePrestige(): number {
@@ -594,51 +598,6 @@ export class Clan {
         return this.consumption.perCapita(TradeGoods.Subsistence);
     }
 
-    get qolFromConsumption() {
-        return 40 + Math.log2(this.perCapitaSubsistenceConsumption) * 15;
-    }
-
-    get qolFromRelativePrestige() {
-        const localAveragePrestige = this.selfAndNeighbors.reduce((acc, clan) => 
-            acc + clan.averagePrestige, 0)
-         / this.selfAndNeighbors.length;
-        return (this.averagePrestige - localAveragePrestige) / 2;
-    }
-
-    get qolFromAbility() {
-        const zi = (this.intelligence - 50) / 15;
-        const zs = (this.strength - 50) / 15;
-        return zi + zs;
-    }
-
-    get qolFromSkill() {
-        const z = (this.skill - 50) / 15;
-        return z * 5;
-    }
-
-    get qol() {
-        return this.qolFromConsumption +
-            this.qolFromRelativePrestige +
-            this.qolFromAbility + 
-            this.qolFromSkill +
-            this.interactionModifier + 
-            this.techModifier +
-            (this.settlement?.populationPressureModifier || 0);
-    }
-
-    get qolTable(): [string, string][] {
-        return [
-            ['Consumption', this.qolFromConsumption.toFixed(1) ],
-            ['Relative Prestige', this.qolFromRelativePrestige.toFixed(1) ],
-            ['Skill', this.qolFromSkill.toFixed(1) ],
-            ['Ability', this.qolFromAbility.toFixed(1) ],
-            ['Interaction', this.interactionModifier.toFixed(1) ],
-            ['Tech', this.techModifier.toFixed(1) ],
-            ['Crowding', (this.settlement?.populationPressureModifier || 0).toFixed(1)],
-            ['Total', this.qol.toFixed(1)],
-        ];
-    }
-
     readonly slices: number[][] = [
         [0, 0], // Children, girls first (0-18)
         [0, 0], // Adults (18-35)
@@ -752,11 +711,11 @@ export class Clan {
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;
         newClan.skill_ = this.skill_;
+        newClan.ritualSkill_ = this.ritualSkill_;
         newClan.settlement = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
         newClan.assessments = this.assessments.clone();
-        newClan.agent = this.agent.clone();
         this.size -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);

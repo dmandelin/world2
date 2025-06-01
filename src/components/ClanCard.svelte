@@ -134,8 +134,11 @@
                 <td>
                     <Tooltip>
                         {clan.qol.toFixed()}
-                        <div slot="tooltip">
-                            <DataTable rows={clan.qolTable} />
+                        <div slot="tooltip" class="ttt">
+                            <h4>Needs & Satisfaction</h4>
+                            <DataTable rows={clan.qolCalc.sats} />
+                            <h4>Sources</h4>
+                            <DataTable rows={clan.qolCalc.items} />
                         </div>
                     </Tooltip>
                 </td>
