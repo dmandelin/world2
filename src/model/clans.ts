@@ -178,6 +178,7 @@ export class Clans extends Array<Clan> {
 
     performRites() {
         this.rites = new Rites(this);
+        this.rites.plan();
         this.rites.perform();
 
     }

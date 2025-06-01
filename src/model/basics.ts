@@ -92,3 +92,14 @@ export function harmonicMean(aa: number[]): number {
     const sum = aa.reduce((acc, cur) => acc + 1 / cur, 0);
     return aa.length / sum;
 }
+
+export function weightedHarmonicMean<T>(
+    aa: T[],
+    value: (t: T) => number,
+    weight: (t: T) => number
+): number {
+    if (aa.length === 0) return 0;
+    if (aa.length === 1) return value(aa[0]);
+    const sum = aa.reduce((acc, cur) => acc + weight(cur) / value(cur), 0);
+    return sum === 0 ? 0 : aa.reduce((acc, cur) => acc + weight(cur), 0) / sum;
+}

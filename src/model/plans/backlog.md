@@ -81,8 +81,11 @@ x Make stresses much clearer
     x make rites break down sooner
 
 - Fix up learning model
-  - verify tuning of basic changes
+  x verify tuning of basic changes
   - add breakthroughs
+
+- Help villages with bad rites
+  - option to have one clan lead the rites
 
 - Better display of hamlets
   - probably need to show on settlement panel instead of map

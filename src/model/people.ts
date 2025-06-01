@@ -251,13 +251,14 @@ export class ClanSkillChange implements SkillChange {
             c => c === clan ? 50 : clan.prestigeViewOf(c).value,
             c => trait(c),
         );
+        const t = trait(clan);
         // Imitation moves skill toward the target. Turns are about a
         // generation, so we'll assume a substantial chunk of the gap
         // can be closed in that time.
-        this.imitationDelta = (this.imitationTarget - trait(this.clan)) / 2;
+        this.imitationDelta = (this.imitationTarget - t) / 2;
         // Imitation error will tend to make things work less well, but
         // occasionally it will result in an improvement.
-        this.imitationError = normal(-1, 1);
+        this.imitationError = normal(-2, 4) * clamp(t / 100, 0, 1);
 
         // Learning refers to incrementally improving skill from personal
         // observation and experience. Not everyone attempts to learn in
@@ -266,7 +267,7 @@ export class ClanSkillChange implements SkillChange {
         // We'll probably want to enrich this soon, but for now we'll start
         // really simple with a standard effect for everyone that balances
         // the imitation error.
-        this.learningDelta = normal(1, 1);
+        this.learningDelta = normal(2, 4) * clamp((100 - t) / 100, 0, 1);
 
         // Innovation refers to a more radical change in practices. These
         // too can be good or bad, but a very bad one would usually be
