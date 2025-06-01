@@ -84,6 +84,10 @@ x Make stresses much clearer
   - verify tuning of basic changes
   - add breakthroughs
 
+- Better display of hamlets
+  - probably need to show on settlement panel instead of map
+  - give better settlement overview with total pop and such
+
 Understanding results:
 - Historical graphs of key numbers
 - Visualization of leading clans over time
