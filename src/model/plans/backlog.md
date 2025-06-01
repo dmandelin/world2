@@ -85,7 +85,10 @@ x Make stresses much clearer
   - add breakthroughs
 
 - Help villages with bad rites
-  - option to have one clan lead the rites
+  x show option values for having one clan lead the rites
+  - different structure options:
+    - implement roles having different effects on prestige, quality, and skill gain
+    - give villages the option to switch structure
 
 - Better display of hamlets
   - probably need to show on settlement panel instead of map
