@@ -5,13 +5,43 @@
         title?: string;
         labels: Iterable<string>;
         datasets: Array<{
-            label: string
+            label: string,
             data: number[],
             color: string,
         }>;
     };
 
+    class Dataset {
+      label: string;
+      data: number[];
+      color: string;
+
+      readonly maxValue: number;
+      readonly minValue: number;
+      readonly xStep: number;
+      readonly yScale: number;
+
+      readonly svgPath: string;
+      readonly svgYAxisLabels: string;
+
+      constructor(label: string, data: number[], color: string) {
+        this.label = label;
+        this.data = data;
+        this.color = color;
+
+        this.maxValue = Math.max(...data);
+        this.minValue = Math.min(...data);
+        this.xStep = width / (data.length - 1);
+        this.yScale = height / (this.maxValue - this.minValue);
+
+        [this.svgPath, this.svgYAxisLabels] = getPath(this, 0);
+      }
+    }
+
     let { data }: { data: GraphData } = $props();
+    let datasets = $derived.by(() => {
+      return data.datasets.map(ds => new Dataset(ds.label, ds.data, ds.color));
+    });
   
     let width = $state(0);
     let height = $state(0);
@@ -24,19 +54,27 @@
       }
     });
   
-    function getPath(dataset: Dataset, yOffset: number): string {
+    function getPath(dataset: Dataset, yOffset: number): [string, string] {
       const maxValue = Math.max(...dataset.data);
       const minValue = Math.min(...dataset.data);
       const xStep = width / (dataset.data.length - 1);
       const yScale = height / (maxValue - minValue);
   
-      return dataset.data
+      const line = dataset.data
         .map((value, index) => {
           const x = index * xStep;
           const y = height - (value - minValue) * yScale;
           return `${index === 0 ? 'M' : 'L'} ${x},${y + yOffset}`;
         })
         .join(' ');
+
+      const yAxisLabels = dataset.data.map((value, index) => {
+        const x = index * xStep;
+        const y = height - 16 + yOffset;
+        return `<text x="${x}" y="${y + 4}" font-size="10" text-anchor="middle">${value}</text>`;
+      }).join('');
+
+      return [line, yAxisLabels];
     }
   </script>
   
@@ -68,8 +106,9 @@
           {data.title}
         </text>
       {/if}
-      {#each data.datasets as dataset}
-        <path d={getPath(dataset, data.title ? 16 : 0)} stroke={dataset.color} />
+      {#each datasets as dataset}
+        <path d={dataset.svgPath} stroke={dataset.color} />
+        <!-- {@html dataset.svgYAxisLabels} -->
       {/each}
     </svg>
   </div>
