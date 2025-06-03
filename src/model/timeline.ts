@@ -1,20 +1,22 @@
-import { randomClanColor } from "./people";
+import { weightedAverage } from "./modelbasics";
 import type { World } from "./world";
 import type { Year } from "./year";
 
 export class TimePoint {
     readonly year: Year;
     readonly totalPopulation: number;
+    readonly averageQoL: number;
     readonly clans;
     
     constructor(world: World) {
         this.year = world.year.clone();
         this.totalPopulation = world.totalPopulation;
+        this.averageQoL = weightedAverage(world.allClans, clan => clan.qol, clan => clan.size);
         this.clans = world.allClans.map(clan => ({
             name: clan.name,
             color: clan.color,
             size: clan.size,
-            prestige: clan.prestige,
+            prestige: clan.averagePrestige,
         }));
     }
 }

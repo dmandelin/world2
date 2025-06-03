@@ -51,6 +51,17 @@ export function traitWeightedAverage<T, U extends Object>(
     return [totalValue / totalWeight, weightedValues];
 }
 
+export function weightedAverage<T>(
+    items: readonly T[],
+    valueFun: (t: T) => number,
+    weightFun: (t: T) => number): number {
+        
+    const totalWeight = items.reduce((acc, item) => acc + weightFun(item), 0);
+    if (totalWeight === 0) return 0;
+    const totalValue = items.reduce((acc, item) => acc + valueFun(item) * weightFun(item), 0);
+    return totalValue / totalWeight;
+}
+
 export function meanAndStdDev(values: readonly number[]): [number, number] {
     const n = values.length;
     if (n === 0) return [0, 0];

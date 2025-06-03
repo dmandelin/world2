@@ -7,6 +7,7 @@ import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, Eco
 import type { PrestigeCalc } from "../model/prestige";
 import type { QolCalc } from "../model/qol";
 import type { Settlement } from "../model/settlement";
+import type { TimePoint } from "../model/timeline";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 
@@ -185,10 +186,12 @@ export class SettlementDTO {
 export class WorldDTO {
     readonly year: string;
     readonly settlements: SettlementDTO[];
+    readonly timeline: TimePoint[];
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
         this.settlements = this.world.settlements.map(s => new SettlementDTO(s));
+        this.timeline = world.timeline;
     }
 
     get population() {
