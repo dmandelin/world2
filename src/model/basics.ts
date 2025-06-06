@@ -103,3 +103,7 @@ export function weightedHarmonicMean<T>(
     const sum = aa.reduce((acc, cur) => acc + weight(cur) / value(cur), 0);
     return sum === 0 ? 0 : aa.reduce((acc, cur) => acc + weight(cur), 0) / sum;
 }
+
+export function znan(value: number): number {
+    return isNaN(value) ? 0 : value;
+}

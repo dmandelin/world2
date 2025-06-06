@@ -1,3 +1,4 @@
+import { znan } from "./basics";
 import { weightedAverage } from "./modelbasics";
 import type { World } from "./world";
 import type { Year } from "./year";
@@ -6,12 +7,25 @@ export class TimePoint {
     readonly year: Year;
     readonly totalPopulation: number;
     readonly averageQoL: number;
+    readonly averageSubsistenceSat: number;
+    readonly averageRitualSat: number;
     readonly clans;
     
     constructor(world: World) {
         this.year = world.year.clone();
         this.totalPopulation = world.totalPopulation;
-        this.averageQoL = weightedAverage(world.allClans, clan => clan.qol, clan => clan.size);
+
+        this.averageQoL = weightedAverage(
+            world.allClans, clan => clan.qol, clan => clan.size);
+        this.averageSubsistenceSat = znan(weightedAverage(
+            world.allClans, 
+            clan => clan.qolCalc.getSat('Subsistence'), 
+            clan => clan.size));
+        this.averageRitualSat = znan(weightedAverage(
+             world.allClans, 
+            clan => clan.qolCalc.getSat('Ritual'), 
+            clan => clan.size));
+
         this.clans = world.allClans.map(clan => ({
             name: clan.name,
             color: clan.color,

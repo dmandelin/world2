@@ -56,7 +56,6 @@ export class World {
     dto = new WorldDTO(this);
 
     constructor() {
-        this.timeline.push(new TimePoint(this));
     }
 
     initialize() {
@@ -103,6 +102,7 @@ export class World {
 
         this.updatePerceptions();
 
+        this.timeline.push(new TimePoint(this));
         this.notify();
     }
 

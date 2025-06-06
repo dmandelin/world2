@@ -203,15 +203,13 @@ export class WorldDTO {
         return totalConsumption / this.population;
     }
 
-    get qol() {
-        const totalQol = this.settlements.reduce((acc, s) => acc + s.clans.reduce((acc, clan) => acc + clan.qol * clan.size, 0), 0);
-        return totalQol / this.population;
-    }
-
     get stats() {
+        const tp = this.timeline[this.timeline.length - 1];
         return [
             ['Productivity', pct(this.consumption)],
-            ['Quality of life', this.qol.toFixed()],
+            ['Quality of life', tp.averageQoL.toFixed(1)],
+            ['Subsistence satisfaction', tp.averageSubsistenceSat.toFixed(1)],
+            ['Ritual satisfaction', tp.averageRitualSat.toFixed(1)],
         ];
     }
 

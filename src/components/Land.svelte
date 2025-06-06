@@ -40,7 +40,15 @@
             datasets: [{
                 label: 'QoL',
                 data: world.timeline.map(timePoint => timePoint.averageQoL),
+                color: 'black',
+            }, {
+                label: 'Subsistence sat',
+                data: world.timeline.map(timePoint => timePoint.averageSubsistenceSat),
                 color: 'green',
+            }, {
+                label: 'Ritual sat',
+                data: world.timeline.map(timePoint => timePoint.averageRitualSat),
+                color: 'red',
             }]
         };
     });

@@ -74,6 +74,11 @@
         return `<text x="${x}" y="${y + 4}" font-size="10" text-anchor="middle">${value}</text>`;
       }).join('');
 
+      if (line.includes("NaN")) {
+        console.warn(`Dataset "${dataset.label}" contains NaN values.`);
+        debugger;
+      }
+
       return [line, yAxisLabels];
     }
   </script>

@@ -80,22 +80,33 @@ x Make stresses much clearer
   x interaction stress: show ritual problems on the map
     x make rites break down sooner
 
-- Fix up learning model
-  x verify tuning of basic changes
-  - add breakthroughs
-
 - Help villages with bad rites
   x show option values for having one clan lead the rites
   - different structure options:
     - implement roles having different effects on prestige, quality, and skill gain
     - give villages the option to switch structure
+    - add ritual lens to map for visualizations
+    - add notifications to show ritual structure changes
+  - get people do a better job moving out if the rites are all messed up.
+  - make ritual skill increase faster/more than farming skill since elaboration is free
+  - (P2) option to invite another village to help
+
+- Fix up learning model
+  x verify tuning of basic changes
+  - add breakthroughs
 
 - Better display of hamlets
   - probably need to show on settlement panel instead of map
   - give better settlement overview with total pop and such
 
+- Give people preferences for different settlement types, which can change
+- Make coordination costs and scale effects more dynamic, 
+  e.g., dependent on settlement relations
+
 Understanding results:
-- Historical graphs of key numbers
+x Historical graphs of key numbers
+  x Include satisfaction subscores
+- Lenses: show ritual quality and other things on map
 - Visualization of leading clans over time
 - Display clan moves again
 
