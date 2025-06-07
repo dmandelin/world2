@@ -1,7 +1,5 @@
 <script>
-    import { clamp } from "../model/basics";
-    import { pct, spct, wg } from "../model/format";
-    import EconomicPolicyDecision from "./EconomicPolicyDecision.svelte";
+    import { spct } from "../model/format";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();

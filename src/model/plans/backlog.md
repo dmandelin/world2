@@ -83,9 +83,9 @@ x Make stresses much clearer
 - Help villages with bad rites
   x show option values for having one clan lead the rites
   - different structure options:
+    - add ritual lens to map for visualizations
     - implement roles having different effects on prestige, quality, and skill gain
     - give villages the option to switch structure
-    - add ritual lens to map for visualizations
     - add notifications to show ritual structure changes
   - get people do a better job moving out if the rites are all messed up.
   - make ritual skill increase faster/more than farming skill since elaboration is free

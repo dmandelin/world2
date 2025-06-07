@@ -1,24 +1,10 @@
 <script lang="ts">
     import { rpct } from "../model/format";
-    import { GiftStrategy } from "../model/interactions";
-    import PopulationPyramid from "./PopulationPyramid.svelte";
 
     let { clan, updateTrigger = $bindable() } = $props();
-
-    function setGiftStrategy(strategy: GiftStrategy) {
-        clan.ref.agent.defaultGiftStrategy = strategy;
-        ++updateTrigger;
-    }
 </script>
 
 <style>
-    button {
-        display: block;
-        margin-top: 6px;
-        width: 120px;
-        height: 24px;
-    }
-
     .la {
         text-align: left;
     }
@@ -111,14 +97,4 @@
         </tr>
     </tbody>
 </table>
-
-<div style="display: flex">
-    <div>
-        Gift strategy: {clan.giftStrategy}
-        <button onclick={() => setGiftStrategy(GiftStrategy.Cooperate)}>Cooperative</button>
-        <button onclick={() => setGiftStrategy(GiftStrategy.Reciprocate)}>Reciprocal</button>
-        <button onclick={() => setGiftStrategy(GiftStrategy.Defect)}>Defecting</button>
-    </div>
-    <PopulationPyramid {clan} />
-</div>
 {/if}

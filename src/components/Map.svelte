@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
+    import ButtonPanel from './ButtonPanel.svelte';
 
     let { selection = $bindable() } = $props();
 
@@ -174,5 +175,17 @@
     }
 </style>
 
-<canvas onclick={click} width="564" height="492" style="width: 564px; height: 492px"></canvas>
-
+<div>
+    <canvas 
+        onclick={click} 
+        width="564" 
+        height="492" 
+        style="width: 564px; height: 492px">
+    </canvas>
+    <ButtonPanel config={{
+        buttons: [
+            { label: 'Pop' },
+            { label: 'Rit' }
+        ],
+    }} />
+</div>
