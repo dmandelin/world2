@@ -245,6 +245,32 @@ export class ClanSkillChange implements SkillChange {
     readonly items: [string, number, number][] = [];
 
     constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
+        // Rethink exactly how this should work:
+        // - Due to generational turnover, people with somewhat above
+        //   average skill are replaced by people with initially 0
+        //   skill, who have to learn.
+        // - The learning will have various sources:
+        //   - The clan itself -- weighted by prestige, but with a
+        //     weight increase due to greater access
+        //   - Other clans in the settlement -- weighted by prestige
+        //   - Learning by experience and observation
+        // - Other clan members learn by experience and observation too
+        //   - Other clan members also learn from other clans in the
+        //     settlement.
+        // - In general we want it so that imitation error and learning
+        //   rate are mild or moderate problems, so that better information
+        //   systems will be worthwhile.
+        //
+        // - Suggested algorithm:
+        //   - Compute target skill clan is trying to imitate/educate
+        //     itself to.
+        //   - Based on a max learning rate, update its skill in that
+        //     direction.
+        //     - Include imitation error, so that it will not get to 
+        //       exactly that value. Seems like we could apply error
+        //       to the target, the move, or both, as convenient.
+        //   - Apply learning by experience to further increase skill.
+
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
