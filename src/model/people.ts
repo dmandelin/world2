@@ -242,7 +242,7 @@ export class ClanSkillChange implements SkillChange {
 
     readonly moveDelta: number|undefined;
 
-    readonly items: [string, number][] = [];
+    readonly items: [string, number, number][] = [];
 
     constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
@@ -258,6 +258,7 @@ export class ClanSkillChange implements SkillChange {
         this.imitationDelta = (this.imitationTarget - t) / 2;
         // Imitation error will tend to make things work less well, but
         // occasionally it will result in an improvement.
+        const meanImitionError = -2 * clamp(t / 100, 0, 1);
         this.imitationError = normal(-2, 4) * clamp(t / 100, 0, 1);
 
         // Learning refers to incrementally improving skill from personal
@@ -267,6 +268,7 @@ export class ClanSkillChange implements SkillChange {
         // We'll probably want to enrich this soon, but for now we'll start
         // really simple with a standard effect for everyone that balances
         // the imitation error.
+        const meanLearningDelta = 2 *  clamp((100 - t) / 100, 0, 1);
         this.learningDelta = normal(2, 4) * clamp((100 - t) / 100, 0, 1);
 
         // Innovation refers to a more radical change in practices. These
@@ -275,21 +277,22 @@ export class ClanSkillChange implements SkillChange {
         // for now. This is the main mechanism for improving long-term skill.
         // TODO - Use a continuous distribution with a fat right tail, but
         //        round down small items to 0.
+        const meanInnovationDelta = 0.1;
         this.innovationDelta = poisson(0.1);
 
         this.items.push(
-            ['Imitation target', this.imitationTarget],
-            ['Imitation delta', this.imitationDelta],
-            ['Imitation error', this.imitationError],
-            ['Learning delta', this.learningDelta],
-            ['Innovation delta', this.innovationDelta],
+            ['Imitation target', this.imitationTarget, 0],
+            ['Imitation delta', this.imitationDelta, this.imitationDelta],
+            ['Imitation error', this.imitationError, meanImitionError],
+            ['Learning delta', this.learningDelta, meanLearningDelta],
+            ['Innovation delta', this.innovationDelta, meanInnovationDelta],
         );
 
         // Things may be a little different after a move, which might
         // work out better or worse for us.
         if (this.clan.tenure == 0) {
             this.moveDelta = normal(-10, 5);
-            this.items.push(['Migration delta', this.moveDelta]);
+            this.items.push(['Migration delta', this.moveDelta, -10]);
         }
     }
 
@@ -304,7 +307,7 @@ export class ClanSkillChange implements SkillChange {
     }
 
     get changeSourcesTooltip(): string[][] {
-        return this.items.map(([k, v]) => [k, v.toFixed(1)]);
+        return this.items.map(([k, v, ev]) => [k, v.toFixed(1), ev.toFixed(1)]);
     }
 }
 

@@ -85,6 +85,7 @@ x Make stresses much clearer
   - different structure options:
     x add ritual lens to map for visualizations
     - implement roles having different effects on prestige, quality, and skill gain
+      x first, show expected skill changes to make it clearer what's going on
     - give villages the option to switch structure
     - add notifications to show ritual structure changes
   - get people do a better job moving out if the rites are all messed up.
