@@ -13,6 +13,7 @@ interface RitesStructure {
     weight: (clan: Clan, rites: Rites) => number;
 }
 
+// Rites performed in common by all the clans.
 export class CommonRitesStructure implements RitesStructure {
     readonly name = 'Common';
 
@@ -31,6 +32,13 @@ export class CommonRitesStructure implements RitesStructure {
     }
 }
 
+// Rites performed in common by all the clans, but with leaders
+// appointed for the rites by clan prestige to help coordinate
+// the rites:
+// - This can better take advantage of scale.
+// - Prestigious clans will have more influence on the ritual
+//   quality, for better or worse. They'll also have a little
+//   more skill change.
 export class GuidedRitesStructure implements RitesStructure {
     readonly name = 'Guided';
 
@@ -46,6 +54,53 @@ export class GuidedRitesStructure implements RitesStructure {
 
     weight(clan: Clan, rites: Rites): number {
         return clan.influence;
+    }
+}
+
+// Rites performed in common by all the clans, but with clans
+// of evidently poor ritual skill (who thus tend to spoil rituals)
+// viewing but not participating directly in the rites:
+// - This can increase the average ritual effectiveness and
+//   therefore quality.
+// - Coordination costs are at least slightly higher, as it
+//   takes effort to exclude clans.
+// - Excluded clans are likely to react in some way, although
+//   one reaction could be deciding they like it that way.
+export class NoScrubsRitesStructure implements RitesStructure {
+    readonly name = 'No Scrubs';
+
+    scale(rites: Rites): number {
+        return [0.5, 0.8, 1, 1.2, 1.3, 1.35, 1.4, 1.45, 1.5]
+            [clamp(rites.participants.length, 1, 9) - 1];
+    }
+
+    coordination(rites: Rites): number {
+        return 0.9 * [1.1, 1.05, 1, 0.9, 0.7, 0.5, 0.3, 0.1, 0.01]
+            [clamp(rites.participants.length, 1, 9) - 1];
+    }
+
+
+    private weightsRites: Rites|undefined;
+    private weights: Map<Clan, number> = new Map();
+
+    weight(clan: Clan, rites: Rites): number {
+        this.updateWeights(rites);
+        return this.weights.get(clan) ?? 0;
+    }
+
+    private updateWeights(rites: Rites) {
+        if (this.weightsRites === rites) return;
+        this.weightsRites = rites;
+
+        const maxRitualEffectiveness = Math.max(...[...rites.participants].map(c => c.ritualEffectiveness));
+        this.weights.clear();
+        for (const clan of rites.participants) {
+            if (clan.ritualEffectiveness < maxRitualEffectiveness * 0.7) {
+                this.weights.set(clan, 0);
+            } else {
+                this.weights.set(clan, 1);
+            }
+        }
     }
 }
 

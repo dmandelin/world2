@@ -1,12 +1,12 @@
 <script lang="ts">
     import { pct, spct } from "../model/format";
-    import { CommonRitesStructure, GuidedRitesStructure, Rites } from "../model/spirit";
+    import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites } from "../model/spirit";
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { settlement } = $props();
 
-    let structures = [new CommonRitesStructure(), new GuidedRitesStructure()];
+    let structures = [new CommonRitesStructure(), new GuidedRitesStructure(), new NoScrubsRitesStructure()];
     let structureOptions = $derived.by(() => {
         return structures.map((s) => {
             const rites = new Rites(settlement.clans);
