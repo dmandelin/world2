@@ -1,9 +1,19 @@
 <script lang="ts">
-  let { config } : {config: { buttons: Array<{label: string }> } } = $props();
+  let { config, selectedLabel = $bindable(), onSelected }
+    : { 
+        config: { buttons: Array<{label: string }> }, 
+        selectedLabel?: string,
+        onSelected?: (label: string) => void
+    } = $props();
+
   let activeIndex = $state(0);
 
   function click(index: number) {
     activeIndex = index;
+    selectedLabel = config.buttons[index].label;
+    if (onSelected) {
+      onSelected(selectedLabel);
+    }
   }
 </script>
 

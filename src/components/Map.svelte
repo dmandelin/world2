@@ -2,8 +2,10 @@
     import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
     import ButtonPanel from './ButtonPanel.svelte';
+    import { pct } from '../model/format';
 
     let { selection = $bindable() } = $props();
+    let selectedLens = $state('Pop');
 
     let canvas: HTMLCanvasElement|null;
     let context: CanvasRenderingContext2D|null;
@@ -114,10 +116,9 @@
             // Name
             fillTextCentered(settlement.name, x, y + s + 15);
 
-            // Population
+            // Lens label (e.g., population)
             if (!settlement.abandoned) {
-                const popLabel = `${settlement.size} (${settlement.lastSizeChange})`;
-                fillTextCentered(popLabel, x, y + s + 32);
+                drawLensLabel(settlement, x, y, s + 32);
             }
 
             // Warnings
@@ -141,6 +142,19 @@
                 yo += 17;
             }
         }
+    }
+
+    function drawLensLabel(settlement: any, x: number, y: number, yo: number) {
+        context!.fillStyle = '#333';
+        context!.font = '12px sans-serif';
+
+        let label = '';
+        if (selectedLens === 'Pop') {
+            label = `${settlement.size} (${settlement.lastSizeChange})`;
+        } else if (selectedLens === 'Rit') {
+            label = `${pct(settlement.clans.rites.quality)}`;
+        }
+        fillTextCentered(label, x, y + yo);
     }
 
     function fillTextCentered(text: string, x: number, y: number) {
@@ -185,7 +199,7 @@
     <ButtonPanel config={{
         buttons: [
             { label: 'Pop' },
-            { label: 'Rit' }
+            { label: 'Rit' },
         ],
-    }} />
+    }} onSelected={label => { selectedLens = label; draw(); } } />
 </div>
