@@ -2,10 +2,6 @@ import { clamp, weightedHarmonicMean } from "./basics";
 import { pct, spct, xm } from "./format";
 import type { Clan } from "./people";
 
-export class SpiritCalc {
-
-}
-
 interface RitesStructure {
     name: string;
     scale: (rites: Rites) => number;
@@ -19,12 +15,12 @@ export class CommonRitesStructure implements RitesStructure {
 
     scale(rites: Rites): number {
         return [0.5, 0.8, 1, 1.2, 1.3, 1.35, 1.4, 1.45, 1.5]
-            [clamp(rites.participants.length, 1, 9) - 1];
+            [clamp(rites.reach.length, 1, 9) - 1];
     }
 
     coordination(rites: Rites): number {
         return [1.1, 1.05, 1, 0.9, 0.7, 0.5, 0.3, 0.1, 0.01]
-            [clamp(rites.participants.length, 1, 9) - 1];
+            [clamp(rites.reach.length, 1, 9) - 1];
     }
 
     weight(clan: Clan, rites: Rites): number {
@@ -44,12 +40,12 @@ export class GuidedRitesStructure implements RitesStructure {
 
     scale(rites: Rites): number {
         return [0.5, 0.8, 1, 1.3, 1.5, 1.6, 1.65, 1.7, 1.75]
-            [clamp(rites.participants.length, 1, 9) - 1];
+            [clamp(rites.reach.length, 1, 9) - 1];
     }
 
     coordination(rites: Rites): number {
         return [1.1, 1.05, 1, 0.95, 0.9, 0.8, 0.5, 0.2, 0.01]
-            [clamp(rites.participants.length, 1, 9) - 1];
+            [clamp(rites.reach.length, 1, 9) - 1];
     }
 
     weight(clan: Clan, rites: Rites): number {
@@ -71,12 +67,12 @@ export class NoScrubsRitesStructure implements RitesStructure {
 
     scale(rites: Rites): number {
         return [0.5, 0.8, 1, 1.2, 1.3, 1.35, 1.4, 1.45, 1.5]
-            [clamp(rites.participants.length, 1, 9) - 1];
+            [clamp(rites.reach.length, 1, 9) - 1];
     }
 
     coordination(rites: Rites): number {
         return 0.9 * [1.1, 1.05, 1, 0.9, 0.7, 0.5, 0.3, 0.1, 0.01]
-            [clamp(rites.participants.length, 1, 9) - 1];
+            [clamp(rites.reach.length, 1, 9) - 1];
     }
 
 
@@ -92,9 +88,9 @@ export class NoScrubsRitesStructure implements RitesStructure {
         if (this.weightsRites === rites) return;
         this.weightsRites = rites;
 
-        const maxRitualEffectiveness = Math.max(...[...rites.participants].map(c => c.ritualEffectiveness));
+        const maxRitualEffectiveness = Math.max(...[...rites.reach].map(c => c.ritualEffectiveness));
         this.weights.clear();
-        for (const clan of rites.participants) {
+        for (const clan of rites.reach) {
             if (clan.ritualEffectiveness < maxRitualEffectiveness * 0.7) {
                 this.weights.set(clan, 0);
             } else {
@@ -109,7 +105,7 @@ export class Rites {
     quality: number = 0;
     items: [string, string][] = [];
 
-    constructor(readonly participants: Clan[]) {
+    constructor(readonly reach: Clan[]) {
     }
 
     plan() {
@@ -121,7 +117,7 @@ export class Rites {
         // ruin entire rituals.
 
         const baseEffectiveness = weightedHarmonicMean(
-            this.participants,
+            this.reach,
             c => c.ritualEffectiveness,
             c => this.structure.weight(c, this));
 

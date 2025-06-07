@@ -158,7 +158,7 @@ export class ClansDTO extends Array<ClanDTO> {
             tfp: clans.pot.tfp,
         }
         this.rites = {
-            participants: clans.rites.participants.map(c => c.name),
+            participants: clans.rites.reach.map(c => c.name),
             quality: clans.rites.quality,
             items: clans.rites.items,
         }
