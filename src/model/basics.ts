@@ -8,6 +8,10 @@ export function clamp(value: number, min: number = 0.0, max: number = 1.0) {
     return Math.min(Math.max(value, min), max);
 }
 
+export function absmin(a: number, b: number): number {
+    return Math.abs(a) < Math.abs(b) ? a : b;
+}
+
 export type OptByWithValue<T> = (arr: T[], key: (t: T) => number) => [T, number];
 
 export function maxby<T>(arr: T[], key: (t: T) => number): T {

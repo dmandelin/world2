@@ -1,5 +1,5 @@
 import { Annals } from "./annals";
-import { clamp, remove } from "./basics";
+import { absmin, clamp, remove } from "./basics";
 import type { Clans } from "./clans";
 import { normal, poisson } from "./distributions";
 import { Assessments } from "./agents";
@@ -231,99 +231,67 @@ export class NilSkillChange implements SkillChange {
 }
 
 export class ClanSkillChange implements SkillChange {
+    readonly originalValue: number;
     readonly imitationTarget: number;
     readonly imitationTargetTable: readonly WeightedValue<String>[];
-    readonly imitationDelta: number;
-    readonly imitationError: number;
 
-    readonly learningDelta: number;
-
-    readonly innovationDelta: number;
-
-    readonly moveDelta: number|undefined;
-
-    readonly items: [string, number, number][] = [];
+    readonly items: {label: string, weight: number, value: number, ev: number}[] = [];
 
     constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
-        // Rethink exactly how this should work:
-        // - Due to generational turnover, people with somewhat above
-        //   average skill are replaced by people with initially 0
-        //   skill, who have to learn.
-        // - The learning will have various sources:
-        //   - The clan itself -- weighted by prestige, but with a
-        //     weight increase due to greater access
-        //   - Other clans in the settlement -- weighted by prestige
-        //   - Learning by experience and observation
-        // - Other clan members learn by experience and observation too
-        //   - Other clan members also learn from other clans in the
-        //     settlement.
-        // - In general we want it so that imitation error and learning
-        //   rate are mild or moderate problems, so that better information
-        //   systems will be worthwhile.
-        //
-        // - Suggested algorithm:
-        //   - Compute target skill clan is trying to imitate/educate
-        //     itself to.
-        //   - Based on a max learning rate, update its skill in that
-        //     direction.
-        //     - Include imitation error, so that it will not get to 
-        //       exactly that value. Seems like we could apply error
-        //       to the target, the move, or both, as convenient.
-        //   - Apply learning by experience to further increase skill.
-
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
-            c => c === clan ? 50 : clan.prestigeViewOf(c).value,
+            // +15 for self due to spending more time together.
+            c => c === clan ? 65 : clan.prestigeViewOf(c).value,
             c => trait(c),
         );
         const t = trait(clan);
-        // Imitation moves skill toward the target. Turns are about a
-        // generation, so we'll assume a substantial chunk of the gap
-        // can be closed in that time.
-        this.imitationDelta = (this.imitationTarget - t) / 2;
-        // Imitation error will tend to make things work less well, but
-        // occasionally it will result in an improvement.
-        const meanImitionError = -2 * clamp(t / 100, 0, 1);
-        this.imitationError = normal(-2, 4) * clamp(t / 100, 0, 1);
+        this.originalValue = t;
 
-        // Learning refers to incrementally improving skill from personal
-        // observation and experience. Not everyone attempts to learn in
-        // this way, and this can also result in loss of skill.
-        //
-        // We'll probably want to enrich this soon, but for now we'll start
-        // really simple with a standard effect for everyone that balances
-        // the imitation error.
-        const meanLearningDelta = 2 *  clamp((100 - t) / 100, 0, 1);
-        this.learningDelta = normal(2, 4) * clamp((100 - t) / 100, 0, 1);
+        const rr = 0.5;  // Population replacement rate
+        const clr = 50; // Child learning rate
+        const alr = 10; // Adult learning rate
 
-        // Innovation refers to a more radical change in practices. These
-        // too can be good or bad, but a very bad one would usually be
-        // rejected immediately, so we'll have that low probability or nil
-        // for now. This is the main mechanism for improving long-term skill.
-        // TODO - Use a continuous distribution with a fat right tail, but
-        //        round down small items to 0.
-        const meanInnovationDelta = 0.1;
-        this.innovationDelta = poisson(0.1);
+        // Imitation with error (education) by children.
+        const educationDelta = absmin(clr, this.imitationTarget) - t;
+        this.items.push({
+            label: 'Education', 
+            weight: 1 - rr, 
+            value: educationDelta - normal(2, 4) * clamp(t / 100, 0, 1),
+            ev: educationDelta - 2 * clamp(t / 100, 0, 1),
+        });
 
-        this.items.push(
-            ['Imitation target', this.imitationTarget, 0],
-            ['Imitation delta', this.imitationDelta, this.imitationDelta],
-            ['Imitation error', this.imitationError, meanImitionError],
-            ['Learning delta', this.learningDelta, meanLearningDelta],
-            ['Innovation delta', this.innovationDelta, meanInnovationDelta],
-        );
+        // Imitation with error by adult clan members.
+        const imitationDelta = absmin(alr, this.imitationTarget - t);
+        this.items.push({
+            label: 'Imitation', 
+            weight: 1 - rr, 
+            value: imitationDelta - normal(2, 4) * clamp(t / 100, 0, 1), 
+            ev: imitationDelta - 2 * clamp(t / 100, 0, 1),
+        });
+
+        // Learning from experience and observation.
+        this.items.push({
+            label: 'Experience', 
+            weight: 1, 
+            value: normal(2, 4) * clamp((100 - t) / 100, 0, 1), 
+            ev: 2 * clamp((100 - t) / 100, 0, 1),
+        })
 
         // Things may be a little different after a move, which might
         // work out better or worse for us.
         if (this.clan.tenure == 0) {
-            this.moveDelta = normal(-10, 5);
-            this.items.push(['Migration delta', this.moveDelta, -10]);
+            this.items.push({
+                label: 'Migration',
+                weight: 1, 
+                value: -10 + normal(2, 4), 
+                ev: -10,
+            })
         }
     }
 
     get delta(): number {
-        return this.imitationDelta + this.imitationError + this.learningDelta + this.innovationDelta;
+        return this.items.reduce((acc, o) => acc + o.weight * o.value, 0);
     }
 
     get imitationTooltip(): string[][] {
@@ -333,7 +301,24 @@ export class ClanSkillChange implements SkillChange {
     }
 
     get changeSourcesTooltip(): string[][] {
-        return this.items.map(([k, v, ev]) => [k, v.toFixed(1), ev.toFixed(1)]);
+        const header = ['Source', 'W', 'EV', 'WEV', 'V', 'WV'];
+        const data = this.items.map(o => [
+            o.label, 
+            o.weight.toFixed(2),
+            o.ev.toFixed(1),
+            (o.weight * o.ev).toFixed(1),
+            o.value.toFixed(1),
+            (o.weight * o.value).toFixed(1),
+        ]);
+        const footer = [ 
+            'Total',
+            '',
+            '',
+            this.items.reduce((acc, o) => acc + o.ev * o.weight, 0).toFixed(1),
+            '',
+            this.items.reduce((acc, o) => acc + o.weight * o.value, 0).toFixed(1),
+        ]
+        return [header, ...data, footer];
     }
 }
 

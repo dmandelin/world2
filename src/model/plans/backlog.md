@@ -82,20 +82,23 @@ x Make stresses much clearer
 
 - Help villages with bad rites
   x show option values for having one clan lead the rites
+  x "no scrubs" ritual option: keep out clans with low ritual skill
   - different structure options:
     x add ritual lens to map for visualizations
     - implement roles having different effects on prestige, quality, and skill gain
       x first, show expected skill changes to make it clearer what's going on
     - give villages the option to switch structure
     - add notifications to show ritual structure changes
-  - get people do a better job moving out if the rites are all messed up.
+  - get people do a better job moving out if the rites are all messed up
   - make ritual skill increase faster/more than farming skill since elaboration is free
-  x "no scrubs" ritual option: keep out clans with low ritual skill
   - (P2) option to invite another village to help
 
 - Fix up learning model
   x verify tuning of basic changes
+  x overhaul learning model to get continuity and learning rates
+  - have it depend on population pyramid
   - add breakthroughs
+  - give a bigger self weight bonus for education vs imitation
 
 - Better display of hamlets
   - probably need to show on settlement panel instead of map
