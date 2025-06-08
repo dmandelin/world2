@@ -1,6 +1,51 @@
 import { clamp, weightedHarmonicMean } from "./basics";
-import { pct, spct, xm } from "./format";
+import { pct, xm } from "./format";
 import type { Clan } from "./people";
+
+// Note on adding roles to this:
+// - Some roles can be discrete, e.g., MC vs auidence member.
+//   However, some roles may have varying weight. At a 20-year
+//   granularity, we can assume that when there are offices
+//   of different value reassigned frequently, they're weighted
+//   according to how often held.
+// - That seems to imply that this is more about clan _status_,
+//   which determines which roles the clan can occupy. But rite
+//   structure does still have different roles, which affects
+//   how status takes effect.
+//
+// What initial setups do we need:
+// - Common rites, where all clans participate equally. This
+//   papers over differences in whom from the clan participates.
+// - Common rites overseen by ritual leaders, who have no
+//   automatic further role in society, but help the rituals
+//   go better
+// - Participation:
+//   - For common rites, we seem to need only a similar participant
+//     concept.
+//
+// Problems people would be trying to solve based on early
+// simulation results:
+// - Sometimes there is a clan or two that has very low ritual
+//   effectiveness, and brings down the quality.
+//   - Let's think through what that really means:
+//     - Imagine a big extended family consisting of several
+//       families (today), getting together for the holidays.
+//     - If there's a family that gets drunk and acts crazy,
+//       says offensive things, or gives highly inappropriate
+//       gifts, it can ruin the entire event. So what do people
+//       do?
+//       - One option is to not invite them, but I think people
+//         are reluctant to exclude family, so this will depend
+//         on relatedness.
+//         - If they resist being uninvited, things can get very
+//           complicated, but here we'll assume that they basically
+//           stay out, with maybe some cost for the effort to
+//           chase them away.
+//       - Another thing people seem to do is create some rules
+//         that they have to follow. This can work in case of
+//         offensive behavior, but failure to perform is harder
+//         to address this way.
+//       - 
 
 interface RitesStructure {
     name: string;

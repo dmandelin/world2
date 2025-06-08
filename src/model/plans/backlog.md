@@ -83,6 +83,22 @@ x Make stresses much clearer
 - Help villages with bad rites
   x show option values for having one clan lead the rites
   x "no scrubs" ritual option: keep out clans with low ritual skill
+  - structure updates epic
+    - make soft officials the default structure
+    - option to have more skill concentration for offices
+    - option to increase authority of offices
+      - think about how, probably have to provide stuff
+    - option to travel more to pick up new practices
+    - option to experiment more with new practices
+    - option to modify rituals for scale so that some people
+      become observers (and other role splits)
+    - structural elements to add to elaborate the ritual
+      - will affect quality, prestige, etc
+      - may have skill thresholds
+      - may have trade good requirements
+      - effects wear off over time
+    - option to build new types of ritual building
+
   - different structure options:
     x add ritual lens to map for visualizations
     - implement roles having different effects on prestige, quality, and skill gain
