@@ -1,6 +1,6 @@
 <script lang="ts">
     import { pct, spct } from "../model/format";
-    import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites } from "../model/spirit";
+    import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites } from "../model/rites";
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 
@@ -22,7 +22,7 @@
 </script>
 
 {#if settlement.clans.rites.participants.length}
-<h4 style="margin-top: 1em;">Community Rites</h4>
+<h4 style="margin-top: 1em;">{settlement.clans.rites.name}</h4>
 <table style="width: 200px">
     <tbody>
         <tr>

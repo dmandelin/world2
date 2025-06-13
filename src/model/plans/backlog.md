@@ -84,7 +84,7 @@ x Make stresses much clearer
   x show option values for having one clan lead the rites
   x "no scrubs" ritual option: keep out clans with low ritual skill
   - structure updates epic
-    - make soft officials the default structure
+    x make soft officials the default structure
     - option to have more skill concentration for offices
     - option to increase authority of offices
       - think about how, probably have to provide stuff

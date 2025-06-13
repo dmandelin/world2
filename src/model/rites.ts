@@ -56,7 +56,7 @@ interface RitesStructure {
 
 // Rites performed in common by all the clans.
 export class CommonRitesStructure implements RitesStructure {
-    readonly name = 'Common';
+    readonly name = 'Common Rites';
 
     scale(rites: Rites): number {
         return [0.5, 0.8, 1, 1.2, 1.3, 1.35, 1.4, 1.45, 1.5]
@@ -81,7 +81,7 @@ export class CommonRitesStructure implements RitesStructure {
 //   quality, for better or worse. They'll also have a little
 //   more skill change.
 export class GuidedRitesStructure implements RitesStructure {
-    readonly name = 'Guided';
+    readonly name = 'Guided Rites';
 
     scale(rites: Rites): number {
         return [0.5, 0.8, 1, 1.3, 1.5, 1.6, 1.65, 1.7, 1.75]
@@ -146,7 +146,7 @@ export class NoScrubsRitesStructure implements RitesStructure {
 }
 
 export class Rites {
-    structure: RitesStructure = new CommonRitesStructure();
+    structure: RitesStructure = new GuidedRitesStructure();
     quality: number = 0;
     items: [string, string][] = [];
 
