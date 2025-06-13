@@ -143,6 +143,7 @@ export class ClansDTO extends Array<ClanDTO> {
         participants: string[];
         quality: number;
         items: string[][];
+        baseEffectivenessItems: [string, string, string][];
     }
 
     constructor(clans: Clans) {
@@ -163,6 +164,7 @@ export class ClansDTO extends Array<ClanDTO> {
             participants: clans.rites.reach.map(c => c.name),
             quality: clans.rites.quality,
             items: clans.rites.items,
+            baseEffectivenessItems: clans.rites.baseEffectivenessItems,
         }
     }
 }

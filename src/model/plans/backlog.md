@@ -85,6 +85,7 @@ x Make stresses much clearer
   x "no scrubs" ritual option: keep out clans with low ritual skill
   - structure updates epic
     x make soft officials the default structure
+    x display base effectiveness calculation
     - option to have more skill concentration for offices
     - option to increase authority of offices
       - think about how, probably have to provide stuff

@@ -23,21 +23,16 @@
 
 {#if settlement.clans.rites.participants.length}
 <h4 style="margin-top: 1em;">{settlement.clans.rites.name}</h4>
-<table style="width: 200px">
-    <tbody>
-        <tr>
-            <td>Quality</td>
-            <td>
-                <Tooltip>
-                    {spct(settlement.clans.rites.quality)}
-                    <div slot="tooltip" class="ttt">
-                        <DataTable rows={settlement.clans.rites.items} />
-                    </div>
-                </Tooltip>
-            </td>
-        </tr>
-    </tbody>
-</table>
+
+<h5>Effectiveness from participants</h5>
+<div class="ttt">
+    <DataTable rows={settlement.clans.rites.baseEffectivenessItems} />
+</div>
+
+<h5>Quality: {spct(settlement.clans.rites.quality)}</h5>
+<div class="ttt">
+    <DataTable rows={settlement.clans.rites.items} />
+</div>
 {/if}
 
 <h4>Options</h4>

@@ -148,6 +148,7 @@ export class NoScrubsRitesStructure implements RitesStructure {
 export class Rites {
     structure: RitesStructure = new GuidedRitesStructure();
     quality: number = 0;
+    baseEffectivenessItems: [string, string, string][] = [];
     items: [string, string][] = [];
 
     constructor(readonly reach: Clan[]) {
@@ -161,10 +162,24 @@ export class Rites {
         // Low skill tends to drag things down quite a bit, as mistakes can
         // ruin entire rituals.
 
-        const baseEffectiveness = weightedHarmonicMean(
-            this.reach,
-            c => c.ritualEffectiveness,
-            c => this.structure.weight(c, this));
+        let reciprocalSum = 0;
+        let weightSum = 0;
+        const baseEffectivenessItemsNumeric: [string, number, number][] = [];
+        for (const clan of this.reach) {
+            const effectiveness = clan.ritualEffectiveness;
+            const weight = this.structure.weight(clan, this);
+            reciprocalSum += weight / clan.ritualEffectiveness;
+            weightSum += weight;
+            baseEffectivenessItemsNumeric.push(
+                [clan.name, effectiveness, weight]);
+        }
+        const baseEffectiveness = weightSum / reciprocalSum;
+        this.baseEffectivenessItems = baseEffectivenessItemsNumeric.map(
+            ([name, effectiveness, weight]) => [
+                name,
+                pct(effectiveness),
+                (weight / weightSum).toFixed(2),
+            ]);
 
         const scale = this.structure.scale(this);
         const coordination = this.structure.coordination(this);
