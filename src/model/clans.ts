@@ -1,7 +1,7 @@
 import { weightedRandInt } from "./distributions";
 import { Clan, ConsumptionCalc, EconomicPolicies } from "./people";
 import { Pot } from "./production";
-import { Rites } from "./spirit";
+import { Rites } from "./rites";
 
 const communalGoodsSource = 'communal';
 
