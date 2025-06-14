@@ -87,6 +87,48 @@ x Make stresses much clearer
     x make soft officials the default structure
     x display base effectiveness calculation
     - option to have more skill concentration for offices
+      - workup
+        - we could select offices by seniority, prestige, skill,
+          or a combination. how to choose?
+          - it seems that people choose by skill when stakes are
+            high, there is agreement on what skill is, and it can
+            be measured
+          - by prestige when stakes are high and prestige is
+            detectable
+          - by seniority when stakes are low and integration in
+            local society is particularly important
+        - for our people prestige seems most important but let's
+          check:
+          - this is roughly equivalent to going by mana, which
+            seems reasonable for this point
+          - stakes may be high as people seem to have been quite
+            concerned to get things right in later times
+          - at the beginning, prestige is not super-detectable,
+            but it would make sense to make ritual skill a 
+            bigger ingredient in prestige when the village is
+            small enough for people to track
+        - so now we need to model in more detail what clans know
+          about each other
+          - we think that "everyone knows everyone" can scale to
+            about 150 adults, 300 people total
+          - but this hardly means people have perfect information
+            about each other
+            - we could think of this as a military company of 3
+              platoons or a startup of 150 with 3 branches, and
+              tons of gossip
+            - people will have a decent sense of other groups'
+              general capabilities, but there can be bias and
+              noise
+            - direct experiences, however, can be assessed *very*
+              well, though again with bias and noise
+            - model: there's enough "social attention" to track
+              300 people. 
+        - tasks:
+          - compute and display social attention
+          - have people move out if they can't track everyone
+          - adjust prestige by attention
+          - tune offices model
+          - give options for how heavily to weight prestige
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices
