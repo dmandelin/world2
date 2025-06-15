@@ -129,6 +129,32 @@ x Make stresses much clearer
           - adjust prestige by attention
           - tune offices model
           - give options for how heavily to weight prestige
+      - analyzing the effects of more skill concentration:
+        - by default, increasing skill concentration will always
+          increase overall effectiveness, but we probably don't
+          want to immediately go to maximum concentration: what's
+          going on here?
+        - analogy with pioneers: I would guess in those settings
+          things could be quite meritocratic, but note that they're
+          random people and don't have clan structures
+        - for our prehistoric people, it seems there could be two
+          issues:
+          - not having enough practices, structure, etc for there
+            to be that much difference in influence
+          - clans not wanting to cede influence, because of concerns
+            they will lose status
+        - tasks
+          - apply effects of ritual influence
+            x prestige
+            - learning of ritual skill
+    - increase ability to learn and gain skill
+      - current problem: skill quickly subsides to a median and sticks
+        there because people just imitate each other too much, regardless
+        of skill
+      - but for rituals, we've established that because everyone is
+        present, there's a lot of observability.
+      - so let's have a bigger prestige weight on learning, and possibly
+        make other changes in this area
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices

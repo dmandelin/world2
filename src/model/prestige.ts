@@ -1,5 +1,5 @@
 import { normal } from "./distributions";
-import { signed } from "./format";
+import { pct, signed } from "./format";
 import type { Clan } from "./people";
 
 export class OwnPrestigeCalc {
@@ -9,6 +9,7 @@ export class OwnPrestigeCalc {
         if (clan.settlement!.size > 300) {
             this.items = [['Strangers!', 35]];
         } else {
+            const otherRitualWeight = clan.settlement!.clans.rites.weights.get(other) ?? 0.1;
             this.items = [
                 ['Neighbors', 50],
                 this.seniorityItem,
@@ -16,7 +17,8 @@ export class OwnPrestigeCalc {
                 [`Strength ${other.strength}`, (other.strength - 50) / 10],
                 [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 10],
                 [`Horticulture ${other.skill.toFixed()}`, (other.skill - 50) / 10],
-                [`Ritual ${other.ritualSkill.toFixed()}`, 0.5 * (other.ritualSkill - 50)],
+                [`Ritual ${other.ritualSkill.toFixed()} (${pct(otherRitualWeight)})`, 
+                    otherRitualWeight * (other.ritualSkill - 50)],
                 [`Random`, normal(0, 2)],
             ];
         }

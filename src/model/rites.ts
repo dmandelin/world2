@@ -150,6 +150,7 @@ export class Rites {
     quality: number = 0;
     baseEffectivenessItems: [string, string, string][] = [];
     items: [string, string][] = [];
+    weights: Map<Clan, number> = new Map();
 
     constructor(readonly reach: Clan[]) {
     }
@@ -165,6 +166,7 @@ export class Rites {
         let reciprocalSum = 0;
         let weightSum = 0;
         const baseEffectivenessItemsNumeric: [string, number, number][] = [];
+        this.weights.clear();
         for (const clan of this.reach) {
             const effectiveness = clan.ritualEffectiveness;
             const weight = this.structure.weight(clan, this);
@@ -172,6 +174,7 @@ export class Rites {
             weightSum += weight;
             baseEffectivenessItemsNumeric.push(
                 [clan.name, effectiveness, weight]);
+            this.weights.set(clan, weight);
         }
         const baseEffectiveness = weightSum / reciprocalSum;
         this.baseEffectivenessItems = baseEffectivenessItemsNumeric.map(
