@@ -160,6 +160,23 @@ x Make stresses much clearer
         x apply self prestige correctly
         - increase self weighting for learning to account for time together
         - better parse out child education vs imitation of other clans
+          - the main problem is that it doesn't make sense for lower-skill
+            clans to rapidly converge in skill to be like the higher-skill
+            clans. why?
+            - it's not entirely clear how they learn from each other, but
+              it seems a bit much to become 80% like another clan in one
+              generation
+            - however, children should be able to rapidly learn up to some
+              target, for clans to be able to preserve knowledge at all
+          - we could apply the same logic to everyone, but might make sense
+            for children to learn to the clan standard, mostly, and then
+            adults imitate. but that's probably not quite right. maybe learning
+            rate is the big thing.
+          - some new concepts:
+            - child learning rate -> max amount of skill that can be gained
+              in childhood, can depend on various factors
+            - adult learning rate -> relates to turnover and rate of practice
+              change and is % of the gap that can be crossed per turn
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices
