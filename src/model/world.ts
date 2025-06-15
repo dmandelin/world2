@@ -88,6 +88,10 @@ export class World {
     }
 
     preAdvance() {
+        // Decisions can depend on perceptions, so we'll initialize them first,
+        // but then update after pre-advancing state.
+        this.updatePerceptions();
+
         for (const s of this.settlements) {
             const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
             const slippage = s.clans.slippage;
