@@ -16,7 +16,7 @@ export class OwnPrestigeCalc {
                 [`Strength ${other.strength}`, (other.strength - 50) / 10],
                 [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 10],
                 [`Horticulture ${other.skill.toFixed()}`, (other.skill - 50) / 10],
-                [`Ritual ${other.skill.toFixed()}`, 0.5 * (other.skill - 50)],
+                [`Ritual ${other.ritualSkill.toFixed()}`, 0.5 * (other.ritualSkill - 50)],
                 [`Random`, normal(0, 2)],
             ];
         }

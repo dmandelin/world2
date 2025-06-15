@@ -193,10 +193,10 @@ export class RitualEffectivenessCalc {
     readonly value: number;
 
     constructor(readonly clan: Clan) {
-        this.baseSkill = clan.skill;
+        this.baseSkill = clan.ritualSkill;
 
         const baseIntelligenceModifier = (clan.intelligence - 50) * 2;
-        const intelligenceModifierFactor = (100 - clan.skill) / 100;
+        const intelligenceModifierFactor = (100 - clan.ritualSkill) / 100;
         this.intelligenceSkillModifier = baseIntelligenceModifier * intelligenceModifierFactor;
         this.effectiveSkill = this.baseSkill + this.intelligenceSkillModifier;
         this.skillFactor = Math.pow(1.01, this.effectiveSkill - 50);
