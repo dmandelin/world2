@@ -238,11 +238,15 @@ export class ClanSkillChange implements SkillChange {
     readonly items: {label: string, weight: number, value: number, ev: number}[] = [];
 
     constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
+        // Rethinking the learning model here:
+        // - We want a clan to favor learning from itself, but not massively.
+        // - We want to significantly favor learning from the most prestigious clan.
+        // - It seems we need to give clans a view of themselves.
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
-            // +15 for self due to spending more time together.
-            c => c === clan ? 65 : clan.prestigeViewOf(c).value,
+            // TODO still some increase in self as source from time together
+            c => clan.prestigeViewOf(c).value,
             c => trait(c),
         );
         const t = trait(clan);
@@ -347,7 +351,7 @@ export class Clan {
 
     assessments = new Assessments(this);
     
-    // This clan's views of others.
+    // This clan's views of itself and others.
     private prestigeViews_ = new Map<Clan, PrestigeCalc>();
     // Local prestige-generated share of influence.
     influence = 0;
@@ -427,7 +431,6 @@ export class Clan {
 
     startUpdatingPrestige() {
         for (const clan of this.settlement!.clans) {
-            if (clan === this) continue;
             if (!this.prestigeViews_.has(clan)) {
                 this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
             }
@@ -443,7 +446,6 @@ export class Clan {
 
     finishUpdatingPrestige() {
         for (const clan of this.settlement!.clans) {
-            if (clan === this) continue;
             this.prestigeViews_.get(clan)!.commitUpdate();
         }
     }

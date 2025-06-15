@@ -155,6 +155,10 @@ x Make stresses much clearer
         present, there's a lot of observability.
       - so let's have a bigger prestige weight on learning, and possibly
         make other changes in this area
+      - tasks
+        - increase prestige weighting of learning
+        x apply self prestige correctly
+        - increase self weighting for learning to account for time together
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices

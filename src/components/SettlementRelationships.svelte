@@ -43,9 +43,6 @@ No leading clan
         <td>{c.name}</td>
         {#each clans as d}
             <td>
-                {#if c === d}
-                -
-                {:else}
                 <Tooltip>
                     {(c.prestige.get(d.ref)?.value?.toFixed())}
                     <div slot="tooltip">
@@ -55,7 +52,6 @@ No leading clan
                         <DataTable rows={c.prestige.get(d.ref)?.inferenceTooltip} />
                     </div>
                 </Tooltip>
-                {/if}
             </td>
         {/each}
     </tr>

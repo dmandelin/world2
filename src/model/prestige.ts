@@ -6,22 +6,28 @@ export class OwnPrestigeCalc {
     readonly items: [string, number][];
 
     constructor(readonly clan: Clan, readonly other: Clan) {
-        if (clan.settlement!.size > 300) {
-            this.items = [['Strangers!', 35]];
+        this.items = [];
+        if (clan === other) {
+            this.items.push(['Self', 55]);
+        } else if (clan.settlement!.size > 300) {
+            this.items.push(['Strangers!', 35]);
+            return;
         } else {
-            const otherRitualWeight = clan.settlement!.clans.rites.weights.get(other) ?? 0.1;
-            this.items = [
-                ['Neighbors', 50],
-                this.seniorityItem,
-                [`Size ${other.size}`, Math.log2(other.size / 50) * 5],
-                [`Strength ${other.strength}`, (other.strength - 50) / 10],
-                [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 10],
-                [`Horticulture ${other.skill.toFixed()}`, (other.skill - 50) / 10],
-                [`Ritual ${other.ritualSkill.toFixed()} (${pct(otherRitualWeight)})`, 
-                    otherRitualWeight * (other.ritualSkill - 50)],
-                [`Random`, normal(0, 2)],
-            ];
+            this.items.push(['Neighbors', 50]);
         }
+
+        this.items.push(this.seniorityItem);
+        const otherRitualWeight = clan.settlement!.clans.rites.weights.get(other) ?? 0.1;
+        const otherItems: [string, number][] = [
+            [`Size ${other.size}`, Math.log2(other.size / 50) * 5],
+            [`Strength ${other.strength}`, (other.strength - 50) / 10],
+            [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 10],
+            [`Horticulture ${other.skill.toFixed()}`, (other.skill - 50) / 10],
+            [`Ritual ${other.ritualSkill.toFixed()} (${pct(otherRitualWeight)})`, 
+                otherRitualWeight * (other.ritualSkill - 50)],
+            [`Random`, normal(0, 2)],
+        ];
+        this.items.push(...otherItems);
     }
 
     private get seniorityItem(): [string, number] {

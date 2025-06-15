@@ -24,12 +24,11 @@ export class Clans extends Array<Clan> {
       return this.reduce((total, clan) => total + clan.size, 0);
     }
 
-    // Population-weighted average of other clans' views of this one.
+    // Population-weighted average of views of this one.
     averagePrestige(clan: Clan): number {
         let totalPrestige = 0;
         let totalWeight = 0;
         for (const other of this) {
-            if (other === clan) continue;
             const prestige = other.prestigeViewOf(clan);
             if (prestige) {
                 totalPrestige += prestige.value * other.size;
