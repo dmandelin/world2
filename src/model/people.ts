@@ -238,15 +238,11 @@ export class ClanSkillChange implements SkillChange {
     readonly items: {label: string, weight: number, value: number, ev: number}[] = [];
 
     constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
-        // Rethinking the learning model here:
-        // - We want a clan to favor learning from itself, but not massively.
-        // - We want to significantly favor learning from the most prestigious clan.
-        // - It seems we need to give clans a view of themselves.
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
             // TODO still some increase in self as source from time together
-            c => clan.prestigeViewOf(c).value,
+            c => clan.prestigeViewOf(c).value + (clan === c ? 0 : 0),
             c => trait(c),
         );
         const t = trait(clan);

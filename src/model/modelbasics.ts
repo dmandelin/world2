@@ -1,4 +1,4 @@
-export function traitFactor(trait: number, a = 1.1) {
+export function traitFactor(trait: number, a = 1.3) {
     return Math.pow(a, trait - 50);
 }
 
