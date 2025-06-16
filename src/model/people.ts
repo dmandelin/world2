@@ -232,12 +232,20 @@ export class NilSkillChange implements SkillChange {
 
 export class ClanSkillChange implements SkillChange {
     readonly originalValue: number;
+    readonly educationTarget: number;
     readonly imitationTarget: number;
     readonly imitationTargetTable: readonly WeightedValue<String>[];
 
     readonly items: {label: string, weight: number, value: number, ev: number}[] = [];
 
     constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
+        const rr = 0.5; // Population replacement rate
+        const cms = 50; // Child max skill
+        const alr = 1.0; // Adult learning rate
+
+        const t = trait(clan);
+        this.originalValue = t;
+        this.educationTarget =  Math.min(cms, t);
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
@@ -245,15 +253,9 @@ export class ClanSkillChange implements SkillChange {
             c => clan.prestigeViewOf(c).value + (clan === c ? 0 : 0),
             c => trait(c),
         );
-        const t = trait(clan);
-        this.originalValue = t;
-
-        const rr = 0.5;  // Population replacement rate
-        const clr = 50; // Child learning rate
-        const alr = 10; // Adult learning rate
 
         // Imitation with error (education) by children.
-        const educationDelta = absmin(clr, this.imitationTarget) - t;
+        const educationDelta = absmin(cms, this.educationTarget) - t;
         this.items.push({
             label: 'Education', 
             weight: 1 - rr, 
@@ -262,10 +264,10 @@ export class ClanSkillChange implements SkillChange {
         });
 
         // Imitation with error by adult clan members.
-        const imitationDelta = absmin(alr, this.imitationTarget - t);
+        const imitationDelta = this.imitationTarget - t;
         this.items.push({
             label: 'Imitation', 
-            weight: 1 - rr, 
+            weight: (1 - rr) * alr,
             value: imitationDelta - normal(2, 4) * clamp(t / 100, 0, 1), 
             ev: imitationDelta - 2 * clamp(t / 100, 0, 1),
         });
@@ -294,9 +296,17 @@ export class ClanSkillChange implements SkillChange {
         return this.items.reduce((acc, o) => acc + o.weight * o.value, 0);
     }
 
+    get educationTargetDelta(): number {
+        return this.educationTarget - this.originalValue;
+    }
+
+    get imitationTargetDelta(): number {
+        return this.imitationTarget - this.originalValue;
+    }
+
     get imitationTooltip(): string[][] {
         return WeightedValue.tooltip(this.imitationTargetTable,
-            ['Model', 'W', 'Sk', 'W'],
+            ['Model', 'V', 'P', 'W', 'WV'],
         );
     }
 

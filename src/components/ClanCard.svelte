@@ -118,9 +118,22 @@
                     <Tooltip>
                         ({clan.ritualSkillChange.delta.toFixed(1)})
                         <div slot="tooltip" class="ttt">
-                            <div>{clan.ritualSkillChange.originalValue.toFixed(1)} /
-                                 {clan.ritualSkillChange.delta.toFixed(1)}</div>
-                            <h4>Imitation Sources (t={clan.ritualSkillChange.imitationTarget.toFixed(1)})</h4>
+                            <h4>Learning targets</h4>
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td>Education</td>
+                                        <td>{clan.ritualSkillChange.educationTarget.toFixed(1)}</td>
+                                        <td>{clan.ritualSkillChange.educationTargetDelta.toFixed(1)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Imitation</td>
+                                        <td>{clan.ritualSkillChange.imitationTarget.toFixed(1)}</td>
+                                        <td>{clan.ritualSkillChange.imitationTargetDelta.toFixed(1)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <h4>Imitation Sources</h4>
                             <DataTable rows={clan.ritualSkillChange.imitationTooltip} />
                             <h4>Skill Changes</h4>
                             <DataTable rows={clan.ritualSkillChange.changeSourcesTooltip} />
