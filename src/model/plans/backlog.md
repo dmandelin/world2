@@ -158,10 +158,12 @@ x Make stresses much clearer
           - apply effects of ritual influence
             x prestige
             - learning of ritual skill
-        - allow different levels of prestige weighting
-        - display prestige weighting
-        - allow random shifting of prestige weighting
-        - allow intentional changes to prestige weighting
+          - allow different levels of prestige weighting
+          - display prestige weighting
+          - show other prestige weighting options and their
+            effects
+          - allow random shifting of prestige weighting
+          - allow intentional changes to prestige weighting
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices
