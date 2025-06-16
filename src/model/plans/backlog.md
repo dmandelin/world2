@@ -160,10 +160,12 @@ x Make stresses much clearer
             - learning of ritual skill
           x allow different levels of prestige weighting
           x display prestige weighting
-          - show other prestige weighting options and their
+          x show other prestige weighting options and their
             effects
           - allow random shifting of prestige weighting
           - allow intentional changes to prestige weighting
+          - introduce some sort of satisfaction/dissatisfaction with
+            ritual role or leadership structure
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices

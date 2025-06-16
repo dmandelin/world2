@@ -1,9 +1,28 @@
 <script lang="ts">
     import { pct, spct } from "../model/format";
-    import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites } from "../model/rites";
+    import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites, RitualLeaderSelectionOptions } from "../model/rites";
     import DataTable from "./DataTable.svelte";
 
     let { settlement } = $props();
+
+    let selections = [
+        RitualLeaderSelectionOptions.Equal, 
+        RitualLeaderSelectionOptions.PrestigeWeightedSoft, 
+        RitualLeaderSelectionOptions.PrestigeWeightedMedium, 
+        RitualLeaderSelectionOptions.PrestigeWeightedHard, 
+    ];
+    let selectionOptions = $derived.by(() => {
+        return selections.map((s) => {
+            const rites = new Rites(settlement.clans);
+            rites.leaderSelectionOption = s;
+            rites.perform();
+
+            return {
+                name: s.name,
+                rites: rites,
+            };
+        });
+    });
 
     let structures = [new CommonRitesStructure(), new GuidedRitesStructure(), new NoScrubsRitesStructure()];
     let structureOptions = $derived.by(() => {
@@ -17,7 +36,7 @@
                 rites: rites,
             };
         });
-    })
+    });
 </script>
 
 {#if settlement.clans.rites.participants.length}
@@ -35,7 +54,15 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
 </div>
 {/if}
 
-<h4>Options</h4>
+<h4>Selection Options</h4>
+{#each selectionOptions as so}
+    <div>
+        <h5>{so.name}: {pct(so.rites.quality)}</h5>
+        <DataTable rows={so.rites.items} />
+    </div>
+{/each}
+
+<h4>Structure Options</h4>
 {#each structureOptions as so}
     <div>
         <h5>{so.name}: {pct(so.rites.quality)}</h5>

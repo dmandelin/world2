@@ -157,7 +157,7 @@ class PrestigeWeightedSelection implements RitualLeaderSelection {
     }
 }
 
-const RitualLeaderSelectionOptions = {
+export const RitualLeaderSelectionOptions = {
     Equal: new EqualSelection(),
     PrestigeWeightedSoft: new PrestigeWeightedSelection('By prestige (soft)', 20),
     PrestigeWeightedMedium: new PrestigeWeightedSelection('By prestige (medium)', 10),
@@ -166,7 +166,7 @@ const RitualLeaderSelectionOptions = {
 
 export class Rites {
     structure: RitesStructure = new GuidedRitesStructure();
-    leaderSelectionOption = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
+    leaderSelectionOption: RitualLeaderSelection = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
     quality: number = 0;
     baseEffectivenessItems: [string, string, string][] = [];
     items: [string, string][] = [];
