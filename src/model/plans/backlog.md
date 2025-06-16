@@ -158,8 +158,8 @@ x Make stresses much clearer
           - apply effects of ritual influence
             x prestige
             - learning of ritual skill
-          - allow different levels of prestige weighting
-          - display prestige weighting
+          x allow different levels of prestige weighting
+          x display prestige weighting
           - show other prestige weighting options and their
             effects
           - allow random shifting of prestige weighting

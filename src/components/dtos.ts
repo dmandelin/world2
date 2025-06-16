@@ -140,6 +140,7 @@ export class ClansDTO extends Array<ClanDTO> {
 
     rites: {
         name: string;
+        leaderSelectionOption: string;
         participants: string[];
         quality: number;
         items: string[][];
@@ -161,6 +162,7 @@ export class ClansDTO extends Array<ClanDTO> {
         }
         this.rites = {
             name: clans.rites.structure.name,
+            leaderSelectionOption: clans.rites.leaderSelectionOption.name,
             participants: clans.rites.reach.map(c => c.name),
             quality: clans.rites.quality,
             items: clans.rites.items,

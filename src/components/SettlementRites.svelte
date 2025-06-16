@@ -2,7 +2,6 @@
     import { pct, spct } from "../model/format";
     import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites } from "../model/rites";
     import DataTable from "./DataTable.svelte";
-    import Tooltip from "./Tooltip.svelte";
 
     let { settlement } = $props();
 
@@ -23,6 +22,7 @@
 
 {#if settlement.clans.rites.participants.length}
 <h4 style="margin-top: 1em;">{settlement.clans.rites.name}</h4>
+Leader selection: {settlement.clans.rites.leaderSelectionOption}
 
 <h5>Effectiveness from participants</h5>
 <div class="ttt">

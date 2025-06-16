@@ -51,7 +51,6 @@ interface RitesStructure {
     name: string;
     scale: (rites: Rites) => number;
     coordination: (rites: Rites) => number;
-    weight: (clan: Clan, rites: Rites) => number;
 }
 
 // Rites performed in common by all the clans.
@@ -66,10 +65,6 @@ export class CommonRitesStructure implements RitesStructure {
     coordination(rites: Rites): number {
         return [1.1, 1.05, 1, 0.9, 0.7, 0.5, 0.3, 0.1, 0.01]
             [clamp(rites.reach.length, 1, 9) - 1];
-    }
-
-    weight(clan: Clan, rites: Rites): number {
-        return 1;
     }
 }
 
@@ -91,10 +86,6 @@ export class GuidedRitesStructure implements RitesStructure {
     coordination(rites: Rites): number {
         return [1.1, 1.05, 1, 0.95, 0.9, 0.8, 0.5, 0.2, 0.01]
             [clamp(rites.reach.length, 1, 9) - 1];
-    }
-
-    weight(clan: Clan, rites: Rites): number {
-        return clan.influence;
     }
 }
 
@@ -145,8 +136,37 @@ export class NoScrubsRitesStructure implements RitesStructure {
     }
 }
 
+interface RitualLeaderSelection {
+    name: string;
+    weight(clan: Clan): number;
+}
+
+class EqualSelection implements RitualLeaderSelection {
+    readonly name = 'Equal by clans';
+
+    weight(clan: Clan): number {
+        return 1;
+    }
+}
+
+class PrestigeWeightedSelection implements RitualLeaderSelection {
+    constructor(readonly name: string, private readonly quotient: number) {}
+
+    weight(clan: Clan): number {
+        return Math.pow(2, (clan.averagePrestige - 50) / this.quotient);
+    }
+}
+
+const RitualLeaderSelectionOptions = {
+    Equal: new EqualSelection(),
+    PrestigeWeightedSoft: new PrestigeWeightedSelection('By prestige (soft)', 20),
+    PrestigeWeightedMedium: new PrestigeWeightedSelection('By prestige (medium)', 10),
+    PrestigeWeightedHard: new PrestigeWeightedSelection('By prestige (hard)', 5),
+};
+
 export class Rites {
     structure: RitesStructure = new GuidedRitesStructure();
+    leaderSelectionOption = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
     quality: number = 0;
     baseEffectivenessItems: [string, string, string][] = [];
     items: [string, string][] = [];
@@ -169,7 +189,7 @@ export class Rites {
         this.weights.clear();
         for (const clan of this.reach) {
             const effectiveness = clan.ritualEffectiveness;
-            const weight = this.structure.weight(clan, this);
+            const weight = this.leaderSelectionOption.weight(clan);
             reciprocalSum += weight / clan.ritualEffectiveness;
             weightSum += weight;
             baseEffectivenessItemsNumeric.push(
