@@ -164,6 +164,13 @@ export const RitualLeaderSelectionOptions = {
     PrestigeWeightedHard: new PrestigeWeightedSelection('By prestige (hard)', 5),
 };
 
+export const RitualLeaderSelectionOptionsList: RitualLeaderSelection[] = [
+    RitualLeaderSelectionOptions.Equal,
+    RitualLeaderSelectionOptions.PrestigeWeightedSoft,
+    RitualLeaderSelectionOptions.PrestigeWeightedMedium,
+    RitualLeaderSelectionOptions.PrestigeWeightedHard,
+];
+
 export class Rites {
     structure: RitesStructure = new GuidedRitesStructure();
     leaderSelectionOption: RitualLeaderSelection = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
@@ -176,6 +183,24 @@ export class Rites {
     }
 
     plan() {
+        // Allow some random drift in ritual leader selection.
+        const i = RitualLeaderSelectionOptionsList.findIndex(
+            option => option === this.leaderSelectionOption);
+        if (i >= 0) {
+            let j = i;
+            const r = Math.random();
+            if (r < 0.1) {
+                --j;
+                if (j < 0) j = 1;
+            } else if (r >= 0.9) {
+                ++j;
+                if (j >= RitualLeaderSelectionOptionsList.length) j = RitualLeaderSelectionOptionsList.length - 2;
+            }
+            if (j !== i) {
+                this.leaderSelectionOption = RitualLeaderSelectionOptionsList[j];
+                console.log(`Rites: changed leader selection option`);
+            }
+        }
     }
 
     perform() {
