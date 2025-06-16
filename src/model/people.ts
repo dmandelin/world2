@@ -249,8 +249,7 @@ export class ClanSkillChange implements SkillChange {
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
-            // TODO still some increase in self as source from time together
-            c => clan.prestigeViewOf(c).value + (clan === c ? 0 : 0),
+            c => clan.prestigeViewOf(c).value,
             c => trait(c),
         );
 

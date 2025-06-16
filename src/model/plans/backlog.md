@@ -141,25 +141,27 @@ x Make stresses much clearer
           issues:
           - not having enough practices, structure, etc for there
             to be that much difference in influence
+            - could be an issue, although people can vary within
+              some range without inventing new stuff
           - clans not wanting to cede influence, because of concerns
             they will lose status
+            - this could be an issue. let's handle like this:
+              - have a few options for how things are distributed
+                - by clan
+                - by clan size
+                - by prestige, with different levels /5, /10, /20
+              - assume that distribution is a matter of culture
+              - let distribution sometimes randomly shift
+              - allow clans to propose distribution changes with some
+                chance of success
         - tasks
           - apply effects of ritual influence
             x prestige
             - learning of ritual skill
-    - increase ability to learn and gain skill
-      - current problem: skill quickly subsides to a median and sticks
-        there because people just imitate each other too much, regardless
-        of skill
-      - but for rituals, we've established that because everyone is
-        present, there's a lot of observability.
-      - so let's have a bigger prestige weight on learning, and possibly
-        make other changes in this area
-      - tasks
-        x increase prestige weighting of learning
-        x apply self prestige correctly
-        - increase self weighting for learning to account for time together
-        x better parse out child education vs imitation of other clans
+        - allow different levels of prestige weighting
+        - display prestige weighting
+        - allow random shifting of prestige weighting
+        - allow intentional changes to prestige weighting
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices
