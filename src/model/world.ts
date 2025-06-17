@@ -198,6 +198,10 @@ export class World implements NoteTaker {
             if (!isNew) {
                 this.annals.log(
                     `Clan ${clan.name} moved from ${source.name} to ${best.name}`, source);
+                this.addNote(new Note(
+                    '↔',
+                    `Clan ${clan.name} moved from ${source.name} to ${best.name}`,
+                ));
             }
         }
     }

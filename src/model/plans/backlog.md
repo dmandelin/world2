@@ -174,7 +174,7 @@ x Make stresses much clearer
             could materialize in the world model or not as needed
           x notification for ritual changes
           - notification for economic policy changes
-          - notification for migrations
+          x notification for migrations
           x show row of notification icons on bottom
           x tooltip for notifications
           - graphic for notifications
