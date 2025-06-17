@@ -3,6 +3,7 @@
     import { world } from '../model/world';
     import ButtonPanel from './ButtonPanel.svelte';
     import { pct } from '../model/format';
+    import NotificationBar from './NotificationBar.svelte';
 
     let { selection = $bindable() } = $props();
     let selectedLens = $state('Pop');
@@ -202,4 +203,5 @@
             { label: 'Rit' },
         ],
     }} onSelected={label => { selectedLens = label; draw(); } } />
+    <NotificationBar notes={world.notes} />
 </div>

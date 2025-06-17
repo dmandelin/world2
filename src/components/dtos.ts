@@ -3,6 +3,7 @@ import { maxbyWithValue, minbyWithValue, sortedByKey, type OptByWithValue } from
 import type { PopulationChange } from "../model/calcs/population";
 import type { Clans, CondorcetCalc } from "../model/clans";
 import { pct } from "../model/format";
+import type { Note } from "../model/notifications";
 import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, ProductivityCalc, RitualEffectivenessCalc, SkillChange } from "../model/people";
 import type { PrestigeCalc } from "../model/prestige";
 import type { QolCalc } from "../model/qol";
@@ -193,11 +194,13 @@ export class WorldDTO {
     readonly year: string;
     readonly settlements: SettlementDTO[];
     readonly timeline: TimePoint[];
+    readonly notes: Note[];
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
         this.settlements = this.world.settlements.map(s => new SettlementDTO(s));
         this.timeline = world.timeline;
+        this.notes = [...world.notes];
     }
 
     get population() {

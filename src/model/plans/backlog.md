@@ -169,6 +169,20 @@ x Make stresses much clearer
             ritual role or leadership structure
           - possibly allow clans to disagree on what the structure
             should be
+        - notifications tasks breakout
+          x notifications object in the world DTO model
+            could materialize in the world model or not as needed
+          - notification for ritual changes
+          - notification for economic policy changes
+          - notification for migrations
+          x show row of notification icons on bottom
+          - tooltip for notifications
+          - graphic for notifications
+          - add other events we've been wanting to see
+          - add lines to show time breaks
+          - option to dismiss notifications
+          - auto-dismiss old enough notifications
+          - text notification log view
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices

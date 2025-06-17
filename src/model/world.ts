@@ -7,6 +7,7 @@ import { TimePoint } from "./timeline";
 import { TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
+import { Note } from "./notifications";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -44,6 +45,7 @@ export class World {
     readonly timeline: TimePoint[] = [];
     // This has to be initialized before the clans because we pass it to them.
     readonly annals = new Annals(this);
+    readonly notes: Note[] = [];
 
     readonly settlements = new SettlementsBuilder(this).createSettlements([
         ['Eridu', 290, 425, 3],
@@ -61,6 +63,7 @@ export class World {
     initialize() {
         this.initializeTradeGoods();
         this.preAdvance();
+        this.notes.push(new Note('N'));
     }
 
     initializeTradeGoods() {
