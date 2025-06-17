@@ -13,7 +13,7 @@
     ];
     let selectionOptions = $derived.by(() => {
         return selections.map((s) => {
-            const rites = new Rites(settlement.clans);
+            const rites = new Rites(settlement.world, settlement.clans);
             rites.leaderSelectionOption = s;
             rites.perform();
 
@@ -27,7 +27,7 @@
     let structures = [new CommonRitesStructure(), new GuidedRitesStructure(), new NoScrubsRitesStructure()];
     let structureOptions = $derived.by(() => {
         return structures.map((s) => {
-            const rites = new Rites(settlement.clans);
+            const rites = new Rites(settlement.world, settlement.clans);
             rites.structure = s;
             rites.perform();
 

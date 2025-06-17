@@ -1,5 +1,7 @@
 <script lang="ts">
-  let { notes } = $props();
+  import type { Note } from "../model/notifications";
+    
+  let { notes }: { notes: Note[] } = $props();
 
   function click(index: number) {
     console.log(`Clicked note at index: ${index}`);
@@ -8,13 +10,14 @@
 
 <style>
 .panel {
+  width: 564px;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
   margin: 1rem 0;
 }
 .panel button {
-  width: 48px;
+  min-width: 48px;
   height: 48px;
   background-color: #f3edd8;
   border-radius: 16px;

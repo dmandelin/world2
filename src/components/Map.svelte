@@ -11,6 +11,8 @@
     let canvas: HTMLCanvasElement|null;
     let context: CanvasRenderingContext2D|null;
 
+    let worldDTO = $state(world.dto);
+
     function click(e: MouseEvent) {
         console.log('click', e.offsetX, e.offsetY);
 
@@ -167,7 +169,10 @@
         canvas = document.querySelector('canvas');
         context = canvas!.getContext('2d');
 
-        world.watch(draw);
+        world.watch(() => {
+            worldDTO = world.dto;
+            draw();
+        });
         draw();
 
         //resizeCanvas();
@@ -203,5 +208,5 @@
             { label: 'Rit' },
         ],
     }} onSelected={label => { selectedLens = label; draw(); } } />
-    <NotificationBar notes={world.notes} />
+    <NotificationBar notes={worldDTO.notes} />
 </div>

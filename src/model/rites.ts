@@ -1,5 +1,6 @@
 import { clamp, weightedHarmonicMean } from "./basics";
 import { pct, xm } from "./format";
+import type { NoteTaker } from "./notifications";
 import type { Clan } from "./people";
 
 // Note on adding roles to this:
@@ -179,7 +180,7 @@ export class Rites {
     items: [string, string][] = [];
     weights: Map<Clan, number> = new Map();
 
-    constructor(readonly reach: Clan[]) {
+    constructor(readonly noteTaker: NoteTaker, readonly reach: Clan[]) {
     }
 
     plan() {
@@ -198,6 +199,9 @@ export class Rites {
             }
             if (j !== i) {
                 this.leaderSelectionOption = RitualLeaderSelectionOptionsList[j];
+                this.noteTaker.addNote({
+                    shortLabel: 'R',
+                });
                 console.log(`Rites: changed leader selection option`);
             }
         }

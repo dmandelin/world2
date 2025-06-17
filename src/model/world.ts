@@ -7,7 +7,7 @@ import { TimePoint } from "./timeline";
 import { TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
-import { Note } from "./notifications";
+import { Note, type NoteTaker } from "./notifications";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -30,7 +30,7 @@ class SettlementsBuilder {
             this.clanColors.add(clan.color);
         }
 
-        return new Settlement(this, name, x, y, new Clans(...clans));
+        return new Settlement(this.world, name, x, y, new Clans(this.world, ...clans));
     }
 
     createSettlements(params: readonly [string, number, number, number][]) {
@@ -39,7 +39,7 @@ class SettlementsBuilder {
     }
 }
 
-export class World {
+export class World implements NoteTaker {
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
@@ -59,6 +59,10 @@ export class World {
     dto = new WorldDTO(this);
 
     constructor() {
+    }
+
+    addNote(note: Note) {
+        this.notes.push(note);
     }
 
     initialize() {
@@ -170,7 +174,7 @@ export class World {
                 const x = clan.settlement!.x + Math.round(Math.cos(dir) * distance);
                 const y = clan.settlement!.y + Math.round(Math.sin(dir) * distance);
                 const newSettlement = new Settlement(this, `Hamlet ${this.settlements.length + 1}`,
-                    x, y, new Clans());
+                    x, y, new Clans(this));
                 this.settlements.push(newSettlement);
 
                 newSettlement.parent = clan.settlement;

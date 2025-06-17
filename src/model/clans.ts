@@ -1,4 +1,5 @@
 import { weightedRandInt } from "./distributions";
+import type { NoteTaker } from "./notifications";
 import { Clan, ConsumptionCalc, EconomicPolicies } from "./people";
 import { Pot } from "./production";
 import { Rites } from "./rites";
@@ -14,10 +15,11 @@ export class Clans extends Array<Clan> {
     pot = new Pot(communalGoodsSource, this);
 
     // Community rites.
-    rites = new Rites(this);
+    rites: Rites;
 
-    constructor(...clans: Clan[]) {
+    constructor(readonly noteTaker: NoteTaker, ...clans: Clan[]) {
       super(...clans);
+      this.rites = new Rites(noteTaker, this);
     }
   
     get population(): number {
@@ -176,7 +178,7 @@ export class Clans extends Array<Clan> {
     }
 
     performRites() {
-        this.rites = new Rites(this);
+        this.rites = new Rites(this.noteTaker, this);
         this.rites.plan();
         this.rites.perform();
 

@@ -218,17 +218,21 @@ export class RitualEffectivenessCalc {
 }
 
 export interface SkillChange {
+    originalValue: number;
+    educationTarget: number;
+    imitationTarget: number;
+
     delta: number;
     imitationTooltip: string[][];
 }
 
 export class NilSkillChange implements SkillChange {
-    get delta(): number {
-        return 0;
-    }
+    readonly delta = 0;
+    readonly educationTarget = 0;
+    readonly imitationTarget = 0;
+    readonly imitationTooltip: string[][] = [];
 
-    get imitationTooltip(): string[][] {
-        return [];
+    constructor(readonly originalValue: number) {
     }
 }
 
@@ -348,10 +352,10 @@ export class Clan {
     lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 
     private skill_: number = normal(30, 10);
-    skillChange = new NilSkillChange();
+    skillChange: SkillChange = new NilSkillChange(this.skill_);
 
     private ritualSkill_: number = normal(30, 10);
-    ritualSkillChange = new NilSkillChange();
+    ritualSkillChange: SkillChange = new NilSkillChange(this.ritualSkill_);
 
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);

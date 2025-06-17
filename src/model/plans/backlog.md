@@ -172,7 +172,7 @@ x Make stresses much clearer
         - notifications tasks breakout
           x notifications object in the world DTO model
             could materialize in the world model or not as needed
-          - notification for ritual changes
+          x notification for ritual changes
           - notification for economic policy changes
           - notification for migrations
           x show row of notification icons on bottom
@@ -183,6 +183,7 @@ x Make stresses much clearer
           - option to dismiss notifications
           - auto-dismiss old enough notifications
           - text notification log view
+          - clean up world/annals constructor stuff
     - option to increase authority of offices
       - think about how, probably have to provide stuff
     - option to travel more to pick up new practices
