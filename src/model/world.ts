@@ -61,8 +61,8 @@ export class World implements NoteTaker {
     constructor() {
     }
 
-    addNote(note: Note) {
-        this.notes.push(note);
+    addNote(shortLabel: string, message: string) {
+        this.notes.push(new Note(shortLabel, message));
     }
 
     initialize() {
@@ -198,10 +198,10 @@ export class World implements NoteTaker {
             if (!isNew) {
                 this.annals.log(
                     `Clan ${clan.name} moved from ${source.name} to ${best.name}`, source);
-                this.addNote(new Note(
+                this.addNote(
                     '↔',
                     `Clan ${clan.name} moved from ${source.name} to ${best.name}`,
-                ));
+                );
             }
         }
     }

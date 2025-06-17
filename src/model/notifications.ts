@@ -1,5 +1,5 @@
 export interface NoteTaker {
-    addNote(note: Note): void;
+    addNote(shortLabel: string, message: string): void;
 }
 
 export class Note {

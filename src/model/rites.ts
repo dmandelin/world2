@@ -200,10 +200,10 @@ export class Rites {
             }
             if (j !== i) {
                 this.leaderSelectionOption = RitualLeaderSelectionOptionsList[j];
-                this.noteTaker.addNote(new Note(
+                this.noteTaker.addNote(
                     'R',
                     `Rites: ${this.reach[0].settlement!.name} changed leader selection option from ${originalLeaderSelectionOption.name} to ${this.leaderSelectionOption.name}`,
-                ));
+                );
             }
         }
     }
