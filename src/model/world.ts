@@ -66,12 +66,13 @@ export class World implements NoteTaker {
     }
 
     initialize() {
-        this.initializeTradeGoods();
-        this.preAdvance();
         this.addNote(
             '*',
             'First permanent settlements founded!'
         );
+
+        this.initializeTradeGoods();
+        this.preAdvance();
     }
 
     initializeTradeGoods() {
@@ -133,6 +134,7 @@ export class World implements NoteTaker {
         // Update timeline.
         this.year.advance(this.yearsPerTurn);
         this.timeline.push(new TimePoint(this));
+        this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
 
         // Notify observers.
         this.notify();

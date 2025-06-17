@@ -180,7 +180,7 @@ x Make stresses much clearer
           x tooltip for notifications
           - graphic for notifications
           - add other events we've been wanting to see
-          - add lines to show time breaks
+          x add lines to show time breaks
           - option to dismiss notifications
           - auto-dismiss old enough notifications
           - text notification log view

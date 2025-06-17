@@ -13,6 +13,7 @@
     .panel {
         width: 564px;
         display: flex;
+        align-items: center;
         justify-content: flex-end;
         gap: 0.5rem;
         margin: 1rem 0;
@@ -31,17 +32,28 @@
         font-size: small;
         margin: 0;
     }
+
+    .panel .vr {
+        width: 2px;
+        height: 36px;
+        background-color: #333;
+    }
 </style>
 
 <div class="panel">
   {#each notes as note, i}
     <Tooltip>
-        <button
-            type="button"
-            onclick={() => click(i)}
-        >
-            {note.shortLabel}
-        </button>
+        {#if note.shortLabel === '$vr$'}
+            <div class="vr"></div>
+        {:else}
+            <button
+                type="button"
+                class={{vr: note.shortLabel === '$vr$'}}
+                onclick={() => click(i)}
+            >
+                {note.shortLabel}
+            </button>
+        {/if}
         <div slot="tooltip" class="ttt">
             {note.year}: {note.message}
         </div>
