@@ -228,6 +228,9 @@ export class Rites {
                 pct(effectiveness),
                 (weight / weightSum).toFixed(2),
             ]);
+        for (const [clan, weight] of this.weights) {
+            this.weights.set(clan, weight / weightSum);
+        }
 
         const scale = this.structure.scale(this);
         const coordination = this.structure.coordination(this);

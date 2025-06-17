@@ -10,6 +10,7 @@ import { PrestigeCalc } from "./prestige";
 import { traitWeightedAverage, WeightedValue, zScore } from "./modelbasics";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./calcs/population";
 import { QolCalc } from "./qol";
+import { pct } from "./format";
 
 const clanGoodsSource = 'clan';
 
@@ -238,7 +239,11 @@ export class ClanSkillChange implements SkillChange {
 
     readonly items: {label: string, weight: number, value: number, ev: number}[] = [];
 
-    constructor(readonly clan: Clan, readonly trait: (clan: Clan) => number) {
+    constructor(
+        readonly clan: Clan, 
+        readonly trait: (clan: Clan) => number,
+        experienceRatio: number) {
+
         const rr = 0.5; // Population replacement rate
         const cms = 50; // Child max skill
         const alr = 1.0; // Adult learning rate
@@ -273,10 +278,10 @@ export class ClanSkillChange implements SkillChange {
 
         // Learning from experience and observation.
         this.items.push({
-            label: 'Experience', 
+            label: `Experience (${pct(experienceRatio)})`, 
             weight: 1, 
-            value: normal(2, 4) * clamp((100 - t) / 100, 0, 1), 
-            ev: 2 * clamp((100 - t) / 100, 0, 1),
+            value: experienceRatio * normal(2, 4) * clamp((100 - t) / 100, 0, 1), 
+            ev: experienceRatio * 2 * clamp((100 - t) / 100, 0, 1),
         })
 
         // Things may be a little different after a move, which might
@@ -641,8 +646,13 @@ export class Clan {
     }
 
     prepareTraitChanges() {
-        this.skillChange = new ClanSkillChange(this, clan => clan.skill);
-        this.ritualSkillChange = new ClanSkillChange(this, clan => clan.ritualSkill);
+        this.skillChange = new ClanSkillChange(this, 
+            clan => clan.skill, 1.0);
+
+        const ritualWeight = this.settlement!.clans.rites.weights.get(this) ?? 0;
+        const experienceRatio = Math.min(2.0, this.settlement!.clans.length * ritualWeight);
+        this.ritualSkillChange = new ClanSkillChange(this, 
+            clan => clan.ritualSkill, experienceRatio);
     }
 
     commitTraitChanges() {
