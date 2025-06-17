@@ -62,16 +62,16 @@ export class World implements NoteTaker {
     }
 
     addNote(shortLabel: string, message: string) {
-        this.notes.push(new Note(shortLabel, message));
+        this.notes.push(new Note(this.year.toString(), shortLabel, message));
     }
 
     initialize() {
         this.initializeTradeGoods();
         this.preAdvance();
-        this.notes.push(new Note(
-            '>',
+        this.addNote(
+            '*',
             'First permanent settlements founded!'
-        ));
+        );
     }
 
     initializeTradeGoods() {

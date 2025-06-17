@@ -4,6 +4,7 @@ export interface NoteTaker {
 
 export class Note {
     constructor(
+        public readonly year: string,
         public readonly shortLabel: string,
         public readonly message: string,
     ) {

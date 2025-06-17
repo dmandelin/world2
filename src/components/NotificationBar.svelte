@@ -43,7 +43,7 @@
             {note.shortLabel}
         </button>
         <div slot="tooltip" class="ttt">
-            {note.message}
+            {note.year}: {note.message}
         </div>
     </Tooltip>
   {/each}

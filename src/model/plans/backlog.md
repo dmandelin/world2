@@ -173,7 +173,7 @@ x Make stresses much clearer
           x notifications object in the world DTO model
             could materialize in the world model or not as needed
           x notification for ritual changes
-          - show year in notifications
+          x show year in notifications
           - notification for economic policy changes
           x notification for migrations
           x show row of notification icons on bottom
