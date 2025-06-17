@@ -1,5 +1,6 @@
 import { Annals } from "./annals";
 import { Clan } from "./people";
+import { world } from "./world";
 
 // Population is roughly constant with this birth rate.
 // At 1.15x, grows 7% per turn (0.35%/y, 30x/M)
@@ -50,7 +51,7 @@ const STABLE_BIRTH_RATE = 2.97;
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
 export function calibrate() {
-    const clan = new Clan(new Annals(), 'test', 'test', 30);
+    const clan = new Clan(world, new Annals(), 'test', 'test', 30);
 
     // Look for a stationary distribution.
     let slices = clan.slices;

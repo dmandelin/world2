@@ -19,6 +19,7 @@ class SettlementsBuilder {
         const clans = [];
         for (let i = 0; i < clanCount; i++) {
             const clan = new Clan(
+                this.world,
                 this.world.annals,
                 randomClanName(this.clanNames), 
                 randomClanColor(this.clanColors),
@@ -29,7 +30,7 @@ class SettlementsBuilder {
             this.clanColors.add(clan.color);
         }
 
-        return new Settlement(name, x, y, new Clans(...clans));
+        return new Settlement(this, name, x, y, new Clans(...clans));
     }
 
     createSettlements(params: readonly [string, number, number, number][]) {
@@ -168,7 +169,7 @@ export class World {
                 const distance = Math.random() * 10 + 20;
                 const x = clan.settlement!.x + Math.round(Math.cos(dir) * distance);
                 const y = clan.settlement!.y + Math.round(Math.sin(dir) * distance);
-                const newSettlement = new Settlement(`Hamlet ${this.settlements.length + 1}`,
+                const newSettlement = new Settlement(this, `Hamlet ${this.settlements.length + 1}`,
                     x, y, new Clans());
                 this.settlements.push(newSettlement);
 

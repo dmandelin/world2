@@ -11,6 +11,7 @@ import { traitWeightedAverage, WeightedValue, zScore } from "./modelbasics";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./calcs/population";
 import { QolCalc } from "./qol";
 import { pct } from "./format";
+import type { World } from "./world";
 
 const clanGoodsSource = 'clan';
 
@@ -390,6 +391,7 @@ export class Clan {
     pot = new Pot(clanGoodsSource, [this]);
 
     constructor(
+        readonly world: World,
         readonly annals: Annals,
         public name: string,
         public color: string,
@@ -739,7 +741,7 @@ export class Clan {
 
         const name = randomClanName(clans.map(clan => clan.name));
         const color = randomClanColor(clans.map(clan => clan.color));
-        const newClan = new Clan(this.annals, name, color, newSize);
+        const newClan = new Clan(this.world, this.annals, name, color, newSize);
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;
         newClan.skill_ = this.skill_;

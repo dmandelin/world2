@@ -2,6 +2,7 @@ import { clamp } from "./basics";
 import type { Clans } from "./clans";
 import { Technai } from "./tech";
 import type { TradeGood } from "./trade";
+import type { World } from "./world";
 
 export class Settlement {
     readonly technai = new Technai(this);
@@ -11,6 +12,7 @@ export class Settlement {
     daughters: Settlement[] = [];
 
     constructor(
+        readonly world: World,
         readonly name: string, 
         readonly x: number,
         readonly y: number,
