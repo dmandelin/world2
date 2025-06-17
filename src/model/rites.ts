@@ -1,6 +1,6 @@
 import { clamp, weightedHarmonicMean } from "./basics";
 import { pct, xm } from "./format";
-import type { NoteTaker } from "./notifications";
+import { Note, type NoteTaker } from "./notifications";
 import type { Clan } from "./people";
 
 // Note on adding roles to this:
@@ -185,6 +185,7 @@ export class Rites {
 
     plan() {
         // Allow some random drift in ritual leader selection.
+        const originalLeaderSelectionOption = this.leaderSelectionOption;
         const i = RitualLeaderSelectionOptionsList.findIndex(
             option => option === this.leaderSelectionOption);
         if (i >= 0) {
@@ -199,10 +200,10 @@ export class Rites {
             }
             if (j !== i) {
                 this.leaderSelectionOption = RitualLeaderSelectionOptionsList[j];
-                this.noteTaker.addNote({
-                    shortLabel: 'R',
-                });
-                console.log(`Rites: changed leader selection option`);
+                this.noteTaker.addNote(new Note(
+                    'R',
+                    `Rites: ${this.reach[0].settlement!.name} changed leader selection option from ${originalLeaderSelectionOption.name} to ${this.leaderSelectionOption.name}`,
+                ));
             }
         }
     }

@@ -163,7 +163,7 @@ x Make stresses much clearer
           x show other prestige weighting options and their
             effects
           x allow random shifting of prestige weighting
-          - show notifications for changes of prestige weighting
+          x show notifications for changes of prestige weighting
           - allow intentional changes to prestige weighting
           - introduce some sort of satisfaction/dissatisfaction with
             ritual role or leadership structure
@@ -176,7 +176,7 @@ x Make stresses much clearer
           - notification for economic policy changes
           - notification for migrations
           x show row of notification icons on bottom
-          - tooltip for notifications
+          x tooltip for notifications
           - graphic for notifications
           - add other events we've been wanting to see
           - add lines to show time breaks

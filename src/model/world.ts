@@ -68,7 +68,10 @@ export class World implements NoteTaker {
     initialize() {
         this.initializeTradeGoods();
         this.preAdvance();
-        this.notes.push(new Note('N'));
+        this.notes.push(new Note(
+            '>',
+            'First permanent settlements founded!'
+        ));
     }
 
     initializeTradeGoods() {
