@@ -91,6 +91,9 @@
 - Help villages with bad rites
   x allow them to actually change leadership selection
 
+  - debug selection options: current selection doesn't appear neutral
+  - lose more information about prestige when things get too big
+
   - for each clan, record their actual preference for
     leadership selection, possibly including favorability
     of each item
