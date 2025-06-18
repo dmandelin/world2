@@ -284,7 +284,8 @@ export class SimulationResult {
 }
 
 export class ClanImpact {
-    readonly weightDelta: number;
+    readonly originalWeight: number;
+    readonly newWeight: number;
 
     readonly originalQoL: number;
     readonly newQoL: number;
@@ -293,15 +294,18 @@ export class ClanImpact {
     readonly newPrestige: number;
 
     constructor(readonly clan: Clan, originalRites: Rites, rites: Rites) {
-        const originalWeight = originalRites.weights.get(clan) ?? 0;
-        const newWeight = rites.weights.get(clan) ?? 0;
-        this.weightDelta = newWeight - originalWeight;
+        this.originalWeight = originalRites.weights.get(clan) ?? 0;
+        this.newWeight = rites.weights.get(clan) ?? 0;
 
         this.originalQoL = new QoLCalc(clan, originalRites.quality).value;
         this.newQoL = new QoLCalc(clan, rites.quality).value;
 
         this.originalPrestige = OwnPrestigeCalc.prestigeFromRitual(clan, originalRites).value;
         this.newPrestige = OwnPrestigeCalc.prestigeFromRitual(clan, rites).value;
+    }
+
+    get weightDelta(): number {
+        return this.newWeight - this.originalWeight;
     }
 
     get qolDelta(): number {

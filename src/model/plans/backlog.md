@@ -171,9 +171,9 @@ x Make stresses much clearer
               x participation -> prestige -> qol
             x investigate predicted low QoL impact of changes
           x rework QoL
-          - rework prestige and ritual more
+          x rework prestige and ritual more
             x investigate marginal utility approach
-            - implement new formula
+            x implement new formula
             x decrease elasticity of substitution on ritual output
           - introduce some sort of satisfaction/dissatisfaction with
             ritual role or leadership structure

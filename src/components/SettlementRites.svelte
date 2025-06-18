@@ -71,7 +71,8 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
                 <Tooltip>
                     {pct(impact.weightDelta)}
                     <div slot="tooltip">
-                        n/a
+                        Weight:
+                        {impact.originalWeight.toFixed(2)} &rarr; {impact.newWeight.toFixed(2)}
                     </div>
                 </Tooltip>
             </td>
@@ -79,6 +80,7 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
                 <Tooltip>
                     {impact.qolDelta.toFixed(1)}
                     <div slot="tooltip">
+                        QoL:
                         {impact.originalQoL.toFixed(1)} &rarr; {impact.newQoL.toFixed(1)}
                     </div>
                 </Tooltip>
@@ -87,6 +89,7 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
                 <Tooltip>
                     {impact.prestigeDelta.toFixed(1)}
                     <div slot="tooltip">
+                        Prestige:
                         {impact.originalPrestige.toFixed(1)} &rarr; {impact.newPrestige.toFixed(1)}
                     </div>
                 </Tooltip>
