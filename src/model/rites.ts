@@ -306,7 +306,7 @@ export class ClanImpact {
 
     get weightDelta(): number {
         return this.newWeight - this.originalWeight;
-    }
+    }   
 
     get qolDelta(): number {
         return this.newQoL - this.originalQoL;

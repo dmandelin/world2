@@ -165,11 +165,12 @@ x Make stresses much clearer
           x allow random shifting of prestige weighting
           x show notifications for changes of prestige weighting
           - allow intentional changes to prestige weighting
-            - estimate the effects on clans
+            x estimate the effects on clans
               x participation
               x ritual effectiveness change will impact qol
               x participation -> prestige -> qol
             x investigate predicted low QoL impact of changes
+            x fix display bug in estimates
           x rework QoL
           x rework prestige and ritual more
             x investigate marginal utility approach

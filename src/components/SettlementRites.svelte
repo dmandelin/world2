@@ -1,6 +1,6 @@
 <script lang="ts">
     import { pct, spct } from "../model/format";
-    import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites, RitualLeaderSelectionOptions } from "../model/rites";
+
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 
@@ -46,7 +46,7 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
         <tr>
             <th>Option</th>
             <th>Quality</th>
-            {#each settlement.clans as clan}
+            {#each selectionOptions[0].clanImpacts.keys() as clan}
             <th colspan="3">{clan.name}</th>
             {/each}
         </tr>
