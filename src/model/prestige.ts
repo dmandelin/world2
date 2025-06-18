@@ -1,6 +1,7 @@
 import { normal } from "./distributions";
 import { pct, signed } from "./format";
 import type { Clan } from "./people";
+import type { Rites } from "./rites";
 
 export class OwnPrestigeCalc {
     readonly items: [string, number][];
@@ -17,6 +18,7 @@ export class OwnPrestigeCalc {
         }
 
         this.items.push(this.seniorityItem);
+        const {weight, value} = OwnPrestigeCalc.prestigeFromRitual(clan, clan.settlement!.clans.rites);
         const otherRitualWeight = (clan.settlement!.clans.rites.weights.get(other) ?? 0.1)
             * clan.settlement!.clans.length;
         const otherItems: [string, number][] = [
@@ -24,8 +26,7 @@ export class OwnPrestigeCalc {
             [`Strength ${other.strength}`, (other.strength - 50) / 10],
             [`Intelligence ${other.intelligence}`, (other.intelligence - 50) / 10],
             [`Horticulture ${other.skill.toFixed()}`, (other.skill - 50) / 10],
-            [`Ritual ${other.ritualSkill.toFixed()} (${pct(otherRitualWeight)})`, 
-                otherRitualWeight * (other.ritualSkill - 50)],
+            [`Ritual ${other.ritualSkill.toFixed()} (${pct(weight)})`, value],
             [`Random`, normal(0, 2)],
         ];
         this.items.push(...otherItems);
@@ -42,6 +43,12 @@ export class OwnPrestigeCalc {
 
     get tooltip(): string[][] {
         return this.items.map(([k, v]) => [k, v.toFixed(1)]);
+    }
+
+    static prestigeFromRitual(clan: Clan, rites: Rites): {weight: number, value: number} {
+        const weight = rites.weights.get(clan) ?? 0.1;
+        const value = (clan.ritualSkill - 50) * weight;
+        return {weight, value};
     }
 }
 

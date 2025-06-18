@@ -2,6 +2,7 @@ import { clamp, weightedHarmonicMean } from "./basics";
 import { pct, xm } from "./format";
 import { Note, type NoteTaker } from "./notifications";
 import type { Clan } from "./people";
+import { OwnPrestigeCalc } from "./prestige";
 import { QoLCalc } from "./qol";
 
 // Note on adding roles to this:
@@ -281,6 +282,9 @@ export class ClanImpact {
     readonly originalQoL: number;
     readonly newQoL: number;
 
+    readonly originalPrestige: number;
+    readonly newPrestige: number;
+
     constructor(readonly clan: Clan, originalRites: Rites, rites: Rites) {
         const originalWeight = originalRites.weights.get(clan) ?? 0;
         const newWeight = rites.weights.get(clan) ?? 0;
@@ -288,9 +292,16 @@ export class ClanImpact {
 
         this.originalQoL = new QoLCalc(clan, originalRites.quality).value;
         this.newQoL = new QoLCalc(clan, rites.quality).value;
+
+        this.originalPrestige = OwnPrestigeCalc.prestigeFromRitual(clan, originalRites).value;
+        this.newPrestige = OwnPrestigeCalc.prestigeFromRitual(clan, rites).value;
     }
 
     get qolDelta(): number {
         return this.newQoL - this.originalQoL;
+    }
+
+    get prestigeDelta(): number {
+        return this.newPrestige - this.originalPrestige;
     }
 }

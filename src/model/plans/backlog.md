@@ -168,9 +168,13 @@ x Make stresses much clearer
             - estimate the effects on clans
               x participation
               x ritual effectiveness change will impact qol
-              - participation -> prestige -> qol
-              - participation -> ritual learning rate
-            - investigate predicted low QoL impact of changes
+              x participation -> prestige -> qol
+            x investigate predicted low QoL impact of changes
+          x rework QoL
+          - rework prestige and ritual more
+            - investigate marginal utility approach
+            - implement new formula
+            - decrease elasticity of substitution on ritual output
           - introduce some sort of satisfaction/dissatisfaction with
             ritual role or leadership structure
           - possibly allow clans to disagree on what the structure

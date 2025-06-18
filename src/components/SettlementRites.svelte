@@ -10,6 +10,21 @@
         () => settlement.clans.rites.leaderSelectionOptions);
 </script>
 
+<style>
+    table.selection-options {
+        border-collapse: collapse;
+        border: 1px solid #ccc;
+    }
+
+    table.selection-options th,
+    table.selection-options td {
+        padding: 0.25em;
+        text-align: center;
+        border: 1px solid #ccc;
+    }
+</style>
+
+
 {#if settlement.clans.rites.participants.length}
 <h4 style="margin-top: 1em;">{settlement.clans.rites.name}</h4>
 Leader selection: {settlement.clans.rites.leaderSelectionOption}
@@ -26,13 +41,13 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
 {/if}
 
 <h4>Selection Options</h4>
-<table>
+<table class="selection-options">
     <thead>
         <tr>
             <th>Option</th>
             <th>Quality</th>
             {#each settlement.clans as clan}
-            <th colspan="2">{clan.name}</th>
+            <th colspan="3">{clan.name}</th>
             {/each}
         </tr>
     </thead>
@@ -65,6 +80,14 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
                     {impact.qolDelta.toFixed(1)}
                     <div slot="tooltip">
                         {impact.originalQoL.toFixed(1)} &rarr; {impact.newQoL.toFixed(1)}
+                    </div>
+                </Tooltip>
+            </td>
+            <td>
+                <Tooltip>
+                    {impact.prestigeDelta.toFixed(1)}
+                    <div slot="tooltip">
+                        {impact.originalPrestige.toFixed(1)} &rarr; {impact.newPrestige.toFixed(1)}
                     </div>
                 </Tooltip>
             </td>
