@@ -89,7 +89,18 @@
 - Help villages with low subsistence
 
 - Help villages with bad rites
-  - allow them to actually change leadership selection
+  x allow them to actually change leadership selection
+
+  - for each clan, record their actual preference for
+    leadership selection, possibly including favorability
+    of each item
+  - add qol penalty for non-agreement
+  - add conservatism to leadership selection
+    - give the current choice more weight
+  - add conformity to leadership selection
+    - adjust weights to be more similar to other clans
+  - add some noise to leadership selection
+    - random noise to weights
 
   - show leadership selection on map
   - apply society effects for disagreements and/or not getting way on
