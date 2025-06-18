@@ -6,7 +6,7 @@ import { pct } from "../model/format";
 import type { Note } from "../model/notifications";
 import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, ProductivityCalc, RitualEffectivenessCalc, SkillChange } from "../model/people";
 import type { PrestigeCalc } from "../model/prestige";
-import type { QolCalc } from "../model/qol";
+import type { QoLCalc } from "../model/qol";
 import type { SimulationResult } from "../model/rites";
 import type { Settlement } from "../model/settlement";
 import type { TimePoint } from "../model/timeline";
@@ -64,7 +64,7 @@ export type ClanDTO = {
     size: number;
 
     qol: number;
-    qolCalc: QolCalc;
+    qolCalc: QoLCalc;
 
     intelligence: number;
     skill: number;

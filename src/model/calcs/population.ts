@@ -54,9 +54,9 @@ export class PopulationChange {
         }
 
         // QoL factors
-        const q = clamp(this.clan.qol, 0, 100);
-        this.qbrf = 1 + (q - 30) / 1000;
-        this.qdrf = 1 + (30 - q) / 1000;
+        const q = clamp(this.clan.qol, -100, 100);
+        this.qbrf = 1 + q / 100;
+        this.qdrf = 1 - q / 100;
 
         // Births.
         const pmbr = this.qbrf * BASE_BIRTH_RATE;

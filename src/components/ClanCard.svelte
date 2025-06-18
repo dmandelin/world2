@@ -1,5 +1,5 @@
 <script>
-    import { npl, pct, spct, wg } from "../model/format";
+    import { npl, pct, signed, spct, wg } from "../model/format";
     import DataTable from "./DataTable.svelte";
     import PopulationChange from "./PopulationChange.svelte";
     import PopulationPyramid from "./PopulationPyramid.svelte";
@@ -158,12 +158,12 @@
                 <td></td>
                 <td>
                     <Tooltip>
-                        {clan.qol.toFixed()}
+                        {signed(clan.qol)}
                         <div slot="tooltip" class="ttt">
                             <h4>Needs & Satisfaction</h4>
-                            <DataTable rows={clan.qolCalc.sats} />
+                            <DataTable rows={clan.qolCalc.satsTable} />
                             <h4>Sources</h4>
-                            <DataTable rows={clan.qolCalc.items} />
+                            <DataTable rows={clan.qolCalc.itemsTable} />
                         </div>
                     </Tooltip>
                 </td>

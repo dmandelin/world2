@@ -9,7 +9,7 @@ import { TradeGoods, type TradeGood } from "./trade";
 import { PrestigeCalc } from "./prestige";
 import { traitWeightedAverage, WeightedValue, zScore } from "./modelbasics";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./calcs/population";
-import { QolCalc } from "./qol";
+import { QoLCalc } from "./qol";
 import { pct } from "./format";
 import type { World } from "./world";
 
@@ -428,7 +428,7 @@ export class Clan {
     }
 
     get qolCalc() {
-        return new QolCalc(this);
+        return new QoLCalc(this);
     }
 
     get qol(): number {

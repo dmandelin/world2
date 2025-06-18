@@ -77,3 +77,11 @@ export function zScore(value: number, values: readonly number[]): number {
     if (stddev === 0) return 0;
     return (value - mean) / stddev;
 }
+
+export function ces(rho: number, ...inputValues: number[]): number {
+    if (rho === 0) {
+        return inputValues.reduce((acc, v) => acc + v / inputValues.length, 0);
+    }
+    const sum = inputValues.reduce((acc, v) => acc + Math.pow(v, rho) / inputValues.length, 0);
+    return Math.pow(sum, 1 / rho);
+}

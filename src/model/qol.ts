@@ -1,52 +1,74 @@
 import { harmonicMean } from "./basics";
+import { ces } from "./modelbasics";
 import type { Clan } from "./people";
 
-export class QolCalc {
-    readonly sats: [string, string][];
-    readonly items: [string, string][];
+export class QoLCalc {
+    readonly perCapitaGoods: [string, number][];
 
-    readonly numericSats: [string, number][];
-    readonly value: number;
-
-    constructor(readonly clan: Clan, ritualSat?: number) {
-        if (ritualSat === undefined) {
-            ritualSat = clan.settlement!.clans.rites.quality
-                ? 50 + Math.log2(clan.settlement!.clans.rites.quality) * 15
-                : 10;
-        }
-        this.numericSats = [
-            ['Subsistence', 50 + Math.log2(clan.perCapitaSubsistenceConsumption) * 15],
-            ['Ritual', ritualSat],
+    constructor(readonly clan: Clan, overrideRitualQuality?: number) {
+        this.perCapitaGoods = [
+            ['Subsistence', clan.perCapitaSubsistenceConsumption],
+            ['Ritual', overrideRitualQuality ?? clan.settlement!.clans.rites.quality],
         ];
+    }
 
-        this.sats = this.numericSats.map(([name, value]) => {
-            return [name, value.toFixed(1)];
-        });
-        const fromSats = harmonicMean(this.numericSats.map(([_, value]) => value));
+    get perCapitaOverall(): number {
+        return ces(-5, ...this.perCapitaGoods.map(([_, value]) => value));
+    }
 
-        const localAveragePrestige = clan.selfAndNeighbors.reduce((acc, clan) => 
-            acc + clan.averagePrestige, 0)
-         / clan.selfAndNeighbors.length;
-
-        const items: [string, number][] = [
-            ['Satisfaction', fromSats],
-            ['Status', (clan.averagePrestige - localAveragePrestige) / 2],
-            ['Intelligence', (clan.intelligence - 50) / 15],
-            ['Strength', (clan.intelligence - 50) / 15],
-            ['Crowding', clan.settlement!.populationPressureModifier],
+    get items(): [string, number][] {
+        return [
+            ['Goods', qolFromPerCapitaGoods(this.perCapitaOverall)],
+            ['Status', statusValue(this.clan)],
+            ['Crowding', crowdingValue(this.clan)],
         ];
+    }
 
-        this.items = items.map(([name, value]) => {
-            return [name, value.toFixed(1)];
-        });
-        this.value = items.reduce((acc, [_, value]) => acc + value, 0);
+    get value(): number {
+        return this.items.reduce((acc, [_, v]) => acc + v, 0);
     }
 
     getSat(name: 'Subsistence' | 'Ritual'): number {
-        return this.numericSats.find(([n, _]) => n === name)?.[1] ?? 0;
+        const value = this.perCapitaGoods.find(([n, _]) => n === name)?.[1] ?? 0;
+        return qolFromPerCapitaGoods(value);
     }
 
-    withRitualSat(ritualSat: number): QolCalc {
-        return new QolCalc(this.clan, ritualSat);
+    get satsTable(): string[][] {
+        const header = ['Need', 'Per Capita', 'Satisfaction'];
+        const rows = this.perCapitaGoods.map(([name, value]) => {
+            return [name, value.toFixed(2), qolFromPerCapitaGoods(value).toFixed(1)];
+        });
+        const totalRow = [
+            'Overall', 
+            this.perCapitaOverall.toFixed(2),
+            this.value.toFixed(1),
+        ];
+        return [header, ...rows, totalRow];
     }
+
+    get itemsTable(): string[][] {
+        const header = ['Item', 'Value'];
+        const rows = this.items.map(([name, value]) => [name, value.toFixed(1)]);
+        return [header, ...rows];
+    }
+}
+
+function statusValue(clan: Clan): number {
+    return clan.averagePrestige - clan.settlement!.clans.reduce((acc, c) => 
+        acc + c.averagePrestige, 0) / clan.settlement!.clans.length;
+}
+
+function crowdingValue(clan: Clan): number {
+    const r = clan.settlement!.size / 300;
+    const b = Math.pow(r, 1/6);
+    const d = Math.pow(r, 0.5);
+    return Math.min(0, (b - d) * 100);
+
+}
+
+function qolFromPerCapitaGoods(perCapitaGoods: number): number {
+    if (perCapitaGoods <= 0) {
+        return -100;
+    }
+    return Math.max(-100, Math.log2(perCapitaGoods) * 50);
 }

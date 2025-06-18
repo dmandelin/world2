@@ -2,6 +2,7 @@ import { clamp, weightedHarmonicMean } from "./basics";
 import { pct, xm } from "./format";
 import { Note, type NoteTaker } from "./notifications";
 import type { Clan } from "./people";
+import { QoLCalc } from "./qol";
 
 // Note on adding roles to this:
 // - Some roles can be discrete, e.g., MC vs auidence member.
@@ -277,7 +278,7 @@ export class SimulationResult {
 export class ClanImpact {
     readonly weightDelta: number;
 
-    readonly origQoL: number;
+    readonly originalQoL: number;
     readonly newQoL: number;
 
     constructor(readonly clan: Clan, originalRites: Rites, rites: Rites) {
@@ -285,11 +286,11 @@ export class ClanImpact {
         const newWeight = rites.weights.get(clan) ?? 0;
         this.weightDelta = newWeight - originalWeight;
 
-        this.origQoL = originalRites.quality;
-        this.newQoL = rites.quality;
+        this.originalQoL = new QoLCalc(clan, originalRites.quality).value;
+        this.newQoL = new QoLCalc(clan, rites.quality).value;
     }
 
     get qolDelta(): number {
-        return this.newQoL - this.origQoL;
+        return this.newQoL - this.originalQoL;
     }
 }

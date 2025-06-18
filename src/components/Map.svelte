@@ -130,7 +130,7 @@
                 warnings.push(`Hunger! (${settlement.populationPressureModifier})`);
             }
             const minQOL = Math.min(...settlement.clans.map(c => c.qol));
-            if (minQOL < 30) {
+            if (minQOL < 0) {
                 warnings.push(`Low QoL! (${minQOL.toFixed()})`);
             }
             if (settlement.clans.rites.quality < 0.7) {
