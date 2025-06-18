@@ -229,7 +229,9 @@ export interface SkillChange {
 export class NilSkillChange implements SkillChange {
     readonly delta = 0;
     readonly educationTarget = 0;
+    readonly educationTargetDelta = 0;
     readonly imitationTarget = 0;
+    readonly imitationTargetDelta = 0;
     readonly imitationTooltip: string[][] = [];
 
     constructor(readonly originalValue: number) {
