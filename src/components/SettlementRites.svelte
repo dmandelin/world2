@@ -2,6 +2,7 @@
     import { pct, spct } from "../model/format";
     import { CommonRitesStructure, GuidedRitesStructure, NoScrubsRitesStructure, Rites, RitualLeaderSelectionOptions } from "../model/rites";
     import DataTable from "./DataTable.svelte";
+    import Tooltip from "./Tooltip.svelte";
 
     let { settlement } = $props();
 
@@ -55,17 +56,23 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
 {/if}
 
 <h4>Selection Options</h4>
-{#each selectionOptions as so}
-    <div>
-        <h5>{so.name}: {pct(so.rites.quality)}</h5>
-        <DataTable rows={so.rites.items} />
-    </div>
-{/each}
-
-<h4>Structure Options</h4>
-{#each structureOptions as so}
-    <div>
-        <h5>{so.name}: {pct(so.rites.quality)}</h5>
-        <DataTable rows={so.rites.items} />
-    </div>
-{/each}
+<table>
+    <tbody>
+        {#each selectionOptions as so}
+        <tr>
+            <td>{so.name}</td>
+            <td>
+                <Tooltip>
+                    {pct(so.rites.quality)}
+                    <div slot="tooltip">
+                        <b>Effectiveness</b>
+                        <DataTable rows={so.rites.baseEffectivenessItems} />
+                        <b>Quality</b>
+                        <DataTable rows={so.rites.items} />
+                    </div>
+                </Tooltip>
+            </td>
+        </tr>
+        {/each}
+    </tbody>
+</table>
