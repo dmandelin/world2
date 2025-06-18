@@ -17,7 +17,8 @@ export class OwnPrestigeCalc {
         }
 
         this.items.push(this.seniorityItem);
-        const otherRitualWeight = clan.settlement!.clans.rites.weights.get(other) ?? 0.1;
+        const otherRitualWeight = (clan.settlement!.clans.rites.weights.get(other) ?? 0.1)
+            * clan.settlement!.clans.length;
         const otherItems: [string, number][] = [
             [`Size ${other.size}`, Math.log2(other.size / 50) * 5],
             [`Strength ${other.strength}`, (other.strength - 50) / 10],
