@@ -253,7 +253,7 @@ export class Rites {
             const rites = new Rites(this.reach[0].settlement!.world, this.reach);
             rites.leaderSelectionOption = option;
             rites.perform();
-            return new SimulationResult(option.name, rites);
+            return new SimulationResult(option.name, this, rites);
         });
     }
 }
@@ -261,6 +261,25 @@ export class Rites {
 export class SimulationResult {
     constructor(
         readonly name: string,
+        readonly originalRites: Rites,
         readonly rites: Rites,
     ) {}
+
+    get clanImpacts(): Map<Clan, ClanImpact> {
+        const impacts = new Map<Clan, ClanImpact>();
+        for (const clan of this.originalRites.reach) {
+            impacts.set(clan, new ClanImpact(clan, this.originalRites, this.rites));
+        }
+        return impacts;
+    }
+}
+
+export class ClanImpact {
+    readonly weightDelta: number;
+
+    constructor(readonly clan: Clan, originalRites: Rites, rites: Rites) {
+        const originalWeight = originalRites.weights.get(clan) ?? 0;
+        const newWeight = rites.weights.get(clan) ?? 0;
+        this.weightDelta = newWeight - originalWeight;
+    }
 }

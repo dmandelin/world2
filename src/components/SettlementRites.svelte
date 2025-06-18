@@ -27,6 +27,15 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
 
 <h4>Selection Options</h4>
 <table>
+    <thead>
+        <tr>
+            <th>Option</th>
+            <th>Quality</th>
+            {#each settlement.clans as clan}
+            <th>{clan.name}</th>
+            {/each}
+        </tr>
+    </thead>
     <tbody>
         {#each selectionOptions as so}
         <tr>
@@ -42,6 +51,16 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
                     </div>
                 </Tooltip>
             </td>
+            {#each so.clanImpacts.values() as impact}
+            <td>
+                <Tooltip>
+                    {pct(impact.weightDelta)}
+                    <div slot="tooltip">
+                        n/a
+                    </div>
+                </Tooltip>
+            </td>
+            {/each}
         </tr>
         {/each}
     </tbody>
