@@ -76,15 +76,19 @@
 ### Items
 
 - General items we'll need
-  - Recenter prestige to zero: we already did that with QoL, will help
+  x Recenter prestige to zero: we already did that with QoL, will help
     make comparisons more cogent.
   - Model how much clans are able to pay attention to each other
   - Desired rituals/roles/laws structure and sat/dissat with present state
   - Conflict over rituals/roles/laws
 
+- Smaller updates
+  - Use population-weighted averages for baselines where appropriate
+
 - Help villages with low subsistence
 
 - Help villages with bad rites
+  - allow them to actually change leadership selection
   - option to increase the authority of offices
   - option to travel more to pick up new practices
   - option to experiment more with new practices

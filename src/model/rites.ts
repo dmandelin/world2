@@ -300,8 +300,12 @@ export class ClanImpact {
         this.originalQoL = new QoLCalc(clan, originalRites.quality).value;
         this.newQoL = new QoLCalc(clan, rites.quality).value;
 
-        this.originalPrestige = OwnPrestigeCalc.prestigeFromRitual(clan, originalRites).value;
-        this.newPrestige = OwnPrestigeCalc.prestigeFromRitual(clan, rites).value;
+        const averageEffectiveSkill = originalRites.reach.reduce(
+            (acc, c) => acc + c.ritualEffectiveness, 0) / originalRites.reach.length;
+        const newAverageEffectiveSkill = rites.reach.reduce(
+            (acc, c) => acc + c.ritualEffectiveness, 0) / rites.reach.length;
+        this.originalPrestige =  OwnPrestigeCalc.prestigeFromRitual(averageEffectiveSkill, clan, originalRites).value;
+        this.newPrestige = OwnPrestigeCalc.prestigeFromRitual(newAverageEffectiveSkill, clan, rites).value;
     }
 
     get weightDelta(): number {
