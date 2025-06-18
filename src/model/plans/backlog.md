@@ -166,13 +166,11 @@ x Make stresses much clearer
           x show notifications for changes of prestige weighting
           - allow intentional changes to prestige weighting
             - estimate the effects on clans
-              - ritual effectiveness change will impact qol
+              x participation
+              x ritual effectiveness change will impact qol
               - participation -> prestige -> qol
               - participation -> ritual learning rate
-            - this seems complicated to calculate in general but
-              we'll need it to have any idea what's going on
-            - then we can show that in the UI and start getting a
-              handle on whether they want to change
+            - investigate predicted low QoL impact of changes
           - introduce some sort of satisfaction/dissatisfaction with
             ritual role or leadership structure
           - possibly allow clans to disagree on what the structure

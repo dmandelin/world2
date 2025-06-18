@@ -277,9 +277,19 @@ export class SimulationResult {
 export class ClanImpact {
     readonly weightDelta: number;
 
+    readonly origQoL: number;
+    readonly newQoL: number;
+
     constructor(readonly clan: Clan, originalRites: Rites, rites: Rites) {
         const originalWeight = originalRites.weights.get(clan) ?? 0;
         const newWeight = rites.weights.get(clan) ?? 0;
         this.weightDelta = newWeight - originalWeight;
+
+        this.origQoL = originalRites.quality;
+        this.newQoL = rites.quality;
+    }
+
+    get qolDelta(): number {
+        return this.newQoL - this.origQoL;
     }
 }

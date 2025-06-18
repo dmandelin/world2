@@ -8,10 +8,12 @@ export class QolCalc {
     readonly numericSats: [string, number][];
     readonly value: number;
 
-    constructor(readonly clan: Clan) {
-        const ritualSat = clan.settlement!.clans.rites.quality
-            ? 50 + Math.log2(clan.settlement!.clans.rites.quality) * 15
-            : 10;
+    constructor(readonly clan: Clan, ritualSat?: number) {
+        if (ritualSat === undefined) {
+            ritualSat = clan.settlement!.clans.rites.quality
+                ? 50 + Math.log2(clan.settlement!.clans.rites.quality) * 15
+                : 10;
+        }
         this.numericSats = [
             ['Subsistence', 50 + Math.log2(clan.perCapitaSubsistenceConsumption) * 15],
             ['Ritual', ritualSat],
@@ -42,5 +44,9 @@ export class QolCalc {
 
     getSat(name: 'Subsistence' | 'Ritual'): number {
         return this.numericSats.find(([n, _]) => n === name)?.[1] ?? 0;
+    }
+
+    withRitualSat(ritualSat: number): QolCalc {
+        return new QolCalc(this.clan, ritualSat);
     }
 }
