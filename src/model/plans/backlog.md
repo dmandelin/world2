@@ -84,11 +84,18 @@
 
 - Smaller updates
   - Use population-weighted averages for baselines where appropriate
+  - Clean up field names and redundancy in ClanImpact
 
 - Help villages with low subsistence
 
 - Help villages with bad rites
   - allow them to actually change leadership selection
+
+  - show leadership selection on map
+  - apply society effects for disagreements and/or not getting way on
+    leadership selection methods
+  - allow a one-time gift to override a small disagreement
+
   - option to increase the authority of offices
   - option to travel more to pick up new practices
   - option to experiment more with new practices

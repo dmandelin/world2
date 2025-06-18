@@ -47,7 +47,7 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
             <th>Option</th>
             <th>Quality</th>
             {#each selectionOptions[0].clanImpacts.keys() as clan}
-            <th colspan="3">{clan.name}</th>
+            <th colspan="4">{clan.name}</th>
             {/each}
         </tr>
     </thead>
@@ -94,6 +94,7 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
                     </div>
                 </Tooltip>
             </td>
+            <td>{impact.delta.toFixed(1)}</td>
             {/each}
         </tr>
         {/each}

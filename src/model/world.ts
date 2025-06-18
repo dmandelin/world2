@@ -113,7 +113,7 @@ export class World implements NoteTaker {
             }
             s.clans.produce();
             s.clans.distribute();
-            s.clans.performRites();
+            s.clans.performRites(false);
         }
 
         this.updatePerceptions();

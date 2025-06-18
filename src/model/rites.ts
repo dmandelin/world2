@@ -1,4 +1,4 @@
-import { clamp } from "./basics";
+import { clamp, maxby, maxbyWithValue } from "./basics";
 import { pct, xm } from "./format";
 import type { NoteTaker } from "./notifications";
 import type { Clan } from "./people";
@@ -186,28 +186,32 @@ export class Rites {
     }
 
     plan() {
-        // Allow some random drift in ritual leader selection.
-        const originalLeaderSelectionOption = this.leaderSelectionOption;
-        const i = RitualLeaderSelectionOptionsList.findIndex(
-            option => option === this.leaderSelectionOption);
-        if (i >= 0) {
-            let j = i;
-            const r = Math.random();
-            if (r < 0.1) {
-                --j;
-                if (j < 0) j = 1;
-            } else if (r >= 0.9) {
-                ++j;
-                if (j >= RitualLeaderSelectionOptionsList.length) j = RitualLeaderSelectionOptionsList.length - 2;
-            }
-            if (j !== i) {
-                this.leaderSelectionOption = RitualLeaderSelectionOptionsList[j];
+        let votes = new Map<RitualLeaderSelection, Clan[]>();
+        const sim = this.simulateLeaderSelectionOptions();
+        for (const clan of this.reach) {
+            const [sr, delta] = maxbyWithValue(sim, r => r.clanImpacts.get(clan)!.delta);
+            votes.set(sr.option, [...(votes.get(sr.option) ?? []), clan]);
+        }
+
+        // If there's a unanimous choice different from the current, switch.
+        if (votes.size === 1) {
+            const [option] = votes.keys();
+            if (option !== this.leaderSelectionOption) {
                 this.noteTaker.addNote(
                     'R',
-                    `Rites: ${this.reach[0].settlement!.name} changed leader selection option from ${originalLeaderSelectionOption.name} to ${this.leaderSelectionOption.name}`,
-                );
+                    `Ritual leader selection changed from ${this.leaderSelectionOption.name} to ${option.name} by unanimous approval!`);
+                this.leaderSelectionOption = option;
             }
+            return;
         }
+
+        // No clear choice: note it for the record.
+        const votesString = [...votes.entries()]
+            .map(([option, clans]) => `${option.name} (${clans.length}): ${clans.map(c => c.name).join(', ')}`)
+            .join('; ');
+        this.noteTaker.addNote(
+            '!',
+            `Disagreement over ritual leader selection options: ${votesString}`);
     }
 
     perform() {
@@ -258,21 +262,40 @@ export class Rites {
     }
 
     simulateLeaderSelectionOptions(): SimulationResult[] {
-        return RitualLeaderSelectionOptionsList.map(option => {
+        if (this.reach.length === 0) {
+            return [];
+        }
+
+        // Get available options: the current choice and nearby ones.
+        const availableOptions = [];
+        const curOptionIndex = RitualLeaderSelectionOptionsList.indexOf(this.leaderSelectionOption);
+        if (curOptionIndex > 0) {
+            availableOptions.push(RitualLeaderSelectionOptionsList[curOptionIndex - 1]);
+        }
+        availableOptions.push(this.leaderSelectionOption);
+        if (curOptionIndex < RitualLeaderSelectionOptionsList.length - 1) {
+            availableOptions.push(RitualLeaderSelectionOptionsList[curOptionIndex + 1]);
+        }
+
+        return availableOptions.map(option => {
             const rites = new Rites(this.reach[0].settlement!.world, this.reach);
             rites.leaderSelectionOption = option;
             rites.perform();
-            return new SimulationResult(option.name, this, rites);
+            return new SimulationResult(option, this, rites);
         });
     }
 }
 
 export class SimulationResult {
     constructor(
-        readonly name: string,
+        readonly option: RitualLeaderSelection,
         readonly originalRites: Rites,
         readonly rites: Rites,
     ) {}
+
+    get name(): string {
+        return this.option.name;
+    }
 
     get clanImpacts(): Map<Clan, ClanImpact> {
         const impacts = new Map<Clan, ClanImpact>();
@@ -318,5 +341,9 @@ export class ClanImpact {
 
     get prestigeDelta(): number {
         return this.newPrestige - this.originalPrestige;
+    }
+
+    get delta(): number {
+        return this.qolDelta + this.prestigeDelta;
     }
 }

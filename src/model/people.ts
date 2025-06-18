@@ -162,7 +162,9 @@ export class ProductivityCalc {
         this.baseSkill = clan.skill;
 
         const baseIntelligenceModifier = (clan.intelligence - 50) / 2;
-        const intelligenceModifierFactor = (100 - clan.skill) / 100;
+        const intelligenceModifierFactor = baseIntelligenceModifier >= 0 
+            ? (100 - clan.skill) / 100
+            : (clan.skill) / 100;
         this.intelligenceSkillModifier = baseIntelligenceModifier * intelligenceModifierFactor;
         this.effectiveSkill = this.baseSkill + this.intelligenceSkillModifier;
         this.skillFactor = Math.pow(1.01, this.effectiveSkill - 50);

@@ -177,9 +177,8 @@ export class Clans extends Array<Clan> {
         this.forEach(clan => clan.pot.distribute());
     }
 
-    performRites() {
-        this.rites = new Rites(this.noteTaker, this);
-        this.rites.plan();
+    performRites(plan: boolean = true) {
+        if (plan) this.rites.plan();
         this.rites.perform();
 
     }
