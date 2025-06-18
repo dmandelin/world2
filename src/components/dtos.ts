@@ -7,6 +7,7 @@ import type { Note } from "../model/notifications";
 import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, ProductivityCalc, RitualEffectivenessCalc, SkillChange } from "../model/people";
 import type { PrestigeCalc } from "../model/prestige";
 import type { QolCalc } from "../model/qol";
+import type { SimulationResult } from "../model/rites";
 import type { Settlement } from "../model/settlement";
 import type { TimePoint } from "../model/timeline";
 import type { TradeGood } from "../model/trade";
@@ -142,6 +143,7 @@ export class ClansDTO extends Array<ClanDTO> {
     rites: {
         name: string;
         leaderSelectionOption: string;
+        leaderSelectionOptions: SimulationResult[];
         participants: string[];
         quality: number;
         items: string[][];
@@ -164,6 +166,7 @@ export class ClansDTO extends Array<ClanDTO> {
         this.rites = {
             name: clans.rites.structure.name,
             leaderSelectionOption: clans.rites.leaderSelectionOption.name,
+            leaderSelectionOptions: clans.rites.simulateLeaderSelectionOptions(),
             participants: clans.rites.reach.map(c => c.name),
             quality: clans.rites.quality,
             items: clans.rites.items,

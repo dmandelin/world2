@@ -247,4 +247,20 @@ export class Rites {
             ['Coordination', xm(coordination)],
         ];
     }
+
+    simulateLeaderSelectionOptions(): SimulationResult[] {
+        return RitualLeaderSelectionOptionsList.map(option => {
+            const rites = new Rites(this.reach[0].settlement!.world, this.reach);
+            rites.leaderSelectionOption = option;
+            rites.perform();
+            return new SimulationResult(option.name, rites);
+        });
+    }
+}
+
+export class SimulationResult {
+    constructor(
+        readonly name: string,
+        readonly rites: Rites,
+    ) {}
 }

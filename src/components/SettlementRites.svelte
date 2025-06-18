@@ -6,38 +6,8 @@
 
     let { settlement } = $props();
 
-    let selections = [
-        RitualLeaderSelectionOptions.Equal, 
-        RitualLeaderSelectionOptions.PrestigeWeightedSoft, 
-        RitualLeaderSelectionOptions.PrestigeWeightedMedium, 
-        RitualLeaderSelectionOptions.PrestigeWeightedHard, 
-    ];
-    let selectionOptions = $derived.by(() => {
-        return selections.map((s) => {
-            const rites = new Rites(settlement.world, settlement.clans);
-            rites.leaderSelectionOption = s;
-            rites.perform();
-
-            return {
-                name: s.name,
-                rites: rites,
-            };
-        });
-    });
-
-    let structures = [new CommonRitesStructure(), new GuidedRitesStructure(), new NoScrubsRitesStructure()];
-    let structureOptions = $derived.by(() => {
-        return structures.map((s) => {
-            const rites = new Rites(settlement.world, settlement.clans);
-            rites.structure = s;
-            rites.perform();
-
-            return {
-                name: s.name,
-                rites: rites,
-            };
-        });
-    });
+    let selectionOptions = $derived.by(
+        () => settlement.clans.rites.leaderSelectionOptions);
 </script>
 
 {#if settlement.clans.rites.participants.length}
