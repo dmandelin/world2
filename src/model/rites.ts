@@ -1,6 +1,6 @@
-import { clamp, weightedHarmonicMean } from "./basics";
+import { clamp } from "./basics";
 import { pct, xm } from "./format";
-import { Note, type NoteTaker } from "./notifications";
+import type { NoteTaker } from "./notifications";
 import type { Clan } from "./people";
 import { OwnPrestigeCalc } from "./prestige";
 import { QoLCalc } from "./qol";
@@ -215,29 +215,36 @@ export class Rites {
         // Low skill tends to drag things down quite a bit, as mistakes can
         // ruin entire rituals.
 
-        let reciprocalSum = 0;
-        let weightSum = 0;
-        const baseEffectivenessItemsNumeric: [string, number, number][] = [];
+        // Calculate normalized weights.
         this.weights.clear();
+        let weightSum = 0;
+        for (const clan of this.reach) {
+            const weight = this.leaderSelectionOption.weight(clan);
+            this.weights.set(clan, weight);
+            weightSum += weight;
+        }
+        for (const [clan, weight] of this.weights) {
+            this.weights.set(clan, weight / weightSum);
+        }
+
+        // CES production function with breakout.
+        const rho = -5;
+        let sum = 0;
+        const baseEffectivenessItemsNumeric: [string, number, number][] = [];
         for (const clan of this.reach) {
             const effectiveness = clan.ritualEffectiveness;
-            const weight = this.leaderSelectionOption.weight(clan);
-            reciprocalSum += weight / clan.ritualEffectiveness;
-            weightSum += weight;
+            const weight = this.weights.get(clan)!;
+            sum += weight * Math.pow(clan.ritualEffectiveness, rho)
             baseEffectivenessItemsNumeric.push(
                 [clan.name, effectiveness, weight]);
-            this.weights.set(clan, weight);
         }
-        const baseEffectiveness = weightSum / reciprocalSum;
+        const baseEffectiveness = Math.pow(sum, 1 / rho);
         this.baseEffectivenessItems = baseEffectivenessItemsNumeric.map(
             ([name, effectiveness, weight]) => [
                 name,
                 pct(effectiveness),
-                (weight / weightSum).toFixed(2),
+                weight.toFixed(2),
             ]);
-        for (const [clan, weight] of this.weights) {
-            this.weights.set(clan, weight / weightSum);
-        }
 
         const scale = this.structure.scale(this);
         const coordination = this.structure.coordination(this);

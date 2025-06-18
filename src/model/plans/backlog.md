@@ -172,9 +172,9 @@ x Make stresses much clearer
             x investigate predicted low QoL impact of changes
           x rework QoL
           - rework prestige and ritual more
-            - investigate marginal utility approach
+            x investigate marginal utility approach
             - implement new formula
-            - decrease elasticity of substitution on ritual output
+            x decrease elasticity of substitution on ritual output
           - introduce some sort of satisfaction/dissatisfaction with
             ritual role or leadership structure
           - possibly allow clans to disagree on what the structure
