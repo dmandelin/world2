@@ -75,139 +75,27 @@
 
 ### Items
 
-x Make stresses much clearer
-  x food stress: verify display on the map
-  x interaction stress: show ritual problems on the map
-    x make rites break down sooner
+- General items we'll need
+  - Recenter prestige to zero: we already did that with QoL, will help
+    make comparisons more cogent.
+  - Model how much clans are able to pay attention to each other
+  - Desired rituals/roles/laws structure and sat/dissat with present state
+  - Conflict over rituals/roles/laws
+
+- Help villages with low subsistence
 
 - Help villages with bad rites
-  x show option values for having one clan lead the rites
-  x "no scrubs" ritual option: keep out clans with low ritual skill
-  - structure updates epic
-    x make soft officials the default structure
-    x display base effectiveness calculation
-    - option to have more skill concentration for offices
-      - workup
-        - we could select offices by seniority, prestige, skill,
-          or a combination. how to choose?
-          - it seems that people choose by skill when stakes are
-            high, there is agreement on what skill is, and it can
-            be measured
-          - by prestige when stakes are high and prestige is
-            detectable
-          - by seniority when stakes are low and integration in
-            local society is particularly important
-        - for our people prestige seems most important but let's
-          check:
-          - this is roughly equivalent to going by mana, which
-            seems reasonable for this point
-          - stakes may be high as people seem to have been quite
-            concerned to get things right in later times
-          - at the beginning, prestige is not super-detectable,
-            but it would make sense to make ritual skill a 
-            bigger ingredient in prestige when the village is
-            small enough for people to track
-        - so now we need to model in more detail what clans know
-          about each other
-          - we think that "everyone knows everyone" can scale to
-            about 150 adults, 300 people total
-          - but this hardly means people have perfect information
-            about each other
-            - we could think of this as a military company of 3
-              platoons or a startup of 150 with 3 branches, and
-              tons of gossip
-            - people will have a decent sense of other groups'
-              general capabilities, but there can be bias and
-              noise
-            - direct experiences, however, can be assessed *very*
-              well, though again with bias and noise
-            - model: there's enough "social attention" to track
-              300 people. 
-        - tasks:
-          - compute and display social attention
-          - have people move out if they can't track everyone
-          - adjust prestige by attention
-          - tune offices model
-          - give options for how heavily to weight prestige
-      - analyzing the effects of more skill concentration:
-        - by default, increasing skill concentration will always
-          increase overall effectiveness, but we probably don't
-          want to immediately go to maximum concentration: what's
-          going on here?
-        - analogy with pioneers: I would guess in those settings
-          things could be quite meritocratic, but note that they're
-          random people and don't have clan structures
-        - for our prehistoric people, it seems there could be two
-          issues:
-          - not having enough practices, structure, etc for there
-            to be that much difference in influence
-            - could be an issue, although people can vary within
-              some range without inventing new stuff
-          - clans not wanting to cede influence, because of concerns
-            they will lose status
-            - this could be an issue. let's handle like this:
-              - have a few options for how things are distributed
-                - by clan
-                - by clan size
-                - by prestige, with different levels /5, /10, /20
-              - assume that distribution is a matter of culture
-              - let distribution sometimes randomly shift
-              - allow clans to propose distribution changes with some
-                chance of success
-        - tasks
-          - apply effects of ritual influence
-            x prestige
-            x learning of ritual skill
-          x allow different levels of prestige weighting
-          x display prestige weighting
-          x show other prestige weighting options and their
-            effects
-          x allow random shifting of prestige weighting
-          x show notifications for changes of prestige weighting
-          - allow intentional changes to prestige weighting
-            x estimate the effects on clans
-              x participation
-              x ritual effectiveness change will impact qol
-              x participation -> prestige -> qol
-            x investigate predicted low QoL impact of changes
-            x fix display bug in estimates
-          x rework QoL
-          x rework prestige and ritual more
-            x investigate marginal utility approach
-            x implement new formula
-            x decrease elasticity of substitution on ritual output
-          - introduce some sort of satisfaction/dissatisfaction with
-            ritual role or leadership structure
-          - possibly allow clans to disagree on what the structure
-            should be
-        - notifications tasks breakout
-          x notifications object in the world DTO model
-            could materialize in the world model or not as needed
-          x notification for ritual changes
-          x show year in notifications
-          - notification for economic policy changes
-          x notification for migrations
-          x show row of notification icons on bottom
-          x tooltip for notifications
-          - graphic for notifications
-          - add other events we've been wanting to see
-          x add lines to show time breaks
-          - option to dismiss notifications
-          - auto-dismiss old enough notifications
-          - text notification log view
-          - clean up world/annals constructor stuff
-    - option to increase authority of offices
-      - think about how, probably have to provide stuff
-    - option to travel more to pick up new practices
-    - option to experiment more with new practices
-    - option to modify rituals for scale so that some people
-      become observers (and other role splits)
-    - structural elements to add to elaborate the ritual
-      - will affect quality, prestige, etc
-      - may have skill thresholds
-      - may have trade good requirements
-      - effects wear off over time
-    - option to build new types of ritual building
+  - option to increase the authority of offices
+  - option to travel more to pick up new practices
+  - option to experiment more with new practices
+  - option to modify rituals for scale so that some people
+    become observers (and other role splits)
+  - structural elements to add to elaborate the ritual
+    - will affect quality, prestige, etc
+    - may have skill thresholds
+    - may have trade good requirements
+    - effects wear off over time
+  - option to build new types of ritual building
 
   - different structure options:
     x add ritual lens to map for visualizations
