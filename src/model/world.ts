@@ -8,6 +8,7 @@ import { TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
+import { crowdingValue } from "./qol";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -156,12 +157,11 @@ export class World implements NoteTaker {
                 : 1;
 
             const moveValue = (settlement: Settlement|'new') => {
-                // Base newValue is assuming no tech kit at the new settlement.
                 const newValue = settlement == 'new'
-                    ? -5 : settlement.localQOLModifierWith(clan.size);
+                    ? 0 : crowdingValue(clan, settlement);
                 const inertiaValue = settlement == 'new'
                     ? inertia * 2 + 1 : inertia;
-                const oldValue = clan.settlement!.localQOLModifier;
+                const oldValue = crowdingValue(clan);
                 return newValue - (oldValue + inertiaValue);
             }
 

@@ -49,14 +49,6 @@ export class Settlement {
         }
     }
 
-    get localQOLModifier() {
-        return this.technai.outputBoost;
-    }
-
-    localQOLModifierWith(additionalPeople: number) {
-        return this.technai.outputBoost;
-    }
-
     private lastSizeChange_ = 0;
 
     get lastSizeChange() {

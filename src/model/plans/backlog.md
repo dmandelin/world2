@@ -78,9 +78,18 @@
 - General items we'll need
   x Recenter prestige to zero: we already did that with QoL, will help
     make comparisons more cogent.
+  - Fix up migration code after deleting obsolete things it depends on
+    x Migrate based on crowding
+    - Show reason for migration in notification
+    - Also consider relative status
+    - Also consider ritual quality
   - Model how much clans are able to pay attention to each other
   - Desired rituals/roles/laws structure and sat/dissat with present state
   - Conflict over rituals/roles/laws
+
+- Problems inflicting our people in recent tests:
+  - rites quality becomes very low with 8 clans due to coordination costs
+  - prestige of new junior clans craters as they can be many steps down
 
 - Smaller updates
   - Use population-weighted averages for baselines where appropriate

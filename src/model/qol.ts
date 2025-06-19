@@ -1,6 +1,7 @@
 import { harmonicMean } from "./basics";
 import { ces } from "./modelbasics";
 import type { Clan } from "./people";
+import type { Settlement } from "./settlement";
 
 export class QoLCalc {
     readonly perCapitaGoods: [string, number][];
@@ -58,12 +59,18 @@ function statusValue(clan: Clan): number {
         acc + c.averagePrestige, 0) / clan.settlement!.clans.length;
 }
 
-function crowdingValue(clan: Clan): number {
-    const r = clan.settlement!.size / 300;
+export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): number {
+    let population;
+    if (overrideSettlement) {
+        population = overrideSettlement.size + clan.size;
+    } else {
+        population = clan.settlement!.size;
+    }
+
+    const r = population / 300;
     const b = Math.pow(r, 1/6);
     const d = Math.pow(r, 0.5);
     return Math.min(0, (b - d) * 100);
-
 }
 
 function qolFromPerCapitaGoods(perCapitaGoods: number): number {

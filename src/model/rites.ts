@@ -176,16 +176,20 @@ export const RitualLeaderSelectionOptionsList: RitualLeaderSelection[] = [
 
 export class Rites {
     structure: RitesStructure = new GuidedRitesStructure();
-    leaderSelectionOption: RitualLeaderSelection = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
     quality: number = 0;
     baseEffectivenessItems: [string, string, string][] = [];
     items: [string, string][] = [];
     weights: Map<Clan, number> = new Map();
 
+    leaderSelectionOption: RitualLeaderSelection = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
+    discord = false;
+
     constructor(readonly noteTaker: NoteTaker, readonly reach: Clan[]) {
     }
 
     plan() {
+        this.discord = true;
+
         let votes = new Map<RitualLeaderSelection, Clan[]>();
         const sim = this.simulateLeaderSelectionOptions();
         for (const clan of this.reach) {
@@ -202,6 +206,7 @@ export class Rites {
                     `Ritual leader selection changed from ${this.leaderSelectionOption.name} to ${option.name} by unanimous approval!`);
                 this.leaderSelectionOption = option;
             }
+            this.discord = false;
             return;
         }
 
@@ -252,12 +257,14 @@ export class Rites {
 
         const scale = this.structure.scale(this);
         const coordination = this.structure.coordination(this);
+        const discord = this.discord ? 0.8 : 1;
 
         this.quality = baseEffectiveness * scale * coordination;
         this.items = [
             ['Base effectiveness', pct(baseEffectiveness)],
             ['Scale', xm(scale)],
             ['Coordination', xm(coordination)],
+            [this.discord ? 'Discord' : 'Concord', xm(discord)],
         ];
     }
 
