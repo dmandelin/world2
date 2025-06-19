@@ -126,7 +126,6 @@
                 <td class="ra">{clan.festivalModifier}</td>
                 <td class="ra">{clan.techModifier}</td>
                 <td class="ra">{clan.tenureModifier} ({clan.tenure})</td>
-                <td class="ra">{clan.settlement.populationPressureModifier}</td>
                 <td class="ra">{wg(clan.qol)}</td>
                 <td class="ra">{wg(clan.prestige)}</td>
             </tr>
