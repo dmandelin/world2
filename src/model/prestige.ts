@@ -71,7 +71,7 @@ export class OwnPrestigeCalc {
         const averageHorticulture = other.settlement!.clans.reduce((acc, c) => acc + c.skill, 0) / other.settlement!.clans.length;
         const averageEffectiveRitualSkill = other.settlement!.clans.reduce((acc, c) => acc + c.ritualEffectivenessCalc.effectiveSkill, 0) / other.settlement!.clans.length;
         this.items.push(
-            new DiffBasedPrestigeCalcItem('Seniority', 5, clan.seniority, other.seniority),
+            new DiffBasedPrestigeCalcItem('Seniority', -5, clan.seniority, other.seniority),
             new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.size),
             new DiffBasedPrestigeCalcItem('Strength', 0.1, averageStrength, other.strength),
             new DiffBasedPrestigeCalcItem('Intelligence', 0.1, averageIntelligence, other.intelligence),
