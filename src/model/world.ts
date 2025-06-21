@@ -115,10 +115,9 @@ export class World implements NoteTaker {
             s.clans.produce();
             s.clans.distribute();
 
-            s.clans.rites.advance(false);
-            for (const clan of s.clans) {
-                s.clans.rites.advance(false);
-            }
+            for (const rites of s.rites) rites.prePlan();
+            s.attendRites();
+            for (const rites of s.rites) rites.perform();
         }
 
         this.updatePerceptions();

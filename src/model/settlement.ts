@@ -62,15 +62,24 @@ export class Settlement {
 
     advance() {
         const sizeBefore = this.size;
+ 
         this.technai.advance(this.size);
         this.clans.advance();
-
-        this.clans.rites.advance();
-        for (const clan of this.clans) {
-            // Planning isn't important yet and introduces a lot of notification noise.
-            clan.rites.advance(false);
-        }
-
+        this.advanceRites();
+ 
         this.lastSizeChange_ = this.size - sizeBefore;
+    }
+
+    advanceRites() {
+        // Planning for clan rites isn't important yet and introduces a lot of notification noise.
+        this.clans.rites.plan();
+        this.attendRites();
+        for (const rites of this.rites) {
+            rites.perform();
+        }
+    }
+
+    attendRites() {
+        console.log(`Attending rites in ${this.name}`);
     }
 }

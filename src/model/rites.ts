@@ -93,25 +93,32 @@ export class Rites {
     held = false;
     discord = false;
 
-    readonly producers: Clan[];
-    readonly consumers: Clan[];
-
     constructor(
         readonly name: string, 
         readonly participants: Clan[],
         readonly leaders: Clan[],
         readonly viewers: Clan[],
         readonly noteTaker: NoteTaker) {
-            
-        this.producers = [...participants, ...leaders];
-        this.consumers = [...participants, ...viewers];
     }
+
+    get producers() { return [...this.participants, ...this.leaders]; }
+    get consumers() { return [...this.participants, ...this.viewers]; }
 
     advance(plan: boolean = true) {
         if (plan) {
             this.plan();
         }
         this.perform();
+    }
+
+    prePlan() {
+        // Initial planning. The main thing for now is that clans don't
+        // have their settlement in the constructor, so we set up viewers
+        // here.
+        if (this.leaders.length) {
+            this.viewers.push(...this.leaders[0].settlement!.clans.filter(
+                c => !this.leaders.includes(c)));
+        }
     }
 
     plan() {
