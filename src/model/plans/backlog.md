@@ -55,23 +55,6 @@
     - Village rituals: +health, +relatedness, +monitoring, +learning
   - For learning might need to update the skill model
 
-- Time to improve the learning model some more
-  - Basic effects to have
-    - Turnover of generations causes loss of skill
-    - But the new people imitate the clan and others
-      - The maximum amount they can gain this way is limited
-        by information systems
-      - Imitation is imperfect, so there tends to be
-        loss of skill if this is all that happens
-    - People also make incremental improvements based
-      on experience (though they can also get worse)
-    - Those two effects will tend to balance at a certain
-      skill level
-    - Breakthroughs will instead be new named things
-      that improve output but may cost skill and other
-      things to use
-      - We'll need a bunch of these for ritual to
-        power faster improvements
 
 ### Items
 
@@ -83,13 +66,28 @@
     - Show reason for migration in notification
     - Also consider relative status
     - Also consider ritual quality
+    - Use Boltzmann model
   - Model how much clans are able to pay attention to each other
   - Desired rituals/roles/laws structure and sat/dissat with present state
   - Conflict over rituals/roles/laws
 
+- Introduce new ritual model
+  - different rituals at same granularity as production pot
+    - later allow option for subsets of clans or multiple clans
+  - calculate appeal for each one
+  - distribute attention per appeal
+  - rename relatedness to solidarity
+  - solidarity effects of ritual
+  - prestige effects of ritual
+  - learning effects of ritual
+  - feasting add-on to ritual
+  - dance style add-on to ritual
+
 - Problems inflicting our people in recent tests:
   - rites quality becomes very low with 8 clans due to coordination costs
   - prestige of new junior clans craters as they can be many steps down
+  - clans with more ritual skill may have a hard time gaining prestige if
+    small or low in traits
 
 - Smaller updates
   - Use population-weighted averages for baselines where appropriate
