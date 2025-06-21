@@ -140,16 +140,6 @@ export class ClansDTO extends Array<ClanDTO> {
         tfp: number;
     };
 
-    rites: {
-        name: string;
-        leaderSelectionOption: string;
-        leaderSelectionOptions: SimulationResult[];
-        participants: string[];
-        quality: number;
-        items: string[][];
-        baseEffectivenessItems: [string, string, string][];
-    }
-
     constructor(clans: Clans) {
         super(...sortedByKey([...clans].map(clanDTO), clan => -clan.averagePrestige));
         this.population = clans.population;
@@ -162,16 +152,7 @@ export class ClansDTO extends Array<ClanDTO> {
             baseProductivity: clans.pot.baseProductivity,
             scaleFactor: clans.pot.scaleFactor,
             tfp: clans.pot.tfp,
-        }
-        this.rites = {
-            name: clans.rites.structure.name,
-            leaderSelectionOption: clans.rites.leaderSelectionOption.name,
-            leaderSelectionOptions: clans.rites.simulateLeaderSelectionOptions(),
-            participants: clans.rites.participants.map(c => c.name),
-            quality: clans.rites.quality,
-            items: clans.rites.items,
-            baseEffectivenessItems: clans.rites.baseEffectivenessItems,
-        }
+        };
     }
 }
 
@@ -183,6 +164,18 @@ export class SettlementDTO {
     readonly clans: ClansDTO;
     readonly localTradeGoods: TradeGood[];
 
+    readonly rites: {
+        name: string;
+        held: boolean;
+        leaderSelectionOption: string;
+        leaderSelectionOptions: SimulationResult[];
+        participants: string[];
+        producers: string[];
+        quality: number;
+        items: string[][];
+        baseEffectivenessItems: [string, string, string][];
+    }[];
+
     constructor(settlement: Settlement) {
         this.name = settlement.name;
         this.size = settlement.size;
@@ -190,6 +183,18 @@ export class SettlementDTO {
 
         this.clans = new ClansDTO(settlement.clans);
         this.localTradeGoods = [...settlement.localTradeGoods];
+
+        this.rites = settlement.rites.map(rites => ({
+            name: rites.name,
+            held: rites.held,
+            leaderSelectionOption: rites.leaderSelectionOption.name,
+            leaderSelectionOptions: rites.simulateLeaderSelectionOptions(),
+            participants: rites.participants.map(c => c.name),
+            producers: rites.producers.map(c => c.name),
+            quality: rites.quality,
+            items: rites.items,
+            baseEffectivenessItems: rites.baseEffectivenessItems,
+        }));
     }
 }
 

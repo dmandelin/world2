@@ -12,6 +12,7 @@ import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./calcs/population"
 import { QoLCalc } from "./qol";
 import { pct } from "./format";
 import type { World } from "./world";
+import { Rites } from "./rites";
 
 const clanGoodsSource = 'clan';
 
@@ -397,6 +398,7 @@ export class Clan {
 
     consumption = new ConsumptionCalc(0);
     pot = new Pot(clanGoodsSource, [this]);
+    readonly rites: Rites;
 
     constructor(
         readonly world: World,
@@ -411,6 +413,8 @@ export class Clan {
             this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * size);
             this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * size);
         }
+
+        this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
     }
 
     get neighbors(): Clan[] {

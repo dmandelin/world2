@@ -1,5 +1,6 @@
 import { clamp } from "./basics";
 import type { Clans } from "./clans";
+import type { Rites } from "./rites";
 import { Technai } from "./tech";
 import type { TradeGood } from "./trade";
 import type { World } from "./world";
@@ -49,6 +50,10 @@ export class Settlement {
         }
     }
 
+    get rites(): Rites[] {
+        return [this.clans.rites, ...this.clans.map(clan => clan.rites)];
+    }
+
     private lastSizeChange_ = 0;
 
     get lastSizeChange() {
@@ -59,6 +64,12 @@ export class Settlement {
         const sizeBefore = this.size;
         this.technai.advance(this.size);
         this.clans.advance();
+
+        this.clans.rites.advance();
+        for (const clan of this.clans) {
+            // Planning isn't important yet and introduces a lot of notification noise.
+            clan.rites.advance(false);
+        }
 
         this.lastSizeChange_ = this.size - sizeBefore;
     }

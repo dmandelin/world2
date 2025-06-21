@@ -90,6 +90,7 @@ export class Rites {
     weights: Map<Clan, number> = new Map();
 
     leaderSelectionOption: RitualLeaderSelection = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
+    held = false;
     discord = false;
 
     readonly producers: Clan[];
@@ -106,13 +107,25 @@ export class Rites {
         this.consumers = [...participants, ...viewers];
     }
 
+    advance(plan: boolean = true) {
+        if (plan) {
+            this.plan();
+        }
+        this.perform();
+    }
+
     plan() {
+        if (this.producers.length === 0 || this.participants.length === 0) {
+            this.discord = false;
+            return;
+        }
+
         this.discord = true;
 
         let votes = new Map<RitualLeaderSelection, Clan[]>();
         const sim = this.simulateLeaderSelectionOptions();
         for (const clan of this.producers) {
-            const [sr, delta] = maxbyWithValue(sim, r => r.clanImpacts.get(clan)!.delta);
+            const [sr, delta] = maxbyWithValue(sim, r => r.clanImpacts.get(clan)?.delta ?? 0);
             votes.set(sr.option, [...(votes.get(sr.option) ?? []), clan]);
         }
 
@@ -139,6 +152,15 @@ export class Rites {
     }
 
     perform() {
+        if (this.producers.length === 0 || this.consumers.length === 0) {
+            this.quality = 0;
+            this.items = [];
+            this.baseEffectivenessItems = [];
+            this.held = false;
+            return;
+        }
+        this.held = true;
+
         // Success of the rites depends on the skill of the participants.
         // Low skill tends to drag things down quite a bit, as mistakes can
         // ruin entire rituals.

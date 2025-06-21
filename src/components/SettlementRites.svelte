@@ -7,7 +7,7 @@
     let { settlement } = $props();
 
     let selectionOptions = $derived.by(
-        () => settlement.clans.rites.leaderSelectionOptions);
+        () => settlement.rites.leaderSelectionOptions);
 </script>
 
 <style>
@@ -24,22 +24,33 @@
     }
 </style>
 
+{#each settlement.rites as rites}
+    {#if rites.held}
+        <h4 style="margin-top: 1em;">{rites.name}</h4>
+        Leader selection: {rites.leaderSelectionOption}
 
-{#if settlement.clans.rites.participants.length}
-<h4 style="margin-top: 1em;">{settlement.clans.rites.name}</h4>
-Leader selection: {settlement.clans.rites.leaderSelectionOption}
+        <div style="display: flex; flex-direction: row; gap: 2em;">
+            <div>
+                <h5>Effectiveness from participants</h5>
+                <div class="ttt">
+                    <DataTable rows={rites.baseEffectivenessItems} />
+                </div>
+            </div>
 
-<h5>Effectiveness from participants</h5>
-<div class="ttt">
-    <DataTable rows={settlement.clans.rites.baseEffectivenessItems} />
-</div>
+            <div>
+                <h5>Quality: {spct(rites.quality)}</h5>
+                <div class="ttt">
+                    <DataTable rows={rites.items} />
+                </div>
+            </div>
+        </div>
+    {:else}
+        <h4 style="margin-top: 1em; color: darkgrey">{rites.name} (not held)</h4>
+    {/if}
+{/each}
 
-<h5>Quality: {spct(settlement.clans.rites.quality)}</h5>
-<div class="ttt">
-    <DataTable rows={settlement.clans.rites.items} />
-</div>
-{/if}
-
+{#if selectionOptions && selectionOptions.length > 0}
+<hr>
 <h4>Selection Options</h4>
 <table class="selection-options">
     <thead>
@@ -100,3 +111,4 @@ Leader selection: {settlement.clans.rites.leaderSelectionOption}
         {/each}
     </tbody>
 </table>
+{/if}

@@ -111,8 +111,6 @@ export class Clans extends Array<Clan> {
         this.produce();
         this.distribute();
 
-        this.performRites();
-
         this.marry();
         for (const clan of this) clan.advancePopulation();
         this.split();
@@ -122,11 +120,6 @@ export class Clans extends Array<Clan> {
         for (const clan of this) clan.prepareTraitChanges();
         for (const clan of this) clan.commitTraitChanges();
         for (const clan of this) ++clan.tenure;
-
-        if (this.rites.quality < 0.20) {
-            console.log('Terrible rites, dispersing!');
-            this.splice(0, this.length);
-        }
     }
 
     produce() {
@@ -175,12 +168,6 @@ export class Clans extends Array<Clan> {
         this.forEach(clan => clan.consumption = new ConsumptionCalc(clan.size));
         this.pot.distribute();
         this.forEach(clan => clan.pot.distribute());
-    }
-
-    performRites(plan: boolean = true) {
-        if (plan) this.rites.plan();
-        this.rites.perform();
-
     }
 
     *pairs() {
