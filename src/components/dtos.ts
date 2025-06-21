@@ -167,7 +167,7 @@ export class ClansDTO extends Array<ClanDTO> {
             name: clans.rites.structure.name,
             leaderSelectionOption: clans.rites.leaderSelectionOption.name,
             leaderSelectionOptions: clans.rites.simulateLeaderSelectionOptions(),
-            participants: clans.rites.reach.map(c => c.name),
+            participants: clans.rites.participants.map(c => c.name),
             quality: clans.rites.quality,
             items: clans.rites.items,
             baseEffectivenessItems: clans.rites.baseEffectivenessItems,
