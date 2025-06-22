@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
     import ButtonPanel from './ButtonPanel.svelte';
-    import { pct, signed } from '../model/format';
+    import { pct, signed } from '../model/lib/format';
     import NotificationBar from './NotificationBar.svelte';
 
     let { selection = $bindable() } = $props();

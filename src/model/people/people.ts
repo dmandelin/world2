@@ -1,18 +1,18 @@
-import { Annals } from "./annals";
-import { absmin, clamp, remove } from "./basics";
+import { Annals } from "../annals";
+import { absmin, clamp, remove } from "../lib/basics";
 import type { Clans } from "./clans";
-import { normal, poisson } from "./distributions";
+import { normal, poisson } from "../lib/distributions";
 import { Assessments } from "./agents";
-import { Pot } from "./production";
+import { Pot } from "../production";
 import type { Settlement } from "./settlement";
-import { TradeGoods, type TradeGood } from "./trade";
+import { TradeGoods, type TradeGood } from "../trade";
 import { PrestigeCalc } from "./prestige";
-import { traitWeightedAverage, WeightedValue, zScore } from "./modelbasics";
-import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./calcs/population";
+import { traitWeightedAverage, WeightedValue, zScore } from "../lib/modelbasics";
+import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QoLCalc } from "./qol";
-import { pct } from "./format";
-import type { World } from "./world";
-import { Rites } from "./rites";
+import { pct } from "../lib/format";
+import type { World } from "../world";
+import { Rites } from "../rites";
 
 const clanGoodsSource = 'clan';
 

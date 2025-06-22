@@ -1,7 +1,7 @@
-import { normal } from "./distributions";
-import { pct, signed, spct } from "./format";
+import { normal } from "../lib/distributions";
+import { pct, signed, spct } from "../lib/format";
 import type { Clan } from "./people";
-import type { Rites } from "./rites";
+import type { Rites } from "../rites";
 
 interface PrestigeCalcItem {
     name: string;

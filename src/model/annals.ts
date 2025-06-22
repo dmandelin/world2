@@ -1,4 +1,4 @@
-import type { Settlement } from "./settlement";
+import type { Settlement } from "./people/settlement";
 import type { World } from "./world";
 import { Year } from "./year";
 

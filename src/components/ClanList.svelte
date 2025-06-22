@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { pct, spct, wg } from "../model/format";
-    import { PersonalityTrait } from "../model/people";
+    import { pct, spct, wg } from "../model/lib/format";
+    import { PersonalityTrait } from "../model/people/people";
     import Clan from "./Clan.svelte";
 
     let { clans, updateTrigger = $bindable() } = $props();

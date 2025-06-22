@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EconomicPolicyDecision } from '../model/people';
+    import type { EconomicPolicyDecision } from '../model/people/people';
 
     let { decision }: {decision: EconomicPolicyDecision} = $props();
 </script>

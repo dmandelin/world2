@@ -1,14 +1,14 @@
 import { Annals } from "./annals";
-import { Clan, PersonalityTraits, randomClanColor, randomClanName } from "./people";
-import { Clans } from "./clans";
-import { chooseFrom, maxbyWithValue, shuffled } from "./basics";
-import { Settlement } from "./settlement";
+import { Clan, PersonalityTraits, randomClanColor, randomClanName } from "./people/people";
+import { Clans } from "./people/clans";
+import { chooseFrom, maxbyWithValue, shuffled } from "./lib/basics";
+import { Settlement } from "./people/settlement";
 import { TimePoint } from "./timeline";
 import { TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
-import { crowdingValue } from "./qol";
+import { crowdingValue } from "./people/qol";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();

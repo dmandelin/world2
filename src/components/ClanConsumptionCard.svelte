@@ -1,5 +1,5 @@
 <script>
-    import { spct } from "../model/format";
+    import { spct } from "../model/lib/format";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();

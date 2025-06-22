@@ -1,8 +1,8 @@
-import { weightedRandInt } from "./distributions";
-import type { NoteTaker } from "./notifications";
+import { weightedRandInt } from "../lib/distributions";
+import type { NoteTaker } from "../notifications";
 import { Clan, ConsumptionCalc, EconomicPolicies } from "./people";
-import { Pot } from "./production";
-import { Rites } from "./rites";
+import { Pot } from "../production";
+import { Rites } from "../rites";
 
 const communalGoodsSource = 'communal';
 

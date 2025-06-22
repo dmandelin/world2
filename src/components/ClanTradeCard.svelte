@@ -1,5 +1,5 @@
 <script>
-    import { pct, spct, wg } from "../model/format";
+    import { pct, spct, wg } from "../model/lib/format";
     import EconomicPolicyDecision from "./EconomicPolicyDecision.svelte";
     import Tooltip from "./Tooltip.svelte";
 

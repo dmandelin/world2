@@ -1,5 +1,5 @@
-import { harmonicMean } from "./basics";
-import { ces } from "./modelbasics";
+import { harmonicMean } from "../lib/basics";
+import { ces } from "../lib/modelbasics";
 import type { Clan } from "./people";
 import type { Settlement } from "./settlement";
 

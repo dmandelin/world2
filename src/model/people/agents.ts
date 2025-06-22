@@ -1,4 +1,4 @@
-import { clamp } from "./basics";
+import { clamp } from "../lib/basics";
 import { type Clan } from "./people";
 
 export class Assessment {

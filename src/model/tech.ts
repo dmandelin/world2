@@ -1,5 +1,5 @@
-import { normal } from "./distributions";
-import type { Settlement } from "./settlement";
+import { normal } from "./lib/distributions";
+import type { Settlement } from "./people/settlement";
 
 // Ditching and canals next steps:
 //

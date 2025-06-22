@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pct, spct } from "../model/format";
+    import { pct, spct } from "../model/lib/format";
 
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";

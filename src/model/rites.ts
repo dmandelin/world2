@@ -1,10 +1,10 @@
-import { clamp, maxby, maxbyWithValue, sum } from "./basics";
-import { pct, xm } from "./format";
-import { ces } from "./modelbasics";
+import { clamp, maxby, maxbyWithValue, sum } from "./lib/basics";
+import { pct, xm } from "./lib/format";
+import { ces } from "./lib/modelbasics";
 import type { NoteTaker } from "./notifications";
-import type { Clan } from "./people";
-import { OwnPrestigeCalc } from "./prestige";
-import { QoLCalc } from "./qol";
+import type { Clan } from "./people/people";
+import { OwnPrestigeCalc } from "./people/prestige";
+import { QoLCalc } from "./people/qol";
 
 interface RitualLeaderSelection {
     name: string;

@@ -1,5 +1,5 @@
-import { clamp } from "../basics";
-import type { Clan } from "../people";
+import { clamp } from "../lib/basics";
+import type { Clan } from "./people";
 
 export const INITIAL_POPULATION_RATIOS = [
     [0.2157, 0.2337],

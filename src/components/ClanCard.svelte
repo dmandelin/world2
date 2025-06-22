@@ -1,5 +1,5 @@
 <script>
-    import { npl, pct, signed, spct, wg } from "../model/format";
+    import { npl, pct, signed, spct, wg } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
     import PopulationChange from "./PopulationChange.svelte";
     import PopulationPyramid from "./PopulationPyramid.svelte";

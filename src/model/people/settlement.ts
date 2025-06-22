@@ -1,9 +1,9 @@
-import { average, chooseFrom } from "./basics";
+import { average, chooseFrom } from "../lib/basics";
 import type { Clans } from "./clans";
-import type { Rites } from "./rites";
-import { Technai } from "./tech";
-import type { TradeGood } from "./trade";
-import type { World } from "./world";
+import type { Rites } from "../rites";
+import { Technai } from "../tech";
+import type { TradeGood } from "../trade";
+import type { World } from "../world";
 
 class DaughterSettlementPlacer {
     readonly places = 12;

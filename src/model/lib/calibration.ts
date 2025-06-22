@@ -1,6 +1,6 @@
-import { Annals } from "./annals";
-import { Clan } from "./people";
-import { world } from "./world";
+import { Annals } from "../annals";
+import { Clan } from "../people/people";
+import { world } from "../world";
 
 // Population is roughly constant with this birth rate.
 // At 1.15x, grows 7% per turn (0.35%/y, 30x/M)

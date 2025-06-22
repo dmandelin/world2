@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { signed } from "../model/format";
+    import { signed } from "../model/lib/format";
     import ButtonPanel from "./ButtonPanel.svelte";
     import Settlement from "./Settlement.svelte";
     import { SettlementDTO } from "./dtos";

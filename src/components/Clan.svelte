@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { rpct } from "../model/format";
+    import { rpct } from "../model/lib/format";
 
     let { clan, updateTrigger = $bindable() } = $props();
 </script>

@@ -2,7 +2,7 @@
 // various source go in, and products come out to different
 // receivers.
 
-import type { GoodsReceiver } from "./people";
+import type { GoodsReceiver } from "./people/people";
 import { TradeGood, TradeGoods } from "./trade";
 
 export class Pot {

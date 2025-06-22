@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { spct } from "../model/format";
+    import { spct } from "../model/lib/format";
     import ClanProductionCard from "./ClanProductionCard.svelte";
 
     let { settlement } = $props();

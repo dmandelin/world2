@@ -1,5 +1,5 @@
-import { znan } from "./basics";
-import { weightedAverage } from "./modelbasics";
+import { znan } from "./lib/basics";
+import { weightedAverage } from "./lib/modelbasics";
 import type { World } from "./world";
 import type { Year } from "./year";
 

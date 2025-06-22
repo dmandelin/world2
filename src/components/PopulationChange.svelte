@@ -1,5 +1,5 @@
 <script>
-    import { dcr, npl, pct, spct, wg } from "../model/format";
+    import { dcr, npl, pct, spct, wg } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 

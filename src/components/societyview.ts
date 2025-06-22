@@ -1,4 +1,4 @@
-import type { Settlement } from "../model/settlement";
+import type { Settlement } from "../model/people/settlement";
 
 export class SocietyView {
     readonly description: string[] = [];
