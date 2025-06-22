@@ -94,6 +94,22 @@ export function sum(aa: number[]): number {
     return aa.reduce((acc, cur) => acc + cur, 0);
 }
 
+export function product(aa: number[]): number {
+    return aa.reduce((acc, cur) => acc * cur, 1);
+}
+
+export function average(aa: number[]): number {
+    if (aa.length === 0) return 0;
+    return sum(aa) / aa.length;
+}
+
+export function geometricMean(aa: number[]): number {
+    if (aa.length === 0) return 0;
+    if (aa.length === 1) return aa[0];
+    const product = aa.reduce((acc, cur) => acc * cur, 1);
+    return Math.pow(product, 1 / aa.length);
+}
+
 export function harmonicMean(aa: number[]): number {
     if (aa.length === 0) return 0;
     if (aa.length === 1) return aa[0];

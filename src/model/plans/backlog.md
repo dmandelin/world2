@@ -72,8 +72,12 @@
   - Conflict over rituals/roles/laws
 
 - Better display of hamlets
-  - probably need to show on settlement panel instead of map
-  - give better settlement overview with total pop and such
+  - new settlement area main view
+    - total population
+    - qol
+    - list of settlements with pop and qol
+  - have hamlets appear around towns in a circular pattern
+  - avoid granddaughters for now
 
 - Introduce new ritual model
   x different rituals at same granularity as production pot
@@ -88,12 +92,12 @@
   - dance style add-on to ritual
 
 - Problems inflicting our people in recent tests:
-  - rites quality becomes very low with 8 clans due to coordination costs
   - prestige of new junior clans craters as they can be many steps down
   - clans with more ritual skill may have a hard time gaining prestige if
     small or low in traits
 
 - Smaller updates
+  - Fix super-low consumption on migration
   - Use population-weighted averages for baselines where appropriate
   - Clean up field names and redundancy in ClanImpact
 

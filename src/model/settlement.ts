@@ -1,4 +1,4 @@
-import { clamp } from "./basics";
+import { average, clamp, geometricMean } from "./basics";
 import type { Clans } from "./clans";
 import type { Rites } from "./rites";
 import { Technai } from "./tech";
@@ -52,6 +52,10 @@ export class Settlement {
 
     get rites(): Rites[] {
         return [this.clans.rites, ...this.clans.map(clan => clan.rites)];
+    }
+
+    get averageQoL() {
+        return average(this.clans.map(clan => clan.qol));
     }
 
     private lastSizeChange_ = 0;

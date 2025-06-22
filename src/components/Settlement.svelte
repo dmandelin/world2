@@ -1,4 +1,5 @@
 <script>
+    import { signed } from "../model/format";
     import ClanCard from "./ClanCard.svelte";
     import SettlementConsumption from "./SettlementConsumption.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
@@ -56,8 +57,9 @@
     <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
         <img src="residents.png" alt="Residents" width="150" height="100" />
         <div>
-            <h1>{settlement.name}</h1>
-            <h3>{settlement.size} people</h3>
+            <h1>{settlement.name} &centerdot; 
+                {settlement.size}👥 &centerdot; 
+                {signed(settlement.averageQoL, 0)}☺</h1>
         </div>
     </div>
 

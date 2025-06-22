@@ -159,6 +159,7 @@ export class ClansDTO extends Array<ClanDTO> {
 export class SettlementDTO {
     readonly name: string;
     readonly size: number;
+    readonly averageQoL: number;
     readonly lastSizeChange: number;
 
     readonly clans: ClansDTO;
@@ -184,6 +185,7 @@ export class SettlementDTO {
     constructor(settlement: Settlement) {
         this.name = settlement.name;
         this.size = settlement.size;
+        this.averageQoL = settlement.averageQoL;
         this.lastSizeChange = settlement.lastSizeChange;
 
         this.clans = new ClansDTO(settlement.clans);

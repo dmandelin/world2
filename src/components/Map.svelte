@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
     import ButtonPanel from './ButtonPanel.svelte';
-    import { pct } from '../model/format';
+    import { pct, signed } from '../model/format';
     import NotificationBar from './NotificationBar.svelte';
 
     let { selection = $bindable() } = $props();
@@ -131,7 +131,7 @@
                 warnings.push(`Low QoL! (${minQOL.toFixed()})`);
             }
             if (settlement.clans.rites.appeal < 0) {
-                warnings.push(`Bad rites! (${(settlement.clans.rites.appeal).toFixed(1)}%)`);
+                warnings.push(`Bad rites! (${(settlement.clans.rites.appeal).toFixed()})`);
             }
 
             let yo = 49;
@@ -152,7 +152,7 @@
         if (selectedLens === 'Pop') {
             label = `${settlement.size} (${settlement.lastSizeChange})`;
         } else if (selectedLens === 'Rit') {
-            label = `${pct(settlement.clans.rites.quality)}`;
+            label = `${signed(settlement.clans.rites.appeal)}`;
         }
         fillTextCentered(label, x, y + yo);
     }
