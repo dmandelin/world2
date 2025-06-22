@@ -130,8 +130,8 @@
             if (minQOL < 0) {
                 warnings.push(`Low QoL! (${minQOL.toFixed()})`);
             }
-            if (settlement.clans.rites.quality < 0.7) {
-                warnings.push(`Bad rites! (${(settlement.clans.rites.quality * 100).toFixed(1)}%)`);
+            if (settlement.clans.rites.appeal < 0) {
+                warnings.push(`Bad rites! (${(settlement.clans.rites.appeal).toFixed(1)}%)`);
             }
 
             let yo = 49;

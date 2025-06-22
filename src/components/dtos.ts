@@ -171,9 +171,14 @@ export class SettlementDTO {
         leaderSelectionOptions: SimulationResult[];
         participants: string[];
         producers: string[];
+
         quality: number;
-        items: string[][];
-        baseEffectivenessItems: [string, string, string][];
+        qualityItems: [string, string, string][];
+        output: number;
+        perCapitaOutput: number;
+        outputItems: [string, string][];
+        appeal: number;
+        appealItems: [string, string][];
     }[];
 
     constructor(settlement: Settlement) {
@@ -192,8 +197,12 @@ export class SettlementDTO {
             participants: rites.participants.map(c => c.name),
             producers: rites.producers.map(c => c.name),
             quality: rites.quality,
-            items: rites.items,
-            baseEffectivenessItems: rites.baseEffectivenessItems,
+            qualityItems: rites.qualityItems,
+            output: rites.output,
+            perCapitaOutput: rites.perCapitaOutput,
+            outputItems: rites.outputItems,
+            appeal: rites.appeal,
+            appealItems: rites.appealItems,
         }));
     }
 }

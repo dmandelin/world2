@@ -78,10 +78,25 @@ export function zScore(value: number, values: readonly number[]): number {
     return (value - mean) / stddev;
 }
 
-export function ces(rho: number, ...inputValues: number[]): number {
+
+export type CESParams = {
+    rho: number;       // substitution parameter
+    alpha?: number[];  // weights, defaults to equal weights
+    nu?: number;       // scale factor, defaults to 1
+    tfp?: number;      // total factor productivity, defaults to 1
+};
+
+export function ces(inputValues: number[], params: CESParams): number {
+    const n = inputValues.length;
+    if (n === 0) return 0;
+    const rho = params.rho;
+    const alpha = params.alpha ?? new Array(n).fill(1 / n);
+    const nu = params.nu ?? 1;
+    const tfp = params.tfp ?? 1;
+
     if (rho === 0) {
-        return inputValues.reduce((acc, v) => acc + v / inputValues.length, 0);
+        return tfp * inputValues.reduce((acc, v, i) => acc * Math.pow(v, alpha[i] * nu), 1);
     }
-    const sum = inputValues.reduce((acc, v) => acc + Math.pow(v, rho) / inputValues.length, 0);
-    return Math.pow(sum, 1 / rho);
+    const sum = inputValues.reduce((acc, v, i) => acc + alpha[i] * Math.pow(v, rho), 0);
+    return tfp * Math.pow(sum, nu / rho);
 }

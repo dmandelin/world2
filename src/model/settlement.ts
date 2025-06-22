@@ -70,9 +70,9 @@ export class Settlement {
         this.lastSizeChange_ = this.size - sizeBefore;
     }
 
-    advanceRites() {
+    advanceRites(updateOptions: boolean = true) {
         // Planning for clan rites isn't important yet and introduces a lot of notification noise.
-        this.clans.rites.plan();
+        this.clans.rites.plan(updateOptions);
         this.attendRites();
         for (const rites of this.rites) {
             rites.perform();

@@ -115,9 +115,8 @@ export class World implements NoteTaker {
             s.clans.produce();
             s.clans.distribute();
 
-            for (const rites of s.rites) rites.prePlan();
-            s.attendRites();
-            for (const rites of s.rites) rites.perform();
+            // Selecting ritual options creates notification noise and isn't necessary here.
+            s.advanceRites(false);
         }
 
         this.updatePerceptions();

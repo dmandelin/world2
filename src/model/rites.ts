@@ -1,51 +1,10 @@
-import { clamp, maxby, maxbyWithValue } from "./basics";
+import { clamp, maxby, maxbyWithValue, sum } from "./basics";
 import { pct, xm } from "./format";
+import { ces } from "./modelbasics";
 import type { NoteTaker } from "./notifications";
 import type { Clan } from "./people";
 import { OwnPrestigeCalc } from "./prestige";
 import { QoLCalc } from "./qol";
-
-interface RitesStructure {
-    name: string;
-    scale: (rites: Rites) => number;
-    coordination: (rites: Rites) => number;
-}
-
-// Rites performed in common by all the clans.
-export class CommonRitesStructure implements RitesStructure {
-    readonly name = 'Common Rites';
-
-    scale(rites: Rites): number {
-        return [0.5, 0.8, 1, 1.2, 1.3, 1.35, 1.4, 1.45, 1.5]
-            [clamp(rites.producers.length, 1, 9) - 1];
-    }
-
-    coordination(rites: Rites): number {
-        return [1.1, 1.05, 1, 0.9, 0.7, 0.5, 0.3, 0.1, 0.01]
-            [clamp(rites.producers.length, 1, 9) - 1];
-    }
-}
-
-// Rites performed in common by all the clans, but with leaders
-// appointed for the rites by clan prestige to help coordinate
-// the rites:
-// - This can better take advantage of scale.
-// - Prestigious clans will have more influence on the ritual
-//   quality, for better or worse. They'll also have a little
-//   more skill change.
-export class GuidedRitesStructure implements RitesStructure {
-    readonly name = 'Guided Rites';
-
-    scale(rites: Rites): number {
-        return [0.5, 0.8, 1, 1.3, 1.5, 1.6, 1.65, 1.7, 1.75]
-            [clamp(rites.producers.length, 1, 9) - 1];
-    }
-
-    coordination(rites: Rites): number {
-        return [1.1, 1.05, 1, 0.95, 0.9, 0.8, 0.5, 0.2, 0.01]
-            [clamp(rites.producers.length, 1, 9) - 1];
-    }
-}
 
 interface RitualLeaderSelection {
     name: string;
@@ -83,15 +42,34 @@ export const RitualLeaderSelectionOptionsList: RitualLeaderSelection[] = [
 ];
 
 export class Rites {
-    structure: RitesStructure = new GuidedRitesStructure();
-    quality: number = 0;
-    baseEffectivenessItems: [string, string, string][] = [];
-    items: [string, string][] = [];
+    // Planning properties.
+    discord = false;
+    leaderSelectionOption: RitualLeaderSelection = 
+        RitualLeaderSelectionOptions.PrestigeWeightedSoft;
     weights: Map<Clan, number> = new Map();
 
-    leaderSelectionOption: RitualLeaderSelection = RitualLeaderSelectionOptions.PrestigeWeightedSoft;
+    // Performance properties.
+
+    // Whether the rites were held.
     held = false;
-    discord = false;
+
+    // Quality represents the quality of the ritual performance,
+    // independent of scale, including such factors as skill and
+    // special materials.
+    qualityItems: [string, string, string][] = [];
+    quality: number = 0;
+
+    // Output represents the amount of ritual services produced.
+    // Ritual services include sacrifices, other ceremonies,
+    // medicine, entertainment, and many other things.
+    outputItems: [string, string][] = [];
+    output: number = 0;
+
+    // Appeal represents the draw of the ritual cycle as held,
+    // including all factors such as quality, scale, discord,
+    // and so on.
+    appealItems: [string, string][] = [];
+    appeal: number = 1;
 
     constructor(
         readonly name: string, 
@@ -111,22 +89,17 @@ export class Rites {
         this.perform();
     }
 
-    prePlan() {
-        // Initial planning. The main thing for now is that clans don't
-        // have their settlement in the constructor, so we set up viewers
-        // here.
-        if (this.leaders.length) {
-            this.viewers.push(...this.leaders[0].settlement!.clans.filter(
-                c => !this.leaders.includes(c)));
-        }
-    }
-
-    plan() {
+    plan(updateOptions: boolean = true) {
         if (this.producers.length === 0 || this.participants.length === 0) {
             this.discord = false;
             return;
         }
 
+        if (updateOptions) this.chooseLeaderSelectionOption();
+        this.updateWeights();
+    }
+
+    private chooseLeaderSelectionOption() {
         this.discord = true;
 
         let votes = new Map<RitualLeaderSelection, Clan[]>();
@@ -158,62 +131,124 @@ export class Rites {
             `Disagreement over ritual leader selection options: ${votesString}`);
     }
 
-    perform() {
-        if (this.producers.length === 0 || this.consumers.length === 0) {
-            this.quality = 0;
-            this.items = [];
-            this.baseEffectivenessItems = [];
-            this.held = false;
-            return;
-        }
-        this.held = true;
-
-        // Success of the rites depends on the skill of the participants.
-        // Low skill tends to drag things down quite a bit, as mistakes can
-        // ruin entire rituals.
-
-        // Calculate normalized weights.
+    private updateWeights() {
+        let totalWeight = 0;
         this.weights.clear();
-        let weightSum = 0;
         for (const clan of this.producers) {
             const weight = this.leaderSelectionOption.weight(clan);
             this.weights.set(clan, weight);
-            weightSum += weight;
+            totalWeight += weight;
         }
-        for (const [clan, weight] of this.weights) {
-            this.weights.set(clan, weight / weightSum);
+        for (const clan of this.producers) {
+            const weight = this.weights.get(clan)! / totalWeight;
+            this.weights.set(clan, weight);
+        }
+    }
+
+    perform() {
+        if (!this.updateHeld()) return;
+        this.updateQuality();
+        this.updateOutput();
+        this.updateAppeal();
+    }
+
+    private updateHeld(): boolean {
+        if (this.producers.length === 0 || this.consumers.length === 0) {
+            this.held = false;
+            this.qualityItems = [];
+            this.quality = 0;
+            this.outputItems = [];
+            this.output = 0;
+            this.appealItems = [];
+            this.appeal = 1;
+            return false;
         }
 
-        // CES production function with breakout.
-        const rho = -5;
+        this.held = true;
+        return true;
+    }
+
+    private updateQuality() {
+        // CES function.
+        const nu = 1.16;  // Increasing returns to scale of producers
+        const rho = -5;   // Close to Liontief (min)
+
         let sum = 0;
-        const baseEffectivenessItemsNumeric: [string, number, number][] = [];
+        const qualityItemsNumeric: [string, number, number][] = [];
         for (const clan of this.producers) {
             const effectiveness = clan.ritualEffectiveness;
-            const weight = this.weights.get(clan)!;
+            const weight = this.weights.get(clan) || .11;
             sum += weight * Math.pow(clan.ritualEffectiveness, rho)
-            baseEffectivenessItemsNumeric.push(
+            qualityItemsNumeric.push(
                 [clan.name, effectiveness, weight]);
         }
-        const baseEffectiveness = Math.pow(sum, 1 / rho);
-        this.baseEffectivenessItems = baseEffectivenessItemsNumeric.map(
-            ([name, effectiveness, weight]) => [
+        this.qualityItems = qualityItemsNumeric.map(
+            ([name, quality, weight]) => [
                 name,
-                pct(effectiveness),
+                pct(quality),
                 weight.toFixed(2),
             ]);
+        this.quality = Math.pow(sum, nu / rho);
+    }
 
-        const scale = this.structure.scale(this);
-        const coordination = this.structure.coordination(this);
-        const discord = this.discord ? 0.8 : 1;
+    private updateOutput() {
+        // CES function on (producer labor, infrastructure). Infrastructure
+        // includes both physical (e.g., a space at the center of the village)
+        // and social (e.g., customs for orderly assembly). A CES function
+        // with superlinear scaling factor gives positive returns to scale
+        // at the low end ("the more the merrier") but diminishing returns at
+        // the high end ("too many cooks spoil the broth").
 
-        this.quality = baseEffectiveness * scale * coordination;
-        this.items = [
-            ['Base effectiveness', pct(baseEffectiveness)],
-            ['Scale', xm(scale)],
-            ['Coordination', xm(coordination)],
-            [this.discord ? 'Discord' : 'Concord', xm(discord)],
+        const producerLabor = sum(this.producers.map(c => c.size));
+        if (this.participants.length) {
+            const infrastructure = 300;
+            this.outputItems = [
+                ['Participants', producerLabor.toFixed()],
+                ['Infrastructure', infrastructure.toFixed()],
+            ];
+            // TFP set to give max per capita output of 1 at around 300 participants.
+            this.output = ces([producerLabor, infrastructure], { rho: -5, nu: 1.5, tfp: 1/17.32 });
+        } else {
+            const attendees = sum(this.viewers.map(c => c.size));
+            const infrastructure = 50;
+            this.outputItems = [
+                ['Producers', producerLabor.toFixed()],
+                ['Attendees', attendees.toFixed()],
+                ['Infrastructure', infrastructure.toFixed()],
+            ];
+            this.output = ces([producerLabor, attendees, infrastructure], { rho: -5, nu: 1.333 });
+        }
+    }   
+
+    get perCapitaOutput(): number {
+        return this.output / sum(this.consumers.map(c => c.size));
+    }
+
+    private updateAppeal() {
+        const base = 10;
+        const fromQuality = 10 * Math.log2(this.quality);
+        const fromQuantity = 10 * Math.log2(this.output / sum(this.consumers.map(c => c.size)));
+
+        // We don't need this component to be too big because other parts of
+        // the calculation also account for scale.
+        const clanScale = clamp(this.producers.length, 1, 9);
+        const diversity = Math.abs(clanScale - 5);
+        
+        const discord = this.discord ? -5 : 0;
+
+        this.appealItems = [
+            ['Base', base.toFixed(1)],
+            ['Quality', fromQuality.toFixed(1)],
+            ['Quantity', fromQuantity.toFixed(1)],
+            ['Clan diversity', diversity.toFixed(1)],
+            [this.discord ? 'Discord' : 'Concord', discord.toFixed(1)],
         ];
+
+        this.appeal = base + fromQuality + fromQuantity + discord + diversity;
+    }
+
+    get appealAsTFP(): number {
+        return Math.pow(2, this.appeal / 10);
     }
 
     simulateLeaderSelectionOptions(): SimulationResult[] {
@@ -277,8 +312,8 @@ export class ClanImpact {
         this.originalWeight = originalRites.weights.get(clan) ?? 0;
         this.newWeight = rites.weights.get(clan) ?? 0;
 
-        this.originalQoL = new QoLCalc(clan, originalRites.quality).value;
-        this.newQoL = new QoLCalc(clan, rites.quality).value;
+        this.originalQoL = new QoLCalc(clan, originalRites.appealAsTFP).value;
+        this.newQoL = new QoLCalc(clan, rites.appealAsTFP).value;
 
         const averageEffectiveSkill = originalRites.producers.reduce(
             (acc, c) => acc + c.ritualEffectiveness, 0) / originalRites.producers.length;

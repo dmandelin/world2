@@ -6,15 +6,15 @@ import type { Settlement } from "./settlement";
 export class QoLCalc {
     readonly perCapitaGoods: [string, number][];
 
-    constructor(readonly clan: Clan, overrideRitualQuality?: number) {
+    constructor(readonly clan: Clan, overrideRitualAppealAsTFP?: number) {
         this.perCapitaGoods = [
             ['Subsistence', clan.perCapitaSubsistenceConsumption],
-            ['Ritual', overrideRitualQuality ?? clan.settlement!.clans.rites.quality],
+            ['Ritual', overrideRitualAppealAsTFP ?? clan.settlement!.clans.rites.appealAsTFP],
         ];
     }
 
     get perCapitaOverall(): number {
-        return ces(-5, ...this.perCapitaGoods.map(([_, value]) => value));
+        return ces(this.perCapitaGoods.map(([_, value]) => value), {rho: -5});
     }
 
     get items(): [string, number][] {

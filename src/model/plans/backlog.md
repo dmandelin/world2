@@ -71,10 +71,14 @@
   - Desired rituals/roles/laws structure and sat/dissat with present state
   - Conflict over rituals/roles/laws
 
+- Better display of hamlets
+  - probably need to show on settlement panel instead of map
+  - give better settlement overview with total pop and such
+
 - Introduce new ritual model
-  - different rituals at same granularity as production pot
+  x different rituals at same granularity as production pot
     - later allow option for subsets of clans or multiple clans
-  - calculate appeal for each one
+  x calculate appeal for each one
   - distribute attention per appeal
   - rename relatedness to solidarity
   - solidarity effects of ritual
@@ -145,10 +149,6 @@
   - have it depend on population pyramid
   - add breakthroughs
   - give a bigger self weight bonus for education vs imitation
-
-- Better display of hamlets
-  - probably need to show on settlement panel instead of map
-  - give better settlement overview with total pop and such
 
 - Give people preferences for different settlement types, which can change
 - Make coordination costs and scale effects more dynamic, 

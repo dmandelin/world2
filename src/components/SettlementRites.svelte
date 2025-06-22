@@ -31,16 +31,23 @@
 
         <div style="display: flex; flex-direction: row; gap: 2em;">
             <div>
-                <h5>Effectiveness from participants</h5>
+                <h5>Appeal {rites.appeal.toFixed()}</h5>
                 <div class="ttt">
-                    <DataTable rows={rites.baseEffectivenessItems} />
+                    <DataTable rows={rites.appealItems} />
                 </div>
             </div>
 
             <div>
-                <h5>Quality: {spct(rites.quality)}</h5>
+                <h5>Quality {pct(rites.quality)}</h5>
                 <div class="ttt">
-                    <DataTable rows={rites.items} />
+                    <DataTable rows={rites.qualityItems} />
+                </div>
+            </div>
+
+            <div>
+                <h5>Scale {pct(rites.perCapitaOutput)}</h5>
+                <div class="ttt">
+                    <DataTable rows={rites.outputItems} />
                 </div>
             </div>
         </div>

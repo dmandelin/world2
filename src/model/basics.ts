@@ -90,6 +90,10 @@ export function compareLexically<T>(aa: T[], bb: T[]): number {
     return aa.length - bb.length;
 }
 
+export function sum(aa: number[]): number {
+    return aa.reduce((acc, cur) => acc + cur, 0);
+}
+
 export function harmonicMean(aa: number[]): number {
     if (aa.length === 0) return 0;
     if (aa.length === 1) return aa[0];
