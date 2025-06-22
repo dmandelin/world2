@@ -1,10 +1,12 @@
 <script lang="ts">
-    import { onDestroy, onMount } from 'svelte';
-    import { world } from '../model/world';
     import ButtonPanel from './ButtonPanel.svelte';
-    import { pct, signed } from '../model/lib/format';
     import NotificationBar from './NotificationBar.svelte';
 
+    import { onDestroy, onMount } from 'svelte';
+    import { signed } from '../model/lib/format';
+    import { world } from '../model/world';
+    import Settlement from './Settlement.svelte';
+    
     let { selection = $bindable() } = $props();
     let selectedLens = $state('Pop');
 
@@ -21,7 +23,7 @@
 
         let best = null;
         let bestds = 50 * 50;
-        for (const settlement of world.settlements) {
+        for (const settlement of world.allSettlements) {
             const dx = settlement.x - clickX;
             const dy = settlement.y - clickY;
             const ds = dx * dx + dy * dy;
@@ -49,7 +51,7 @@
     function draw() {
         context!.clearRect(0, 0, canvas!.width, canvas!.height);
 
-        for (const settlement of world.settlements) {
+        for (const settlement of world.allSettlements) {
             const x = settlement.x;
             const y = settlement.y;
             const fieldsRadius = 0.5 * Math.sqrt(settlement.size)
@@ -96,7 +98,7 @@
     }
 
     function drawSettlements() {
-        for (const settlement of world.settlements) {
+        for (const settlement of world.allSettlements) {
             const x = settlement.x;
             const y = settlement.y;
             const s = 3;

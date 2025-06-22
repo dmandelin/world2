@@ -1,7 +1,7 @@
 import { Annals } from "./annals";
 import { Clan, PersonalityTraits, randomClanColor, randomClanName } from "./people/people";
 import { Clans } from "./people/clans";
-import { chooseFrom, maxbyWithValue, shuffled } from "./lib/basics";
+import { chooseFrom, sumFun, maxbyWithValue, shuffled } from "./lib/basics";
 import { Settlement } from "./people/settlement";
 import { TimePoint } from "./timeline";
 import { TradeGood, TradeGoods } from "./trade";
@@ -9,6 +9,7 @@ import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
 import { crowdingValue } from "./people/qol";
+import { SettlementCluster } from "./people/cluster";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -16,7 +17,7 @@ class SettlementsBuilder {
 
     constructor(readonly world: World) {}
 
-    createSettlement(name: string, x: number, y: number, clanCount: number) {
+    createCluster(name: string, x: number, y: number, clanCount: number) {
         const clans = [];
         for (let i = 0; i < clanCount; i++) {
             const clan = new Clan(
@@ -31,12 +32,14 @@ class SettlementsBuilder {
             this.clanColors.add(clan.color);
         }
 
-        return new Settlement(this.world, name, x, y, new Clans(this.world, ...clans));
+        const settlement = new Settlement(this.world, name, x, y, new Clans(this.world, ...clans));
+        const cluster = new SettlementCluster(this.world, settlement);
+        return cluster;
     }
 
-    createSettlements(params: readonly [string, number, number, number][]) {
+    createClusters(params: readonly [string, number, number, number][]) {
         return params.map(([name, x, y, clanCount]) => 
-            this.createSettlement(name, x, y, clanCount));
+            this.createCluster(name, x, y, clanCount));
     }
 }
 
@@ -49,7 +52,7 @@ export class World implements NoteTaker {
     readonly annals = new Annals(this);
     readonly notes: Note[] = [];
 
-    readonly settlements = new SettlementsBuilder(this).createSettlements([
+    readonly clusters = new SettlementsBuilder(this).createClusters([
         ['Eridu', 290, 425, 3],
         ['Ur', 350, 350, 3],
         ['Uruk', 200, 287, 3],
@@ -78,7 +81,7 @@ export class World implements NoteTaker {
 
     initializeTradeGoods() {
         let e: Settlement, u: Settlement;
-        for (const s of this.settlements) {
+        for (const s of this.motherSettlements) {
             let localTradeGoods: TradeGood[] = [];
             switch (s.name) {
                 case 'Eridu':
@@ -100,12 +103,20 @@ export class World implements NoteTaker {
         chooseFrom(e!.clans).addKinBasedTradePartner(chooseFrom(u!.clans));
     }
 
+    get motherSettlements() {
+        return this.clusters.map(c => c.mother);
+    }
+
+    get allSettlements() {
+        return this.clusters.flatMap(c => c.settlements);
+    }
+
     preAdvance() {
         // Decisions can depend on perceptions, so we'll initialize them first,
         // but then update after pre-advancing state.
         this.updatePerceptions();
 
-        for (const s of this.settlements) {
+        for (const s of this.motherSettlements) {
             const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
             const slippage = s.clans.slippage;
             for (const clan of s.clans) {
@@ -127,8 +138,8 @@ export class World implements NoteTaker {
 
     advance() {
         // Main advance phase.
-        for (const s of this.settlements) {
-            s.advance();
+        for (const cl of this.clusters) {
+            cl.advance();
         }
         this.emigrate();
 
@@ -149,7 +160,7 @@ export class World implements NoteTaker {
         // they wouldn't want to crowd in, so we'll have to see who gets
         // to move first.
 
-        if (this.settlements.length < 2) return;
+        if (this.allSettlements.length < 2) return;
 
         for (const clan of shuffled(this.allClans)) {
             const inertia = clan.traits.has(PersonalityTraits.MOBILE) 
@@ -168,7 +179,7 @@ export class World implements NoteTaker {
             }
 
             // See if there are settlements worth moving to.
-            const targets: Array<Settlement|'new'> = [...this.settlements, 'new'];
+            const targets: Array<Settlement|'new'> = [...this.allSettlements, 'new'];
             let [best, value] = maxbyWithValue(targets, s => moveValue(s));
             if (best == clan.settlement) continue;
             if (value <= 0) break;
@@ -176,21 +187,7 @@ export class World implements NoteTaker {
             // Create a new settlement if needed.
             const isNew = best == 'new';
             if (best == 'new') {
-                const originalSettlement = clan.settlement!;
-                const parent = originalSettlement.parent || originalSettlement;
-
-                const [x, y] = parent.daughterPlacer.placeFor(parent);
-                const newSettlement = new Settlement(this, `Hamlet ${this.settlements.length + 1}`,
-                    x, y, new Clans(this));
-                this.settlements.push(newSettlement);
-
-                newSettlement.parent = parent;
-                parent.daughters.push(newSettlement);
-
-                best = newSettlement;
-                this.addNote('🏠', `New settlement ${newSettlement.name} founded from ${originalSettlement.name} with parent ${newSettlement.parent!.name}.`);
-                this.annals.log(
-                    `Clan ${clan.name} founded ${newSettlement.name}`, newSettlement);
+                best = clan.cluster.foundSettlement(`Hamlet ${this.allSettlements.length + 1}`, clan.settlement!);
             }
 
             // Move the clan.
@@ -212,21 +209,17 @@ export class World implements NoteTaker {
     }
 
     updatePerceptions() {
-        for (const s of this.settlements) {
-            for (const clan of s.clans) {
-                clan.assessments.update();
-            }
-            s.clans.updateSeniority();
-            s.clans.updatePrestigeViews();
+        for (const cl of this.clusters) {
+            cl.updatePerceptions();
         }
     }        
 
     get totalPopulation() {
-        return this.settlements.reduce((acc, s) => acc + s.size, 0);
+        return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);
     }
 
     get allClans() {
-        return this.settlements.flatMap(s => s.clans);
+        return this.clusters.flatMap(s => s.clans);
     }
 
     watch(watcher: (world: World) => void) {

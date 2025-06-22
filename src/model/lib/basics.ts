@@ -95,6 +95,18 @@ export function sum(aa: number[]): number {
     return aa.reduce((acc, cur) => acc + cur, 0);
 }
 
+export function sumFun<T>(
+        aa: T[], 
+        fn: (t: T) => number,
+        weightFn?: (t: T) => number,
+    ): number {
+    if (weightFn === undefined) {
+        return aa.reduce((acc, cur) => acc + fn(cur), 0);
+    } else {
+        return aa.reduce((acc, cur) => acc + fn(cur) * weightFn(cur), 0);
+    }
+}
+
 export function product(aa: number[]): number {
     return aa.reduce((acc, cur) => acc * cur, 1);
 }
@@ -102,6 +114,20 @@ export function product(aa: number[]): number {
 export function average(aa: number[]): number {
     if (aa.length === 0) return 0;
     return sum(aa) / aa.length;
+}
+
+export function averageFun<T>(
+        aa: T[], 
+        fn: (t: T) => number, 
+        weightFn?: (t: T) => number): number {
+    if (aa.length === 0) return 0;
+    if (weightFn === undefined) {
+        return sumFun(aa, fn) / aa.length;
+    } else {
+        const totalWeight = sumFun(aa, t => 1, weightFn);
+        if (totalWeight === 0) return 0;
+        return sumFun(aa, fn, weightFn) / totalWeight;
+    }
 }
 
 export function geometricMean(aa: number[]): number {

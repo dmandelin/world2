@@ -82,10 +82,17 @@
   - show per-individual settlement pop and qol somewhere
   x have hamlets appear around towns in a circular pattern
   x avoid granddaughters for now
+  - give hamlets better names
   - enhance buttonpanel
     - smaller font or different size or format so buttons look better here
     - better layout options
     - data item option
+
+- Small but important
+  - more reticence to emigrate to a different cluster / or allow migrating to cluster
+  - scale bonuses for learning in settlements
+  - connectivity bonuses for related settlements
+  - merge annals and notetaker
 
 - Introduce new ritual model
   x different rituals at same granularity as production pot

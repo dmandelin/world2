@@ -4,6 +4,7 @@ import type { Rites } from "../rites";
 import { Technai } from "../tech";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
+import type { SettlementCluster } from "./cluster";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -35,6 +36,8 @@ class DaughterSettlementPlacer {
 }
 
 export class Settlement {
+    private cluster_: SettlementCluster|undefined;
+
     readonly technai = new Technai(this);
     readonly localTradeGoods = new Set<TradeGood>();
 
@@ -54,18 +57,12 @@ export class Settlement {
         }
     }
 
-    get areaSettlements(): Settlement[] {
-        const settlements = [];
-        const work: Settlement[] = [this];
-        while (work) {
-            const s = work.pop()!;
-            if (!s) break;
-            settlements.push(s);
-            for (const d of s.daughters) {
-                work.push(d);
-            }
-        }
-        return settlements;
+    get cluster(): SettlementCluster {
+        return this.cluster_!;
+    }
+
+    setCluster(cluster: SettlementCluster) {
+        this.cluster_ = cluster;
     }
 
     get abandoned() {

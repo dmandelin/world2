@@ -6,7 +6,7 @@
     import { world as _world } from '../model/world';
 
     let world = $state(_world.dto);
-    let _selectedSettlement = $state(_world.settlements[0]);
+    let _selectedSettlement = $state(_world.allSettlements[0]);
     let selectedSettlement = $derived.by(() => 
         _selectedSettlement
             ? world.settlements.find(s => s.name === _selectedSettlement.name) || undefined

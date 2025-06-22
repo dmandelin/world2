@@ -3,6 +3,7 @@ import type { NoteTaker } from "../notifications";
 import { Clan, ConsumptionCalc, EconomicPolicies } from "./people";
 import { Pot } from "../production";
 import { Rites } from "../rites";
+import { averageFun } from "../lib/basics";
 
 const communalGoodsSource = 'communal';
 
@@ -24,6 +25,10 @@ export class Clans extends Array<Clan> {
   
     get population(): number {
       return this.reduce((total, clan) => total + clan.size, 0);
+    }
+
+    get averageQoL(): number {
+        return averageFun(this, clan => clan.qol, clan => clan.size);
     }
 
     // Population-weighted average of views of this one.

@@ -1,5 +1,5 @@
 import type { Assessments } from "../model/people/agents";
-import { maxbyWithValue, minbyWithValue, sortedByKey, type OptByWithValue } from "../model/lib/basics";
+import { maxbyWithValue, minbyWithValue, sortedByKey, sumFun, type OptByWithValue } from "../model/lib/basics";
 import type { PopulationChange } from "../model/people/population";
 import type { Clans, CondorcetCalc } from "../model/people/clans";
 import { pct } from "../model/lib/format";
@@ -12,6 +12,8 @@ import type { Settlement } from "../model/people/settlement";
 import type { TimePoint } from "../model/timeline";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
+import type { SettlementCluster } from "../model/people/cluster";
+import { weightedAverage } from "../model/lib/modelbasics";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -162,11 +164,6 @@ export class SettlementDTO {
     readonly averageQoL: number;
     readonly lastSizeChange: number;
 
-    readonly areaSettlements: SettlementDTO[] = [];
-    readonly areaPopulation: number;
-    readonly areaLastSizeChange: number;
-    readonly areaAverageQoL: number;
-
     readonly clans: ClansDTO;
     readonly localTradeGoods: TradeGood[];
 
@@ -187,12 +184,9 @@ export class SettlementDTO {
         appealItems: [string, string][];
     }[];
 
-    constructor(settlement: Settlement) {
+    constructor(settlement: Settlement, readonly cluster: ClusterDTO) {
         this.name = settlement.name;
         this.size = settlement.size;
-        this.areaPopulation = settlement.areaSettlements.reduce((acc, s) => acc + s.size, 0);
-        this.areaLastSizeChange = settlement.areaSettlements.reduce((acc, s) => acc + s.lastSizeChange * s.size, 0) / this.areaPopulation;
-        this.areaAverageQoL = settlement.areaSettlements.reduce((acc, s) => acc + s.averageQoL * s.size, 0) / this.areaPopulation;
         this.averageQoL = settlement.averageQoL;
         this.lastSizeChange = settlement.lastSizeChange;
 
@@ -217,32 +211,43 @@ export class SettlementDTO {
     }
 }
 
+export class ClusterDTO {
+    readonly settlements: SettlementDTO[];
+    readonly population: number;
+    readonly averageQoL: number;
+
+    constructor(private readonly cluster: SettlementCluster) {
+        this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this));
+        this.population = cluster.population;
+        this.averageQoL = cluster.qol;
+    }
+}
+
 export class WorldDTO {
     readonly year: string;
-    readonly settlements: SettlementDTO[] = [];
+    readonly clusters: ClusterDTO[] = [];
     readonly timeline: TimePoint[];
     readonly notes: Note[];
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
-
-        const smap = new Map(this.world.settlements.map(s => [s, new SettlementDTO(s)]));
-        for (const [s, dto] of smap) {
-            dto.areaSettlements.push(...s.areaSettlements.map(s => smap.get(s)!));
-            this.settlements.push(dto);
-        }
+        this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl));
 
         this.timeline = world.timeline;
         this.notes = [...world.notes];
     }
 
+    get settlements() {
+        return this.clusters.flatMap(c => c.settlements);
+    }
+
     get population() {
-        return this.settlements.reduce((acc, s) => acc + s.size, 0);
+        return sumFun(this.clusters, cl => cl.population);
     }
 
     get consumption() {
-        const totalConsumption = this.settlements.reduce((acc, s) => acc + s.clans.reduce((acc, clan) => acc + clan.subsistenceConsumption, 0), 0);
-        return totalConsumption / this.population;
+        return weightedAverage(
+            [...this.clans()], clan => clan.subsistenceConsumption, clan => clan.size);
     }
 
     get stats() {
@@ -256,9 +261,11 @@ export class WorldDTO {
     }
 
     *clans() {
-        for (const settlement of this.settlements) {
-            for (const clan of settlement.clans) {
-                yield clan;
+        for (const cl of this.clusters) {
+            for (const s of cl.settlements) {
+                for (const clan of s.clans) {
+                    yield clan;
+                }
             }
         }
     }

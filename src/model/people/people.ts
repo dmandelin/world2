@@ -13,6 +13,7 @@ import { QoLCalc } from "./qol";
 import { pct } from "../lib/format";
 import type { World } from "../world";
 import { Rites } from "../rites";
+import type { SettlementCluster } from "./cluster";
 
 const clanGoodsSource = 'clan';
 
@@ -415,6 +416,10 @@ export class Clan {
         }
 
         this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
+    }
+
+    get cluster(): SettlementCluster {
+        return this.settlement!.cluster;
     }
 
     get neighbors(): Clan[] {

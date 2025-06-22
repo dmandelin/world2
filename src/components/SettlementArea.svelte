@@ -26,10 +26,10 @@
         <img src="residents.png" alt="Residents" width="150" height="100" />
         <div>
             <h1>{settlement.name} &centerdot; 
-                {settlement.areaPopulation}👥 &centerdot; 
-                {signed(settlement.areaAverageQoL, 0)}☺</h1>
+                {settlement.population}👥 &centerdot; 
+                {signed(settlement.averageQoL, 0)}☺</h1>
             <ButtonPanel config={{
-        buttons: settlement.areaSettlements.map((s: SettlementDTO) => 
+        buttons: settlement.cluster.settlements.map((s: SettlementDTO) => 
         ({ label: s.name, data: s })),
     }} onSelected={(_, data) => { selectedSettlement = data; } } />
         </div>
