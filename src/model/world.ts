@@ -176,18 +176,22 @@ export class World implements NoteTaker {
             // Create a new settlement if needed.
             const isNew = best == 'new';
             if (best == 'new') {
+                const originalSettlement = clan.settlement!;
+                const parent = originalSettlement.parent || originalSettlement;
+
                 const dir = Math.random() * 2 * Math.PI;
                 const distance = Math.random() * 10 + 20;
-                const x = clan.settlement!.x + Math.round(Math.cos(dir) * distance);
-                const y = clan.settlement!.y + Math.round(Math.sin(dir) * distance);
+                const x = parent.x + Math.round(Math.cos(dir) * distance);
+                const y = parent.y + Math.round(Math.sin(dir) * distance);
                 const newSettlement = new Settlement(this, `Hamlet ${this.settlements.length + 1}`,
                     x, y, new Clans(this));
                 this.settlements.push(newSettlement);
 
-                newSettlement.parent = clan.settlement;
-                clan.settlement!.daughters.push(newSettlement);
+                newSettlement.parent = parent;
+                parent.daughters.push(newSettlement);
 
                 best = newSettlement;
+                this.addNote('🏠', `New settlement ${newSettlement.name} founded from ${originalSettlement.name} with parent ${newSettlement.parent!.name}.`);
                 this.annals.log(
                     `Clan ${clan.name} founded ${newSettlement.name}`, newSettlement);
             }

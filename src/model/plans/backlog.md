@@ -75,13 +75,13 @@
 
 - Better display of hamlets
   - new settlement area main view
-    - total population
-    - qol
+    x total population
+    x qol
     x list of settlements with pop and qol
   - show area values on the map
   - show per-individual settlement pop and qol somewhere
   - have hamlets appear around towns in a circular pattern
-  - avoid granddaughters for now
+  x avoid granddaughters for now
   - enhance buttonpanel
     - smaller font or different size or format so buttons look better here
     - better layout options
