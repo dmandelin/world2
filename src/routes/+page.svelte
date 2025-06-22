@@ -1,7 +1,7 @@
 <script>
     import Land from '../components/Land.svelte';
     import Map from '../components/Map.svelte';
-    import SettlementArea from '../components/SettlementArea.svelte';
+    import SettlementArea from '../components/SettlementCluster.svelte';
     import Sidebar from '../components/Sidebar.svelte';
     import { world as _world } from '../model/world';
 

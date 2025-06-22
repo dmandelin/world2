@@ -58,21 +58,21 @@ export class OwnPrestigeCalc {
         this.items = [];
         if (clan === other) {
             this.items.push(new DirectPrestigeCalcItem('Self', 5));
-        } else if (clan.settlement!.size > 300) {
+        } else if (clan.settlement!.population > 300) {
             this.items.push(new DirectPrestigeCalcItem('Strangers', -25));
             return;
         } else {
             this.items.push(new DirectPrestigeCalcItem('Neighbors', 0));
         }
 
-        const averageSize = other.settlement!.clans.reduce((acc, c) => acc + c.size, 0) / other.settlement!.clans.length;
+        const averageSize = other.settlement!.clans.reduce((acc, c) => acc + c.population, 0) / other.settlement!.clans.length;
         const averageStrength = other.settlement!.clans.reduce((acc, c) => acc + c.strength, 0) / other.settlement!.clans.length;
         const averageIntelligence = other.settlement!.clans.reduce((acc, c) => acc + c.intelligence, 0) / other.settlement!.clans.length;
         const averageHorticulture = other.settlement!.clans.reduce((acc, c) => acc + c.skill, 0) / other.settlement!.clans.length;
         const averageEffectiveRitualSkill = other.settlement!.clans.reduce((acc, c) => acc + c.ritualEffectivenessCalc.effectiveSkill, 0) / other.settlement!.clans.length;
         this.items.push(
             new DiffBasedPrestigeCalcItem('Seniority', -5, clan.seniority, other.seniority),
-            new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.size),
+            new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.population),
             new DiffBasedPrestigeCalcItem('Strength', 0.1, averageStrength, other.strength),
             new DiffBasedPrestigeCalcItem('Intelligence', 0.1, averageIntelligence, other.intelligence),
             new DiffBasedPrestigeCalcItem('Horticulture', 0.1, averageHorticulture, other.skill),
@@ -145,7 +145,7 @@ export class PrestigeCalc {
         }
         this.buffer('Inferred', this.inferredPrestige_.value, this.prestigeOfInference);
 
-        if (this.clan.settlement!.size < 300) {
+        if (this.clan.settlement!.population < 300) {
             for (const model of this.clan.prestigeViews.keys()) {
                 if (model === this.other || model === this.clan) continue;
                 this.buffer(model.name, model.prestigeViewOf(this.other)!.value, this.clan.prestigeViewOf(model)!.value);

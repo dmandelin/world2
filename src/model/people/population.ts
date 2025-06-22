@@ -38,7 +38,7 @@ export class PopulationChange {
     ];
 
     constructor(public readonly clan: Clan, empty: boolean = false) {
-        this.previousSize = clan.size;
+        this.previousSize = clan.population;
 
         if (empty) {
             this.births = 0;

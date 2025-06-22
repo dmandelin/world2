@@ -62,9 +62,9 @@ function statusValue(clan: Clan): number {
 export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): number {
     let population;
     if (overrideSettlement) {
-        population = overrideSettlement.size + clan.size;
+        population = overrideSettlement.population + clan.population;
     } else {
-        population = clan.settlement!.size;
+        population = clan.settlement!.population;
     }
 
     const r = population / 300;

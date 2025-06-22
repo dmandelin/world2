@@ -406,13 +406,13 @@ export class Clan {
         readonly annals: Annals,
         public name: string,
         public color: string,
-        public size: number,
+        public population: number,
         public strength: number = randomStat(),
         public intelligence: number = randomStat(),
     ) {
         for (let i = 0; i < 4; ++i) {
-            this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * size);
-            this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * size);
+            this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * population);
+            this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * population);
         }
 
         this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
@@ -498,8 +498,8 @@ export class Clan {
         let n = 0;
         for (const clan of this.settlement?.clans ?? []) {
             if (clan === this) continue;
-            r += this.assessments.alignment(clan) * clan.size;
-            n += clan.size;
+            r += this.assessments.alignment(clan) * clan.population;
+            n += clan.population;
         }
         return r / n;
     }
@@ -509,8 +509,8 @@ export class Clan {
         let n = 0;
         for (const clan of this.settlement?.clans ?? []) {
             if (clan === this) continue;
-            r += clan.assessments.alignment(this) * clan.size;
-            n += clan.size;
+            r += clan.assessments.alignment(this) * clan.population;
+            n += clan.population;
         }
         return r / n;
     }
@@ -540,7 +540,7 @@ export class Clan {
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
         // Consumption from keeping.
         const testKeepPot = new Pot('', []);
-        testKeepPot.accept(this.size, this.size * this.productivity);
+        testKeepPot.accept(this.population, this.population * this.productivity);
         const keepReturn = testKeepPot.output;
 
         // Consumption from sharing.
@@ -549,18 +549,18 @@ export class Clan {
         for (const clan of policies.keys()) {
             if (clan == this) continue;
             const policy = policies.get(clan);
-            const input = clan.size * clan.productivity;
+            const input = clan.population * clan.productivity;
             if (policy === EconomicPolicies.Share) {
-                testShareBasePot.accept(clan.size, input);
+                testShareBasePot.accept(clan.population, input);
             } else if (policy === EconomicPolicies.Cheat) {
-                testShareBasePot.accept(clan.size, input * (1 - slippage));
+                testShareBasePot.accept(clan.population, input * (1 - slippage));
             }
         }
         const shareOthersBaseReturn = testShareBasePot.output;
         // Now add us to the pot.
         const testSharePot = testShareBasePot.clone();
-        testSharePot.accept(this.size, this.size * this.productivity);
-        const shareSelfReturn = testSharePot.output * this.size / testSharePot.contributors;
+        testSharePot.accept(this.population, this.population * this.productivity);
+        const shareSelfReturn = testSharePot.output * this.population / testSharePot.contributors;
         // Determine a net return to others for sharing.
         const shareOthersNetReturn = (testSharePot.output - shareSelfReturn) - shareOthersBaseReturn;
         // For now simply assume a small prosocial bias giving r = 0.1.
@@ -569,9 +569,9 @@ export class Clan {
 
         // Consumption from cheating.
         const testCheatPot = testShareBasePot.clone();
-        testCheatPot.accept(this.size, this.size * this.productivity * (1 - slippage));
-        const cheatPotReturn = testCheatPot.output * this.size / testCheatPot.contributors;
-        const cheatKeepReturn = this.size * this.productivity * slippage * 0.5;
+        testCheatPot.accept(this.population, this.population * this.productivity * (1 - slippage));
+        const cheatPotReturn = testCheatPot.output * this.population / testCheatPot.contributors;
+        const cheatKeepReturn = this.population * this.productivity * slippage * 0.5;
         // Net to others for this reduced level of sharing.
         const cheatOthersNetReturn = (testCheatPot.output - cheatPotReturn) - shareOthersBaseReturn;
         const cheatOthersReturn = 0.1 * cheatOthersNetReturn;
@@ -629,7 +629,7 @@ export class Clan {
     }
 
     get share() {
-        return this.size / (this.settlement?.size ?? this.size);
+        return this.population / (this.settlement?.population ?? this.population);
     }
 
     accept(source: string, good: TradeGood, amount: number) {
@@ -661,7 +661,7 @@ export class Clan {
             this.slices[i][0] = this.lastPopulationChange.newSlices[i][0];
             this.slices[i][1] = this.lastPopulationChange.newSlices[i][1];
         }
-        this.size = this.slicesTotal;
+        this.population = this.slicesTotal;
     }
 
     prepareTraitChanges() {
@@ -723,12 +723,12 @@ export class Clan {
     }
 
     absorb(other: Clan) {
-        if (other.size >= this.size * 0.5) {
+        if (other.population >= this.population * 0.5) {
             this.name = `${this.name}-${other.name}`;
         }
 
-        const origSize = this.size;
-        this.size += other.size;
+        const origSize = this.population;
+        this.population += other.population;
 
         for (let i = 0; i < this.slices.length; ++i) {
             this.slices[i][0] += other.slices[i][0];
@@ -736,8 +736,8 @@ export class Clan {
         }
 
         this.intelligence = Math.round(
-            (this.intelligence * origSize + other.intelligence * other.size) / 
-            (origSize + other.size));
+            (this.intelligence * origSize + other.intelligence * other.population) / 
+            (origSize + other.population));
 
         // Cadets of the absorbed clan become cadets of the absorbing clan.
         for (const cadet of other.cadets) {
@@ -749,12 +749,12 @@ export class Clan {
             remove(other.parent.cadets, other);
         }
 
-        this.annals.log(`Clan ${other.name} (${other.size}) joined into clan ${this.name} (${this.size})`, this.settlement);
+        this.annals.log(`Clan ${other.name} (${other.population}) joined into clan ${this.name} (${this.population})`, this.settlement);
     }
 
     splitOff(clans: Clans): Clan {
         const fraction = 0.3 + 0.15 * (Math.random() + Math.random());
-        const newSize = Math.round(this.size * fraction);
+        const newSize = Math.round(this.population * fraction);
 
         const name = randomClanName(clans.map(clan => clan.name));
         const color = randomClanColor(clans.map(clan => clan.color));
@@ -767,7 +767,7 @@ export class Clan {
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
         newClan.assessments = this.assessments.clone();
-        this.size -= newSize;
+        this.population -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
             newClan.slices[i][1] = Math.round(this.slices[i][1] * fraction);
@@ -783,7 +783,7 @@ export class Clan {
         newClan.economicPolicyDecision = this.economicPolicyDecision;
         newClan.consumption = this.consumption.splitOff(newSize);
 
-        this.annals.log(`Clan ${newClan.name} (${newClan.size}) split off from clan ${this.name} (${this.size})`, this.settlement);
+        this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
         return newClan;
     }
 }

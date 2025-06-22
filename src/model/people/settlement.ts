@@ -69,8 +69,8 @@ export class Settlement {
         return this.clans.length === 0;
     }
 
-    get size() {
-        return this.clans.reduce((acc, clan) => acc + clan.size, 0);
+    get population() {
+        return this.clans.reduce((acc, clan) => acc + clan.population, 0);
     }
 
     get popLimit() {
@@ -84,7 +84,7 @@ export class Settlement {
     }
 
     get agricultureDescription() {
-        if (this.size < 300 || !this.technai.hasIrrigation) {
+        if (this.population < 300 || !this.technai.hasIrrigation) {
             return 'We\'re farming small fields of barley and lentils we found by the river.';
         } else {
             return 'We\'re farming fields we irrigated using canals.';
@@ -106,13 +106,13 @@ export class Settlement {
     }
 
     advance() {
-        const sizeBefore = this.size;
+        const sizeBefore = this.population;
  
-        this.technai.advance(this.size);
+        this.technai.advance(this.population);
         this.clans.advance();
         this.advanceRites();
  
-        this.lastSizeChange_ = this.size - sizeBefore;
+        this.lastSizeChange_ = this.population - sizeBefore;
     }
 
     advanceRites(updateOptions: boolean = true) {

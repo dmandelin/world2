@@ -12,12 +12,20 @@ export class SettlementCluster {
         mother.setCluster(this);
     }
 
+    get daughters(): Settlement[] {
+        return this.mother.daughters;
+    }
+
     get clans(): Clan[] {
         return this.settlements.flatMap(s => s.clans);
     }
 
     get population(): number {
         return sumFun(this.settlements, s => s.clans.population);
+    }
+
+    get lastPopulationChange(): number {
+        return sumFun(this.settlements, s => s.lastSizeChange);
     }
 
     get qol(): number {

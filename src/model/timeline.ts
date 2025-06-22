@@ -16,20 +16,20 @@ export class TimePoint {
         this.totalPopulation = world.totalPopulation;
 
         this.averageQoL = weightedAverage(
-            world.allClans, clan => clan.qol, clan => clan.size);
+            world.allClans, clan => clan.qol, clan => clan.population);
         this.averageSubsistenceSat = znan(weightedAverage(
             world.allClans, 
             clan => clan.qolCalc.getSat('Subsistence'), 
-            clan => clan.size));
+            clan => clan.population));
         this.averageRitualSat = znan(weightedAverage(
              world.allClans, 
             clan => clan.qolCalc.getSat('Ritual'), 
-            clan => clan.size));
+            clan => clan.population));
 
         this.clans = world.allClans.map(clan => ({
             name: clan.name,
             color: clan.color,
-            size: clan.size,
+            size: clan.population,
             prestige: clan.averagePrestige,
         }));
     }

@@ -78,7 +78,7 @@
     x total population
     x qol
     x list of settlements with pop and qol
-  - show area values on the map
+  x show area values on the map
   - show per-individual settlement pop and qol somewhere
   x have hamlets appear around towns in a circular pattern
   x avoid granddaughters for now

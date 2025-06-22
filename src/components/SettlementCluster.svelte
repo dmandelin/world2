@@ -26,7 +26,7 @@
         <img src="residents.png" alt="Residents" width="150" height="100" />
         <div>
             <h1>{settlement.name} &centerdot; 
-                {settlement.population}👥 &centerdot; 
+                {settlement.size}👥 &centerdot; 
                 {signed(settlement.averageQoL, 0)}☺</h1>
             <ButtonPanel config={{
         buttons: settlement.cluster.settlements.map((s: SettlementDTO) => 

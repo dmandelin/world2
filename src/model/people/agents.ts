@@ -109,7 +109,7 @@ export class Assessments implements Iterable<Assessment> {
         // something instead of ourselves? Their commmon fraction of
         // production will go back into the pot, and we'll get our share.
         const commonBack = target.economicReport.commonFraction * target.productivity;
-        const ourShare = this.clan.size / this.clan.settlement!.size;
+        const ourShare = this.clan.population / this.clan.settlement!.population;
         return commonBack * ourShare;
     }
 
@@ -117,7 +117,7 @@ export class Assessments implements Iterable<Assessment> {
         // If the settlement is approximately full, large penalty as we
         // are resource-constrained.
         const s = this.clan.settlement!;
-        const fullness = clamp((s.size / s.popLimit - 0.9) * 10, 0, 1);
+        const fullness = clamp((s.population / s.popLimit - 0.9) * 10, 0, 1);
         if (fullness > 0) {
             for (const clan of s.clans) {
                 if (clan === this.clan) continue;
@@ -127,7 +127,7 @@ export class Assessments implements Iterable<Assessment> {
         }
 
         // Otherwise small bonus for positive returns to scale.
-        const gf = Math.pow(s.size / (s.size - this.clan.size), 1/3) - 1;
+        const gf = Math.pow(s.population / (s.population - this.clan.population), 1/3) - 1;
         for (const clan of s.clans) {
             if (clan === this.clan) continue;
             a.rScale = gf;

@@ -199,7 +199,7 @@ export class Rites {
         // at the low end ("the more the merrier") but diminishing returns at
         // the high end ("too many cooks spoil the broth").
 
-        const producerLabor = sum(this.producers.map(c => c.size));
+        const producerLabor = sum(this.producers.map(c => c.population));
         if (this.participants.length) {
             const infrastructure = 300;
             this.outputItems = [
@@ -209,7 +209,7 @@ export class Rites {
             // TFP set to give max per capita output of 1 at around 300 participants.
             this.output = ces([producerLabor, infrastructure], { rho: -5, nu: 1.5, tfp: 1/17.32 });
         } else {
-            const attendees = sum(this.viewers.map(c => c.size));
+            const attendees = sum(this.viewers.map(c => c.population));
             const infrastructure = 50;
             this.outputItems = [
                 ['Producers', producerLabor.toFixed()],
@@ -221,13 +221,13 @@ export class Rites {
     }   
 
     get perCapitaOutput(): number {
-        return this.output / sum(this.consumers.map(c => c.size));
+        return this.output / sum(this.consumers.map(c => c.population));
     }
 
     private updateAppeal() {
         const base = 10;
         const fromQuality = 10 * Math.log2(this.quality);
-        const fromQuantity = 10 * Math.log2(this.output / sum(this.consumers.map(c => c.size)));
+        const fromQuantity = 10 * Math.log2(this.output / sum(this.consumers.map(c => c.population)));
 
         // We don't need this component to be too big because other parts of
         // the calculation also account for scale.

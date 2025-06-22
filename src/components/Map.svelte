@@ -5,7 +5,8 @@
     import { onDestroy, onMount } from 'svelte';
     import { signed } from '../model/lib/format';
     import { world } from '../model/world';
-    import Settlement from './Settlement.svelte';
+    import type { SettlementCluster } from '../model/people/cluster';
+    import { Settlement } from '../model/people/settlement';
     
     let { selection = $bindable() } = $props();
     let selectedLens = $state('Pop');
@@ -54,7 +55,7 @@
         for (const settlement of world.allSettlements) {
             const x = settlement.x;
             const y = settlement.y;
-            const fieldsRadius = 0.5 * Math.sqrt(settlement.size)
+            const fieldsRadius = 0.5 * Math.sqrt(settlement.population)
             const fieldsColor = settlement.abandoned ? '#eee' : '#dfd';
             context!.fillStyle = fieldsColor;
             context!.beginPath();
@@ -63,7 +64,7 @@
         }
 
         drawRivers();
-        drawSettlements();
+        drawPeople();
     }
 
     function drawRivers() {
@@ -97,54 +98,65 @@
         context!.stroke();
     }
 
-    function drawSettlements() {
-        for (const settlement of world.allSettlements) {
-            const x = settlement.x;
-            const y = settlement.y;
-            const s = 3;
-
-            context!.font = '14px sans-serif';
-
-            // Symbol
-            if (settlement.abandoned) {
-                context!.fillStyle = '#777';
-                fillTextCentered('x', x, y);
-            } else if (!settlement.parent) {
-                context!.fillStyle = '#333';
-                context!.fillRect(x - s, y - s, s * 2, s * 2);
-            } else {
-                context!.fillStyle = '#333';
-                context!.fillRect(x - 2, y - 2, 4, 4);
-                continue;
-            }
-
-            // Name
-            fillTextCentered(settlement.name, x, y + s + 15);
-
-            // Lens label (e.g., population)
-            if (!settlement.abandoned) {
-                drawLensLabel(settlement, x, y, s + 32);
-            }
-
-            // Warnings
-            const warnings = [];
-            const minQOL = Math.min(...settlement.clans.map(c => c.qol));
-            if (minQOL < 0) {
-                warnings.push(`Low QoL! (${minQOL.toFixed()})`);
-            }
-            if (settlement.clans.rites.appeal < 0) {
-                warnings.push(`Bad rites! (${(settlement.clans.rites.appeal).toFixed()})`);
-            }
-
-            let yo = 49;
-            for (const w of warnings) {
-                context!.fillStyle = '#d22';
-                context!.font = '12px sans-serif';
-                fillTextCentered(w, x, y + s + yo);
-                yo += 17;
-            }
+    function drawPeople() {
+        for (const cluster of world.clusters) {
+            drawCluster(cluster);
         }
     }
+
+    function drawCluster(cluster: SettlementCluster) {
+        drawSettlement(cluster.mother);
+        for (const settlement of cluster.daughters) {
+            drawSettlement(settlement);
+        }
+    }
+
+    function drawSettlement(settlement: Settlement) {
+        const x = settlement.x;
+        const y = settlement.y;
+        const s = 3;
+
+        context!.font = '14px sans-serif';
+
+        // Symbol
+        if (settlement.abandoned) {
+            context!.fillStyle = '#777';
+            fillTextCentered('x', x, y);
+        } else if (!settlement.parent) {
+            context!.fillStyle = '#333';
+            context!.fillRect(x - s, y - s, s * 2, s * 2);
+        } else {
+            context!.fillStyle = '#333';
+            context!.fillRect(x - 2, y - 2, 4, 4);
+            return;
+        }
+
+        // Name
+        fillTextCentered(settlement.name, x, y + s + 15);
+
+        // Lens label (e.g., population)
+        if (!settlement.abandoned) {
+            drawLensLabel(settlement, x, y, s + 32);
+        }
+
+        // Warnings
+        const warnings = [];
+        const minQOL = Math.min(...settlement.clans.map(c => c.qol));
+        if (minQOL < 0) {
+            warnings.push(`Low QoL! (${minQOL.toFixed()})`);
+        }
+        if (settlement.clans.rites.appeal < 0) {
+            warnings.push(`Bad rites! (${(settlement.clans.rites.appeal).toFixed()})`);
+        }
+
+        let yo = 49;
+        for (const w of warnings) {
+            context!.fillStyle = '#d22';
+            context!.font = '12px sans-serif';
+            fillTextCentered(w, x, y + s + yo);
+            yo += 17;
+        }
+}
 
     function drawLensLabel(settlement: any, x: number, y: number, yo: number) {
         context!.fillStyle = '#333';
@@ -152,7 +164,9 @@
 
         let label = '';
         if (selectedLens === 'Pop') {
-            label = `${settlement.size} (${settlement.lastSizeChange})`;
+            label = `${settlement.population} | \
+${settlement.cluster.population} \
+(${signed(settlement.cluster.lastPopulationChange)})`;
         } else if (selectedLens === 'Rit') {
             label = `${signed(settlement.clans.rites.appeal)}`;
         }

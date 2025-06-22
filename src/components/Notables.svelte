@@ -10,7 +10,7 @@
     function update() {
         try {
             biggestSettlement = world.settlements.reduce((a, b) => a.size > b.size ? a : b);
-            biggestClan = world.allClans.reduce((a, b) => a.size > b.size ? a : b);
+            biggestClan = world.allClans.reduce((a, b) => a.population > b.population ? a : b);
             mostIntelligentClan = world.allClans.reduce((a, b) => a.intelligence > b.intelligence ? a : b);
             strongestClan = world.allClans.reduce((a, b) => a.strength > b.strength ? a : b);
         } catch (e) {
@@ -51,7 +51,7 @@
             <tr>
                 <th>Biggest Clan</th>
                 <td>{biggestClan.name} of {biggestClan.settlement?.name}</td>
-                <td>{biggestClan.size} people</td>
+                <td>{biggestClan.population} people</td>
             </tr>
             <tr>
                 <th>Most Intelligent Clan</th>

@@ -24,11 +24,11 @@ export class Clans extends Array<Clan> {
     }
   
     get population(): number {
-      return this.reduce((total, clan) => total + clan.size, 0);
+      return this.reduce((total, clan) => total + clan.population, 0);
     }
 
     get averageQoL(): number {
-        return averageFun(this, clan => clan.qol, clan => clan.size);
+        return averageFun(this, clan => clan.qol, clan => clan.population);
     }
 
     // Population-weighted average of views of this one.
@@ -38,8 +38,8 @@ export class Clans extends Array<Clan> {
         for (const other of this) {
             const prestige = other.prestigeViewOf(clan);
             if (prestige) {
-                totalPrestige += prestige.value * other.size;
-                totalWeight += other.size;
+                totalPrestige += prestige.value * other.population;
+                totalWeight += other.population;
             }
         }
         return totalWeight ? totalPrestige / totalWeight : 0;
@@ -148,16 +148,16 @@ export class Clans extends Array<Clan> {
                     break;
             }
 
-            const baseProduce = clan.size * clan.productivity;
+            const baseProduce = clan.population * clan.productivity;
             const commonProduce = baseProduce * commonFraction;
             const cheatProduce = cheatFraction * baseProduce;
             const clanProduce = baseProduce - commonProduce - cheatProduce;
 
             if (commonProduce > 0) {
-                this.pot.accept(clan.size, commonProduce);
+                this.pot.accept(clan.population, commonProduce);
             }
             if (clanProduce > 0) {
-                clan.pot.accept(clan.size, clanProduce);
+                clan.pot.accept(clan.population, clanProduce);
             }
 
             clan.economicReport = {
@@ -170,7 +170,7 @@ export class Clans extends Array<Clan> {
     }
 
     distribute() {
-        this.forEach(clan => clan.consumption = new ConsumptionCalc(clan.size));
+        this.forEach(clan => clan.consumption = new ConsumptionCalc(clan.population));
         this.pot.distribute();
         this.forEach(clan => clan.pot.distribute());
     }
@@ -218,7 +218,7 @@ export class Clans extends Array<Clan> {
         const newClans = [];
         for (const clan of this) {
             newClans.push(clan);
-            if (clan.size > Clan.maxDesiredSize) {
+            if (clan.population > Clan.maxDesiredSize) {
                 newClans.push(clan.splitOff(this));
             }
         }
@@ -228,15 +228,15 @@ export class Clans extends Array<Clan> {
     merge() {
         while (true) {
             if (this.length < 2) return;
-            const sortedClans = this.toSorted((a, b) => a.size - b.size);
-            if (sortedClans[0].size >= Clan.minDesiredSize) return;
+            const sortedClans = this.toSorted((a, b) => a.population - b.population);
+            if (sortedClans[0].population >= Clan.minDesiredSize) return;
             sortedClans[1].absorb(sortedClans[0]);
             this.splice(this.indexOf(sortedClans[0]), 1);
         }
     }
 
     prune() {
-        this.splice(0, this.length, ...this.filter(clan => clan.size > 0));
+        this.splice(0, this.length, ...this.filter(clan => clan.population > 0));
     }
 
     updateSeniority() {

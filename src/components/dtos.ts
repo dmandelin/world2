@@ -108,7 +108,7 @@ export function clanDTO(clan: Clan) {
         ritualEffectiveness: clan.ritualEffectiveness,
         ritualEffectivenessTooltip: clan.ritualEffectivenessCalc.tooltip,
         seniority: clan.seniority,
-        size: clan.size,
+        size: clan.population,
         lastPopulationChange: clan.lastPopulationChange,
         tradePartners: tradePartnersDTO(clan),
 
@@ -186,7 +186,7 @@ export class SettlementDTO {
 
     constructor(settlement: Settlement, readonly cluster: ClusterDTO) {
         this.name = settlement.name;
-        this.size = settlement.size;
+        this.size = settlement.population;
         this.averageQoL = settlement.averageQoL;
         this.lastSizeChange = settlement.lastSizeChange;
 
@@ -220,6 +220,10 @@ export class ClusterDTO {
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this));
         this.population = cluster.population;
         this.averageQoL = cluster.qol;
+    }
+
+    get lastPopulationChange() {
+        return sumFun(this.settlements, s => s.lastSizeChange);
     }
 }
 
