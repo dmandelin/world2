@@ -1,7 +1,7 @@
 <script>
     import Land from '../components/Land.svelte';
     import Map from '../components/Map.svelte';
-    import Settlement from '../components/Settlement.svelte';
+    import SettlementArea from '../components/SettlementArea.svelte';
     import Sidebar from '../components/Sidebar.svelte';
     import { world as _world } from '../model/world';
 
@@ -28,7 +28,7 @@
 <div style="display: flex;">
     <Map bind:selection={_selectedSettlement} />
     {#if selectedSettlement}
-    <Settlement settlement={selectedSettlement} />
+    <SettlementArea settlement={selectedSettlement} />
     {:else}
     <Land world={world}/>
     {/if}

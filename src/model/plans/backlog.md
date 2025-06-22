@@ -70,6 +70,8 @@
   - Model how much clans are able to pay attention to each other
   - Desired rituals/roles/laws structure and sat/dissat with present state
   - Conflict over rituals/roles/laws
+  - Have daughter settlements interact somehow -- allow mutual trade and/or
+    learning
 
 - Better display of hamlets
   - new settlement area main view
@@ -90,6 +92,7 @@
   - learning effects of ritual
   - feasting add-on to ritual
   - dance style add-on to ritual
+  - add multi-settlement ritual
 
 - Problems inflicting our people in recent tests:
   - prestige of new junior clans craters as they can be many steps down
