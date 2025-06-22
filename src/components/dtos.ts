@@ -162,6 +162,11 @@ export class SettlementDTO {
     readonly averageQoL: number;
     readonly lastSizeChange: number;
 
+    readonly areaSettlements: SettlementDTO[] = [];
+    readonly areaPopulation: number;
+    readonly areaLastSizeChange: number;
+    readonly areaAverageQoL: number;
+
     readonly clans: ClansDTO;
     readonly localTradeGoods: TradeGood[];
 
@@ -185,6 +190,9 @@ export class SettlementDTO {
     constructor(settlement: Settlement) {
         this.name = settlement.name;
         this.size = settlement.size;
+        this.areaPopulation = settlement.areaSettlements.reduce((acc, s) => acc + s.size, 0);
+        this.areaLastSizeChange = settlement.areaSettlements.reduce((acc, s) => acc + s.lastSizeChange * s.size, 0) / this.areaPopulation;
+        this.areaAverageQoL = settlement.areaSettlements.reduce((acc, s) => acc + s.averageQoL * s.size, 0) / this.areaPopulation;
         this.averageQoL = settlement.averageQoL;
         this.lastSizeChange = settlement.lastSizeChange;
 
@@ -211,13 +219,19 @@ export class SettlementDTO {
 
 export class WorldDTO {
     readonly year: string;
-    readonly settlements: SettlementDTO[];
+    readonly settlements: SettlementDTO[] = [];
     readonly timeline: TimePoint[];
     readonly notes: Note[];
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
-        this.settlements = this.world.settlements.map(s => new SettlementDTO(s));
+
+        const smap = new Map(this.world.settlements.map(s => [s, new SettlementDTO(s)]));
+        for (const [s, dto] of smap) {
+            dto.areaSettlements.push(...s.areaSettlements.map(s => smap.get(s)!));
+            this.settlements.push(dto);
+        }
+
         this.timeline = world.timeline;
         this.notes = [...world.notes];
     }

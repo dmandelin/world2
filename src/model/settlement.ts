@@ -24,6 +24,20 @@ export class Settlement {
         }
     }
 
+    get areaSettlements(): Settlement[] {
+        const settlements = [];
+        const work: Settlement[] = [this];
+        while (work) {
+            const s = work.pop()!;
+            if (!s) break;
+            settlements.push(s);
+            for (const d of s.daughters) {
+                work.push(d);
+            }
+        }
+        return settlements;
+    }
+
     get abandoned() {
         return this.clans.length === 0;
     }

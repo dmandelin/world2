@@ -38,13 +38,13 @@
       }
     }
 
+    let width = $state(0);
+    let height = $state(0);
+  
     let { data }: { data: GraphData } = $props();
     let datasets = $derived.by(() => {
       return data.datasets.map(ds => new Dataset(ds.label, ds.data, ds.color));
     });
-  
-    let width = $state(0);
-    let height = $state(0);
   
     onMount(() => {
       const container = document.querySelector('.line-graph-container');

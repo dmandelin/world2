@@ -1,9 +1,19 @@
 <script lang="ts">
-  let { config, selectedLabel = $bindable(), onSelected }
-    : { 
-        config: { buttons: Array<{label: string }> }, 
+  let { 
+    config, 
+    selectedLabel = $bindable(),
+    selectedData = $bindable(),
+    onSelected,
+  } : { 
+        config: { 
+          buttons: Array<{
+            label: string,
+            data?: any,
+          }> 
+        }, 
         selectedLabel?: string,
-        onSelected?: (label: string) => void
+        selectedData?: any,
+        onSelected?: (label: string, data?: any) => void
     } = $props();
 
   let activeIndex = $state(0);
@@ -11,8 +21,9 @@
   function click(index: number) {
     activeIndex = index;
     selectedLabel = config.buttons[index].label;
+    selectedData = config.buttons[index].data;
     if (onSelected) {
-      onSelected(selectedLabel);
+      onSelected(selectedLabel, selectedData);
     }
   }
 </script>
@@ -20,7 +31,6 @@
 <style>
 .panel {
   display: flex;
-  justify-content: flex-end;
   gap: 0.5rem;
   margin: 1rem 0;
 }
