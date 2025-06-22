@@ -39,7 +39,7 @@
                 {signed(selectedSettlement.averageQoL, 0)}☺</h1>
             <ButtonPanel config={{
         buttons: settlement.cluster.settlements.map((s: SettlementDTO) => 
-        ({ label: s.name, data: s })),
+        ({ label: `${s.name}<br>${s.size}`, data: s })),
     }} onSelected={(_, data) => { selectedSettlement = data; } } />
         </div>
     </div>

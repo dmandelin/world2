@@ -94,10 +94,10 @@
 
 - Better display of hamlets
   x new views
+  - properly update settlement selection in all cases
   - enhance buttonpanel
     - smaller font or different size or format so buttons look better here
     - better layout options
-    - data item option
 
 - Problems inflicting our people in recent tests:
   - prestige of new junior clans craters as they can be many steps down

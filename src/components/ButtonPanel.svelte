@@ -53,7 +53,7 @@
       class="tab-header {i === activeIndex ? 'active' : ''}"
       onclick={() => click(i)}
     >
-      {button.label}
+      {@html button.label}
     </button>
   {/each}
 </div>
