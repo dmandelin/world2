@@ -73,21 +73,6 @@
   - Have daughter settlements interact somehow -- allow mutual trade and/or
     learning
 
-- Better display of hamlets
-  - new settlement area main view
-    x total population
-    x qol
-    x list of settlements with pop and qol
-  x show area values on the map
-  x show per-individual settlement pop and qol somewhere
-  x have hamlets appear around towns in a circular pattern
-  x avoid granddaughters for now
-  - give hamlets better names
-  - enhance buttonpanel
-    - smaller font or different size or format so buttons look better here
-    - better layout options
-    - data item option
-
 - Small but important
   - more reticence to emigrate to a different cluster / or allow migrating to cluster
   - scale bonuses for learning in settlements
@@ -106,6 +91,13 @@
   - feasting add-on to ritual
   - dance style add-on to ritual
   - add multi-settlement ritual
+
+- Better display of hamlets
+  x new views
+  - enhance buttonpanel
+    - smaller font or different size or format so buttons look better here
+    - better layout options
+    - data item option
 
 - Problems inflicting our people in recent tests:
   - prestige of new junior clans craters as they can be many steps down

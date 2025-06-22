@@ -10,6 +10,7 @@ import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
 import { crowdingValue } from "./people/qol";
 import { SettlementCluster } from "./people/cluster";
+import { randomHamletName } from "./people/names";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -187,7 +188,7 @@ export class World implements NoteTaker {
             // Create a new settlement if needed.
             const isNew = best == 'new';
             if (best == 'new') {
-                best = clan.cluster.foundSettlement(`Hamlet ${this.allSettlements.length + 1}`, clan.settlement!);
+                best = clan.cluster.foundSettlement(randomHamletName(), clan.settlement!);
             }
 
             // Move the clan.
