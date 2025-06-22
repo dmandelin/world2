@@ -212,11 +212,13 @@ export class SettlementDTO {
 }
 
 export class ClusterDTO {
+    readonly name: string;
     readonly settlements: SettlementDTO[];
     readonly population: number;
     readonly averageQoL: number;
 
     constructor(private readonly cluster: SettlementCluster) {
+        this.name = cluster.name;
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this));
         this.population = cluster.population;
         this.averageQoL = cluster.qol;

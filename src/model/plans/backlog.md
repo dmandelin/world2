@@ -79,7 +79,7 @@
     x qol
     x list of settlements with pop and qol
   x show area values on the map
-  - show per-individual settlement pop and qol somewhere
+  x show per-individual settlement pop and qol somewhere
   x have hamlets appear around towns in a circular pattern
   x avoid granddaughters for now
   - give hamlets better names

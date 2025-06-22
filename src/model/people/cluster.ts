@@ -1,7 +1,7 @@
 import { averageFun, sumFun } from "../lib/basics";
+import type { Clan } from "./people";
 import type { NoteTaker } from "../notifications";
 import { Clans } from "./clans";
-import type { Clan } from "./people";
 import { Settlement } from "./settlement";
 
 export class SettlementCluster {
@@ -10,6 +10,10 @@ export class SettlementCluster {
     constructor(readonly noteTaker: NoteTaker, readonly mother: Settlement) {
         this.settlements = [mother];
         mother.setCluster(this);
+    }
+
+    get name(): string {
+        return `${this.mother.name} area`;
     }
 
     get daughters(): Settlement[] {
