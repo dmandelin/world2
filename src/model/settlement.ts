@@ -1,16 +1,46 @@
-import { average, clamp, geometricMean } from "./basics";
+import { average, chooseFrom } from "./basics";
 import type { Clans } from "./clans";
 import type { Rites } from "./rites";
 import { Technai } from "./tech";
 import type { TradeGood } from "./trade";
 import type { World } from "./world";
 
+class DaughterSettlementPlacer {
+    readonly places = 12;
+    private radius = Math.random() * 10 + 15;
+    private originAngle = Math.random() * 2 * Math.PI;
+    readonly openPlaces = Array.from({ length: this.places }, (_, i) => i);
+    private jitter = 3;
+
+    constructor(readonly settlement: Settlement) {}
+
+    placeFor(parent: Settlement): [number, number] {
+        if (!this.openPlaces.length) {
+            this.radius *= 1.5;
+            this.jitter *= 1.5;
+            this.originAngle = Math.random() * 2 * Math.PI / this.places;
+            this.openPlaces.push(...Array.from({ length: this.places }, (_, i) => i));
+        }
+        const place = chooseFrom(this.openPlaces, true);
+
+        const angle = this.originAngle + place * (2 * Math.PI / this.places);
+        const x = this.settlement.x + this.radius * Math.cos(angle) + this.generateJitter();
+        const y = this.settlement.y + this.radius * Math.sin(angle) + this.generateJitter();
+        return [Math.round(x), Math.round(y)];
+    }
+
+    private generateJitter() {
+        return (Math.random() * 2 - 1) * this.jitter;
+    }
+}
+
 export class Settlement {
     readonly technai = new Technai(this);
     readonly localTradeGoods = new Set<TradeGood>();
 
     parent: Settlement|undefined;
-    daughters: Settlement[] = [];
+    readonly daughters: Settlement[] = [];
+    readonly daughterPlacer = new DaughterSettlementPlacer(this);
 
     constructor(
         readonly world: World,

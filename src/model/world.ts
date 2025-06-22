@@ -179,10 +179,7 @@ export class World implements NoteTaker {
                 const originalSettlement = clan.settlement!;
                 const parent = originalSettlement.parent || originalSettlement;
 
-                const dir = Math.random() * 2 * Math.PI;
-                const distance = Math.random() * 10 + 20;
-                const x = parent.x + Math.round(Math.cos(dir) * distance);
-                const y = parent.y + Math.round(Math.sin(dir) * distance);
+                const [x, y] = parent.daughterPlacer.placeFor(parent);
                 const newSettlement = new Settlement(this, `Hamlet ${this.settlements.length + 1}`,
                     x, y, new Clans(this));
                 this.settlements.push(newSettlement);
