@@ -83,6 +83,7 @@
   x different rituals at same granularity as production pot
     - later allow option for subsets of clans or multiple clans
   x calculate appeal for each one
+  - fix scale factors going up too high
   - distribute attention per appeal
   - rename relatedness to solidarity
   - solidarity effects of ritual

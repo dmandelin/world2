@@ -207,7 +207,7 @@ export class Rites {
                 ['Infrastructure', infrastructure.toFixed()],
             ];
             // TFP set to give max per capita output of 1 at around 300 participants.
-            this.output = ces([producerLabor, infrastructure], { rho: -5, nu: 1.5, tfp: 1/17.32 });
+            this.output = ces([producerLabor, infrastructure], { rho: -5, nu: 1.333, tfp: 1/6 });
         } else {
             const attendees = sum(this.viewers.map(c => c.population));
             const infrastructure = 50;
@@ -216,7 +216,7 @@ export class Rites {
                 ['Attendees', attendees.toFixed()],
                 ['Infrastructure', infrastructure.toFixed()],
             ];
-            this.output = ces([producerLabor, attendees, infrastructure], { rho: -5, nu: 1.333 });
+            this.output = ces([producerLabor, attendees, infrastructure], { rho: -5, nu: 1.167 });
         }
     }   
 
@@ -248,7 +248,7 @@ export class Rites {
     }
 
     get appealAsTFP(): number {
-        return Math.pow(2, this.appeal / 10);
+        return Math.pow(2, (this.appeal - 10) / 10);
     }
 
     simulateLeaderSelectionOptions(): SimulationResult[] {
