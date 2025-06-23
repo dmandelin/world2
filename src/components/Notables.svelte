@@ -2,14 +2,14 @@
     import { onDestroy, onMount } from 'svelte';
     import { world } from '../model/world';
 
-    let biggestSettlement = $state(world.settlements[0]);
+    let biggestSettlement = $state(world.allSettlements[0]);
     let biggestClan = $state(world.allClans[0]);
     let mostIntelligentClan = $state(world.allClans[0]);
     let strongestClan = $state(world.allClans[0]);
 
     function update() {
         try {
-            biggestSettlement = world.settlements.reduce((a, b) => a.size > b.size ? a : b);
+            biggestSettlement = world.allSettlements.reduce((a, b) => a.population > b.population ? a : b);
             biggestClan = world.allClans.reduce((a, b) => a.population > b.population ? a : b);
             mostIntelligentClan = world.allClans.reduce((a, b) => a.intelligence > b.intelligence ? a : b);
             strongestClan = world.allClans.reduce((a, b) => a.strength > b.strength ? a : b);
@@ -46,7 +46,7 @@
             <tr>
                 <th>Biggest Settlement</th>
                 <td>{biggestSettlement.name}</td>
-                <td>{biggestSettlement.size} people</td>
+                <td>{biggestSettlement.population} people</td>
             </tr>
             <tr>
                 <th>Biggest Clan</th>

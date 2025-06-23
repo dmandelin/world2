@@ -55,7 +55,7 @@ export class Technai {
             case DITCHING.name:
                 return 1.0;
             case IRRIGATION.name:
-                return this.settlement.populationPressureModifier < 0 ? 1.0 : 0.1;
+                return 0.1;
             default:
                 return 1.0;
         }
