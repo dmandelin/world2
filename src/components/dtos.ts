@@ -75,7 +75,6 @@ export type ClanDTO = {
     ritualSkillChange: SkillChange;
     strength: number;
     techModifier: number;
-    tenure: number;
     traits: string[];
 }
 
@@ -122,7 +121,6 @@ export function clanDTO(clan: Clan) {
         ritualSkillChange: clan.ritualSkillChange,
         strength: clan.strength,
         techModifier: clan.techModifier,
-        tenure: clan.tenure,
         traits: [...clan.traits].map(t => t.name),
     };
 }

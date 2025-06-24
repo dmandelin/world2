@@ -121,7 +121,7 @@ export class World implements NoteTaker {
             const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
             const slippage = s.clans.slippage;
             for (const clan of s.clans) {
-                clan.tenure = 1;
+                clan.seniority = 2;
                 clan.chooseEconomicPolicy(snapshot, slippage);
             }
             s.clans.produce();
@@ -193,7 +193,6 @@ export class World implements NoteTaker {
 
             // Move the clan.
             const source = clan.settlement!;
-            clan.tenure = 0;
             clan.moveTo(best);
             clan.traits.delete(PersonalityTraits.SETTLED);
             clan.traits.add(PersonalityTraits.MOBILE);

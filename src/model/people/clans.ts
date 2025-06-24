@@ -124,7 +124,7 @@ export class Clans extends Array<Clan> {
 
         for (const clan of this) clan.prepareTraitChanges();
         for (const clan of this) clan.commitTraitChanges();
-        for (const clan of this) ++clan.tenure;
+        for (const clan of this) clan.advanceSeniority();
     }
 
     produce() {

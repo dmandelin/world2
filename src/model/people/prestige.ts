@@ -2,6 +2,7 @@ import { normal } from "../lib/distributions";
 import { pct, signed, spct } from "../lib/format";
 import type { Clan } from "./people";
 import type { Rites } from "../rites";
+import { averageFun } from "../lib/basics";
 
 interface PrestigeCalcItem {
     name: string;
@@ -65,13 +66,14 @@ export class OwnPrestigeCalc {
             this.items.push(new DirectPrestigeCalcItem('Neighbors', 0));
         }
 
-        const averageSize = other.settlement!.clans.reduce((acc, c) => acc + c.population, 0) / other.settlement!.clans.length;
-        const averageStrength = other.settlement!.clans.reduce((acc, c) => acc + c.strength, 0) / other.settlement!.clans.length;
-        const averageIntelligence = other.settlement!.clans.reduce((acc, c) => acc + c.intelligence, 0) / other.settlement!.clans.length;
-        const averageHorticulture = other.settlement!.clans.reduce((acc, c) => acc + c.skill, 0) / other.settlement!.clans.length;
-        const averageEffectiveRitualSkill = other.settlement!.clans.reduce((acc, c) => acc + c.ritualEffectivenessCalc.effectiveSkill, 0) / other.settlement!.clans.length;
+        const averageSeniority = averageFun(clan.settlement!.clans, c => c.seniority);
+        const averageSize = averageFun(clan.settlement!.clans, c => c.population);
+        const averageStrength = averageFun(clan.settlement!.clans, c => c.strength);
+        const averageIntelligence = averageFun(clan.settlement!.clans, c => c.intelligence);
+        const averageHorticulture = averageFun(clan.settlement!.clans, c => c.skill);
+        const averageEffectiveRitualSkill = averageFun(clan.settlement!.clans, c => c.ritualEffectivenessCalc.effectiveSkill);
         this.items.push(
-            new DiffBasedPrestigeCalcItem('Seniority', -5, clan.seniority, other.seniority),
+            new DiffBasedPrestigeCalcItem('Seniority', 3, averageSeniority, clan.seniority),
             new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.population),
             new DiffBasedPrestigeCalcItem('Strength', 0.1, averageStrength, other.strength),
             new DiffBasedPrestigeCalcItem('Intelligence', 0.1, averageIntelligence, other.intelligence),

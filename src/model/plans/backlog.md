@@ -1,10 +1,10 @@
 ## Top needs
 
 - Fix seniority
-  - change seniority to a rating of how many turns the clan has been
+  x change seniority to a rating of how many turns the clan has been
     present in the settlement, up to a max of 4
-  - add relative rank for fully tenured clans
-  - make seniority prestige based on value relative to average like others
+  x make seniority prestige based on value relative to average like others
+  - add relative rank for fully tenured clans (conditional on some cultural move?)
 - Fix migration
   - idea: go by average QoL and see if there is a different settlement
     that has higher average QoL -- don't assume total information
@@ -17,6 +17,10 @@
   - collect total ritual consumption per clan and display
   - add settlement cluster ritual
     
+- Small items
+  - some migrations not showing as notifications
+  - notifications for clans dying out or merging
+
 ## Original settlement
 
 - Start out people as semi-nomadic

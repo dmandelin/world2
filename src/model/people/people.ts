@@ -297,7 +297,7 @@ export class ClanSkillChange implements SkillChange {
 
         // Things may be a little different after a move, which might
         // work out better or worse for us.
-        if (this.clan.tenure == 0) {
+        if (this.clan.seniority == 0) {
             this.items.push({
                 label: 'Migration',
                 weight: 1, 
@@ -352,8 +352,9 @@ export class Clan {
     static maxDesiredSize = 100;
 
     settlement: Settlement|undefined;
-    seniority: number = -1;
-    tenure: number = 0;
+    // Number of turns it's generally agreed the clan has been in the settlement,
+    // counting a cadet clan based on the parent clan's tenure.
+    seniority: number = 0;
     
     lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 
@@ -491,6 +492,13 @@ export class Clan {
         if (this.parent === other.parent && this.parent !== undefined) return rStep * rStep;
 
         return 0.01;
+    }
+
+    advanceSeniority() {
+        // People can remember back only so far.
+        if (this.seniority < 4) {
+            ++this.seniority;
+        }
     }
 
     get benevolence() {
@@ -684,7 +692,7 @@ export class Clan {
         // Mobility traits
         if (this.traits.has(PersonalityTraits.MOBILE)) {
             // If they've been here a while they might cease to be mobile.
-            if (this.tenure >= 1 && Math.random() < 0.3) {
+            if (this.seniority >= 1 && Math.random() < 0.3) {
                 this.traits.delete(PersonalityTraits.MOBILE);
             }
         } else if (this.traits.has(PersonalityTraits.SETTLED)) {
@@ -694,7 +702,7 @@ export class Clan {
             }
         } else {
             const r = Math.random();
-            if (this.tenure >= 1 && Math.random() < 0.3) {
+            if (this.seniority >= 1 && Math.random() < 0.3) {
                 this.traits.add(PersonalityTraits.SETTLED);
             } else if (r >= 0.9) {
                 this.traits.add(PersonalityTraits.MOBILE);
@@ -717,8 +725,7 @@ export class Clan {
         settlement.clans.push(this);
         this.settlement = settlement;
 
-        this.seniority = -1;
-        this.tenure = 0;
+        this.seniority = 0;
         this.skill_ *= 0.9;
     }
 

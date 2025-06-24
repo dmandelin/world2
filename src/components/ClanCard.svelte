@@ -54,9 +54,9 @@
                 <td>{pct(clan.influence)}</td>
             </tr>
             <tr>
-                <td>Seniority</td>
+                <td>Tenure</td>
                 <td></td>
-                <td>{String.fromCharCode(65 + clan.seniority)}</td>
+                <td>{clan.seniority}</td>
             </tr>
             <tr>
                 <td>People</td>
