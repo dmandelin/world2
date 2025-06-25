@@ -1,5 +1,39 @@
+## Key next themes
+
+Get the current feature set working decently well:
+
+*   Fix/flesh out the existing submodels. They more or less work, but
+    have missing features and bugs. They don't have to be perfect, but
+    they should be "good enough" before doing much else.
+*   Improve graphs and visualizations. These can be for the most part
+    rough, because the data model is very complicated and it would be
+    hard to make a great UI for all of it. But at least it should be
+    possible to read actual population numbers off the graph.
+
+Next, make social learning complex and dynamic:
+
+*   Have the prestige model do something more interesting than blowing
+    up when the population goes over 300. Exactly what is TBD, but it
+    could include clans using more status markers (such as fine pottery
+    or semiprecious gems), clans losing partial information about each
+    other, and clans grouping into neighborhoods.
+    *   This makes the social learning model dynamic: rather than simply
+        learning from people in the same village, clans may change who
+        they learn from, and it gives people reasons to signal to each
+        other.
+*   Add cultural traits (e.g., technologies, home life practices, ritual
+    practices, mythos elements) that can be possessed or not by each
+    clan and model their spread.
+    *   This really gives the social learning model something to learn,
+        and models culture change through society (aka archaeological
+        horizons).
+
 ## Top needs
 
+- Docs
+  x README
+  - instructions for prereqs
+  - bibliography
 - Fix seniority
   x change seniority to a rating of how many turns the clan has been
     present in the settlement, up to a max of 4

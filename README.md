@@ -1,38 +1,69 @@
-# sv
+# world2
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**world2** is a simulation of the development of cities and social
+structures in prehistoric southern Mesopotamia.
 
-## Creating a project
+## Goals
 
-If you're seeing this, you've probably already done this step. Congrats!
+The ultimate goal is to create a map game with as realistic dynamics
+as possible that portrays the development of cities, culture, and
+society in world prehistory and history. It may or may not be 
+entertaining, but it has the structure of a game, so it can equally 
+well be called a game or simulation.
 
-```bash
-# create a new project in the current directory
-npx sv create
+For now this is scoped down to southern Mesopotamia 6500&ndash;4500 BC,
+to make things tractable. Next places to add would be those that had
+important interactions with southern Mesopotamia: nothern Mesopotamia, 
+the Susiana plain to the east, and the mining regions in the Taurus
+mountains to the northwest, and the Zagros mountains to the east.
 
-# create a new project in my-app
-npx sv create my-app
-```
+Key features:
 
-## Developing
+*   Model dynamics based on social science, including history, 
+    economics, anthropology, archaeology, sociology, psychology.
+*   Intertwined development of population, production economy,
+    specialization, trade, religion, and culture.
+*   UI for inspecting model parameters and calculations, to really
+    understand what's going on.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Status
+
+In development. Does stuff but may or may not make any sense. The
+model includes basic submodels for:
+
+*   Population and population growth
+*   Individual clans with a few traits and skills such as local
+    tenure, strength, and farming
+*   Economic production with choices between collective or family
+    production
+*   Ritual production with choices for how to select leaders
+*   Prestige rating for each clan as seen by each other and itself
+*   Social learning of skills and prestige assessments
+*   Quality of life
+*   Migration to a different or new settlement to increase quality
+    of life.
+
+[backlog.md](https://github.com/dmandelin/world2/blob/main/src/model/plans/backlog.md)
+lists near-future plans.
+
+## Architecture
+
+Extreme simplicity is the way for now. This is a SvelteKit application
+running entirely in a web client, with Node serving a few assets.
+
+## Try it
+
+TODO - Instructions for installing prerequisites
 
 ```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+This will build, start the server, and print out a URL. Open the URL.
 
-To create a production version of your app:
+*   The main thing you can do is click the advance turn button in the
+    upper right.
+*   Many of the stats have tooltips showing detailed calculations.
+    On touchscreen, long tap an item to show its tooltip if it has one.
 
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+[Report an issue](https://github.com/dmandelin/world2/issues/new)
