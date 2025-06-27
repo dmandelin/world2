@@ -1,16 +1,16 @@
 import { Annals } from "./annals";
 import { Clan, PersonalityTraits, randomClanColor, randomClanName } from "./people/people";
 import { Clans } from "./people/clans";
-import { chooseFrom, sumFun, maxbyWithValue, shuffled } from "./lib/basics";
+import { chooseFrom, sumFun, shuffled } from "./lib/basics";
 import { Settlement } from "./people/settlement";
 import { TimePoint } from "./timeline";
 import { TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
-import { crowdingValue } from "./people/qol";
 import { SettlementCluster } from "./people/cluster";
 import { randomHamletName } from "./people/names";
+import { MigrationCalc, type MigrationTarget } from "./people/migration";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -155,55 +155,41 @@ export class World implements NoteTaker {
         this.notify();
     }
 
-    emigrate() {
-        // People may move from a place with QoL issues to a better place.
-        // More than one group may want to move to the same place, but
-        // they wouldn't want to crowd in, so we'll have to see who gets
-        // to move first.
+    private handleClanEmigration(clan: Clan, target: MigrationTarget) {
+        const source = clan.settlement!;
+        let actualTarget: Settlement;
+        let isNew = false;
 
-        if (this.allSettlements.length < 2) return;
+        if (target === 'new') {
+            actualTarget = clan.cluster.foundSettlement(randomHamletName(), source);
+            isNew = true;
+        } else {
+            actualTarget = target;
+        }
+
+        clan.moveTo(actualTarget);
+        clan.traits.delete(PersonalityTraits.SETTLED);
+        clan.traits.add(PersonalityTraits.MOBILE);
+
+        if (!isNew) {
+            this.annals.log(
+                `Clan ${clan.name} moved from ${source.name} to ${actualTarget.name}`, source);
+            this.addNote(
+                '↔',
+                `Clan ${clan.name} moved from ${source.name} to ${actualTarget.name}`,
+            );
+        }
+    }
+
+    emigrate() {
+        for (const clan of this.allClans) {
+            clan.migrationCalc = new MigrationCalc(clan);
+        }
 
         for (const clan of shuffled(this.allClans)) {
-            const inertia = clan.traits.has(PersonalityTraits.MOBILE) 
-                ? 0
-                : clan.traits.has(PersonalityTraits.SETTLED)
-                ? 2
-                : 1;
-
-            const moveValue = (settlement: Settlement|'new') => {
-                const newValue = settlement == 'new'
-                    ? 0 : crowdingValue(clan, settlement);
-                const inertiaValue = settlement == 'new'
-                    ? inertia * 2 + 1 : inertia;
-                const oldValue = crowdingValue(clan);
-                return newValue - (oldValue + inertiaValue);
-            }
-
-            // See if there are settlements worth moving to.
-            const targets: Array<Settlement|'new'> = [...this.allSettlements, 'new'];
-            let [best, value] = maxbyWithValue(targets, s => moveValue(s));
-            if (best == clan.settlement) continue;
-            if (value <= 0) break;
-
-            // Create a new settlement if needed.
-            const isNew = best == 'new';
-            if (best == 'new') {
-                best = clan.cluster.foundSettlement(randomHamletName(), clan.settlement!);
-            }
-
-            // Move the clan.
-            const source = clan.settlement!;
-            clan.moveTo(best);
-            clan.traits.delete(PersonalityTraits.SETTLED);
-            clan.traits.add(PersonalityTraits.MOBILE);
-
-            if (!isNew) {
-                this.annals.log(
-                    `Clan ${clan.name} moved from ${source.name} to ${best.name}`, source);
-                this.addNote(
-                    '↔',
-                    `Clan ${clan.name} moved from ${source.name} to ${best.name}`,
-                );
+            const best = clan.migrationCalc.best;
+            if (best && best.value > 0 && best.target !== clan.settlement) {
+                this.handleClanEmigration(clan, best.target);
             }
         }
     }

@@ -1,19 +1,20 @@
 import { Annals } from "../annals";
 import { absmin, clamp, remove } from "../lib/basics";
-import type { Clans } from "./clans";
 import { normal, poisson } from "../lib/distributions";
 import { Assessments } from "./agents";
 import { Pot } from "../production";
-import type { Settlement } from "./settlement";
 import { TradeGoods, type TradeGood } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { traitWeightedAverage, WeightedValue, zScore } from "../lib/modelbasics";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QoLCalc } from "./qol";
 import { pct } from "../lib/format";
-import type { World } from "../world";
 import { Rites } from "../rites";
+import type { Clans } from "./clans";
+import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
+import type { World } from "../world";
+import { MigrationCalc } from "./migration";
 
 const clanGoodsSource = 'clan';
 
@@ -355,6 +356,8 @@ export class Clan {
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 0;
+    migrationCalc: MigrationCalc = new MigrationCalc(this);
+
     
     lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 

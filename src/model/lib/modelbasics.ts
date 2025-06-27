@@ -89,12 +89,12 @@ export type CESParams = {
 export function ces(inputValues: number[], params: CESParams): number {
     const n = inputValues.length;
     if (n === 0) return 0;
-    const rho = params.rho;
+
+    const { rho, nu = 1, tfp = 1 } = params;
     const alpha = params.alpha ?? new Array(n).fill(1 / n);
-    const nu = params.nu ?? 1;
-    const tfp = params.tfp ?? 1;
 
     if (rho === 0) {
+        // This is the Cobb-Douglas case, a limit of the CES function as rho -> 0.
         return tfp * inputValues.reduce((acc, v, i) => acc * Math.pow(v, alpha[i] * nu), 1);
     }
     const sum = inputValues.reduce((acc, v, i) => acc + alpha[i] * Math.pow(v, rho), 0);

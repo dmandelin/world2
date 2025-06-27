@@ -14,19 +14,25 @@ export function absmin(a: number, b: number): number {
 
 export type OptByWithValue<T> = (arr: T[], key: (t: T) => number) => [T, number];
 
-export function maxby<T>(arr: T[], key: (t: T) => number): T {
-    return arr.reduce((acc, cur) => key(acc) > key(cur) ? acc : cur);
+export function maxby<T>(aa: Iterable<T>, key: (t: T) => number): T {
+    return maxbyWithValue(aa, key)[0];
 }
 
-export function maxbyWithValue<T>(arr: T[], key: (t: T) => number): [T, number] {
-    return arr.reduce((acc, cur) => {
+export function maxbyWithValue<T>(aa: Iterable<T>, key: (t: T) => number): [T, number] {
+    let best: T | undefined = undefined;
+    let bestValue = -Infinity;
+    for (const cur of aa) {
         const curValue = key(cur);
-        if (curValue > acc[1]) {
-            return [cur, curValue];
-        } else {
-            return acc;
+        if (curValue > bestValue) {
+            best = cur;
+            bestValue = curValue;
         }
-    }, [arr[0], key(arr[0])]);
+    }
+    if (best === undefined) {
+        console.warn("maxbyWithValue called on empty array");
+        return [undefined as unknown as T, -Infinity];
+    }
+    return [best, bestValue];
 }
 
 export function maxComparing<T>(arr: T[], compareFn: (a: T, b: T) => number): [number, T] {
