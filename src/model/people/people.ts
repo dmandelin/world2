@@ -352,7 +352,7 @@ export class Clan {
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
 
-    settlement: Settlement|undefined;
+    private settlement_: Settlement|undefined;
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 0;
@@ -419,6 +419,14 @@ export class Clan {
         }
 
         this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
+    }
+
+    get settlement(): Settlement {
+        return this.settlement_!;
+    }
+
+    setSettlement(settlement: Settlement) {
+        this.settlement_ = settlement;
     }
 
     get cluster(): SettlementCluster {
@@ -725,7 +733,7 @@ export class Clan {
             this.settlement.clans.remove(this);
         }
         settlement.clans.push(this);
-        this.settlement = settlement;
+        this.settlement_ = settlement;
 
         this.seniority = 0;
         this.skill_ *= 0.9;
@@ -772,7 +780,7 @@ export class Clan {
         newClan.intelligence = this.intelligence;
         newClan.skill_ = this.skill_;
         newClan.ritualSkill_ = this.ritualSkill_;
-        newClan.settlement = this.settlement;
+        newClan.settlement_ = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
         newClan.assessments = this.assessments.clone();

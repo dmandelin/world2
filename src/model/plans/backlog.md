@@ -40,10 +40,13 @@ Next, make social learning complex and dynamic:
   x make seniority prestige based on value relative to average like others
   - add relative rank for fully tenured clans (conditional on some cultural move?)
 - Fix migration
-  - idea: go by average QoL and see if there is a different settlement
-    that has higher average QoL -- don't assume total information
-  - higher reluctance to move to a different cluster than to a different
-    village in the same cluster
+  x include average QoL from goods in the calculation
+  x higher reluctance to move to a different cluster
+  - consider displaying pending moves in the UI
+  - switch to a probabilistic model
+    - compute an appeal per city similar to now
+    - get a "desired home" from softmax
+    - have a logistic probability of making the move based on appeal difference
   - fix messed up consumption and satisfaction values on migration
 - More ritual options
   - give option to attend other clan rituals
@@ -66,12 +69,6 @@ Next, make social learning complex and dynamic:
 - General items we'll need
   x Recenter prestige to zero: we already did that with QoL, will help
     make comparisons more cogent.
-  - Fix up migration code after deleting obsolete things it depends on
-    x Migrate based on crowding
-    - Show reason for migration in notification
-    - Also consider relative status
-    - Also consider ritual quality
-    - Use Boltzmann model
   - Model how much clans are able to pay attention to each other
   - Desired rituals/roles/laws structure and sat/dissat with present state
   - Conflict over rituals/roles/laws
@@ -85,7 +82,6 @@ Next, make social learning complex and dynamic:
   - merge annals and notetaker
   - trade good effects
   - ritual side effects: +health, +relatedness, +monitoring, +learning
-
 
 - Introduce new ritual model
   x different rituals at same granularity as production pot

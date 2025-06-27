@@ -1,6 +1,6 @@
 import { Clan, PersonalityTraits } from "./people";
 import { Settlement } from "./settlement";
-import { maxby, sumFun } from "../lib/basics";
+import { clamp, maxby, sumFun } from "../lib/basics";
 import { crowdingValue } from "./qol";
 
 export type MigrationTarget = Settlement | 'new';
@@ -49,7 +49,8 @@ export class CandidateMigrationCalc {
     constructor(readonly clan: Clan, readonly target: MigrationTarget) {
         this.items = [
             this.inertia(),
-            this.fromPopulation()
+            this.fromPopulation(),
+            this.fromLocalGoods(),
         ];
         this.value = sumFun(this.items, item => item.value);
     }
@@ -70,22 +71,56 @@ export class CandidateMigrationCalc {
             }
         }
 
+        let item: CandidateMigrationCalcItem;
         switch (true) {
             case this.clan.traits.has(PersonalityTraits.MOBILE): 
-                return {label: 'Mobile', value: -0.5};
+                item = {label: 'Mobile', value: -0.5}; break;
             case this.clan.traits.has(PersonalityTraits.SETTLED): 
-                return {label: 'Settled', value: -2};
+                item = {label: 'Settled', value: -2}; break;
             default: 
-                return {label: 'Settling', value: -1};
+                item = {label: 'Settling', value: -1}; break;
         }
+
+        if (this.target !== 'new' && this.target.cluster !== this.clan.settlement.cluster) {
+            item.label = `Far (${item.label})`;
+            item.value = -4 + 2 * item.value;
+        } else {
+            item.label = `Near (${item.label})`;
+        }
+
+        return item;
     }
 
     private fromPopulation(): CandidateMigrationCalcItem {
+        let item: CandidateMigrationCalcItem;
         if (this.target === 'new') {
-            return {label: 'New settlement', value: -5};
+            item = {label: 'Nrw settlement', value: -2};
         } else {
-            return {label: 'Crowding', value: crowdingValue(this.clan, this.target)};
+            item = {label: 'Crowding', value: crowdingValue(this.clan, this.target)};
         }
+        return item;
+    }
+
+    private fromLocalGoods(): CandidateMigrationCalcItem {
+        // Giving full credit for QoL differences causes everyone
+        // to quickly collect in one place.
+        const qlFactor = 0.25;
+        let item: CandidateMigrationCalcItem;
+        if (this.target === 'new') {
+            item = {
+                label: 'Goods like home', 
+                value: qlFactor * this.clan.settlement.averageQoLFromGoods,
+            };
+        } else {
+            item = {
+                label: 'Local goods', 
+                value: qlFactor * this.target.averageQoLFromGoods,
+            };
+        }
+        
+        // Don't let this get too huge.
+        item.value = clamp(item.value, -5, 5);
+        return item;
     }
 }
 
