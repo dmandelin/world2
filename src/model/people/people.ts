@@ -14,7 +14,7 @@ import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { MigrationCalc } from "./migration";
+import { MigrationCalc, type MigrationTarget } from "./migration";
 
 const clanGoodsSource = 'clan';
 
@@ -356,8 +356,7 @@ export class Clan {
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 0;
-    migrationCalc: MigrationCalc = new MigrationCalc(this);
-
+    migrationCalc: MigrationCalc = new MigrationCalc(this, true);
     
     lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 

@@ -62,6 +62,8 @@ export type ClanDTO = {
     ritualEffectiveness: number;
     ritualEffectivenessTooltip: string[][];
     seniority: number;
+    migrationTargets: string[][];
+    bestMigrationTarget: string[][];
     lastPopulationChange: PopulationChange;
     size: number;
 
@@ -94,6 +96,8 @@ export function clanDTO(clan: Clan) {
         cadets: clan.cadets,
         parent: clan.parent,
         settlement: clan.settlement!,
+        migrationTargets: clan.migrationCalc.targetsTable,
+        bestMigrationTarget: clan.migrationCalc.bestTargetTable,
         slices: clan.slices,
 
         consumption: clan.consumption.clone(),

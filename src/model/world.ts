@@ -182,13 +182,10 @@ export class World implements NoteTaker {
     }
 
     emigrate() {
-        for (const clan of this.allClans) {
-            clan.migrationCalc = new MigrationCalc(clan);
-        }
-
         for (const clan of shuffled(this.allClans)) {
+            clan.migrationCalc = new MigrationCalc(clan);
             const best = clan.migrationCalc.best;
-            if (best && best.value > 0 && best.target !== clan.settlement) {
+            if (best && best.target !== clan.settlement) {
                 this.handleClanEmigration(clan, best.target);
             }
         }

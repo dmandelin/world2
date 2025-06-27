@@ -56,7 +56,17 @@
             <tr>
                 <td>Tenure</td>
                 <td></td>
-                <td>{clan.seniority}</td>
+                <td>
+                    <Tooltip>
+                        {clan.seniority}
+                        <div slot="tooltip" class="ttt">
+                            <h4>Migration targets</h4>
+                            <DataTable rows={clan.migrationTargets} />
+                            <h4>Best</h4>
+                            <DataTable rows={clan.bestMigrationTarget} />
+                        </div>
+                    </Tooltip>
+                </td>
             </tr>
             <tr>
                 <td>People</td>
