@@ -61,9 +61,9 @@
                         {clan.seniority}
                         <div slot="tooltip" class="ttt">
                             <h4>Migration targets</h4>
-                            <DataTable rows={clan.migrationTargets} />
+                            <DataTable rows={clan.migrationPlan?.targetsTable} />
                             <h4>Best</h4>
-                            <DataTable rows={clan.bestMigrationTarget} />
+                            <DataTable rows={clan.migrationPlan?.bestTargetTable} />
                         </div>
                     </Tooltip>
                 </td>

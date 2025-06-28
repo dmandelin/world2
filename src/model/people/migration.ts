@@ -1,7 +1,9 @@
-import { Clan, PersonalityTraits } from "./people";
-import { Settlement } from "./settlement";
 import { clamp, maxby, sumFun } from "../lib/basics";
+import { Clan, PersonalityTraits } from "./people";
 import { crowdingValue } from "./qol";
+import { randomHamletName } from "./names";
+import { Settlement } from "./settlement";
+import type { NoteTaker } from "../notifications";
 
 export type MigrationTarget = Settlement | 'new';
 
@@ -26,6 +28,10 @@ export class MigrationCalc {
             [target, new CandidateMigrationCalc(clan, target)]));
 
         this.best = maxby(this.targets.values(), item => item.value);
+    }
+
+    advance() {
+        migrateClan(this.clan, this.best.target, this.clan.world);
     }
 
     get targetsTable(): string[][] {
@@ -128,3 +134,27 @@ type CandidateMigrationCalcItem = {
     label: string;
     value: number;
 };
+
+function migrateClan(clan: Clan, target: MigrationTarget, noteTaker: NoteTaker) {
+    const source = clan.settlement!;
+    let actualTarget: Settlement;
+    let isNew = false;
+
+    if (target === 'new') {
+        actualTarget = clan.cluster.foundSettlement(randomHamletName(), source);
+        isNew = true;
+    } else {
+        actualTarget = target;
+    }
+
+    clan.moveTo(actualTarget);
+    clan.traits.delete(PersonalityTraits.SETTLED);
+    clan.traits.add(PersonalityTraits.MOBILE);
+
+    if (!isNew) {
+        noteTaker.addNote(
+            '↔',
+            `Clan ${clan.name} moved from ${source.name} to ${actualTarget.name}`,
+        );
+    }
+}

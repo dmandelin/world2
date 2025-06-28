@@ -14,6 +14,7 @@ import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
 import { weightedAverage } from "../model/lib/modelbasics";
+import type { MigrationCalc } from "../model/people/migration";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -62,8 +63,7 @@ export type ClanDTO = {
     ritualEffectiveness: number;
     ritualEffectivenessTooltip: string[][];
     seniority: number;
-    migrationTargets: string[][];
-    bestMigrationTarget: string[][];
+    migrationPlan: MigrationCalc|undefined;
     lastPopulationChange: PopulationChange;
     size: number;
 
@@ -96,8 +96,7 @@ export function clanDTO(clan: Clan) {
         cadets: clan.cadets,
         parent: clan.parent,
         settlement: clan.settlement!,
-        migrationTargets: clan.migrationCalc.targetsTable,
-        bestMigrationTarget: clan.migrationCalc.bestTargetTable,
+        migrationPlan: clan.migrationPlan,
         slices: clan.slices,
 
         consumption: clan.consumption.clone(),

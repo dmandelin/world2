@@ -9,8 +9,6 @@ import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
 import { SettlementCluster } from "./people/cluster";
-import { randomHamletName } from "./people/names";
-import { MigrationCalc, type MigrationTarget } from "./people/migration";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -133,7 +131,11 @@ export class World implements NoteTaker {
 
     // Let agents predict results and make choices for how to act.
     private plan() {
-        console.log('[World] Planning (nop).');
+        console.log('[World]   Planning.');
+
+        for (const clan of this.allClans) {
+            clan.planMigration();
+        }
     }
 
     private preAdvance() {
@@ -163,10 +165,10 @@ export class World implements NoteTaker {
 
     private advance() {
         // Main advance phase.
+        this.migrate();
         for (const cl of this.clusters) {
             cl.advance();
         }
-        this.emigrate();
 
         this.updatePerceptions();
 
@@ -179,39 +181,9 @@ export class World implements NoteTaker {
         this.notify();
     }
 
-    private handleClanEmigration(clan: Clan, target: MigrationTarget) {
-        const source = clan.settlement!;
-        let actualTarget: Settlement;
-        let isNew = false;
-
-        if (target === 'new') {
-            actualTarget = clan.cluster.foundSettlement(randomHamletName(), source);
-            isNew = true;
-        } else {
-            actualTarget = target;
-        }
-
-        clan.moveTo(actualTarget);
-        clan.traits.delete(PersonalityTraits.SETTLED);
-        clan.traits.add(PersonalityTraits.MOBILE);
-
-        if (!isNew) {
-            this.annals.log(
-                `Clan ${clan.name} moved from ${source.name} to ${actualTarget.name}`, source);
-            this.addNote(
-                '↔',
-                `Clan ${clan.name} moved from ${source.name} to ${actualTarget.name}`,
-            );
-        }
-    }
-
-    emigrate() {
+    migrate() {
         for (const clan of shuffled(this.allClans)) {
-            clan.migrationCalc = new MigrationCalc(clan);
-            const best = clan.migrationCalc.best;
-            if (best && best.target !== clan.settlement) {
-                this.handleClanEmigration(clan, best.target);
-            }
+            clan.advanceMigration();
         }
     }
 

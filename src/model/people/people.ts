@@ -14,7 +14,7 @@ import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { MigrationCalc, type MigrationTarget } from "./migration";
+import { MigrationCalc} from "./migration";
 
 const clanGoodsSource = 'clan';
 
@@ -356,7 +356,6 @@ export class Clan {
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 0;
-    migrationCalc: MigrationCalc = new MigrationCalc(this, true);
     
     lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 
@@ -403,6 +402,8 @@ export class Clan {
     consumption = new ConsumptionCalc(0);
     pot = new Pot(clanGoodsSource, [this]);
     readonly rites: Rites;
+
+    migrationPlan_: MigrationCalc|undefined;
 
     constructor(
         readonly world: World,
@@ -455,6 +456,20 @@ export class Clan {
 
     get qol(): number {
         return this.qolCalc.value;
+    }
+
+    get migrationPlan(): MigrationCalc|undefined {
+        return this.migrationPlan_;
+    }
+
+    planMigration() {
+        this.migrationPlan_ = new MigrationCalc(this);
+    }
+
+    advanceMigration() {
+        if (this.migrationPlan && this.migrationPlan.best.target !== this.settlement) {
+            this.migrationPlan.advance();
+        }
     }
 
     get averagePrestige(): number {
