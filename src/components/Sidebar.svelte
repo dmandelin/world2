@@ -2,7 +2,7 @@
     let { world } = $props();
 
     function click() {
-        world.advance();
+        world.advanceFromPlanningView();
     }
 </script>
 

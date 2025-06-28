@@ -298,7 +298,7 @@ export class WorldDTO {
         });
     }
 
-    advance() {
-        this.world.advance();
+    advanceFromPlanningView() {
+        this.world.advanceFromPlanningView();
     }
 }

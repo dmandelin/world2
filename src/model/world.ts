@@ -44,7 +44,19 @@ class SettlementsBuilder {
     }
 }
 
+// State in the turn substep state machine. A state is a stable point
+// where we can show data in the UI.
+enum TurnState {
+    // See plans and predictions made by the entities, possibly alter 
+    // them.
+    Planning,
+    // See results of executing the previous turn.
+    Reviewing,
+}
+
 export class World implements NoteTaker {
+    private turnState = TurnState.Planning;
+
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
@@ -65,6 +77,9 @@ export class World implements NoteTaker {
 
     constructor() {
     }
+
+    get nowPlanning() { return this.turnState === TurnState.Planning; }
+    get nowReviewing() { return this.turnState === TurnState.Reviewing; }
 
     addNote(shortLabel: string, message: string) {
         this.notes.push(new Note(this.year.toString(), shortLabel, message));
@@ -104,17 +119,26 @@ export class World implements NoteTaker {
         chooseFrom(e!.clans).addKinBasedTradePartner(chooseFrom(u!.clans));
     }
 
-    get motherSettlements() {
-        return this.clusters.map(c => c.mother);
+    // ----------------------------------------------------------------
+    // Action handlers to trigger turn substeps
+
+    advanceFromPlanningView() {
+        console.log('[World] Advance from planning view.');
+        this.advance();
+        this.plan();
     }
 
-    get allSettlements() {
-        return this.clusters.flatMap(c => c.settlements);
+    // ----------------------------------------------------------------
+    // Functions that carry out turn substeps
+
+    // Let agents predict results and make choices for how to act.
+    private plan() {
+        console.log('[World] Planning (nop).');
     }
 
-    preAdvance() {
-        // Decisions can depend on perceptions, so we'll initialize them first,
-        // but then update after pre-advancing state.
+    private preAdvance() {
+        // Decisions can depend on perceptions, so we'll initialize them 
+        // first, but then update after pre-advancing state.
         this.updatePerceptions();
 
         for (const s of this.motherSettlements) {
@@ -137,7 +161,7 @@ export class World implements NoteTaker {
         this.notify();
     }
 
-    advance() {
+    private advance() {
         // Main advance phase.
         for (const cl of this.clusters) {
             cl.advance();
@@ -199,6 +223,14 @@ export class World implements NoteTaker {
 
     get totalPopulation() {
         return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);
+    }
+
+    get motherSettlements() {
+        return this.clusters.map(c => c.mother);
+    }
+
+    get allSettlements() {
+        return this.clusters.flatMap(c => c.settlements);
     }
 
     get allClans() {
