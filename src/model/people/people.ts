@@ -467,9 +467,7 @@ export class Clan {
     }
 
     advanceMigration() {
-        if (this.migrationPlan && this.migrationPlan.best.target !== this.settlement) {
-            this.migrationPlan.advance();
-        }
+        this.migrationPlan?.advance();
     }
 
     get averagePrestige(): number {

@@ -10,6 +10,7 @@ export type MigrationTarget = Settlement | 'new';
 export class MigrationCalc {
     readonly targets: Map<MigrationTarget, CandidateMigrationCalc>;
     readonly best: CandidateMigrationCalc;
+    readonly willMigrate: boolean = false;
 
     constructor(readonly clan: Clan, dummy: boolean = false) {
         if (dummy) {
@@ -18,7 +19,7 @@ export class MigrationCalc {
                 clan: clan,
                 target: 'new',
                 items: [],
-                value: 0
+                value: 0,
             } as unknown as CandidateMigrationCalc;
             return;
         }
@@ -28,10 +29,13 @@ export class MigrationCalc {
             [target, new CandidateMigrationCalc(clan, target)]));
 
         this.best = maxby(this.targets.values(), item => item.value);
+        this.willMigrate = this.best.target !== this.clan.settlement;
     }
 
     advance() {
-        migrateClan(this.clan, this.best.target, this.clan.world);
+        if (this.willMigrate) {
+            migrateClan(this.clan, this.best.target, this.clan.world);
+        }
     }
 
     get targetsTable(): string[][] {

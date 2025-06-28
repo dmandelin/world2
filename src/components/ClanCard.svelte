@@ -6,6 +6,18 @@
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
+
+    let clanUpperRightIcon = $derived.by(() => {
+        return clan.migrationPlan?.willMigrate
+            ? 'migrate-yes-256.png'
+            : 'migrate-no-256.png';
+    });
+
+    let clanUpperRightAlt = $derived.by(() => {
+        return clan.migrationPlan?.willMigrate
+            ? 'This clan will migrate'
+            : 'This clan will not migrate';
+    });
 </script>
 
 <style>
@@ -29,9 +41,34 @@
         font-size: small;
         margin: 0;
     }
+
+    #top {
+        position: relative; /* Needed for absolute positioning of the image */
+    }
+
+    #clan-upper-right-icon {
+        position: absolute;
+        top: 0px;
+        right: -3px;
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+    }
 </style>
 
 <div id="top">
+    <div id="clan-upper-right-icon">
+        <Tooltip>
+            <img width="24" height="24" src={clanUpperRightIcon} alt={clanUpperRightAlt} />    
+            <div slot="tooltip" class="ttt">
+                <h4>Migration targets</h4>
+                <DataTable rows={clan.migrationPlan?.targetsTable} />
+                <h4>Best</h4>
+                <DataTable rows={clan.migrationPlan?.bestTargetTable} />
+            </div>
+        </Tooltip>
+    </div>
+
     <table>
         <tbody>
             <tr>
@@ -57,15 +94,7 @@
                 <td>Tenure</td>
                 <td></td>
                 <td>
-                    <Tooltip>
-                        {clan.seniority}
-                        <div slot="tooltip" class="ttt">
-                            <h4>Migration targets</h4>
-                            <DataTable rows={clan.migrationPlan?.targetsTable} />
-                            <h4>Best</h4>
-                            <DataTable rows={clan.migrationPlan?.bestTargetTable} />
-                        </div>
-                    </Tooltip>
+                    {clan.seniority}
                 </td>
             </tr>
             <tr>
