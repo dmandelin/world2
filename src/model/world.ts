@@ -136,6 +136,9 @@ export class World implements NoteTaker {
         for (const clan of this.allClans) {
             clan.planMigration();
         }
+        
+        // Notify observers.
+        this.notify();
     }
 
     private preAdvance() {

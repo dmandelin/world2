@@ -1,3 +1,5 @@
+import { sum } from './basics';
+
 export function traitFactor(trait: number, a = 1.3) {
     return Math.pow(a, trait - 50);
 }
@@ -76,6 +78,35 @@ export function zScore(value: number, values: readonly number[]): number {
     const [mean, stddev] = meanAndStdDev(values);
     if (stddev === 0) return 0;
     return (value - mean) / stddev;
+}
+
+export function selectBySoftmax<T>(
+    items: Iterable<T>,
+    fun: (t: T) => number,
+    temperature: number = 10,
+): T | undefined {
+    let sum = 0;
+    const weights: number[] = [];
+    const savedItems: T[] = [];
+    for (const item of items) {
+        savedItems.push(item);
+        const weight = Math.exp(fun(item) / temperature);
+        weights.push(weight);
+        sum += weight;
+    }
+
+    if (sum === 0) return undefined;
+    const probabilities = weights.map(w => w / sum);
+    const randomValue = Math.random();
+    let cumulativeProbability = 0;
+    let index = 0;
+    for (const probability of probabilities) {
+        cumulativeProbability += probability;
+        if (randomValue < cumulativeProbability) {
+            return savedItems[index];
+        }
+        index++;
+    }
 }
 
 

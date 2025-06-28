@@ -1,6 +1,7 @@
 <script>
     import { npl, pct, signed, spct, wg } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
+    import MigrationPlan from "./MigrationPlan.svelte";
     import PopulationChange from "./PopulationChange.svelte";
     import PopulationPyramid from "./PopulationPyramid.svelte";
     import Tooltip from "./Tooltip.svelte";
@@ -61,10 +62,7 @@
         <Tooltip>
             <img width="24" height="24" src={clanUpperRightIcon} alt={clanUpperRightAlt} />    
             <div slot="tooltip" class="ttt">
-                <h4>Migration targets</h4>
-                <DataTable rows={clan.migrationPlan?.targetsTable} />
-                <h4>Best</h4>
-                <DataTable rows={clan.migrationPlan?.bestTargetTable} />
+                <MigrationPlan plan={clan.migrationPlan} />
             </div>
         </Tooltip>
     </div>

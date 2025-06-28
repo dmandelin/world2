@@ -33,6 +33,10 @@ Next, make social learning complex and dynamic:
 -   Epic: Blast out all the key components of the new migration model.
 -   Epic: Get to at least 3 interesting and legible graphs.
 
+-   Show want-to-migrate but not yet indicator
+-   Make abandoned daughter villages go away eventually
+-   Make people moving out to new places go the same new place  
+
 ## Top needs
 
 - Docs

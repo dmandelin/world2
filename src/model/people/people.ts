@@ -403,7 +403,7 @@ export class Clan {
     pot = new Pot(clanGoodsSource, [this]);
     readonly rites: Rites;
 
-    migrationPlan_: MigrationCalc|undefined;
+    migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 
     constructor(
         readonly world: World,

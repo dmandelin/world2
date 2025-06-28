@@ -121,7 +121,9 @@
         // Symbol
         if (settlement.abandoned) {
             context!.fillStyle = '#777';
-            fillTextCentered('x', x, y);
+            if (!settlement.parent) {
+                fillTextCentered('x', x, y);
+            }
         } else if (!settlement.parent) {
             context!.fillStyle = '#333';
             context!.fillRect(x - s, y - s, s * 2, s * 2);
