@@ -28,6 +28,11 @@ Next, make social learning complex and dynamic:
         and models culture change through society (aka archaeological
         horizons).
 
+## Top top needs
+
+-   Epic: Blast out all the key components of the new migration model.
+-   Epic: Get to at least 3 interesting and legible graphs.
+
 ## Top needs
 
 - Docs
