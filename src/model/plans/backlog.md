@@ -33,16 +33,19 @@ Next, make social learning complex and dynamic:
 -   Epic: Blast out all the key components of the new migration model.
 -   Epic: Get to at least 3 interesting and legible graphs.
 
+-   Show the actual comparisons with current conditions
+-   Make people moving out to new places go the same new place  
 -   Show want-to-migrate but not yet indicator
 -   Make abandoned daughter villages go away eventually
--   Make people moving out to new places go the same new place  
+-   Make clans that just split off more likely to move
+    -   Also move splitting to plan/review model
 
 ## Top needs
 
 - Docs
   x README
   - instructions for prereqs
-  - bibliography
+  - bibliographyP
 - Fix seniority
   x change seniority to a rating of how many turns the clan has been
     present in the settlement, up to a max of 4

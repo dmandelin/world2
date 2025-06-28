@@ -127,14 +127,15 @@
         } else if (!settlement.parent) {
             context!.fillStyle = '#333';
             context!.fillRect(x - s, y - s, s * 2, s * 2);
+            fillTextCentered(settlement.name, x, y + s + 15);
         } else {
             context!.fillStyle = '#333';
             context!.fillRect(x - 2, y - 2, 4, 4);
-            return;
         }
 
-        // Name
-        fillTextCentered(settlement.name, x, y + s + 15);
+        if (settlement.parent || settlement.abandoned) {
+            return;
+        }
 
         // Lens label (e.g., population)
         if (!settlement.abandoned) {
