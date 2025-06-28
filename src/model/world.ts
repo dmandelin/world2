@@ -31,7 +31,7 @@ class SettlementsBuilder {
             this.clanColors.add(clan.color);
         }
 
-        const settlement = new Settlement(this.world, name, x, y, new Clans(this.world, ...clans));
+        const settlement = new Settlement(this.world, name, x, y, undefined, new Clans(this.world, ...clans));
         const cluster = new SettlementCluster(this.world, settlement);
         return cluster;
     }
@@ -136,7 +136,7 @@ export class World implements NoteTaker {
         for (const clan of this.allClans) {
             clan.planMigration();
         }
-        
+
         // Notify observers.
         this.notify();
     }

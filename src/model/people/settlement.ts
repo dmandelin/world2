@@ -41,7 +41,6 @@ export class Settlement {
     readonly technai = new Technai(this);
     readonly localTradeGoods = new Set<TradeGood>();
 
-    parent: Settlement|undefined;
     readonly daughters: Settlement[] = [];
     readonly daughterPlacer = new DaughterSettlementPlacer(this);
 
@@ -50,7 +49,12 @@ export class Settlement {
         readonly name: string, 
         readonly x: number,
         readonly y: number,
+        readonly parent: Settlement|undefined,
         readonly clans: Clans) {
+        
+        if (this.parent) {
+            this.parent.daughters.push(this);
+        }
         
         for (const clan of clans) {
             clan.setSettlement(this);

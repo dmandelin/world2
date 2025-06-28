@@ -136,12 +136,12 @@ export class ConsumptionCalc {
         sourceMap.set(source, prevAmount + amount);
     }
     
-    splitOff(newPopulation: number): ConsumptionCalc {
-        const newCalc = new ConsumptionCalc(newPopulation);
+    splitOff(originalPopulation: number, cadetPopulation: number): ConsumptionCalc {
+        const newCalc = new ConsumptionCalc(cadetPopulation);
         for (const [good, sourceMap] of this.ledger_) {
             const newSourceMap = new Map<string, number>();
             for (const [source, amount] of sourceMap) {
-                const newAmount = amount * newPopulation / this.population;
+                const newAmount = amount * cadetPopulation / originalPopulation;
                 newSourceMap.set(source, newAmount);
                 this.ledger_.get(good)!.set(source, amount - newAmount);
             }
@@ -783,6 +783,7 @@ export class Clan {
     }
 
     splitOff(clans: Clans): Clan {
+        const originalPopulation = this.population;
         const fraction = 0.3 + 0.15 * (Math.random() + Math.random());
         const newSize = Math.round(this.population * fraction);
 
@@ -811,7 +812,7 @@ export class Clan {
 
         newClan.economicPolicy = this.economicPolicy;
         newClan.economicPolicyDecision = this.economicPolicyDecision;
-        newClan.consumption = this.consumption.splitOff(newSize);
+        newClan.consumption = this.consumption.splitOff(originalPopulation, newSize);
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
         return newClan;

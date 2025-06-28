@@ -30,15 +30,20 @@ Next, make social learning complex and dynamic:
 
 ## Top top needs
 
--   Epic: Blast out all the key components of the new migration model.
--   Epic: Get to at least 3 interesting and legible graphs.
+x   Epic: Blast out all the key components of the new migration model.
+-   Epic: Get to at least 3 interesting and legible graphs. Ideas:
+    -   Existing main page graph: show actual data values
+    -   Scatter plot with correlation between prestige and QoL
+    -   Clan timeline showing history of population, QoL, and residence
 
--   Show the actual comparisons with current conditions
--   Make people moving out to new places go the same new place  
--   Show want-to-migrate but not yet indicator
--   Make abandoned daughter villages go away eventually
--   Make clans that just split off more likely to move
-    -   Also move splitting to plan/review model
+-   Refinements to the new migration model:
+    x   Show the actual comparisons with current conditions
+    -   Make people moving out to new places go the same new place  
+    -   Show want-to-migrate but not yet indicator
+    -   Make abandoned daughter villages go away eventually
+    -   Make clans that just split off more likely to move
+        -   Also move splitting to plan/review model
+    -   Have one clan moving out of a settlement potentially trigger others
 
 ## Top needs
 

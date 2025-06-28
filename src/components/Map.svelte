@@ -119,28 +119,26 @@
         context!.font = '14px sans-serif';
 
         // Symbol
-        if (settlement.abandoned) {
-            context!.fillStyle = '#777';
-            if (!settlement.parent) {
+        context!.fillStyle = settlement.abandoned ? '#777' : '#333';
+        if (!settlement.parent) {
+            if (!settlement.abandoned) {
+                context!.fillRect(x - s, y - s, s * 2, s * 2);
+            } else {
                 fillTextCentered('x', x, y);
             }
-        } else if (!settlement.parent) {
-            context!.fillStyle = '#333';
-            context!.fillRect(x - s, y - s, s * 2, s * 2);
-            fillTextCentered(settlement.name, x, y + s + 15);
         } else {
-            context!.fillStyle = '#333';
             context!.fillRect(x - 2, y - 2, 4, 4);
         }
 
-        if (settlement.parent || settlement.abandoned) {
-            return;
+        // Name
+        if (!settlement.parent && !settlement.abandoned) {
+            fillTextCentered(settlement.name, x, y + s + 15);
         }
 
+        if (settlement.parent) return;
+
         // Lens label (e.g., population)
-        if (!settlement.abandoned) {
-            drawLensLabel(settlement, x, y, s + 32);
-        }
+        drawLensLabel(settlement, x, y, s + 32);
 
         // Warnings
         const warnings = [];

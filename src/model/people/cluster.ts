@@ -54,12 +54,10 @@ export class SettlementCluster {
 
     foundSettlement(name: string, source: Settlement): Settlement {
         const [x, y] = this.mother.daughterPlacer.placeFor(this.mother);
-        const settlement = new Settlement(this.mother.world, name, x, y, new Clans(this.noteTaker));
+        const settlement = new Settlement(this.mother.world, name, x, y, this.mother, new Clans(this.noteTaker));
 
         settlement.setCluster(this);
-        settlement.parent = this.mother;
         this.settlements.push(settlement);
-        this.mother.daughters.push(settlement);
         this.noteTaker.addNote('🏠', 
             `Founded new village ${settlement.name} from ${source.name} near ${this.mother.name}.`);
         return settlement;

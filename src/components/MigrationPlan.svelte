@@ -11,7 +11,11 @@
         const columnSet = new Set<string>();
         const items = [];
         for (const candidate of plan.targets.values()) {
-            const name = candidate.target === 'new' ? '(New)' : candidate.target.name;
+            const name = candidate.target === 'new' 
+                ? '(New)' 
+                : candidate.target === candidate.clan.settlement
+                ? '(Here)'
+                : candidate.target.name;
             const eligibility = candidate.isEligible ? '' : 'X';
             const value = signed(candidate.value, 1);
             const columns = [];

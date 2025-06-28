@@ -25,8 +25,10 @@ export class MigrationCalc {
         this.prepare();
         this.trigger();
 
-        if (this.wantToMove) {
-            this.filter();
+        // We really only need this if moving but it can be nice to
+        // see the data.
+        this.filter();
+        if (this.wantToMove) {  
             this.select();
             this.decide();
         }
@@ -68,7 +70,6 @@ export class MigrationCalc {
     private filter() {
         const stayCalc = new CandidateMigrationCalc(this.clan, undefined, this.clan.settlement);
         for (const target of this.clan.settlement.cluster.settlements) {
-            if (target === this.clan.settlement) continue;
             this.targets.set(target,  new CandidateMigrationCalc(this.clan, stayCalc, target));
         }
         this.targets.set('new', new CandidateMigrationCalc(this.clan, stayCalc, 'new'));
@@ -127,6 +128,11 @@ export class CandidateMigrationCalc {
         if (this.stayCalc && this.value < this.stayCalc.value) {
             this.isEligible = false;
             this.isIneligibleReason = `No better than home (${this.stayCalc.value.toFixed(1)})`;
+        }
+
+        if (clan.settlement === target) {
+            this.isEligible = false;
+            this.isIneligibleReason = 'Already at home';
         }
     }
 
