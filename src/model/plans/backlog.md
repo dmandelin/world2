@@ -37,7 +37,7 @@ x   Epic: Blast out all the key components of the new migration model.
         x axis ticks and labels
         x y axis 0 tick for zero-centered
         x legend for the multi-case
-        - click to show data point
+        x click to show data point
         - smoothing
         - ???
     -   Scatter plot with correlation between prestige and QoL

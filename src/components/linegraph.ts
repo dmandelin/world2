@@ -93,6 +93,12 @@ export class InputToPixelCoordateTransform {
   applyToY(y: number): number {
     return this.box.y + this.box.height - (y - this.minYAxisValue) * this.yScale;
   }
+
+  unapplyToPoint(xPixel: number, yPixel: number): [number, number] {
+    const x = Math.round((xPixel - this.box.x) / this.xScale);
+    const y = Math.round(this.maxYAxisValue - (yPixel - this.box.y) / this.yScale);
+    return [x, y];
+  }
 }
 
 // Data needed to render a line graph.
@@ -107,6 +113,8 @@ export class Graph {
   readonly xAxisLabels: string[]
   readonly maxXValue: string;
   readonly minXValue: string;
+
+  readonly coordinateTransform: InputToPixelCoordateTransform;
 
   // Lists of (x, y) pairs for each dataset in pixel coordinates.
   readonly scaledDatasets: readonly ScaledDataset[];
@@ -124,16 +132,16 @@ export class Graph {
     [this.minYAxisValue, this.maxYAxisValue] = scaler.endpoints(this.data.datasets);
 
     // Create the coordinate transform.
-    const coordinateTransform = new InputToPixelCoordateTransform(
+    this.coordinateTransform = new InputToPixelCoordateTransform(
       box, this.xAxisLabels, this.minYAxisValue, this.maxYAxisValue);
 
     // Build values that rely on the coordinate transform.
     this.yAxisTicks = scaler.ticks(this.data.datasets).map(value => {
-      const y = coordinateTransform.applyToY(value);
+      const y = this.coordinateTransform.applyToY(value);
       return [value.toFixed(), y];
     });
     this.scaledDatasets = this.data.datasets.map(dataset => {
-      return coordinateTransform.apply(dataset);
+      return this.coordinateTransform.apply(dataset);
     });
 
     // Build the SVG paths for each dataset.
@@ -145,49 +153,19 @@ export class Graph {
           return `L ${x} ${y}`;
         }
       }).join(' ');
-      console.log(pathData);
       return `<path d="${pathData}" stroke="${dataset.color}" fill="none" />`;
     });
   }
 
   get title(): string { return this.data.title || ''; }
-}
 
-/*
-class Dataset {
-  label: string;
-  data: number[];
-  color: string;
+  inputToPixelCoordinates(xInput: number, yInput: number): [number, number] {
+    const xPixel = this.coordinateTransform.applyToX(xInput);
+    const yPixel = this.coordinateTransform.applyToY(yInput);
+    return [xPixel, yPixel];
+  }
 
-  readonly maxValue: number;
-  readonly minValue: number;
-  readonly xStep: number;
-  readonly yScale: number;
-
-  readonly svgPath: string;
-  readonly svgYAxisLabels: string;
-
-  constructor(label: string, data: number[], color: string) {
-    this.label = label;
-    this.data = data;
-    this.color = color;
-
-    this.maxValue = Math.max(...data);
-    this.minValue = Math.min(...data);
-    this.xStep = width / (data.length - 1);
-    this.yScale = height / (this.maxValue - this.minValue);
-
-    [this.svgPath, this.svgYAxisLabels] = getPath(this, 0);
+  pixelToInputCoordinates(xPixel: number, yPixel: number): [number, number] {
+    return this.coordinateTransform.unapplyToPoint(xPixel, yPixel);
   }
 }
-
-class Graph {
-  data: GraphData;
-  datasets: Dataset[];
-
-  constructor(data: GraphData) {
-    this.data = data;
-    this.datasets = data.datasets.map(ds => new Dataset(ds.label, ds.data, ds.color));
-  }
-}
-  */

@@ -5,6 +5,12 @@
   let width = $state(0);
   let height = $state(0);
 
+  let markedXPixel: number|undefined = $state(undefined);
+  let markedYPixel: number|undefined = $state(undefined);
+
+  let xMarkLabel: string|undefined = $state(undefined);
+  let yMarkLabel: string|undefined = $state(undefined);
+
   let { data }: { data: GraphData } = $props();
 
   const margin = 30;
@@ -29,35 +35,26 @@
     }
   });
 
-  /*
-  function getPath(dataset: Dataset, yOffset: number): [string, string] {
-    const maxValue = Math.max(...dataset.data);
-    const minValue = Math.min(...dataset.data);
-    const xStep = width / (dataset.data.length - 1);
-    const yScale = height / (maxValue - minValue);
+  function onClick(event: MouseEvent) {
+    const clickX = event.offsetX;
+    const clickY = event.offsetY;
 
-    const line = dataset.data
-      .map((value, index) => {
-        const x = index * xStep;
-        const y = height - (value - minValue) * yScale;
-        return `${index === 0 ? 'M' : 'L'} ${x},${y + yOffset}`;
-      })
-      .join(' ');
+    // Check if the click is within the graph area
+    if (clickX >= gleft && clickX <= gright && clickY >= gtop && clickY <= gbot) {
+      const [xIndex, yValue] = graph.pixelToInputCoordinates(clickX, clickY)
 
-    const yAxisLabels = dataset.data.map((value, index) => {
-      const x = index * xStep;
-      const y = height - 16 + yOffset;
-      return `<text x="${x}" y="${y + 4}" font-size="10" text-anchor="middle">${value}</text>`;
-    }).join('');
+      markedXPixel = graph.inputToPixelCoordinates(xIndex, 0)[0];
+      markedYPixel = graph.scaledDatasets[0].data[xIndex][1];
 
-    if (line.includes("NaN")) {
-      console.warn(`Dataset "${dataset.label}" contains NaN values.`);
-      debugger;
+      xMarkLabel = graph.xAxisLabels[xIndex];
+      yMarkLabel = yValue.toFixed();
+    } else {
+      markedXPixel = undefined; 
+      markedYPixel = undefined;
+      xMarkLabel = undefined;
+      yMarkLabel = undefined;
     }
-
-    return [line, yAxisLabels];
   }
-    */
 </script>
 
 <style>
@@ -77,7 +74,9 @@
 
 
 <div class="line-graph-container">
-  <svg viewBox={`0 0 ${width} ${height}`}>
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <svg viewBox={`0 0 ${width} ${height}`} onclick={onClick}>
     <!-- Graph title -->
     <text x="{width / 2}" y="{margin / 2}" font-size="16" text-anchor="middle" alignment-baseline="middle">{graph.title}</text>
 
@@ -99,6 +98,13 @@
       <text x="{gleft-6}" y="{y}" font-size="10" text-anchor="end" alignment-baseline="middle">{label}</text>
     {/each}
 
+    <!-- Y axis label for marked pixel -->
+    {#if markedYPixel !== undefined}
+      <text x="{gleft-6}" y="{markedYPixel}" font-size="10" text-anchor="end" alignment-baseline="middle">
+        {yMarkLabel}
+      </text>
+    {/if}
+
     <!-- X axis left mark -->
     <line x1="{gleft}" y1="{gbot}" x2="{gleft}" y2="{gbot+4}" stroke="black" />
     <text x="{gleft}" y="{gbot+6}" font-size="10" text-anchor="end" alignment-baseline="hanging" transform="rotate(-45 {gleft} {gbot+6})">{graph.minXValue}</text>
@@ -106,6 +112,13 @@
     <!-- X axis right mark -->
     <line x1="{gright}" y1="{gbot}" x2="{gright}" y2="{gbot+4}" stroke="black" />
     <text x="{gright}" y="{gbot+6}" font-size="10" text-anchor="end" alignment-baseline="hanging" transform="rotate(-45 {gright} {gbot+6})">{graph.maxXValue}</text>
+
+    <!-- X axis label for marked pixel -->
+    {#if markedXPixel !== undefined}
+      <text x="{markedXPixel}" y="{gbot+6}" font-size="10" text-anchor="end" alignment-baseline="hanging" transform="rotate(-45 {markedXPixel} {gbot+6})">
+        {xMarkLabel}
+      </text>
+    {/if}
 
     <!-- legend if there is more than one dataset -->
     {#if graph.scaledDatasets.length > 1}
@@ -118,5 +131,13 @@
     {#each graph.svgPaths as svgPath}
       {@html svgPath}
     {/each}
+
+    <!-- gray horizontal and vertical lines through marked pixel -->
+    {#if markedXPixel !== undefined && markedYPixel !== undefined}
+      <line x1="{markedXPixel}" y1="{gtop}" x2="{markedXPixel}" y2="{gbot}" stroke="gray" stroke-dasharray="4" />
+      <line x1="{gleft}" y1="{markedYPixel}" x2="{gright}" y2="{markedYPixel}" stroke="gray" stroke-dasharray="4" />
+    {/if}
   </svg>
 </div>
+
+<div>{graph.scaledDatasets[0].data}</div>
