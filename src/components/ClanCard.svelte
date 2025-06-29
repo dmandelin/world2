@@ -13,6 +13,8 @@
     let clanUpperRightIcon = $derived.by(() => {
         return clan.migrationPlan?.willMigrate
             ? 'migrate-yes-256.png'
+            : clan.migrationPlan?.wantToMove
+            ? 'migrate-want-256.png'
             : 'migrate-no-256.png';
     });
 

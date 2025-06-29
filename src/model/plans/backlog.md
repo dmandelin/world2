@@ -5,6 +5,7 @@ Get the current feature set working decently well:
 *   Fix/flesh out the existing submodels. They more or less work, but
     have missing features and bugs. They don't have to be perfect, but
     they should be "good enough" before doing much else.
+
 *   Improve graphs and visualizations. These can be for the most part
     rough, because the data model is very complicated and it would be
     hard to make a great UI for all of it. But at least it should be
@@ -43,7 +44,7 @@ x   Epic: Blast out all the key components of the new migration model.
 -   Refinements to the new migration model:
     x   Show the actual comparisons with current conditions
     x   Make people moving out to new places go the same new place  
-    -   Show want-to-migrate but not yet indicator
+    x   Show want-to-migrate but not yet indicator
     -   Make abandoned daughter villages go away eventually
     -   Make clans that just split off more likely to move
         -   Also move splitting to plan/review model
