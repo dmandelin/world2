@@ -42,7 +42,7 @@ x   Epic: Blast out all the key components of the new migration model.
 
 -   Refinements to the new migration model:
     x   Show the actual comparisons with current conditions
-    -   Make people moving out to new places go the same new place  
+    x   Make people moving out to new places go the same new place  
     -   Show want-to-migrate but not yet indicator
     -   Make abandoned daughter villages go away eventually
     -   Make clans that just split off more likely to move

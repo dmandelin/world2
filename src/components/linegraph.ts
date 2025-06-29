@@ -71,7 +71,7 @@ export type GraphData = {
   secondYAxis?: {
     datasets: Dataset[],
     scaler?: YAxisScaler,
-  }
+  };
 };
 
 type ScaledDataset = {

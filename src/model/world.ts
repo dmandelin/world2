@@ -9,6 +9,7 @@ import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
 import { SettlementCluster } from "./people/cluster";
+import { NewSettlementSupplier } from "./people/migration";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -185,8 +186,9 @@ export class World implements NoteTaker {
     }
 
     migrate() {
+        const nss = new NewSettlementSupplier();
         for (const clan of shuffled(this.allClans)) {
-            clan.advanceMigration();
+            clan.advanceMigration(nss);
         }
     }
 

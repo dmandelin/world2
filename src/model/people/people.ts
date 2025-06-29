@@ -14,7 +14,7 @@ import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { MigrationCalc} from "./migration";
+import { MigrationCalc, type NewSettlementSupplier} from "./migration";
 import type { GraphData } from "../../components/linegraph";
 
 const clanGoodsSource = 'clan';
@@ -471,8 +471,8 @@ export class Clan {
         this.migrationPlan_ = new MigrationCalc(this);
     }
 
-    advanceMigration() {
-        this.migrationPlan?.advance();
+    advanceMigration(newSettlementSupplier: NewSettlementSupplier) {
+        this.migrationPlan?.advance(newSettlementSupplier);
     }
 
     get averagePrestige(): number {

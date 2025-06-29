@@ -4,9 +4,29 @@ import { Clan, PersonalityTraits } from "./people";
 import { crowdingValue } from "./qol";
 import { randomHamletName } from "./names";
 import { Settlement } from "./settlement";
+import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../notifications";
 
 export type MigrationTarget = Settlement | 'new';
+
+export class NewSettlementSupplier {
+    private readonly newBySource: Map<Settlement, Settlement> = new Map();
+
+    constructor() {}
+
+    get(cluster: SettlementCluster, source: Settlement): Settlement {
+        // We assume that clans from the same source found a village
+        // together, but clans from different sources are independent.
+        if (this.newBySource.has(source)) {
+            return this.newBySource.get(source)!;
+        }
+
+        const name = randomHamletName();
+        const newSettlement = cluster.foundSettlement(name, source);
+        this.newBySource.set(source, newSettlement);
+        return newSettlement;
+    }
+}
 
 export class MigrationCalc {
     qolThreshold: number = 0;
@@ -85,9 +105,9 @@ export class MigrationCalc {
         this.willMigrate = Boolean(this.best?.isEligible);
     }
 
-    advance() {
+    advance(newSettlementSupplier: NewSettlementSupplier) {
         if (this.willMigrate) {
-            migrateClan(this.clan, this.best!.target, this.clan.world);
+            migrateClan(this.clan, this.best!.target, newSettlementSupplier, this.clan.world);
         }
     }
 
@@ -207,13 +227,18 @@ type CandidateMigrationCalcItem = {
     reason: string;
 };
 
-function migrateClan(clan: Clan, target: MigrationTarget, noteTaker: NoteTaker) {
+function migrateClan(
+        clan: Clan, 
+        target: MigrationTarget,
+        newSettlementSupplier: NewSettlementSupplier,
+        noteTaker: NoteTaker) {
+
     const source = clan.settlement!;
     let actualTarget: Settlement;
     let isNew = false;
 
     if (target === 'new') {
-        actualTarget = clan.cluster.foundSettlement(randomHamletName(), source);
+        actualTarget = newSettlementSupplier.get(source.cluster, source);
         isNew = true;
     } else {
         actualTarget = target;
