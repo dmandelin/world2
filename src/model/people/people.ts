@@ -98,7 +98,7 @@ export class ConsumptionCalc {
     // good -> source -> amount
     private ledger_: Map<TradeGood, Map<string, number>> = new Map();
 
-    constructor(readonly population: number) {
+    constructor(public population: number) {
     }
 
     clone(): ConsumptionCalc {
@@ -138,6 +138,7 @@ export class ConsumptionCalc {
     }
     
     splitOff(originalPopulation: number, cadetPopulation: number): ConsumptionCalc {
+        this.population = originalPopulation - cadetPopulation;
         const newCalc = new ConsumptionCalc(cadetPopulation);
         for (const [good, sourceMap] of this.ledger_) {
             const newSourceMap = new Map<string, number>();
@@ -408,6 +409,8 @@ export class Clan {
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 
+    private qolCalc_: QoLCalc|undefined;
+
     constructor(
         readonly world: World,
         readonly annals: Annals,
@@ -455,12 +458,16 @@ export class Clan {
         return this.ritualSkill_;
     }
 
+    consume() {
+        this.qolCalc_ = new QoLCalc(this);
+    }
+
     get qolCalc() {
-        return new QoLCalc(this);
+        return this.qolCalc_!;
     }
 
     get qol(): number {
-        return this.qolCalc.value;
+        return this.qolCalc?.value || 0;
     }
 
     get migrationPlan(): MigrationCalc|undefined {
@@ -818,6 +825,9 @@ export class Clan {
         newClan.economicPolicy = this.economicPolicy;
         newClan.economicPolicyDecision = this.economicPolicyDecision;
         newClan.consumption = this.consumption.splitOff(originalPopulation, newSize);
+
+        this.consume();
+        newClan.consume();
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
         return newClan;

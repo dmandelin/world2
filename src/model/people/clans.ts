@@ -115,6 +115,7 @@ export class Clans extends Array<Clan> {
         }
         this.produce();
         this.distribute();
+        this.consume();
 
         this.marry();
         for (const clan of this) clan.advancePopulation();
@@ -173,6 +174,10 @@ export class Clans extends Array<Clan> {
         this.forEach(clan => clan.consumption = new ConsumptionCalc(clan.population));
         this.pot.distribute();
         this.forEach(clan => clan.pot.distribute());
+    }
+
+    consume() {
+        this.forEach(clan => clan.consume());
     }
 
     *pairs() {
