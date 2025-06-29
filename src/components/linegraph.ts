@@ -5,9 +5,39 @@ type Dataset = {
   color: string;
 };
 
+abstract class YAxisScaler {
+  abstract endpoints(datasets: Dataset[]): [number, number];
+
+  range(datasets: Dataset[]): [number, number] {
+    const min = Math.min(...datasets.flatMap(ds => ds.data));
+    const max = Math.max(...datasets.flatMap(ds => ds.data));
+    return [min, max];
+  }
+}
+
+export class DefaultScaler extends YAxisScaler {
+  endpoints(datasets: Dataset[]): [number, number] {
+    return this.range(datasets);
+  }
+}
+
+export class PopulationScaler extends YAxisScaler {
+  endpoints(datasets: Dataset[]): [number, number] {
+    const [min, max] = this.range(datasets);
+    return [0, Math.max(1000, Math.ceil(max / 1000) * 1000)];
+  }
+}
+
+export class ZeroCenteredScaler extends YAxisScaler {
+  endpoints(datasets: Dataset[]): [number, number] {
+    return [-100, 100];
+  }
+}
+
 export type GraphData = {
   title?: string;
   labels: Iterable<string>;
+  yAxisScaler?: YAxisScaler;
   datasets: Dataset[];
 };
 
@@ -51,10 +81,6 @@ export class InputToPixelCoordateTransform {
 
 // Data needed to render a line graph.
 export class Graph { 
-  // Max and min values in the datasets.
-  readonly maxYValue: number;
-  readonly minYValue: number;
-
   // Max and min values for the Y axis of the graph.
   readonly maxYAxisValue: number;
   readonly minYAxisValue: number;
@@ -71,11 +97,8 @@ export class Graph {
   readonly svgPaths: readonly string[];
 
   constructor(readonly data: GraphData, box: GraphBox) {
-    this.maxYValue = Math.max(...this.data.datasets.flatMap(ds => ds.data));
-    this.minYValue = Math.min(...this.data.datasets.flatMap(ds => ds.data));
-
-    this.maxYAxisValue = Math.max(1000, Math.ceil(this.maxYValue / 1000) * 1000);
-    this.minYAxisValue = 0;
+    const scaler = data.yAxisScaler || new DefaultScaler();
+    [this.minYAxisValue, this.maxYAxisValue] = scaler.endpoints(this.data.datasets);
 
     this.xAxisLabels = Array.from(this.data.labels);
     this.maxXValue = this.xAxisLabels[this.xAxisLabels.length - 1];

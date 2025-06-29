@@ -86,11 +86,11 @@
 
     <!-- Y axis top mark -->
     <line x1="{gleft}" y1="{gtop}" x2="{gleft-4}" y2="{gtop}" stroke="black" />
-    <text x="{gleft-6}" y="{gtop}" font-size="10" text-anchor="end" alignment-baseline="middle">{graph.maxYAxisValue}</text>
+    <text x="{gleft-6}" y="{gtop}" font-size="10" text-anchor="end" alignment-baseline="middle">{graph.maxYAxisValue.toFixed()}</text>
 
     <!-- Y axis bottom mark -->
     <line x1="{gleft}" y1="{gbot}" x2="{gleft-4}" y2="{gbot}" stroke="black" />
-    <text x="{gleft-6}" y="{gbot}" font-size="10" text-anchor="end" alignment-baseline="middle">{graph.minYAxisValue}</text>
+    <text x="{gleft-6}" y="{gbot}" font-size="10" text-anchor="end" alignment-baseline="middle">{graph.minYAxisValue.toFixed()}</text>
 
     <!-- X axis left mark -->
     <line x1="{gleft}" y1="{gbot}" x2="{gleft}" y2="{gbot+4}" stroke="black" />

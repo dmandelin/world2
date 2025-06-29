@@ -19,12 +19,14 @@
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
     import type { WorldDTO } from "./dtos";
+    import { PopulationScaler, ZeroCenteredScaler } from "./linegraph";
 
     let { world }: { world: WorldDTO } = $props();
 
     let popData = $derived.by(() => {
         return {
             title: 'Population',
+            yAxisScaler: new PopulationScaler(),
             labels: world.timeline.map(timePoint => timePoint.year.toString()),
             datasets: [{
                 label: 'Population',
@@ -37,6 +39,7 @@
     let qolData = $derived.by(() => {
         return {
             title: 'Quality of Life',
+            yAxisScaler: new ZeroCenteredScaler(),
             labels: world.timeline.map(timePoint => timePoint.year.toString()),
             datasets: [{
                 label: 'QoL',
