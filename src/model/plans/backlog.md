@@ -31,10 +31,6 @@ Next, make social learning complex and dynamic:
 
 ## Top top needs
 
-x   Fix subsistence consumption getting messed up on clan splits
--   Fix initial low QoL
--   Fix weirdly low ritual satisfaction
-
 x   Epic: Blast out all the key components of the new migration model.
 -   Epic: Get to at least 3 interesting and legible graphs. Ideas:
     x   Existing main page graph: show actual data values

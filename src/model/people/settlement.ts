@@ -55,7 +55,7 @@ export class Settlement {
         if (this.parent) {
             this.parent.daughters.push(this);
         }
-        
+
         for (const clan of clans) {
             clan.setSettlement(this);
         }
@@ -118,8 +118,36 @@ export class Settlement {
         const sizeBefore = this.population;
  
         this.technai.advance(this.population);
-        this.clans.advance();
+
+        // Economic planning.
+        // TODO - Move to a planning function.        
+        const policySnapshot = new Map(this.clans.map(clan => [clan, clan.economicPolicy]));
+        const slippage = this.clans.slippage;
+        for (const clan of this.clans) {
+            clan.chooseEconomicPolicy(policySnapshot, slippage);
+        }
+
+        // Economic production.
+        this.clans.produce();
+        this.clans.distribute();
+
+        // Ritual production.
         this.advanceRites();
+
+        // Consume production.
+        this.clans.consume();
+
+        // Advance traits and seniority.
+        for (const clan of this.clans) clan.prepareTraitChanges();
+        for (const clan of this.clans) clan.commitTraitChanges();
+        for (const clan of this.clans) clan.advanceSeniority();
+
+        // Population effects.
+        this.clans.marry();
+        for (const clan of this.clans) clan.advancePopulation();
+        this.clans.split();
+        this.clans.merge();
+        this.clans.prune();
  
         this.lastSizeChange_ = this.population - sizeBefore;
     }

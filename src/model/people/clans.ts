@@ -107,27 +107,6 @@ export class Clans extends Array<Clan> {
         this.splice(this.indexOf(clan), 1);
     }
 
-    advance() {
-        const policySnapshot = new Map(this.map(clan => [clan, clan.economicPolicy]));
-        const slippage = this.slippage;
-        for (const clan of this) {
-            clan.chooseEconomicPolicy(policySnapshot, slippage);
-        }
-        this.produce();
-        this.distribute();
-        this.consume();
-
-        this.marry();
-        for (const clan of this) clan.advancePopulation();
-        this.split();
-        this.merge();
-        this.prune();
-
-        for (const clan of this) clan.prepareTraitChanges();
-        for (const clan of this) clan.commitTraitChanges();
-        for (const clan of this) clan.advanceSeniority();
-    }
-
     produce() {
         this.pot = new Pot(communalGoodsSource, this);
         for (const clan of this) {

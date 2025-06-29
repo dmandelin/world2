@@ -156,10 +156,11 @@ export class World implements NoteTaker {
             }
             s.clans.produce();
             s.clans.distribute();
-            s.clans.consume();
 
             // Selecting ritual options creates notification noise and isn't necessary here.
             s.advanceRites(false);
+
+            s.clans.consume();
         }
 
         this.updatePerceptions();
