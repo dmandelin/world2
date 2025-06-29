@@ -8,9 +8,10 @@
     }
 
     .graph-container {
+        padding: 16px 4px 16px 16px;
         width: 300px;
         height: 200px;
-        border: 2px solid #2c250d;
+        border: 1px solid #ccc;
     }
 </style>
 
