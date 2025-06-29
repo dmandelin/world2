@@ -1,9 +1,9 @@
 import { Annals } from "./annals";
-import { Clan, PersonalityTraits, randomClanColor, randomClanName } from "./people/people";
+import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { Clans } from "./people/clans";
 import { chooseFrom, sumFun, shuffled } from "./lib/basics";
 import { Settlement } from "./people/settlement";
-import { TimePoint } from "./timeline";
+import { Timeline, TimePoint } from "./timeline";
 import { TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
@@ -58,7 +58,7 @@ export class World implements NoteTaker {
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
-    readonly timeline: TimePoint[] = [];
+    readonly timeline = new Timeline<TimePoint>();
     // This has to be initialized before the clans because we pass it to them.
     readonly annals = new Annals(this);
     readonly notes: Note[] = [];
@@ -162,7 +162,7 @@ export class World implements NoteTaker {
 
         this.updatePerceptions();
 
-        this.timeline.push(new TimePoint(this));
+        this.timeline.add(this.year, new TimePoint(this));
         this.notify();
     }
 
@@ -177,7 +177,7 @@ export class World implements NoteTaker {
 
         // Update timeline.
         this.year.advance(this.yearsPerTurn);
-        this.timeline.push(new TimePoint(this));
+        this.timeline.add(this.year, new TimePoint(this));
         this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
 
         // Notify observers.

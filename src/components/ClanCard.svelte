@@ -1,10 +1,12 @@
 <script>
     import { npl, pct, signed, spct, wg } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
+    import LineGraph from "./LineGraph.svelte";
     import MigrationPlan from "./MigrationPlan.svelte";
     import PopulationChange from "./PopulationChange.svelte";
     import PopulationPyramid from "./PopulationPyramid.svelte";
     import Tooltip from "./Tooltip.svelte";
+    import { clanTimelineGraphData } from "../model/timeline";
 
     let { clan } = $props();
 
@@ -43,6 +45,11 @@
         margin: 0;
     }
 
+    .timeline-tooltip {
+        width: 300px;
+        height: 200px;
+    }
+
     #top {
         position: relative; /* Needed for absolute positioning of the image */
     }
@@ -79,9 +86,18 @@
                 <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">{npl(clan.cadets.length, 'cadet')}</td>
             </tr>
             <tr>
-                <td>Prestige</td>
+                <td>
+                    Prestige
+                </td>
                 <td></td>
-                <td>{clan.averagePrestige.toFixed()}</td>
+                <td>
+                    <Tooltip>
+                        {clan.averagePrestige.toFixed()}
+                        <div slot="tooltip" class="timeline-tooltip">
+                            <LineGraph data={clanTimelineGraphData(clan)} />
+                        </div>
+                    </Tooltip>
+                </td> 
             </tr>
             <tr>
                 <td>Influence</td>

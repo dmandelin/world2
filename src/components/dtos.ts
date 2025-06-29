@@ -9,7 +9,7 @@ import type { PrestigeCalc } from "../model/people/prestige";
 import type { QoLCalc } from "../model/people/qol";
 import type { SimulationResult } from "../model/rites";
 import type { Settlement } from "../model/people/settlement";
-import type { TimePoint } from "../model/timeline";
+import type { TimePoint, Timeline } from "../model/timeline";
 import type { TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
@@ -36,7 +36,10 @@ function tradePartnersDTO(clan: Clan) {
 }
 
 export type ClanDTO = {
-    ref: Clan,
+    world: WorldDTO;
+
+    ref: Clan;
+    uuid: string;
     name: string;
     color: string;
 
@@ -80,8 +83,11 @@ export type ClanDTO = {
     traits: string[];
 }
 
-export function clanDTO(clan: Clan) {
+export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
     return {
+        world,
+        uuid: clan.uuid,
+
         ref: clan,
         name: clan.name,
         color: clan.color,
@@ -104,7 +110,6 @@ export function clanDTO(clan: Clan) {
         economicPolicy: clan.economicPolicy,
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,
-        perCapitaSubsistenceConsumption: clan.perCapitaSubsistenceConsumption,
         productivity: clan.productivity,
         productivityTooltip: clan.productivityCalc.tooltip,
         ritualEffectiveness: clan.ritualEffectiveness,
@@ -143,8 +148,10 @@ export class ClansDTO extends Array<ClanDTO> {
         tfp: number;
     };
 
-    constructor(clans: Clans) {
-        super(...sortedByKey([...clans].map(clanDTO), clan => -clan.averagePrestige));
+    constructor(clans: Clans, world: WorldDTO) {
+        super(...sortedByKey([...clans].map(clan => 
+            clanDTO(clan, world)), clan => -clan.averagePrestige));
+
         this.population = clans.population;
         this.condorcet = clans.condorcetLeader;
         this.slippage = clans.slippage;
@@ -191,7 +198,7 @@ export class SettlementDTO {
         this.averageQoL = settlement.averageQoL;
         this.lastSizeChange = settlement.lastSizeChange;
 
-        this.clans = new ClansDTO(settlement.clans);
+        this.clans = new ClansDTO(settlement.clans, cluster.world);
         this.localTradeGoods = [...settlement.localTradeGoods];
 
         this.rites = settlement.rites.map(rites => ({
@@ -218,7 +225,7 @@ export class ClusterDTO {
     readonly population: number;
     readonly averageQoL: number;
 
-    constructor(private readonly cluster: SettlementCluster) {
+    constructor(private readonly cluster: SettlementCluster, readonly world: WorldDTO) {
         this.name = cluster.name;
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this));
         this.population = cluster.population;
@@ -233,12 +240,12 @@ export class ClusterDTO {
 export class WorldDTO {
     readonly year: string;
     readonly clusters: ClusterDTO[] = [];
-    readonly timeline: TimePoint[];
+    readonly timeline: Timeline<TimePoint>;
     readonly notes: Note[];
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
-        this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl));
+        this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
 
         this.timeline = world.timeline;
         this.notes = [...world.notes];
@@ -258,7 +265,7 @@ export class WorldDTO {
     }
 
     get stats() {
-        const tp = this.timeline[this.timeline.length - 1];
+        const tp = this.timeline.points[this.timeline.points.length - 1];
         return [
             ['Productivity', pct(this.consumption)],
             ['Quality of life', tp.averageQoL.toFixed(1)],

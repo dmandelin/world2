@@ -15,6 +15,7 @@ import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { MigrationCalc} from "./migration";
+import type { GraphData } from "../../components/linegraph";
 
 const clanGoodsSource = 'clan';
 
@@ -349,6 +350,8 @@ export class ClanSkillChange implements SkillChange {
 }
 
 export class Clan {
+    readonly uuid = crypto.randomUUID();
+
     static minDesiredSize = 10;
     static maxDesiredSize = 100;
 
@@ -414,6 +417,8 @@ export class Clan {
         public strength: number = randomStat(),
         public intelligence: number = randomStat(),
     ) {
+        this.world.timeline.register(this.uuid, this.name);
+
         for (let i = 0; i < 4; ++i) {
             this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * population);
             this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * population);

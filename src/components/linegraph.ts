@@ -1,7 +1,7 @@
 // Input data structure for the line graph component.
 type Dataset = {
   label: string;
-  data: number[];
+  data: (number | undefined)[];
   color: string;
 };
 
@@ -9,8 +9,8 @@ abstract class YAxisScaler {
   abstract endpoints(datasets: Dataset[]): [number, number];
 
   range(datasets: Dataset[]): [number, number] {
-    const min = Math.min(...datasets.flatMap(ds => ds.data));
-    const max = Math.max(...datasets.flatMap(ds => ds.data));
+    const min = Math.min(...datasets.flatMap(ds => ds.data.filter((d): d is number => d !== undefined)));
+    const max = Math.max(...datasets.flatMap(ds => ds.data.filter((d): d is number => d !== undefined)));
     return [min, max];
   }
 
@@ -81,7 +81,7 @@ export class InputToPixelCoordateTransform {
   apply(dataset: Dataset): ScaledDataset {
     const scaledData: [number, number][] = dataset.data.map((y, i) => [
       this.applyToX(i),
-      this.applyToY(y),
+      y !== undefined ? this.applyToY(y) : NaN,
     ]);
     return { label: dataset.label, data: scaledData, color: dataset.color };
   }
@@ -146,13 +146,15 @@ export class Graph {
 
     // Build the SVG paths for each dataset.
     this.svgPaths = this.scaledDatasets.map(dataset => {
-      const pathData = dataset.data.map(([x, y], i) => {
-        if (i === 0) {
-          return `M ${x} ${y}`;
-        } else {
-          return `L ${x} ${y}`;
-        }
-      }).join(' ');
+        const pathData = dataset.data
+          .filter(([_, y]) => !isNaN(y))
+          .map(([x, y], i) => {
+            if (i === 0) {
+              return `M ${x} ${y}`;
+            } else {
+              return `L ${x} ${y}`;
+            }
+        }).join(' ');
       return `<path d="${pathData}" stroke="${dataset.color}" fill="none" />`;
     });
   }

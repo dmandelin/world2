@@ -32,16 +32,13 @@ Next, make social learning complex and dynamic:
 
 x   Epic: Blast out all the key components of the new migration model.
 -   Epic: Get to at least 3 interesting and legible graphs. Ideas:
-    -   Existing main page graph: show actual data values
-        x axis titles
-        x axis ticks and labels
-        x y axis 0 tick for zero-centered
-        x legend for the multi-case
-        x click to show data point
-        - smoothing
-        - ???
+    x   Existing main page graph: show actual data values
     -   Scatter plot with correlation between prestige and QoL
     -   Clan timeline showing history of population, QoL, and residence
+        x handle ID vs name issue
+        x show basic timeline
+        - add second Y axis support
+        - add event markers
 
 -   Refinements to the new migration model:
     x   Show the actual comparisons with current conditions
