@@ -36,7 +36,7 @@ x   Epic: Blast out all the key components of the new migration model.
         x axis titles
         x axis ticks and labels
         x y axis 0 tick for zero-centered
-        - legend for the multi-case
+        x legend for the multi-case
         - click to show data point
         - smoothing
         - ???

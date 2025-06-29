@@ -107,6 +107,14 @@
     <line x1="{gright}" y1="{gbot}" x2="{gright}" y2="{gbot+4}" stroke="black" />
     <text x="{gright}" y="{gbot+6}" font-size="10" text-anchor="end" alignment-baseline="hanging" transform="rotate(-45 {gright} {gbot+6})">{graph.maxXValue}</text>
 
+    <!-- legend if there is more than one dataset -->
+    {#if graph.scaledDatasets.length > 1}
+      {#each graph.scaledDatasets as dataset, index}
+        <rect x="{gright+4}" y="{gtop - index * 16}" width="10" height="10" fill="{dataset.color}" />
+        <text x="{gright+16}" y="{gtop - index * 16 + 10}" font-size="10">{dataset.label}</text>
+      {/each}
+    {/if}
+
     {#each graph.svgPaths as svgPath}
       {@html svgPath}
     {/each}
