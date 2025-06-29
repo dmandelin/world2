@@ -92,6 +92,13 @@
     <line x1="{gleft}" y1="{gbot}" x2="{gleft-4}" y2="{gbot}" stroke="black" />
     <text x="{gleft-6}" y="{gbot}" font-size="10" text-anchor="end" alignment-baseline="middle">{graph.minYAxisValue.toFixed()}</text>
 
+    <!-- Y axis tick lines -->
+    {#each graph.yAxisTicks as [label, y]}
+      <line x1="{gleft}" y1="{y}" x2="{gleft-4}" y2="{y}" stroke="black" />
+      <line x1="{gleft}" y1="{y}" x2="{gright}" y2="{y}" stroke="gray" />
+      <text x="{gleft-6}" y="{y}" font-size="10" text-anchor="end" alignment-baseline="middle">{label}</text>
+    {/each}
+
     <!-- X axis left mark -->
     <line x1="{gleft}" y1="{gbot}" x2="{gleft}" y2="{gbot+4}" stroke="black" />
     <text x="{gleft}" y="{gbot+6}" font-size="10" text-anchor="end" alignment-baseline="hanging" transform="rotate(-45 {gleft} {gbot+6})">{graph.minXValue}</text>

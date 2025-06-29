@@ -13,6 +13,10 @@ abstract class YAxisScaler {
     const max = Math.max(...datasets.flatMap(ds => ds.data));
     return [min, max];
   }
+
+  ticks(datasets: Dataset[]): number[] {
+    return [];
+  }
 }
 
 export class DefaultScaler extends YAxisScaler {
@@ -31,6 +35,10 @@ export class PopulationScaler extends YAxisScaler {
 export class ZeroCenteredScaler extends YAxisScaler {
   endpoints(datasets: Dataset[]): [number, number] {
     return [-100, 100];
+  }
+
+  ticks(datasets: Dataset[]): number[] {
+    return [0];
   }
 }
 
@@ -72,10 +80,18 @@ export class InputToPixelCoordateTransform {
 
   apply(dataset: Dataset): ScaledDataset {
     const scaledData: [number, number][] = dataset.data.map((y, i) => [
-      this.box.x + i * this.xScale,
-      this.box.y + this.box.height - (y - this.minYAxisValue) * this.yScale
+      this.applyToX(i),
+      this.applyToY(y),
     ]);
     return { label: dataset.label, data: scaledData, color: dataset.color };
+  }
+
+  applyToX(x: number): number {
+    return this.box.x + x * this.xScale;
+  }
+
+  applyToY(y: number): number {
+    return this.box.y + this.box.height - (y - this.minYAxisValue) * this.yScale;
   }
 }
 
@@ -84,6 +100,8 @@ export class Graph {
   // Max and min values for the Y axis of the graph.
   readonly maxYAxisValue: number;
   readonly minYAxisValue: number;
+  // (label, pixel coordinate)
+  readonly yAxisTicks: [string, number][];
 
   // Max and min values for both datasets and the graph.
   readonly xAxisLabels: string[]
@@ -97,20 +115,28 @@ export class Graph {
   readonly svgPaths: readonly string[];
 
   constructor(readonly data: GraphData, box: GraphBox) {
-    const scaler = data.yAxisScaler || new DefaultScaler();
-    [this.minYAxisValue, this.maxYAxisValue] = scaler.endpoints(this.data.datasets);
-
+    // Compute min and max graph area in input coordinates.
     this.xAxisLabels = Array.from(this.data.labels);
     this.maxXValue = this.xAxisLabels[this.xAxisLabels.length - 1];
     this.minXValue = this.xAxisLabels[0];
 
+    const scaler = data.yAxisScaler || new DefaultScaler();
+    [this.minYAxisValue, this.maxYAxisValue] = scaler.endpoints(this.data.datasets);
+
+    // Create the coordinate transform.
     const coordinateTransform = new InputToPixelCoordateTransform(
       box, this.xAxisLabels, this.minYAxisValue, this.maxYAxisValue);
 
+    // Build values that rely on the coordinate transform.
+    this.yAxisTicks = scaler.ticks(this.data.datasets).map(value => {
+      const y = coordinateTransform.applyToY(value);
+      return [value.toFixed(), y];
+    });
     this.scaledDatasets = this.data.datasets.map(dataset => {
       return coordinateTransform.apply(dataset);
     });
 
+    // Build the SVG paths for each dataset.
     this.svgPaths = this.scaledDatasets.map(dataset => {
       const pathData = dataset.data.map(([x, y], i) => {
         if (i === 0) {

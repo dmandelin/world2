@@ -33,8 +33,10 @@ Next, make social learning complex and dynamic:
 x   Epic: Blast out all the key components of the new migration model.
 -   Epic: Get to at least 3 interesting and legible graphs. Ideas:
     -   Existing main page graph: show actual data values
-        - axis titles
-        - axis ticks and labels
+        x axis titles
+        x axis ticks and labels
+        x y axis 0 tick for zero-centered
+        - legend for the multi-case
         - click to show data point
         - smoothing
         - ???
