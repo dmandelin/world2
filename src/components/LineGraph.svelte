@@ -139,5 +139,3 @@
     {/if}
   </svg>
 </div>
-
-<div>{graph.scaledDatasets[0].data}</div>
