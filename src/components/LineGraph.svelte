@@ -41,10 +41,11 @@
 
     // Check if the click is within the graph area
     if (clickX >= gleft && clickX <= gright && clickY >= gtop && clickY <= gbot) {
-      const [xIndex, yValue] = graph.pixelToInputCoordinates(clickX, clickY)
+      const xIndex = graph.xp2i(clickX);
+      const yValue = graph.yp2i(clickY);
 
-      markedXPixel = graph.inputToPixelCoordinates(xIndex, 0)[0];
-      markedYPixel = graph.scaledDatasets[0].data[xIndex][1];
+      markedXPixel = graph.xi2p(xIndex);
+      markedYPixel = graph.sides[0].scaledDatasets[0].data[xIndex][1];
 
       xMarkLabel = graph.xAxisLabels[xIndex];
       yMarkLabel = yValue.toFixed();
@@ -83,28 +84,6 @@
     <!-- Box enclosing graph -->
     <rect x="{margin}" y="{margin}" width="{gw}" height="{gh}" stroke="black" fill="none" />
 
-    <!-- Y axis top mark -->
-    <line x1="{gleft}" y1="{gtop}" x2="{gleft-4}" y2="{gtop}" stroke="black" />
-    <text x="{gleft-6}" y="{gtop}" font-size="10" text-anchor="end" alignment-baseline="middle">{graph.maxYAxisValue.toFixed()}</text>
-
-    <!-- Y axis bottom mark -->
-    <line x1="{gleft}" y1="{gbot}" x2="{gleft-4}" y2="{gbot}" stroke="black" />
-    <text x="{gleft-6}" y="{gbot}" font-size="10" text-anchor="end" alignment-baseline="middle">{graph.minYAxisValue.toFixed()}</text>
-
-    <!-- Y axis tick lines -->
-    {#each graph.yAxisTicks as [label, y]}
-      <line x1="{gleft}" y1="{y}" x2="{gleft-4}" y2="{y}" stroke="black" />
-      <line x1="{gleft}" y1="{y}" x2="{gright}" y2="{y}" stroke="gray" />
-      <text x="{gleft-6}" y="{y}" font-size="10" text-anchor="end" alignment-baseline="middle">{label}</text>
-    {/each}
-
-    <!-- Y axis label for marked pixel -->
-    {#if markedYPixel !== undefined}
-      <text x="{gleft-6}" y="{markedYPixel}" font-size="10" text-anchor="end" alignment-baseline="middle">
-        {yMarkLabel}
-      </text>
-    {/if}
-
     <!-- X axis left mark -->
     <line x1="{gleft}" y1="{gbot}" x2="{gleft}" y2="{gbot+4}" stroke="black" />
     <text x="{gleft}" y="{gbot+6}" font-size="10" text-anchor="end" alignment-baseline="hanging" transform="rotate(-45 {gleft} {gbot+6})">{graph.minXValue}</text>
@@ -120,17 +99,53 @@
       </text>
     {/if}
 
-    <!-- legend if there is more than one dataset -->
-    {#if graph.scaledDatasets.length > 1}
-      {#each graph.scaledDatasets as dataset, index}
-        <rect x="{gright+4}" y="{gtop - index * 16}" width="10" height="10" fill="{dataset.color}" />
-        <text x="{gright+16}" y="{gtop - index * 16 + 10}" font-size="10">{dataset.label}</text>
-      {/each}
-    {/if}
+    <!-- both sides of the graph if present -->
+      {#each graph.sides as side, sideIndex}
+      {#if sideIndex === 0}
+        <!-- Y axis top mark -->
+        <line x1="{gleft}" y1="{gtop}" x2="{gleft-4}" y2="{gtop}" stroke="black" />
+        <text x="{gleft-6}" y="{gtop}" font-size="10" text-anchor="end" alignment-baseline="middle">{side.maxYAxisValue.toFixed()}</text>
 
-    {#each graph.svgPaths as svgPath}
-      {@html svgPath}
+        <!-- Y axis bottom mark -->
+        <line x1="{gleft}" y1="{gbot}" x2="{gleft-4}" y2="{gbot}" stroke="black" />
+        <text x="{gleft-6}" y="{gbot}" font-size="10" text-anchor="end" alignment-baseline="middle">{side.minYAxisValue.toFixed()}</text>
+
+        <!-- Y axis tick lines -->
+        {#each side.yAxisTicks as [label, y]}
+          <line x1="{gleft}" y1="{y}" x2="{gleft-4}" y2="{y}" stroke="black" />
+          <line x1="{gleft}" y1="{y}" x2="{gright}" y2="{y}" stroke="gray" />
+          <text x="{gleft-6}" y="{y}" font-size="10" text-anchor="end" alignment-baseline="middle">{label}</text>
+        {/each}
+
+      {:else}
+        <text x="{gright+4}" y="{gtop}" font-size="10" text-anchor="start" alignment-baseline="middle">{side.maxYAxisValue.toFixed()}</text>
+        <text x="{gright+4}" y="{gbot}" font-size="10" text-anchor="start" alignment-baseline="middle">{side.minYAxisValue.toFixed()}</text>
+        {#each side.yAxisTicks as [label, y]}
+          <line x1="{gleft}" y1="{y}" x2="{gright}" y2="{y}" stroke="gray" />
+          <text x="{gright+4}" y="{y}" font-size="10" text-anchor="start" alignment-baseline="middle">{label}</text>
+        {/each}
+      {/if}
+
+      <!-- Y axis label for marked pixel -->
+      {#if markedYPixel !== undefined}
+        <text x="{gleft-6}" y="{markedYPixel}" font-size="10" text-anchor="end" alignment-baseline="middle">
+          {yMarkLabel}
+        </text>
+      {/if}
+
+      {#each side.svgPaths as svgPath}
+        {@html svgPath}
+      {/each}
+
+      <!-- legend if there is more than one dataset -->
+      {#if side.scaledDatasets.length > 1 && graph.data.showLegend !== false}
+        {#each side.scaledDatasets as dataset, index}
+          <rect x="{gright+4}" y="{gtop - index * 16}" width="10" height="10" fill="{dataset.color}" />
+          <text x="{gright+16}" y="{gtop - index * 16 + 10}" font-size="10">{dataset.label}</text>
+        {/each}
+      {/if}
     {/each}
+
 
     <!-- gray horizontal and vertical lines through marked pixel -->
     {#if markedXPixel !== undefined && markedYPixel !== undefined}

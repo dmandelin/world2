@@ -1,4 +1,4 @@
-import type { GraphData } from "../components/linegraph";
+import { PopulationScaler, ZeroCenteredScaler, type GraphData } from "../components/linegraph";
 import type { ClanDTO } from "../components/dtos";
 import { znan } from "./lib/basics";
 import { weightedAverage } from "./lib/modelbasics";
@@ -78,32 +78,38 @@ export class TimePoint {
 export function clanTimelineGraphData(clan: ClanDTO): GraphData {
     const graphData: GraphData = {
         title: 'Clan Timeline',
+        showLegend: false,
         labels: clan.world.timeline.map(timePoint => timePoint.year.toString()),
+        yAxisScaler: new PopulationScaler(),
         datasets: [{
             label: 'Population',
             data: [],
             color: 'blue',
-        }, {
-            label: 'QoL',
-            data: [],
-            color: 'red',
-        }, {
-            label: 'Prestige',
-            data: [],
-            color: 'green',
         }],
+        secondYAxis: {
+            scaler: new ZeroCenteredScaler(),
+            datasets: [{
+                label: 'QoL',
+                data: [],
+                color: 'red',
+            }, {
+                label: 'Prestige',
+                data: [],
+                color: 'green',
+            }],
+        },
     };
 
     for (const tp of clan.world.timeline.points) {
         const clanData = tp.clans.get(clan.uuid);
         if (clanData) {
             graphData.datasets[0].data.push(clanData.population);
-            graphData.datasets[1].data.push(clanData.qol);
-            graphData.datasets[2].data.push(clanData.averagePrestige);
+            graphData.secondYAxis?.datasets[0].data.push(clanData.qol);
+            graphData.secondYAxis?.datasets[1].data.push(clanData.averagePrestige);
         } else {
-            for (const dataset of graphData.datasets) {
-                dataset.data.push(undefined);
-            }
+            graphData.datasets[0].data.push(undefined);
+            graphData.secondYAxis?.datasets[0].data.push(undefined);
+            graphData.secondYAxis?.datasets[1].data.push(undefined);
         }
     }
 

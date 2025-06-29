@@ -37,7 +37,7 @@ x   Epic: Blast out all the key components of the new migration model.
     -   Clan timeline showing history of population, QoL, and residence
         x handle ID vs name issue
         x show basic timeline
-        - add second Y axis support
+        x add second Y axis support
         - add event markers
 
 -   Refinements to the new migration model:

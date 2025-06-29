@@ -28,7 +28,16 @@ export class DefaultScaler extends YAxisScaler {
 export class PopulationScaler extends YAxisScaler {
   endpoints(datasets: Dataset[]): [number, number] {
     const [min, max] = this.range(datasets);
-    return [0, Math.max(1000, Math.ceil(max / 1000) * 1000)];
+    const baseMax = Math.pow(10, Math.ceil(Math.log10(max)));
+    let adjMax = baseMax;
+    if (baseMax < 1) {
+      adjMax = 1;
+    } else if (max * 1.2 < baseMax / 5) {
+      adjMax = baseMax / 5;
+    } else if (max * 1.2 < baseMax / 2) {
+      adjMax = baseMax / 2;
+    }
+    return [0, adjMax];
   }
 }
 
@@ -43,10 +52,26 @@ export class ZeroCenteredScaler extends YAxisScaler {
 }
 
 export type GraphData = {
+  // Title of the graph.
   title?: string;
+
+  // Whether to show the legend.
+  showLegend?: boolean;
+
+  // X axis labels.
   labels: Iterable<string>;
+
+  // Y axis scaler to determine the min and max Y values.
   yAxisScaler?: YAxisScaler;
+
+  // Datasets to be plotted on the graph.
   datasets: Dataset[];
+
+  // Optional second Y axis for additional datasets.
+  secondYAxis?: {
+    datasets: Dataset[],
+    scaler?: YAxisScaler,
+  }
 };
 
 type ScaledDataset = {
@@ -64,57 +89,54 @@ export class GraphBox {
   ) {}
 }
 
-export class InputToPixelCoordateTransform {
+class InputToPixelXValueTransform {
   readonly xScale: number;
+
+  constructor(
+    readonly box: GraphBox,
+    readonly xAxisLabels: string[],
+  ) {
+    this.xScale = box.width / (xAxisLabels.length - 1);
+  }
+
+  i2p(x: number): number {
+    return this.box.x + x * this.xScale;
+  }
+
+  p2i(xPixel: number): number {
+    return Math.round((xPixel - this.box.x) / this.xScale);
+  }
+}
+
+class InputToPixelYValueTransform {
   readonly yScale: number;
 
   constructor(
     readonly box: GraphBox,
-    xAxisLabels: string[],
     readonly minYAxisValue: number,
     readonly maxYAxisValue: number,
   ) {
-    this.xScale = box.width / (xAxisLabels.length - 1);
     this.yScale = box.height / (maxYAxisValue - minYAxisValue);
   }
 
-  apply(dataset: Dataset): ScaledDataset {
-    const scaledData: [number, number][] = dataset.data.map((y, i) => [
-      this.applyToX(i),
-      y !== undefined ? this.applyToY(y) : NaN,
-    ]);
-    return { label: dataset.label, data: scaledData, color: dataset.color };
-  }
-
-  applyToX(x: number): number {
-    return this.box.x + x * this.xScale;
-  }
-
-  applyToY(y: number): number {
+  i2p(y: number): number {
     return this.box.y + this.box.height - (y - this.minYAxisValue) * this.yScale;
   }
 
-  unapplyToPoint(xPixel: number, yPixel: number): [number, number] {
-    const x = Math.round((xPixel - this.box.x) / this.xScale);
-    const y = Math.round(this.maxYAxisValue - (yPixel - this.box.y) / this.yScale);
-    return [x, y];
+  p2i(yPixel: number): number {
+    return Math.round(this.maxYAxisValue - (yPixel - this.box.y) / this.yScale);
   }
 }
 
-// Data needed to render a line graph.
-export class Graph { 
+// Part of the graph corresponding to a single side (e.g., left or right).
+export class GraphSide { 
   // Max and min values for the Y axis of the graph.
   readonly maxYAxisValue: number;
   readonly minYAxisValue: number;
   // (label, pixel coordinate)
   readonly yAxisTicks: [string, number][];
 
-  // Max and min values for both datasets and the graph.
-  readonly xAxisLabels: string[]
-  readonly maxXValue: string;
-  readonly minXValue: string;
-
-  readonly coordinateTransform: InputToPixelCoordateTransform;
+  readonly ytransform: InputToPixelYValueTransform;
 
   // Lists of (x, y) pairs for each dataset in pixel coordinates.
   readonly scaledDatasets: readonly ScaledDataset[];
@@ -122,26 +144,32 @@ export class Graph {
   // SVG path for the graph.
   readonly svgPaths: readonly string[];
 
-  constructor(readonly data: GraphData, box: GraphBox) {
-    // Compute min and max graph area in input coordinates.
-    this.xAxisLabels = Array.from(this.data.labels);
-    this.maxXValue = this.xAxisLabels[this.xAxisLabels.length - 1];
-    this.minXValue = this.xAxisLabels[0];
-
-    const scaler = data.yAxisScaler || new DefaultScaler();
-    [this.minYAxisValue, this.maxYAxisValue] = scaler.endpoints(this.data.datasets);
+  constructor(
+      readonly datasets: Dataset[], 
+      xtransform: InputToPixelXValueTransform, 
+      scaler: YAxisScaler, 
+      box: GraphBox) {
+    [this.minYAxisValue, this.maxYAxisValue] = scaler.endpoints(datasets);
 
     // Create the coordinate transform.
-    this.coordinateTransform = new InputToPixelCoordateTransform(
-      box, this.xAxisLabels, this.minYAxisValue, this.maxYAxisValue);
+    this.ytransform = new InputToPixelYValueTransform(
+      box, this.minYAxisValue, this.maxYAxisValue);
 
     // Build values that rely on the coordinate transform.
-    this.yAxisTicks = scaler.ticks(this.data.datasets).map(value => {
-      const y = this.coordinateTransform.applyToY(value);
+    this.yAxisTicks = scaler.ticks(datasets).map(value => {
+      const y = this.ytransform.i2p(value);
       return [value.toFixed(), y];
     });
-    this.scaledDatasets = this.data.datasets.map(dataset => {
-      return this.coordinateTransform.apply(dataset);
+    this.scaledDatasets = datasets.map(dataset => {
+      const data = dataset.data.map((y, i): [number, number] => {
+        const x = xtransform.i2p(i);
+        return [x, y === undefined ? NaN : this.ytransform.i2p(y)];
+      });
+      return {
+        label: dataset.label,
+        data: data,
+        color: dataset.color,
+      };
     });
 
     // Build the SVG paths for each dataset.
@@ -158,16 +186,58 @@ export class Graph {
       return `<path d="${pathData}" stroke="${dataset.color}" fill="none" />`;
     });
   }
+}
+
+
+// Data needed to render a line graph.
+export class Graph { 
+  // Max and min values for both datasets and the graph.
+  readonly xAxisLabels: string[]
+  readonly maxXValue: string;
+  readonly minXValue: string;
+
+  readonly xtransform: InputToPixelXValueTransform;
+  readonly sides: readonly GraphSide[];
+
+  constructor(readonly data: GraphData, box: GraphBox) {
+    // Compute min and max graph area in input coordinates.
+    this.xAxisLabels = Array.from(this.data.labels);
+    this.maxXValue = this.xAxisLabels[this.xAxisLabels.length - 1];
+    this.minXValue = this.xAxisLabels[0];
+    this.xtransform = new InputToPixelXValueTransform(box, this.xAxisLabels);
+
+    const sides = [
+      new GraphSide(
+        this.data.datasets, 
+        this.xtransform,
+        this.data.yAxisScaler || new DefaultScaler(), 
+        box),
+    ];
+    if (this.data.secondYAxis) {
+      sides.push(new GraphSide(
+        this.data.secondYAxis.datasets,
+        this.xtransform,
+        this.data.secondYAxis.scaler || new DefaultScaler(),
+        box));
+    }
+    this.sides = sides;
+  }
 
   get title(): string { return this.data.title || ''; }
 
-  inputToPixelCoordinates(xInput: number, yInput: number): [number, number] {
-    const xPixel = this.coordinateTransform.applyToX(xInput);
-    const yPixel = this.coordinateTransform.applyToY(yInput);
-    return [xPixel, yPixel];
+  xp2i(xPixel: number): number {
+    return this.xtransform.p2i(xPixel);
   }
 
-  pixelToInputCoordinates(xPixel: number, yPixel: number): [number, number] {
-    return this.coordinateTransform.unapplyToPoint(xPixel, yPixel);
+  yp2i(yPixel: number, sideIndex = 0): number {
+    return this.sides[sideIndex].ytransform.p2i(yPixel);
+  }
+
+  xi2p(x: number): number {
+    return this.xtransform.i2p(x);
+  }
+
+  yi2p(y: number, sideIndex = 0): number {
+    return this.sides[sideIndex].ytransform.i2p(y);
   }
 }
