@@ -6,6 +6,24 @@ Get the current feature set working decently well:
     have missing features and bugs. They don't have to be perfect, but
     they should be "good enough" before doing much else.
 
+    *   Rituals
+        
+        *   Make it easier to tell where the ritual satisfaction
+            actually comes from
+        *   Disagreement dynamics for any disagreement over ritual
+            leader selection
+
+    *   Production
+
+        *   Use the new disagreement and culture concepts to model
+            choices about collective production methods. 
+
+    *   Trade
+
+        *   Inter-village trade
+        *   Inter-cluster trade
+        *   Off-map trade
+
 *   Improve graphs and visualizations. These can be for the most part
     rough, because the data model is very complicated and it would be
     hard to make a great UI for all of it. But at least it should be
@@ -30,6 +48,9 @@ Next, make social learning complex and dynamic:
         horizons).
 
 ## Top top needs
+
+-   Fix issues with ritual satisfaction having a very unobvious relationship
+    with the values in the rites panel.
 
 x   Epic: Blast out all the key components of the new migration model.
 -   Epic: Get to at least 3 interesting and legible graphs. Ideas:
