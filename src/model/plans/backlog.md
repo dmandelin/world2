@@ -49,6 +49,15 @@ Next, make social learning complex and dynamic:
 
 ## Top top needs
 
+-   Epic sequence: add one social change at a time, fixing up systems as
+    needed to make it work
+    -   Permanent settlements
+        -   Regularize skills so we can add an irrigation skill
+            (Will also need fishing soon)
+            x   Change clan skills to a map
+            -   Regularize productivity calculations as well
+            -   Collect skills and productivity as a mini-panel
+
 -   Fix issues with ritual satisfaction having a very unobvious relationship
     with the values in the rites panel.
 
