@@ -667,10 +667,6 @@ export class Clan {
         return new RitualEffectivenessCalc(this);
     }
 
-    get techModifier() {
-        return this.settlement?.technai.outputBoost ?? 0;
-    }
-
     get share() {
         return this.population / (this.settlement?.population ?? this.population);
     }

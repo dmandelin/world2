@@ -117,7 +117,7 @@ export class Assessments implements Iterable<Assessment> {
         // If the settlement is approximately full, large penalty as we
         // are resource-constrained.
         const s = this.clan.settlement!;
-        const fullness = clamp((s.population / s.popLimit - 0.9) * 10, 0, 1);
+        const fullness = clamp((s.population / 300 - 0.9) * 10, 0, 1);
         if (fullness > 0) {
             for (const clan of s.clans) {
                 if (clan === this.clan) continue;

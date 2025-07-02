@@ -1,7 +1,6 @@
 import { average, chooseFrom } from "../lib/basics";
 import type { Clans } from "./clans";
 import type { Rites } from "../rites";
-import { Technai } from "../tech";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { SettlementCluster } from "./cluster";
@@ -38,7 +37,6 @@ class DaughterSettlementPlacer {
 export class Settlement {
     private cluster_: SettlementCluster|undefined;
 
-    readonly technai = new Technai(this);
     readonly localTradeGoods = new Set<TradeGood>();
 
     readonly daughters: Settlement[] = [];
@@ -77,24 +75,6 @@ export class Settlement {
         return this.clans.reduce((acc, clan) => acc + clan.population, 0);
     }
 
-    get popLimit() {
-        // Initially we assume people are taking advantage of small natural
-        // fields of barley, lentils, and such, for a population limit of 300.
-        //
-        // Once there is irrigation, we'll assume people can irrigate a wide
-        // area and are willing to commute up to 1.5 km to work in the fields.
-        // This gives a population limit of 1000.
-        return this.technai.hasIrrigation ? 1000 : 300;
-    }
-
-    get agricultureDescription() {
-        if (this.population < 300 || !this.technai.hasIrrigation) {
-            return 'We\'re farming small fields of barley and lentils we found by the river.';
-        } else {
-            return 'We\'re farming fields we irrigated using canals.';
-        }
-    }
-
     get rites(): Rites[] {
         return [this.clans.rites, ...this.clans.map(clan => clan.rites)];
     }
@@ -117,8 +97,6 @@ export class Settlement {
     advance() {
         const sizeBefore = this.population;
  
-        this.technai.advance(this.population);
-
         // Economic planning.
         // TODO - Move to a planning function.        
         const policySnapshot = new Map(this.clans.map(clan => [clan, clan.economicPolicy]));
