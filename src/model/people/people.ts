@@ -1,21 +1,20 @@
 import { Annals } from "../annals";
-import { absmin, clamp, remove } from "../lib/basics";
-import { normal, poisson } from "../lib/distributions";
+import { clamp, remove } from "../lib/basics";
+import { normal } from "../lib/distributions";
 import { Assessments } from "./agents";
 import { Pot } from "../production";
 import { TradeGoods, type TradeGood } from "../trade";
 import { PrestigeCalc } from "./prestige";
-import { traitWeightedAverage, WeightedValue, zScore } from "../lib/modelbasics";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QoLCalc } from "./qol";
-import { pct } from "../lib/format";
 import { Rites } from "../rites";
 import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { MigrationCalc, type NewSettlementSupplier} from "./migration";
-import type { GraphData } from "../../components/linegraph";
+import { ClanSkills, SkillDefs } from "./skills";
+import { ProductivityCalc, RitualEffectivenessCalc } from "./productivity";
 
 const clanGoodsSource = 'clan';
 
@@ -153,203 +152,6 @@ export class ConsumptionCalc {
     }
 }
 
-export class ProductivityCalc {
-    readonly baseSkill: number;
-    readonly intelligenceSkillModifier: number = 1.0;
-    readonly effectiveSkill: number;
-
-    readonly skillFactor: number;
-    readonly strengthFactor: number;
-
-    readonly value: number;
-
-    constructor(readonly clan: Clan) {
-        this.baseSkill = clan.skill;
-
-        const baseIntelligenceModifier = (clan.intelligence - 50) / 2;
-        const intelligenceModifierFactor = baseIntelligenceModifier >= 0 
-            ? (100 - clan.skill) / 100
-            : (clan.skill) / 100;
-        this.intelligenceSkillModifier = baseIntelligenceModifier * intelligenceModifierFactor;
-        this.effectiveSkill = this.baseSkill + this.intelligenceSkillModifier;
-        this.skillFactor = Math.pow(1.01, this.effectiveSkill - 50);
-
-        this.strengthFactor = Math.pow(1.01, (clan.strength - 50) / 4);
-
-        this.value = this.skillFactor * this.strengthFactor;
-    }
-
-    get tooltip(): string[][] {
-        return [
-            ['Base skill', this.baseSkill.toFixed(1)],
-            ['Intelligence', this.clan.intelligence.toFixed(1)],
-            ['Intelligence modifier', this.intelligenceSkillModifier.toFixed(1)],
-            ['Effective skill', this.effectiveSkill.toFixed(1)],
-            ['Skill factor', this.skillFactor.toFixed(2)],
-            ['Strength factor', this.strengthFactor.toFixed(2)],
-            ['Productivity', this.value.toFixed(2)],
-        ];
-    }
-}
-
-export class RitualEffectivenessCalc {
-    readonly baseSkill: number;
-    readonly intelligenceSkillModifier: number = 1.0;
-    readonly effectiveSkill: number;
-
-    readonly skillFactor: number;
-
-    readonly value: number;
-
-    constructor(readonly clan: Clan) {
-        this.baseSkill = clan.ritualSkill;
-
-        const baseIntelligenceModifier = (clan.intelligence - 50);
-        const intelligenceModifierFactor = (100 - clan.ritualSkill) / 100;
-        this.intelligenceSkillModifier = baseIntelligenceModifier * intelligenceModifierFactor;
-        this.effectiveSkill = this.baseSkill + this.intelligenceSkillModifier;
-        this.skillFactor = Math.pow(1.01, this.effectiveSkill - 50);
-
-        this.value = this.skillFactor;
-    }
-
-    get tooltip(): string[][] {
-        return [
-            ['Base skill', this.baseSkill.toFixed(1)],
-            ['Intelligence', this.clan.intelligence.toFixed(1)],
-            ['Intelligence modifier', this.intelligenceSkillModifier.toFixed(1)],
-            ['Effective skill', this.effectiveSkill.toFixed(1)],
-            ['Effectiveness', this.value.toFixed(2)],
-        ];
-    }
-}
-
-export interface SkillChange {
-    originalValue: number;
-    educationTarget: number;
-    imitationTarget: number;
-
-    delta: number;
-    imitationTooltip: string[][];
-}
-
-export class NilSkillChange implements SkillChange {
-    readonly delta = 0;
-    readonly educationTarget = 0;
-    readonly educationTargetDelta = 0;
-    readonly imitationTarget = 0;
-    readonly imitationTargetDelta = 0;
-    readonly imitationTooltip: string[][] = [];
-
-    constructor(readonly originalValue: number) {
-    }
-}
-
-export class ClanSkillChange implements SkillChange {
-    readonly originalValue: number;
-    readonly educationTarget: number;
-    readonly imitationTarget: number;
-    readonly imitationTargetTable: readonly WeightedValue<String>[];
-
-    readonly items: {label: string, weight: number, value: number, ev: number}[] = [];
-
-    constructor(
-        readonly clan: Clan, 
-        readonly trait: (clan: Clan) => number,
-        experienceRatio: number) {
-
-        const rr = 0.5; // Population replacement rate
-        const cms = 50; // Child max skill
-        const alr = 1.0; // Adult learning rate
-
-        const t = trait(clan);
-        this.originalValue = t;
-        this.educationTarget =  Math.min(cms, t);
-        [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
-            [...clan.settlement!.clans],
-            c => c.name,
-            c => clan.prestigeViewOf(c).value,
-            c => trait(c),
-        );
-
-        // Imitation with error (education) by children.
-        const educationDelta = absmin(cms, this.educationTarget) - t;
-        this.items.push({
-            label: 'Education', 
-            weight: 1 - rr, 
-            value: educationDelta - normal(2, 4) * clamp(t / 100, 0, 1),
-            ev: educationDelta - 2 * clamp(t / 100, 0, 1),
-        });
-
-        // Imitation with error by adult clan members.
-        const imitationDelta = this.imitationTarget - t;
-        this.items.push({
-            label: 'Imitation', 
-            weight: (1 - rr) * alr,
-            value: imitationDelta - normal(2, 4) * clamp(t / 100, 0, 1), 
-            ev: imitationDelta - 2 * clamp(t / 100, 0, 1),
-        });
-
-        // Learning from experience and observation.
-        this.items.push({
-            label: `Experience (${pct(experienceRatio)})`, 
-            weight: 1, 
-            value: experienceRatio * normal(2, 4) * clamp((100 - t) / 100, 0, 1), 
-            ev: experienceRatio * 2 * clamp((100 - t) / 100, 0, 1),
-        })
-
-        // Things may be a little different after a move, which might
-        // work out better or worse for us.
-        if (this.clan.seniority == 0) {
-            this.items.push({
-                label: 'Migration',
-                weight: 1, 
-                value: -10 + normal(2, 4), 
-                ev: -10,
-            })
-        }
-    }
-
-    get delta(): number {
-        return this.items.reduce((acc, o) => acc + o.weight * o.value, 0);
-    }
-
-    get educationTargetDelta(): number {
-        return this.educationTarget - this.originalValue;
-    }
-
-    get imitationTargetDelta(): number {
-        return this.imitationTarget - this.originalValue;
-    }
-
-    get imitationTooltip(): string[][] {
-        return WeightedValue.tooltip(this.imitationTargetTable,
-            ['Model', 'V', 'P', 'W', 'WV'],
-        );
-    }
-
-    get changeSourcesTooltip(): string[][] {
-        const header = ['Source', 'W', 'EV', 'WEV', 'V', 'WV'];
-        const data = this.items.map(o => [
-            o.label, 
-            o.weight.toFixed(2),
-            o.ev.toFixed(1),
-            (o.weight * o.ev).toFixed(1),
-            o.value.toFixed(1),
-            (o.weight * o.value).toFixed(1),
-        ]);
-        const footer = [ 
-            'Total',
-            '',
-            '',
-            this.items.reduce((acc, o) => acc + o.ev * o.weight, 0).toFixed(1),
-            '',
-            this.items.reduce((acc, o) => acc + o.weight * o.value, 0).toFixed(1),
-        ]
-        return [header, ...data, footer];
-    }
-}
-
 export class Clan {
     readonly uuid = crypto.randomUUID();
 
@@ -363,11 +165,7 @@ export class Clan {
     
     lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 
-    private skill_: number = normal(30, 10);
-    skillChange: SkillChange = new NilSkillChange(this.skill_);
-
-    private ritualSkill_: number = normal(30, 10);
-    ritualSkillChange: SkillChange = new NilSkillChange(this.ritualSkill_);
+    skills = new ClanSkills(this);
 
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
@@ -451,11 +249,11 @@ export class Clan {
     }
 
     get skill() {
-        return this.skill_;
+        return this.skills.v(SkillDefs.Agriculture);
     }
 
     get ritualSkill() {
-        return this.ritualSkill_;
+        return this.skills.v(SkillDefs.Ritual);
     }
 
     consume() {
@@ -704,18 +502,11 @@ export class Clan {
     }
 
     prepareTraitChanges() {
-        this.skillChange = new ClanSkillChange(this, 
-            clan => clan.skill, 1.0);
-
-        const ritualWeight = this.settlement!.clans.rites.weights.get(this) ?? 0;
-        const experienceRatio = Math.min(2.0, this.settlement!.clans.length * ritualWeight);
-        this.ritualSkillChange = new ClanSkillChange(this, 
-            clan => clan.ritualSkill, experienceRatio);
+        this.skills.prepareAdvance();
     }
 
     commitTraitChanges() {
-        this.skill_ += this.skillChange.delta;
-        this.ritualSkill_ += this.ritualSkillChange.delta;
+        this.skills.commitAdvance();
 
         this.strength = this.advancedTrait(this.strength);
         this.intelligence = this.advancedTrait(this.intelligence);
@@ -757,7 +548,7 @@ export class Clan {
         this.settlement_ = settlement;
 
         this.seniority = 0;
-        this.skill_ *= 0.9;
+        this.skills.updateForMigration();
     }
 
     absorb(other: Clan) {
@@ -800,8 +591,7 @@ export class Clan {
         const newClan = new Clan(this.world, this.annals, name, color, newSize);
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;
-        newClan.skill_ = this.skill_;
-        newClan.ritualSkill_ = this.ritualSkill_;
+        newClan.skills = this.skills.cloneFor(newClan);
         newClan.settlement_ = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);

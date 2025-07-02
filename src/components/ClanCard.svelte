@@ -7,8 +7,26 @@
     import PopulationPyramid from "./PopulationPyramid.svelte";
     import Tooltip from "./Tooltip.svelte";
     import { clanTimelineGraphData } from "../model/timeline";
+    import { SkillDefs } from "../model/people/skills";
 
     let { clan } = $props();
+    let agsk = $derived.by(() => clan.skills.lastChange(SkillDefs.Agriculture) ?? {
+        originalValue: 0,
+        delta: 0,
+        imitationTarget: 0,
+        imitationTooltip: [],
+        changeSourcesTooltip: []
+    });
+    let rtsk = $derived.by(() => clan.skills.lastChange(SkillDefs.Ritual) ?? {
+        originalValue: 0,
+        delta: 0,
+        educationTarget: 0,
+        educationTargetDelta: 0,
+        imitationTarget: 0,
+        imitationTargetDelta: 0,
+        imitationTooltip: [],
+        changeSourcesTooltip: []
+    });
 
     let clanUpperRightIcon = $derived.by(() => {
         return clan.migrationPlan?.willMigrate
@@ -132,19 +150,19 @@
                 </td>
             </tr>
             <tr>
-                <td>Hort</td>
-                <td>{clan.skill.toFixed()}</td>
+                <td>Farming</td>
+                <td>{clan.skills.s(SkillDefs.Agriculture)}</td>
                 <td>
                     <Tooltip>
-                        ({clan.skillChange.delta.toFixed(1)})
+                        ({agsk.delta.toFixed(1)})
                         <div slot="tooltip" class="ttt">
-                            <div>{clan.skillChange.originalValue.toFixed(1)} /
-                                 {clan.skillChange.delta.toFixed(1)}</div>
-                            <h4>Imitation Sources (t={clan.skillChange.imitationTarget.toFixed(1)})</h4>
-                            <h4>Target: {clan.skillChange.imitationTarget.toFixed(1)}</h4>
-                            <DataTable rows={clan.skillChange.imitationTooltip} />
+                            <div>{agsk.originalValue.toFixed(1)} /
+                                 {agsk.delta.toFixed(1)}</div>
+                            <h4>Imitation Sources (t={agsk.imitationTarget.toFixed(1)})</h4>
+                            <h4>Target: {agsk.imitationTarget.toFixed(1)}</h4>
+                            <DataTable rows={agsk.imitationTooltip} />
                             <h4>Skill Changes</h4>
-                            <DataTable rows={clan.skillChange.changeSourcesTooltip} />
+                            <DataTable rows={agsk.changeSourcesTooltip} />
                         </div>
                     </Tooltip>
                 </td>
@@ -168,30 +186,30 @@
             </tr>
             <tr>
                 <td>Rite</td>
-                <td>{clan.ritualSkill.toFixed()}</td>
+                <td>{clan.skills.s(SkillDefs.Ritual)}</td>
                 <td>
                     <Tooltip>
-                        ({clan.ritualSkillChange.delta.toFixed(1)})
+                        ({rtsk.delta.toFixed(1)})
                         <div slot="tooltip" class="ttt">
                             <h4>Learning targets</h4>
                             <table>
                                 <tbody>
                                     <tr>
                                         <td>Education</td>
-                                        <td>{clan.ritualSkillChange.educationTarget.toFixed(1)}</td>
-                                        <td>{clan.ritualSkillChange.educationTargetDelta.toFixed(1)}</td>
+                                        <td>{rtsk.educationTarget.toFixed(1)}</td>
+                                        <td>{rtsk.educationTargetDelta.toFixed(1)}</td>
                                     </tr>
                                     <tr>
                                         <td>Imitation</td>
-                                        <td>{clan.ritualSkillChange.imitationTarget.toFixed(1)}</td>
-                                        <td>{clan.ritualSkillChange.imitationTargetDelta.toFixed(1)}</td>
+                                        <td>{rtsk.imitationTarget.toFixed(1)}</td>
+                                        <td>{rtsk.imitationTargetDelta.toFixed(1)}</td>
                                     </tr>
                                 </tbody>
                             </table>
                             <h4>Imitation Sources</h4>
-                            <DataTable rows={clan.ritualSkillChange.imitationTooltip} />
+                            <DataTable rows={rtsk.imitationTooltip} />
                             <h4>Skill Changes</h4>
-                            <DataTable rows={clan.ritualSkillChange.changeSourcesTooltip} />
+                            <DataTable rows={rtsk.changeSourcesTooltip} />
                         </div>
                     </Tooltip>
                 </td>

@@ -4,7 +4,7 @@ import type { PopulationChange } from "../model/people/population";
 import type { Clans, CondorcetCalc } from "../model/people/clans";
 import { pct } from "../model/lib/format";
 import type { Note } from "../model/notifications";
-import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport, ProductivityCalc, RitualEffectivenessCalc, SkillChange } from "../model/people/people";
+import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people/people";
 import type { PrestigeCalc } from "../model/people/prestige";
 import type { QoLCalc } from "../model/people/qol";
 import type { SimulationResult } from "../model/rites";
@@ -15,6 +15,7 @@ import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
 import { weightedAverage } from "../model/lib/modelbasics";
 import type { MigrationCalc } from "../model/people/migration";
+import type { ClanSkills } from "../model/people/skills";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -73,11 +74,8 @@ export type ClanDTO = {
     qol: number;
     qolCalc: QoLCalc;
 
+    skills: ClanSkills;
     intelligence: number;
-    skill: number;
-    skillChange: SkillChange;
-    ritualSkill: number;
-    ritualSkillChange: SkillChange;
     strength: number;
     traits: string[];
 }
@@ -121,11 +119,8 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         qol: clan.qol,
         qolCalc: clan.qolCalc,
 
+        skills: clan.skills,
         intelligence: clan.intelligence,
-        skill: clan.skill,
-        skillChange: clan.skillChange,
-        ritualSkill: clan.ritualSkill,
-        ritualSkillChange: clan.ritualSkillChange,
         strength: clan.strength,
         traits: [...clan.traits].map(t => t.name),
     };
