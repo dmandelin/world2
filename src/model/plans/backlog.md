@@ -72,9 +72,6 @@ x   Epic: Blast out all the key components of the new migration model.
         - add event markers
 
 -   Refinements to the new migration model:
-    x   Show the actual comparisons with current conditions
-    x   Make people moving out to new places go the same new place  
-    x   Show want-to-migrate but not yet indicator
     -   Make abandoned daughter villages go away eventually
     -   Make clans that just split off more likely to move
         -   Also move splitting to plan/review model
@@ -83,23 +80,11 @@ x   Epic: Blast out all the key components of the new migration model.
 ## Top needs
 
 - Docs
-  x README
   - instructions for prereqs
   - bibliographyP
 - Fix seniority
-  x change seniority to a rating of how many turns the clan has been
     present in the settlement, up to a max of 4
-  x make seniority prestige based on value relative to average like others
   - add relative rank for fully tenured clans (conditional on some cultural move?)
-- Fix migration
-  x include average QoL from goods in the calculation
-  x higher reluctance to move to a different cluster
-  - consider displaying pending moves in the UI
-  - switch to a probabilistic model
-    - compute an appeal per city similar to now
-    - get a "desired home" from softmax
-    - have a logistic probability of making the move based on appeal difference
-  - fix messed up consumption and satisfaction values on migration
 - More ritual options
   - give option to attend other clan rituals
   - distribute attendance according to appeal
@@ -110,17 +95,11 @@ x   Epic: Blast out all the key components of the new migration model.
   - some migrations not showing as notifications
   - notifications for clans dying out or merging
 
-## Original settlement
-
-- Start out people as semi-nomadic
-
 ## Learning and status
 
 ### Items
 
 - General items we'll need
-  x Recenter prestige to zero: we already did that with QoL, will help
-    make comparisons more cogent.
   - Model how much clans are able to pay attention to each other
   - Desired rituals/roles/laws structure and sat/dissat with present state
   - Conflict over rituals/roles/laws
@@ -128,7 +107,6 @@ x   Epic: Blast out all the key components of the new migration model.
     learning
 
 - Small but important
-  - more reticence to emigrate to a different cluster / or allow migrating to cluster
   - scale bonuses for learning in settlements
   - connectivity bonuses for related settlements
   - merge annals and notetaker
@@ -138,7 +116,6 @@ x   Epic: Blast out all the key components of the new migration model.
 - Introduce new ritual model
   x different rituals at same granularity as production pot
     - later allow option for subsets of clans or multiple clans
-  x calculate appeal for each one
   - fix scale factors going up too high
   - distribute attention per appeal
   - rename relatedness to solidarity
@@ -150,7 +127,6 @@ x   Epic: Blast out all the key components of the new migration model.
   - add multi-settlement ritual
 
 - Better display of hamlets
-  x new views
   - properly update settlement selection in all cases
   - enhance buttonpanel
     - smaller font or different size or format so buttons look better here
@@ -169,8 +145,6 @@ x   Epic: Blast out all the key components of the new migration model.
 - Help villages with low subsistence
 
 - Help villages with bad rites
-  x allow them to actually change leadership selection
-
   - debug selection options: current selection doesn't appear neutral
   - lose more information about prestige when things get too big
 
@@ -203,7 +177,6 @@ x   Epic: Blast out all the key components of the new migration model.
   - option to build new types of ritual building
 
   - different structure options:
-    x add ritual lens to map for visualizations
     - implement roles having different effects on prestige, quality, and skill gain
       x first, show expected skill changes to make it clearer what's going on
     - give villages the option to switch structure
@@ -213,8 +186,6 @@ x   Epic: Blast out all the key components of the new migration model.
   - (P2) option to invite another village to help
 
 - Fix up learning model
-  x verify tuning of basic changes
-  x overhaul learning model to get continuity and learning rates
   - have it depend on population pyramid
   - add breakthroughs
   - give a bigger self weight bonus for education vs imitation
@@ -224,14 +195,7 @@ x   Epic: Blast out all the key components of the new migration model.
   e.g., dependent on settlement relations
 
 Understanding results:
-x Historical graphs of key numbers
-  x Include satisfaction subscores
-- Lenses: show ritual quality and other things on map
 - Visualization of leading clans over time
-- Display clan moves again
-
-Liveliness:
-- Thumbnails or backgrounds to represent settlement or clan
 
 Model refinements:
 - Better skill growth after migrants arrive
