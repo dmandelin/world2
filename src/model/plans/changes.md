@@ -30,6 +30,35 @@ Details:
 
     *   Start with shifting settlements
     *   Ditching technology and investment allow switching to permanent settlement
+    
+    *   People have the idea of ditching, but might need time to build up ditching
+        skills in the new environment
+    *   There could also be some risk, especially if there is not yet a lot of
+        experience with ditching
+    *   Decisions:
+        
+        *   Ditch shifting settlement -- increases expected time to move, but some
+            chance it will not and effort was wasted
+        *   Establish permanent settlement -- increases expected time to move even
+            more, but still no guarantees
+
+    *   At first, the only effect of moving less often is QoL, but it should probably
+        be a precondition for many future developments
+
+    *   Implementation
+
+        *   Add an irrigation skill
+        *   Clans can decide to work on ditches or not but all get the benefit
+            *   Clans can shame shirkers resulting in a QoL penalty, but that's it
+        *   Clans can decide to settle permanently or not
+            *   Village splits if some go each way
+            *   Permanence is an attribute of the settlement
+        *   Keep in mind that these are all actually iterated prisoners' dilemmas
+            inside each 20-year turn. If someone defects, they can collect on that
+            only one time out of many notional steps inside the turn. Real defection
+            is probably more of a long-term policy shift that other clans don't like,
+            but we can definitely imagine ill-advised short defections as background
+            friction if we need it.
 
 *   Marshland economy
 
