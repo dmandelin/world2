@@ -68,6 +68,10 @@ export class ClanSkills {
         }
     }
 
+    [Symbol.iterator](): IterableIterator<[SkillDef, ClanSkill]> {
+        return this.m_.entries();
+    }
+
     v(skill: SkillDef): number {
         const clanSkill = this.m_.get(skill);
         return clanSkill ? clanSkill.value : 0;

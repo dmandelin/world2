@@ -10,12 +10,12 @@ import type { QoLCalc } from "../model/people/qol";
 import type { SimulationResult } from "../model/rites";
 import type { Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/timeline";
-import { TradeGoods } from "../model/trade";
+import { type TradeGood, TradeGoods } from "../model/trade";
 import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
 import { weightedAverage } from "../model/lib/modelbasics";
 import type { MigrationCalc } from "../model/people/migration";
-import { type ClanSkills, SkillDefs } from "../model/people/skills";
+import { type ClanSkills, type SkillDef, SkillDefs } from "../model/people/skills";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -62,6 +62,7 @@ export type ClanDTO = {
     economicPolicy: EconomicPolicy;
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
+    productivityCalcs: Map<SkillDef, ConsumptionCalc>;
     productivity: number;
     productivityTooltip: string[][];
     ritualEffectiveness: number;
@@ -107,6 +108,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         economicPolicy: clan.economicPolicy,
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,
+        productivityCalcs: clan.productivityCalcs,
         productivity: clan.productivity,
         productivityTooltip: clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [],
         ritualEffectiveness: clan.ritualEffectiveness,
