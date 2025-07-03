@@ -97,6 +97,9 @@ export class Settlement {
     advance() {
         const sizeBefore = this.population;
  
+        // Update productivity now, so that policy can use it.
+        this.clans.updateProductivity();
+
         // Economic planning.
         // TODO - Move to a planning function.        
         const policySnapshot = new Map(this.clans.map(clan => [clan, clan.economicPolicy]));

@@ -13,8 +13,9 @@ import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { MigrationCalc, type NewSettlementSupplier} from "./migration";
-import { ClanSkills, SkillDefs } from "./skills";
-import { ProductivityCalc, RitualEffectivenessCalc } from "./productivity";
+import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
+import { ProductivityCalc } from "./productivity";
+import { Traits } from "./traits";
 
 const clanGoodsSource = 'clan';
 
@@ -201,6 +202,8 @@ export class Clan {
     };
     tradePartners = new Set<Clan>();
 
+    productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
+
     consumption = new ConsumptionCalc(0);
     pot = new Pot(clanGoodsSource, [this]);
     readonly rites: Rites;
@@ -378,6 +381,18 @@ export class Clan {
         return clan.exportsTo(this);
     }
 
+    updateProductivity() {
+        this.productivityCalcs = this.skills.createProductivityCalcs();
+    }
+
+    get productivity(): number {
+        return this.productivityCalcs.get(SkillDefs.Agriculture)?.tfp ?? 0;
+    }
+
+    get ritualEffectiveness(): number {
+        return this.productivityCalcs.get(SkillDefs.Ritual)?.tfp ?? 0;
+    }
+
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
         // Consumption from keeping.
         const testKeepPot = new Pot('', []);
@@ -449,22 +464,6 @@ export class Clan {
         };
     }
 
-    get productivity() {
-        return this.productivityCalc.value;
-    }
-
-    get productivityCalc() {
-        return new ProductivityCalc(this);
-    }
-
-    get ritualEffectiveness() {
-        return this.ritualEffectivenessCalc.value;
-    }
-
-    get ritualEffectivenessCalc() {
-        return new RitualEffectivenessCalc(this);
-    }
-
     get share() {
         return this.population / (this.settlement?.population ?? this.population);
     }
@@ -499,6 +498,15 @@ export class Clan {
             this.slices[i][1] = this.lastPopulationChange.newSlices[i][1];
         }
         this.population = this.slicesTotal;
+    }
+
+    getTrait(trait: string): number {
+        if (trait === Traits.Intelligence) {
+            return this.intelligence;
+        } else if (trait === Traits.Strength) {
+            return this.strength;
+        }
+        return 0;
     }
 
     prepareTraitChanges() {
@@ -606,6 +614,8 @@ export class Clan {
         // New clan starts as a cadet.
         newClan.parent = this;
         this.cadets.push(newClan);
+
+        newClan.updateProductivity();
 
         newClan.economicPolicy = this.economicPolicy;
         newClan.economicPolicyDecision = this.economicPolicyDecision;

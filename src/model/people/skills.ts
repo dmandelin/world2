@@ -1,17 +1,23 @@
 import type { Clan } from './people';
 import { ClanSkillChange } from './skillchange';
+import { ProductivityCalc } from './productivity';
+import { Traits } from './traits';
 import { normal } from '../lib/distributions';
 
 export class SkillDef {
     constructor(
         readonly name: string,
+        readonly traitFactors: Map<string, number> = new Map<string, number>(),
     ) {}
 }
 
 export const SkillDefs = {
-    Agriculture: new SkillDef('Agriculture'),
-    Irrigation: new SkillDef('Irrigation'),
-    Ritual: new SkillDef('Ritual'),
+    Agriculture: new SkillDef('Agriculture', 
+        new Map([['Skill', 1.01], [Traits.Intelligence, 1.01], [Traits.Strength, 1.02]])),
+    Irrigation: new SkillDef('Irrigation',
+        new Map([['Skill', 1.02], [Traits.Intelligence, 1.02], [Traits.Strength, 1.02]])),
+    Ritual: new SkillDef('Ritual',
+        new Map([['Skill', 1.01], [Traits.Intelligence, 1.02], [Traits.Strength, 1.01]])),
 };
 
 export class ClanSkill {
@@ -82,6 +88,15 @@ export class ClanSkills {
         }
         return clone;
     }
+
+    createProductivityCalcs(): Map<SkillDef, ProductivityCalc> {
+        const calcs = new Map<SkillDef, ProductivityCalc>();
+        for (const skillDef of this.m_.keys()) {
+            calcs.set(skillDef, new ProductivityCalc(this.clan, skillDef));
+        }
+        return calcs;
+    }
+        
 
     // We have to split skill updates into prepare/commit phases because
     // the skill change depends on the skill value of other clans.

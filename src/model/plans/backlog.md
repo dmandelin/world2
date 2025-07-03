@@ -55,8 +55,8 @@ Next, make social learning complex and dynamic:
         -   Regularize skills so we can add an irrigation skill
             (Will also need fishing soon)
             x   Change clan skills to a map
-            -   Redo trait bonuses
-            -   Regularize productivity calculations as well
+            x   Redo trait bonuses
+            x   Regularize productivity calculations as well
             -   Collect skills and productivity as a mini-panel
 
 -   Fix issues with ritual satisfaction having a very unobvious relationship

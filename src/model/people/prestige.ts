@@ -71,18 +71,19 @@ export class OwnPrestigeCalc {
         const averageStrength = averageFun(clan.settlement!.clans, c => c.strength);
         const averageIntelligence = averageFun(clan.settlement!.clans, c => c.intelligence);
         const averageHorticulture = averageFun(clan.settlement!.clans, c => c.skill);
-        const averageEffectiveRitualSkill = averageFun(clan.settlement!.clans, c => c.ritualEffectivenessCalc.effectiveSkill);
+        const averageEffectiveRitualSkill = averageFun(clan.settlement!.clans, c => c.ritualEffectiveness);
         this.items.push(
             new DiffBasedPrestigeCalcItem('Seniority', 3, averageSeniority, clan.seniority),
             new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.population),
             new DiffBasedPrestigeCalcItem('Strength', 0.1, averageStrength, other.strength),
             new DiffBasedPrestigeCalcItem('Intelligence', 0.1, averageIntelligence, other.intelligence),
-            new DiffBasedPrestigeCalcItem('Horticulture', 0.1, averageHorticulture, other.skill),
+            // TODO - Make this based on the data structures.
+            new DiffBasedPrestigeCalcItem('Agriculture', 0.1, averageHorticulture, other.skill),
             new DiffBasedPrestigeCalcItem(
                 'Ritual',
                 0.5, 
                 averageEffectiveRitualSkill,
-                other.ritualEffectivenessCalc.effectiveSkill),
+                other.ritualEffectiveness),
             new DirectPrestigeCalcItem('Random', normal(0, 2)),
         );
     }
@@ -106,7 +107,7 @@ export class OwnPrestigeCalc {
     static prestigeFromRitual(baselineEffectiveSkill: number, other: Clan, rites: Rites): {weight: number, value: number} {
         const weight = rites.weights.get(other) ?? 0.1;
         const value = weight *  
-               (other.ritualEffectivenessCalc.effectiveSkill 
+               (other.ritualEffectiveness, 
                - baselineEffectiveSkill) / 2;
         return {weight, value};
     }

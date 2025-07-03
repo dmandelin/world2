@@ -1,72 +1,45 @@
 import { Clan } from '../people/people';
+import { SkillDef } from './skills';
+import { spct } from '../lib/format';
+import { product } from '../lib/basics';
 
-export class ProductivityCalc {
-    readonly baseSkill: number;
-    readonly intelligenceSkillModifier: number = 1.0;
-    readonly effectiveSkill: number;
+export class ProductivityCalcItem {
+    constructor(readonly label: string,
+                readonly statValue: number,
+                readonly statFactor: number) {}
 
-    readonly skillFactor: number;
-    readonly strengthFactor: number;
-
-    readonly value: number;
-
-    constructor(readonly clan: Clan) {
-        this.baseSkill = clan.skill;
-
-        const baseIntelligenceModifier = (clan.intelligence - 50) / 2;
-        const intelligenceModifierFactor = baseIntelligenceModifier >= 0 
-            ? (100 - clan.skill) / 100
-            : (clan.skill) / 100;
-        this.intelligenceSkillModifier = baseIntelligenceModifier * intelligenceModifierFactor;
-        this.effectiveSkill = this.baseSkill + this.intelligenceSkillModifier;
-        this.skillFactor = Math.pow(1.01, this.effectiveSkill - 50);
-
-        this.strengthFactor = Math.pow(1.01, (clan.strength - 50) / 4);
-
-        this.value = this.skillFactor * this.strengthFactor;
-    }
-
-    get tooltip(): string[][] {
-        return [
-            ['Base skill', this.baseSkill.toFixed(1)],
-            ['Intelligence', this.clan.intelligence.toFixed(1)],
-            ['Intelligence modifier', this.intelligenceSkillModifier.toFixed(1)],
-            ['Effective skill', this.effectiveSkill.toFixed(1)],
-            ['Skill factor', this.skillFactor.toFixed(2)],
-            ['Strength factor', this.strengthFactor.toFixed(2)],
-            ['Productivity', this.value.toFixed(2)],
-        ];
+    get fp(): number {
+        return Math.pow(this.statFactor, this.statValue - 50);
     }
 }
 
-export class RitualEffectivenessCalc {
-    readonly baseSkill: number;
-    readonly intelligenceSkillModifier: number = 1.0;
-    readonly effectiveSkill: number;
+export class ProductivityCalc {
+    readonly skill: number;
+    readonly items: ProductivityCalcItem[];
 
-    readonly skillFactor: number;
+    constructor(readonly clan: Clan, readonly skillDef: SkillDef) {
+        this.skill = clan.skills.v(skillDef);
+        this.items = [...skillDef.traitFactors.entries()].map(tf => {
+            const [statName, statFactor] = tf;
+            const statValue = statName === 'Skill'
+                ? this.skill
+                : clan.getTrait(statName);
+            return new ProductivityCalcItem(statName, statValue, statFactor);
+        });
+    }
 
-    readonly value: number;
-
-    constructor(readonly clan: Clan) {
-        this.baseSkill = clan.ritualSkill;
-
-        const baseIntelligenceModifier = (clan.intelligence - 50);
-        const intelligenceModifierFactor = (100 - clan.ritualSkill) / 100;
-        this.intelligenceSkillModifier = baseIntelligenceModifier * intelligenceModifierFactor;
-        this.effectiveSkill = this.baseSkill + this.intelligenceSkillModifier;
-        this.skillFactor = Math.pow(1.01, this.effectiveSkill - 50);
-
-        this.value = this.skillFactor;
+    get tfp(): number {
+        return product(this.items.map(item => item.fp));
     }
 
     get tooltip(): string[][] {
-        return [
-            ['Base skill', this.baseSkill.toFixed(1)],
-            ['Intelligence', this.clan.intelligence.toFixed(1)],
-            ['Intelligence modifier', this.intelligenceSkillModifier.toFixed(1)],
-            ['Effective skill', this.effectiveSkill.toFixed(1)],
-            ['Effectiveness', this.value.toFixed(2)],
-        ];
+        const header = ['Item', '*', 'Value', 'Factor'];
+        const data = this.items.map(item => [
+            item.label, 
+            ((item.statFactor - 1) * 100).toFixed(),
+            item.statValue.toFixed(1), 
+            spct(item.fp),
+        ]);
+        return [header, ...data];
     }
 }

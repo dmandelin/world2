@@ -15,7 +15,7 @@ import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
 import { weightedAverage } from "../model/lib/modelbasics";
 import type { MigrationCalc } from "../model/people/migration";
-import type { ClanSkills } from "../model/people/skills";
+import { type ClanSkills, SkillDefs } from "../model/people/skills";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -108,9 +108,9 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,
         productivity: clan.productivity,
-        productivityTooltip: clan.productivityCalc.tooltip,
+        productivityTooltip: clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [],
         ritualEffectiveness: clan.ritualEffectiveness,
-        ritualEffectivenessTooltip: clan.ritualEffectivenessCalc.tooltip,
+        ritualEffectivenessTooltip: clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [],
         seniority: clan.seniority,
         size: clan.population,
         lastPopulationChange: clan.lastPopulationChange,

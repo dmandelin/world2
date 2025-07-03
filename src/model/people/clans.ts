@@ -107,6 +107,12 @@ export class Clans extends Array<Clan> {
         this.splice(this.indexOf(clan), 1);
     }
 
+    updateProductivity() {
+        for (const clan of this) {
+            clan.updateProductivity();
+        }
+    }
+
     produce() {
         this.pot = new Pot(communalGoodsSource, this);
         for (const clan of this) {
