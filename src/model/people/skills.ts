@@ -7,16 +7,17 @@ import { normal } from '../lib/distributions';
 export class SkillDef {
     constructor(
         readonly name: string,
+        readonly icon: string,
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
     ) {}
 }
 
 export const SkillDefs = {
-    Agriculture: new SkillDef('Agriculture', 
+    Agriculture: new SkillDef('Agriculture', 'skill-farming-256.png',
         new Map([['Skill', 1], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
-    Irrigation: new SkillDef('Irrigation',
+    Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png',
         new Map([['Skill', 1], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
-    Ritual: new SkillDef('Ritual',
+    Ritual: new SkillDef('Ritual', 'skill-ritual-256.png',
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
 };
 

@@ -65,6 +65,24 @@
         height: 24px;
         object-fit: contain;
     }
+
+    .skills-table img {
+        vertical-align: middle;
+    }
+
+    .skills-table td {
+        padding-left: 2px;
+        padding-right: 2px;
+        text-align: right;
+    }
+
+    .skills-table .rp {
+        padding-right: 0.9em;
+    }
+
+    .skills-table .rph {
+        padding-right: 0.5em;
+    }
 </style>
 
 <div id="top">
@@ -151,26 +169,37 @@
     </table>
 
     <!-- Skills and TFP -->
-    <table>
+    <table class="skills-table">
         <tbody>
             <tr>
                 <td></td>
                 {#each clan.skills as [def, _]}
-                <td>{def.name.substr(0, 2)}</td>
+                <td class="rph">
+                    <Tooltip>
+                        {#if def.icon}
+                            <img src={def.icon} alt={def.name} width="20" height="20" />
+                        {:else}
+                            {def.name.substr(0, 2)}
+                        {/if}
+                        <div slot="tooltip" class="ttt">
+                            <b>{def.name}</b>
+                        </div>
+                    </Tooltip>
+                </td>
                 {/each}
             </tr>
             <tr>
                 <td>𝕊</td>
                 {#each clan.skills as [_, skill]}
-                <td>{skill.value.toFixed(1)}</td>
+                <td class="rp">{skill.value.toFixed()}</td>
                 {/each}
             </tr>
             <tr>
                 <td>Δ</td>
                 {#each clan.skills as [_, skill]}
-                <td>
+                <td class="rp">
                     <Tooltip>
-                        {signed(skill.lastChange?.delta || 0, 1)}
+                        {signed(skill.lastChange?.delta || 0)}
                         <div slot="tooltip" class="ttt">
                             {#if skill.lastChange}
                                 <h4>Imitation Sources (t={skill.lastChange.imitationTarget.toFixed(1)})</h4>

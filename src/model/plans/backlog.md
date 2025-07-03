@@ -57,7 +57,9 @@ Next, make social learning complex and dynamic:
             x   Change clan skills to a map
             x   Redo trait bonuses
             x   Regularize productivity calculations as well
-            -   Collect skills and productivity as a mini-panel
+            x   Collect skills and productivity as a mini-panel
+
+-   More icons for clan card, looks a lot better that way.
 
 -   Fix issues with ritual satisfaction having a very unobvious relationship
     with the values in the rites panel.
