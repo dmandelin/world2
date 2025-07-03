@@ -137,7 +137,7 @@ export class Settlement {
         this.clans.distribute();
 
         // Construct fixed capital.
-        clan.construct();
+        this.construct();
 
         // Ritual production.
         this.advanceRites();
@@ -161,7 +161,7 @@ export class Settlement {
     }
 
     construct() {
-        
+
     }
 
     advanceRites(updateOptions: boolean = true) {
