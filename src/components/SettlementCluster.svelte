@@ -29,7 +29,8 @@
     <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
         <div>
             <img style="display: block" src="residents.png" alt="Residents" width="150" height="100" />
-            Flood control: {selectedSettlement.ditchingLevel}
+            <div>Flooding level: {selectedSettlement.floodingLevel}</div>
+            <div>Flood control: {selectedSettlement.ditchingLevel}</div>
         </div>
         <div>
             <h4>{selectedSettlement.cluster.name}: 

@@ -174,6 +174,7 @@ export class SettlementDTO {
     readonly localTradeGoods: TradeGood[];
 
     readonly ditchingLevel: number;
+    readonly floodingLevel: number;
 
     readonly rites: {
         name: string;
@@ -202,6 +203,7 @@ export class SettlementDTO {
         this.localTradeGoods = [...settlement.localTradeGoods];
 
         this.ditchingLevel = settlement.ditchingLevel;
+        this.floodingLevel = settlement.floodingLevel;
 
         this.rites = settlement.rites.map(rites => ({
             name: rites.name,

@@ -4,6 +4,7 @@ import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { SettlementCluster } from "./cluster";
+import { poisson } from "../lib/distributions";
 
 export class Housing {
     constructor(readonly name: string, readonly description: string) {}
@@ -53,6 +54,9 @@ export class Settlement {
 
     // Infrastructure.
     readonly ditchingLevel = 0;
+
+    // Local conditions.
+    floodingLevel_ = 1;
 
     constructor(
         readonly world: World,
@@ -106,9 +110,16 @@ export class Settlement {
         return this.lastSizeChange_;
     }
 
+    get floodingLevel() {
+        return this.floodingLevel_;
+    }
+
     advance() {
         const sizeBefore = this.population;
- 
+
+        // Nature.
+        this.floodingLevel_ = 1 + poisson(1);
+
         // Update productivity now, so that policy can use it.
         this.clans.updateProductivity();
 

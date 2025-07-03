@@ -22,6 +22,7 @@ export class QoLCalc {
             ['Goods', qolFromPerCapitaGoods(this.perCapitaOverall)],
             ['Status', statusValue(this.clan)],
             ['Crowding', crowdingValue(this.clan)],
+            ['Flooding', floodingValue(this.clan)]
         ];
     }
 
@@ -71,6 +72,19 @@ export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): numb
     const b = Math.pow(r, 1/6);
     const d = Math.pow(r, 0.5);
     return Math.min(0, (b - d) * 100);
+}
+
+export function floodingValue(clan: Clan): number {
+    const floodingLevel = clan.settlement!.floodingLevel;
+    const ditchingLevel = clan.settlement!.ditchingLevel;
+
+    // If ditching is adequate to contain flooding, no negative impact.
+    // Otherwise, people have to move more often, which costs.
+    if (ditchingLevel >= floodingLevel) {
+        return 0;
+    }
+
+    return 10 * (ditchingLevel - floodingLevel);
 }
 
 function qolFromPerCapitaGoods(perCapitaGoods: number): number {

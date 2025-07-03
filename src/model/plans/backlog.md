@@ -52,6 +52,7 @@ Next, make social learning complex and dynamic:
 -   Epic sequence: add one social change at a time, fixing up systems as
     needed to make it work
     -   Permanent settlements
+        - Make flooding and move rate affect productivity
 
 -   More icons for clan card, looks a lot better that way.
 
