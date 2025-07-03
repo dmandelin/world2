@@ -55,6 +55,7 @@ Next, make social learning complex and dynamic:
         -   Regularize skills so we can add an irrigation skill
             (Will also need fishing soon)
             x   Change clan skills to a map
+            -   Redo trait bonuses
             -   Regularize productivity calculations as well
             -   Collect skills and productivity as a mini-panel
 
@@ -81,7 +82,7 @@ x   Epic: Blast out all the key components of the new migration model.
 
 - Docs
   - instructions for prereqs
-  - bibliographyP
+  - bibliography
 - Fix seniority
     present in the settlement, up to a max of 4
   - add relative rank for fully tenured clans (conditional on some cultural move?)

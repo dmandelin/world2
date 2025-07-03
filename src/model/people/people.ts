@@ -548,7 +548,6 @@ export class Clan {
         this.settlement_ = settlement;
 
         this.seniority = 0;
-        this.skills.updateForMigration();
     }
 
     absorb(other: Clan) {

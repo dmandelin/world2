@@ -1,38 +1,51 @@
-import { Clan } from './people';
+import { type Clan } from './people';
 import { type ClanSkill, type SkillDef, SkillDefs } from './skills';
-import { traitWeightedAverage, WeightedValue } from '../lib/modelbasics';
-import { absmin, clamp } from '../lib/basics';
+import { traitFactor, traitWeightedAverage, WeightedValue } from '../lib/modelbasics';
+import { absmin, clamp, sumFun } from '../lib/basics';
 import { normal } from '../lib/distributions';
 import { pct } from '../lib/format';
 
-export interface SkillChange {
-    originalValue: number;
-    educationTarget: number;
-    imitationTarget: number;
+export class ClanSkillChangeItem {
+    readonly shift: number;
 
-    delta: number;
-    imitationTooltip: string[][];
-}
+    constructor(
+        readonly label: string,
+        readonly originalValue: number,
+        readonly baseDelta: number,
+        readonly shiftMean: number,
+        readonly shiftStdDev: number,
+        readonly weight: number,
+        readonly experienceRatio: number = 1.0,
+    ) {
+        this.shift = normal(shiftMean, shiftStdDev);
+    }
 
-export class NilSkillChange implements SkillChange {
-    readonly delta = 0;
-    readonly educationTarget = 0;
-    readonly educationTargetDelta = 0;
-    readonly imitationTarget = 0;
-    readonly imitationTargetDelta = 0;
-    readonly imitationTooltip: string[][] = [];
+    get delta(): number {
+        return this.experienceRatio * (this.baseDelta + this.shift);
+    }
 
-    constructor(readonly originalValue: number) {
+    get expectedDelta(): number {
+        return this.experienceRatio * (this.baseDelta + this.shiftMean);
+    }
+
+    get weightedDelta(): number {
+        return this.weight * this.delta;
+    }
+
+    get weightedExpectedDelta(): number {
+        return this.weight * this.expectedDelta;
     }
 }
 
-export class ClanSkillChange implements SkillChange {
+export class ClanSkillChange {
     readonly originalValue: number;
     readonly educationTarget: number;
     readonly imitationTarget: number;
     readonly imitationTargetTable: readonly WeightedValue<String>[];
 
-    readonly items: {label: string, weight: number, value: number, ev: number}[] = [];
+    readonly generalLearningFactor: number;
+
+    readonly items: ClanSkillChangeItem[] = [];
 
     constructor(
         readonly clan: Clan,
@@ -42,12 +55,16 @@ export class ClanSkillChange implements SkillChange {
         let experienceRatio = 1.0;
         if (skillDef === SkillDefs.Ritual) {
             const ritualWeight = clan.settlement!.clans.rites.weights.get(clan) ?? 0;
-            const experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
+            experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
         }
 
         const rr = 0.5; // Population replacement rate
-        const cms = 50; // Child max skill
-        const alr = 1.0; // Adult learning rate
+        const baseCMS = 50; // Child max skill
+        const baseALR = 1.0; // Adult learning rate
+
+        this.generalLearningFactor = clamp(traitFactor(clan.intelligence, 1.02), 0.5, 1.5);
+        const cms = baseCMS * this.generalLearningFactor;
+        const alr = baseALR * this.generalLearningFactor;
 
         const t = skill.value;
         this.originalValue = t;
@@ -61,44 +78,29 @@ export class ClanSkillChange implements SkillChange {
 
         // Imitation with error (education) by children.
         const educationDelta = absmin(cms, this.educationTarget) - t;
-        this.items.push({
-            label: 'Education', 
-            weight: 1 - rr, 
-            value: educationDelta - normal(2, 4) * clamp(t / 100, 0, 1),
-            ev: educationDelta - 2 * clamp(t / 100, 0, 1),
-        });
+        this.items.push(new ClanSkillChangeItem(
+            'Education', this.originalValue, educationDelta, -2, 4, 1 - rr));
 
         // Imitation with error by adult clan members.
         const imitationDelta = this.imitationTarget - t;
-        this.items.push({
-            label: 'Imitation', 
-            weight: (1 - rr) * alr,
-            value: imitationDelta - normal(2, 4) * clamp(t / 100, 0, 1), 
-            ev: imitationDelta - 2 * clamp(t / 100, 0, 1),
-        });
+        this.items.push(new ClanSkillChangeItem(
+        'Imitation', this.originalValue, imitationDelta, -2, 4, (1 - rr) * alr));
 
         // Learning from experience and observation.
-        this.items.push({
-            label: `Experience (${pct(experienceRatio)})`, 
-            weight: 1, 
-            value: experienceRatio * normal(2, 4) * clamp((100 - t) / 100, 0, 1), 
-            ev: experienceRatio * 2 * clamp((100 - t) / 100, 0, 1),
-        })
+        this.items.push(new ClanSkillChangeItem(
+            `Experience (${pct(experienceRatio)})`, 
+            this.originalValue, 0, 2, 4, 1, experienceRatio * this.generalLearningFactor));
 
         // Things may be a little different after a move, which might
         // work out better or worse for us.
         if (this.clan.seniority == 0) {
-            this.items.push({
-                label: 'Migration',
-                weight: 1, 
-                value: -10 + normal(2, 4), 
-                ev: -10,
-            })
+            this.items.push(new ClanSkillChangeItem(
+                'Migration', this.originalValue, -10, 0, 5, 1, 1/this.generalLearningFactor));
         }
     }
 
     get delta(): number {
-        return this.items.reduce((acc, o) => acc + o.weight * o.value, 0);
+        return sumFun(this.items, o => o.weightedDelta);
     }
 
     get educationTargetDelta(): number {
@@ -116,22 +118,18 @@ export class ClanSkillChange implements SkillChange {
     }
 
     get changeSourcesTooltip(): string[][] {
-        const header = ['Source', 'W', 'EV', 'WEV', 'V', 'WV'];
+        const header = ['Source', '𝔼Δ', 'Δ', 'w'];
         const data = this.items.map(o => [
             o.label, 
-            o.weight.toFixed(2),
-            o.ev.toFixed(1),
-            (o.weight * o.ev).toFixed(1),
-            o.value.toFixed(1),
-            (o.weight * o.value).toFixed(1),
+            o.expectedDelta.toFixed(1),
+            o.delta.toFixed(1),
+            o.weight.toFixed(1),
         ]);
         const footer = [ 
             'Total',
-            '',
-            '',
-            this.items.reduce((acc, o) => acc + o.ev * o.weight, 0).toFixed(1),
-            '',
-            this.items.reduce((acc, o) => acc + o.weight * o.value, 0).toFixed(1),
+            sumFun(this.items, o => o.weightedExpectedDelta).toFixed(1),
+            sumFun(this.items, o => o.weightedDelta).toFixed(1),
+            sumFun(this.items, o => o.weight).toFixed(1),
         ]
         return [header, ...data, footer];
     }

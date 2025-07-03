@@ -96,10 +96,4 @@ export class ClanSkills {
             clanSkill.commitAdvance();
         }
     }
-
-    updateForMigration() {
-        for (const clanSkill of this.m_.values()) {
-            clanSkill.updateForMigration(this.clan);
-        }
-    }
 }
