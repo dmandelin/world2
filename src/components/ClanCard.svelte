@@ -80,6 +80,12 @@
         padding-left: 2px;
         padding-right: 2px;
         text-align: right;
+        height: 24px;
+    }
+
+    .stats-table td {
+        text-align: center;
+        height: 24px;
     }
 
     .skills-table .rp {
@@ -87,7 +93,11 @@
     }
 
     .skills-table .rph {
-        padding-right: 0.5em;
+        padding-right: 0.7em;
+    }
+
+    hr {
+        margin: 0.25rem 0;
     }
 </style>
 
@@ -107,6 +117,21 @@
                 <td colspan="3" style:color={clan.color} style:font-weight="bold" style:text-align="center">{clan.name}</td>
             </tr>
             <tr>
+                <td colspan="3" style="display: flex; text-align: left; vertical-align: middle; gap: 0.5em; justify-content: center;">
+                    <img src="stat-population-256.png" alt="Population" width="24" height="24" />
+                <Tooltip>
+                    {clan.size}
+                    <div slot="tooltip" class="ttt">
+                        <PopulationPyramid clan={clan} />
+                </Tooltip>
+                <Tooltip>
+                        {clan.lastPopulationChange.change}
+                        <div slot="tooltip" style="text-align: left">
+                            <PopulationChange clan={clan} />
+                        </div>
+                </Tooltip>
+            </tr>
+            <tr>
                 <td colspan="3" class="full-row">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>
             </tr>
             <tr>
@@ -115,53 +140,46 @@
             <tr>
                 <td colspan="3" class="full-row">{clan.isDitching ? 'Ditching' : 'Not ditching'}</td>
             </tr>
+        </tbody>
+    </table>
+    <hr>
+    <table class="stats-table">
+        <tbody>
             <tr>
                 <td>
-                    Prestige
+                    <Tooltip>
+                        <img src="stat-prestige-256.png" alt="Prestige" width="24" height="24" />
+                        <div slot="tooltip">Prestige</div>
+                    </Tooltip>
                 </td>
-                <td></td>
+                <td>
+                    <Tooltip>
+                        <img src="stat-tenure-256.png" alt="Tenure" width="24" height="24" />
+                        <div slot="tooltip">Tenure</div>
+                    </Tooltip>
+                </td>
+                <td>
+                    <Tooltip>
+                        <img src="stat-qol-256.png" alt="Quality of Life" width="24" height="24" />
+                        <div slot="tooltip">Quality of Life</div>
+                    </Tooltip>
+                </td>
+            </tr>
+            <tr>
                 <td>
                     <Tooltip>
                         {clan.averagePrestige.toFixed()}
-                        <div slot="tooltip" class="timeline-tooltip">
-                            <LineGraph data={clanTimelineGraphData(clan)} />
+                        <div slot="tooltip"  class="timeline-tooltip">
+                            <div>Influence {pct(clan.influence)}</div>
+                            <div>
+                                <LineGraph data={clanTimelineGraphData(clan)} />
+                            </div>
                         </div>
                     </Tooltip>
                 </td> 
-            </tr>
-            <tr>
-                <td>Influence</td>
-                <td></td>
-                <td>{pct(clan.influence)}</td>
-            </tr>
-            <tr>
-                <td>Tenure</td>
-                <td></td>
                 <td>
                     {clan.seniority}
                 </td>
-            </tr>
-            <tr>
-                <td>People</td>
-                <td>
-                    <Tooltip>
-                    {clan.size}
-                    <div slot="tooltip" class="ttt">
-                        <PopulationPyramid clan={clan} />
-                    </Tooltip>
-                </td>
-                <td>
-                    <Tooltip>
-                        ({clan.lastPopulationChange.change})
-                        <div slot="tooltip" style="text-align: left">
-                            <PopulationChange clan={clan} />
-                        </div>
-                    </Tooltip>
-                </td>
-            </tr>
-            <tr>
-                <td>QoL</td>
-                <td></td>
                 <td>
                     <Tooltip>
                         {signed(clan.qol)}
@@ -176,7 +194,7 @@
             </tr>
         </tbody>
     </table>
-
+    <hr>
     <!-- Skills and TFP -->
     <table class="skills-table">
         <tbody>

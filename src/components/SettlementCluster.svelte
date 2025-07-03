@@ -23,6 +23,10 @@
     h4 {
         margin: 0 0;
     }
+
+    img {
+        vertical-align: middle;
+    }
 </style>
 
 <div id="top">
@@ -33,12 +37,20 @@
             <div>Flood control: {selectedSettlement.ditchingLevel}</div>
         </div>
         <div>
-            <h4>{selectedSettlement.cluster.name}: 
-                {selectedSettlement.cluster.population}👥
-                {signed(selectedSettlement.cluster.averageQoL, 0)}☺</h4>
-            <h1>{selectedSettlement.name}
-                {selectedSettlement.size}👥
-                {signed(selectedSettlement.averageQoL, 0)}☺</h1>
+            <h4>{selectedSettlement.cluster.name} |
+                <img src="stat-population-256.png" alt="Population" width="20" height="20"
+                     style="padding-bottom: 2px;"
+                />{selectedSettlement.cluster.population}&nbsp;
+                <img src="stat-qol-256.png" alt="QoL" width="20" height="20"
+                     style="padding-bottom: 4px;"
+                />{signed(selectedSettlement.cluster.averageQoL, 0)}</h4>
+            <h1 style="white-space: nowrap;">{selectedSettlement.name} |
+                <img src="stat-population-256.png" alt="Population" width="40" height="40"
+                     style="padding-bottom: 4px;"
+                />{selectedSettlement.size}&nbsp;
+                <img src="stat-qol-256.png" alt="QoL" width="40" height="40"
+                     style="padding-bottom: 8px;"
+                />{signed(selectedSettlement.averageQoL, 0)}</h1>
             <ButtonPanel config={{
         buttons: settlement.cluster.settlements.map((s: SettlementDTO) => 
         ({ label: `${s.name}<br>${s.size}`, data: s })),
