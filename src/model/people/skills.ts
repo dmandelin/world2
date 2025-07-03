@@ -13,11 +13,11 @@ export class SkillDef {
 
 export const SkillDefs = {
     Agriculture: new SkillDef('Agriculture', 
-        new Map([['Skill', 1.01], [Traits.Intelligence, 1.01], [Traits.Strength, 1.02]])),
+        new Map([['Skill', 1], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
     Irrigation: new SkillDef('Irrigation',
-        new Map([['Skill', 1.02], [Traits.Intelligence, 1.02], [Traits.Strength, 1.02]])),
+        new Map([['Skill', 1], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
     Ritual: new SkillDef('Ritual',
-        new Map([['Skill', 1.01], [Traits.Intelligence, 1.02], [Traits.Strength, 1.01]])),
+        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
 };
 
 export class ClanSkill {

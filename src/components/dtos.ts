@@ -10,7 +10,7 @@ import type { QoLCalc } from "../model/people/qol";
 import type { SimulationResult } from "../model/rites";
 import type { Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/timeline";
-import type { TradeGood } from "../model/trade";
+import { TradeGoods } from "../model/trade";
 import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
 import { weightedAverage } from "../model/lib/modelbasics";
@@ -103,7 +103,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         slices: clan.slices,
 
         consumption: clan.consumption.clone(),
-        subsistenceConsumption: clan.subsistenceConsumption,
+        subsistenceConsumption: clan.consumption.perCapita(TradeGoods.Subsistence),
         economicPolicy: clan.economicPolicy,
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,

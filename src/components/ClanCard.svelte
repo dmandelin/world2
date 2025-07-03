@@ -182,7 +182,7 @@
             <tr>
                 <td>Cons</td>
                 <td></td>
-                <td>{spct(clan.subsistenceConsumption / clan.size)}</td>
+                <td>{spct(clan.subsistenceConsumption)}</td>
             </tr>
             <tr>
                 <td>Rite</td>

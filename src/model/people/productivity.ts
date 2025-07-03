@@ -9,7 +9,8 @@ export class ProductivityCalcItem {
                 readonly statFactor: number) {}
 
     get fp(): number {
-        return Math.pow(this.statFactor, this.statValue - 50);
+        const f = 1 + this.statFactor / 300;
+        return Math.pow(f, this.statValue - 50);
     }
 }
 
@@ -36,7 +37,7 @@ export class ProductivityCalc {
         const header = ['Item', '*', 'Value', 'Factor'];
         const data = this.items.map(item => [
             item.label, 
-            ((item.statFactor - 1) * 100).toFixed(),
+            item.statFactor.toFixed(),
             item.statValue.toFixed(1), 
             spct(item.fp),
         ]);

@@ -153,7 +153,7 @@ export class World implements NoteTaker {
             for (const clan of s.clans) {
                 clan.seniority = 2;
                 clan.updateProductivity();
-                clan.chooseEconomicPolicy(snapshot, slippage);
+                // For now, start with default economic policies.
             }
             s.clans.produce();
             s.clans.distribute();
