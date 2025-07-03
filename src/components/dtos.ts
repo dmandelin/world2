@@ -173,6 +173,8 @@ export class SettlementDTO {
     readonly clans: ClansDTO;
     readonly localTradeGoods: TradeGood[];
 
+    readonly ditchingLevel: number;
+
     readonly rites: {
         name: string;
         held: boolean;
@@ -198,6 +200,8 @@ export class SettlementDTO {
 
         this.clans = new ClansDTO(settlement.clans, cluster.world);
         this.localTradeGoods = [...settlement.localTradeGoods];
+
+        this.ditchingLevel = settlement.ditchingLevel;
 
         this.rites = settlement.rites.map(rites => ({
             name: rites.name,

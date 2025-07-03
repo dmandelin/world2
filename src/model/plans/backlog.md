@@ -52,12 +52,6 @@ Next, make social learning complex and dynamic:
 -   Epic sequence: add one social change at a time, fixing up systems as
     needed to make it work
     -   Permanent settlements
-        -   Regularize skills so we can add an irrigation skill
-            (Will also need fishing soon)
-            x   Change clan skills to a map
-            x   Redo trait bonuses
-            x   Regularize productivity calculations as well
-            x   Collect skills and productivity as a mini-panel
 
 -   More icons for clan card, looks a lot better that way.
 

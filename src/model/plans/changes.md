@@ -60,7 +60,7 @@ Details:
 
     *   Implementation
 
-        *   Add an irrigation skill
+        *   x Add an irrigation skill
         *   Clans can decide to work on ditches or not but all get the benefit
             *   Clans can shame shirkers resulting in a QoL penalty, but that's it
         *   Clans can decide to settle permanently or not

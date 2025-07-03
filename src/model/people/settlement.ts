@@ -51,6 +51,9 @@ export class Settlement {
     readonly daughters: Settlement[] = [];
     readonly daughterPlacer = new DaughterSettlementPlacer(this);
 
+    // Infrastructure.
+    readonly ditchingLevel = 0;
+
     constructor(
         readonly world: World,
         readonly name: string, 

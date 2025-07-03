@@ -1,5 +1,4 @@
 <script>
-    import { signed } from "../model/lib/format";
     import ClanCard from "./ClanCard.svelte";
     import SettlementConsumption from "./SettlementConsumption.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
