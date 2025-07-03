@@ -66,6 +66,7 @@ Details:
             *   Clans can shame shirkers resulting in a QoL penalty, but that's it
             *   Have all clans decide together whether to ditch or not
             *   Decide separately
+            *   Make ditching success highly sensitive to failures
         *   Clans can decide to settle permanently or not
             *   Village splits if some go each way
             *   Permanence is an attribute of the settlement

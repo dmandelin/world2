@@ -136,6 +136,9 @@ export class Settlement {
         this.clans.produce();
         this.clans.distribute();
 
+        // Construct fixed capital.
+        clan.construct();
+
         // Ritual production.
         this.advanceRites();
 
@@ -155,6 +158,10 @@ export class Settlement {
         this.clans.prune();
  
         this.lastSizeChange_ = this.population - sizeBefore;
+    }
+
+    construct() {
+        
     }
 
     advanceRites(updateOptions: boolean = true) {

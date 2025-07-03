@@ -21,8 +21,9 @@ export class QoLCalc {
         return [
             ['Goods', qolFromPerCapitaGoods(this.perCapitaOverall)],
             ['Status', statusValue(this.clan)],
+            ['Labor', laborValue(this.clan)],
             ['Crowding', crowdingValue(this.clan)],
-            ['Flooding', floodingValue(this.clan)]
+            ['Flooding', floodingValue(this.clan)],
         ];
     }
 
@@ -58,6 +59,10 @@ export class QoLCalc {
 function statusValue(clan: Clan): number {
     return clan.averagePrestige - clan.settlement!.clans.reduce((acc, c) => 
         acc + c.averagePrestige, 0) / clan.settlement!.clans.length;
+}
+
+function laborValue(clan: Clan): number {
+    return clan.isDitching ? -5 : 0;
 }
 
 export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): number {
