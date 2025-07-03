@@ -9,7 +9,7 @@ import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QoLCalc } from "./qol";
 import { Rites } from "../rites";
 import type { Clans } from "./clans";
-import type { Settlement } from "./settlement";
+import { HousingTypes, type Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { MigrationCalc, type NewSettlementSupplier} from "./migration";
@@ -181,6 +181,8 @@ export class Clan {
     private prestigeViews_ = new Map<Clan, PrestigeCalc>();
     // Local prestige-generated share of influence.
     influence = 0;
+
+    housing = HousingTypes.Huts;
 
     // Individual clan economy.
     economicPolicy = EconomicPolicies.Share;

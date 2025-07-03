@@ -104,7 +104,7 @@
                 <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>
             </tr>
             <tr>
-                <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">{npl(clan.cadets.length, 'cadet')}</td>
+                <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">Housing: {clan.housing.name}</td>
             </tr>
             <tr>
                 <td>

@@ -5,6 +5,15 @@ import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { SettlementCluster } from "./cluster";
 
+export class Housing {
+    constructor(readonly name: string, readonly description: string) {}
+}
+
+export const HousingTypes = {
+    Huts: new Housing("Huts", "Small, simple mud dwellings, mainly for sleeping."),
+    Houses: new Housing("Houses", "Small but permantent mud houses"),
+}
+
 class DaughterSettlementPlacer {
     readonly places = 12;
     private radius = Math.random() * 10 + 15;

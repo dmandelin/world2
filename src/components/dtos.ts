@@ -8,7 +8,7 @@ import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, Eco
 import type { PrestigeCalc } from "../model/people/prestige";
 import type { QoLCalc } from "../model/people/qol";
 import type { SimulationResult } from "../model/rites";
-import type { Settlement } from "../model/people/settlement";
+import type { Housing, Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/timeline";
 import { type TradeGood, TradeGoods } from "../model/trade";
 import type { World } from "../model/world";
@@ -16,6 +16,7 @@ import type { SettlementCluster } from "../model/people/cluster";
 import { weightedAverage } from "../model/lib/modelbasics";
 import type { MigrationCalc } from "../model/people/migration";
 import { type ClanSkills, type SkillDef, SkillDefs } from "../model/people/skills";
+import type { ProductivityCalc } from "../model/people/productivity";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -48,6 +49,7 @@ export type ClanDTO = {
     parent: Clan|undefined;
     tradePartners: TradePartnerDTO[];
     settlement: Settlement;
+    housing: Housing;
     slices: number[][];
 
     assessments: Assessments;
@@ -62,7 +64,7 @@ export type ClanDTO = {
     economicPolicy: EconomicPolicy;
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
-    productivityCalcs: Map<SkillDef, ConsumptionCalc>;
+    productivityCalcs: Map<SkillDef, ProductivityCalc>;
     productivity: number;
     productivityTooltip: string[][];
     ritualEffectiveness: number;
@@ -100,6 +102,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         cadets: clan.cadets,
         parent: clan.parent,
         settlement: clan.settlement!,
+        housing: clan.housing,
         migrationPlan: clan.migrationPlan,
         slices: clan.slices,
 
