@@ -13,16 +13,29 @@ The changes:
 *    (P1) 6500 1A - Intensive marshland economy
 *    (P2) 6500 2B - Clay tokens
 *    (P1) 6500 1A - Ophidian clay figurines
+*         6500 1B - Obsidian from Anatolia
+*         6500 1A - Bitumen from Zagros - waterproofing, mortar, and toolmaking adhesive
 *    (P1) 6200 2B - Canal irrigation
 *    (P3) 6200 2A - Barley focus
-*    (P2) 6000 1A - Specialized pottery production
+*         6200 1A - Pottery exporting to Gulf and elsewhere
+*         6200 2A - Agriculture exporting
+*    (P2) 6000 1A - Specialized pottery production (slow pottery wheel)
+*         6000 2A - Reed-bundle boats 
 *    (P3) 5800 1A - Clay sickles
 *    (P2) 5800 1A - Tripartite house
+*         5800 1B - Semiprecious stones from Zagros
+*         5800 1B - Copper beads from Zagros
+*         5800 2B - Gulf maritime network
+*         5750 ?? - Sails
+*         5750 1B - Stamp seals
 *    (P1) 5750 1B - Community shrine buildings
 *    (P2) 5750 2B - Long-distance exchange
 *    (P3) 5500 2A - Ritual feasting
 *    (P2) 5500 2C - Leadership roles
 *    (P3) 5500 1B - Extramural cemeteries
+*         5500 2B - Donkeys
+*         5500 3? - Woven textiles to ?
+*         5500 3? - Standard measurements
 
 Details:
 
