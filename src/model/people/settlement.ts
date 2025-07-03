@@ -129,6 +129,7 @@ export class Settlement {
         const slippage = this.clans.slippage;
         for (const clan of this.clans) {
             clan.chooseEconomicPolicy(policySnapshot, slippage);
+            clan.chooseConstructionProject();
         }
 
         // Economic production.

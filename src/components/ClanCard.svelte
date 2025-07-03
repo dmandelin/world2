@@ -66,6 +66,12 @@
         object-fit: contain;
     }
 
+    .full-row {
+        text-align: center; 
+        font-weight: bold; 
+        font-size: smaller;
+    }
+
     .skills-table img {
         vertical-align: middle;
     }
@@ -101,10 +107,13 @@
                 <td colspan="3" style:color={clan.color} style:font-weight="bold" style:text-align="center">{clan.name}</td>
             </tr>
             <tr>
-                <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>
+                <td colspan="3" class="full-row">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>
             </tr>
             <tr>
-                <td colspan="3" style="text-align: center; font-weight: bold; font-size: smaller">Housing: {clan.housing.name}</td>
+                <td colspan="3" class="full-row">Housing: {clan.housing.name}</td>
+            </tr>
+            <tr>
+                <td colspan="3" class="full-row">{clan.isDitching ? 'Ditching' : 'Not ditching'}</td>
             </tr>
             <tr>
                 <td>

@@ -60,7 +60,8 @@ export type ClanDTO = {
     influence: number;
     
     consumption: ConsumptionCalc;
-    subsistenceConsumption: number; // TODO - remove
+    subsistenceConsumption: number;
+    isDitching: boolean;
     economicPolicy: EconomicPolicy;
     economicPolicyDecision: EconomicPolicyDecision;
     economicReport: EconomicReport;
@@ -108,6 +109,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 
         consumption: clan.consumption.clone(),
         subsistenceConsumption: clan.consumption.perCapita(TradeGoods.Subsistence),
+        isDitching: clan.isDitching,
         economicPolicy: clan.economicPolicy,
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,

@@ -183,6 +183,8 @@ export class Clan {
     influence = 0;
 
     housing = HousingTypes.Huts;
+    isDitching = false;
+    biggestFloodSeen = 2;
 
     // Individual clan economy.
     economicPolicy = EconomicPolicies.Share;
@@ -464,6 +466,17 @@ export class Clan {
             cheatOthersReturn: cheatOthersReturn,
             cheatReturn: cheatReturn,
         };
+    }
+
+    chooseConstructionProject() {
+        // Work on ditches if we think we'll need them someday.
+        this.isDitching = this.biggestFloodSeen > this.settlement.ditchingLevel;
+        
+        // Update biggest flood seen after the decision, because nature
+        // has already moved at this point.
+        if (this.settlement.floodingLevel > this.biggestFloodSeen) {
+            this.biggestFloodSeen = this.settlement.floodingLevel;
+        }
     }
 
     get share() {
