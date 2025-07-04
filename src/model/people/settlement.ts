@@ -5,6 +5,7 @@ import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { SettlementCluster } from "./cluster";
 import { poisson } from "../lib/distributions";
+import { MaintenanceCalcItem, DitchMaintenanceCalc } from "../infrastructure";
 
 export class Housing {
     constructor(readonly name: string, readonly description: string) {}
@@ -53,7 +54,9 @@ export class Settlement {
     readonly daughterPlacer = new DaughterSettlementPlacer(this);
 
     // Infrastructure.
-    readonly ditchingLevel = 0;
+    ditchingLevel = 0;
+    ditchQuality = 0.9;
+    maintenanceCalc: DitchMaintenanceCalc|undefined;
 
     // Local conditions.
     floodingLevel_ = 1;
@@ -129,15 +132,15 @@ export class Settlement {
         const slippage = this.clans.slippage;
         for (const clan of this.clans) {
             clan.chooseEconomicPolicy(policySnapshot, slippage);
-            clan.chooseConstructionProject();
+            clan.planMaintenance();
         }
 
         // Economic production.
+        // Maintenance goes before production, because it represents capital
+        // that can be built in much less than a turn.
+        this.maintain();
         this.clans.produce();
         this.clans.distribute();
-
-        // Construct fixed capital.
-        this.construct();
 
         // Ritual production.
         this.advanceRites();
@@ -160,8 +163,10 @@ export class Settlement {
         this.lastSizeChange_ = this.population - sizeBefore;
     }
 
-    construct() {
-
+    maintain() {
+        this.maintenanceCalc = new DitchMaintenanceCalc(this);
+        this.ditchingLevel = this.maintenanceCalc.items.length ? 2 : 0;
+        this.ditchQuality = this.maintenanceCalc.quality;
     }
 
     advanceRites(updateOptions: boolean = true) {

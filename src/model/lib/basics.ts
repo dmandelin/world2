@@ -117,6 +117,18 @@ export function product(aa: number[]): number {
     return aa.reduce((acc, cur) => acc * cur, 1);
 }
 
+export function productFun<T>(
+        aa: T[],
+        fn: (t: T) => number,
+        weightFn?: (t: T) => number,
+    ): number {
+    if (weightFn === undefined) {
+        return aa.reduce((acc, cur) => acc * fn(cur), 1);
+    } else {
+        return aa.reduce((acc, cur) => acc * fn(cur) * weightFn(cur), 1);
+    }
+}
+
 export function average(aa: number[]): number {
     if (aa.length === 0) return 0;
     return sum(aa) / aa.length;
@@ -142,6 +154,20 @@ export function geometricMean(aa: number[]): number {
     const product = aa.reduce((acc, cur) => acc * cur, 1);
     return Math.pow(product, 1 / aa.length);
 }
+
+export function weightedGeometricMean<T>(
+    aa: T[],
+    value: (t: T) => number,
+    weight?: (t: T) => number
+): number {
+    if (aa.length === 0) return 0;
+    if (aa.length === 1) return value(aa[0]);
+    const product = aa.reduce((acc, cur) => acc * value(cur) ** (weight ? weight(cur) : 1), 1);
+    const totalWeight = weight ? sumFun(aa, t => 1, weight) : aa.length;
+    if (totalWeight === 0) return 0;
+    return Math.pow(product, 1 / totalWeight);
+}
+
 
 export function harmonicMean(aa: number[]): number {
     if (aa.length === 0) return 0;

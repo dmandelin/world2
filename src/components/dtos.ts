@@ -114,7 +114,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         economicPolicyDecision: clan.economicPolicyDecision,
         economicReport: clan.economicReport,
         productivityCalcs: clan.productivityCalcs,
-        productivity: clan.productivity,
+        productivity: clan.agriculturalProductivity,
         productivityTooltip: clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [],
         ritualEffectiveness: clan.ritualEffectiveness,
         ritualEffectivenessTooltip: clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [],
@@ -176,6 +176,8 @@ export class SettlementDTO {
     readonly localTradeGoods: TradeGood[];
 
     readonly ditchingLevel: number;
+    readonly ditchQuality: number;
+    readonly ditchTooltip: string[][];
     readonly floodingLevel: number;
 
     readonly rites: {
@@ -205,6 +207,8 @@ export class SettlementDTO {
         this.localTradeGoods = [...settlement.localTradeGoods];
 
         this.ditchingLevel = settlement.ditchingLevel;
+        this.ditchQuality = settlement.ditchQuality;
+        this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
         this.floodingLevel = settlement.floodingLevel;
 
         this.rites = settlement.rites.map(rites => ({

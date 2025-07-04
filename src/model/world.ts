@@ -136,6 +136,7 @@ export class World implements NoteTaker {
 
         for (const clan of this.allClans) {
             clan.planMigration();
+            clan.planMaintenance();
         }
 
         // Notify observers.
@@ -155,8 +156,9 @@ export class World implements NoteTaker {
                 clan.updateProductivity();
                 // For now, start with default economic policies, but do make the
                 // decision on construction.
-                clan.chooseConstructionProject();
+                clan.planMaintenance();
             }
+            s.maintain();
             s.clans.produce();
             s.clans.distribute();
 

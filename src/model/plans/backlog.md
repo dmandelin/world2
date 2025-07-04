@@ -53,6 +53,8 @@ Next, make social learning complex and dynamic:
     needed to make it work
     -   Permanent settlements
         - Make flooding and move rate affect productivity
+        - Implement labor costs for infra projects
+        - Let clans decide to ditch or not
 
 -   More icons for clan card, looks a lot better that way.
 

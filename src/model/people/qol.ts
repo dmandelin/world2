@@ -92,6 +92,8 @@ export function floodingValue(clan: Clan): number {
     return 10 * (ditchingLevel - floodingLevel);
 }
 
+// Doubling per-capita goods increases QoL by 50 points.
+// One point of QoL is equivalent to 1.14% per-capita goods.
 function qolFromPerCapitaGoods(perCapitaGoods: number): number {
     if (perCapitaGoods <= 0) {
         return -100;

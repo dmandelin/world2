@@ -134,7 +134,7 @@ export class Clans extends Array<Clan> {
                     break;
             }
 
-            const baseProduce = clan.population * clan.productivity;
+            const baseProduce = clan.population * clan.agriculturalProductivity;
             const commonProduce = baseProduce * commonFraction;
             const cheatProduce = cheatFraction * baseProduce;
             const clanProduce = baseProduce - commonProduce - cheatProduce;

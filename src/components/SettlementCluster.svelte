@@ -3,6 +3,9 @@
     import ButtonPanel from "./ButtonPanel.svelte";
     import Settlement from "./Settlement.svelte";
     import { SettlementDTO } from "./dtos";
+    import { pct } from "../model/lib/format";
+    import Tooltip from "./Tooltip.svelte";
+    import DataTable from "./DataTable.svelte";
 
     let { settlement } = $props();
     let selectedSettlement = $state(settlement);
@@ -34,7 +37,15 @@
         <div>
             <img style="display: block" src="residents.png" alt="Residents" width="150" height="100" />
             <div>Flooding level: {selectedSettlement.floodingLevel}</div>
-            <div>Flood control: {selectedSettlement.ditchingLevel}</div>
+            <div>
+                <Tooltip>
+                    Ditching: L{selectedSettlement.ditchingLevel}, 
+                    Q {pct(selectedSettlement.ditchQuality)}
+                    <div slot="tooltip">
+                        <DataTable rows={selectedSettlement.ditchTooltip} />
+                    </div>
+                </Tooltip>
+            </div>
         </div>
         <div>
             <h4>{selectedSettlement.cluster.name} |

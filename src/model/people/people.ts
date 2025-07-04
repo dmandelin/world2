@@ -389,7 +389,11 @@ export class Clan {
         this.productivityCalcs = this.skills.createProductivityCalcs();
     }
 
-    get productivity(): number {
+    productivity(skillDef: SkillDef): number {
+        return this.productivityCalcs.get(skillDef)?.tfp ?? 0;
+    }
+
+    get agriculturalProductivity(): number {
         return this.productivityCalcs.get(SkillDefs.Agriculture)?.tfp ?? 0;
     }
 
@@ -400,7 +404,7 @@ export class Clan {
     chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
         // Consumption from keeping.
         const testKeepPot = new Pot('', []);
-        testKeepPot.accept(this.population, this.population * this.productivity);
+        testKeepPot.accept(this.population, this.population * this.agriculturalProductivity);
         const keepReturn = testKeepPot.output;
 
         // Consumption from sharing.
@@ -409,7 +413,7 @@ export class Clan {
         for (const clan of policies.keys()) {
             if (clan == this) continue;
             const policy = policies.get(clan);
-            const input = clan.population * clan.productivity;
+            const input = clan.population * clan.agriculturalProductivity;
             if (policy === EconomicPolicies.Share) {
                 testShareBasePot.accept(clan.population, input);
             } else if (policy === EconomicPolicies.Cheat) {
@@ -419,7 +423,7 @@ export class Clan {
         const shareOthersBaseReturn = testShareBasePot.output;
         // Now add us to the pot.
         const testSharePot = testShareBasePot.clone();
-        testSharePot.accept(this.population, this.population * this.productivity);
+        testSharePot.accept(this.population, this.population * this.agriculturalProductivity);
         const shareSelfReturn = testSharePot.output * this.population / testSharePot.contributors;
         // Determine a net return to others for sharing.
         const shareOthersNetReturn = (testSharePot.output - shareSelfReturn) - shareOthersBaseReturn;
@@ -429,9 +433,9 @@ export class Clan {
 
         // Consumption from cheating.
         const testCheatPot = testShareBasePot.clone();
-        testCheatPot.accept(this.population, this.population * this.productivity * (1 - slippage));
+        testCheatPot.accept(this.population, this.population * this.agriculturalProductivity * (1 - slippage));
         const cheatPotReturn = testCheatPot.output * this.population / testCheatPot.contributors;
-        const cheatKeepReturn = this.population * this.productivity * slippage * 0.5;
+        const cheatKeepReturn = this.population * this.agriculturalProductivity * slippage * 0.5;
         // Net to others for this reduced level of sharing.
         const cheatOthersNetReturn = (testCheatPot.output - cheatPotReturn) - shareOthersBaseReturn;
         const cheatOthersReturn = 0.1 * cheatOthersNetReturn;
@@ -468,9 +472,9 @@ export class Clan {
         };
     }
 
-    chooseConstructionProject() {
-        // Work on ditches if we think we'll need them someday.
-        this.isDitching = this.biggestFloodSeen > this.settlement.ditchingLevel;
+    planMaintenance() {
+        // This is a current maintenance activity and for now everyone does it.
+        this.isDitching = true;
         
         // Update biggest flood seen after the decision, because nature
         // has already moved at this point.
