@@ -52,9 +52,12 @@ Next, make social learning complex and dynamic:
 -   Epic sequence: add one social change at a time, fixing up systems as
     needed to make it work
     -   Permanent settlements
+        - Tune ditching and QoL factors so that permanent settlements aren't
+          quite worth it most places at first but get there soon.
         - Make flooding and move rate affect productivity
         - Implement labor costs for infra projects
         - Let clans decide to ditch or not
+        - Split out controlled and uncontrolled flooding in the qol report
 
 -   More icons for clan card, looks a lot better that way.
 

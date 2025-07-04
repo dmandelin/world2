@@ -83,13 +83,15 @@ export function floodingValue(clan: Clan): number {
     const floodingLevel = clan.settlement!.floodingLevel;
     const ditchingLevel = clan.settlement!.ditchingLevel;
 
-    // If ditching is adequate to contain flooding, no negative impact.
-    // Otherwise, people have to move more often, which costs.
-    if (ditchingLevel >= floodingLevel) {
-        return 0;
-    }
+    const controlledFlooding = Math.min(floodingLevel, ditchingLevel);
+    const uncontrolledFlooding = floodingLevel - controlledFlooding;
 
-    return 10 * (ditchingLevel - floodingLevel);
+    // Uncontrolled flooding is full cost. Controlled flooding has cost
+    // scaled by ditch quality.
+    const baseFloodingCost = -10;
+    const controlledFloodingCost = baseFloodingCost * controlledFlooding * (1 - clan.settlement!.ditchQuality);
+    const uncontrolledFloodingCost = baseFloodingCost * uncontrolledFlooding;
+    return controlledFloodingCost + uncontrolledFloodingCost;
 }
 
 // Doubling per-capita goods increases QoL by 50 points.

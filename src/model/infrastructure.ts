@@ -26,7 +26,7 @@ export class DitchMaintenanceCalc {
             .filter(c => c.isDitching)
             .map(c => {
                 const skill = c.skills.v(SkillDefs.Irrigation);
-                const failureExponent = (50 - skill) / 25;
+                const failureExponent = (75 - skill) / 25;
                 const failureFactor = 2 ** failureExponent;
                 const failureProbability = clamp(0.1 * failureFactor, 0.01, 1.0);
               
