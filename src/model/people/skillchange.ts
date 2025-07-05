@@ -6,18 +6,25 @@ import { normal } from '../lib/distributions';
 import { pct } from '../lib/format';
 
 export class ClanSkillChangeItem {
+    readonly shiftMean: number;
+    readonly shiftStdDev: number;
     readonly shift: number;
 
     constructor(
         readonly label: string,
         readonly originalValue: number,
         readonly baseDelta: number,
-        readonly shiftMean: number,
-        readonly shiftStdDev: number,
+        shiftMean: number,
+        shiftStdDev: number,
         readonly weight: number,
         readonly experienceRatio: number = 1.0,
     ) {
-        this.shift = normal(shiftMean, shiftStdDev);
+        const shiftFactor = shiftMean <= 0
+            ? originalValue / 100
+            : (100 - originalValue) / 100;
+        this.shiftMean = shiftFactor * shiftMean;
+        this.shiftStdDev = shiftFactor * shiftStdDev;
+        this.shift = normal(this.shiftMean, this.shiftStdDev);
     }
 
     get delta(): number {
@@ -95,7 +102,7 @@ export class ClanSkillChange {
         // work out better or worse for us.
         if (this.clan.seniority == 0) {
             this.items.push(new ClanSkillChangeItem(
-                'Migration', this.originalValue, -10, 0, 5, 1, 1/this.generalLearningFactor));
+                'Migration', this.originalValue, 0, -10, 5, 1, 1/this.generalLearningFactor));
         }
     }
 
