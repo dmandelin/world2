@@ -56,8 +56,9 @@ Next, make social learning complex and dynamic:
           quite worth it most places at first but get there soon.
         - Make flooding and move rate affect productivity
         - Implement labor costs for infra projects
-        - Let clans decide to ditch or not
+        x Let clans decide to ditch or not
         - Split out controlled and uncontrolled flooding in the qol report
+        - Add housing qol as an imitation appeal item
 
 -   More icons for clan card, looks a lot better that way.
 

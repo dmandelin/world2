@@ -17,6 +17,7 @@ import { weightedAverage } from "../model/lib/modelbasics";
 import type { MigrationCalc } from "../model/people/migration";
 import { type ClanSkills, type SkillDef, SkillDefs } from "../model/people/skills";
 import type { ProductivityCalc } from "../model/people/productivity";
+import type { HousingDecision } from "../model/decisions/housingdecision";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -50,6 +51,7 @@ export type ClanDTO = {
     tradePartners: TradePartnerDTO[];
     settlement: Settlement;
     housing: Housing;
+    housingDecision: HousingDecision|undefined;
     slices: number[][];
 
     assessments: Assessments;
@@ -104,6 +106,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         parent: clan.parent,
         settlement: clan.settlement!,
         housing: clan.housing,
+        housingDecision: clan.housingDecision,
         migrationPlan: clan.migrationPlan,
         slices: clan.slices,
 

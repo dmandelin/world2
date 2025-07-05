@@ -156,6 +156,7 @@ export class World implements NoteTaker {
                 clan.updateProductivity();
                 // For now, start with default economic policies, but do make the
                 // decision on construction.
+                clan.planHousing();
                 clan.planMaintenance();
             }
             s.maintain();

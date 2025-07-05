@@ -1,7 +1,7 @@
 import { harmonicMean } from "../lib/basics";
 import { ces } from "../lib/modelbasics";
 import type { Clan } from "./people";
-import type { Settlement } from "./settlement";
+import type { Housing, Settlement } from "./settlement";
 
 export class QoLCalc {
     readonly perCapitaGoods: [string, number][];
@@ -57,8 +57,9 @@ export class QoLCalc {
     }
 }
 
-function housingValue(clan: Clan): number {
-    return clan.housing.qol;
+export function housingValue(clan: Clan, overrideHousing?: Housing): number {
+    const housing = overrideHousing ?? clan.housing;
+    return housing.qol;
 }
 
 function statusValue(clan: Clan): number {
@@ -84,7 +85,7 @@ export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): numb
     return Math.min(0, (b - d) * 100);
 }
 
-export function floodingValue(clan: Clan): number {
+export function floodingValue(clan: Clan, overrideHousing?: Housing): number {
     const floodingLevel = clan.settlement!.floodingLevel;
     const ditchingLevel = clan.settlement!.ditchingLevel;
 
@@ -93,7 +94,8 @@ export function floodingValue(clan: Clan): number {
 
     // Uncontrolled flooding is full cost. Controlled flooding has cost
     // scaled by ditch quality.
-    const baseFloodingCost = clan.housing.baseFloodingCost;
+    const housing = overrideHousing ?? clan.housing;
+    const baseFloodingCost = housing.baseFloodingCost;
     const controlledFloodingCost = baseFloodingCost * controlledFlooding * (1 - clan.settlement!.ditchQuality);
     const uncontrolledFloodingCost = baseFloodingCost * uncontrolledFlooding;
     return controlledFloodingCost + uncontrolledFloodingCost;

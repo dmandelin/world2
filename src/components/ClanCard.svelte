@@ -8,6 +8,7 @@
     import Tooltip from "./Tooltip.svelte";
     import { clanTimelineGraphData } from "../model/timeline";
     import { SkillDefs } from "../model/people/skills";
+    import HousingDecision from "./decisions/HousingDecision.svelte";
 
     let { clan } = $props();
 
@@ -135,7 +136,16 @@
                 <td colspan="3" class="full-row">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>
             </tr>
             <tr>
-                <td colspan="3" class="full-row">Housing: {clan.housing.name}</td>
+                <td colspan="3" class="full-row">
+                    <Tooltip>
+                        Housing: {clan.housing.name}
+                        <div slot="tooltip" class="ttt">
+                            {#if clan.housingDecision}
+                                <HousingDecision decision={clan.housingDecision} />
+                            {/if}
+                        </div>
+                    </Tooltip>
+                </td>
             </tr>
             <tr>
                 <td colspan="3" class="full-row">{clan.isDitching ? 'Ditching' : 'Not ditching'}</td>

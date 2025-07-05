@@ -16,6 +16,7 @@ import { MigrationCalc, type NewSettlementSupplier} from "./migration";
 import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
 import { ProductivityCalc } from "./productivity";
 import { Traits } from "./traits";
+import { HousingDecision } from "../decisions/housingdecision";
 
 const clanGoodsSource = 'clan';
 
@@ -182,7 +183,9 @@ export class Clan {
     // Local prestige-generated share of influence.
     influence = 0;
 
+    housingDecision: HousingDecision|undefined;
     housing = HousingTypes.Huts;
+
     isDitching = false;
     biggestFloodSeen = 2;
 
@@ -484,8 +487,14 @@ export class Clan {
     }
 
     planHousing() {
-        // Go random for current testing.
-        this.housing = Math.random() < 0.5 ? HousingTypes.Huts : HousingTypes.Houses;
+        this.housingDecision = new HousingDecision(this);
+        if (this.housingDecision.choice !== this.housing) {
+            this.world.addNote(
+                'H',
+                `Clan ${this.name} changing housing from ${this.housing} to ${this.housingDecision.choice}.`,
+            );
+            this.housing = this.housingDecision.choice;
+        }
     }
 
     get share() {

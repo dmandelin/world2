@@ -131,3 +131,7 @@ export function ces(inputValues: number[], params: CESParams): number {
     const sum = inputValues.reduce((acc, v, i) => acc + alpha[i] * Math.pow(v, rho), 0);
     return tfp * Math.pow(sum, nu / rho);
 }
+
+export function binaryLogistic(k: number, x: number): number {
+    return 1 / (1 + 2 ** (-k * x));
+}

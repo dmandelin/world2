@@ -60,6 +60,23 @@ export function chooseFrom<T>(arr: T[], remove: boolean = false): T {
     return remove ? arr.splice(i, 1)[0] : arr[i];
 }
 
+export function chooseWeighted<T>(arr: T[], weightFn: (t: T) => number): T {
+    const totalWeight = arr.reduce((acc, cur) => acc + weightFn(cur), 0);
+    if (totalWeight === 0) {
+        throw new Error("Total weight is zero, cannot choose a weighted element.");
+    }
+    
+    let randomValue = Math.random() * totalWeight;
+    for (const item of arr) {
+        randomValue -= weightFn(item);
+        if (randomValue <= 0) {
+            return item;
+        }
+    }
+    
+    throw new Error("Failed to choose a weighted element, this should not happen.");
+}
+
 export function shuffled<T>(arr: T[]): T[] {
     const copy = arr.slice();
     const result: T[] = [];
@@ -102,7 +119,7 @@ export function sum(aa: number[]): number {
 }
 
 export function sumFun<T>(
-        aa: T[], 
+        aa: readonly T[], 
         fn: (t: T) => number,
         weightFn?: (t: T) => number,
     ): number {
@@ -185,6 +202,29 @@ export function weightedHarmonicMean<T>(
     if (aa.length === 1) return value(aa[0]);
     const sum = aa.reduce((acc, cur) => acc + weight(cur) / value(cur), 0);
     return sum === 0 ? 0 : aa.reduce((acc, cur) => acc + weight(cur), 0) / sum;
+}
+
+export function mapNormalized<T, U>(
+    aa: readonly T[],
+    weightFun: (t: T) => number,
+    mapFun: (t: T, weight: number) => U,
+): U[] {
+    const weights: number[] = [];
+    let totalWeight = 0;
+    for (const item of aa) {
+        const weight = weightFun(item);
+        weights.push(weight);
+        totalWeight += weight;
+    }
+
+    const bb: U[] = [];
+    for (let i = 0; i < aa.length; ++i) {
+        const item = aa[i];
+        const weight = weights[i];
+        const normalizedWeight = totalWeight === 0 ? 0 : weight / totalWeight;
+        bb.push(mapFun(item, normalizedWeight));
+    }
+    return bb;
 }
 
 export function znan(value: number): number {
