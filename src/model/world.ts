@@ -10,6 +10,7 @@ import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
 import { SettlementCluster } from "./people/cluster";
 import { NewSettlementSupplier } from "./people/migration";
+import { randomFloodLevel } from "./flood";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -137,6 +138,7 @@ export class World implements NoteTaker {
         for (const clan of this.allClans) {
             clan.planMigration();
             clan.planMaintenance();
+            clan.planHousing();
         }
 
         // Notify observers.
@@ -176,6 +178,12 @@ export class World implements NoteTaker {
     }
 
     private advance() {
+        // Nature
+        const floodLevel = randomFloodLevel();
+        for (const cluster of this.clusters) {
+            cluster.updateFloodLevel(floodLevel);
+        }
+
         // Main advance phase.
         this.migrate();
         for (const cl of this.clusters) {

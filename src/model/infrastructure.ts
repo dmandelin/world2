@@ -35,7 +35,7 @@ export class DitchMaintenanceCalc {
                     c.population,
                     skill,
                     c.productivity(SkillDefs.Irrigation),
-                    1 - failureProbability,
+                    (1 - failureProbability),
                 );
             });
 

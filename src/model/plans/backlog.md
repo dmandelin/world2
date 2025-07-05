@@ -51,15 +51,18 @@ Next, make social learning complex and dynamic:
 
 -   Epic sequence: add one social change at a time, fixing up systems as
     needed to make it work
+    x   Permanent settlements
+    -   
+
+-   D1 refinements to recent changes
     -   Permanent settlements
-        - Tune ditching and QoL factors so that permanent settlements aren't
-          quite worth it most places at first but get there soon.
-        - Make flooding and move rate affect productivity
-        - Implement labor costs for infra projects
-        x Let clans decide to ditch or not
-        - Split out controlled and uncontrolled flooding in the qol report
-        - Add housing qol as an imitation appeal item
-        - Make moving more expensive for houses than huts
+        -   Track a shift frequency and declare when the settlement is permanent
+        -   Refine the model, how quality works, etc
+
+-   D2 refinements to recent changes
+    -   Permanent settlements
+        -   Labor costs for infrastructure projects
+        -   Clans can decide to ditch or not and track biggest flood seen
 
 -   More icons for clan card, looks a lot better that way.
 

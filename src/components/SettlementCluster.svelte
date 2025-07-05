@@ -30,17 +30,24 @@
     img {
         vertical-align: middle;
     }
+
+    .sm {
+        font-size: smaller;
+    }
 </style>
 
 <div id="top">
     <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
         <div>
             <img style="display: block" src="residents.png" alt="Residents" width="150" height="100" />
-            <div>Flooding level: {selectedSettlement.floodingLevel}</div>
-            <div>
+            <div class="sm">Flood level: {selectedSettlement.floodLevel.name}</div>
+            <div class="sm">
                 <Tooltip>
-                    Ditching: L{selectedSettlement.ditchingLevel}, 
-                    Q {pct(selectedSettlement.ditchQuality)}
+                    {#if selectedSettlement.ditchingLevel}
+                        Ditch: {pct(selectedSettlement.ditchQuality)}
+                    {:else}
+                        No ditch
+                    {/if}
                     <div slot="tooltip">
                         <DataTable rows={selectedSettlement.ditchTooltip} />
                     </div>

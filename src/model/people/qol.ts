@@ -20,11 +20,13 @@ export class QoLCalc {
     get items(): [string, number][] {
         return [
             ['Goods', qolFromPerCapitaGoods(this.perCapitaOverall)],
-            ['Housing', housingValue(this.clan)],
+            ['Housing', this.clan.housing.qol],
+            ['Moves due to flooding', housingFloodingValue(this.clan)],
+            ['Flooding', this.clan.settlement.floodLevel.qolModifier
+                * (1 - this.clan.settlement.ditchQuality)],
             ['Status', statusValue(this.clan)],
             ['Labor', laborValue(this.clan)],
             ['Crowding', crowdingValue(this.clan)],
-            ['Flooding', floodingValue(this.clan)],
         ];
     }
 
@@ -57,9 +59,12 @@ export class QoLCalc {
     }
 }
 
-export function housingValue(clan: Clan, overrideHousing?: Housing): number {
+export function housingFloodingValue(clan: Clan, overrideHousing?: Housing): number {
     const housing = overrideHousing ?? clan.housing;
-    return housing.qol;
+
+    return clan.settlement.floodLevel.expectedForcedMigrations 
+        * housing.forcedMigrationCost
+        * (1 - clan.settlement.ditchQuality);
 }
 
 function statusValue(clan: Clan): number {
@@ -83,22 +88,6 @@ export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): numb
     const b = Math.pow(r, 1/6);
     const d = Math.pow(r, 0.5);
     return Math.min(0, (b - d) * 100);
-}
-
-export function floodingValue(clan: Clan, overrideHousing?: Housing): number {
-    const floodingLevel = clan.settlement!.floodingLevel;
-    const ditchingLevel = clan.settlement!.ditchingLevel;
-
-    const controlledFlooding = Math.min(floodingLevel, ditchingLevel);
-    const uncontrolledFlooding = floodingLevel - controlledFlooding;
-
-    // Uncontrolled flooding is full cost. Controlled flooding has cost
-    // scaled by ditch quality.
-    const housing = overrideHousing ?? clan.housing;
-    const baseFloodingCost = housing.baseFloodingCost;
-    const controlledFloodingCost = baseFloodingCost * controlledFlooding * (1 - clan.settlement!.ditchQuality);
-    const uncontrolledFloodingCost = baseFloodingCost * uncontrolledFlooding;
-    return controlledFloodingCost + uncontrolledFloodingCost;
 }
 
 // Doubling per-capita goods increases QoL by 50 points.

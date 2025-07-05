@@ -18,6 +18,7 @@ import type { MigrationCalc } from "../model/people/migration";
 import { type ClanSkills, type SkillDef, SkillDefs } from "../model/people/skills";
 import type { ProductivityCalc } from "../model/people/productivity";
 import type { HousingDecision } from "../model/decisions/housingdecision";
+import type { FloodLevel } from "../model/flood";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -181,7 +182,7 @@ export class SettlementDTO {
     readonly ditchingLevel: number;
     readonly ditchQuality: number;
     readonly ditchTooltip: string[][];
-    readonly floodingLevel: number;
+    readonly floodLevel: FloodLevel;
 
     readonly rites: {
         name: string;
@@ -212,7 +213,7 @@ export class SettlementDTO {
         this.ditchingLevel = settlement.ditchingLevel;
         this.ditchQuality = settlement.ditchQuality;
         this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
-        this.floodingLevel = settlement.floodingLevel;
+        this.floodLevel = settlement.floodLevel;
 
         this.rites = settlement.rites.map(rites => ({
             name: rites.name,

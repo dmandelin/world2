@@ -138,7 +138,7 @@
             <tr>
                 <td colspan="3" class="full-row">
                     <Tooltip>
-                        Housing: {clan.housing.name}
+                        {clan.housing.name}
                         <div slot="tooltip" class="ttt">
                             {#if clan.housingDecision}
                                 <HousingDecision decision={clan.housingDecision} />

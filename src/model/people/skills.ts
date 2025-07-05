@@ -63,9 +63,15 @@ export class ClanSkills {
     readonly m_: Map<SkillDef, ClanSkill> = new Map<SkillDef, ClanSkill>();
 
     constructor(readonly clan: Clan) {
-        const gen = () => normal(35, 10);
+        // Make them build up some skill ditching at the beginning before
+        // they get good at it. This is different from how they do it in the
+        // north, so they have less of a model to imitate.
+        const gen = (skillDef: SkillDef) => 
+              skillDef === SkillDefs.Irrigation
+            ? normal(20, 5)
+            : normal(40, 10);
         for (const skillDef of Object.values(SkillDefs)) {
-            this.m_.set(skillDef, new ClanSkill(gen()));
+            this.m_.set(skillDef, new ClanSkill(gen(skillDef)));
         }
     }
 

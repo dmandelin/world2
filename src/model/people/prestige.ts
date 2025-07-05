@@ -67,6 +67,7 @@ export class OwnPrestigeCalc {
         }
 
         const averageSeniority = averageFun(clan.settlement!.clans, c => c.seniority);
+        const averageHousing = averageFun(clan.settlement!.clans, c => c.housing.qol);
         const averageSize = averageFun(clan.settlement!.clans, c => c.population);
         const averageStrength = averageFun(clan.settlement!.clans, c => c.strength);
         const averageIntelligence = averageFun(clan.settlement!.clans, c => c.intelligence);
@@ -74,6 +75,7 @@ export class OwnPrestigeCalc {
         const averageEffectiveRitualSkill = averageFun(clan.settlement!.clans, c => c.ritualEffectiveness);
         this.items.push(
             new DiffBasedPrestigeCalcItem('Seniority', 3, averageSeniority, clan.seniority),
+            new DiffBasedPrestigeCalcItem('Housing', 1, averageHousing, other.housing.qol),
             new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.population),
             new DiffBasedPrestigeCalcItem('Strength', 0.1, averageStrength, other.strength),
             new DiffBasedPrestigeCalcItem('Intelligence', 0.1, averageIntelligence, other.intelligence),

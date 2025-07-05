@@ -3,9 +3,11 @@ import type { Clan } from "./people";
 import type { NoteTaker } from "../notifications";
 import { Clans } from "./clans";
 import { Settlement } from "./settlement";
+import { FloodLevels, type FloodLevel } from "../flood";
 
 export class SettlementCluster {
     readonly settlements: Settlement[];
+    private floodLevel_: FloodLevel = FloodLevels.Normal;
 
     constructor(readonly noteTaker: NoteTaker, readonly mother: Settlement) {
         this.settlements = [mother];
@@ -34,6 +36,14 @@ export class SettlementCluster {
 
     get qol(): number {
         return averageFun(this.settlements, s => s.clans.averageQoL);
+    }
+
+    get floodLevel(): FloodLevel {
+        return this.floodLevel_;
+    }
+
+    updateFloodLevel(level: FloodLevel): void {
+        this.floodLevel_ = level;
     }
 
     advance(): void {

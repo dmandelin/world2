@@ -4,7 +4,6 @@ import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { SettlementCluster } from "./cluster";
-import { poisson } from "../lib/distributions";
 import { DitchMaintenanceCalc } from "../infrastructure";
 
 export class Housing {
@@ -12,13 +11,14 @@ export class Housing {
         readonly name: string, 
         readonly description: string,
         readonly qol: number,
-        readonly baseFloodingCost: number,
+        readonly forcedMigrationCost: number,
     ) {}
 }
 
 export const HousingTypes = {
     Huts: new Housing("Huts", "Small, simple mud dwellings, mainly for sleeping.", -5, -2),
-    Houses: new Housing("Houses", "Small but permantent mud houses", 0, -20),
+    Cottages: new Housing("Cottages", "Small but permanent mud houses with a thatched roof.", -2, -10),
+    Houses: new Housing("Houses", "Permanent mud houses", 0, -20),
 }
 
 class DaughterSettlementPlacer {
@@ -60,11 +60,8 @@ export class Settlement {
 
     // Infrastructure.
     ditchingLevel = 0;
-    ditchQuality = 0.9;
+    ditchQuality = 0.3;
     maintenanceCalc: DitchMaintenanceCalc|undefined;
-
-    // Local conditions.
-    floodingLevel_ = 1;
 
     constructor(
         readonly world: World,
@@ -118,15 +115,12 @@ export class Settlement {
         return this.lastSizeChange_;
     }
 
-    get floodingLevel() {
-        return this.floodingLevel_;
+    get floodLevel() {
+        return this.cluster.floodLevel;
     }
 
     advance() {
         const sizeBefore = this.population;
-
-        // Nature.
-        this.floodingLevel_ = 1 + poisson(1);
 
         // Update productivity now, so that policy can use it.
         this.clans.updateProductivity();
@@ -137,8 +131,6 @@ export class Settlement {
         const slippage = this.clans.slippage;
         for (const clan of this.clans) {
             clan.chooseEconomicPolicy(policySnapshot, slippage);
-            clan.planMaintenance();
-            clan.planHousing();
         }
 
         // Economic production.
@@ -171,7 +163,7 @@ export class Settlement {
 
     maintain() {
         this.maintenanceCalc = new DitchMaintenanceCalc(this);
-        this.ditchingLevel = this.maintenanceCalc.items.length ? 2 : 0;
+        this.ditchingLevel = this.maintenanceCalc.items.length ? 1 : 0;
         this.ditchQuality = this.maintenanceCalc.quality;
     }
 

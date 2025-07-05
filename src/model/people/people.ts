@@ -17,6 +17,7 @@ import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
 import { ProductivityCalc } from "./productivity";
 import { Traits } from "./traits";
 import { HousingDecision } from "../decisions/housingdecision";
+import { type FloodLevel, FloodLevels } from "../flood";
 
 const clanGoodsSource = 'clan';
 
@@ -187,7 +188,7 @@ export class Clan {
     housing = HousingTypes.Huts;
 
     isDitching = false;
-    biggestFloodSeen = 2;
+    biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
     // Individual clan economy.
     economicPolicy = EconomicPolicies.Share;
@@ -478,12 +479,6 @@ export class Clan {
     planMaintenance() {
         // This is a current maintenance activity and for now everyone does it.
         this.isDitching = true;
-        
-        // Update biggest flood seen after the decision, because nature
-        // has already moved at this point.
-        if (this.settlement.floodingLevel > this.biggestFloodSeen) {
-            this.biggestFloodSeen = this.settlement.floodingLevel;
-        }
     }
 
     planHousing() {

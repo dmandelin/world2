@@ -1,4 +1,8 @@
-import { sum } from './basics';
+export function scaleFactorEffect(factor: number, scale: number): number {
+    if (factor === 0) return 0;
+    if (scale === 0) return 1;
+    return Math.pow(factor, scale);
+}
 
 export function traitFactor(trait: number, a = 1.3) {
     return Math.pow(a, trait - 50);
