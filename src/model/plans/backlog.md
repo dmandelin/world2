@@ -59,6 +59,7 @@ Next, make social learning complex and dynamic:
         x Let clans decide to ditch or not
         - Split out controlled and uncontrolled flooding in the qol report
         - Add housing qol as an imitation appeal item
+        - Make moving more expensive for houses than huts
 
 -   More icons for clan card, looks a lot better that way.
 

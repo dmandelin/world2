@@ -79,17 +79,17 @@ export class ClanSkillChange {
         // Imitation with error (education) by children.
         const educationDelta = absmin(cms, this.educationTarget) - t;
         this.items.push(new ClanSkillChangeItem(
-            'Education', this.originalValue, educationDelta, -2, 4, 1 - rr));
+            'Education', this.originalValue, educationDelta, -2, 2, 1 - rr));
 
         // Imitation with error by adult clan members.
         const imitationDelta = this.imitationTarget - t;
         this.items.push(new ClanSkillChangeItem(
-        'Imitation', this.originalValue, imitationDelta, -2, 4, (1 - rr) * alr));
+            'Imitation', this.originalValue, imitationDelta, -2, 2, (1 - rr) * alr));
 
         // Learning from experience and observation.
         this.items.push(new ClanSkillChangeItem(
             `Experience (${pct(experienceRatio)})`, 
-            this.originalValue, 0, 2, 4, 1, experienceRatio * this.generalLearningFactor));
+            this.originalValue, 0, 2, 2, 1, experienceRatio * this.generalLearningFactor));
 
         // Things may be a little different after a move, which might
         // work out better or worse for us.
