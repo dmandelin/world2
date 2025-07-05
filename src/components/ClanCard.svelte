@@ -36,7 +36,7 @@
     }
 
     table {
-        width: 120px;
+        width: 170px;
     }
 
     td:not(first-child) {

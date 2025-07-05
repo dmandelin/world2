@@ -53,7 +53,7 @@ Next, make social learning complex and dynamic:
     needed to make it work
     x   Permanent settlements
     -   Marshland economy
-        *   Add fishing skill
+        x   Add fishing skill
         *   Add fish production
             *   Initially assume 50/50 effort split
             *   Some environmental variation but different from agriculture

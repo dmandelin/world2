@@ -13,12 +13,14 @@ export class SkillDef {
 }
 
 export const SkillDefs = {
+    Fishing: new SkillDef('Fishing', 'skill-fishing-256.png',
+        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
     Agriculture: new SkillDef('Agriculture', 'skill-farming-256.png',
-        new Map([['Skill', 1], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
+        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
     Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png',
-        new Map([['Skill', 1], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
+        new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
     Ritual: new SkillDef('Ritual', 'skill-ritual-256.png',
-        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
+        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
 };
 
 export class ClanSkill {
@@ -65,11 +67,14 @@ export class ClanSkills {
     constructor(readonly clan: Clan) {
         // Make them build up some skill ditching at the beginning before
         // they get good at it. This is different from how they do it in the
-        // north, so they have less of a model to imitate.
+        // north, so they have less of a model to imitate. They've already
+        // been fishing, though.
         const gen = (skillDef: SkillDef) => 
               skillDef === SkillDefs.Irrigation
             ? normal(20, 5)
-            : normal(40, 10);
+            : skillDef === SkillDefs.Fishing
+            ? normal(50, 5)
+            : normal(35, 7.5);
         for (const skillDef of Object.values(SkillDefs)) {
             this.m_.set(skillDef, new ClanSkill(gen(skillDef)));
         }
