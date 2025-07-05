@@ -62,7 +62,7 @@ function statusValue(clan: Clan): number {
 }
 
 function laborValue(clan: Clan): number {
-    return clan.isDitching ? -5 : 0;
+    return clan.isDitching ? -2 : 0;
 }
 
 export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): number {
