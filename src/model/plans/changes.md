@@ -79,9 +79,17 @@ Details:
 
 *   Marshland economy
 
+    *   Add fishing skill
+    *   Add fish production
+        *   Initially assume 50/50 effort split
+        *   Some environmental variation but different from agriculture
+        *   Less production penalty for shifting settlements
+    *   Add fish consumption
+        *   Balanced diet better than either/or but don't have to fuss massively
+            as they both represent broader spectra
     *   Add a farmer/fisher trait, allow learning and assimilation
-    *   Make both variable production but on different bases
-    *   Fishing less dependent on stationary settlements
+        *   Economies of scale for concentration
+    *   Add new economic policy options as needed
      
 *   Ophidian clay figurines
 
