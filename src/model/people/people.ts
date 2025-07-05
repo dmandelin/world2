@@ -483,6 +483,11 @@ export class Clan {
         }
     }
 
+    planHousing() {
+        // Go random for current testing.
+        this.housing = Math.random() < 0.5 ? HousingTypes.Huts : HousingTypes.Houses;
+    }
+
     get share() {
         return this.population / (this.settlement?.population ?? this.population);
     }

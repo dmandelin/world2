@@ -20,6 +20,7 @@ export class QoLCalc {
     get items(): [string, number][] {
         return [
             ['Goods', qolFromPerCapitaGoods(this.perCapitaOverall)],
+            ['Housing', housingValue(this.clan)],
             ['Status', statusValue(this.clan)],
             ['Labor', laborValue(this.clan)],
             ['Crowding', crowdingValue(this.clan)],
@@ -56,6 +57,10 @@ export class QoLCalc {
     }
 }
 
+function housingValue(clan: Clan): number {
+    return clan.housing.qol;
+}
+
 function statusValue(clan: Clan): number {
     return clan.averagePrestige - clan.settlement!.clans.reduce((acc, c) => 
         acc + c.averagePrestige, 0) / clan.settlement!.clans.length;
@@ -88,7 +93,7 @@ export function floodingValue(clan: Clan): number {
 
     // Uncontrolled flooding is full cost. Controlled flooding has cost
     // scaled by ditch quality.
-    const baseFloodingCost = -10;
+    const baseFloodingCost = clan.housing.baseFloodingCost;
     const controlledFloodingCost = baseFloodingCost * controlledFlooding * (1 - clan.settlement!.ditchQuality);
     const uncontrolledFloodingCost = baseFloodingCost * uncontrolledFlooding;
     return controlledFloodingCost + uncontrolledFloodingCost;

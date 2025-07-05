@@ -5,15 +5,20 @@ import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { SettlementCluster } from "./cluster";
 import { poisson } from "../lib/distributions";
-import { MaintenanceCalcItem, DitchMaintenanceCalc } from "../infrastructure";
+import { DitchMaintenanceCalc } from "../infrastructure";
 
 export class Housing {
-    constructor(readonly name: string, readonly description: string) {}
+    constructor(
+        readonly name: string, 
+        readonly description: string,
+        readonly qol: number,
+        readonly baseFloodingCost: number,
+    ) {}
 }
 
 export const HousingTypes = {
-    Huts: new Housing("Huts", "Small, simple mud dwellings, mainly for sleeping."),
-    Houses: new Housing("Houses", "Small but permantent mud houses"),
+    Huts: new Housing("Huts", "Small, simple mud dwellings, mainly for sleeping.", -5, -2),
+    Houses: new Housing("Houses", "Small but permantent mud houses", 0, -20),
 }
 
 class DaughterSettlementPlacer {
@@ -133,6 +138,7 @@ export class Settlement {
         for (const clan of this.clans) {
             clan.chooseEconomicPolicy(policySnapshot, slippage);
             clan.planMaintenance();
+            clan.planHousing();
         }
 
         // Economic production.
