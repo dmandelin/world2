@@ -88,13 +88,6 @@
             <td class="ra">{rpct(a.rBlowup)}</td>
             {/each}
         </tr>
-
-        <tr>
-            <th class="la">Relatedness</th>
-            {#each clan.assessments as a}
-            <th class="ra">{rpct(a.r)}</th>
-            {/each}
-        </tr>
     </tbody>
 </table>
 {/if}

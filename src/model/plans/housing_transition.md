@@ -24,18 +24,6 @@ x We can tune this, but we'll say that the monitoring cost
   1 / (k * pop ^ (1 + a)) fraction of actions are undeterred.
 x a = 0.166 looks good.
 
-The basic sequence is then:
-x Clans generate subsistence
-x Clans select their move: I, C, D
-  x % of shirking allowed determines impact of D, may be 0
-  x Clans select their strategy based on inclusive benefit,
-    which can include both relatedness and desire for growth
-x Subsistence is placed into collective and individual pots
-  per move
-x Subsistence is distributed from collective and individual
-  pots per move
-x Welfare and population change computed from distributions
-
 x We'll want to clearly visualize their moves and the relevant
 metrics. 
 - Also probably the history of moves.
