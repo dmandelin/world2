@@ -18,6 +18,7 @@
 .tab-header {
   all: unset;
   cursor: pointer;
+  white-space: nowrap;
 }
 .tab-header.active {
   font-weight: bold;

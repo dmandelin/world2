@@ -116,11 +116,6 @@ export class Settlement {
         return average(this.clans.map(clan => clan.qol));
     }
 
-    get averageQoLFromGoods() {
-        return average(this.clans.map(clan => 
-            clan.qolCalc.items.find(item => item[0] === 'Goods')?.[1] ?? 0));
-    }
-
     private lastSizeChange_ = 0;
 
     get lastSizeChange() {

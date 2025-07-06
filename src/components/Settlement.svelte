@@ -12,10 +12,10 @@
     const tabs = [
         { label: "People", snippet: peopleTab },
         { label: "Relationships", snippet: relationshipsTab },
-        { label: "Production", snippet: economyTab },
+        { label: "Quality of Life", snippet: consumptionTab },
         { label: "Rites", snippet: ritesTab },
+        { label: "Production", snippet: economyTab },
         { label: "Trade", snippet: tradeTab },
-        { label: "Consumption", snippet: consumptionTab },
     ];
 </script>
 

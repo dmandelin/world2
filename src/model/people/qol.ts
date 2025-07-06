@@ -12,6 +12,15 @@ export class SatisfactionItem {
     ) {}
 }
 
+export class QolItem {
+    constructor(
+        readonly name: string,
+        readonly value: number,
+        readonly indent: number = 0,
+        readonly satisfactionItems?: SatisfactionItem[],
+    ) {}
+}
+
 export class QolCalc {
     readonly subsistenceItems: SatisfactionItem[];
     readonly subsistenceSatisfaction: number;
@@ -21,7 +30,7 @@ export class QolCalc {
     readonly satisfactionItems: SatisfactionItem[];
     readonly satisfaction: number;
 
-    readonly items: [string, number][];
+    readonly items: QolItem[];
     readonly value: number;
 
     constructor(readonly clan: Clan, overrideRitualAppealAsTFP?: number) {
@@ -38,17 +47,18 @@ export class QolCalc {
         this.satisfaction = ces(this.satisfactionItems.map(item => item.perCapita), {rho: -5});
 
         this.items = [
-            ['Goods and rituals', qolFromPerCapitaGoods(this.satisfaction)],
-            ['- Food variety', foodVarietyQolModifier(this.clan)],
-            ['Housing', this.clan.housing.qol],
-            ['- Moves', housingFloodingValue(this.clan)],
-            ['Flooding', this.clan.settlement.floodLevel.qolModifier
-                * (1 - this.clan.settlement.ditchQuality)],
-            ['Status', statusValue(this.clan)],
-            ['Labor', laborValue(this.clan)],
-            ['Crowding', crowdingValue(this.clan)],
+            new QolItem('Goods and rituals', qolFromPerCapitaGoods(this.satisfaction), 0, this.satisfactionItems),
+            new QolItem('Food variety', foodVarietyQolModifier(clan), 1),
+            new QolItem('Housing', clan.housing.qol, 0),
+            new QolItem('Moves', housingFloodingValue(clan), 1),
+            new QolItem('Flooding', clan.settlement.floodLevel.qolModifier
+                * (1 - clan.settlement.ditchQuality), 0),
+            new QolItem('Status', statusValue(clan), 0),
+            new QolItem('Labor', laborValue(clan), 0),
+            new QolItem('Crowding', crowdingValue(clan), 0),
         ];
-        this.value = sumFun(this.items, ([_, value]) => value);
+
+        this.value = sumFun(this.items, i => i.value);
     }
 
     getSat(name: string): number {
@@ -78,7 +88,8 @@ export class QolCalc {
 
     get itemsTable(): string[][] {
         const header = ['Item', 'QoL'];
-        const rows = this.items.map(([name, value]) => [name, value.toFixed(1)]);
+        //const rows = this.items.map(([name, value]) => [name, value.toFixed(1)]);
+        const rows: string[][] = [];
         return [header, ...rows];
     }
 }
@@ -126,7 +137,7 @@ export function foodVarietyQolModifier(clan: Clan): number {
 
 // Doubling per-capita goods increases QoL by 50 points.
 // One point of QoL is equivalent to 1.14% per-capita goods.
-function qolFromPerCapitaGoods(perCapitaGoods: number): number {
+export function qolFromPerCapitaGoods(perCapitaGoods: number): number {
     if (perCapitaGoods <= 0) {
         return -100;
     }

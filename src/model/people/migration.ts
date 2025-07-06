@@ -205,13 +205,13 @@ export class CandidateMigrationCalc {
             item = {
                 name: 'Goods',
                 reason: 'Goods like home', 
-                value: qlFactor * this.clan.settlement.averageQoLFromGoods,
+                value: qlFactor * this.clan.settlement.averageQoL,
             };
         } else {
             item = {
                 name: 'Goods',
                 reason: 'Local goods', 
-                value: qlFactor * this.target.averageQoLFromGoods,
+                value: qlFactor * this.target.averageQoL,
             };
         }
         
