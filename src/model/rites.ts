@@ -4,7 +4,7 @@ import { ces } from "./lib/modelbasics";
 import type { NoteTaker } from "./notifications";
 import type { Clan } from "./people/people";
 import { OwnPrestigeCalc } from "./people/prestige";
-import { QoLCalc } from "./people/qol";
+import { QolCalc } from "./people/qol";
 
 interface RitualLeaderSelection {
     name: string;
@@ -312,8 +312,8 @@ export class ClanImpact {
         this.originalWeight = originalRites.weights.get(clan) ?? 0;
         this.newWeight = rites.weights.get(clan) ?? 0;
 
-        this.originalQoL = new QoLCalc(clan, originalRites.appealAsTFP).value;
-        this.newQoL = new QoLCalc(clan, rites.appealAsTFP).value;
+        this.originalQoL = new QolCalc(clan, originalRites.appealAsTFP).value;
+        this.newQoL = new QolCalc(clan, rites.appealAsTFP).value;
 
         const averageEffectiveSkill = originalRites.producers.reduce(
             (acc, c) => acc + c.ritualEffectiveness, 0) / originalRites.producers.length;

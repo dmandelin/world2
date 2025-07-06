@@ -5,7 +5,7 @@ import { Assessments } from "./agents";
 import { TradeGoods, type TradeGood } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
-import { QoLCalc } from "./qol";
+import { QolCalc } from "./qol";
 import { Rites } from "../rites";
 import type { Clans } from "./clans";
 import { HousingTypes, type Settlement } from "./settlement";
@@ -70,16 +70,19 @@ export interface GoodsReceiver {
 export class ConsumptionCalc {
     // good -> source -> amount
     private ledger_: Map<TradeGood, Map<string, number>> = new Map();
+    private population_: number = 0;
 
-    constructor(public population: number) {
+    constructor(readonly clan: Clan) {
     }
 
     reset() {
+        this.population_ = this.clan.population;
         this.ledger_.clear();
     }
 
     clone(): ConsumptionCalc {
-        const clone = new ConsumptionCalc(this.population);
+        const clone = new ConsumptionCalc(this.clan);
+        clone.population_ = this.population_;
         for (const [good, sourceMap] of this.ledger_) {
             const newSourceMap = new Map<string, number>();
             for (const [source, amount] of sourceMap) {
@@ -88,6 +91,10 @@ export class ConsumptionCalc {
             clone.ledger_.set(good, newSourceMap);
         }
         return clone;
+    }
+
+    get population(): number {
+        return this.population_;
     }
 
     get ledger(): IterableIterator<[TradeGood, Map<string, number>]> {
@@ -114,13 +121,14 @@ export class ConsumptionCalc {
         sourceMap.set(source, prevAmount + amount);
     }
     
-    splitOff(originalPopulation: number, cadetPopulation: number): ConsumptionCalc {
-        this.population = originalPopulation - cadetPopulation;
-        const newCalc = new ConsumptionCalc(cadetPopulation);
+    splitOff(newClan: Clan): ConsumptionCalc {
+        const originalPopulation = this.population_;
+        this.population_ -= newClan.population;
+        const newCalc = new ConsumptionCalc(this.clan);
         for (const [good, sourceMap] of this.ledger_) {
             const newSourceMap = new Map<string, number>();
             for (const [source, amount] of sourceMap) {
-                const newAmount = amount * cadetPopulation / originalPopulation;
+                const newAmount = amount * newClan.population / originalPopulation;
                 newSourceMap.set(source, newAmount);
                 this.ledger_.get(good)!.set(source, amount - newAmount);
             }
@@ -168,11 +176,11 @@ export class Clan {
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     readonly rites: Rites;
     tradePartners = new Set<Clan>();
-    consumption: ConsumptionCalc;
+    consumption = new ConsumptionCalc(this);
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 
-    private qolCalc_: QoLCalc|undefined;
+    private qolCalc_: QolCalc|undefined;
 
     constructor(
         readonly world: World,
@@ -191,7 +199,6 @@ export class Clan {
         }
 
         this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
-        this.consumption = new ConsumptionCalc(population);
     }
 
     get settlement(): Settlement {
@@ -223,7 +230,7 @@ export class Clan {
     }
 
     consume() {
-        this.qolCalc_ = new QoLCalc(this);
+        this.qolCalc_ = new QolCalc(this);
     }
 
     get qolCalc() {
@@ -384,16 +391,6 @@ export class Clan {
         this.consumption.accept(source, good, amount);
     }
 
-    get subsistenceConsumption() {
-        return this.consumption.amount(TradeGoods.Cereals)
-            + this.consumption.amount(TradeGoods.Fish);
-    }
-    
-    get perCapitaSubsistenceConsumption() {
-        return this.consumption.perCapita(TradeGoods.Cereals)
-            + this.consumption.perCapita(TradeGoods.Fish);
-    }
-
     readonly slices: number[][] = [
         [0, 0], // Children, girls first (0-18)
         [0, 0], // Adults (18-35)
@@ -530,7 +527,7 @@ export class Clan {
         this.cadets.push(newClan);
 
         newClan.updateProductivity();
-        newClan.consumption = this.consumption.splitOff(originalPopulation, newSize);
+        newClan.consumption = this.consumption.splitOff(newClan);
 
         this.consume();
         newClan.consume();

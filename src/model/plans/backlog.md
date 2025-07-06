@@ -68,7 +68,7 @@ Next, make social learning complex and dynamic:
     x   Permanent settlements
     -   Marshland economy
         x   Add fishing skill
-        *   Fix bug in consumption distribution
+        x   Fix bug in consumption distribution
         *   Make sure migration effects take place at the right point
         *   Add fish production
             x   Initially assume 50/50 effort split

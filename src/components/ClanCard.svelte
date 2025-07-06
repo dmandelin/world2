@@ -194,6 +194,8 @@
                     <Tooltip>
                         {signed(clan.qol)}
                         <div slot="tooltip" class="ttt">
+                            <h4>Subsistence</h4>
+                            <DataTable rows={clan.qolCalc.subsistenceTable} />
                             <h4>Needs & Satisfaction</h4>
                             <DataTable rows={clan.qolCalc.satsTable} />
                             <h4>Sources</h4>

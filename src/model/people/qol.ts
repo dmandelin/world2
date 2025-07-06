@@ -1,25 +1,44 @@
-import { harmonicMean } from "../lib/basics";
+import { sumFun } from "../lib/basics";
 import { ces } from "../lib/modelbasics";
+import { signed } from "../lib/format";
+import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
 import type { Housing, Settlement } from "./settlement";
 
-export class QoLCalc {
-    readonly perCapitaGoods: [string, number][];
+export class SatisfactionItem {
+    constructor(
+        readonly name: string,
+        readonly perCapita: number,
+    ) {}
+}
+
+export class QolCalc {
+    readonly subsistenceItems: SatisfactionItem[];
+    readonly subsistenceSatisfaction: number;
+
+    readonly ritualSatisfaction: number;
+
+    readonly satisfactionItems: SatisfactionItem[];
+    readonly satisfaction: number;
+
+    readonly items: [string, number][];
+    readonly value: number;
 
     constructor(readonly clan: Clan, overrideRitualAppealAsTFP?: number) {
-        this.perCapitaGoods = [
-            ['Subsistence', clan.perCapitaSubsistenceConsumption],
-            ['Ritual', overrideRitualAppealAsTFP ?? clan.settlement!.clans.rites.appealAsTFP],
+        this.subsistenceItems = [TradeGoods.Cereals, TradeGoods.Fish]
+            .map(good => new SatisfactionItem(good.name, clan.consumption.perCapita(good)));
+        this.subsistenceSatisfaction = sumFun(this.subsistenceItems, item => item.perCapita);
+
+        this.ritualSatisfaction = overrideRitualAppealAsTFP ?? clan.settlement.clans.rites.appealAsTFP;
+
+        this.satisfactionItems = [
+            new SatisfactionItem('Subsistence', this.subsistenceSatisfaction),
+            new SatisfactionItem('Ritual', this.ritualSatisfaction),
         ];
-    }
+        this.satisfaction = ces(this.satisfactionItems.map(item => item.perCapita), {rho: -5});
 
-    get perCapitaOverall(): number {
-        return ces(this.perCapitaGoods.map(([_, value]) => value), {rho: -5});
-    }
-
-    get items(): [string, number][] {
-        return [
-            ['Goods', qolFromPerCapitaGoods(this.perCapitaOverall)],
+        this.items = [
+            ['Goods and rituals', qolFromPerCapitaGoods(this.satisfaction)],
             ['Housing', this.clan.housing.qol],
             ['Moves due to flooding', housingFloodingValue(this.clan)],
             ['Flooding', this.clan.settlement.floodLevel.qolModifier
@@ -28,25 +47,29 @@ export class QoLCalc {
             ['Labor', laborValue(this.clan)],
             ['Crowding', crowdingValue(this.clan)],
         ];
+        this.value = sumFun(this.items, ([_, value]) => value);
     }
 
-    get value(): number {
-        return this.items.reduce((acc, [_, v]) => acc + v, 0);
+    getSat(name: string): number {
+        return this.satisfactionItems.find(si => si.name === name)?.perCapita ?? 0;
     }
 
-    getSat(name: 'Subsistence' | 'Ritual'): number {
-        const value = this.perCapitaGoods.find(([n, _]) => n === name)?.[1] ?? 0;
-        return qolFromPerCapitaGoods(value);
+    get subsistenceTable(): string[][] {
+        const header = ['Item', 'Per Capita'];
+        const rows = this.subsistenceItems.map(item => {
+            return [item.name, item.perCapita.toFixed(2)];
+        });
+        return [header, ...rows];
     }
 
     get satsTable(): string[][] {
         const header = ['Need', 'Per Capita', 'Satisfaction'];
-        const rows = this.perCapitaGoods.map(([name, value]) => {
-            return [name, value.toFixed(2), qolFromPerCapitaGoods(value).toFixed(1)];
+        const rows = this.satisfactionItems.map(si => {
+            return [si.name, si.perCapita.toFixed(2), signed(qolFromPerCapitaGoods(si.perCapita), 1)];
         });
         const totalRow = [
             'Overall', 
-            this.perCapitaOverall.toFixed(2),
+            this.satisfaction.toFixed(2),
             this.value.toFixed(1),
         ];
         return [header, ...rows, totalRow];
