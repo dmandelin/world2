@@ -56,7 +56,7 @@ export class QolCalc {
     }
 
     get subsistenceTable(): string[][] {
-        const header = ['Item', 'Per Capita'];
+        const header = ['Food', 'Amt'];
         const rows = this.subsistenceItems.map(item => {
             return [item.name, item.perCapita.toFixed(2)];
         });
@@ -64,7 +64,7 @@ export class QolCalc {
     }
 
     get satsTable(): string[][] {
-        const header = ['Need', 'Per Capita', 'Satisfaction'];
+        const header = ['Need', 'Amt', 'QoL'];
         const rows = this.satisfactionItems.map(si => {
             return [si.name, si.perCapita.toFixed(2), signed(qolFromPerCapitaGoods(si.perCapita), 1)];
         });
@@ -77,7 +77,7 @@ export class QolCalc {
     }
 
     get itemsTable(): string[][] {
-        const header = ['Item', 'Value'];
+        const header = ['Item', 'QoL'];
         const rows = this.items.map(([name, value]) => [name, value.toFixed(1)]);
         return [header, ...rows];
     }

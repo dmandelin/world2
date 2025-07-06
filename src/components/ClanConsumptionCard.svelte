@@ -1,4 +1,5 @@
 <script>
+    import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
@@ -9,46 +10,18 @@
         background-color: #f3edd8;
         border: 1px solid #62531d;
         border-radius: 5px;
-        padding: 0.25rem;
-    }
-
-    table {
-        width: 180px;
-    }
-
-    td:not(first-child) {
-        text-align: right;
-    }
-
-    td {
-        white-space: nowrap;
+        padding: 1rem;
     }
 </style>
 
 <div id="top">
-    <table>
-        <tbody>
-            <tr>
-                <td colspan="3" style:font-weight="bold" style:text-align="center">
-                    Goods
-                </td>
-            </tr>
-            {#each clan.consumption?.ledger as [good, sourceMap]}
-            <tr>
-                <td>{good.name}</td>
-                <td>
-                    <Tooltip>
-                        {clan.consumption?.amount(good).toFixed()}
-                        <div slot="tooltip">
-                            {#each sourceMap as [source, amount]}
-                                <div>{amount.toFixed()} from {source}</div>
-                            {/each}
-                        </div>
-                    </Tooltip>
-                </td>
-                <td>{clan.consumption?.perCapita(good).toFixed(2)}</td>
-            </tr>
-            {/each}
-        </tbody>
-    </table>
+    <h3>{clan.name}</h3>
+    <h4>Subsistence</h4>
+    <DataTable rows={clan.qolCalc.subsistenceTable} />
+    <h4>Needs & Satisfaction</h4>
+    <DataTable rows={clan.qolCalc.satsTable} />
+    <h4>Sources</h4>
+    <DataTable rows={clan.qolCalc.itemsTable} />
+
+    <b>Total: {clan.qolCalc.value.toFixed()}</b>
 </div>
