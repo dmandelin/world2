@@ -1,7 +1,7 @@
 <script>
-    import ClanCard from "./ClanCard.svelte";
     import SettlementConsumption from "./SettlementConsumption.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
+    import SettlementPeople from "./SettlementPeople.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRites from "./SettlementRites.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
@@ -10,13 +10,18 @@
     let { settlement } = $props();
 
     const tabs = [
+        { label: "People", snippet: peopleTab },
+        { label: "Relationships", snippet: relationshipsTab },
         { label: "Production", snippet: economyTab },
         { label: "Rites", snippet: ritesTab },
-        { label: "Relationships", snippet: relationshipsTab },
-        { label: "Consumption", snippet: consumptionTab },
         { label: "Trade", snippet: tradeTab },
+        { label: "Consumption", snippet: consumptionTab },
     ];
 </script>
+
+{#snippet peopleTab()}
+    <SettlementPeople settlement={settlement} />
+{/snippet}
 
 {#snippet economyTab()}
     <SettlementEconomy settlement={settlement} />
@@ -44,13 +49,4 @@
     }
 </style>
 
-<div>
-<h4 style="text-align: center; border-bottom: 1px solid grey">The {settlement.clans.length} clans</h4>
-<div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-    {#each settlement.clans as clan}
-    <ClanCard clan={clan} />
-    {/each}
-</div>
-
-<TabbedView tabs={tabs} />
-</div>
+<TabbedView tabs={tabs} /> 
