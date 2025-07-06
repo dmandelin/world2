@@ -139,3 +139,21 @@ export function ces(inputValues: number[], params: CESParams): number {
 export function binaryLogistic(k: number, x: number): number {
     return 1 / (1 + 2 ** (-k * x));
 }
+
+export function createTwoSidedQuadratic(
+    x0: number, y0: number,
+    xc: number, yc: number,
+    x1: number, y1: number): (x: number) => number {
+
+    return (x: number): number => {
+        if (x < x0) return y0;
+        if (x > x1) return y1;
+        if (x < xc) {
+            const d = xc - x0;
+            return y0 + (yc - y0) * ((x - x0) / d) ** 2;
+        } else {
+            const d = x1 - xc;
+            return yc + (y1 - yc) * ((x - xc) / d) ** 2;
+        }
+    };
+}

@@ -49,19 +49,7 @@ Next, make social learning complex and dynamic:
 
 ## Top top needs
 
--   We need to rework economic production somewhat. It's going to get
-    annoying adding a new trade good
-    -   Let's clearly separate out all the different notional concepts:
-        - ProductionNode: labor and input materials go in, services and
-          materials come out via some kind of output port.
-        - DistributionNode: stuff goes in and then back out
-        - ConsumptionNode: stuff goes in
-    -   Initial model
-        - Land held in common by the village, thus one production node
-        - Clan could hold back a little stuff/eat on the spot, could
-          model that but not high priority
-        - Village store is a distribution node
-        - Clans are consumption nodes
+-   Major annoyance: Stuff isn't fitting in settlement UI.
 
 -   Epic sequence: add one social change at a time, fixing up systems as
     needed to make it work
@@ -77,7 +65,7 @@ Next, make social learning complex and dynamic:
             *   Less production penalty for shifting settlements
         *   Add fish consumption
             x   Initially make it a perfect substitute for cereals
-            *   Balanced diet better than either/or but don't have to fuss massively
+            x   Balanced diet better than either/or but don't have to fuss massively
                 as they both represent broader spectra
         *   Add a farmer/fisher trait, allow learning and assimilation
             *   Economies of scale for concentration
@@ -85,6 +73,8 @@ Next, make social learning complex and dynamic:
             *   Production depends on effort ratio between activities
             *   Learning depends on effort ratio between activities
         *   Add new economic policy options as needed
+        *   Show dietary ratios
+        *   Break out qol panel so you can actually use it
 
 -   D1 refinements to recent changes
     -   Permanent settlements

@@ -1,5 +1,5 @@
 import { sumFun } from "../lib/basics";
-import { ces } from "../lib/modelbasics";
+import { ces, createTwoSidedQuadratic } from "../lib/modelbasics";
 import { signed } from "../lib/format";
 import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
@@ -39,8 +39,9 @@ export class QolCalc {
 
         this.items = [
             ['Goods and rituals', qolFromPerCapitaGoods(this.satisfaction)],
+            ['- Food variety', foodVarietyQolModifier(this.clan)],
             ['Housing', this.clan.housing.qol],
-            ['Moves due to flooding', housingFloodingValue(this.clan)],
+            ['- Moves', housingFloodingValue(this.clan)],
             ['Flooding', this.clan.settlement.floodLevel.qolModifier
                 * (1 - this.clan.settlement.ditchQuality)],
             ['Status', statusValue(this.clan)],
@@ -112,6 +113,16 @@ export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): numb
     const d = Math.pow(r, 0.5);
     return Math.min(0, (b - d) * 100);
 }
+
+const foodVarietyFun = createTwoSidedQuadratic(0, -10, 0.5, 0, 1, -5);
+
+export function foodVarietyQolModifier(clan: Clan): number {
+    const cereals = clan.consumption.perCapita(TradeGoods.Cereals);
+    const fish = clan.consumption.perCapita(TradeGoods.Fish);
+    const fishRatio = fish / (cereals + fish);
+    return foodVarietyFun(fishRatio);
+}
+
 
 // Doubling per-capita goods increases QoL by 50 points.
 // One point of QoL is equivalent to 1.14% per-capita goods.
