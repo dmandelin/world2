@@ -91,8 +91,19 @@ export class World implements NoteTaker {
             'First permanent settlements founded!'
         );
 
+        // Initialize state not intialized above
         this.initializeTradeGoods();
-        this.preAdvance();
+
+        // Run an initial turn so that there is state for all the output
+        // variables but don't apply the effects that mutate clans.
+        this.plan(true);
+        this.advance(true);
+
+        // Capture this state as the first point in the timeline.
+        this.timeline.add(this.year, new TimePoint(this));
+
+        // Run planning because we're about to activate planning view.
+        this.plan(true);
     }
 
     initializeTradeGoods() {
@@ -132,11 +143,17 @@ export class World implements NoteTaker {
     // Functions that carry out turn substeps
 
     // Let agents predict results and make choices for how to act.
-    private plan() {
+    private plan(priming: boolean = false) {
         console.log('[World]   Planning.');
 
+        this.updatePerceptions();
+
         for (const clan of this.allClans) {
-            clan.planMigration();
+            // Update productivity values so that planning can see them.
+            clan.updateProductivity();
+
+            // Don't move immediately.
+            if (!priming) clan.planMigration();
             clan.planMaintenance();
             clan.planHousing();
         }
@@ -145,39 +162,7 @@ export class World implements NoteTaker {
         this.notify();
     }
 
-    private preAdvance() {
-        // Decisions can depend on perceptions, so we'll initialize them 
-        // first, but then update after pre-advancing state.
-        this.updatePerceptions();
-
-        for (const s of this.motherSettlements) {
-            const snapshot = new Map(s.clans.map(clan => [clan, clan.economicPolicy]));
-            const slippage = s.clans.slippage;
-            for (const clan of s.clans) {
-                clan.seniority = 2;
-                clan.updateProductivity();
-                // For now, start with default economic policies, but do make the
-                // decision on construction.
-                clan.planHousing();
-                clan.planMaintenance();
-            }
-            s.maintain();
-            s.clans.produce();
-            s.clans.distribute();
-
-            // Selecting ritual options creates notification noise and isn't necessary here.
-            s.advanceRites(false);
-
-            s.clans.consume();
-        }
-
-        this.updatePerceptions();
-
-        this.timeline.add(this.year, new TimePoint(this));
-        this.notify();
-    }
-
-    private advance() {
+    private advance(noEffect: boolean = false) {
         // Nature
         const floodLevel = randomFloodLevel();
         for (const cluster of this.clusters) {
@@ -185,17 +170,17 @@ export class World implements NoteTaker {
         }
 
         // Main advance phase.
-        this.migrate();
+        if (!noEffect) this.migrate();
         for (const cl of this.clusters) {
-            cl.advance();
+            cl.advance(noEffect);
         }
 
-        this.updatePerceptions();
-
         // Update timeline.
-        this.year.advance(this.yearsPerTurn);
-        this.timeline.add(this.year, new TimePoint(this));
-        this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
+        if (!noEffect) {
+            this.year.advance(this.yearsPerTurn);
+            this.timeline.add(this.year, new TimePoint(this));
+            this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
+        }
 
         // Notify observers.
         this.notify();

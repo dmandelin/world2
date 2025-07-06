@@ -1,5 +1,4 @@
 <script>
-    import { spct } from "../model/lib/format";
     import Tooltip from "./Tooltip.svelte";
 
     let { clan } = $props();
@@ -14,7 +13,7 @@
     }
 
     table {
-        width: 120px;
+        width: 180px;
     }
 
     td:not(first-child) {
@@ -47,7 +46,7 @@
                         </div>
                     </Tooltip>
                 </td>
-                <td>{spct(clan.consumption?.perCapita(good))}</td>
+                <td>{clan.consumption?.perCapita(good).toFixed(2)}</td>
             </tr>
             {/each}
         </tbody>

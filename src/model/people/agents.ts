@@ -108,7 +108,7 @@ export class Assessments implements Iterable<Assessment> {
         // The idea is, what happens if we help the target clan produce
         // something instead of ourselves? Their commmon fraction of
         // production will go back into the pot, and we'll get our share.
-        const commonBack = target.economicReport.commonFraction * target.agriculturalProductivity;
+        const commonBack = target.agriculturalProductivity;
         const ourShare = this.clan.population / this.clan.settlement!.population;
         return commonBack * ourShare;
     }

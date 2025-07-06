@@ -5,6 +5,9 @@ import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { SettlementCluster } from "./cluster";
 import { DitchMaintenanceCalc } from "../infrastructure";
+import { DistributionNode } from "../econ/distributionnode";
+import { ProductionNode } from "../econ/productionnode";
+import { SkillDefs } from "./skills";
 
 export class Housing {
     constructor(
@@ -53,6 +56,9 @@ class DaughterSettlementPlacer {
 export class Settlement {
     private cluster_: SettlementCluster|undefined;
 
+    readonly productionNodes: ProductionNode[] = [];
+    readonly distributionNode: DistributionNode;
+
     readonly localTradeGoods = new Set<TradeGood>();
 
     readonly daughters: Settlement[] = [];
@@ -78,6 +84,12 @@ export class Settlement {
         for (const clan of clans) {
             clan.setSettlement(this);
         }
+
+        this.distributionNode = new DistributionNode(this);
+        this.productionNodes.push(
+            new ProductionNode('Farms', this, SkillDefs.Agriculture, this.distributionNode),
+            new ProductionNode('Fisheries', this, SkillDefs.Fishing, this.distributionNode),
+        );
     }
 
     get cluster(): SettlementCluster {
@@ -119,46 +131,50 @@ export class Settlement {
         return this.cluster.floodLevel;
     }
 
-    advance() {
+    advance(noEffect: boolean = false) {
         const sizeBefore = this.population;
-
-        // Update productivity now, so that policy can use it.
-        this.clans.updateProductivity();
-
-        // Economic planning.
-        // TODO - Move to a planning function.        
-        const policySnapshot = new Map(this.clans.map(clan => [clan, clan.economicPolicy]));
-        const slippage = this.clans.slippage;
-        for (const clan of this.clans) {
-            clan.chooseEconomicPolicy(policySnapshot, slippage);
-        }
 
         // Economic production.
         // Maintenance goes before production, because it represents capital
         // that can be built in much less than a turn.
+        this.resetEconomicNodes();
         this.maintain();
-        this.clans.produce();
-        this.clans.distribute();
+        this.produce();
+        this.distribute();
 
         // Ritual production.
         this.advanceRites();
 
         // Consume production.
-        this.clans.consume();
+        for (const clan of this.clans) clan.consume();
 
-        // Advance traits and seniority.
-        for (const clan of this.clans) clan.prepareTraitChanges();
-        for (const clan of this.clans) clan.commitTraitChanges();
-        for (const clan of this.clans) clan.advanceSeniority();
+        if (!noEffect) {
+            // Advance traits and seniority.
+            for (const clan of this.clans) clan.prepareTraitChanges();
+            for (const clan of this.clans) clan.commitTraitChanges();
+            for (const clan of this.clans) clan.advanceSeniority();
 
-        // Population effects.
-        this.clans.marry();
-        for (const clan of this.clans) clan.advancePopulation();
-        this.clans.split();
-        this.clans.merge();
-        this.clans.prune();
- 
+            // Population effects.
+            this.clans.marry();
+            for (const clan of this.clans) clan.advancePopulation();
+            this.clans.split();
+            this.clans.merge();
+            this.clans.prune();
+        }
+
         this.lastSizeChange_ = this.population - sizeBefore;
+    }
+
+    resetEconomicNodes() {
+        for (const clan of this.clans) {
+            clan.consumption.reset();
+        }
+
+        this.distributionNode.reset();
+
+        for (const pn of this.productionNodes) {
+                pn.reset();
+        }
     }
 
     maintain() {
@@ -167,16 +183,30 @@ export class Settlement {
         this.ditchQuality = this.maintenanceCalc.quality;
     }
 
+    produce() {
+        for (const pn of this.productionNodes) {
+            pn.acceptFromSettlement();
+            pn.produce();
+            pn.commit();
+        }
+    }
+
+    distribute() {
+        this.distributionNode.distribute();
+        this.distributionNode.commit();
+    }
+
     advanceRites(updateOptions: boolean = true) {
         // Planning for clan rites isn't important yet and introduces a lot of notification noise.
         this.clans.rites.plan(updateOptions);
-        this.attendRites();
         for (const rites of this.rites) {
             rites.perform();
         }
     }
 
-    attendRites() {
-        console.log(`Attending rites in ${this.name}`);
+    consume() {
+        for (const clan of this.clans) {
+            clan.consume();
+        }
     }
 }

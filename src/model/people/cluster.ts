@@ -46,9 +46,9 @@ export class SettlementCluster {
         this.floodLevel_ = level;
     }
 
-    advance(): void {
+    advance(noEffect: boolean = false): void {
         for (const settlement of this.settlements) {
-            settlement.advance();
+            settlement.advance(noEffect);
         }
     }
 

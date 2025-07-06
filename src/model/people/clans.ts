@@ -1,7 +1,6 @@
 import { weightedRandInt } from "../lib/distributions";
 import type { NoteTaker } from "../notifications";
-import { Clan, ConsumptionCalc, EconomicPolicies } from "./people";
-import { Pot } from "../production";
+import { Clan } from "./people";
 import { Rites } from "../rites";
 import { averageFun } from "../lib/basics";
 
@@ -12,9 +11,6 @@ export class CondorcetCalc {
 }
 
 export class Clans extends Array<Clan> {
-    // Communal sharing economy.
-    pot = new Pot(communalGoodsSource, this);
-
     // Community rites.
     rites: Rites;
 
@@ -95,74 +91,8 @@ export class Clans extends Array<Clan> {
         return new CondorcetCalc(this, undefined, wins);
     }
 
-    // How much defection people can get away with, 0-1.
-    get slippage(): number {
-        const cap = 120;
-        const req = this.population;
-        if (cap >= req) return 0.0;
-        return 1 - cap / req;
-    }
-
     remove(clan: Clan) {
         this.splice(this.indexOf(clan), 1);
-    }
-
-    updateProductivity() {
-        for (const clan of this) {
-            clan.updateProductivity();
-        }
-    }
-
-    produce() {
-        this.pot = new Pot(communalGoodsSource, this);
-        for (const clan of this) {
-            clan.pot.clear();
-        }
-
-        for (const clan of this) {
-            let commonFraction = 0.0;   
-            let cheatFraction = 0.0;
-            switch (clan.economicPolicy) {
-                case EconomicPolicies.Share:
-                    commonFraction = 1.0;
-                    break;
-                case EconomicPolicies.Cheat:
-                    commonFraction = 1.0 - this.slippage;
-                    // The clan can do something else with their time, but it will be
-                    // hard to garner full benefit.
-                    cheatFraction = 0.5 * this.slippage;
-                    break;
-            }
-
-            const baseProduce = clan.population * clan.agriculturalProductivity;
-            const commonProduce = baseProduce * commonFraction;
-            const cheatProduce = cheatFraction * baseProduce;
-            const clanProduce = baseProduce - commonProduce - cheatProduce;
-
-            if (commonProduce > 0) {
-                this.pot.accept(clan.population, commonProduce);
-            }
-            if (clanProduce > 0) {
-                clan.pot.accept(clan.population, clanProduce);
-            }
-
-            clan.economicReport = {
-                baseProduce,
-                commonFraction,
-                commonProduce,
-                clanProduce: clanProduce + cheatProduce,
-            }
-        }
-    }
-
-    distribute() {
-        this.forEach(clan => clan.consumption = new ConsumptionCalc(clan.population));
-        this.pot.distribute();
-        this.forEach(clan => clan.pot.distribute());
-    }
-
-    consume() {
-        this.forEach(clan => clan.consume());
     }
 
     *pairs() {

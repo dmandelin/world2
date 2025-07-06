@@ -2,7 +2,6 @@ import { Annals } from "../annals";
 import { clamp, remove } from "../lib/basics";
 import { normal } from "../lib/distributions";
 import { Assessments } from "./agents";
-import { Pot } from "../production";
 import { TradeGoods, type TradeGood } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
@@ -62,34 +61,6 @@ export const PersonalityTraits = {
     MOBILE: new PersonalityTrait('Mobile'),
 };
 
-export class EconomicPolicy {
-    constructor(readonly name: string, readonly c: string) {}
-}
-
-export const EconomicPolicies = {
-    Share: new EconomicPolicy('Sharing', 'S'),  // Contribute to communal sharing pot.
-    Cheat: new EconomicPolicy('Shirking', 'C'), // Contribute minimum acceptable to communal sharing pot.
-    Hoard: new EconomicPolicy('Hoarding', 'H'), // Contribute nothing to communal sharing pot.
-};
-
-export type EconomicPolicyDecision = {
-    keepReturn: number;
-    shareSelfReturn: number;
-    shareOthersReturn: number;
-    shareReturn: number;
-    cheatPotReturn: number;
-    cheatKeepReturn: number;
-    cheatOthersReturn: number;
-    cheatReturn: number;
-};
-
-export type EconomicReport = {
-    baseProduce: number;
-    commonFraction: number;
-    commonProduce: number;
-    clanProduce: number;
-}
-
 export interface GoodsReceiver {
     share: number;
 
@@ -101,6 +72,10 @@ export class ConsumptionCalc {
     private ledger_: Map<TradeGood, Map<string, number>> = new Map();
 
     constructor(public population: number) {
+    }
+
+    reset() {
+        this.ledger_.clear();
     }
 
     clone(): ConsumptionCalc {
@@ -190,31 +165,10 @@ export class Clan {
     isDitching = false;
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
-    // Individual clan economy.
-    economicPolicy = EconomicPolicies.Share;
-    economicPolicyDecision: EconomicPolicyDecision = {
-        keepReturn: 0,
-        shareSelfReturn: 0,
-        shareOthersReturn: 0,
-        shareReturn: 0,
-        cheatPotReturn: 0,
-        cheatKeepReturn: 0,
-        cheatOthersReturn: 0,
-        cheatReturn: 0,
-    }
-    economicReport: EconomicReport = {
-        baseProduce: 0,
-        commonFraction: 0,
-        commonProduce: 0,
-        clanProduce: 0,
-    };
-    tradePartners = new Set<Clan>();
-
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
-
-    consumption = new ConsumptionCalc(0);
-    pot = new Pot(clanGoodsSource, [this]);
     readonly rites: Rites;
+    tradePartners = new Set<Clan>();
+    consumption: ConsumptionCalc;
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 
@@ -237,6 +191,7 @@ export class Clan {
         }
 
         this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
+        this.consumption = new ConsumptionCalc(population);
     }
 
     get settlement(): Settlement {
@@ -405,77 +360,6 @@ export class Clan {
         return this.productivityCalcs.get(SkillDefs.Ritual)?.tfp ?? 0;
     }
 
-    chooseEconomicPolicy(policies: Map<Clan, EconomicPolicy>, slippage: number) {
-        // Consumption from keeping.
-        const testKeepPot = new Pot('', []);
-        testKeepPot.accept(this.population, this.population * this.agriculturalProductivity);
-        const keepReturn = testKeepPot.output;
-
-        // Consumption from sharing.
-        // First see what the pot is without us.
-        const testShareBasePot = new Pot('', []);
-        for (const clan of policies.keys()) {
-            if (clan == this) continue;
-            const policy = policies.get(clan);
-            const input = clan.population * clan.agriculturalProductivity;
-            if (policy === EconomicPolicies.Share) {
-                testShareBasePot.accept(clan.population, input);
-            } else if (policy === EconomicPolicies.Cheat) {
-                testShareBasePot.accept(clan.population, input * (1 - slippage));
-            }
-        }
-        const shareOthersBaseReturn = testShareBasePot.output;
-        // Now add us to the pot.
-        const testSharePot = testShareBasePot.clone();
-        testSharePot.accept(this.population, this.population * this.agriculturalProductivity);
-        const shareSelfReturn = testSharePot.output * this.population / testSharePot.contributors;
-        // Determine a net return to others for sharing.
-        const shareOthersNetReturn = (testSharePot.output - shareSelfReturn) - shareOthersBaseReturn;
-        // For now simply assume a small prosocial bias giving r = 0.1.
-        const shareOthersReturn = 0.1 * shareOthersNetReturn;
-        const shareReturn = shareSelfReturn + shareOthersReturn;
-
-        // Consumption from cheating.
-        const testCheatPot = testShareBasePot.clone();
-        testCheatPot.accept(this.population, this.population * this.agriculturalProductivity * (1 - slippage));
-        const cheatPotReturn = testCheatPot.output * this.population / testCheatPot.contributors;
-        const cheatKeepReturn = this.population * this.agriculturalProductivity * slippage * 0.5;
-        // Net to others for this reduced level of sharing.
-        const cheatOthersNetReturn = (testCheatPot.output - cheatPotReturn) - shareOthersBaseReturn;
-        const cheatOthersReturn = 0.1 * cheatOthersNetReturn;
-        const cheatReturn = cheatKeepReturn + cheatPotReturn + cheatOthersReturn;
-
-        // Determine the best policy, but require a little extra for selfish policies,
-        // because we don't want a clan to switch to hoarding over a 0.1% difference.
-        // Once they're there, though, they can stay there as long as there's any benefit.
-        let returns: [EconomicPolicy, number][] = [
-            [EconomicPolicies.Share, shareReturn],
-            [EconomicPolicies.Cheat, cheatReturn],
-            [EconomicPolicies.Hoard, keepReturn],
-        ];
-        returns.sort((a, b) => b[1] - a[1]);
-        const [bestPolicy, bestReturn] = returns[0];
-        const [curPolicy, curReturn] = returns.find(([p, r]) => p === this.economicPolicy) ?? [this.economicPolicy, 0];
-
-        if (bestPolicy !== curPolicy) {
-            let frictionFactor = curPolicy === EconomicPolicies.Share ? 0.1 : 0.02;
-            if (bestReturn - curReturn >= frictionFactor * bestReturn) {
-                this.economicPolicy = bestPolicy;
-            }
-        }
-
-        this.economicPolicyDecision = {
-            keepReturn: keepReturn,
-            shareSelfReturn: shareSelfReturn,
-            shareOthersReturn: shareOthersReturn,
-            shareReturn: shareReturn,
-            cheatPotReturn: cheatPotReturn,
-            cheatKeepReturn: cheatKeepReturn,
-            cheatOthersReturn: cheatOthersReturn,
-            cheatReturn: cheatReturn,
-        };
-    }
-
     planMaintenance() {
         // This is a current maintenance activity and for now everyone does it.
         this.isDitching = true;
@@ -501,11 +385,13 @@ export class Clan {
     }
 
     get subsistenceConsumption() {
-        return this.consumption.amount(TradeGoods.Subsistence);
+        return this.consumption.amount(TradeGoods.Cereals)
+            + this.consumption.amount(TradeGoods.Fish);
     }
     
     get perCapitaSubsistenceConsumption() {
-        return this.consumption.perCapita(TradeGoods.Subsistence);
+        return this.consumption.perCapita(TradeGoods.Cereals)
+            + this.consumption.perCapita(TradeGoods.Fish);
     }
 
     readonly slices: number[][] = [
@@ -644,9 +530,6 @@ export class Clan {
         this.cadets.push(newClan);
 
         newClan.updateProductivity();
-
-        newClan.economicPolicy = this.economicPolicy;
-        newClan.economicPolicyDecision = this.economicPolicyDecision;
         newClan.consumption = this.consumption.splitOff(originalPopulation, newSize);
 
         this.consume();

@@ -4,7 +4,7 @@ import type { PopulationChange } from "../model/people/population";
 import type { Clans, CondorcetCalc } from "../model/people/clans";
 import { pct } from "../model/lib/format";
 import type { Note } from "../model/notifications";
-import type { Clan, ConsumptionCalc, EconomicPolicy, EconomicPolicyDecision, EconomicReport } from "../model/people/people";
+import type { Clan, ConsumptionCalc } from "../model/people/people";
 import type { PrestigeCalc } from "../model/people/prestige";
 import type { QoLCalc } from "../model/people/qol";
 import type { SimulationResult } from "../model/rites";
@@ -39,6 +39,22 @@ function tradePartnersDTO(clan: Clan) {
     }));
 }
 
+class ClanProductionDTO {
+    readonly goods: Map<TradeGood, number> = new Map();
+
+    constructor(clan: Clan) {
+        for (const pn of clan.settlement.productionNodes) {
+            for (const [good, clanProduce] of pn.output_.entries()) {
+                for (const [pc, amount] of clanProduce.entries()) {
+                    if (pc === clan) {
+                        this.goods.set(good, (this.goods.get(good) ?? 0) + amount);
+                    }
+                }
+            }
+        }
+    }
+}
+
 export type ClanDTO = {
     world: WorldDTO;
 
@@ -63,14 +79,11 @@ export type ClanDTO = {
     influence: number;
     
     consumption: ConsumptionCalc;
-    subsistenceConsumption: number;
     isDitching: boolean;
-    economicPolicy: EconomicPolicy;
-    economicPolicyDecision: EconomicPolicyDecision;
-    economicReport: EconomicReport;
     productivityCalcs: Map<SkillDef, ProductivityCalc>;
     productivity: number;
     productivityTooltip: string[][];
+    production: ClanProductionDTO;
     ritualEffectiveness: number;
     ritualEffectivenessTooltip: string[][];
     seniority: number;
@@ -112,14 +125,11 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         slices: clan.slices,
 
         consumption: clan.consumption.clone(),
-        subsistenceConsumption: clan.consumption.perCapita(TradeGoods.Subsistence),
         isDitching: clan.isDitching,
-        economicPolicy: clan.economicPolicy,
-        economicPolicyDecision: clan.economicPolicyDecision,
-        economicReport: clan.economicReport,
         productivityCalcs: clan.productivityCalcs,
         productivity: clan.agriculturalProductivity,
         productivityTooltip: clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [],
+        production: new ClanProductionDTO(clan),
         ritualEffectiveness: clan.ritualEffectiveness,
         ritualEffectivenessTooltip: clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [],
         seniority: clan.seniority,
@@ -140,17 +150,6 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 export class ClansDTO extends Array<ClanDTO> {
     population: number;
     condorcet: CondorcetCalc;
-    slippage: number;
-
-    pot: { 
-        contributors: number; 
-        input: number; 
-        output: number;
-
-        baseProductivity: number;
-        scaleFactor: number;
-        tfp: number;
-    };
 
     constructor(clans: Clans, world: WorldDTO) {
         super(...sortedByKey([...clans].map(clan => 
@@ -158,15 +157,20 @@ export class ClansDTO extends Array<ClanDTO> {
 
         this.population = clans.population;
         this.condorcet = clans.condorcetLeader;
-        this.slippage = clans.slippage;
-        this.pot = {
-            contributors: clans.pot.contributors,
-            input: clans.pot.input,
-            output: clans.pot.output,
-            baseProductivity: clans.pot.baseProductivity,
-            scaleFactor: clans.pot.scaleFactor,
-            tfp: clans.pot.tfp,
-        };
+    }
+}
+
+class SettlementProductionDTO {
+    readonly goods: Map<TradeGood, number> = new Map();
+
+    constructor(settlement: Settlement) {
+        for (const pn of settlement.productionNodes) {
+            for (const [good, clanProduce] of pn.output_.entries()) {
+                for (const [clan, amount] of clanProduce.entries()) {
+                    this.goods.set(good, (this.goods.get(good) ?? 0) + amount);
+                }
+            }
+        }
     }
 }
 
@@ -177,6 +181,7 @@ export class SettlementDTO {
     readonly lastSizeChange: number;
 
     readonly clans: ClansDTO;
+    readonly production: SettlementProductionDTO;
     readonly localTradeGoods: TradeGood[];
 
     readonly ditchingLevel: number;
@@ -208,6 +213,7 @@ export class SettlementDTO {
         this.lastSizeChange = settlement.lastSizeChange;
 
         this.clans = new ClansDTO(settlement.clans, cluster.world);
+        this.production = new SettlementProductionDTO(settlement);
         this.localTradeGoods = [...settlement.localTradeGoods];
 
         this.ditchingLevel = settlement.ditchingLevel;
@@ -273,15 +279,9 @@ export class WorldDTO {
         return sumFun(this.clusters, cl => cl.population);
     }
 
-    get consumption() {
-        return weightedAverage(
-            [...this.clans()], clan => clan.subsistenceConsumption, clan => clan.size);
-    }
-
     get stats() {
         const tp = this.timeline.points[this.timeline.points.length - 1];
         return [
-            ['Productivity', pct(this.consumption)],
             ['Quality of life', tp.averageQoL.toFixed(1)],
             ['Subsistence satisfaction', tp.averageSubsistenceSat.toFixed(1)],
             ['Ritual satisfaction', tp.averageRitualSat.toFixed(1)],

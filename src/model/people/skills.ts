@@ -3,23 +3,25 @@ import { ClanSkillChange } from './skillchange';
 import { ProductivityCalc } from './productivity';
 import { Traits } from './traits';
 import { normal } from '../lib/distributions';
+import { TradeGoods, type TradeGood } from '../trade';
 
 export class SkillDef {
     constructor(
         readonly name: string,
         readonly icon: string,
+        readonly outputGood: TradeGood|undefined,
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
     ) {}
 }
 
 export const SkillDefs = {
-    Fishing: new SkillDef('Fishing', 'skill-fishing-256.png',
+    Fishing: new SkillDef('Fishing', 'skill-fishing-256.png', TradeGoods.Fish,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
-    Agriculture: new SkillDef('Agriculture', 'skill-farming-256.png',
+    Agriculture: new SkillDef('Agriculture', 'skill-farming-256.png', TradeGoods.Cereals,
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
-    Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png',
+    Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png', undefined,
         new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
-    Ritual: new SkillDef('Ritual', 'skill-ritual-256.png',
+    Ritual: new SkillDef('Ritual', 'skill-ritual-256.png', undefined,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
 };
 
