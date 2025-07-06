@@ -5,10 +5,17 @@
     let { settlement } = $props();
 
     let rows = $derived.by(() => {
-        const r = [...settlement.production.goods.entries()].map(([good, value]) => {
-            return [good.name, value.toFixed()];
+        const r = [...settlement.production.goods.values()].map((item) => {
+            return [
+                item.good.name,
+                item.workers.toFixed(), 
+                item.tfp.toFixed(2),
+                item.amount.toFixed(),
+            ];
         });
-        return r;
+        return [
+            ['Good', 'L', 'P', 'Y'],
+            ...r];
     });
 </script>
 

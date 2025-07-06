@@ -2,7 +2,7 @@ import { Annals } from "../annals";
 import { clamp, remove } from "../lib/basics";
 import { normal } from "../lib/distributions";
 import { Assessments } from "./agents";
-import { TradeGoods, type TradeGood } from "../trade";
+import { type TradeGood } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QolCalc } from "./qol";
@@ -17,6 +17,7 @@ import { ProductivityCalc } from "./productivity";
 import { Traits } from "./traits";
 import { HousingDecision } from "../decisions/housingdecision";
 import { type FloodLevel, FloodLevels } from "../flood";
+import { LaborAllocation } from "./labor";
 
 const clanGoodsSource = 'clan';
 
@@ -174,6 +175,7 @@ export class Clan {
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
+    laborAllocation = new LaborAllocation(this);
     readonly rites: Rites;
     tradePartners = new Set<Clan>();
     consumption = new ConsumptionCalc(this);

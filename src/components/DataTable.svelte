@@ -8,6 +8,10 @@
         margin: 0 auto;
     }
 
+    tr:first-child {
+        font-weight: bold;
+    }
+
     td {
         padding: 0.1em 0.5em;
     }

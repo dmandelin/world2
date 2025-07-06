@@ -4,21 +4,21 @@ import type { PopulationChange } from "../model/people/population";
 import type { Clans, CondorcetCalc } from "../model/people/clans";
 import { pct } from "../model/lib/format";
 import type { Note } from "../model/notifications";
-import type { Clan, ConsumptionCalc } from "../model/people/people";
+import { Clan, type ConsumptionCalc } from "../model/people/people";
 import type { PrestigeCalc } from "../model/people/prestige";
 import type { QolCalc } from "../model/people/qol";
 import type { SimulationResult } from "../model/rites";
 import type { Housing, Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/timeline";
-import { type TradeGood, TradeGoods } from "../model/trade";
+import { type TradeGood } from "../model/trade";
 import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
-import { weightedAverage } from "../model/lib/modelbasics";
 import type { MigrationCalc } from "../model/people/migration";
 import { type ClanSkills, type SkillDef, SkillDefs } from "../model/people/skills";
 import type { ProductivityCalc } from "../model/people/productivity";
 import type { HousingDecision } from "../model/decisions/housingdecision";
 import type { FloodLevel } from "../model/flood";
+import { ProductionNode } from "../model/econ/productionnode";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -39,17 +39,27 @@ function tradePartnersDTO(clan: Clan) {
     }));
 }
 
+export class ProductionItemDTO {
+    constructor(
+        readonly good: TradeGood,
+        readonly workers: number,
+        readonly amount: number,
+    ) {}
+
+    get tfp(): number {
+        return this.amount / this.workers / ProductionNode.outputPerWorker;
+    }
+}
+
 class ClanProductionDTO {
-    readonly goods: Map<TradeGood, number> = new Map();
+    readonly goods: ProductionItemDTO[] = [];
 
     constructor(clan: Clan) {
         for (const pn of clan.settlement.productionNodes) {
-            for (const [good, clanProduce] of pn.output_.entries()) {
-                for (const [pc, amount] of clanProduce.entries()) {
-                    if (pc === clan) {
-                        this.goods.set(good, (this.goods.get(good) ?? 0) + amount);
-                    }
-                }
+            for (const [good, amount] of pn.output(clan).entries()) {
+                const item = new ProductionItemDTO(
+                    good, pn.workers(clan), amount);
+                this.goods.push(item);
             }
         }
     }
@@ -161,13 +171,21 @@ export class ClansDTO extends Array<ClanDTO> {
 }
 
 class SettlementProductionDTO {
-    readonly goods: Map<TradeGood, number> = new Map();
+    readonly goods: Map<TradeGood, ProductionItemDTO> = new Map();
 
     constructor(settlement: Settlement) {
         for (const pn of settlement.productionNodes) {
-            for (const [good, clanProduce] of pn.output_.entries()) {
-                for (const [clan, amount] of clanProduce.entries()) {
-                    this.goods.set(good, (this.goods.get(good) ?? 0) + amount);
+            for (const [good, amount] of pn.output().entries()) {
+                const item = new ProductionItemDTO(
+                    good, pn.workers(), amount);
+                const existingItem = this.goods.get(good);
+                if (existingItem) {
+                    this.goods.set(good, new ProductionItemDTO(
+                        good, 
+                        existingItem.workers + item.workers, 
+                        existingItem.amount + item.amount));
+                } else {
+                    this.goods.set(good, item);
                 }
             }
         }
