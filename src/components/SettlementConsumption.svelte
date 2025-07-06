@@ -1,11 +1,43 @@
 <script lang="ts">
     import { maxbyWithValue } from "../model/lib/basics";
     import { qolFromPerCapitaGoods } from "../model/people/qol";
+    import { clamp } from "../model/lib/basics";
 
     type Cell = string | {
         value: string;
         bold?: boolean;
         indent?: number;
+        color?: string;
+    }
+
+    const bonColor = [20, 108, 221];
+    const midColor = [20, 20, 20];
+    const malColor = [221, 20, 20];
+    
+    function lerp(a: number, b: number, t: number): number {
+        return a + (b - a) * t;
+    }
+
+    function colorFor(value: number): string {
+        if (value < 0) {
+            const t = clamp((value + 5) / 5, 0, 1);
+            return `rgb(${lerp(malColor[0], midColor[0], t)}, ${lerp(malColor[1], midColor[1], t)}, ${lerp(malColor[2], midColor[2], t)})`;
+        } else {
+            const t = clamp(value / 5, 0, 1);
+            return `rgb(${lerp(midColor[0], bonColor[0], t)}, ${lerp(midColor[1], bonColor[1], t)}, ${lerp(midColor[2], bonColor[2], t)})`;
+        }
+    }
+
+    function cellForValue(value: number|undefined): Cell {
+        if (value === undefined) {
+            return '';
+        }
+        const formattedValue = value.toFixed(1);
+        return {
+            value: formattedValue,
+            color: colorFor(value),
+            indent: 0,
+        };
     }
 
     let { settlement } = $props();
@@ -23,7 +55,7 @@
 
             const row: Cell[] = [labelCell];
             for (const qc of qcs) {
-                row.push(qc.items[i]?.value?.toFixed(1) || '');
+                row.push(cellForValue(qc.items[i]?.value));
             }
             rs.push(row);
 
@@ -134,7 +166,9 @@
                     {#if typeof cell === 'object' && 'value' in cell}
                         <span 
                             style:font-weight={cell.bold ? 'bold' : undefined} 
-                            style:padding-left={cell.indent + 'em'}>{cell.value}</span>
+                            style:padding-left={cell.indent + 'em'}
+                            style:color={cell.color}
+                        >{cell.value}</span>
                     {:else}
                         {cell}
                     {/if}

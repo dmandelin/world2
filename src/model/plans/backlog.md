@@ -86,7 +86,8 @@ Next, make social learning complex and dynamic:
             *   Learning depends on effort ratio between activities
         *   Add new economic policy options as needed
         *   Show dietary ratios
-        *   Break out qol panel so you can actually use it
+        x   Break out qol panel so you can actually use it
+        x   Colorize qol panel
 
 -   D1 refinements to recent changes
     -   Permanent settlements
