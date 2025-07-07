@@ -1,7 +1,9 @@
+import type Settlement from '../../components/Settlement.svelte';
 import { Clan } from './people';
 import { SkillDefs, type SkillDef } from './skills';
 
 export class LaborAllocation {
+    // value is fraction and values must sum to 1
     readonly allocs: Map<SkillDef, number> = new Map<SkillDef, number>();
 
     constructor(readonly clan: Clan) {

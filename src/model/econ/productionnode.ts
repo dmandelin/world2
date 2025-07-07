@@ -9,6 +9,7 @@ export class ProductionNode {
     output_ = new Map<TradeGood, Map<Clan, number>>();
 
     static readonly outputPerWorker = 3;
+    static readonly populationPerWorker = 3;
 
     totalWorkers_: number = 0;
     totalOutput_ = new Map<TradeGood, number>();
@@ -47,19 +48,26 @@ export class ProductionNode {
         this.totalOutput_.clear();
     }
 
-    acceptFromSettlement(): void {
-        // Assumptions:
-        // - (For now) Every clan is 50/50 farmer/fisher
-        for (const clan of this.settlement.clans) {
-            this.workers_.set(clan, clan.population / 6);
+    acceptFrom(settlement: Settlement): void {
+        for (const clan of settlement.clans) {
+            const laborFraction = clan.laborAllocation.allocs.get(this.skillDef) ?? 0;
+            const workers = laborFraction * clan.population / ProductionNode.populationPerWorker;
+            this.accept(clan, workers);
         }
+    }
+
+    accept(clan: Clan, workers: number): void {
+        if (workers <= 0) {
+            return;
+        }
+        this.workers_.set(clan, (this.workers_.get(clan) ?? 0) + workers);
+        this.totalWorkers_ += workers;
     }
 
     produce(): void {
         // Assumptions:
         // - Output is linear in labor at this scale
         for (const [clan, workers] of this.workers_.entries()) {
-            this.totalWorkers_ += workers;
             const tfp = clan.productivity(this.skillDef);
             const output = Math.round(ProductionNode.outputPerWorker * workers * tfp);
             if (output > 0) {

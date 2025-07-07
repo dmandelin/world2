@@ -180,7 +180,7 @@ export class Settlement {
 
     produce() {
         for (const pn of this.productionNodes) {
-            pn.acceptFromSettlement();
+            pn.acceptFrom(this);
             pn.produce();
             pn.commit();
         }
@@ -193,7 +193,7 @@ export class Settlement {
 
     advanceRites(updateOptions: boolean = true) {
         if (this.abandoned) return;
-        
+
         // Planning for clan rites isn't important yet and introduces a lot of notification noise.
         this.clans.rites.plan(updateOptions);
         for (const rites of this.rites) {
