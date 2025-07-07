@@ -17,7 +17,8 @@ export class ClanSkillChangeItem {
         shiftMean: number,
         shiftStdDev: number,
         readonly weight: number,
-        readonly experienceRatio: number = 1.0,
+        readonly baseRatio: number = 1.0,
+        readonly shiftRatio: number = 1.0,
     ) {
         const shiftFactor = shiftMean <= 0
             ? originalValue / 100
@@ -28,11 +29,11 @@ export class ClanSkillChangeItem {
     }
 
     get delta(): number {
-        return this.experienceRatio * (this.baseDelta + this.shift);
+        return this.baseRatio * this.baseDelta + this.shiftRatio * this.shift;
     }
 
     get expectedDelta(): number {
-        return this.experienceRatio * (this.baseDelta + this.shiftMean);
+        return this.baseRatio * this.baseDelta + this.shiftRatio * this.shiftMean;
     }
 
     get weightedDelta(): number {
@@ -63,6 +64,11 @@ export class ClanSkillChange {
         if (skillDef === SkillDefs.Ritual) {
             const ritualWeight = clan.settlement!.clans.rites.weights.get(clan) ?? 0;
             experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
+        } else {
+            const workerFraction = clan.laborAllocation.allocs.get(skillDef) ?? 0;
+            // Clans can internally specialize a little, so learning isn't scaled
+            // down fully by worker fraction.
+            experienceRatio *= Math.sqrt(workerFraction);
         }
 
         const rr = 0.5; // Population replacement rate
@@ -75,7 +81,7 @@ export class ClanSkillChange {
 
         const t = skill.value;
         this.originalValue = t;
-        this.educationTarget =  Math.min(cms, t);
+        this.educationTarget = Math.min(cms, t);
         [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
             [...clan.settlement!.clans],
             c => c.name,
@@ -83,26 +89,32 @@ export class ClanSkillChange {
             c => c.skills.v(skillDef),
         );
 
-        // Imitation with error (education) by children.
+        // Imitation with error (education) by children. For now children
+        // learn by doing, so they also depend on experience.
         const educationDelta = absmin(cms, this.educationTarget) - t;
         this.items.push(new ClanSkillChangeItem(
-            'Education', this.originalValue, educationDelta, -2, 2, 1 - rr));
+            'Education', this.originalValue, educationDelta, -2, 2, 1 - rr, 
+            experienceRatio, 1));
 
-        // Imitation with error by adult clan members.
+        // Imitation with error by adult clan members. Requires experience
+        // because they imitate by doing the thing themselves.
         const imitationDelta = this.imitationTarget - t;
         this.items.push(new ClanSkillChangeItem(
-            'Imitation', this.originalValue, imitationDelta, -2, 2, (1 - rr) * alr));
+            'Imitation', this.originalValue, imitationDelta, -2, 2, (1 - rr) * alr, 
+            experienceRatio, 1));
 
-        // Learning from experience and observation.
+        // Learning from experience and observation. Requires experience.
         this.items.push(new ClanSkillChangeItem(
             `Experience (${pct(experienceRatio)})`, 
-            this.originalValue, 0, 2, 2, 1, experienceRatio * this.generalLearningFactor));
+            this.originalValue, 0, 4, 4, 1, 
+            1, experienceRatio * this.generalLearningFactor));
 
         // Things may be a little different after a move, which might
         // work out better or worse for us.
         if (this.clan.seniority == 0) {
             this.items.push(new ClanSkillChangeItem(
-                'Migration', this.originalValue, 0, -10, 5, 1, 1/this.generalLearningFactor));
+                'Migration', this.originalValue, 0, -10, 5, 1, 
+                1, 1/this.generalLearningFactor));
         }
     }
 

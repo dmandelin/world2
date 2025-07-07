@@ -148,7 +148,7 @@ export class Clan {
     private settlement_: Settlement|undefined;
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
-    seniority: number = 0;
+    seniority: number = 2;
     
     lastPopulationChange: PopulationChange = new PopulationChange(this, true);
 

@@ -51,6 +51,7 @@ export class ProductionNode {
     }
 
     reset(): void {
+        this.workerFractions_.clear();
         this.workers_.clear();
         this.output_.clear();
         this.totalWorkers_ = 0;

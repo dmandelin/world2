@@ -69,12 +69,12 @@ Next, make social learning complex and dynamic:
     -   Marshland economy
         x   Add fishing skill
         x   Fix bug in consumption distribution
-        *   Make sure migration effects take place at the right point
         *   Add fish production
             x   Initially assume 50/50 effort split
             x   Add basic fish production
             *   Some environmental variation but different from agriculture
             *   Less production penalty for shifting settlements
+                (Need to add farming penalty for this)
         *   Add fish consumption
             x   Initially make it a perfect substitute for cereals
             x   Balanced diet better than either/or but don't have to fuss massively
@@ -82,13 +82,14 @@ Next, make social learning complex and dynamic:
         *   Add a farmer/fisher trait, allow learning and assimilation
             x   Add basic trait
             x   Apply trait and show percentages in the UI.
-            *   Better learning if specialized
-            *   Production depends on effort ratio between activities
-            *   Learning depends on effort ratio between activities
-        *   Add new economic policy options as needed
+            x   Production depends on effort ratio between activities
+            x   Learning depends on effort ratio between activities
+        *   Give clans the ability to change which activities they do
         *   Show dietary ratios
         x   Break out qol panel so you can actually use it
         x   Colorize qol panel
+    -   Clay figurines
+        -   Will also need to overhaul rituals for this
 
 -   D1 refinements to recent changes
     -   Permanent settlements
@@ -96,7 +97,8 @@ Next, make social learning complex and dynamic:
         -   Refine the model, how quality works, etc
 
 -   D2 general refinements
-    -   Rework baselines so that appeal is more often positive    
+    -   Rework baselines so that appeal is more often positive 
+    -   Simplify skill deltas a bit, too many ratios   
 
 -   D2 refinements to recent changes
     -   Permanent settlements
