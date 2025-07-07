@@ -53,12 +53,17 @@ Next, make social learning complex and dynamic:
     -   Main views:
         x    People - clans, skills, etc
         -    Relationships - new table view
-        -    Production - production focus
+        x    Production - production focus
         -    Rites - rites focus
         x    Consumption - consumption focus & QoL
         -    Trade - trade focus
     -   Settlement view vs clan breakdown view
         -    And then even settlement cluster view!
+
+-   Better reporting of social changes
+    -   Right now we're getting too many notification blips. Instead track
+        change more broadly (first appearance, 20%, etc) for notifications
+        and show interesting things on the map.
 
 -   Re-fix consumption distribution bug
 -   Add back temporary qol effect of migration
