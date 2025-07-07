@@ -19,6 +19,7 @@ import type { ProductivityCalc } from "../model/people/productivity";
 import type { HousingDecision } from "../model/decisions/housingdecision";
 import type { FloodLevel } from "../model/flood";
 import { ProductionNode } from "../model/econ/productionnode";
+import type { LaborAllocation } from "../model/people/labor";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -42,6 +43,7 @@ function tradePartnersDTO(clan: Clan) {
 export class ProductionItemDTO {
     constructor(
         readonly good: TradeGood,
+        readonly workerFraction: number,
         readonly workers: number,
         readonly amount: number,
     ) {}
@@ -58,7 +60,7 @@ class ClanProductionDTO {
         for (const pn of clan.settlement.productionNodes) {
             for (const [good, amount] of pn.output(clan).entries()) {
                 const item = new ProductionItemDTO(
-                    good, pn.workers(clan), amount);
+                    good, pn.workerFraction(clan), pn.workers(clan), amount);
                 this.goods.push(item);
             }
         }
@@ -90,6 +92,7 @@ export type ClanDTO = {
     
     consumption: ConsumptionCalc;
     isDitching: boolean;
+    laborAllocation: LaborAllocation;
     productivityCalcs: Map<SkillDef, ProductivityCalc>;
     productivity: number;
     productivityTooltip: string[][];
@@ -136,6 +139,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 
         consumption: clan.consumption.clone(),
         isDitching: clan.isDitching,
+        laborAllocation: clan.laborAllocation,
         productivityCalcs: clan.productivityCalcs,
         productivity: clan.agriculturalProductivity,
         productivityTooltip: clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [],
@@ -177,11 +181,12 @@ class SettlementProductionDTO {
         for (const pn of settlement.productionNodes) {
             for (const [good, amount] of pn.output().entries()) {
                 const item = new ProductionItemDTO(
-                    good, pn.workers(), amount);
+                    good, pn.workerFraction(), pn.workers(), amount);
                 const existingItem = this.goods.get(good);
                 if (existingItem) {
                     this.goods.set(good, new ProductionItemDTO(
                         good, 
+                        existingItem.workerFraction + item.workerFraction,
                         existingItem.workers + item.workers, 
                         existingItem.amount + item.amount));
                 } else {

@@ -80,7 +80,8 @@ Next, make social learning complex and dynamic:
             x   Balanced diet better than either/or but don't have to fuss massively
                 as they both represent broader spectra
         *   Add a farmer/fisher trait, allow learning and assimilation
-            *   Economies of scale for concentration
+            x   Add basic trait
+            x   Apply trait and show percentages in the UI.
             *   Better learning if specialized
             *   Production depends on effort ratio between activities
             *   Learning depends on effort ratio between activities

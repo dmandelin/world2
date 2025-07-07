@@ -3,9 +3,11 @@ import { Settlement } from '../people/settlement';
 import { TradeGood } from '../trade';
 import type { DistributionNode } from './distributionnode';
 import type { SkillDef } from '../people/skills';
+import { sumFun } from '../lib/basics';
 
 export class ProductionNode {
     workers_ = new Map<Clan, number>();
+    workerFractions_ = new Map<Clan, number>();
     output_ = new Map<TradeGood, Map<Clan, number>>();
 
     static readonly outputPerWorker = 3;
@@ -23,6 +25,13 @@ export class ProductionNode {
 
     workers(clan?: Clan): number {
         return clan ? this.workers_.get(clan) ?? 0 : this.totalWorkers_;
+    }
+
+    workerFraction(clan?: Clan): number {
+        return clan 
+             ? this.workerFractions_.get(clan)!
+             : sumFun([...this.workerFractions_.entries()], ([c, f]) =>
+                f * c.population / this.settlement.population);
     }
 
     output(clan?: Clan): Map<TradeGood, number> {
@@ -52,15 +61,17 @@ export class ProductionNode {
         for (const clan of settlement.clans) {
             const laborFraction = clan.laborAllocation.allocs.get(this.skillDef) ?? 0;
             const workers = laborFraction * clan.population / ProductionNode.populationPerWorker;
-            this.accept(clan, workers);
+            this.accept(clan, laborFraction, workers);
+
         }
     }
 
-    accept(clan: Clan, workers: number): void {
+    accept(clan: Clan, laborFraction: number, workers: number): void {
         if (workers <= 0) {
             return;
         }
         this.workers_.set(clan, (this.workers_.get(clan) ?? 0) + workers);
+        this.workerFractions_.set(clan, (this.workerFractions_.get(clan) ?? 0) + laborFraction);
         this.totalWorkers_ += workers;
     }
 
