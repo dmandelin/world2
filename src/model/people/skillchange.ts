@@ -65,10 +65,11 @@ export class ClanSkillChange {
             const ritualWeight = clan.settlement!.clans.rites.weights.get(clan) ?? 0;
             experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
         } else {
-            const workerFraction = clan.laborAllocation.allocs.get(skillDef) ?? 0;
+            const workerFraction = clan.laborAllocation.allocs.get(skillDef);
             // Clans can internally specialize a little, so learning isn't scaled
             // down fully by worker fraction.
-            experienceRatio *= Math.sqrt(workerFraction);
+            if (workerFraction !== undefined)
+                experienceRatio *= Math.sqrt(workerFraction);
         }
 
         const rr = 0.5; // Population replacement rate
