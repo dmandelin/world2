@@ -2,7 +2,7 @@ import { normal } from "../lib/distributions";
 import { pct, signed, spct } from "../lib/format";
 import type { Clan } from "./people";
 import type { Rites } from "../rites";
-import { averageFun } from "../lib/basics";
+import { averageFun, sumFun } from "../lib/basics";
 import { AttitudeCalc } from "./attitude";
 
 interface PrestigeCalcItem {
@@ -17,6 +17,7 @@ interface PrestigeCalcItem {
 class DirectPrestigeCalcItem implements PrestigeCalcItem {
     constructor(
         readonly name: string,
+        readonly label: string,
         readonly value: number) {}
 }
 
@@ -54,18 +55,18 @@ class RatioBasedPrestigeCalcItem implements PrestigeCalcItem {
 }
 
 export class OwnPrestigeCalc {
-    readonly items: PrestigeCalcItem[];
+    readonly itemMap: Map<string, PrestigeCalcItem> = new Map<string, PrestigeCalcItem>();
 
     constructor(readonly clan: Clan, readonly other: Clan) {
-        this.items = [];
+        let relItem;
         if (clan === other) {
-            this.items.push(new DirectPrestigeCalcItem('Self', 5));
+            relItem = new DirectPrestigeCalcItem('Relationship', 'Self', 5);
         } else if (clan.settlement!.population > 300) {
-            this.items.push(new DirectPrestigeCalcItem('Strangers', -25));
-            return;
+            relItem = new DirectPrestigeCalcItem('Relationship', 'Strangers', -25);
         } else {
-            this.items.push(new DirectPrestigeCalcItem('Neighbors', 0));
+            relItem = new DirectPrestigeCalcItem('Relationship', 'Neighbors', 0);
         }
+        this.itemMap.set('Relationship', relItem);
 
         const averageSeniority = averageFun(clan.settlement!.clans, c => c.seniority);
         const averageHousing = averageFun(clan.settlement!.clans, c => c.housing.qol);
@@ -74,7 +75,7 @@ export class OwnPrestigeCalc {
         const averageIntelligence = averageFun(clan.settlement!.clans, c => c.intelligence);
         const averageHorticulture = averageFun(clan.settlement!.clans, c => c.skill);
         const averageEffectiveRitualSkill = averageFun(clan.settlement!.clans, c => c.ritualEffectiveness);
-        this.items.push(
+        for (const item of [
             new DiffBasedPrestigeCalcItem('Seniority', 3, averageSeniority, clan.seniority),
             new DiffBasedPrestigeCalcItem('Housing', 1, averageHousing, other.housing.qol),
             new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.population),
@@ -87,12 +88,18 @@ export class OwnPrestigeCalc {
                 0.5, 
                 averageEffectiveRitualSkill,
                 other.ritualEffectiveness),
-            new DirectPrestigeCalcItem('Random', normal(0, 2)),
-        );
+            new DirectPrestigeCalcItem('Random', '', normal(0, 2)),
+        ]) {
+            this.itemMap.set(item.name, item);
+        }
+    }
+
+    get items(): PrestigeCalcItem[] {
+        return [...this.itemMap.values()];
     }
 
     get value(): number {
-        return this.items.reduce((acc, item) => acc + item.value, 0);
+        return sumFun(this.items, item => item.value);
     }
 
     get tooltip(): string[][] {
