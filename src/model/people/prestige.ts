@@ -127,4 +127,8 @@ export class PrestigeCalc extends AttitudeCalc<OwnPrestigeCalc> {
     createInferenceCalc(): OwnPrestigeCalc {
         return new OwnPrestigeCalc(this.clan, this.other);
     }
+
+    modelViewOf(model: Clan, other: Clan): PrestigeCalc {
+        return model.prestigeViewOf(other)!;
+    }
 }

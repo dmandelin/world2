@@ -17,8 +17,14 @@ class AlignmentInferenceCalc {
 
     constructor(readonly clan: Clan, readonly other: Clan) {
         this.add('Kinship', this.kinship());
-        this.add('Neighborhood', this.neighborhood());
-        this.add('Random', normal(0, 2));
+        if (this.clan !== this.other) {
+            this.add('Neighborhood', this.neighborhood());
+            this.add('Random', normal(0, 0.1));
+        }
+    }
+
+    get items(): AlignmentInferenceCalcItem[] {
+        return [...this.itemMap.values()];
     }
 
     private add(name: string, value: number): AlignmentInferenceCalcItem {
@@ -50,4 +56,10 @@ export class AlignmentCalc extends AttitudeCalc<AlignmentInferenceCalc> {
     createInferenceCalc(): AlignmentInferenceCalc {
         return new AlignmentInferenceCalc(this.clan, this.other);
     }
+
+    modelViewOf(model: Clan, other: Clan): AlignmentCalc {
+        return model.alignmentViewOf(other)!;
+    }
+
+    get useInferenceOnlyOnSelf(): boolean { return true; }
 }

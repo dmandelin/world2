@@ -59,6 +59,7 @@ export class SettlementCluster {
             }
             s.clans.updateSeniority();
             s.clans.updatePrestigeViews();
+            s.clans.updateAlignmentViews();
         }
     }
 

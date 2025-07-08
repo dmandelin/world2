@@ -18,6 +18,7 @@ import { Traits } from "./traits";
 import { HousingDecision } from "../decisions/housingdecision";
 import { type FloodLevel, FloodLevels } from "../flood";
 import { LaborAllocation } from "./labor";
+import { AlignmentCalc } from "./alignment";
 
 const clanGoodsSource = 'clan';
 
@@ -167,6 +168,8 @@ export class Clan {
     private prestigeViews_ = new Map<Clan, PrestigeCalc>();
     // Local prestige-generated share of influence.
     influence = 0;
+    // This clan's assessment of others as helpful or harmful.
+    private alignmentViews_ = new Map<Clan, AlignmentCalc>(); 
 
     housingDecision: HousingDecision|undefined;
     housing = HousingTypes.Huts;
@@ -267,6 +270,14 @@ export class Clan {
         return this.prestigeViews_;
     }
 
+    alignmentViewOf(other: Clan): AlignmentCalc {
+        return this.alignmentViews_.get(other) ?? new AlignmentCalc(this, other);
+    }
+
+    get alignmentViews(): Map<Clan, AlignmentCalc> {
+        return this.alignmentViews_;
+    }
+
     startUpdatingPrestige() {
         for (const clan of this.settlement!.clans) {
             if (!this.prestigeViews_.has(clan)) {
@@ -285,6 +296,27 @@ export class Clan {
     finishUpdatingPrestige() {
         for (const clan of this.settlement!.clans) {
             this.prestigeViews_.get(clan)!.commitUpdate();
+        }
+    }
+
+    startUpdatingAlignment() {
+        for (const clan of this.settlement!.clans) {
+            if (!this.alignmentViews_.has(clan)) {
+                this.alignmentViews_.set(clan, new AlignmentCalc(this, clan));
+            }
+            this.alignmentViews_.get(clan)!.startUpdate();
+        }
+
+        for (const clan of this.alignmentViews_.keys()) {
+            if (!this.settlement?.clans.includes(clan)) {
+                this.alignmentViews_.delete(clan);
+            }
+        }
+    }
+
+    finishUpdatingAlignment() {
+        for (const clan of this.settlement!.clans) {
+            this.alignmentViews_.get(clan)!.commitUpdate();
         }
     }
 

@@ -34,6 +34,12 @@ export abstract class AttitudeCalc<InferenceCalc extends {value: number}> {
 
     abstract createInferenceCalc(): InferenceCalc;
 
+    abstract modelViewOf(model: Clan, other: Clan): AttitudeCalc<InferenceCalc>;
+
+    get useInferenceOnlyOnSelf(): boolean {
+        return false;
+    }
+
     private buffer(name: string, value: number, sourcePrestige: number) {
         this.bufferedItems_.push(new AttitudeCalcItem(name, value, sourcePrestige));
     }
@@ -43,15 +49,21 @@ export abstract class AttitudeCalc<InferenceCalc extends {value: number}> {
         this.inferred_ = this.createInferenceCalc();
 
         this.bufferedItems_ = [];
-        if (this.heritage_ !== undefined) {
-            this.buffer('Heritage', this.heritage_, this.heritagePrestige_);
-        }
         this.buffer('Inferred', this.inferred_.value, this.inferencePrestige_);
 
-        if (this.clan.settlement!.population < 300) {
-            for (const model of this.clan.prestigeViews.keys()) {
-                if (model === this.other || model === this.clan) continue;
-                this.buffer(model.name, model.prestigeViewOf(this.other)!.value, this.clan.prestigeViewOf(model)!.value);
+        if (this.clan !== this.other || !this.useInferenceOnlyOnSelf) {
+            if (this.heritage_ !== undefined) {
+                this.buffer('Heritage', this.heritage_, this.heritagePrestige_);
+            }
+
+            if (this.clan.settlement!.population < 300) {
+                for (const model of this.clan.prestigeViews.keys()) {
+                    if (model === this.other || model === this.clan) continue;
+                    this.buffer(
+                        model.name, 
+                        this.modelViewOf(model, this.other)!.value, 
+                        this.clan.prestigeViewOf(model)!.value);
+                }
             }
         }
 
@@ -65,6 +77,14 @@ export abstract class AttitudeCalc<InferenceCalc extends {value: number}> {
     commitUpdate() {
         this.items_ = this.bufferedItems_;
         this.bufferedItems_ = [];
+    }
+
+    get inference(): InferenceCalc {
+        return this.inferred_;
+    }
+
+    get items(): AttitudeCalcItem[] {
+        return this.items_;
     }
 
     get value(): number {

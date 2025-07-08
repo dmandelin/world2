@@ -185,4 +185,13 @@ export class Clans extends Array<Clan> {
             clan.influence = expPrestige / totalExpPrestige;
         }
     }
+
+    updateAlignmentViews() {
+        for (const clan of this) {
+            clan.startUpdatingAlignment();
+        }
+        for (const clan of this) {
+            clan.finishUpdatingAlignment();
+        }
+    }
 }

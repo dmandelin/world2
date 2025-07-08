@@ -20,9 +20,14 @@ import type { HousingDecision } from "../model/decisions/housingdecision";
 import type { FloodLevel } from "../model/flood";
 import { ProductionNode } from "../model/econ/productionnode";
 import type { LaborAllocation } from "../model/people/labor";
+import type { AlignmentCalc } from "../model/people/alignment";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
+}
+
+function alignmentDTO(clan: Clan) {
+    return new Map(clan.alignmentViews);
 }
 
 export type TradePartnerDTO = {
@@ -87,6 +92,7 @@ export type ClanDTO = {
     benevolence: number;
     reputation: number;
     prestige: Map<Clan, PrestigeCalc>;
+    alignment: Map<Clan, AlignmentCalc>;
     averagePrestige: number;
     influence: number;
     
@@ -126,6 +132,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         benevolence: clan.benevolence,
         reputation: clan.reputation,
         prestige: prestigeDTO(clan),
+        alignment: alignmentDTO(clan),
         averagePrestige: clan.averagePrestige,
         influence: clan.influence,
 
