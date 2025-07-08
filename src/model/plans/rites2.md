@@ -204,6 +204,23 @@ Let's brainstorm some specific model pieces we can build up:
     but will start to generate more disagreement above that size.
 
 *   Key first steps
+    *   Expectations seem at the core -- maybe start near there
     *   Clan knowledge system
+        * Consider making some similar changes to quality of life
     *   Leader election system
     *   Elaboration and norm system
+
+As it often is, it's hard to see exactly where to start. Maybe it makes
+sense to start with the outputs, what are they? Clearly we have something
+about how many people can be served and what happens there. It would
+seem that key outputs aside from quality of life (which we already have) 
+are:
+
+*   Norms
+*   Solidarity
+
+Maybe we can get started like this:
+
+*   Simplify and correct existing ritual output functions
+*   Simplify and correct solidarity ratings
+*   Start adding norms
