@@ -25,7 +25,7 @@ export class QolCalc {
     readonly subsistenceItems: SatisfactionItem[];
     readonly subsistenceSatisfaction: number;
 
-    readonly ritualSatisfaction: number;
+    readonly ritualAppeal: number;
 
     readonly satisfactionItems: SatisfactionItem[];
     readonly satisfaction: number;
@@ -33,21 +33,21 @@ export class QolCalc {
     readonly items: QolItem[];
     readonly value: number;
 
-    constructor(readonly clan: Clan, overrideRitualAppealAsTFP?: number) {
+    constructor(readonly clan: Clan, overrideRitualAppeal?: number) {
         this.subsistenceItems = [TradeGoods.Cereals, TradeGoods.Fish]
             .map(good => new SatisfactionItem(good.name, clan.consumption.perCapita(good)));
         this.subsistenceSatisfaction = sumFun(this.subsistenceItems, item => item.perCapita);
 
-        this.ritualSatisfaction = overrideRitualAppealAsTFP ?? clan.settlement.clans.rites.appealAsTFP;
+        this.ritualAppeal = overrideRitualAppeal ?? clan.settlement.clans.rites.appeal;
 
         this.satisfactionItems = [
             new SatisfactionItem('Subsistence', this.subsistenceSatisfaction),
-            new SatisfactionItem('Ritual', this.ritualSatisfaction),
         ];
         this.satisfaction = ces(this.satisfactionItems.map(item => item.perCapita), {rho: -5});
 
         this.items = [
-            new QolItem('Goods and rituals', qolFromPerCapitaGoods(this.satisfaction), 0, this.satisfactionItems),
+            new QolItem('Rituals', this.ritualAppeal - 10, 0),
+            new QolItem('Goods', qolFromPerCapitaGoods(this.satisfaction), 0, this.satisfactionItems),
             new QolItem('Food variety', foodVarietyQolModifier(clan), 1),
             new QolItem('Housing', clan.housing.qol, 0),
             new QolItem('Moves', housingFloodingValue(clan), 1),

@@ -247,10 +247,6 @@ export class Rites {
         this.appeal = base + fromQuality + fromQuantity + discord + diversity;
     }
 
-    get appealAsTFP(): number {
-        return Math.pow(2, (this.appeal - 10) / 10);
-    }
-
     simulateLeaderSelectionOptions(): SimulationResult[] {
         if (this.producers.length === 0) {
             return [];
@@ -302,8 +298,8 @@ export class ClanImpact {
     readonly originalWeight: number;
     readonly newWeight: number;
 
-    readonly originalQoL: number;
-    readonly newQoL: number;
+    readonly originalAppeal: number;
+    readonly newAppeal: number;
 
     readonly originalPrestige: number;
     readonly newPrestige: number;
@@ -312,8 +308,8 @@ export class ClanImpact {
         this.originalWeight = originalRites.weights.get(clan) ?? 0;
         this.newWeight = rites.weights.get(clan) ?? 0;
 
-        this.originalQoL = new QolCalc(clan, originalRites.appealAsTFP).value;
-        this.newQoL = new QolCalc(clan, rites.appealAsTFP).value;
+        this.originalAppeal = originalRites.appeal;
+        this.newAppeal = rites.appeal;
 
         const averageEffectiveSkill = originalRites.producers.reduce(
             (acc, c) => acc + c.ritualEffectiveness, 0) / originalRites.producers.length;
@@ -328,7 +324,7 @@ export class ClanImpact {
     }   
 
     get qolDelta(): number {
-        return this.newQoL - this.originalQoL;
+        return this.newAppeal - this.originalAppeal;
     }
 
     get prestigeDelta(): number {
