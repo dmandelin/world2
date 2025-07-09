@@ -256,3 +256,31 @@ x   Simplify and correct solidarity ratings
 *   Start adding norms
 *   Some piece of ritual elaboration?
 *   Some feature change to agree over or not?
+
+Rethink based on the next goal of clay figurines:
+
+*   Obvious approach is similar to ditching, add bit for using clay
+    figurines based on trade model
+*   But then we also have to do stuff on trade model, and should add
+    norms, which makes that big
+*   But we really don't need to do the trade model right away, could
+    make some trivial assumption about that, then refine later.
+*   And it will be good to bring in norms, because that'll be an
+    important part of that shift. And then we might have enough to
+    do more refinement of the first 3 shifts (next up is canal irrigation,
+    which is a natural extension of ditching)
+
+Workup on clay figurines:
+
+*   Give clans optional off-map trade partners
+*   They have an ongoing relationship and automatically send away
+    some amount of goods and receive clay figurines
+*   Base effects are on quality of life, ritual appeal, and
+    prestige, but that could change, and maybe alignment now that
+    we have it
+*   Decision: clan use vs village use
+    *   Clan use: QoL bonus for clan solidarity, small prestige bonus,
+        also internal prestige bonus
+    *   Village use: Means use in village rituals. Boosts ritual appeal
+        and prestige
+    *   Also consider gifts, common use, and local exchange
