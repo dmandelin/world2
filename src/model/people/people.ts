@@ -1,7 +1,6 @@
 import { Annals } from "../annals";
 import { clamp, remove } from "../lib/basics";
 import { normal } from "../lib/distributions";
-import { Assessments } from "./agents";
 import { type TradeGood } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
@@ -162,8 +161,8 @@ export class Clan {
     parent: Clan|undefined;
     cadets: Clan[] = [];
 
-    assessments = new Assessments(this);
-    
+    migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
+
     // This clan's views of itself and others.
     private prestigeViews_ = new Map<Clan, PrestigeCalc>();
     // Local prestige-generated share of influence.
@@ -182,8 +181,6 @@ export class Clan {
     readonly rites: Rites;
     tradePartners = new Set<Clan>();
     consumption = new ConsumptionCalc(this);
-
-    migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 
     private qolCalc_: QolCalc|undefined;
 
@@ -339,28 +336,6 @@ export class Clan {
         if (this.seniority < 4) {
             ++this.seniority;
         }
-    }
-
-    get benevolence() {
-        let r = 0;
-        let n = 0;
-        for (const clan of this.settlement?.clans ?? []) {
-            if (clan === this) continue;
-            r += this.assessments.alignment(clan) * clan.population;
-            n += clan.population;
-        }
-        return r / n;
-    }
-
-    get reputation() {
-        let r = 0;
-        let n = 0;
-        for (const clan of this.settlement?.clans ?? []) {
-            if (clan === this) continue;
-            r += clan.assessments.alignment(this) * clan.population;
-            n += clan.population;
-        }
-        return r / n;
     }
 
     addKinBasedTradePartner(clan: Clan) {
@@ -547,7 +522,6 @@ export class Clan {
         newClan.settlement_ = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
-        newClan.assessments = this.assessments.clone();
         this.population -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);

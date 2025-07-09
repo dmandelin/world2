@@ -54,9 +54,6 @@ export class SettlementCluster {
 
     updatePerceptions(): void {
         for (const s of this.settlements) {
-            for (const clan of s.clans) {
-                clan.assessments.update();
-            }
             s.clans.updateSeniority();
             s.clans.updatePrestigeViews();
             s.clans.updateAlignmentViews();
