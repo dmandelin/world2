@@ -7,7 +7,6 @@
     import PopulationPyramid from "./PopulationPyramid.svelte";
     import Tooltip from "./Tooltip.svelte";
     import { clanTimelineGraphData } from "../model/timeline";
-    import { SkillDefs } from "../model/people/skills";
     import HousingDecision from "./decisions/HousingDecision.svelte";
 
     let { clan } = $props();
@@ -121,7 +120,7 @@
                 <td colspan="3" style="display: flex; text-align: left; vertical-align: middle; gap: 0.5em; justify-content: center;">
                     <img src="stat-population-256.png" alt="Population" width="24" height="24" />
                 <Tooltip>
-                    {clan.size}
+                    {clan.population}
                     <div slot="tooltip" class="ttt">
                         <PopulationPyramid clan={clan} />
                 </Tooltip>

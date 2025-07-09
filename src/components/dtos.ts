@@ -108,7 +108,7 @@ export type ClanDTO = {
     seniority: number;
     migrationPlan: MigrationCalc|undefined;
     lastPopulationChange: PopulationChange;
-    size: number;
+    population: number;
 
     qol: number;
     qolCalc: QolCalc;
@@ -154,7 +154,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         ritualEffectiveness: clan.ritualEffectiveness,
         ritualEffectivenessTooltip: clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [],
         seniority: clan.seniority,
-        size: clan.population,
+        population: clan.population,
         lastPopulationChange: clan.lastPopulationChange,
         tradePartners: tradePartnersDTO(clan),
 
@@ -166,19 +166,6 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         strength: clan.strength,
         traits: [...clan.traits].map(t => t.name),
     };
-}
-
-export class ClansDTO extends Array<ClanDTO> {
-    population: number;
-    condorcet: CondorcetCalc;
-
-    constructor(clans: Clans, world: WorldDTO) {
-        super(...sortedByKey([...clans].map(clan => 
-            clanDTO(clan, world)), clan => -clan.averagePrestige));
-
-        this.population = clans.population;
-        this.condorcet = clans.condorcetLeader;
-    }
 }
 
 class SettlementProductionDTO {
@@ -206,11 +193,11 @@ class SettlementProductionDTO {
 
 export class SettlementDTO {
     readonly name: string;
-    readonly size: number;
+    readonly population: number;
     readonly averageQoL: number;
     readonly lastSizeChange: number;
 
-    readonly clans: ClansDTO;
+    readonly clans: ClanDTO[];
     readonly production: SettlementProductionDTO;
     readonly localTradeGoods: TradeGood[];
 
@@ -218,6 +205,8 @@ export class SettlementDTO {
     readonly ditchQuality: number;
     readonly ditchTooltip: string[][];
     readonly floodLevel: FloodLevel;
+
+    readonly condorcet: CondorcetCalc;
 
     readonly rites: {
         name: string;
@@ -236,13 +225,15 @@ export class SettlementDTO {
         appealItems: [string, string][];
     }[];
 
-    constructor(settlement: Settlement, readonly cluster: ClusterDTO) {
+    constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
+        this.clans = sortedByKey([...settlement.clans].map(clan => 
+            clanDTO(clan, world)), clan => -clan.averagePrestige);
+
         this.name = settlement.name;
-        this.size = settlement.population;
+        this.population = settlement.population;
         this.averageQoL = settlement.averageQoL;
         this.lastSizeChange = settlement.lastSizeChange;
 
-        this.clans = new ClansDTO(settlement.clans, cluster.world);
         this.production = new SettlementProductionDTO(settlement);
         this.localTradeGoods = [...settlement.localTradeGoods];
 
@@ -266,6 +257,8 @@ export class SettlementDTO {
             appeal: rites.appeal,
             appealItems: rites.appealItems,
         }));
+            
+        this.condorcet = settlement.clans.condorcetLeader;
     }
 }
 
@@ -277,7 +270,7 @@ export class ClusterDTO {
 
     constructor(private readonly cluster: SettlementCluster, readonly world: WorldDTO) {
         this.name = cluster.name;
-        this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this));
+        this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this, world));
         this.population = cluster.population;
         this.averageQoL = cluster.qol;
     }
@@ -330,8 +323,8 @@ export class WorldDTO {
 
     get notableClans() {
         const items: [string, OptByWithValue<ClanDTO>, (clan: ClanDTO) => number, (n: number) => string][] = [
-            ['Biggest', maxbyWithValue, clan => clan.size, n => n.toFixed()],
-            ['Smallest', minbyWithValue,  clan => clan.size, n => n.toFixed()],
+            ['Biggest', maxbyWithValue, clan => clan.population, n => n.toFixed()],
+            ['Smallest', minbyWithValue,  clan => clan.population, n => n.toFixed()],
             ['Most productive', maxbyWithValue, clan => clan.productivity, pct],
             ['Least productive', minbyWithValue, clan => clan.productivity, pct],
             ['Most correct', maxbyWithValue, clan => clan.ritualEffectiveness, pct],

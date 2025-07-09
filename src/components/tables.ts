@@ -48,3 +48,39 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
 
     return { header, subheader, rows}
 }
+
+export type AveragePrestigeTable = {
+    header: string[];
+    rows: string[][];
+}
+
+export function averagePrestigeTable(settlement: SettlementDTO): AveragePrestigeTable {
+    const n = settlement.population;
+    const rs = new Map<string, Map<string, number>>(); // calc item name -> clan name -> value
+    for (const clan of settlement.clans) {
+        for (const [other, prestigeCalc] of clan.prestige) {
+            console.log(clan.prestige);
+            for (const item of prestigeCalc.inference.items) {
+                const part = item.value * clan.population / n;
+                const row = rs.get(item.name) ?? new Map<string, number>();
+                row.set(other.name, (row.get(other.name) ?? 0) + part);
+                rs.set(item.name, row);
+            }
+            const totalPart = prestigeCalc.inference.value * clan.population / n;
+            const totalRow = rs.get('Total') ?? new Map<string, number>();
+            totalRow.set(other.name, (totalRow.get(other.name) ?? 0) + totalPart);
+            rs.set('Total', totalRow);
+        }
+    }
+
+    const header = ['Source', ...[...settlement.clans].map(c => c.name)]
+    const rows = [...rs.entries()].map(([name, clanMap]) => {
+        const row = [name];
+        for (const clan of settlement.clans) {
+            row.push((clanMap.get(clan.name) ?? 0).toFixed(1));
+        }
+        return row;
+    });
+
+    return { header, rows };
+}
