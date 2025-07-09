@@ -1,7 +1,7 @@
 import { Annals } from "../annals";
 import { clamp, remove } from "../lib/basics";
 import { normal } from "../lib/distributions";
-import { type TradeGood } from "../trade";
+import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QolCalc } from "./qol";
@@ -18,8 +18,6 @@ import { HousingDecision } from "../decisions/housingdecision";
 import { type FloodLevel, FloodLevels } from "../flood";
 import { LaborAllocation } from "./labor";
 import { AlignmentCalc } from "./alignment";
-
-const clanGoodsSource = 'clan';
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -139,7 +137,7 @@ export class ConsumptionCalc {
     }
 }
 
-export class Clan {
+export class Clan implements TradePartner {
     readonly uuid = crypto.randomUUID();
 
     static minDesiredSize = 10;
@@ -179,7 +177,7 @@ export class Clan {
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     laborAllocation = new LaborAllocation(this);
     readonly rites: Rites;
-    tradePartners = new Set<Clan>();
+    readonly tradeRelationships = new Set<TradeRelationship>();
     consumption = new ConsumptionCalc(this);
 
     private qolCalc_: QolCalc|undefined;
@@ -201,6 +199,10 @@ export class Clan {
         }
 
         this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
+    }
+
+    get moniker(): string {
+        return this.settlement!.name;
     }
 
     get settlement(): Settlement {
@@ -338,26 +340,15 @@ export class Clan {
         }
     }
 
-    addKinBasedTradePartner(clan: Clan) {
-        // In kin-based trade, one of the trade partners marries into
-        // the other (if not already related), providing the bonds of
-        // trust needed to facilitate trade. Thus clans have limited
-        // capacity for trade partners.
-        if (this.tradePartners.has(clan)) return;
-        if (this.tradePartners.size >= 2 || clan.tradePartners.size >= 2) return;
-        
-        this.tradePartners.add(clan);
-        clan.tradePartners.add(this);
+    get tradeGoods(): TradeGood[] {
+        return [...this.settlement.localTradeGoods];
     }
 
-    exportsTo(clan: Clan): TradeGood[] {
-        // We'll export everything that they don't already have.
-        return [...this.settlement!.localTradeGoods]
-            .filter(good => !clan.settlement?.localTradeGoods.has(good));
-    }
-
-    importsFrom(clan: Clan): TradeGood[] {
-        return clan.exportsTo(this);
+    addTradeRelationship(partner: TradePartner): TradeRelationship {
+        const relationship = new TradeRelationship(this, partner);
+        this.tradeRelationships.add(relationship);
+        partner.tradeRelationships.add(relationship);
+        return relationship;
     }
 
     updateProductivity() {

@@ -4,7 +4,7 @@ import { Clans } from "./people/clans";
 import { chooseFrom, sumFun, shuffled } from "./lib/basics";
 import { Settlement } from "./people/settlement";
 import { Timeline, TimePoint } from "./timeline";
-import { TradeGood, TradeGoods } from "./trade";
+import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./year";
 import { Note, type NoteTaker } from "./notifications";
@@ -108,26 +108,27 @@ export class World implements NoteTaker {
 
     initializeTradeGoods() {
         let e: Settlement, u: Settlement;
-        for (const s of this.motherSettlements) {
-            let localTradeGoods: TradeGood[] = [];
-            switch (s.name) {
-                case 'Eridu':
-                    localTradeGoods = [TradeGoods.Cereals, TradeGoods.Fish];
-                    e = s;
-                    break;
-                case 'Ur':
-                    localTradeGoods = [TradeGoods.Cereals, TradeGoods.ReedProducts];
-                    u = s;
-                    break;
-                case 'Uruk':
-                    localTradeGoods = [TradeGoods.Cereals, TradeGoods.Bitumen];
-                    break;
-            }
-            for (const g of localTradeGoods) {
-                s.localTradeGoods.add(g);
-            }
+        const clayFigurineSource = new OffMapTradePartner(
+            'Northern artisans', [TradeGoods.ClayFigurines]);
+
+        this.initializeTrade(
+            this.motherSettlements.find(s => s.name === 'Eridu')!,
+            [TradeGoods.Cereals, TradeGoods.Fish],
+            clayFigurineSource);
+        this.initializeTrade(
+            this.motherSettlements.find(s => s.name === 'Ur')!,
+            [TradeGoods.Cereals, TradeGoods.ReedProducts],
+            clayFigurineSource);
+    }
+
+    initializeTrade(settlement: Settlement, localTradeGoods: TradeGood[], partner: OffMapTradePartner) {
+        for (const t of localTradeGoods) {
+            settlement.localTradeGoods.add(t);
         }
-        chooseFrom(e!.clans).addKinBasedTradePartner(chooseFrom(u!.clans));
+
+        const clan = chooseFrom(settlement.clans);
+        const relationship = clan.addTradeRelationship(partner);
+        relationship.addExchange(clan, [...clan.tradeGoods][0], partner.tradeGoods[0]);
     }
 
     // ----------------------------------------------------------------

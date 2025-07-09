@@ -1,4 +1,3 @@
-import type { Assessments } from "../model/people/agents";
 import { maxbyWithValue, minbyWithValue, sortedByKey, sumFun, type OptByWithValue } from "../model/lib/basics";
 import type { PopulationChange } from "../model/people/population";
 import type { Clans, CondorcetCalc } from "../model/people/clans";
@@ -30,18 +29,17 @@ function alignmentDTO(clan: Clan) {
     return new Map(clan.alignmentViews);
 }
 
-export type TradePartnerDTO = {
+export type TradeRelationshipsDTO = {
     name: string;
     sending: string[];
     receiving: string[];
 }
 
-function tradePartnersDTO(clan: Clan) {
-    return [...clan.tradePartners].map(partner => ({
-        name: partner.name,
-        settlement: partner.settlement!.name,
-        sending: [...clan.exportsTo(partner).map(t => t.name)],
-        receiving: [...clan.importsFrom(partner).map(t => t.name)],
+function tradeRelationshipsDTO(clan: Clan) {
+    return [...clan.tradeRelationships].map(r => ({
+        name: r.partner(clan).moniker,
+        sending: r.sending(clan).map(t => t.name),
+        receiving: r.receiving(clan).map(t => t.name),
     }));
 }
 
@@ -82,15 +80,12 @@ export type ClanDTO = {
 
     cadets: Clan[];
     parent: Clan|undefined;
-    tradePartners: TradePartnerDTO[];
+    tradeRelationships: TradeRelationshipsDTO[];
     settlement: Settlement;
     housing: Housing;
     housingDecision: HousingDecision|undefined;
     slices: number[][];
 
-    assessments: Assessments;
-    benevolence: number;
-    reputation: number;
     prestige: Map<Clan, PrestigeCalc>;
     alignment: Map<Clan, AlignmentCalc>;
     averagePrestige: number;
@@ -128,9 +123,6 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         name: clan.name,
         color: clan.color,
 
-        assessments: clan.assessments.clone(),
-        benevolence: clan.benevolence,
-        reputation: clan.reputation,
         prestige: prestigeDTO(clan),
         alignment: alignmentDTO(clan),
         averagePrestige: clan.averagePrestige,
@@ -156,7 +148,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         seniority: clan.seniority,
         population: clan.population,
         lastPopulationChange: clan.lastPopulationChange,
-        tradePartners: tradePartnersDTO(clan),
+        tradeRelationships: tradeRelationshipsDTO(clan),
 
         qol: clan.qol,
         qolCalc: clan.qolCalc,

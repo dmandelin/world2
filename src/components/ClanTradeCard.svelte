@@ -1,8 +1,4 @@
 <script>
-    import { pct, spct, wg } from "../model/lib/format";
-    import EconomicPolicyDecision from "./EconomicPolicyDecision.svelte";
-    import Tooltip from "./Tooltip.svelte";
-
     let { clan } = $props();
 </script>
 
@@ -32,18 +28,21 @@
 </style>
 
 <div id="top">
-    {#if clan.tradePartners?.length}
+    {#if clan.tradeRelationships?.length}
     <table>
         <tbody>
+            <tr>
+                <td colspan="3" style:color={clan.color} style:font-weight="bold" style:text-align="center">{clan.name}</td>
+            </tr>
             <tr class="sm"><td>Trading with kin</td></tr>
-            {#each clan.tradePartners as partner}
-            <tr><td>{partner.name} of {partner.settlement}</td></tr>
+            {#each clan.tradeRelationships as relationship}
+            <tr><td>{relationship.name}</td></tr>
             <tr class="sm"><td>Sending</td></tr>
-                {#each partner.sending as sending}
+                {#each relationship.sending as sending}
                 <tr><td>{sending}</td></tr>
                 {/each}
             <tr class="sm"><td>Receiving</td></tr>
-                {#each partner.receiving as receiving}
+                {#each relationship.receiving as receiving}
                 <tr><td>{receiving}</td></tr>
                 {/each}
             {/each}
@@ -52,6 +51,9 @@
     {:else}
     <table>
         <tbody>
+            <tr>
+                <td colspan="3" style:color={clan.color} style:font-weight="bold" style:text-align="center">{clan.name}</td>
+            </tr>
             <tr class="sm"><td>No trade partners</td></tr>
         </tbody>
     </table>
