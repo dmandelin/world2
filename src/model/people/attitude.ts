@@ -1,6 +1,16 @@
 import { sumFun } from '../lib/basics';
 import { Clan } from './people';
 
+interface InferenceCalcItem {
+    name: string;
+    value: number;
+}
+
+export interface InferenceCalc {
+    value: number;
+    items: Iterable<InferenceCalcItem>;
+}
+
 export class AttitudeCalcItem {
     weight: number;
 
@@ -16,11 +26,11 @@ export class AttitudeCalcItem {
     }
 }
 
-export abstract class AttitudeCalc<InferenceCalc extends {value: number}> {
+export abstract class AttitudeCalc<IC extends InferenceCalc> {
     readonly heritagePrestige_ = 0;
     readonly inferencePrestige_ = 0;
 
-    private inferred_: InferenceCalc;
+    private inferred_: IC;
     private heritage_: number|undefined;
 
     private items_: AttitudeCalcItem[];
@@ -32,9 +42,9 @@ export abstract class AttitudeCalc<InferenceCalc extends {value: number}> {
             'Inferred', this.inferred_.value, this.inferencePrestige_)];
     }
 
-    abstract createInferenceCalc(): InferenceCalc;
+    abstract createInferenceCalc(): IC;
 
-    abstract modelViewOf(model: Clan, other: Clan): AttitudeCalc<InferenceCalc>;
+    abstract modelViewOf(model: Clan, other: Clan): AttitudeCalc<IC>;
 
     get useInferenceOnlyOnSelf(): boolean {
         return false;
@@ -79,7 +89,7 @@ export abstract class AttitudeCalc<InferenceCalc extends {value: number}> {
         this.bufferedItems_ = [];
     }
 
-    get inference(): InferenceCalc {
+    get inference(): IC {
         return this.inferred_;
     }
 

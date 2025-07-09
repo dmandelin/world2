@@ -1,16 +1,28 @@
 <script lang="ts">
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
-    import { averagePrestigeTable } from "./tables";
+    import { averageAttitudeTable } from "./tables";
+    import type { ClanDTO, SettlementDTO } from "./dtos";
     import type { AlignmentCalc } from "../model/people/alignment";
     import { signed } from "../model/lib/format";
+    import type { PrestigeCalc } from "../model/people/prestige";
     
-    let { settlement } = $props();
+    let { settlement }: { settlement: SettlementDTO }= $props();
     let clans = $derived(settlement.clans);
 
-    let prestigeTable = $derived(averagePrestigeTable(settlement));
+    let prestigeTable = $derived(averageAttitudeTable(
+        settlement,
+        (clan: ClanDTO) => clan.prestige.entries(),
+        true,
+        1,
+    ));
 
-    function prestigeTooltip(calc: AlignmentCalc) {
+    let alignmentTable = $derived(averageAttitudeTable(
+        settlement,
+        (clan: ClanDTO) => clan.alignment.entries(),
+    ));
+
+    function prestigeTooltip(calc: PrestigeCalc) {
         const rows = [];
         for (const item of calc.items) {
             rows.push([item.name, item.weight.toFixed(2), item.value.toFixed()]);
@@ -21,7 +33,7 @@
         ];
     }
 
-    function prestigeInferenceTooltip(calc: AlignmentCalc) {
+    function prestigeInferenceTooltip(calc: PrestigeCalc) {
         const rows = [];
         for (const item of calc.inference.items) {
             rows.push([item.name, item.value.toFixed()]);
@@ -56,6 +68,10 @@
 </script>
 
 <style>
+    h3 {
+        margin-top: 0;
+    }
+
     h3, h4 {
         text-align: center;
     }
@@ -71,12 +87,16 @@
         border: 1px solid #ccc;
     }
 
-    #prestige-inferences-table {
+    .inferences-table {
         margin-top: 1em;
     }
 
-    #prestige-inferences-table td:first-child {
+    .inferences-table td:first-child, .inferences-table th:first-child {
         text-align: left;
+    }
+
+    .inferences-table tr:last-child {
+        font-weight: bold;
     }
 </style>
 
@@ -98,7 +118,7 @@
             {#each clans as d}
                 <td>
                     <Tooltip>
-                        {signed(c.prestige.get(d.ref)?.value)}
+                        {signed(c.prestige.get(d.ref)?.value ?? 0)}
                         <div slot="tooltip">
                             <b>Sources</b>
                             <DataTable rows={prestigeTooltip(c.prestige.get(d.ref)!)} />
@@ -114,7 +134,7 @@
     </table>
 
     <h4>Average Inferences</h4>
-    <table id="prestige-inferences-table">
+    <table class="inferences-table">
         <thead>
             <tr>
                 {#each prestigeTable.header as cell}
@@ -133,6 +153,7 @@
         </tbody>
     </table>
 </div>
+
 <div>
     <h3>Alignment</h3>
     <table>
@@ -149,7 +170,7 @@
             {#each clans as d}
                 <td>
                     <Tooltip>
-                        {(c.alignment.get(d.ref)?.value?.toFixed(2))}
+                        {signed(c.alignment.get(d.ref)?.value ?? 0, 2)}
                         <div slot="tooltip">
                             <b>Sources</b>
                             <DataTable rows={alignmentTooltip(c.alignment.get(d.ref)!)} />
@@ -161,6 +182,26 @@
             {/each}
         </tr>
         {/each}
+        </tbody>
+    </table>
+
+    <h4>Average Inferences</h4>
+    <table class="inferences-table">
+        <thead>
+            <tr>
+                {#each alignmentTable.header as cell}
+                    <th>{cell}</th>
+                {/each}
+            </tr>
+        </thead>   
+        <tbody>
+            {#each alignmentTable.rows as row}
+                <tr>
+                    {#each row as cell}
+                        <td>{cell}</td>
+                    {/each}
+                </tr>
+            {/each}
         </tbody>
     </table>
 </div>

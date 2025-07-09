@@ -1,5 +1,8 @@
-import { ProductionItemDTO, SettlementDTO } from './dtos';
-import { pct } from '../model/lib/format';
+import type { ProductionItemDTO, SettlementDTO } from './dtos';
+import type { AttitudeCalc, InferenceCalc } from '../model/people/attitude';
+import type { ClanDTO } from './dtos';
+import type { Clan } from '../model/people/people';
+import { pct, signed } from '../model/lib/format';
 
 export type SettlementProductionTable = {
     header: string[];
@@ -49,27 +52,33 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
     return { header, subheader, rows}
 }
 
-export type AveragePrestigeTable = {
+export type AverageAttitudeTable = {
     header: string[];
     rows: string[][];
 }
 
-export function averagePrestigeTable(settlement: SettlementDTO): AveragePrestigeTable {
-    const n = settlement.population;
+export function averageAttitudeTable<AC extends AttitudeCalc<IC>, IC extends InferenceCalc> (
+    settlement: SettlementDTO,
+    attitudeCalcProvider: (clan: ClanDTO) => Iterable<[Clan, AC]>,
+    includeTotals: boolean = true,
+    precision: number = 2,
+): AverageAttitudeTable {
     const rs = new Map<string, Map<string, number>>(); // calc item name -> clan name -> value
     for (const clan of settlement.clans) {
-        for (const [other, prestigeCalc] of clan.prestige) {
-            console.log(clan.prestige);
-            for (const item of prestigeCalc.inference.items) {
-                const part = item.value * clan.population / n;
+        for (const [other, attitudeCalc] of attitudeCalcProvider(clan)) {
+            if (other === clan.ref) continue;
+            for (const item of attitudeCalc.inference.items) {
+                const part = item.value * clan.population / (settlement.population - other.population);
                 const row = rs.get(item.name) ?? new Map<string, number>();
                 row.set(other.name, (row.get(other.name) ?? 0) + part);
                 rs.set(item.name, row);
             }
-            const totalPart = prestigeCalc.inference.value * clan.population / n;
-            const totalRow = rs.get('Total') ?? new Map<string, number>();
-            totalRow.set(other.name, (totalRow.get(other.name) ?? 0) + totalPart);
-            rs.set('Total', totalRow);
+            if (includeTotals) {
+                const totalPart = attitudeCalc.inference.value * clan.population / (settlement.population - other.population);
+                const totalRow = rs.get('Total') ?? new Map<string, number>();
+                totalRow.set(other.name, (totalRow.get(other.name) ?? 0) + totalPart);
+                rs.set('Total', totalRow);
+            }
         }
     }
 
@@ -77,7 +86,7 @@ export function averagePrestigeTable(settlement: SettlementDTO): AveragePrestige
     const rows = [...rs.entries()].map(([name, clanMap]) => {
         const row = [name];
         for (const clan of settlement.clans) {
-            row.push((clanMap.get(clan.name) ?? 0).toFixed(1));
+            row.push(signed(clanMap.get(clan.name) ?? 0, precision));
         }
         return row;
     });

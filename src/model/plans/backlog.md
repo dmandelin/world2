@@ -52,7 +52,7 @@ Next, make social learning complex and dynamic:
 -   Major annoyance: Stuff isn't fitting in settlement UI.
     -   Main views:
         x    People - clans, skills, etc
-        -    Relationships - new table view
+        x    Relationships - new table view
         x    Production - production focus
         -    Rites - rites focus
         x    Consumption - consumption focus & QoL
