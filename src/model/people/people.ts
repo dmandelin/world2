@@ -351,6 +351,16 @@ export class Clan implements TradePartner {
         return relationship;
     }
 
+    exchange() {
+        for (const relationship of this.tradeRelationships) {
+            // For now we are always trading farm products for
+            // clay figurines. We'll assume that the exports are
+            // livestock and high-value produce such as dates,
+            // so that labor cost of the goods sent is relatively
+            // high, but we don't have to worry about transportation
+            // costs too much.
+    }
+
     updateProductivity() {
         this.productivityCalcs = this.skills.createProductivityCalcs();
     }

@@ -136,6 +136,7 @@ export class Settlement {
         this.maintain();
         this.produce();
         this.distribute();
+        this.exchange();
 
         // Ritual production.
         this.advanceRites();
@@ -189,6 +190,12 @@ export class Settlement {
     distribute() {
         this.distributionNode.distribute();
         this.distributionNode.commit();
+    }
+
+    exchange() {
+        for (const clan of this.clans) {
+            clan.exchange();
+        }
     }
 
     advanceRites(updateOptions: boolean = true) {

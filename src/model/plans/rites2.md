@@ -284,3 +284,18 @@ Workup on clay figurines:
     *   Village use: Means use in village rituals. Boosts ritual appeal
         and prestige
     *   Also consider gifts, common use, and local exchange
+
+Next steps for clay figurines:
+
+*   Implement exchange
+    *   Send away 2-5% of produce
+    *   Receive arbitrary unit of clay goods
+    *   Record the transaction in the trade relationship and update
+        consumption amounts.
+    *   Display in the UI
+        *   Trade panel
+        *   Might want an overall total for goods, could show in trade
+            panel for now
+    *   Need to think about exactly where this produce is coming from:
+        do we need assent from the rest of the village?
+    *   Then decision about private vs public use and effects
