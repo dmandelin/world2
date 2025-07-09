@@ -141,6 +141,37 @@
             *   There can be multiple competing kinds of rituals - unity can no
                 longer be mostly assumed
 
+## The pace of ritual innovation
+
+Some factors that can affect the amount of ritual innovation:
+
+*   Competition/emulation
+    *   For example, if 3 villages newly come into contact, some might
+        decide they like other rituals better and become more like them.
+        So the more settlements in contact who can compete, the faster 
+        things change overall.
+*   Monopoly
+    *   If one entity controls the ritual, they might suppress change, or
+        just make there be fewer change inputs.
+    *   But they could also intentionally try to drive fast change.
+*   Priestly roles and institutionalization
+    *   Supposedly they tended to be conservative. 
+    *   But in some cases they would compete.
+    *   This is somewhat similar to monopoly, but it's less about being
+        the only game in town, and more about being big and rule-based
+        in ways that make it hard to turn the ship.
+*   Economic resources
+    *   More wealth enables more elaboration and more experimentation.
+*   Crisis
+    *   Crises often induce rapid change and new religious movements.
+*   Diversity and immigration
+    *   More distinct cultural sources allow more change.
+*   Oral culture
+    *   More drift
+*   Culture
+    *   Different cultures and ritual cycles allow different levels of
+        variation both structurally and in terms of norms.
+
 ## Plans
 
 Based on the above, what do we want to add? Start with things that give
@@ -221,6 +252,7 @@ are:
 
 Maybe we can get started like this:
 
-*   Simplify and correct existing ritual output functions
-*   Simplify and correct solidarity ratings
+x   Simplify and correct solidarity ratings
 *   Start adding norms
+*   Some piece of ritual elaboration?
+*   Some feature change to agree over or not?
