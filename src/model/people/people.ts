@@ -359,6 +359,8 @@ export class Clan implements TradePartner {
             // so that labor cost of the goods sent is relatively
             // high, but we don't have to worry about transportation
             // costs too much.
+            console.log(relationship);
+        }
     }
 
     updateProductivity() {
