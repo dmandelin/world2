@@ -288,18 +288,38 @@ Workup on clay figurines:
 Next steps for clay figurines:
 
 *   Implement exchange
-    *   Send away 2-5% of produce
-    *   Receive arbitrary unit of clay goods
-    *   Record the transaction in the trade relationship and update
-        consumption amounts.
-    *   Display in the UI
-        *   Trade panel
-        *   Might want an overall total for goods, could show in trade
-            panel for now
-    *   Need to think about exactly where this produce is coming from:
-        do we need assent from the rest of the village?
-        *   For now, let's assume this comes out of an individual
-            livestock herd, or from some special resource the clan
-            is collecting
+    x   Send away 2-5% of produce
+    x   Receive arbitrary unit of clay goods
+    x   Update consumption amounts.
+    x   Display in the UI
     *   Then decision about private vs public use and effects
     *   Later we may need differential appeal values, but not for now
+
+Next steps on updating rites to work with this. We'll want to simplify
+the main model a bit and make it convenient to add ritual goods.
+
+*   Give clans two categories of satisfaction, village rites and
+    clan rites.
+*   Have some sort of base appeal based on the structure of the rites.
+    Could be 0 to start with.
+*   Work out a skill appeal function incorporating one or more of:
+    *   Compounding error rate
+    *   Additive errors
+    *   Higher appeal based on creativity
+*   Add some appeal for clan diversity
+*   Consider updating skill before the rites to account for modifications
+    to the rites
+*   Add logarithmic appeal for scale (probably both producers and consumers)
+*   Deal with overcapacity through some combination of:
+    *   Appeal goes down for everyone
+    *   Appeal goes down for some but not others
+    *   Conflict that reduces QoL
+*   Clay figurines:
+    *   Most basic: add appeal to the ritual they are used in
+    *   For clan use, increase internal prestige and QoL
+    *   For communal use:
+        *   Add a norm about this for each clan
+        *   Prestige and QoL effects depend on norm
+        *   Norms change through the usual mechanisms
+        *   May need further conflict mechanics, but these figurines
+            were probably not that controversial
