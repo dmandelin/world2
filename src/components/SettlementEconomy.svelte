@@ -1,17 +1,22 @@
 <script lang="ts">
-    import { settlementProductionTable } from "./tables";
+    import { settlementConsumptionTable, settlementProductionTable } from "./tables";
 
     let { settlement } = $props();
 
-    let table = $derived.by(() => settlementProductionTable(settlement));
+    let prodTable = $derived.by(() => settlementProductionTable(settlement));
+    let consTable = $derived.by(() => settlementConsumptionTable(settlement));
 </script>
 
 <style>
-    #top {
+    .table-container {
         background-color: #f3edd8;
         border: 1px solid #62531d;
         border-radius: 5px;
         padding: 0.25rem;
+    }
+
+    h3 {
+        text-align: center;
     }
 
     table {
@@ -44,18 +49,19 @@
 </style>
 
 <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-<div id="top">
+<h3>Production</h3>
+<div class="table-container">
     <table>
         <thead>
             <tr>
                 <th></th>
-                {#each table.header as cell}
+                {#each prodTable.header as cell}
                     <th colspan="4">{cell}</th>
                 {/each}
             </tr>
             <tr>
                 <th></th>
-                {#each table.header as cell}
+                {#each prodTable.header as cell}
                     <th class='lb'>L%</th>
                     <th>L</th>
                     <th>ℙ</th>
@@ -64,7 +70,7 @@
             </tr>
         </thead>
         <tbody>
-            {#each table.rows as row}
+            {#each prodTable.rows as row}
             <tr>
                 {#each row as cell, index}
                 <td class={(index - 1) % 4 === 0 ? 'lb' : ''}>
@@ -76,5 +82,36 @@
         </tbody>
     </table>
 </div>
-</div>
 
+<h3>Consumption</h3>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                {#each consTable.header as cell}
+                    <th colspan="2">{cell}</th>
+                {/each}
+            </tr>
+            <tr>
+                <th></th>
+                {#each consTable.header as cell}
+                    <th>Q</th>
+                    <th>R</th>
+                {/each}
+            </tr>
+        </thead>
+        <tbody>
+            {#each consTable.rows as row}
+            <tr>
+                {#each row as cell, index}
+                <td class={(index - 1) % 2 === 0 ? 'lb' : ''}>
+                    {cell}
+                </td>
+                {/each}
+            </tr>
+            {/each}
+        </tbody>
+    </table>
+</div>
+</div>

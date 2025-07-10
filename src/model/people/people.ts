@@ -18,6 +18,7 @@ import { HousingDecision } from "../decisions/housingdecision";
 import { type FloodLevel, FloodLevels } from "../flood";
 import { LaborAllocation } from "./labor";
 import { AlignmentCalc } from "./alignment";
+import { TradeGoods } from "../trade";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -100,6 +101,10 @@ export class ConsumptionCalc {
         return this.ledger_.entries();
     }
 
+    sourceMap(good: TradeGood): Map<string, number> {
+        return this.ledger_.get(good) ?? new Map<string, number>();
+    }
+    
     amount(good: TradeGood): number {
         const sourceMap = this.ledger_.get(good);
         if (!sourceMap) return 0;
@@ -110,6 +115,14 @@ export class ConsumptionCalc {
         const amount = this.amount(good);
         if (this.population === 0) return amount;
         return amount / this.population;
+    }
+
+    remove(source: string, good: TradeGood, amount: number): boolean {
+        if (amount <= 0) return false;
+        if (this.amount(good) < amount) return false;
+        const sourceMap = this.ledger_.get(good)!;
+        sourceMap.set(source, (sourceMap.get(source) ?? 0) - amount);
+        return true;
     }
 
     accept(source: string, good: TradeGood, amount: number) {
@@ -358,8 +371,17 @@ export class Clan implements TradePartner {
             // livestock and high-value produce such as dates,
             // so that labor cost of the goods sent is relatively
             // high, but we don't have to worry about transportation
-            // costs too much.
-            console.log(relationship);
+            // costs too much. We also assume for now that even
+            // in common production models, clans can trade their
+            // consumption resources for this.
+
+            const sustenanceAvailable = 
+                  this.consumption.amount(TradeGoods.Cereals)
+                + this.consumption.amount(TradeGoods.Fish);
+            const cost = sustenanceAvailable * 0.05;
+            if (this.consumption.remove(`To ${relationship.partner.name}`, TradeGoods.Cereals, cost)) {
+                this.consumption.accept(`From ${relationship.partner.name}`, TradeGoods.ClayFigurines, 1);
+            }
         }
     }
 

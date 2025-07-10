@@ -298,4 +298,8 @@ Next steps for clay figurines:
             panel for now
     *   Need to think about exactly where this produce is coming from:
         do we need assent from the rest of the village?
+        *   For now, let's assume this comes out of an individual
+            livestock herd, or from some special resource the clan
+            is collecting
     *   Then decision about private vs public use and effects
+    *   Later we may need differential appeal values, but not for now
