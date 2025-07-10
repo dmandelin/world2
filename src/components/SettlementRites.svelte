@@ -52,7 +52,7 @@
             </div>
         </div>
     {:else}
-        <h4 style="margin-top: 1em; color: darkgrey">{rites.name} (not held)</h4>
+        <h4 style="margin-top: 1em">{rites.name}</h4>
     {/if}
 {/each}
 

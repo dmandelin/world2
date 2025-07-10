@@ -4,7 +4,11 @@ import { ces } from "./lib/modelbasics";
 import type { NoteTaker } from "./notifications";
 import type { Clan } from "./people/people";
 import { OwnPrestigeCalc } from "./people/prestige";
-import { QolCalc } from "./people/qol";
+
+export const RitualGoodsUsage = {
+    Private: 'Private',
+    Communal: 'Communal',
+}
 
 interface RitualLeaderSelection {
     name: string;

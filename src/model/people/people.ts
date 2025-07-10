@@ -5,7 +5,7 @@ import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QolCalc } from "./qol";
-import { Rites } from "../rites";
+import { Rites, RitualGoodsUsage } from "../rites";
 import type { Clans } from "./clans";
 import { HousingTypes, type Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
@@ -104,7 +104,7 @@ export class ConsumptionCalc {
     sourceMap(good: TradeGood): Map<string, number> {
         return this.ledger_.get(good) ?? new Map<string, number>();
     }
-    
+
     amount(good: TradeGood): number {
         const sourceMap = this.ledger_.get(good);
         if (!sourceMap) return 0;
@@ -181,6 +181,9 @@ export class Clan implements TradePartner {
     // This clan's assessment of others as helpful or harmful.
     private alignmentViews_ = new Map<Clan, AlignmentCalc>(); 
 
+    readonly rites: Rites; // TODO - remove if not used
+    ritualGoodsUsage: 'Private'|'Communal' = 'Private';
+
     housingDecision: HousingDecision|undefined;
     housing = HousingTypes.Huts;
 
@@ -189,7 +192,6 @@ export class Clan implements TradePartner {
 
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     laborAllocation = new LaborAllocation(this);
-    readonly rites: Rites;
     readonly tradeRelationships = new Set<TradeRelationship>();
     consumption = new ConsumptionCalc(this);
 
