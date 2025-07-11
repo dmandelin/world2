@@ -213,7 +213,7 @@ export class Clan implements TradePartner {
             this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * population);
         }
 
-        this.rites = new Rites(`${this.name} rites`, [], [this], [], this.world);
+        this.rites = new Rites(`${this.name} rites`, 50, [this], [], [], this.world);
     }
 
     get moniker(): string {

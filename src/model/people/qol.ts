@@ -46,7 +46,8 @@ export class QolCalc {
         this.satisfaction = ces(this.satisfactionItems.map(item => item.perCapita), {rho: -5});
 
         this.items = [
-            new QolItem('Rituals', this.ritualAppeal - 10, 0),
+            new QolItem('Clan rituals', clan.rites.appeal, 0),
+            new QolItem('Village rituals', this.ritualAppeal, 0),
             new QolItem('Goods', qolFromPerCapitaGoods(this.satisfaction), 0, this.satisfactionItems),
             new QolItem('Food variety', foodVarietyQolModifier(clan), 1),
             new QolItem('Housing', clan.housing.qol, 0),

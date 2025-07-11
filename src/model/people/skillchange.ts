@@ -62,8 +62,9 @@ export class ClanSkillChange {
 ) {
         let experienceRatio = 1.0;
         if (skillDef === SkillDefs.Ritual) {
-            const ritualWeight = clan.settlement!.clans.rites.weights.get(clan) ?? 0;
-            experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
+            // TODO - bring back at some point.
+            //const ritualWeight = clan.settlement!.clans.rites.weights.get(clan) ?? 0;
+            //experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
         } else {
             const workerFraction = clan.laborAllocation.allocs.get(skillDef);
             // Clans can internally specialize a little, so learning isn't scaled

@@ -16,7 +16,7 @@ export class Clans extends Array<Clan> {
 
     constructor(readonly noteTaker: NoteTaker, ...clans: Clan[]) {
       super(...clans);
-      this.rites = new Rites('Village rites', this, [], [], noteTaker);
+      this.rites = new Rites('Village rites', 150, this, [], [], noteTaker);
     }
   
     get population(): number {

@@ -298,22 +298,17 @@ Next steps for clay figurines:
 Next steps on updating rites to work with this. We'll want to simplify
 the main model a bit and make it convenient to add ritual goods.
 
-*   Give clans two categories of satisfaction, village rites and
+x   Give clans two categories of satisfaction, village rites and
     clan rites.
-*   Have some sort of base appeal based on the structure of the rites.
+x   Have some sort of base appeal based on the structure of the rites.
     Could be 0 to start with.
-*   Work out a skill appeal function incorporating one or more of:
-    *   Compounding error rate
-    *   Additive errors
-    *   Higher appeal based on creativity
-*   Add some appeal for clan diversity
-*   Consider updating skill before the rites to account for modifications
-    to the rites
-*   Add logarithmic appeal for scale (probably both producers and consumers)
-*   Deal with overcapacity through some combination of:
-    *   Appeal goes down for everyone
-    *   Appeal goes down for some but not others
-    *   Conflict that reduces QoL
+x   Work out a skill appeal function incorporating one or more of:
+    x   Compounding error rate
+    x   Additive errors
+    x   Higher appeal based on creativity
+x   Add logarithmic appeal for scale (probably both producers and consumers)
+x   Deal with overcapacity through some combination of:
+    x   Appeal goes down for everyone
 *   Clay figurines:
     *   Most basic: add appeal to the ritual they are used in
     *   For clan use, increase internal prestige and QoL
@@ -438,7 +433,7 @@ the main model a bit and make it convenient to add ritual goods.
                  complexity. But include some randomness, possibly more at
                  lower skill levels.
         *   For benefits of size, we could either ignore, or make it a weak
-            linear function.
+            log function.
         *   Problems of scale should be zero or minimal at small population,
             then a bigger linear function after that point. If we keep it
             piecewise we can easily determine the crossover point.

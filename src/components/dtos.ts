@@ -6,7 +6,7 @@ import type { Note } from "../model/notifications";
 import { Clan, type ConsumptionCalc } from "../model/people/people";
 import type { PrestigeCalc } from "../model/people/prestige";
 import type { QolCalc } from "../model/people/qol";
-import type { SimulationResult } from "../model/rites";
+import type { Rites } from "../model/rites";
 import type { Housing, Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/timeline";
 import { type TradeGood } from "../model/trade";
@@ -82,6 +82,7 @@ export type ClanDTO = {
     parent: Clan|undefined;
     tradeRelationships: TradeRelationshipsDTO[];
     settlement: Settlement;
+    rites: Rites;
     housing: Housing;
     housingDecision: HousingDecision|undefined;
     slices: number[][];
@@ -130,7 +131,8 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 
         cadets: clan.cadets,
         parent: clan.parent,
-        settlement: clan.settlement!,
+        settlement: clan.settlement,
+        rites: clan.rites.clone(),
         housing: clan.housing,
         housingDecision: clan.housingDecision,
         migrationPlan: clan.migrationPlan,
@@ -200,22 +202,7 @@ export class SettlementDTO {
 
     readonly condorcet: CondorcetCalc;
 
-    readonly rites: {
-        name: string;
-        held: boolean;
-        leaderSelectionOption: string;
-        leaderSelectionOptions: SimulationResult[];
-        participants: string[];
-        producers: string[];
-
-        quality: number;
-        qualityItems: [string, string, string][];
-        output: number;
-        perCapitaOutput: number;
-        outputItems: [string, string][];
-        appeal: number;
-        appealItems: [string, string][];
-    }[];
+    readonly rites: Rites;
 
     constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
         this.clans = sortedByKey([...settlement.clans].map(clan => 
@@ -234,21 +221,7 @@ export class SettlementDTO {
         this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
         this.floodLevel = settlement.floodLevel;
 
-        this.rites = settlement.rites.map(rites => ({
-            name: rites.name,
-            held: rites.held,
-            leaderSelectionOption: rites.leaderSelectionOption.name,
-            leaderSelectionOptions: rites.simulateLeaderSelectionOptions(),
-            participants: rites.participants.map(c => c.name),
-            producers: rites.producers.map(c => c.name),
-            quality: rites.quality,
-            qualityItems: rites.qualityItems,
-            output: rites.output,
-            perCapitaOutput: rites.perCapitaOutput,
-            outputItems: rites.outputItems,
-            appeal: rites.appeal,
-            appealItems: rites.appealItems,
-        }));
+        this.rites = settlement.clans.rites.clone();
             
         this.condorcet = settlement.clans.condorcetLeader;
     }

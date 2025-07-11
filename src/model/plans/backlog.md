@@ -50,13 +50,13 @@ Next, make social learning complex and dynamic:
 ## Top top needs
 
 -   Major annoyance: Stuff isn't fitting in settlement UI.
-    -   Main views:
+    x   Main views:
         x    People - clans, skills, etc
         x    Relationships - new table view
         x    Production - production focus
-        -    Rites - rites focus
+        x    Rites - rites focus
         x    Consumption - consumption focus & QoL
-        -    Trade - trade focus
+        x    Trade - trade focus
     -   Settlement view vs clan breakdown view
         -    And then even settlement cluster view!
 
@@ -65,6 +65,7 @@ Next, make social learning complex and dynamic:
         change more broadly (first appearance, 20%, etc) for notifications
         and show interesting things on the map.
 
+-   Fix bug with super-high or infinity consumption amounts
 -   Re-fix consumption distribution bug
 -   Add back temporary qol effect of migration
 
@@ -89,7 +90,7 @@ Next, make social learning complex and dynamic:
             x   Apply trait and show percentages in the UI.
             x   Production depends on effort ratio between activities
             x   Learning depends on effort ratio between activities
-        *   Give clans the ability to change which activities they do
+            *   Give clans the ability to change which activities they do
         *   Show dietary ratios
         x   Break out qol panel so you can actually use it
         x   Colorize qol panel

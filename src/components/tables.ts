@@ -4,6 +4,41 @@ import type { ClanDTO } from './dtos';
 import { Clan } from '../model/people/people';
 import { pct, signed } from '../model/lib/format';
 import { TradeGoods } from '../model/trade';
+import { type Rites } from '../model/rites';
+
+export type SettlementRitesTable = {
+    header: string[];
+    rows: string[][];
+}
+
+export function settlementRitesTable(settlement: SettlementDTO): SettlementRitesTable {
+    const rites = [...[...settlement.clans].map(c => c.rites), settlement.rites];
+    const rowMap = new Map<string, Map<Rites, number>>();
+    for (const rite of rites) {
+        for (const item of rite.items.values()) {
+            const row = rowMap.get(item.name) ?? new Map<Rites, number>();
+            row.set(rite, (row.get(rite) ?? 0) + item.value);
+            rowMap.set(item.name, row);
+        }
+    }
+
+    const header = [...[...settlement.clans].map(c => c.name), 'Village'];
+    const rows = [...rowMap.entries()].map(([name, riteMap]) => {
+        const row = [name];
+        for (const value of riteMap.values()) {
+            row.push(signed(value));
+        }
+        return row;
+    });
+
+    const totalRow = ['Total'];
+    for (const rite of rites) {
+        totalRow.push(signed(rite.appeal));
+    }
+    rows.push(totalRow);
+
+    return { header, rows };
+}
 
 export type SettlementEconomyTable = {
     header: string[];
