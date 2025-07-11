@@ -323,3 +323,125 @@ the main model a bit and make it convenient to add ritual goods.
         *   Norms change through the usual mechanisms
         *   May need further conflict mechanics, but these figurines
             were probably not that controversial
+
+*   Work up the basic model a little better
+    *   Let's assume that people in the larger region have been following
+        these ways for some time, and their rituals are aligned:
+        *   Rituals generate satisfaction
+        *   Rituals bring current benefits
+            *   I've researched these benefits somewhat, and this is still
+                a confusing topic, but a few ways forward are:
+                *   QoL already combines satisfaction and biosocial health
+                    so we could just use that
+                *   Benefits probably go along with farming, things like:
+                    *   Increased motivation to farm
+                    *   Help with anxiety/impatience over delayed return
+                    *   Help with general emotional management and navigation
+                        during major and minor life events
+                    *   Stories and terminology to hang farming and social
+                        knowledge off of
+                    *   Making everyday life a bit more magical and interesting
+                    *   Solidarity
+                    *   Structured socializing -- both induces some amount of
+                        socializing and provides structure that can make it
+                        go better or foster specific activities
+                    *   Family formation and birth rate through stories, 
+                        attractive rituals
+    *   Let's take a few of the example benefits and see what might influence
+        how the rituals do or don't produce them.
+        *   Satisfaction
+            *   Here the key may be something that is the same enough in
+                some ways to be familiar and comforting while different
+                enough in other ways to be interesting. For these ancient
+                societies the sameness is probably more important.
+            *   That suggests there isn't too much scope for creativity to
+                make things better. Mostly, there is a way things should be,
+                which produces satisfaction, but every now and then something
+                different happens, which may be liked or not, and may be
+                adopted or not. For now we could have our discrete items
+                cover this.
+                *   It could make sense for people to try to make the same
+                    thing, but higher quality, which could come in as ritual
+                    goods quality.
+                *   Another place this could come up is with special events,
+                    good or bad, and how people respond to them. We could 
+                    assume some amount of adaptation is always required,
+                    or focus this more on less frequent big events.
+            *   There is, then, room for error, neglect, conflict, sabotage,
+                etc. We can use an error-based model with some mixture of
+                serial and parallel adding.
+            *   More people will increase satisfaction to some extent.
+            *   More clans also.
+            *   Too many people doesn't really have to mess up rituals, though
+                exactly whom they appeal to may shift (consider Burning Man),
+                but without effort will create problems:
+                *   Logistical difficulties: not enough food, not enough
+                    preferred wedding days, etc.
+                *   Conflicts over how to do it: even with notionally keeping
+                    everything the same, there are decisions to make and things
+                    to coordinate as well as micro differences. This should be
+                    somewhat random as the factors are very complex.
+        *   Soothing
+            *   The sameness is probably powerful for soothing.
+            *   Here there is substantial scope for skill on the plus and
+                minus sides, as social sensitivity will help on this independent
+                of ritual structure (but still through the ritual). But with
+                more downside risk
+            *   As before, this is probably a mixture model, some things are
+                additive (day to day help on small stuff), some sensitive to a 
+                failure by anyone (response to big village event).
+            *   Amount of people is probably best if it "matches expectations"
+            *   Number of clans might not be that relevant, except if there's
+                too many it might make life too complicated
+            *   Too many people can definitely cause problems here. This is a
+                deep topic but this probably ceases to function that well past
+                Dunbar's number.
+        *   Solidarity
+            *   The sameness is probably also powerful for solidarity, except
+                for weird people that could be the opposite.
+            *   Similar to soothing, except there's probably more upside as
+                effects can flow to more people
+            *   Responses to special events could have big effects here
+            *   More or less strictly decreasing in the number of people -- pair
+                bonds and blood brothers are closest
+            *   Also with number of clans
+            *   Mixture model like the others
+        *   Clan vs village rituals
+            *   In general, we can guess that for daily life, clan is more important,
+                but for major rituals, the village, and assume they're equally 
+                important overall, but the village rites will be more challenging
+                to run.
+            *   Satisfaction: both equally important
+            *   Soothing: clan probably more important
+            *   Solidarity: has effect at that level
+        *   All together
+            *   Some upside but in general more risk of downside.
+            *   Clan and village rituals about equal contributions to satisfaction
+                and soothing
+            *   Response to crises is important. We'll need to give crises their
+                due: don't bother with an abstract model.
+            *   Solidarity is monotonically decreasing with population.
+            *   Satisfaction and soothing will increase to a point, then
+                decrease, but details on this are complicated -- some randomness
+                would make sense here
+            *   With multiple producers, there will be some small errors that are
+                additive, but bigger failures where one spoils it -- some randomness
+                would make sense there.
+    *   Models
+        *   Compute an appeal, which we can for now assume is equal to the QoL
+            effect.
+        *   For skill, could use a more detailed error model or some simple
+            combining model
+            *    Combining model: linear in skill, combine with moderate CES
+            *    Error model: additive component plus multiplicative component
+            *    Combining model probably fine for now, don't need too much
+                 complexity. But include some randomness, possibly more at
+                 lower skill levels.
+        *   For benefits of size, we could either ignore, or make it a weak
+            linear function.
+        *   Problems of scale should be zero or minimal at small population,
+            then a bigger linear function after that point. If we keep it
+            piecewise we can easily determine the crossover point.
+            *    Make this somewhat random, probably the coefficient.
+        *   Number of clans is similar effect types to number of people, so
+            we could fold together.
