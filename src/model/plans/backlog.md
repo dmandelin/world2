@@ -1,173 +1,14 @@
-## Key next themes
-
-Get the current feature set working decently well:
-
-*   Fix/flesh out the existing submodels. They more or less work, but
-    have missing features and bugs. They don't have to be perfect, but
-    they should be "good enough" before doing much else.
-
-    *   Rituals
-        
-        *   Make it easier to tell where the ritual satisfaction
-            actually comes from
-        *   Disagreement dynamics for any disagreement over ritual
-            leader selection
-
-    *   Production
-
-        *   Use the new disagreement and culture concepts to model
-            choices about collective production methods. 
-
-    *   Trade
-
-        *   Inter-village trade
-        *   Inter-cluster trade
-        *   Off-map trade
-
-*   Improve graphs and visualizations. These can be for the most part
-    rough, because the data model is very complicated and it would be
-    hard to make a great UI for all of it. But at least it should be
-    possible to read actual population numbers off the graph.
-
-Next, make social learning complex and dynamic:
-
-*   Have the prestige model do something more interesting than blowing
-    up when the population goes over 300. Exactly what is TBD, but it
-    could include clans using more status markers (such as fine pottery
-    or semiprecious gems), clans losing partial information about each
-    other, and clans grouping into neighborhoods.
-    *   This makes the social learning model dynamic: rather than simply
-        learning from people in the same village, clans may change who
-        they learn from, and it gives people reasons to signal to each
-        other.
-*   Add cultural traits (e.g., technologies, home life practices, ritual
-    practices, mythos elements) that can be possessed or not by each
-    clan and model their spread.
-    *   This really gives the social learning model something to learn,
-        and models culture change through society (aka archaeological
-        horizons).
-
-## Top top needs
-
--   Major annoyance: Stuff isn't fitting in settlement UI.
-    x   Main views:
-        x    People - clans, skills, etc
-        x    Relationships - new table view
-        x    Production - production focus
-        x    Rites - rites focus
-        x    Consumption - consumption focus & QoL
-        x    Trade - trade focus
-    -   Settlement view vs clan breakdown view
-        -    And then even settlement cluster view!
-
--   Better reporting of social changes
-    -   Right now we're getting too many notification blips. Instead track
-        change more broadly (first appearance, 20%, etc) for notifications
-        and show interesting things on the map.
+# Next steps
 
 -   Fix bug with super-high or infinity consumption amounts
 -   Re-fix consumption distribution bug
--   Add back temporary qol effect of migration
 
--   Epic sequence: add one social change at a time, fixing up systems as
-    needed to make it work
-    x   Permanent settlements
-    -   Marshland economy
-        x   Add fishing skill
-        x   Fix bug in consumption distribution
-        *   Add fish production
-            x   Initially assume 50/50 effort split
-            x   Add basic fish production
-            *   Some environmental variation but different from agriculture
-            *   Less production penalty for shifting settlements
-                (Need to add farming penalty for this)
-        *   Add fish consumption
-            x   Initially make it a perfect substitute for cereals
-            x   Balanced diet better than either/or but don't have to fuss massively
-                as they both represent broader spectra
-        *   Add a farmer/fisher trait, allow learning and assimilation
-            x   Add basic trait
-            x   Apply trait and show percentages in the UI.
-            x   Production depends on effort ratio between activities
-            x   Learning depends on effort ratio between activities
-            *   Give clans the ability to change which activities they do
-        *   Show dietary ratios
-        x   Break out qol panel so you can actually use it
-        x   Colorize qol panel
-    -   Clay figurines
-        -   Will also need to overhaul rituals for this
 
--   D1 refinements to recent changes
-    -   Permanent settlements
-        -   Track a shift frequency and declare when the settlement is permanent
-        -   Refine the model, how quality works, etc
+# On deck
 
--   D2 general refinements
-    -   Rework baselines so that appeal is more often positive 
-    -   Simplify skill deltas a bit, too many ratios   
-
--   D2 refinements to recent changes
-    -   Permanent settlements
-        -   Labor costs for infrastructure projects
-        -   Clans can decide to ditch or not and track biggest flood seen
-
--   More icons for clan card, looks a lot better that way.
-
--   Fix issues with ritual satisfaction having a very unobvious relationship
-    with the values in the rites panel.
-
-x   Epic: Blast out all the key components of the new migration model.
--   Epic: Get to at least 3 interesting and legible graphs. Ideas:
-    x   Existing main page graph: show actual data values
-    -   Scatter plot with correlation between prestige and QoL
-    -   Clan timeline showing history of population, QoL, and residence
-        x handle ID vs name issue
-        x show basic timeline
-        x add second Y axis support
-        - add event markers
-
--   Refinements to the new migration model:
-    -   Make abandoned daughter villages go away eventually
-    -   Make clans that just split off more likely to move
-        -   Also move splitting to plan/review model
-    -   Have one clan moving out of a settlement potentially trigger others
-
-## Top needs
-
-- Docs
-  - instructions for prereqs
-  - bibliography
-- Fix seniority
-    present in the settlement, up to a max of 4
-  - add relative rank for fully tenured clans (conditional on some cultural move?)
-- More ritual options
-  - give option to attend other clan rituals
-  - distribute attendance according to appeal
-  - collect total ritual consumption per clan and display
-  - add settlement cluster ritual
-    
-- Small items
-  - some migrations not showing as notifications
-  - notifications for clans dying out or merging
-
-## Learning and status
-
-### Items
-
-- General items we'll need
-  - Model how much clans are able to pay attention to each other
-  - Desired rituals/roles/laws structure and sat/dissat with present state
-  - Conflict over rituals/roles/laws
-  - Have daughter settlements interact somehow -- allow mutual trade and/or
-    learning
-
-- Small but important
-  - scale bonuses for learning in settlements
-  - connectivity bonuses for related settlements
-  - merge annals and notetaker
-  - trade good effects
-  - ritual side effects: +health, +relatedness, +monitoring, +learning
-
+-   Permanent settlements
+    -   Track a shift frequency and declare when the settlement is permanent
+    -   Refine the model, how quality works, etc
 - Introduce new ritual model
   x different rituals at same granularity as production pot
     - later allow option for subsets of clans or multiple clans
@@ -181,65 +22,31 @@ x   Epic: Blast out all the key components of the new migration model.
   - dance style add-on to ritual
   - add multi-settlement ritual
 
-- Better display of hamlets
-  - properly update settlement selection in all cases
-  - enhance buttonpanel
-    - smaller font or different size or format so buttons look better here
-    - better layout options
 
-- Problems inflicting our people in recent tests:
-  - prestige of new junior clans craters as they can be many steps down
-  - clans with more ritual skill may have a hard time gaining prestige if
-    small or low in traits
+## Documentation
 
-- Smaller updates
-  - Fix super-low consumption on migration
-  - Use population-weighted averages for baselines where appropriate
-  - Clean up field names and redundancy in ClanImpact
+-   instructions for prereqs
+-   bibliography
 
-- Help villages with low subsistence
+## Small things
 
-- Help villages with bad rites
-  - debug selection options: current selection doesn't appear neutral
-  - lose more information about prestige when things get too big
-
-  - for each clan, record their actual preference for
-    leadership selection, possibly including favorability
-    of each item
-  - add qol penalty for non-agreement
-  - add conservatism to leadership selection
-    - give the current choice more weight
-  - add conformity to leadership selection
-    - adjust weights to be more similar to other clans
-  - add some noise to leadership selection
-    - random noise to weights
-
-  - show leadership selection on map
-  - apply society effects for disagreements and/or not getting way on
-    leadership selection methods
-  - allow a one-time gift to override a small disagreement
-
-  - option to increase the authority of offices
-  - option to travel more to pick up new practices
-  - option to experiment more with new practices
-  - option to modify rituals for scale so that some people
-    become observers (and other role splits)
-  - structural elements to add to elaborate the ritual
-    - will affect quality, prestige, etc
-    - may have skill thresholds
-    - may have trade good requirements
-    - effects wear off over time
-  - option to build new types of ritual building
-
-  - different structure options:
-    - implement roles having different effects on prestige, quality, and skill gain
-      x first, show expected skill changes to make it clearer what's going on
-    - give villages the option to switch structure
-    - add notifications to show ritual structure changes
-  - get people do a better job moving out if the rites are all messed up
-  - make ritual skill increase faster/more than farming skill since elaboration is free
-  - (P2) option to invite another village to help
-
+-   Add back temporary qol effect of migration
+-   Production
+    -   Different variance for fishing and farming
+    -   Effects of variance and sharing
+    -   Production penalty for shifting farming
+-   More icons for clan card, looks a lot better that way.
+-   Refinements to the new migration model:
+    -   Make abandoned daughter villages go away eventually
+    -   Make clans that just split off more likely to move
+        -   Also move splitting to plan/review model
+    -   Have one clan moving out of a settlement potentially trigger others
+- Small but important
+  - scale bonuses for learning in settlements
+  - connectivity bonuses for related settlements
+  - merge annals and notetaker
+  - trade good effects
+  - ritual side effects: +health, +relatedness, +monitoring, +learning
 - Fix up learning model
   - have it depend on population pyramid
   - add breakthroughs
@@ -265,3 +72,89 @@ Model refinements:
 - QoL for traded goods
 - Off-map flint
 - Map overlay view
+
+# Changes
+
+# Themes
+
+*   Norms and expectations
+*   Some kind of being able to disagree over rites
+*   Clans having views of each other with signals instead of
+    blowing up relationships over a size limit
+*   Cultural traits and similarity
+*   Trend reporting on social changes
+
+# Discussion
+
+We have a set of interacting models, and clans can make a few cultural
+changes. This seems close to some meaningful atom, but it's not quite
+there yet: it's too rough around the edges and there are a few missing
+pieces.
+
+The cultural shifts and what we need to fill them out:
+
+*   Housing: Main thing missing here was expectation effects, but this
+    would also be better with floating prestige.
+*   Farming vs fishing: Need to give them some choices over how much to
+    do of each. Here we need to think really carefully about what they
+    do and don't know about what works better. Also floating prestige.
+*   Clay figurines: Need to actually add them, including figuring out
+    what usage choices to offer. Also expectations and floating prestige.
+
+The key themes that we need to flesh out are then:
+
+*   Expectations, norms, and floating prestige
+*   What clans really know about each other and their output
+*   Trend reporting and visualizations to make cultural change understandable
+
+We can then think, what's the simplest set of models that would bring
+out all those themes. Let's start with the UI, as that's where any of 
+this acquires any meaning. 
+
+*   We already show some sort of indicator within detailed UIs, but that's
+    hard to track for anything other than looking at a specific list. 
+*   We can show map icons, but that might be busy with multiple changes
+    in play, and doesn't show history. Perhaps we can think about showing
+    major and current changes and not every last thing:
+    *   "Settlement type" as a broader category
+    *   Settlement economy as broad category
+    *   Possible shift indicator for recent changes
+    *   Could add clay figurines or ritual information as a lens
+*   Trend reports: We could show an icon for each trend, with a summary
+    of where it's at, notifications and visuals. Click or hover to get
+    map lenses or graphs.
+    *   This is the place to focus on at first.
+
+Now, how do our clan informational aspects plug into trend reports?
+
+*   Expectations: not immediately necessary
+*   Norms: These will tend to influence trends, and norms are themselves
+    trends. It seems we can start trend reports without this but will
+    need soon.
+*   Floating prestige: This seems not to be essential to trend reports,
+    but I keep thinking about it lately, I think because it relates to
+    the question of "how do people know what works" that seems all-important.
+    We don't immediately need floating prestige but should at least validate
+    the whole prestige model.
+*   What clans know about each other: All-important to how trends work.
+    It would seem we can do trend reports without this but there's little
+    that will make sense without this.
+*   Quality of life vs standard of living: I think the point here was
+    that dissatisfaction could be a major source of behavior change, and
+    to really get a handle on that, we need expectation indexing. This
+    doesn't seem to be completely essential, so we could do later.
+
+The main conclusion from that is that we need a reworked knowledge and
+prestige model about as much as trend reports. Norms are the next priority,
+then floating prestige and satisfaction.
+
+The next bit of planning is to map out a minimal kernel that will generate
+meaningful trend reports. But first, we need the research on how people tell
+what works and what they know about each other.
+
+## Research questions
+
+*   How much do people know about (their|others) (traits|skill|effectiveness)?
+*   How do people decide which innovations to keep?
+*   How do things change with scale?
+*   What's the real deal with each of our prestige inputs?

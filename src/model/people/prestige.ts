@@ -115,7 +115,7 @@ export class OwnPrestigeCalc {
     }
 
     static prestigeFromRitual(baselineEffectiveSkill: number, other: Clan, rites: Rites): {weight: number, value: number} {
-        const weight = rites.weights.get(other) ?? 0.1;
+        const weight = 0.1; //rites.weights.get(other) ?? 0.1;
         const value = weight *  
                (other.ritualEffectiveness, 
                - baselineEffectiveSkill) / 2;
