@@ -4,7 +4,9 @@
 
 x   How much do people know about (their|others) (traits|skill|effectiveness)?
 x   How do people decide which innovations to keep?
-*   How do things change with scale?
+x   How do things change with scale?
+    *   More on how this affects communal production
+    *   More on disputes and alignment
 x   What's the real deal with each of our prestige inputs?
 
 ## Skill and practices
@@ -143,3 +145,73 @@ items will be:
 *   [C+M] Reputation
 
 Q: what exactly to do with skills/traits?
+
+## Population effects
+
+The limit for a completely connected community is 150 adults, or about
+300 people with our prehistoric population pyramids. Below this limit,
+clans have full knowledge and assessments of each other, and the gossip
+network is able to keep the peace.
+
+Beyond that limit, clans have to choose whom to focus their attention
+on:
+*   The clan they assign the most prestige to, but they may look at 1-3
+    if the prestige ratings are close.
+    *   We can assume they're mainly monitoring leading members of those
+        clans, so we might give them a reduced or free population charge
+        on these.
+*   Clans in their neighborhood
+    *   We can do this various ways, but a simple version is to arrange
+        the clans in a ring and choose their 2-4 closest neighbors
+*   Optionally a random clan
+    *   Represents the fact that other relationships can exist
+    *   Also helps mix up the network a bit so that basic geographic
+        connection models don't completely force results
+
+*   Alternatively, we could assign weights based on prestige and proximity,
+    then do a softmax selection, but that mostly seems to make things more
+    complicated.
+*   We might want the random-clan relationships to be mutual.
+*   Clans might want to learn from each other whom to watch (although
+    the prestige part will already work that way).
+
+Effects:
+
+*   Clans have full visibility on clans they're watching
+    *   We could dial that down a bit on the assumption they're spending
+        a bit less attention locally to see the rest of the village, but
+        this is probably not that important until we get to larger towns.
+*   Clans can still learn reputation information from their neighbors
+    about clans they're not watching
+    *   But transmission might be less, because they don't have as much
+        reason to pay attention
+    *   With idiosyncratic bias, this could lead to major splits
+    *   We could give clans options to say nice or mean things about each
+        other
+*   Tune so that mostly completely connected neighborhoods form
+*   Alignment decreases when monitoring decreases
+    *   Out-of-neighborhood clans have a lower alignment
+    *   We should probably also have alignment decrease a bit for within-
+        neighborhood clans because they could have other relationships
+        that compete
+    *   Monitored prestigious clans still have a good alignment rating
+        from clans, but again they know they have other relationships
+        *   Alignment does not automatically hold up in the opposite
+            direction, but it will if the clans are giving them something
+
+Communal production:
+
+*   People can switch to neighborhood production as neighborhoods form
+*   We could let them just do it, or make it a trackable change
+    *   If it's trackable, we need cooperate/defect actions that can
+        turn to more defection
+
+Disputes:
+
+*   We can give clans different conflicting and cooperating relationships,
+    or random disputes
+*   Those will start to affect alignment
+    *   If alignment goes negative, people will really want to defect
+*   We can also have a model where two clans can have a dispute, and
+    then potentially the whole community can mediate that, or be split up
+    into sides
