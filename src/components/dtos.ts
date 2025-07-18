@@ -1,6 +1,6 @@
 import { maxbyWithValue, minbyWithValue, sortedByKey, sumFun, type OptByWithValue } from "../model/lib/basics";
 import type { PopulationChange } from "../model/people/population";
-import type { Clans, CondorcetCalc } from "../model/people/clans";
+import type { CondorcetCalc } from "../model/people/clans";
 import { pct } from "../model/lib/format";
 import type { Note } from "../model/records/notifications";
 import { Clan, type ConsumptionCalc } from "../model/people/people";
@@ -20,7 +20,7 @@ import type { FloodLevel } from "../model/flood";
 import { ProductionNode } from "../model/econ/productionnode";
 import type { LaborAllocation } from "../model/people/labor";
 import type { AlignmentCalc } from "../model/people/alignment";
-import type { Trend } from "../model/records/trends";
+import type { TrendDTO } from "../model/records/trends";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -250,7 +250,7 @@ export class WorldDTO {
     readonly year: string;
     readonly clusters: ClusterDTO[] = [];
     readonly timeline: Timeline<TimePoint>;
-    readonly trends: Trend[];
+    readonly trends: TrendDTO[];
     readonly notes: Note[];
 
     constructor(private readonly world: World) {
@@ -258,7 +258,7 @@ export class WorldDTO {
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
 
         this.timeline = world.timeline;
-        this.trends = world.trends.map(t => t.clone());
+        this.trends = world.trends.map(t => t.asDTO);
         this.notes = [...world.notes];
     }
 

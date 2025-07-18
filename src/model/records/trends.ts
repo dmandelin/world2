@@ -1,48 +1,35 @@
 import { matchingFraction } from "../lib/basics";
 import { pct } from "../lib/format";
-import type { Clan } from "../people/people";
-import { Housing, HousingTypes } from "../people/settlement";
+import { weightedAverage } from "../lib/modelbasics";
+import { HousingTypes } from "../people/settlement";
+import { SkillDefs } from "../people/skills";
 import type { World } from "../world";
 import { Year } from "./year";
 
+export class TrendDTO {
+    constructor(readonly current: string) {}
+}
+
 export interface Trend {
     label: string;
+    asDTO: TrendDTO;
 
     initialize(year: Year): void;
     update(year: Year): void;
-    clone(): Trend;
 }
 
-class TrendDef {
-    constructor() {
+abstract class BasicTrend<T> implements Trend {
+    protected history = new Map<Year, T>();
+    protected current_: T|undefined;
 
+    constructor(readonly world: World) {
     }
 
-    get label() {
-        return 'TREND';
-    }
+    abstract get label(): string;
+    abstract getValue(): T;
 
-    initialize(year: Year) {
-
-    }
-
-    update(year: Year) {
-
-    }
-
-    clone(): Trend {
-        return new TrendDef();
-    }
-}
-
-class HousingTrend {
-    private history = new Map<Year, number>();
-    private current = 0;
-
-    constructor(readonly world: World) {}
-
-    get label(): string {
-        return `+H ${pct(this.current)}`;
+    get current(): T {
+        return this.current_!;
     }
 
     initialize(year: Year): void {
@@ -50,19 +37,45 @@ class HousingTrend {
     }
 
     update(year: Year): void {
-        this.current = matchingFraction(this.world.allClans, 
-            c => c.housing !== HousingTypes.Huts);
-        this.history.set(year, this.current);
+        this.current_ = this.getValue();
+        this.history.set(year, this.current_);
     }
 
-    clone(): Trend {
-        const clone = new HousingTrend(this.world);
-        clone.history = new Map(this.history);
-        clone.current = this.current;
-        return clone;
+    get asDTO(): TrendDTO {
+        return new TrendDTO(this.label);
+    }
+}
+
+class HousingTrend extends BasicTrend<number> {
+    get label(): string {
+        return `+H ${pct(this.current)}`;
+    }
+
+    getValue(): number {
+        return matchingFraction(
+            this.world.allClans,
+            c => c.housing !== HousingTypes.Huts,
+        );
+    }
+}
+
+class FarmingTrend extends BasicTrend<number> {
+    get label(): string {
+        return `F ${pct(this.current)}`;
+    }
+
+    getValue(): number {
+        return weightedAverage(
+            this.world.allClans,
+            c => c.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0,
+            c => c.population,
+        );
     }
 }
 
 export function createTrends(world: World): Trend[] {
-    return [new HousingTrend(world), new TrendDef()];
+    return [
+        new HousingTrend(world),
+        new FarmingTrend(world),
+    ];
 }

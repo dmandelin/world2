@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { Trend } from "../model/records/trends";
+  import type { TrendDTO } from "../model/records/trends";
 
-  let { trend } : { trend: Trend } = $props();
+  let { trend } : { trend: TrendDTO } = $props();
 </script>
 
 <style>
 </style>
 
 <div>
-{trend.label}
+{trend.current}
 </div>
