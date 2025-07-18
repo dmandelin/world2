@@ -1,9 +1,9 @@
-import { PopulationScaler, ZeroCenteredScaler, type GraphData } from "../components/linegraph";
-import type { ClanDTO } from "../components/dtos";
-import { znan } from "./lib/basics";
-import { weightedAverage } from "./lib/modelbasics";
-import type { Clan } from "./people/people";
-import type { World } from "./world";
+import { PopulationScaler, ZeroCenteredScaler, type GraphData } from "../../components/linegraph";
+import type { ClanDTO } from "../../components/dtos";
+import { znan } from "../lib/basics";
+import { weightedAverage } from "../lib/modelbasics";
+import type { Clan } from "../people/people";
+import type { World } from "../world";
 import type { Year } from "./year";
 
 export class Timeline<T> {

@@ -1,5 +1,5 @@
 import { weightedRandInt } from "../lib/distributions";
-import type { NoteTaker } from "../notifications";
+import type { NoteTaker } from "../records/notifications";
 import { Clan } from "./people";
 import { Rites } from "../rites";
 import { averageFun } from "../lib/basics";

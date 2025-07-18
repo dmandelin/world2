@@ -1,7 +1,7 @@
 import { clamp, mapNormalized, maxby, maxbyWithValue, sum, sumFun, weightedHarmonicMean } from "./lib/basics";
 import { pct, xm } from "./lib/format";
 import { ces } from "./lib/modelbasics";
-import type { NoteTaker } from "./notifications";
+import type { NoteTaker } from "./records/notifications";
 import type { Clan } from "./people/people";
 import { OwnPrestigeCalc } from "./people/prestige";
 import { SkillDefs } from "./people/skills";

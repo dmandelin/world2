@@ -7,6 +7,7 @@
     import { world } from '../model/world';
     import type { SettlementCluster } from '../model/people/cluster';
     import { Settlement } from '../model/people/settlement';
+    import TrendsPanel from './TrendsPanel.svelte';
     
     let { selection = $bindable() } = $props();
     let selectedLens = $state('Pop');
@@ -216,11 +217,16 @@ ${settlement.cluster.population} \
         height="492" 
         style="width: 564px; height: 492px">
     </canvas>
-    <ButtonPanel config={{
-        buttons: [
-            { label: 'Pop' },
-            { label: 'Rit' },
-        ],
-    }} onSelected={label => { selectedLens = label; draw(); } } />
+    <div style="display: flex; justify-content: space-between">
+        <ButtonPanel config={{
+            buttons: [
+                { label: 'Pop' },
+                { label: 'Rit' },
+            ],
+        }} onSelected={label => { selectedLens = label; draw(); } } />
+        <TrendsPanel config={{
+            trends: worldDTO.trends,
+        }} />
+    </div>
     <NotificationBar notes={worldDTO.notes} />
 </div>

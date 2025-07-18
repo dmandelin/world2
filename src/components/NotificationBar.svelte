@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Note } from "../model/notifications";
+  import type { Note } from "../model/records/notifications";
     import Tooltip from "./Tooltip.svelte";
     
   let { notes }: { notes: Note[] } = $props();

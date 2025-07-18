@@ -5,7 +5,7 @@ import { crowdingValue } from "./qol";
 import { randomHamletName } from "./names";
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
-import type { NoteTaker } from "../notifications";
+import type { NoteTaker } from "../records/notifications";
 
 export type MigrationTarget = Settlement | 'new';
 

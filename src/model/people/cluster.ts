@@ -1,6 +1,6 @@
 import { averageFun, sumFun } from "../lib/basics";
 import type { Clan } from "./people";
-import type { NoteTaker } from "../notifications";
+import type { NoteTaker } from "../records/notifications";
 import { Clans } from "./clans";
 import { Settlement } from "./settlement";
 import { FloodLevels, type FloodLevel } from "../flood";

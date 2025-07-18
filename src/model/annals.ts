@@ -1,6 +1,6 @@
 import type { Settlement } from "./people/settlement";
 import type { World } from "./world";
-import { Year } from "./year";
+import { Year } from "./records/year";
 
 export class Annals {
     records: Record[] = [];

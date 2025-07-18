@@ -3,14 +3,15 @@ import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { Clans } from "./people/clans";
 import { chooseFrom, sumFun, shuffled } from "./lib/basics";
 import { Settlement } from "./people/settlement";
-import { Timeline, TimePoint } from "./timeline";
+import { Timeline, TimePoint } from "./records/timeline";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { WorldDTO } from "../components/dtos";
-import { Year } from "./year";
-import { Note, type NoteTaker } from "./notifications";
+import { Year } from "./records/year";
+import { Note, type NoteTaker } from "./records/notifications";
 import { SettlementCluster } from "./people/cluster";
 import { NewSettlementSupplier } from "./people/migration";
 import { randomFloodLevel } from "./flood";
+import { createTrends } from "./records/trends";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -61,6 +62,7 @@ export class World implements NoteTaker {
     readonly yearsPerTurn = 20;
 
     readonly timeline = new Timeline<TimePoint>();
+    readonly trends = createTrends(this);
     // This has to be initialized before the clans because we pass it to them.
     readonly annals = new Annals(this);
     readonly notes: Note[] = [];
@@ -101,6 +103,7 @@ export class World implements NoteTaker {
 
         // Capture this state as the first point in the timeline.
         this.timeline.add(this.year, new TimePoint(this));
+        for (const trend of this.trends) trend.initialize(this.year);
 
         // Run planning because we're about to activate planning view.
         this.plan(true);
@@ -180,6 +183,7 @@ export class World implements NoteTaker {
         if (!noEffect) {
             this.year.advance(this.yearsPerTurn);
             this.timeline.add(this.year, new TimePoint(this));
+            for (const trend of this.trends) trend.update(this.year);
             this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
         }
 

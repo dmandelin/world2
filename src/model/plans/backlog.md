@@ -149,12 +149,18 @@ prestige model about as much as trend reports. Norms are the next priority,
 then floating prestige and satisfaction.
 
 The next bit of planning is to map out a minimal kernel that will generate
-meaningful trend reports. But first, we need the research on how people tell
-what works and what they know about each other.
+meaningful trend reports:
 
-## Research questions
+*   Basic trend reports
 
-*   How much do people know about (their|others) (traits|skill|effectiveness)?
-*   How do people decide which innovations to keep?
-*   How do things change with scale?
-*   What's the real deal with each of our prestige inputs?
+    *   Show UI element per trend near map
+    *   Show basic data such as % adoption on the element
+    *   Tooltip with origin and other details
+    *   Infra: trend list 
+
+*   Improved map trend reporting
+*   New appeal-based model applied to early trends
+    *   Improve early trends as needed
+*   Floating prestige
+
+More will probably come up as we go.

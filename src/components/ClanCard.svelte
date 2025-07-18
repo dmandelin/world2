@@ -6,7 +6,7 @@
     import PopulationChange from "./PopulationChange.svelte";
     import PopulationPyramid from "./PopulationPyramid.svelte";
     import Tooltip from "./Tooltip.svelte";
-    import { clanTimelineGraphData } from "../model/timeline";
+    import { clanTimelineGraphData } from "../model/records/timeline";
     import HousingDecision from "./decisions/HousingDecision.svelte";
 
     let { clan } = $props();
