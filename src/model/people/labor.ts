@@ -1,4 +1,6 @@
 import type Settlement from '../../components/Settlement.svelte';
+import { clamp } from '../lib/basics';
+import { normal } from '../lib/distributions';
 import { Clan } from './people';
 import { SkillDefs, type SkillDef } from './skills';
 
@@ -7,7 +9,7 @@ export class LaborAllocation {
     readonly allocs: Map<SkillDef, number> = new Map<SkillDef, number>();
 
     constructor(readonly clan: Clan) {
-        const r = Math.random();
+        const r = clamp(normal(0.2, 0.1), 0, 1);
         this.allocs.set(SkillDefs.Agriculture, r);
         this.allocs.set(SkillDefs.Fishing, 1 - r);
     }

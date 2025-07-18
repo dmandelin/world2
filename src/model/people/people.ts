@@ -216,7 +216,7 @@ export class Clan implements TradePartner {
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.
-        this.rites = new Rites(`${this.name} rites`, 50, 30, 0.15, [this], [], [], this.world);
+        this.rites = new Rites(`${this.name} rites`, 35, 30, 0.15, [this], [], [], this.world);
     }
 
     get moniker(): string {
