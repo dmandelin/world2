@@ -213,7 +213,10 @@ export class Clan implements TradePartner {
             this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * population);
         }
 
-        this.rites = new Rites(`${this.name} rites`, 50, [this], [], [], this.world);
+        // Low skill loading since rituals are simpler than village rituals and
+        // clans are more happy just to be together. They still really care, though,
+        // as the ancestors are watching, among other things.
+        this.rites = new Rites(`${this.name} rites`, 50, 30, 0.15, [this], [], [], this.world);
     }
 
     get moniker(): string {

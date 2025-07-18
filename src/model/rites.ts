@@ -29,6 +29,8 @@ export class Rites {
     constructor(
         readonly name: string,
         readonly expectedParticipantCount: number,
+        readonly skillRequirement: number,
+        readonly skillFactor: number,
         readonly participants: Clan[],
         readonly leaders: Clan[],
         readonly viewers: Clan[],
@@ -82,7 +84,7 @@ export class Rites {
     }
 
     private quality(): number {
-        return (this.skill - 50) / 2;
+        return this.skillFactor * (this.skill - this.skillRequirement);
     }
 
     private numbers(): number {
@@ -102,6 +104,8 @@ export class Rites {
         const clone = new Rites(
             this.name,
             this.expectedParticipantCount,
+            this.skillRequirement,
+            this.skillFactor,
             this.participants,
             this.leaders,
             this.viewers,

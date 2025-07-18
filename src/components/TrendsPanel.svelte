@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Trend } from "../model/records/trends";
+    import type { TrendDTO } from "../model/records/trends";
     import TrendFace from "./TrendFace.svelte";
 
   let { 
@@ -8,10 +8,10 @@
     onSelected,
   } : { 
         config: { 
-          trends: Trend[]; 
+          trends: TrendDTO[]; 
         }, 
         selectedTrend?: any,
-        onSelected?: (trend: Trend) => void
+        onSelected?: (trend: TrendDTO) => void
     } = $props();
 
   let activeIndex = $state(0);

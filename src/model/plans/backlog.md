@@ -153,14 +153,16 @@ meaningful trend reports:
 
 *   Basic trend reports
 
-    *   Show UI element per trend near map
-    *   Show basic data such as % adoption on the element
+    x   Show UI element per trend near map
+    x   Show basic data such as % adoption on the element
     *   Tooltip with origin and other details
-    *   Infra: trend list 
+    x   Infra: trend list 
 
 *   Improved map trend reporting
 *   New appeal-based model applied to early trends
     *   Improve early trends as needed
+    *   Improve base models as needed
+        *   Rites quality may depend on alignment
 *   Floating prestige
 
 More will probably come up as we go.
