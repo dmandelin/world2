@@ -76,7 +76,7 @@ export class ClanSkills {
             ? normal(20, 5)
             : skillDef === SkillDefs.Fishing
             ? normal(50, 5)
-            : normal(35, 7.5);
+            : normal(40, 10);
         for (const skillDef of Object.values(SkillDefs)) {
             this.m_.set(skillDef, new ClanSkill(gen(skillDef)));
         }

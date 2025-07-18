@@ -166,3 +166,32 @@ meaningful trend reports:
 *   Floating prestige
 
 More will probably come up as we go.
+
+Problems: QoL is too low at the start and I don't understand farming vs
+          fishing productivity
+
+*   QoL is low for several reasons:
+    *   Uncontrolled flooding (OK, want to see improvement)
+    *   Low village ritual quality: the idea was that people are not too
+        versed on the full panoply of ritual yet, but they should still
+        be reasonably satisfied with their new rituals
+        *   Obvious move is to make QoL effects relative to expectations
+            *   Reviewing rites2.md, ritual elaboration will add specific
+                elements to add appeal. Before we have that, we can basically
+                assume the appeal is set. So we can assume clans' skill
+                is about average, or just a bit below. 
+    *   Low farming productivity: the idea was that people are not expert
+        farmers yet, but if so, why are they doing any farming, or a lot
+        of farming?
+        *   It would make sense to start with relatively low farming ratios.
+        *   We still need to come up with a reason they'd be farming at all.
+            The idea could be, doing it on a small scale is worth it for
+            the dietary variety.
+        *   It's also possible they're looking forward to better results
+            like in the north, but I think our people will want to see
+            relatively short-term gains so this won't be enough by itself.
+        *   We could also have relatively high farming productivity:
+            *   Maybe it's extra high on the first, richest plots
+            *   Or maybe it's just good, but it takes time for clans to
+                be confident in farming
+        * We don't have to figure out everything up front, can try and tune.
