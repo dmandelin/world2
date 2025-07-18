@@ -258,7 +258,7 @@ export class WorldDTO {
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
 
         this.timeline = world.timeline;
-        this.trends = [...world.trends];
+        this.trends = world.trends.map(t => t.clone());
         this.notes = [...world.notes];
     }
 

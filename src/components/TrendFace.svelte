@@ -8,5 +8,5 @@
 </style>
 
 <div>
-TREND
+{trend.label}
 </div>

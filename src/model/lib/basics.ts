@@ -4,6 +4,28 @@ export function assert(condition: boolean, message?: string): asserts condition 
     }
 }
 
+export function matchingCount<T>(aa: Iterable<T>, predicate: (t: T) => boolean): number {
+    let count = 0;
+    for (const item of aa) {
+        if (predicate(item)) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+export function matchingFraction<T>(aa: Iterable<T>, predicate: (t: T) => boolean): number {
+    let count = 0;
+    let total = 0;
+    for (const item of aa) {
+        ++total;
+        if (predicate(item)) {
+            ++count;
+        }
+    }
+    return count ? count / total : 0;
+}
+
 export function clamp(value: number, min: number = 0.0, max: number = 1.0) {
     return Math.min(Math.max(value, min), max);
 }
