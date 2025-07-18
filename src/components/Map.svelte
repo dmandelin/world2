@@ -8,6 +8,7 @@
     import type { SettlementCluster } from '../model/people/cluster';
     import { Settlement } from '../model/people/settlement';
     import TrendsPanel from './TrendsPanel.svelte';
+    import { weightedAverage } from '../model/lib/modelbasics';
     
     let { selection = $bindable() } = $props();
     let selectedLens = $state('Pop');
@@ -141,23 +142,29 @@
         // Lens label (e.g., population)
         drawLensLabel(settlement, x, y, s + 32);
 
-        // Warnings
-        const warnings = [];
-        const minQOL = Math.min(...settlement.clans.map(c => c.qol));
-        if (minQOL < 0) {
-            warnings.push(`Low QoL! (${minQOL.toFixed()})`);
-        }
-        if (settlement.clans.rites.appeal < 0) {
-            warnings.push(`Bad rites! (${(settlement.clans.rites.appeal).toFixed()})`);
-        }
+        // Basic QoL stats
+        const food = weightedAverage(
+            settlement.clans,
+            c => c.qolCalc.items.find(i => i.name === 'Goods')?.value ?? 0,
+            c => c.population,
+        );
+        const ritual = weightedAverage(
+            settlement.clans,
+            c => (c.qolCalc.items.find(i => i.name === 'Clan rituals')?.value ?? 0)
+               + (c.qolCalc.items.find(i => i.name === 'Village rituals')?.value ?? 0),
+            c => c.population,
+        );
+        const qol = weightedAverage(
+            settlement.clans,
+            c => c.qol,
+            c => c.population,
+        );
+
+        const stats = `${food.toFixed()} | ${ritual.toFixed()} | ${qol.toFixed()}`;
 
         let yo = 49;
-        for (const w of warnings) {
-            context!.fillStyle = '#d22';
-            context!.font = '12px sans-serif';
-            fillTextCentered(w, x, y + s + yo);
-            yo += 17;
-        }
+        //context!.font = '12px sans-serif';
+        fillTextCentered(stats, x, y + s + yo);
 }
 
     function drawLensLabel(settlement: any, x: number, y: number, yo: number) {
