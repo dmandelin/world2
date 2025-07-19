@@ -1,4 +1,4 @@
-import { sumFun } from "../lib/basics";
+import { clamp, sumFun } from "../lib/basics";
 import { ces, createTwoSidedQuadratic } from "../lib/modelbasics";
 import { signed } from "../lib/format";
 import { TradeGoods } from "../trade";
@@ -57,6 +57,7 @@ export class QolCalc {
             new QolItem('Status', statusValue(clan), 0),
             new QolItem('Labor', laborValue(clan), 0),
             new QolItem('Crowding', crowdingValue(clan), 0),
+            new QolItem('Inspiration', 25 - clamp(clan.world.year.yearsSince() / 20, 0, 25), 0),
         ];
 
         this.value = sumFun(this.items, i => i.value);

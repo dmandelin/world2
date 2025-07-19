@@ -1,6 +1,7 @@
 export class Year {
     // Negative is BC, positive is AD, zero is unused.
-    private value = -6500;
+    readonly start = -6500;
+    private value = this.start;
 
     clone(): Year {
         const year = new Year();
@@ -12,6 +13,10 @@ export class Year {
         let newValue = this.value + years;
         if (this.value < 0 && newValue >= 0) ++newValue;
         this.value = newValue;
+    }
+
+    yearsSince(year?: Year) {
+        return this.value - (year ? year.value : this.start);
     }
 
     toString() {
