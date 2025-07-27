@@ -1,8 +1,15 @@
 # Next steps
 
+## Bug fixes
+
 -   Fix bug with super-high or infinity consumption amounts
 -   Re-fix consumption distribution bug
 
+## New base models
+
+-   Demographics
+-   Appeal
+-   Happiness
 
 # On deck
 
