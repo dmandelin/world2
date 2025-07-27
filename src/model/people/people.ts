@@ -556,23 +556,25 @@ export class Clan implements TradePartner {
         newClan.settlement_ = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
-        this.population -= newSize;
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
             newClan.slices[i][1] = Math.round(this.slices[i][1] * fraction);
             this.slices[i][0] -= newClan.slices[i][0];
             this.slices[i][1] -= newClan.slices[i][1];
+            this.population -= newClan.slices[i][0] + newClan.slices[i][1];
         }
 
         // New clan starts as a cadet.
         newClan.parent = this;
         this.cadets.push(newClan);
 
+        // Plan for the new clan, since it didn't get a chance to during the main
+        // planning phase. Note that we also need to update productivity, otherwise
+        // it will be 0 and so the clan won't produce anything.
         newClan.updateProductivity();
-        newClan.consumption = this.consumption.splitOff(newClan);
-
-        this.consume();
-        newClan.consume();
+        newClan.planMaintenance();
+        newClan.planHousing();
+        newClan.planMigration();
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
         return newClan;
