@@ -129,6 +129,12 @@ export class Settlement {
     advance(noEffect: boolean = false) {
         const sizeBefore = this.population;
 
+        // Split and merge at the start of the turn so that normal update
+        // logic correctly updates the new clans.
+        this.clans.split();
+        this.clans.merge();
+        this.clans.prune();
+
         // Economic production.
         // Maintenance goes before production, because it represents capital
         // that can be built in much less than a turn.
@@ -153,9 +159,6 @@ export class Settlement {
             // Population effects.
             this.clans.marry();
             for (const clan of this.clans) clan.advancePopulation();
-            this.clans.split();
-            this.clans.merge();
-            this.clans.prune();
         }
 
         this.lastSizeChange_ = this.population - sizeBefore;

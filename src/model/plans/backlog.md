@@ -8,6 +8,14 @@
 ## New base models
 
 -   Demographics
+    x   Establish new basic demographic model
+    x   Do splits and merges at the start of the turn so that we can mainly
+        use the normal turn update logic rather than error-prone special
+        processing.
+    -   Fix bug with wacky consumption amounts
+    -   Definitively fix bug with hazards
+    -   Add in more terms from old QoL to have an effect
+    -   Display more background on disease calculations
 -   Appeal
 -   Happiness
 

@@ -158,7 +158,7 @@ export class Clan implements TradePartner {
     readonly uuid = crypto.randomUUID();
 
     static minDesiredSize = 10;
-    static maxDesiredSize = 100;
+    static maxDesiredSize = 75;
 
     private settlement_: Settlement|undefined;
     // Number of turns it's generally agreed the clan has been in the settlement,
