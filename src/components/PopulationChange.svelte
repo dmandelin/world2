@@ -1,58 +1,45 @@
 <script>
-    import { dcr, npl, pct, spct, wg } from "../model/lib/format";
-    import DataTable from "./DataTable.svelte";
-    import Tooltip from "./Tooltip.svelte";
-
     let { clan } = $props();
     let c = $derived(clan.lastPopulationChange);
 </script>
 
 <style>
-    td {
+    td, th {
+        padding: 0 0.25em;
+    }
+
+    td:not(:first-child), th:not(:first-child) {
         text-align: right;
+    }
+
+    tr:last-child {
+        font-weight: bold;
     }
 </style>
 
+<div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
 <div id="top">
-    QoL: {clan.qol.toFixed()}
     <table>
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>𝕊</th>
+                <th>𝔼</th>
+                <th>𝔸</th>
+                <th>Δ</th>
+            </tr>
+        </thead>
         <tbody>
+            {#each [...c.items, c.total] as item}
             <tr>
-                <td></td>
-                <td>Births</td>
-                <td>Deaths</td>
-                <td>Change</td>
+                {#each item.asRow as cell}
+                <td>
+                    {cell}
+                </td>
+                {/each}
             </tr>
-            <tr>
-                <td>QoL modifier</td>
-                <td>{spct(c.qbrf)}</td>
-                <td>{spct(c.qdrf)}</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Expected rates</td>
-                <td>{dcr(c.ebr)}</td>
-                <td>{dcr(c.edr)}</td>
-                <td>{dcr(c.ebr - c.edr)}</td>
-            </tr>
-            <tr>
-                <td>Std expected rates</td>
-                <td>{dcr(c.sebr)}</td>
-                <td>{dcr(c.sedr)}</td>
-                <td>{dcr(c.sebr - c.sedr)}</td>
-            </tr>
-            <tr>
-                <td>Actual rates</td>
-                <td>{dcr(c.br)}</td>
-                <td>{dcr(c.dr)}</td>
-                <td>{dcr(c.br - c.dr)}</td>
-            </tr>
-            <tr>
-                <td>Actual</td>
-                <td>{c.births}</td>
-                <td>{c.deaths}</td>
-                <td>{c.change}</td>
-            </tr>
+            {/each}
         </tbody>
     </table>
+</div>
 </div>

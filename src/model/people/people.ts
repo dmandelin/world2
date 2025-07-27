@@ -117,6 +117,10 @@ export class ConsumptionCalc {
         return amount / this.population;
     }
 
+    perCapitaSubsistence(): number {
+        return this.perCapita(TradeGoods.Cereals) + this.perCapita(TradeGoods.Fish);
+    }
+
     remove(source: string, good: TradeGood, amount: number): boolean {
         if (amount <= 0) return false;
         if (this.amount(good) < amount) return false;

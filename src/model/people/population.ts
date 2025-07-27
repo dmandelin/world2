@@ -1,4 +1,4 @@
-import { clamp } from "../lib/basics";
+import { clamp, sum } from "../lib/basics";
 import type { Clan } from "./people";
 
 export const INITIAL_POPULATION_RATIOS = [
@@ -14,18 +14,46 @@ const BASE_BIRTH_RATE = 2.90;
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
+export class DiseaseLoadCalc {
+    readonly zoonotic: number;
+    readonly endemic: number;
+
+    readonly value: number;
+
+    constructor(readonly clan: Clan) {
+        // TODO - fill out model
+        this.zoonotic = 0.1;
+        this.endemic = Math.log10(clan.world.totalPopulation) * 0.05;
+        this.value = this.zoonotic + this.endemic;
+    }
+}
+
+export class PopulationChangeItem {
+    constructor(
+        readonly name: string,
+        readonly standardRate: number,
+        readonly expectedRate: number,
+        readonly actualRate: number,
+        readonly actual: number,
+    ) {}
+
+    get asRow(): string[] {
+        return [
+            this.name,
+            (this.standardRate * 1000).toFixed(),
+            (this.expectedRate * 1000).toFixed(),
+            (this.actualRate * 1000).toFixed(),
+            this.actual.toFixed(),
+        ];
+    }
+}
+
 export class PopulationChange {
     readonly previousSize: number;
-    // QoL-based rate factors.
-    readonly qbrf: number;
-    readonly qdrf: number;
 
-    // Standard-population-ratio expected rate factors.
-    readonly sebr: number;
-    readonly sedr: number;
-    // Expected rate factors.
-    readonly ebr: number;
-    readonly edr: number;
+    readonly diseaseLoad: DiseaseLoadCalc|undefined;
+    readonly items: PopulationChangeItem[];
+    readonly total: PopulationChangeItem;
 
     // Actual changes.
     readonly births: number;
@@ -43,23 +71,21 @@ export class PopulationChange {
         if (empty) {
             this.births = 0;
             this.deaths = 0;
-            this.qbrf = 1;
-            this.qdrf = 1;
-            this.ebr = 0;
-            this.edr = 0;
-            this.sebr = 0;
-            this.sedr = 0;
+            this.items = [];
+            this.total = new PopulationChangeItem(
+                'Total',
+                0,
+                0,
+                0,
+                0,
+            );
             this.newSlices = this.clan.slices;
             return;
         }
 
-        // QoL factors
-        const q = clamp(this.clan.qol, -100, 100);
-        this.qbrf = 1 + q / 100;
-        this.qdrf = 1 - q / 100;
-
-        // Births.
-        const pmbr = this.qbrf * BASE_BIRTH_RATE;
+        // Births. For now, birth rate depends on nutrition.
+        const brFactor = clamp(this.clan.consumption.perCapitaSubsistence(), 0, 2);
+        const pmbr = brFactor * BASE_BIRTH_RATE;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
         let femaleBirths = 0;
@@ -69,23 +95,49 @@ export class PopulationChange {
         const maleBirths = this.births - femaleBirths;
         this.newSlices[0][0] = femaleBirths;
         this.newSlices[0][1] = maleBirths;
+        const birthsItem = new PopulationChangeItem(
+            'Births', 
+            INITIAL_POPULATION_RATIOS[1][0] * pmbr,
+            eb / this.previousSize,
+            this.births / this.previousSize,
+            this.births,
+        );
 
-        this.ebr = eb / this.previousSize;
-        this.sebr = INITIAL_POPULATION_RATIOS[1][0] * pmbr;
+        // Childhood diseases: a terrible source of tragedy through prehistory
+        // and prehistory until effective infection control in modern times.
+        this.diseaseLoad = new DiseaseLoadCalc(this.clan);
+        const diseaseDeaths = Math.round(this.diseaseLoad.value * this.births);
+        const diseaseItem = new PopulationChangeItem(
+            'Disease',
+            -this.diseaseLoad.value,
+            -this.diseaseLoad.value,
+            -this.diseaseLoad.value,
+            -diseaseDeaths,
+        );
+        const femaleDiseaseDeaths = Math.round(this.diseaseLoad.value * femaleBirths);
+        const maleDiseaseDeaths = diseaseDeaths - femaleDiseaseDeaths;
+        this.newSlices[1][0] -= femaleDiseaseDeaths;
+        this.newSlices[1][1] -= maleDiseaseDeaths;
 
-        // Aging and deaths.
+        // Hazards.
+        // TODO - include more items from QoL here
+        // TODO - include some disease load here but maybe just do epidemics
+        const subsistence = this.clan.consumption.perCapitaSubsistence();
+        const drFactor = subsistence >= 1
+                       ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
+                       : 1 + clamp((1 - subsistence) / 2, 0, 0.5)
         let [ed, sedr] = [0, 0];
         for (let i = 0; i < this.clan.slices.length - 1; ++i) {
             let [fSurvivors, mSurvivors] = [0, 0];
             for (let j = 0; j < this.clan.slices[i][0]; ++j)
-                if (Math.random() >= BASE_DEATH_RATES[i] * this.qdrf) ++fSurvivors;
+                if (Math.random() >= BASE_DEATH_RATES[i] * drFactor) ++fSurvivors;
             for (let j = 0; j < this.clan.slices[i][1]; ++j)
-                if (Math.random() >= 1.1 * BASE_DEATH_RATES[i] * this.qdrf) ++mSurvivors;
+                if (Math.random() >= 1.1 * BASE_DEATH_RATES[i] * drFactor) ++mSurvivors;
             this.newSlices[i+1][0] = fSurvivors;
             this.newSlices[i+1][1] = mSurvivors;
 
-            ed += this.qdrf * BASE_DEATH_RATES[i] * this.clan.slices[i][0]
-                + this.qdrf * 1.1 * BASE_DEATH_RATES[i] * this.clan.slices[i][1];
+            ed += drFactor * BASE_DEATH_RATES[i] * this.clan.slices[i][0]
+                + drFactor * 1.1 * BASE_DEATH_RATES[i] * this.clan.slices[i][1];
             sedr += INITIAL_POPULATION_RATIOS[i][0] * BASE_DEATH_RATES[i]
                 + INITIAL_POPULATION_RATIOS[i][1] * 1.1 * BASE_DEATH_RATES[i];
         }
@@ -94,14 +146,29 @@ export class PopulationChange {
         sedr += INITIAL_POPULATION_RATIOS[this.clan.slices.length - 1][0]
             + INITIAL_POPULATION_RATIOS[this.clan.slices.length - 1][1];
 
-        this.sedr = sedr;
-        this.edr = ed / this.previousSize;
-
         let newTotal = 0;
         for (let i = 0; i < this.clan.slices.length; ++i) {
             newTotal += this.newSlices[i][0] + this.newSlices[i][1];
         }
-        this.deaths = this.previousSize + this.births - newTotal;
+        this.deaths = this.previousSize + this.births - diseaseDeaths - newTotal;
+
+        const hazardsItem = new PopulationChangeItem(
+            'Hazards', 
+            -sedr,
+            -ed / this.previousSize,
+            -this.deaths / this.previousSize,
+            -this.deaths,
+        );
+
+        this.items = [birthsItem, diseaseItem, hazardsItem];
+            
+        this.total = new PopulationChangeItem(
+            'Total',
+            sum(this.items.map(item => item.standardRate)),
+            sum(this.items.map(item => item.expectedRate)),
+            sum(this.items.map(item => item.actualRate)),
+            sum(this.items.map(item => item.actual)),
+        );
     }
 
     get br() {
