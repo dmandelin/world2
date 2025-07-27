@@ -1,4 +1,5 @@
 import { clamp, sum } from "../lib/basics";
+import { spct } from "../lib/format";
 import type { Clan } from "./people";
 
 export const INITIAL_POPULATION_RATIOS = [
@@ -9,7 +10,7 @@ export const INITIAL_POPULATION_RATIOS = [
 ];
 
 // Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 2.90;
+const BASE_BIRTH_RATE = 4;
 
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
@@ -31,6 +32,7 @@ export class DiseaseLoadCalc {
 export class PopulationChangeItem {
     constructor(
         readonly name: string,
+        readonly mod: number,
         readonly standardRate: number,
         readonly expectedRate: number,
         readonly actualRate: number,
@@ -40,6 +42,7 @@ export class PopulationChangeItem {
     get asRow(): string[] {
         return [
             this.name,
+            spct(this.mod),
             (this.standardRate * 1000).toFixed(),
             (this.expectedRate * 1000).toFixed(),
             (this.actualRate * 1000).toFixed(),
@@ -78,6 +81,7 @@ export class PopulationChange {
                 0,
                 0,
                 0,
+                0,
             );
             this.newSlices = this.clan.slices;
             return;
@@ -96,7 +100,8 @@ export class PopulationChange {
         this.newSlices[0][0] = femaleBirths;
         this.newSlices[0][1] = maleBirths;
         const birthsItem = new PopulationChangeItem(
-            'Births', 
+            'Births',
+            brFactor,
             INITIAL_POPULATION_RATIOS[1][0] * pmbr,
             eb / this.previousSize,
             this.births / this.previousSize,
@@ -106,12 +111,16 @@ export class PopulationChange {
         // Childhood diseases: a terrible source of tragedy through prehistory
         // and prehistory until effective infection control in modern times.
         this.diseaseLoad = new DiseaseLoadCalc(this.clan);
-        const diseaseDeaths = Math.round(this.diseaseLoad.value * this.births);
+        // Fold in a term for other hazards.
+        const mortality = this.diseaseLoad.value + 0.2;
+        const diseaseDeaths = Math.round(mortality * this.births);
+        const diseaseDeathRate = diseaseDeaths / this.previousSize;
         const diseaseItem = new PopulationChangeItem(
             'Disease',
-            -this.diseaseLoad.value,
-            -this.diseaseLoad.value,
-            -this.diseaseLoad.value,
+            1,
+            -diseaseDeathRate,
+            -diseaseDeathRate,
+            -diseaseDeathRate,
             -diseaseDeaths,
         );
         const femaleDiseaseDeaths = Math.round(this.diseaseLoad.value * femaleBirths);
@@ -154,6 +163,7 @@ export class PopulationChange {
 
         const hazardsItem = new PopulationChangeItem(
             'Hazards', 
+            drFactor,
             -sedr,
             -ed / this.previousSize,
             -this.deaths / this.previousSize,
@@ -164,6 +174,7 @@ export class PopulationChange {
             
         this.total = new PopulationChangeItem(
             'Total',
+            1,
             sum(this.items.map(item => item.standardRate)),
             sum(this.items.map(item => item.expectedRate)),
             sum(this.items.map(item => item.actualRate)),

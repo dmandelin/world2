@@ -51,6 +51,36 @@ than QoL (BD indicates which rates are affected):
     *   There can be various cultural pratices that affect birth or
         death rates in various ways
 
+### Tuning
+
+Net gain should be about 220 per 1000 in good conditions, corresponding
+to natural population growth of 1% per year.
+
+#### Birth rates
+
+The base data are complicated, with fertility rates varying widely
+across different cultures. Some sources assert that there is little
+difference between foragers and farmers, while others say there is,
+but mediated by mobility and food supply rather than economy per se.
+
+TFR for hunter-gatherers now is 5-6. It's possibly somewhat lower
+for our people that would have had simpler technology, so it's not
+entirely unreasonable to call it 4. High-side fertility would then
+be around 8, but 5-6 maybe more typical for farmers.
+
+To convert that to a birth rate, we have that about 1/6 of our
+population pyramids are child-bearing, and bear a base of 4 children
+per turn, therefore around 667 per 1000.
+
+#### Death rates
+
+First we have the very unfortunate childhood disease rate, which
+will reduce the net gain from 600-1000 to around 500.
+
+Life expectancy at age 45 was around 20 more years for many groups,
+so we could use a 50% per turn death rate for that bracket, and
+something lower for younger brackets. 
+
 ## Appeal
 
 Appeal is a primary concept, and represents the attractiveness of a
