@@ -13,9 +13,10 @@
         use the normal turn update logic rather than error-prone special
         processing.
     x   Fix bug with wacky consumption amounts
-    -   Definitively fix bug with hazards
+    x   Definitively fix bug with hazards
     -   Add in more terms from old QoL to have an effect
     -   Display more background on disease calculations
+    -   Tune disease load
 -   Appeal
 -   Happiness
 

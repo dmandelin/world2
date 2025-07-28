@@ -10,10 +10,10 @@ export const INITIAL_POPULATION_RATIOS = [
 ];
 
 // Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 4;
+const BASE_BIRTH_RATE = 4.5;
 
 // Per 20-year turn by age tier.
-const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
+const BASE_DEATH_RATES = [0.25, 0.35, 0.5, 1.0];
 
 export class DiseaseLoadCalc {
     readonly zoonotic: number;
@@ -61,14 +61,10 @@ export class PopulationChange {
     // Actual changes.
     readonly births: number;
     readonly deaths: number;
-    readonly newSlices: number[][] = [
-        [0, 0],
-        [0, 0],
-        [0, 0],
-        [0, 0],
-    ];
+    readonly newSlices: number[][];
 
     constructor(public readonly clan: Clan, empty: boolean = false) {
+        const newSlices = [[0, 0], [0, 0], [0, 0], [0, 0]];
         this.previousSize = clan.population;
 
         if (empty) {
@@ -83,7 +79,7 @@ export class PopulationChange {
                 0,
                 0,
             );
-            this.newSlices = this.clan.slices;
+            this.newSlices = clan.slices;
             return;
         }
 
@@ -97,8 +93,8 @@ export class PopulationChange {
             if (Math.random() < 0.48) ++femaleBirths;
         }
         const maleBirths = this.births - femaleBirths;
-        this.newSlices[0][0] = femaleBirths;
-        this.newSlices[0][1] = maleBirths;
+        newSlices[0][0] = femaleBirths;
+        newSlices[0][1] = maleBirths;
         const birthsItem = new PopulationChangeItem(
             'Births',
             brFactor,
@@ -123,10 +119,10 @@ export class PopulationChange {
             -diseaseDeathRate,
             -diseaseDeaths,
         );
-        const femaleDiseaseDeaths = Math.round(this.diseaseLoad.value * femaleBirths);
+        const femaleDiseaseDeaths = Math.round(mortality * femaleBirths);
         const maleDiseaseDeaths = diseaseDeaths - femaleDiseaseDeaths;
-        this.newSlices[1][0] -= femaleDiseaseDeaths;
-        this.newSlices[1][1] -= maleDiseaseDeaths;
+        newSlices[0][0] -= femaleDiseaseDeaths;
+        newSlices[0][1] -= maleDiseaseDeaths;
 
         // Hazards.
         // TODO - include more items from QoL here
@@ -136,14 +132,16 @@ export class PopulationChange {
                        ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
                        : 1 + clamp((1 - subsistence) / 2, 0, 0.5)
         let [ed, sedr] = [0, 0];
+        let deaths = 0;
         for (let i = 0; i < this.clan.slices.length - 1; ++i) {
             let [fSurvivors, mSurvivors] = [0, 0];
             for (let j = 0; j < this.clan.slices[i][0]; ++j)
                 if (Math.random() >= BASE_DEATH_RATES[i] * drFactor) ++fSurvivors;
             for (let j = 0; j < this.clan.slices[i][1]; ++j)
                 if (Math.random() >= 1.1 * BASE_DEATH_RATES[i] * drFactor) ++mSurvivors;
-            this.newSlices[i+1][0] = fSurvivors;
-            this.newSlices[i+1][1] = mSurvivors;
+            newSlices[i+1][0] = fSurvivors;
+            newSlices[i+1][1] = mSurvivors;
+            deaths += this.clan.slices[i][0] - fSurvivors + this.clan.slices[i][1] - mSurvivors;
 
             ed += drFactor * BASE_DEATH_RATES[i] * this.clan.slices[i][0]
                 + drFactor * 1.1 * BASE_DEATH_RATES[i] * this.clan.slices[i][1];
@@ -154,12 +152,10 @@ export class PopulationChange {
             + this.clan.slices[this.clan.slices.length - 1][1];
         sedr += INITIAL_POPULATION_RATIOS[this.clan.slices.length - 1][0]
             + INITIAL_POPULATION_RATIOS[this.clan.slices.length - 1][1];
+        deaths += this.clan.slices[this.clan.slices.length - 1][0]
+            + this.clan.slices[this.clan.slices.length - 1][1];
 
-        let newTotal = 0;
-        for (let i = 0; i < this.clan.slices.length; ++i) {
-            newTotal += this.newSlices[i][0] + this.newSlices[i][1];
-        }
-        this.deaths = this.previousSize + this.births - diseaseDeaths - newTotal;
+        this.deaths = deaths;
 
         const hazardsItem = new PopulationChangeItem(
             'Hazards', 
@@ -180,6 +176,13 @@ export class PopulationChange {
             sum(this.items.map(item => item.actualRate)),
             sum(this.items.map(item => item.actual)),
         );
+
+        this.newSlices = newSlices;
+
+        let newTotal = 0;
+        for (let i = 0; i < this.clan.slices.length; ++i) {
+            newTotal += newSlices[i][0] + newSlices[i][1];
+        }
     }
 
     get br() {
@@ -191,6 +194,6 @@ export class PopulationChange {
     }
 
     get change() {
-        return this.births - this.deaths;
+        return this.total.actual;
     }
 }

@@ -131,9 +131,11 @@ export class Settlement {
 
         // Split and merge at the start of the turn so that normal update
         // logic correctly updates the new clans.
-        this.clans.split();
-        this.clans.merge();
-        this.clans.prune();
+        if (!noEffect) {
+            this.clans.split();
+            this.clans.merge();
+            this.clans.prune();
+        }
 
         // Economic production.
         // Maintenance goes before production, because it represents capital

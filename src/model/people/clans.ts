@@ -122,7 +122,7 @@ export class Clans extends Array<Clan> {
         for (let i = 0; i < women; ++i) {
             const husbandIndex = weightedRandInt(husbandWeights);
             // If same clan selected: don't marry, stay in the clan.
-            // Note that women from properous clans are less likely
+            // Note that women from prosperous clans are less likely
             // to marry in this model. However, they still can
             // give birth, and we assume in part they may form a
             // matrilocal marriage.
@@ -131,6 +131,11 @@ export class Clans extends Array<Clan> {
             if (husbandClan.slices[1][0] >= husbandClan.slices[1][1]) {
                 husbandWeights[husbandIndex] = 0;
             }
+        }
+
+        // Fix up populations.
+        for (const clan of this) {
+            clan.population = clan.slicesTotal;
         }
     }
 

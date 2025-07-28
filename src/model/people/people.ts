@@ -217,6 +217,22 @@ export class Clan implements TradePartner {
             this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * population);
         }
 
+        // It's annoying but important to get the total exactly right, because
+        // cadet clans will be initialized with the specific population split
+        // off from the senior clan.
+        let error = this.slicesTotal - this.population;
+        const initError = error;
+        while (error > 0) {
+            let gix = Math.floor(Math.random() * 2);
+            --this.slices[0][gix];
+            --error;
+        }
+        while (error < 0) { 
+            let gix = Math.floor(Math.random() * 2);
+            ++this.slices[0][gix];
+            ++error;
+        }
+
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.
@@ -441,7 +457,7 @@ export class Clan implements TradePartner {
         [0, 0], // Elders (55+)
     ];
 
-    private get slicesTotal(): number {
+    get slicesTotal(): number {
         return this.slices.reduce((acc, slice) => acc + slice[0] + slice[1], 0);
     }
 
