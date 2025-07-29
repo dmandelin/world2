@@ -153,3 +153,59 @@ different clans. Values particularly influence the weighting of:
         *   Freedom
         *   Creativity - art, ritual, myth
         *   Invention - technology, political structures
+
+## Applications
+
+Notes on applying the new base models to the initial shifts.
+
+### Housing
+
+Effects and appeal:
+
+*   Prestige: may have some +prestige as the known preference in the north
+    and/or as a desirable or expensive item
+*   Comfort: +appeal, maybe minor increase in birth rate. 
+    **Note that moving less often should have a more substantial effect
+    on birth rate** +shelter (for happiness)
+*   Maintenance labor: requires additional labor allocation which can't
+    be used for other things. -appeal if not used to it
+*   Health and safety plus small storage: minor reduction in hazard death 
+    rate. No appeal effect: relatively unobvious to the people. Possible
+    increase to disease death rate from more close contact
+
+This warrants some further research. Permanent settlements are definitely
+important but the difference in housing types is unclear.
+
+### More farming
+
+Effects and appeal:
+
+*   Prestige: may have some +prestige as the known way from the north
+*   Storage: cereals can be stored to get through lean times more easily,
+    which could work via lifting a nutrition limit from foraging
+*   Scale: can scale up production, which foraging can't (it's at capacity
+    at start)
+*   Learning: skill and technology improve faster if spending more time
+    farming
+*   Disease: substantial increase in disease load
+*   Preference: consider a preference for clans that affects appeal and
+    happiness
+
+### Imported art
+
+Effects and appeal:
+
+*   Prestige: may have some +prestige as a known prestige item from the north
+*   Ritual/magic for the clan: +self prestige, +happiness (morale)
+*   Shared use in common village ritual: +prestige, +happiness (morale)
+    for all clans. (Could be -prestige -happiness if some clans don't
+    like the change but that's not important at first.)
+*   Leading use in common village ritual: +/-prestige depending on clan
+    ideologies and relationships, also +/-happiness. It's OK to assume
+    preference for the figures but clans may oppose inequality generated
+    by them.
+*   Beauty: +happiness
+*   Inspiration: may inspire someone in a clan to begin producing similar
+    art, may inspire new myths and ritual components, may stimulate demand
+    for complementary religious goods and services, or inspire other new
+    thoughts and inventions related to the art and its use

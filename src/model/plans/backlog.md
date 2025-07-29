@@ -20,6 +20,9 @@
 -   Appeal
 -   Happiness
 
+-   Applying the new base models to the initial three shifts
+    
+
 # On deck
 
 -   Permanent settlements
