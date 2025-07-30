@@ -4,12 +4,17 @@
 
 ## Housing
 
--   Show housing and decision basis in the UI
--   Update ditching labor model
+-   Update housing labor model
+    x   Introduce construction skill
+    -   Require labor allocation, charge for both construction
+        and maintenance costs
+    -   (P2) Have housing eventually wear out
+    -   Introduce a way to change the skill basis for different types
+        of housing
 -   Update flooding effects
     -   Housing maintenance costs
     -   Possible casualties for worse flooding
--   Update housing labor model
+-   Update ditching labor model
 -   Update housing effects
 -   Update housing decisions
 

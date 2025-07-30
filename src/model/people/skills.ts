@@ -21,6 +21,8 @@ export const SkillDefs = {
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
     Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png', undefined,
         new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
+    Construction: new SkillDef('Construction', 'skill-construction-256.png', undefined,
+        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
     Ritual: new SkillDef('Ritual', 'skill-ritual-256.png', undefined,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
 };
@@ -72,7 +74,7 @@ export class ClanSkills {
         // north, so they have less of a model to imitate. They've already
         // been fishing, though.
         const gen = (skillDef: SkillDef) => 
-              skillDef === SkillDefs.Irrigation
+              skillDef === SkillDefs.Irrigation || skillDef === SkillDefs.Construction
             ? normal(20, 5)
             : skillDef === SkillDefs.Fishing
             ? normal(50, 5)
