@@ -2,8 +2,16 @@
 
 ## Bug fixes
 
--   Fix bug with super-high or infinity consumption amounts
--   Re-fix consumption distribution bug
+## Housing
+
+-   Show housing and decision basis in the UI
+-   Update ditching labor model
+-   Update flooding effects
+    -   Housing maintenance costs
+    -   Possible casualties for worse flooding
+-   Update housing labor model
+-   Update housing effects
+-   Update housing decisions
 
 ## New base models
 
@@ -22,7 +30,6 @@
 
 -   Applying the new base models to the initial three shifts
     
-
 # On deck
 
 -   Permanent settlements

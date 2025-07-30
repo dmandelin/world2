@@ -160,6 +160,43 @@ Notes on applying the new base models to the initial shifts.
 
 ### Housing
 
+Background: The simplest housing is mud huts used mainly for sleeping.
+But early in our period, at least some families switched to larger houses,
+and later on, the "tripartite house". These would have several benefits:
+
+*   Prestige
+*   Better comfort and protection from the elements
+    *   Sun and wind are substantial!
+*   Clan solidarity from more people living together
+*   Clan and family-level food storage, giving direct possession of stores
+    *   This can be a precondition for per-clan production later on
+*   Space for craft workshops
+    *   Open-air production of some goods should definitely be posssible, 
+        but higher-quality products and some normal products will require 
+        shelter (so that threads aren't tangled by the wind or pots dried 
+        inconsistently)
+
+And the costs:
+
+*   Tripartite house
+    *   Construction: 25-50% of annual labor
+    *   Maintenance: 5% of annual labor
+    *   Clay and reeds are locally available
+    *   Requires imported large wooden beams for the roof
+    *   Bitumen waterproofs the roof
+    *   Fired bricks would be even better than sun-dried but not used that
+        much at this point
+
+*   Small house
+    *   Construction: 5-15% of annual labor 
+        (less space per person and less per-area cost due to simplicity)
+    *   Maintenance: 5% of annual labor (maybe simpler but also less robust)
+
+*   Hut
+    *   Construction: 1-3% of annual labor
+    *   Maintenance: 1-3% of annual labor
+    *   Could abstract as 5% of annual labor regardless of move frequency
+
 Effects and appeal:
 
 *   Prestige: may have some +prestige as the known preference in the north
@@ -170,11 +207,9 @@ Effects and appeal:
 *   Maintenance labor: requires additional labor allocation which can't
     be used for other things. -appeal if not used to it
 *   Health and safety plus small storage: minor reduction in hazard death 
-    rate. No appeal effect: relatively unobvious to the people. Possible
-    increase to disease death rate from more close contact
-
-This warrants some further research. Permanent settlements are definitely
-important but the difference in housing types is unclear.
+    rate. Low appeal effect: relatively unobvious to the people, plus problems
+    such as possible increase to disease death rate from more close contact
+*   Unlocks: clan storage and crafting
 
 ### More farming
 
