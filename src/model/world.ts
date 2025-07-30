@@ -160,6 +160,7 @@ export class World implements NoteTaker {
             if (!priming) clan.planMigration();
             clan.planMaintenance();
             clan.planHousing();
+            clan.laborAllocation.plan();
         }
 
         // Notify observers.

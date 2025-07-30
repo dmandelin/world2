@@ -8,9 +8,12 @@
     x   Introduce construction skill
     -   Require labor allocation, charge for both construction
         and maintenance costs
+        x   Require fixed allocation as simple start
+        -   Require proper cost for huts
     -   (P2) Have housing eventually wear out
     -   Introduce a way to change the skill basis for different types
         of housing
+    -   Require proper cost for houses
 -   Update flooding effects
     -   Housing maintenance costs
     -   Possible casualties for worse flooding
