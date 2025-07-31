@@ -7,7 +7,7 @@ import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
 import { QolCalc } from "./qol";
 import { Rites, RitualGoodsUsage } from "../rites";
 import type { Clans } from "./clans";
-import { HousingTypes, type Settlement } from "./settlement";
+import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { MigrationCalc, type NewSettlementSupplier} from "./migration";
@@ -19,6 +19,7 @@ import { type FloodLevel, FloodLevels } from "../flood";
 import { LaborAllocation } from "./labor";
 import { AlignmentCalc } from "./alignment";
 import { TradeGoods } from "../trade";
+import { HousingTypes } from "../econ/housing";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",

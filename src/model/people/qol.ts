@@ -3,7 +3,8 @@ import { ces, createTwoSidedQuadratic } from "../lib/modelbasics";
 import { signed } from "../lib/format";
 import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
-import type { Housing, Settlement } from "./settlement";
+import type { Settlement } from "./settlement";
+import type { Housing } from "../econ/housing";
 
 export class SatisfactionItem {
     constructor(
@@ -99,7 +100,7 @@ export class QolCalc {
 export function housingFloodingValue(clan: Clan, overrideHousing?: Housing): number {
     const housing = overrideHousing ?? clan.housing;
 
-    return clan.settlement.floodLevel.expectedForcedMigrations 
+    return clan.settlement.floodLevel.baseExpectedForcedMigrations 
         * housing.forcedMigrationCost
         * (1 - clan.settlement.ditchQuality);
 }

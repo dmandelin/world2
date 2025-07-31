@@ -1,9 +1,11 @@
 <script lang="ts">
     import DataTable from "../DataTable.svelte";
+    import type { Clan } from "../../model/people/people";
     import { HousingDecision } from "../../model/decisions/housingdecision";
     import { pct } from "../../model/lib/format";
-
-    let { decision }: { decision: HousingDecision } = $props();
+    import { SkillDefs } from "../../model/people/skills";
+    
+    let {clan, decision }: { clan: Clan, decision: HousingDecision } = $props();
 
     let imitationRows = $derived.by(() => {
         const rows = decision.imitationItems.map(item => [
@@ -38,3 +40,8 @@
     <h4>Choice ({decision.choice.name})</h4>
     <DataTable rows={choiceRows} />
 {/if}
+
+<div style="margin-top: 0.5em">
+Cost: {(clan.laborAllocation.allocs.get(SkillDefs.Construction) ?? 0).toFixed(2)}
+(moves: {clan.settlement.forcedMigrations})
+</div>

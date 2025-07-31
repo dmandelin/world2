@@ -8,21 +8,8 @@ import { DitchMaintenanceCalc } from "../infrastructure";
 import { DistributionNode } from "../econ/distributionnode";
 import { ProductionNode } from "../econ/productionnode";
 import { SkillDefs } from "./skills";
-
-export class Housing {
-    constructor(
-        readonly name: string, 
-        readonly description: string,
-        readonly qol: number,
-        readonly forcedMigrationCost: number,
-    ) {}
-}
-
-export const HousingTypes = {
-    Huts: new Housing("Huts", "Small, simple mud dwellings, mainly for sleeping.", -5, -2),
-    Cottages: new Housing("Cottages", "Small but permanent mud houses with a thatched roof.", -2, -10),
-    Houses: new Housing("Houses", "Permanent mud houses", 0, -20),
-}
+import type { FloodLevel } from "../flood";
+import { poisson } from "../lib/distributions";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -69,6 +56,8 @@ export class Settlement {
     ditchQuality = 0.3;
     maintenanceCalc: DitchMaintenanceCalc|undefined;
 
+    private forcedMigrations_ = 0;
+    
     constructor(
         readonly world: World,
         readonly name: string, 
@@ -124,6 +113,16 @@ export class Settlement {
 
     get floodLevel() {
         return this.cluster.floodLevel;
+    }
+
+    get forcedMigrations(): number {
+        return this.forcedMigrations_;
+    }
+
+    updateForFloodLevel(level: FloodLevel): void {
+        const efm = level.baseExpectedForcedMigrations * (1 - this.ditchQuality)
+            + level.majorEventForcedMigrations;
+        this.forcedMigrations_ = poisson(efm)
     }
 
     advance(noEffect: boolean = false) {

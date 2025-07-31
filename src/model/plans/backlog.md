@@ -9,13 +9,13 @@
     -   Require labor allocation, charge for both construction
         and maintenance costs
         x   Require fixed allocation as simple start
-        -   Require proper cost for huts
-    -   (P2) Have housing eventually wear out
+        x   Require proper cost for huts
+    x   (P2) Have housing eventually wear out
     -   Introduce a way to change the skill basis for different types
         of housing
-    -   Require proper cost for houses
+    x   Require proper cost for houses
 -   Update flooding effects
-    -   Housing maintenance costs
+    x   Housing maintenance costs
     -   Possible casualties for worse flooding
 -   Update ditching labor model
 -   Update housing effects

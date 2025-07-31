@@ -140,7 +140,7 @@
                         {clan.housing.name}
                         <div slot="tooltip" class="ttt">
                             {#if clan.housingDecision}
-                                <HousingDecision decision={clan.housingDecision} />
+                                <HousingDecision clan={clan} decision={clan.housingDecision} />
                             {/if}
                         </div>
                     </Tooltip>

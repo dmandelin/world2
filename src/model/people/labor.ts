@@ -25,13 +25,15 @@ export class LaborAllocation {
     plan(): void {
         this.allocs.clear();
 
-        // Fixed allocation for housing.
-        const housing = 0.05;
+        const housing = this.clan.housing.cost(this.clan);
         this.allocs.set(SkillDefs.Construction, housing);
 
+        // Allocate planned items in remainder.
         const remainder = 1 - housing;
         for (const [skill, fraction] of this.planned_.entries()) {
             this.allocs.set(skill, fraction * remainder);
         }
+
+        console.log("YYY", this.clan.name, this.clan.housing.name, this.allocs);
     }
 }

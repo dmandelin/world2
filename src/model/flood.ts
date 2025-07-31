@@ -1,3 +1,6 @@
+import { poisson } from "./lib/distributions";
+import type { Settlement } from "./people/settlement";
+
 export class FloodLevel {
     constructor(
         readonly index: number,
@@ -5,9 +8,11 @@ export class FloodLevel {
         readonly description: string,
         readonly agricultureBonus: number,
         readonly agricultureLoss: number,
-        readonly expectedForcedMigrations: number,
+        readonly baseExpectedForcedMigrations: number,
+        readonly majorEventForcedMigrations: number,
         readonly qolModifier: number,
     ) {}
+
 
     static max(a: FloodLevel, b: FloodLevel): FloodLevel {
         return a.index > b.index ? a : b;
@@ -22,6 +27,7 @@ export const FloodLevels = {
         0.9,
         0.9,
         0.8,
+        0,
         2,
     ),
     Normal: new FloodLevel(
@@ -32,6 +38,7 @@ export const FloodLevels = {
         0.8,
         1.0,
         0,
+        0,
     ),
     Higher: new FloodLevel(
         2,
@@ -40,6 +47,7 @@ export const FloodLevels = {
         1.1,
         0.7,
         1.2,
+        0,
         -2,
     ),
     Major: new FloodLevel(
@@ -48,7 +56,8 @@ export const FloodLevels = {
         'There was a major flood event in recent years!',
         1.2,
         0.6,
-        1.5,
+        1.2,
+        0.3,
         -10,
     ),
     Extreme: new FloodLevel(
@@ -57,7 +66,8 @@ export const FloodLevels = {
         'There was an extreme flood event in recent years!',
         1.3,
         0.5,
-        2,
+        1.2,
+        0.8,
         -20,
     ),
 };

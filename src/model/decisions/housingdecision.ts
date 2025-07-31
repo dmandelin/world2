@@ -2,7 +2,7 @@ import { sumFun, chooseWeighted, mapNormalized, maxby } from '../lib/basics';
 import { traitFactor } from '../lib/modelbasics';
 import { Clan } from '../people/people';
 import { housingFloodingValue } from '../people/qol';
-import { Housing, HousingTypes } from '../people/settlement';
+import { Housing, HousingTypes } from '../people/../econ/housing';
 
 export class HousingImitationItem {
     constructor(

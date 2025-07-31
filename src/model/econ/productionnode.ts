@@ -61,9 +61,9 @@ export class ProductionNode {
     acceptFrom(settlement: Settlement): void {
         for (const clan of settlement.clans) {
             const laborFraction = clan.laborAllocation.allocs.get(this.skillDef) ?? 0;
+            console.log("YYY node", clan.name, this.skillDef.name, laborFraction)
             const workers = laborFraction * clan.population / ProductionNode.populationPerWorker;
             this.accept(clan, laborFraction, workers);
-
         }
     }
 

@@ -1,7 +1,7 @@
 import { matchingFraction } from "../lib/basics";
 import { pct } from "../lib/format";
 import { weightedAverage } from "../lib/modelbasics";
-import { HousingTypes } from "../people/settlement";
+import { HousingTypes } from "../econ/housing";
 import { SkillDefs } from "../people/skills";
 import type { World } from "../world";
 import { Year } from "./year";

@@ -7,7 +7,7 @@ import { Clan, type ConsumptionCalc } from "../model/people/people";
 import type { PrestigeCalc } from "../model/people/prestige";
 import type { QolCalc } from "../model/people/qol";
 import type { Rites } from "../model/rites";
-import type { Housing, Settlement } from "../model/people/settlement";
+import type { Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/records/timeline";
 import { type TradeGood } from "../model/trade";
 import type { World } from "../model/world";
@@ -21,6 +21,7 @@ import { ProductionNode } from "../model/econ/productionnode";
 import type { LaborAllocation } from "../model/people/labor";
 import type { AlignmentCalc } from "../model/people/alignment";
 import type { TrendDTO } from "../model/records/trends";
+import type { Housing } from "../model/econ/housing";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
