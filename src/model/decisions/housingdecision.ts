@@ -1,4 +1,4 @@
-import { sumFun, chooseWeighted, mapNormalized, maxby } from '../lib/basics';
+import { sumFun, chooseWeighted, mapNormalized, maxby, clamp } from '../lib/basics';
 import { traitFactor } from '../lib/modelbasics';
 import { Clan } from '../people/people';
 import { Housing, HousingTypes } from '../people/../econ/housing';
@@ -15,12 +15,12 @@ export class HousingImitationItem {
 export class HousingGuessItem {
     constructor(
         readonly housing: Housing,
-        readonly housingQoL: number,
-        readonly floodingQoL: number,
+        readonly benefit: number,
+        readonly cost: number,
     ) {}
 
-    get qol(): number {
-        return this.housingQoL + this.floodingQoL;
+    get appeal(): number {
+        return this.benefit + this.cost;
     }
 }
 
@@ -28,7 +28,7 @@ export class HousingChoiceItem {
     constructor(
         readonly label: string,
         readonly housing: Housing,
-        readonly qol: number,
+        readonly appeal: number,
         public weight: number,
     ) {}
 }
@@ -63,35 +63,43 @@ export class HousingDecision {
 
         // Guess which choice is better.
         for (const housing of Object.values(HousingTypes)) {
+            // Assume that the prestige fully reflects the positive appeal.
+            const benefit = housing.basePrestige;
+            // For now, have clans assume one move per year and some appeal
+            // consideration from that.
+            const laborCost = 2 * housing.constructionCost / clan.world.yearsPerTurn + housing.maintenanceCost;
+            const cost = -clamp(100 * laborCost, 0, 100);
             this.guessItems.set(housing, new HousingGuessItem(
-                housing, housing.basePrestige, 0));
+                housing, 
+                housing.basePrestige,
+                cost));
         }
         this.guessed = maxby(
-            Array.from(this.guessItems.values()), item => item.qol).housing;
+            Array.from(this.guessItems.values()), item => item.appeal).housing;
 
         if (this.guessed === this.imitated) {
             this.choice = this.guessed;
         } else {
             // Clans don't really have an accurate way to tell what new ideas might
             // work better. We'll assume:
-            // - If there's no reason to prefer the new (equal expected QoL), clans
+            // - If there's no reason to prefer the new (equal appeal), clans
             //   have a low probability of switching (single digits) corresponding
             //   to some clan in a village trying something new every several generations.
-            // - If the new is substantially better (+10 QoL), clans will have a high
+            // - If the new is substantially better (+10 appeal), clans will have a high
             //   interest in switching, but are still cautious, maybe a 25% chance.
-            const choiceWeightFun = (qol: number): number => 1.25 ** qol;
+            const choiceWeightFun = (appeal: number): number => 1.25 ** appeal;
             this.choiceItems = [
                 new HousingChoiceItem(
                     this.imitated.name,
                     this.imitated,
-                    this.imitatedQoL,
-                    choiceWeightFun(this.imitatedQoL),
+                    this.imitatedAppeal,
+                    choiceWeightFun(this.imitatedAppeal),
                 ),
                 new HousingChoiceItem(
                     this.guessed.name,
                     this.guessed,
-                    this.guessedQoL,
-                    choiceWeightFun(this.guessedQoL),
+                    this.guessedAppeal,
+                    choiceWeightFun(this.guessedAppeal),
                 ),
             ];
             const totalChoiceWeight = sumFun(this.choiceItems, item => item.weight);
@@ -104,11 +112,11 @@ export class HousingDecision {
         }
     }
 
-    get imitatedQoL(): number {
-        return this.guessItems.get(this.imitated)!.qol;
+    get imitatedAppeal(): number {
+        return this.guessItems.get(this.imitated)!.appeal;
     }
 
-    get guessedQoL(): number {
-        return this.guessed.basePrestige;
+    get guessedAppeal(): number {
+        return this.guessItems.get(this.guessed)!.appeal;
     }
 }

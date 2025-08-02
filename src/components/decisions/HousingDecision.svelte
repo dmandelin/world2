@@ -16,14 +16,14 @@
     let guessRows = $derived.by(() => {
         const rows = [...decision.guessItems.values()].map(item => [
             item.housing.name, 
-            item.housingQoL.toFixed(), item.floodingQoL.toFixed(), item.qol.toFixed()]);
-        return [['Housing', 'Amenities', 'Flooding', 'Appeal'], ...rows];
+            item.benefit.toFixed(), item.cost.toFixed(), item.appeal.toFixed()]);
+        return [['Housing', 'Shelter', 'Cost', 'Appeal'], ...rows];
     });
 
     let choiceRows = $derived.by(() => {
         const rows = decision.choiceItems.map(item => [
-            item.label, item.housing.name, item.qol.toFixed(), pct(item.weight)]);
-        return [['Choice', 'Housing', 'QoL', 'Weight'], ...rows];
+            item.label, item.housing.name, item.appeal.toFixed(), pct(item.weight)]);
+        return [['Choice', 'Housing', 'Appeal', 'Weight'], ...rows];
     });
 </script>
 

@@ -2,6 +2,9 @@
 
 ## Bug fixes
 
+-   Bring back nutritional balance between cereals and fish as having
+    demographic and appeal effects
+
 ## Housing
 
 x   Update ditching labor model
@@ -13,10 +16,14 @@ x   Update ditching labor model
 -   Settlement shifting effects
     -   Better farming production and birth rate for staying still
 -   Update housing decisions
+    x   Switch to appeal model
+    -   Give people a way to learn which is better
+    -   Make people more likely to upgrade if they have enough food
 -   Introduce a way to change the skill basis for different types
         of housing
 -   Show construction labor allocations more clearly in the UI
 -   Show birth and death rate modifiers more clearly in the UI
+-   Visualize move history and settlement permanence in the UI
 
 ## New base models
 
