@@ -39,7 +39,7 @@ export const HousingTypes = {
         -5, 
         -2,
         0,
-        0.05,
+        0.02,
     ),
     Cottages: new Housing(
         "Cottages", 

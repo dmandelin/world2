@@ -19,9 +19,6 @@ export class DitchMaintenanceCalc {
     readonly quality: number;
 
     constructor(readonly settlement: Settlement) {
-        // Basic flood control ditching costs 2% of output, or about 2
-        // points of QoL, scaled by productivity factor. The labor cost
-        // is distributed equally among clans who are ditching.
         this.items = settlement.clans
             .filter(c => c.isDitching)
             .map(c => {

@@ -4,22 +4,12 @@
 
 ## Housing
 
--   Update housing labor model
-    x   Introduce construction skill
-    -   Require labor allocation, charge for both construction
-        and maintenance costs
-        x   Require fixed allocation as simple start
-        x   Require proper cost for huts
-    x   (P2) Have housing eventually wear out
-    -   Introduce a way to change the skill basis for different types
-        of housing
-    x   Require proper cost for houses
--   Update flooding effects
-    x   Housing maintenance costs
-    -   Possible casualties for worse flooding
--   Update ditching labor model
+x   Update ditching labor model
 -   Update housing effects
 -   Update housing decisions
+-   Introduce a way to change the skill basis for different types
+        of housing
+-   Show construction labor allocations more clearly in the UI
 
 ## New base models
 

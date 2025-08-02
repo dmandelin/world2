@@ -25,11 +25,19 @@ export class LaborAllocation {
     plan(): void {
         this.allocs.clear();
 
+        // Mandatory allocations.
         const housing = this.clan.housing.cost(this.clan);
         this.allocs.set(SkillDefs.Construction, housing);
 
+        const ditching = this.clan.isDitching ? 0.02 : 0;
+        if (ditching) {
+            this.allocs.set(SkillDefs.Irrigation, ditching);
+        }
+
+        const reserved = housing + ditching;
+
         // Allocate planned items in remainder.
-        const remainder = 1 - housing;
+        const remainder = 1 - reserved;
         for (const [skill, fraction] of this.planned_.entries()) {
             this.allocs.set(skill, fraction * remainder);
         }

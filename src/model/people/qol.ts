@@ -52,11 +52,9 @@ export class QolCalc {
             new QolItem('Goods', qolFromPerCapitaGoods(this.satisfaction), 0, this.satisfactionItems),
             new QolItem('Food variety', foodVarietyQolModifier(clan), 1),
             new QolItem('Housing', clan.housing.qol, 0),
-            new QolItem('Moves', housingFloodingValue(clan), 1),
             new QolItem('Flooding', clan.settlement.floodLevel.qolModifier
                 * (1 - clan.settlement.ditchQuality), 0),
             new QolItem('Status', statusValue(clan), 0),
-            new QolItem('Labor', laborValue(clan), 0),
             new QolItem('Crowding', crowdingValue(clan), 0),
             new QolItem('Inspiration', 25 - clamp(clan.world.year.yearsSince() / 20, 0, 25), 0),
         ];
@@ -97,21 +95,9 @@ export class QolCalc {
     }
 }
 
-export function housingFloodingValue(clan: Clan, overrideHousing?: Housing): number {
-    const housing = overrideHousing ?? clan.housing;
-
-    return clan.settlement.floodLevel.baseExpectedForcedMigrations 
-        * housing.forcedMigrationCost
-        * (1 - clan.settlement.ditchQuality);
-}
-
 function statusValue(clan: Clan): number {
     return clan.averagePrestige - clan.settlement!.clans.reduce((acc, c) => 
         acc + c.averagePrestige, 0) / clan.settlement!.clans.length;
-}
-
-function laborValue(clan: Clan): number {
-    return clan.isDitching ? -2 : 0;
 }
 
 export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): number {

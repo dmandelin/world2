@@ -1,7 +1,6 @@
 import { sumFun, chooseWeighted, mapNormalized, maxby } from '../lib/basics';
 import { traitFactor } from '../lib/modelbasics';
 import { Clan } from '../people/people';
-import { housingFloodingValue } from '../people/qol';
 import { Housing, HousingTypes } from '../people/../econ/housing';
 
 export class HousingImitationItem {
@@ -65,7 +64,7 @@ export class HousingDecision {
         // Guess which choice is better.
         for (const housing of Object.values(HousingTypes)) {
             this.guessItems.set(housing, new HousingGuessItem(
-                housing, housing.qol, housingFloodingValue(clan, housing)));
+                housing, housing.qol, 0));
         }
         this.guessed = maxby(
             Array.from(this.guessItems.values()), item => item.qol).housing;
