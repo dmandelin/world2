@@ -43,6 +43,21 @@ Key stuff to think about:
     The chance to save lives will create an appeal for stored food
 -   Also think about shifts to clan-based production and storage
 
+Backlog items:
+
+*   Consumption limit for fishing
+*   Max production for fishing: start with fixed
+*   Make sure learning is proportional to labor experience
+*   Make sure disease load is proportional to farming amounts
+*   Behavior shifts:
+    *   Assume a strong motivation to get consumption up from 0.9 to 1.0.
+    *   In communal production, producing the cereals to make that happen
+        is awarded prestige by the other clans, if they can see.
+    *   For now, that might be enough, as eventually population growth
+        will induce them to scale up. But things will become different
+        with different distribution models, specialization opportunities,
+        and trade opportunities.
+
 ## New base models
 
 -   Demographics

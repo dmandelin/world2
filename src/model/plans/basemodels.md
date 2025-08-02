@@ -213,6 +213,39 @@ Effects and appeal:
 
 ### More farming
 
+Background: This is a complicated subject. For now some notes based on
+earlier research of model-relevant things:
+
+*   Agriculture isn't necessarily more productive per labor hour nor
+    "better" than agriculture. It is:
+    *   More scalable: May have 10-100x the carrying capacity in an area
+    *   More predictable: Some control over when, where, and how much
+    *   (For certain crops such as cereals) More storable: can relatively
+        easily be stored for a long time
+    *   (Generally) Less nutritious: Typically the resulting diet is much
+        less varied and people don't grow as tall or healthy.
+*   In our region, they were probably adopting agriculture from the north
+    rather than gradually developing it from mild tending. So we can skip
+    that sequence and have them farm.
+*   Given the disadvantages, why agriculture? There are several reasons
+    our people might take up and expand agriculture:
+    *   Not getting enough to eat from other sources: agriculture could
+        solve an immediate problem.
+    *   Not enough carbohydrates in local food sources: For health, 
+        performance, and/or taste reasons, people may want to add carbs.
+    *   Food security. 
+        *   Our hunter-gatherers might experience:
+            *   An annual lean season (maybe early spring) where there isn't
+                much to eat and growth, fertility, and healing are suppressed.
+            *   Occasional lean years, with perhaps notable events every 10-30
+                years (we could even tie to major floods) with similar effects
+                but longer through the year.
+            *   A simple model would be to cap consumption derived from
+                foraging at 0.9.
+        *   Thus, they have some incentive to farm and store cereals.
+        *   That doesn't necessarily mean they will, but we have assumed at
+            the start state that most clans are at least a little.
+
 Effects and appeal:
 
 *   Prestige: may have some +prestige as the known way from the north
