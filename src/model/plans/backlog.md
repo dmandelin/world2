@@ -7,7 +7,7 @@
 x   Update ditching labor model
 -   Update housing effects
     x   Prestige and internal solidarity
-    -   Shelter and comfort: +appeal, +births, -deaths
+    x   Shelter and comfort: +appeal, +births, -deaths
     -   Storage: can reserve family storage
     -   Workshops: can expand craft production
 -   Settlement shifting effects
@@ -16,6 +16,7 @@ x   Update ditching labor model
 -   Introduce a way to change the skill basis for different types
         of housing
 -   Show construction labor allocations more clearly in the UI
+-   Show birth and death rate modifiers more clearly in the UI
 
 ## New base models
 

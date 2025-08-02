@@ -83,8 +83,13 @@ export class PopulationChange {
             return;
         }
 
-        // Births. For now, birth rate depends on nutrition.
-        const brFactor = clamp(this.clan.consumption.perCapitaSubsistence(), 0, 2);
+        // Up to 10% increase/decrease in birth/death rates for shelter.
+        // That's for a warm environment and assuming some shelter always.
+        const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
+
+        // Births. For now, birth rate depends on nutrition and shelter.
+        const brFactor = clamp(this.clan.consumption.perCapitaSubsistence(), 0, 2)
+            * shelterModifier;
         const pmbr = brFactor * BASE_BIRTH_RATE;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
@@ -128,9 +133,10 @@ export class PopulationChange {
         // TODO - include more items from QoL here
         // TODO - include some disease load here but maybe just do epidemics
         const subsistence = this.clan.consumption.perCapitaSubsistence();
-        const drFactor = subsistence >= 1
+        const subsistenceDrFactor = subsistence >= 1
                        ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
                        : 1 + clamp((1 - subsistence) / 2, 0, 0.5)
+        const drFactor = subsistenceDrFactor / shelterModifier;
         let [ed, sedr] = [0, 0];
         let deaths = 0;
         for (let i = 0; i < this.clan.slices.length - 1; ++i) {

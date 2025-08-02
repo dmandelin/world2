@@ -4,6 +4,7 @@ export class Housing {
     constructor(
         readonly name: string, 
         readonly description: string,
+        readonly shelter: number,
         readonly basePrestige: number,
         readonly constructionCost: number,
         readonly maintenanceCost: number,
@@ -35,6 +36,7 @@ export const HousingTypes = {
     Huts: new Housing(
         "Huts", 
         "Small, simple mud dwellings, mainly for sleeping.", 
+        1,
         0, 
         0,
         0.02,
@@ -42,6 +44,7 @@ export const HousingTypes = {
     Cottages: new Housing(
         "Cottages", 
         "Small but permanent mud houses with a thatched roof.", 
+        2,
         2, 
         0.15,
         0.05,
@@ -49,6 +52,7 @@ export const HousingTypes = {
     Houses: new Housing(
         "Houses", 
         "Permanent mud houses", 
+        3,
         5, 
         0.5,
         0.05),
