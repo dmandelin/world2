@@ -64,7 +64,7 @@ export class HousingDecision {
         // Guess which choice is better.
         for (const housing of Object.values(HousingTypes)) {
             this.guessItems.set(housing, new HousingGuessItem(
-                housing, housing.qol, 0));
+                housing, housing.basePrestige, 0));
         }
         this.guessed = maxby(
             Array.from(this.guessItems.values()), item => item.qol).housing;
@@ -109,6 +109,6 @@ export class HousingDecision {
     }
 
     get guessedQoL(): number {
-        return this.guessed.qol;
+        return this.guessed.basePrestige;
     }
 }

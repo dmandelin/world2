@@ -69,7 +69,7 @@ export class OwnPrestigeCalc {
         this.itemMap.set('Relationship', relItem);
 
         const averageSeniority = averageFun(clan.settlement!.clans, c => c.seniority);
-        const averageHousing = averageFun(clan.settlement!.clans, c => c.housing.qol);
+        const averageHousing = averageFun(clan.settlement!.clans, c => c.housing.basePrestige);
         const averageSize = averageFun(clan.settlement!.clans, c => c.population);
         const averageStrength = averageFun(clan.settlement!.clans, c => c.strength);
         const averageIntelligence = averageFun(clan.settlement!.clans, c => c.intelligence);
@@ -77,7 +77,10 @@ export class OwnPrestigeCalc {
         const averageEffectiveRitualSkill = averageFun(clan.settlement!.clans, c => c.ritualEffectiveness);
         for (const item of [
             new DiffBasedPrestigeCalcItem('Seniority', 3, averageSeniority, clan.seniority),
-            new DiffBasedPrestigeCalcItem('Housing', 1, averageHousing, other.housing.qol),
+            new DiffBasedPrestigeCalcItem('Housing', 1, averageHousing, 
+                // A clan's own housing has an extra effect of increasing internal solidarity
+                // since people will spend more time within the clan.
+                other === clan ? 2 * clan.housing.basePrestige : other.housing.basePrestige),
             new RatioBasedPrestigeCalcItem('Size', 5, averageSize, other.population),
             new DiffBasedPrestigeCalcItem('Strength', 0.1, averageStrength, other.strength),
             new DiffBasedPrestigeCalcItem('Intelligence', 0.1, averageIntelligence, other.intelligence),

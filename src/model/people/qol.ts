@@ -51,7 +51,7 @@ export class QolCalc {
             new QolItem('Village rituals', this.ritualAppeal, 0),
             new QolItem('Goods', qolFromPerCapitaGoods(this.satisfaction), 0, this.satisfactionItems),
             new QolItem('Food variety', foodVarietyQolModifier(clan), 1),
-            new QolItem('Housing', clan.housing.qol, 0),
+            new QolItem('Housing', clan.housing.basePrestige, 0),
             new QolItem('Flooding', clan.settlement.floodLevel.qolModifier
                 * (1 - clan.settlement.ditchQuality), 0),
             new QolItem('Status', statusValue(clan), 0),
