@@ -9,7 +9,7 @@ import type { QolCalc } from "../model/people/qol";
 import type { Rites } from "../model/rites";
 import type { Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/records/timeline";
-import { type TradeGood } from "../model/trade";
+import { TradeGood, TradeGoods } from "../model/trade";
 import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
 import type { MigrationCalc } from "../model/people/migration";
@@ -50,11 +50,13 @@ export class ProductionItemDTO {
         readonly good: TradeGood,
         readonly workerFraction: number,
         readonly workers: number,
-        readonly amount: number,
+        readonly amount: number|undefined,
     ) {}
 
-    get tfp(): number {
-        return this.amount / this.workers / ProductionNode.outputPerWorker;
+    get tfp(): number|undefined {
+        return this.amount !== undefined
+            ? this.amount / this.workers / ProductionNode.outputPerWorker
+            : undefined;
     }
 }
 
@@ -69,6 +71,14 @@ class ClanProductionDTO {
                 this.goods.push(item);
             }
         }
+
+        const housingWf = clan.laborAllocation.allocs.get(SkillDefs.Construction) ?? 0;
+        this.goods.push(new ProductionItemDTO(
+            TradeGoods.Housing, housingWf, housingWf * clan.population, undefined));
+
+        const ditchingWf = clan.laborAllocation.allocs.get(SkillDefs.Irrigation) ?? 0;
+        this.goods.push(new ProductionItemDTO(
+            TradeGoods.Ditching, ditchingWf, ditchingWf * clan.population, undefined));
     }
 }
 
@@ -174,16 +184,25 @@ class SettlementProductionDTO {
                     good, pn.workerFraction(), pn.workers(), amount);
                 const existingItem = this.goods.get(good);
                 if (existingItem) {
+                    const newAmount = existingItem.amount !== undefined && item.amount !== undefined
+                        ? existingItem.amount + item.amount
+                        : undefined;
                     this.goods.set(good, new ProductionItemDTO(
                         good, 
                         existingItem.workerFraction + item.workerFraction,
                         existingItem.workers + item.workers, 
-                        existingItem.amount + item.amount));
+                        newAmount));
                 } else {
                     this.goods.set(good, item);
                 }
             }
         }
+
+        // Add items for construction, because the table code keys off of this.
+        this.goods.set(TradeGoods.Housing, new ProductionItemDTO(
+            TradeGoods.Housing, 0, 0, undefined));
+        this.goods.set(TradeGoods.Ditching, new ProductionItemDTO(
+            TradeGoods.Ditching, 0, 0, undefined));
     }
 }
 

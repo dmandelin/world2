@@ -17,6 +17,10 @@ export const TradeGoods = {
     ShellBeads: new TradeGood('Shell Beads', 10),
 
     ClayFigurines: new TradeGood('Clay Figurines', 1),
+
+    // Not actual trade goods but we need these as products for now.
+    Housing: new TradeGood('Housing', 1),
+    Ditching: new TradeGood('Ditching', 1),
 }
 
 export interface TradePartner {

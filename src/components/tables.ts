@@ -60,8 +60,8 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
                 row.push(
                     pct(citem.workerFraction),
                     citem.workers.toFixed(), 
-                    citem.tfp.toFixed(2),
-                    citem.amount.toFixed(),               
+                    citem.tfp !== undefined ? citem.tfp.toFixed(2) : '',
+                    citem.amount !== undefined ? citem.amount.toFixed() : '',               
                 );
             } else {
                 row.push('', '', '', '');
@@ -72,8 +72,8 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
         row.push(
             pct(item.workerFraction),
             item.workers.toFixed(), 
-            item.tfp.toFixed(2),
-            item.amount.toFixed(),               
+            item.tfp !== undefined ? item.tfp.toFixed(2) : '',
+            item.amount !== undefined ? item.amount.toFixed() : '',               
         );
 
         return row;

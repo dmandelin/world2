@@ -5,7 +5,18 @@
 -   Bring back nutritional balance between cereals and fish as having
     demographic and appeal effects
 
+-   Clean up production table code, especially for construction items
+
 ## Housing
+
+-   Show birth and death rate modifiers more clearly in the UI
+-   Visualize move history and settlement permanence in the UI
+-   Settlement shifting effects
+    -   Better farming production and birth rate for staying still
+
+Remaining items can go along with food production shifts, because
+people won't want bigger houses until they're better fed, for the
+most part.
 
 x   Update ditching labor model
 -   Update housing effects
@@ -13,17 +24,24 @@ x   Update ditching labor model
     x   Shelter and comfort: +appeal, +births, -deaths
     -   Storage: can reserve family storage
     -   Workshops: can expand craft production
--   Settlement shifting effects
-    -   Better farming production and birth rate for staying still
 -   Update housing decisions
     x   Switch to appeal model
     -   Give people a way to learn which is better
     -   Make people more likely to upgrade if they have enough food
 -   Introduce a way to change the skill basis for different types
         of housing
--   Show construction labor allocations more clearly in the UI
--   Show birth and death rate modifiers more clearly in the UI
--   Visualize move history and settlement permanence in the UI
+x   Show construction labor allocations more clearly in the UI
+-   Idiosyncratic appeal
+
+## Food production shifts
+
+Key stuff to think about:
+
+-   Variable yield per production type, so doing a bit of both helps
+-   Lean times: with baseline foraging, there will sometimes be lean times
+    that are particularly hard, or lean times will impact weaker clan members.
+    The chance to save lives will create an appeal for stored food
+-   Also think about shifts to clan-based production and storage
 
 ## New base models
 
