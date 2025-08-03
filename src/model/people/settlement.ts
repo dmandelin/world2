@@ -7,8 +7,8 @@ import type { SettlementCluster } from "./cluster";
 import { DitchMaintenanceCalc } from "../infrastructure";
 import { DistributionNode } from "../econ/distributionnode";
 import { ProductionNode } from "../econ/productionnode";
-import { SkillDefs } from "./skills";
-import type { FloodLevel } from "../flood";
+import { SkillDef, SkillDefs } from "./skills";
+import type { FloodLevel } from "../environment/flood";
 import { poisson } from "../lib/distributions";
 
 class DaughterSettlementPlacer {
@@ -96,6 +96,11 @@ export class Settlement {
     get population() {
         return this.clans.reduce((acc, clan) => acc + clan.population, 0);
     }
+
+    productionNode(skillDef: SkillDef): ProductionNode {
+        return this.productionNodes.find(pn => pn.skillDef === skillDef)!;
+    }
+
 
     get rites(): Rites[] {
         return [this.clans.rites, ...this.clans.map(clan => clan.rites)];

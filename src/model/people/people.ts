@@ -15,7 +15,7 @@ import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
 import { ProductivityCalc } from "./productivity";
 import { Traits } from "./traits";
 import { HousingDecision } from "../decisions/housingdecision";
-import { type FloodLevel, FloodLevels } from "../flood";
+import { type FloodLevel, FloodLevels } from "../environment/flood";
 import { LaborAllocation } from "./labor";
 import { AlignmentCalc } from "./alignment";
 import { TradeGoods } from "../trade";

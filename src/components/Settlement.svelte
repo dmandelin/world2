@@ -2,6 +2,7 @@
     import SettlementConsumption from "./SettlementConsumption.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
     import SettlementPeople from "./SettlementPeople.svelte";
+    import SettlementHealth from "./SettlementHealth.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRites from "./SettlementRites.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
@@ -11,6 +12,7 @@
 
     const tabs = [
         { label: "People", snippet: peopleTab },
+        { label: "Health", snippet: healthTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Quality of Life", snippet: consumptionTab },
         { label: "Rites", snippet: ritesTab },
@@ -21,6 +23,10 @@
 
 {#snippet peopleTab()}
     <SettlementPeople settlement={settlement} />
+{/snippet}
+
+{#snippet healthTab()}
+    <SettlementHealth settlement={settlement} />
 {/snippet}
 
 {#snippet economyTab()}

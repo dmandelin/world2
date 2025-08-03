@@ -1,5 +1,5 @@
-import { poisson } from "./lib/distributions";
-import type { Settlement } from "./people/settlement";
+import { poisson } from "../lib/distributions";
+import type { Settlement } from "../people/settlement";
 
 export class FloodLevel {
     constructor(

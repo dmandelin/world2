@@ -1,3 +1,4 @@
+import { DiseaseLoadCalc } from "../environment/pathogens";
 import { clamp, sum } from "../lib/basics";
 import { spct } from "../lib/format";
 import type { Clan } from "./people";
@@ -14,20 +15,6 @@ const BASE_BIRTH_RATE = 4.5;
 
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.25, 0.35, 0.5, 1.0];
-
-export class DiseaseLoadCalc {
-    readonly zoonotic: number;
-    readonly endemic: number;
-
-    readonly value: number;
-
-    constructor(readonly clan: Clan) {
-        // TODO - fill out model
-        this.zoonotic = 0.1;
-        this.endemic = Math.log10(clan.world.totalPopulation) * 0.05;
-        this.value = this.zoonotic + this.endemic;
-    }
-}
 
 export class PopulationChangeItem {
     constructor(
@@ -111,7 +98,7 @@ export class PopulationChange {
 
         // Childhood diseases: a terrible source of tragedy through prehistory
         // and prehistory until effective infection control in modern times.
-        this.diseaseLoad = new DiseaseLoadCalc(this.clan);
+        this.diseaseLoad = this.clan.settlement.cluster.diseaseLoad;
         // Fold in a term for other hazards.
         const mortality = this.diseaseLoad.value + 0.2;
         const diseaseDeaths = Math.round(mortality * this.births);

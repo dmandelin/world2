@@ -10,7 +10,7 @@ import { Year } from "./records/year";
 import { Note, type NoteTaker } from "./records/notifications";
 import { SettlementCluster } from "./people/cluster";
 import { NewSettlementSupplier } from "./people/migration";
-import { randomFloodLevel } from "./flood";
+import { randomFloodLevel } from "./environment/flood";
 import { createTrends } from "./records/trends";
 
 class SettlementsBuilder {
@@ -100,6 +100,11 @@ export class World implements NoteTaker {
         // variables but don't apply the effects that mutate clans.
         this.plan(true);
         this.advance(true);
+        for (const cluster of this.clusters) {
+            // This depends on labor actually allocated to production nodes
+            // so we have to run it after the first production call.
+            cluster.updateDisease();
+        }
 
         // Capture this state as the first point in the timeline.
         this.timeline.add(this.year, new TimePoint(this));
@@ -172,6 +177,7 @@ export class World implements NoteTaker {
         const floodLevel = randomFloodLevel();
         for (const cluster of this.clusters) {
             cluster.updateFloodLevel(floodLevel);
+            cluster.updateDisease();
         }
 
         // Main advance phase.

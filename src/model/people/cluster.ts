@@ -3,15 +3,19 @@ import type { Clan } from "./people";
 import type { NoteTaker } from "../records/notifications";
 import { Clans } from "./clans";
 import { Settlement } from "./settlement";
-import { FloodLevels, type FloodLevel } from "../flood";
+import { FloodLevels, type FloodLevel } from "../environment/flood";
+import { DiseaseLoadCalc } from "../environment/pathogens";
 
 export class SettlementCluster {
     readonly settlements: Settlement[];
     private floodLevel_: FloodLevel = FloodLevels.Normal;
+    diseaseLoad: DiseaseLoadCalc;
 
     constructor(readonly noteTaker: NoteTaker, readonly mother: Settlement) {
         this.settlements = [mother];
         mother.setCluster(this);
+        
+        this.diseaseLoad = new DiseaseLoadCalc(this);
     }
 
     get name(): string {
@@ -45,6 +49,10 @@ export class SettlementCluster {
     updateFloodLevel(level: FloodLevel): void {
         this.floodLevel_ = level;
         for (const s of this.settlements) s.updateForFloodLevel(level);
+    }
+
+    updateDisease(): void {
+        this.diseaseLoad = new DiseaseLoadCalc(this);
     }
 
     advance(noEffect: boolean = false): void {

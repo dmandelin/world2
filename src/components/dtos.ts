@@ -16,12 +16,13 @@ import type { MigrationCalc } from "../model/people/migration";
 import { type ClanSkills, type SkillDef, SkillDefs } from "../model/people/skills";
 import type { ProductivityCalc } from "../model/people/productivity";
 import type { HousingDecision } from "../model/decisions/housingdecision";
-import type { FloodLevel } from "../model/flood";
+import type { FloodLevel } from "../model/environment/flood";
 import { ProductionNode } from "../model/econ/productionnode";
 import type { LaborAllocation } from "../model/people/labor";
 import type { AlignmentCalc } from "../model/people/alignment";
 import type { TrendDTO } from "../model/records/trends";
 import type { Housing } from "../model/econ/housing";
+import type { DiseaseLoadCalc } from "../model/environment/pathogens";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -255,12 +256,14 @@ export class ClusterDTO {
     readonly settlements: SettlementDTO[];
     readonly population: number;
     readonly averageQoL: number;
+    readonly diseaseLoad: DiseaseLoadCalc;
 
     constructor(private readonly cluster: SettlementCluster, readonly world: WorldDTO) {
         this.name = cluster.name;
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this, world));
         this.population = cluster.population;
         this.averageQoL = cluster.qol;
+        this.diseaseLoad = cluster.diseaseLoad;
     }
 
     get lastPopulationChange() {

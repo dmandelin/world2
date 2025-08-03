@@ -11,14 +11,17 @@ export class SkillDef {
         readonly icon: string,
         readonly outputGood: TradeGood|undefined,
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
+        readonly diseaseLoadFactor: number = 0,
     ) {}
 }
 
 export const SkillDefs = {
     Fishing: new SkillDef('Fishing', 'skill-fishing-256.png', TradeGoods.Fish,
-        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
+        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
+        1),
     Agriculture: new SkillDef('Agriculture', 'skill-farming-256.png', TradeGoods.Cereals,
-        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
+        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
+        2),
     Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png', undefined,
         new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
     Construction: new SkillDef('Construction', 'skill-construction-256.png', undefined,

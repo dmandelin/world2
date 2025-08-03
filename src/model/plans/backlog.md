@@ -57,8 +57,11 @@ Backlog items:
 
 x   Consumption limit for fishing
 x   Max production for fishing: start with fixed
-*   Make sure learning is proportional to labor experience
-*   Make sure disease load is proportional to farming amounts
+x   Make sure learning is proportional to labor experience
+x   Make sure disease load is proportional to farming amounts
+    x   UI for disease load
+    x   Include farming activity in disease load
+    x   Disease load from clans boosts each other
 *   Behavior shifts:
     *   Assume a strong motivation to get consumption up from 0.9 to 1.0.
     *   In communal production, producing the cereals to make that happen
