@@ -7,6 +7,17 @@
 
 -   Clean up production table code, especially for construction items
 
+## Recent issues
+
+-   Growing settlements max out foraging and then don't reallocate labor.
+    -   It may not be completely obvious to them that there's overforaging,
+        but they might be aware, especially if massively overforaged.
+    -   We need to think about what people could see and understand in
+        this case and how they'll learn to change.
+
+-   It's slowly seeming more important to have a real happiness metric.
+    Will need to think about how to get started on that.
+
 ## Bringing it to life
 
 Updating for the new models is going reasonably well, but the updated
