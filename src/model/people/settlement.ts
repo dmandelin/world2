@@ -76,8 +76,8 @@ export class Settlement {
 
         this.distributionNode = new DistributionNode(this);
         this.productionNodes.push(
-            new ProductionNode('Farms', this, SkillDefs.Agriculture, this.distributionNode),
-            new ProductionNode('Fisheries', this, SkillDefs.Fishing, this.distributionNode),
+            new ProductionNode('Farms', this, 40, SkillDefs.Agriculture, this.distributionNode),
+            new ProductionNode('Fisheries', this, 40, SkillDefs.Fishing, this.distributionNode),
         );
     }
 

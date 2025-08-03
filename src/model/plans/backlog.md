@@ -56,7 +56,7 @@ Key stuff to think about:
 Backlog items:
 
 x   Consumption limit for fishing
-*   Max production for fishing: start with fixed
+x   Max production for fishing: start with fixed
 *   Make sure learning is proportional to labor experience
 *   Make sure disease load is proportional to farming amounts
 *   Behavior shifts:

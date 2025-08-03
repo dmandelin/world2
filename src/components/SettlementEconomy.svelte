@@ -56,13 +56,14 @@
             <tr>
                 <th></th>
                 {#each prodTable.header as cell}
-                    <th colspan="4">{cell}</th>
+                    <th colspan="5">{cell}</th>
                 {/each}
             </tr>
             <tr>
                 <th></th>
                 {#each prodTable.header as cell}
-                    <th class='lb'>L%</th>
+                    <th class='lb'>K</th>
+                    <th>L%</th>
                     <th>L</th>
                     <th>ℙ</th>
                     <th>Y</th>
@@ -73,7 +74,7 @@
             {#each prodTable.rows as row}
             <tr>
                 {#each row as cell, index}
-                <td class={(index - 1) % 4 === 0 ? 'lb' : ''}>
+                <td class={(index - 1) % 5 === 0 ? 'lb' : ''}>
                     {cell}
                 </td>
                 {/each}

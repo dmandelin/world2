@@ -58,18 +58,20 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
             const citem: ProductionItemDTO|undefined = clan.production.goods.find(g => g.good === item.good);
             if (citem) {
                 row.push(
+                    citem.land === Infinity ? '' : citem.land.toFixed(),
                     pct(citem.workerFraction),
                     citem.workers.toFixed(), 
                     citem.tfp !== undefined ? citem.tfp.toFixed(2) : '',
                     citem.amount !== undefined ? citem.amount.toFixed() : '',               
                 );
             } else {
-                row.push('', '', '', '');
+                row.push('', '', '', '', '');
             }
         }
 
         // Settlement totals
         row.push(
+            item.land === Infinity ? '' : item.land.toFixed(),
             pct(item.workerFraction),
             item.workers.toFixed(), 
             item.tfp !== undefined ? item.tfp.toFixed(2) : '',
@@ -82,7 +84,7 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
     const header = [...[...settlement.clans].map(c => c.name), 'Total'];
     const subheader = ['Good', ...[...settlement.clans]
         .map(c => c.name)
-        .flatMap(name => [name, 'L%', 'L', 'P', 'Y'])];
+        .flatMap(name => [name, 'K', 'L%', 'L', 'P', 'Y'])];
 
     return { header, subheader, rows}
 }

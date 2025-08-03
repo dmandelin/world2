@@ -2,13 +2,15 @@ import { Clan } from '../people/people';
 import { Settlement } from '../people/settlement';
 import { TradeGood } from '../trade';
 import type { DistributionNode } from './distributionnode';
-import type { SkillDef } from '../people/skills';
+import { type SkillDef } from '../people/skills';
 import { sumFun } from '../lib/basics';
 
 export class ProductionNode {
     workers_ = new Map<Clan, number>();
     workerFractions_ = new Map<Clan, number>();
     output_ = new Map<TradeGood, Map<Clan, number>>();
+
+    land_ = new Map<Clan, number>();
 
     static readonly outputPerWorker = 3;
     static readonly populationPerWorker = 3;
@@ -19,6 +21,7 @@ export class ProductionNode {
     constructor(
         readonly name: string,
         readonly settlement: Settlement,
+        readonly totalLand: number,
         readonly skillDef: SkillDef,
         readonly sink: DistributionNode,
     ) {}
@@ -32,6 +35,10 @@ export class ProductionNode {
              ? this.workerFractions_.get(clan)!
              : sumFun([...this.workerFractions_.entries()], ([c, f]) =>
                 f * c.population / this.settlement.population);
+    }
+
+    land(clan?: Clan): number {
+        return clan ? this.land_.get(clan)! : this.totalLand;
     }
 
     output(clan?: Clan): Map<TradeGood, number> {
@@ -53,6 +60,7 @@ export class ProductionNode {
     reset(): void {
         this.workerFractions_.clear();
         this.workers_.clear();
+        this.land_.clear();
         this.output_.clear();
         this.totalWorkers_ = 0;
         this.totalOutput_.clear();
@@ -61,7 +69,6 @@ export class ProductionNode {
     acceptFrom(settlement: Settlement): void {
         for (const clan of settlement.clans) {
             const laborFraction = clan.laborAllocation.allocs.get(this.skillDef) ?? 0;
-            console.log("YYY node", clan.name, this.skillDef.name, laborFraction)
             const workers = laborFraction * clan.population / ProductionNode.populationPerWorker;
             this.accept(clan, laborFraction, workers);
         }
@@ -77,11 +84,16 @@ export class ProductionNode {
     }
 
     produce(): void {
-        // Assumptions:
-        // - Output is linear in labor at this scale
+        // Assume output is linear in workers and land at this scale, with both
+        // required.
         for (const [clan, workers] of this.workers_.entries()) {
+            const land = this.totalLand * this.workers(clan) / this.totalWorkers_;
+            this.land_.set(clan, land);
+
+            const inputs = Math.min(land, workers);
             const tfp = clan.productivity(this.skillDef);
-            const output = Math.round(ProductionNode.outputPerWorker * workers * tfp);
+            let output = Math.round(ProductionNode.outputPerWorker * inputs * tfp);
+
             if (output > 0) {
                 this.totalOutput_.set(this.skillDef.outputGood!, 
                     (this.totalOutput_.get(this.skillDef.outputGood!) ?? 0) + output);
