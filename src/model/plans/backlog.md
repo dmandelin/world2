@@ -7,6 +7,16 @@
 
 -   Clean up production table code, especially for construction items
 
+## Bringing it to life
+
+Updating for the new models is going reasonably well, but the updated
+version isn't coming to life yet. We need to think about what that
+means, but starting points could be:
+
+-   More clearly showing new things arriving and trends building
+-   Narrative components, possibly AI-based
+-   More graphics and visuals
+
 ## Housing
 
 -   Show birth and death rate modifiers more clearly in the UI
@@ -45,7 +55,7 @@ Key stuff to think about:
 
 Backlog items:
 
-*   Consumption limit for fishing
+x   Consumption limit for fishing
 *   Max production for fishing: start with fixed
 *   Make sure learning is proportional to labor experience
 *   Make sure disease load is proportional to farming amounts

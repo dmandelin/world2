@@ -135,7 +135,15 @@ export class ConsumptionCalc {
         if (!this.ledger_.has(good)) this.ledger_.set(good, new Map<string, number>());
         const sourceMap = this.ledger_.get(good)!;
         const prevAmount = sourceMap.get(source) ?? 0;
-        sourceMap.set(source, prevAmount + amount);
+        let newAmount = prevAmount + amount;
+
+        // Seasonal availability varies and forage is hard to store, so
+        // there will always be some shortfall if this is the only good.
+        if (good === TradeGoods.Fish) {
+            newAmount = Math.min(newAmount, this.population * 0.9)
+        }
+
+        sourceMap.set(source, newAmount);
     }
     
     splitOff(newClan: Clan): ConsumptionCalc {
