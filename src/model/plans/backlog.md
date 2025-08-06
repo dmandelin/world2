@@ -15,6 +15,9 @@
     -   We need to think about what people could see and understand in
         this case and how they'll learn to change.
 
+-   Farming skill doesn't grow that high, so clans have a hard time
+    getting their productivity up.
+
 -   It's slowly seeming more important to have a real happiness metric.
     Will need to think about how to get started on that.
 
