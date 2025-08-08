@@ -1,5 +1,16 @@
 # Next steps
 
+## Next items in latest plans
+
+-   Settlement permanance
+    -   Calculate moves/move frequency
+    -   Move effects
+    -   Update tell height
+    -   Options for usage level
+    -   Display usage levels on map and panels
+    -   More prominent notifications for key firsts
+-   Further sub-items
+
 ## Bug fixes
 
 -   Bring back nutritional balance between cereals and fish as having
