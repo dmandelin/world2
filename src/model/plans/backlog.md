@@ -5,17 +5,17 @@
 -   Settlement permanance
     -   Calculate moves/move frequency
         x   Show in UI
-        -   Update ditching effect calculations
+        x   Update ditching effect calculations
             x   Update main move model
             x   Agricultural productivity bonus
             x   Make ditching skill actually improve
-            -   Update ditch quality so they can get to 100% in reasonable time
+            x   Update ditch quality so they can get to 100% in reasonable time
+    -   Update tell height
     -   Move effects
         -   Birth rate decrease, smaller death rate increase
         -   Productivity decrease
         -   Appeal/happiness effects
         -   Get clear sequencing in the model
-    -   Update tell height
     -   Options for usage level
     -   Display usage levels on map and panels
     -   More prominent notifications for key firsts

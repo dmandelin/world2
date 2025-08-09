@@ -3,6 +3,7 @@ import type { Settlement } from './people/settlement';
 import { SkillDefs } from './people/skills';
 import { pct, spct } from './lib/format';
 import { clamp } from './lib/basics';
+import { eloSuccessProbability } from './lib/modelbasics';
 
 export class MaintenanceCalcItem {
     constructor(
@@ -23,16 +24,13 @@ export class DitchMaintenanceCalc {
             .filter(c => c.isDitching)
             .map(c => {
                 const skill = c.skills.v(SkillDefs.Irrigation);
-                const failureExponent = (75 - skill) / 25;
-                const failureFactor = 2 ** failureExponent;
-                const failureProbability = clamp(0.1 * failureFactor, 0.01, 1.0);
               
                 return new MaintenanceCalcItem(
                     c.name,
                     c.population,
                     skill,
                     c.productivity(SkillDefs.Irrigation),
-                    (1 - failureProbability),
+                    eloSuccessProbability(skill, 30),
                 );
             });
 

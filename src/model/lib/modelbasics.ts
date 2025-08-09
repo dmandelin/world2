@@ -8,6 +8,10 @@ export function traitFactor(trait: number, a = 1.3) {
     return Math.pow(a, trait - 50);
 }
 
+export function eloSuccessProbability(eloScore: number, opponentEloScore: number, k: number = 15): number {
+    return 1 / (1 + Math.pow(10, (opponentEloScore - eloScore) / k));
+}
+
 export class WeightedValue<T extends object> {
     constructor(
         readonly label: T,
