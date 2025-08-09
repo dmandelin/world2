@@ -20,11 +20,11 @@
     }
 
     h1 {
-        margin: 0 0 1rem 0;
+        margin: 0;
     }
 
     h4 {
-        margin: 0 0;
+        margin: 0;
     }
 
     img {
@@ -69,6 +69,12 @@
                 <img src="stat-qol-256.png" alt="QoL" width="40" height="40"
                      style="padding-bottom: 8px;"
                 />{signed(selectedSettlement.averageQoL, 0)}</h1>
+            <div>
+                {#if selectedSettlement.forcedMigrations}
+                  Shifting about every {(20/selectedSettlement.forcedMigrations).toFixed()} years ({selectedSettlement.forcedMigrations}/20y)
+                {/if}
+            </div>
+
             <ButtonPanel config={{
         buttons: settlement.cluster.settlements.map((s: SettlementDTO) => 
         ({ label: `${s.name}<br>${s.population}`, data: s })),

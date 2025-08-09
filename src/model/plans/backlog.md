@@ -4,7 +4,12 @@
 
 -   Settlement permanance
     -   Calculate moves/move frequency
+        x   Show in UI
+        -   Update ditching effect calculations
     -   Move effects
+        -   Birth rate decrease, smaller death rate increase
+        -   Productivity decrease
+        -   Get clear sequencing in the model
     -   Update tell height
     -   Options for usage level
     -   Display usage levels on map and panels

@@ -223,6 +223,7 @@ export class SettlementDTO {
     readonly ditchQuality: number;
     readonly ditchTooltip: string[][];
     readonly floodLevel: FloodLevel;
+    readonly forcedMigrations: number;
 
     readonly condorcet: CondorcetCalc;
 
@@ -244,6 +245,7 @@ export class SettlementDTO {
         this.ditchQuality = settlement.ditchQuality;
         this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
         this.floodLevel = settlement.floodLevel;
+        this.forcedMigrations = settlement.forcedMigrations;
 
         this.rites = settlement.clans.rites.clone();
             
