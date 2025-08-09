@@ -10,7 +10,9 @@
             x   Agricultural productivity bonus
             x   Make ditching skill actually improve
             x   Update ditch quality so they can get to 100% in reasonable time
-    -   Update tell height
+    -   Update stationarity indicators
+        -   Change shifting every N to a moving average
+        -   Update tell height
     -   Move effects
         -   Birth rate decrease, smaller death rate increase
         -   Productivity decrease
