@@ -1,6 +1,6 @@
 import { Clan } from '../people/people';
 import { SkillDef, SkillDefs } from './skills';
-import { spct } from '../lib/format';
+import { pct, spct } from '../lib/format';
 import { product } from '../lib/basics';
 import { scaleFactorEffect } from '../lib/modelbasics';
 
@@ -46,15 +46,21 @@ export class ProductivityCalc {
         });
 
         if (skillDef === SkillDefs.Agriculture) {
+            const ditchQuality = clan.settlement.ditchQuality;
+            const baseProductivity = clan.settlement.floodLevel.baseAgriculturalProductivity;
+            const maxProductivity = clan.settlement.floodLevel.maxAgriculturalProductivity;
+            const productivity = (1-ditchQuality)*baseProductivity + ditchQuality*maxProductivity;
+            const differentialProductivity = productivity / baseProductivity;
+
             this.items.push(new SimpleProductivityCalcItem(
-                'Flood levels',
+                'Flooding',
                 clan.settlement.floodLevel.name,
-                scaleFactorEffect(clan.settlement.floodLevel.agricultureBonus, 1-clan.settlement.ditchQuality),
+                baseProductivity,
             ));
             this.items.push(new SimpleProductivityCalcItem(
-                'Flood damage',
-                clan.settlement.floodLevel.name,
-                scaleFactorEffect(clan.settlement.floodLevel.agricultureLoss, 1-clan.settlement.ditchQuality),
+                'Flood control',
+                pct(ditchQuality),
+                differentialProductivity,
             ));
         }
     }

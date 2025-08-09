@@ -7,7 +7,7 @@
         x   Show in UI
         -   Update ditching effect calculations
             x   Update main move model
-            -   Agricultural productivity bonus
+            x   Agricultural productivity bonus
             -   Make ditching skill actually improve
     -   Move effects
         -   Birth rate decrease, smaller death rate increase
