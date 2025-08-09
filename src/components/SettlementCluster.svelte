@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { signed } from "../model/lib/format";
+    import { formatTellHeight, signed } from "../model/lib/format";
     import ButtonPanel from "./ButtonPanel.svelte";
     import Settlement from "./Settlement.svelte";
     import { SettlementDTO } from "./dtos";
@@ -74,7 +74,7 @@
                 {#if selectedSettlement.forcedMigrations}
                     Shifting about every {(20/selectedSettlement.forcedMigrations).toFixed()} years ({selectedSettlement.forcedMigrations}/20y)
                 {:else}
-                    Not shifting
+                    {formatTellHeight(selectedSettlement.tellHeightInMeters)}
                 {/if}
             </div>
 

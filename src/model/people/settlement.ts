@@ -43,6 +43,8 @@ class DaughterSettlementPlacer {
 export class Settlement {
     private cluster_: SettlementCluster|undefined;
 
+    private tellHeightInMeters_: number = 0;
+
     readonly productionNodes: ProductionNode[] = [];
     readonly distributionNode: DistributionNode;
 
@@ -88,6 +90,10 @@ export class Settlement {
 
     setCluster(cluster: SettlementCluster) {
         this.cluster_ = cluster;
+    }
+
+    get tellHeightInMeters() {
+        return this.tellHeightInMeters_;
     }
 
     get abandoned() {
@@ -178,6 +184,9 @@ export class Settlement {
             // Population effects.
             this.clans.marry();
             for (const clan of this.clans) clan.advancePopulation();
+
+            // Tell height.
+            this.growTell(sizeBefore);
         }
 
         this.lastSizeChange_ = this.population - sizeBefore;
@@ -234,5 +243,24 @@ export class Settlement {
         for (const clan of this.clans) {
             clan.consume();
         }
+    }
+
+    growTell(previousPopulation: number) {
+        // If the settlement shifts, there would be no tell at the new
+        // location, but substantial tells would still be there on the
+        // land and probably resettled at some point. As a simplification,
+        // substantial tells will persist.
+        if (this.forcedMigrations > 0 && this.tellHeightInMeters < 0.5) {
+            this.tellHeightInMeters_ = 0;
+            return;
+        }
+
+        // If population grew, scale down.
+        if (this.population > previousPopulation) {
+            this.tellHeightInMeters_ = this.tellHeightInMeters_ * previousPopulation / this.population;
+        }
+
+        // 2cm per turn (1m/millennium)
+        this.tellHeightInMeters_ += 0.001 * this.world.yearsPerTurn;
     }
 }

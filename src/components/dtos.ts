@@ -211,6 +211,7 @@ class SettlementProductionDTO {
 
 export class SettlementDTO {
     readonly name: string;
+    readonly tellHeightInMeters: number;
     readonly population: number;
     readonly averageQoL: number;
     readonly lastSizeChange: number;
@@ -235,6 +236,7 @@ export class SettlementDTO {
             clanDTO(clan, world)), clan => -clan.averagePrestige);
 
         this.name = settlement.name;
+        this.tellHeightInMeters = settlement.tellHeightInMeters;
         this.population = settlement.population;
         this.averageQoL = settlement.averageQoL;
         this.lastSizeChange = settlement.lastSizeChange;
