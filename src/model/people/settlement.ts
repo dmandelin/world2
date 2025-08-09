@@ -57,6 +57,7 @@ export class Settlement {
     maintenanceCalc: DitchMaintenanceCalc|undefined;
 
     private forcedMigrations_ = 0;
+    private preventedForcedMigrations_ = 0;
     
     constructor(
         readonly world: World,
@@ -124,10 +125,22 @@ export class Settlement {
         return this.forcedMigrations_;
     }
 
+    get preventedForcedMigrations(): number {
+        return this.preventedForcedMigrations_;
+    }
+
     updateForFloodLevel(level: FloodLevel): void {
-        const efm = level.baseExpectedForcedMigrations * (1 - this.ditchQuality)
-            + level.majorEventForcedMigrations;
-        this.forcedMigrations_ = poisson(efm)
+        this.forcedMigrations_ = level.majorEventForcedMigrations;
+        this.preventedForcedMigrations_ = 0;
+
+        const potentialMigrations = poisson(level.baseExpectedForcedMigrations);
+        for (let i = 0; i < potentialMigrations; ++i) {
+            if (Math.random() >= this.ditchQuality) {
+                ++this.forcedMigrations_;
+            } else {
+                ++this.preventedForcedMigrations_;
+            }
+        }
     }
 
     advance(noEffect: boolean = false) {

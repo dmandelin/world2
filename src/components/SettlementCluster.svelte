@@ -45,6 +45,7 @@
                 <Tooltip>
                     {#if selectedSettlement.ditchingLevel}
                         Ditch: {pct(selectedSettlement.ditchQuality)}
+                        (holding {selectedSettlement.preventedForcedMigrations}x)
                     {:else}
                         No ditch
                     {/if}
@@ -71,7 +72,9 @@
                 />{signed(selectedSettlement.averageQoL, 0)}</h1>
             <div>
                 {#if selectedSettlement.forcedMigrations}
-                  Shifting about every {(20/selectedSettlement.forcedMigrations).toFixed()} years ({selectedSettlement.forcedMigrations}/20y)
+                    Shifting about every {(20/selectedSettlement.forcedMigrations).toFixed()} years ({selectedSettlement.forcedMigrations}/20y)
+                {:else}
+                    Not shifting
                 {/if}
             </div>
 
