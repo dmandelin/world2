@@ -5,6 +5,18 @@ import { absmin, clamp, sumFun } from '../lib/basics';
 import { normal } from '../lib/distributions';
 import { pct } from '../lib/format';
 
+export class ImitationTargetItem {
+    weight: number;
+
+    constructor(
+        readonly label: string,
+        readonly trait: number,
+        readonly prestige: number,
+    ) {
+        this.weight = traitFactor(trait) * traitFactor(prestige);
+    }
+}
+
 export class ClanSkillChangeItem {
     readonly shiftMean: number;
     readonly shiftStdDev: number;
@@ -49,7 +61,7 @@ export class ClanSkillChange {
     readonly originalValue: number;
     readonly educationTarget: number;
     readonly imitationTarget: number;
-    readonly imitationTargetTable: readonly WeightedValue<String>[];
+    readonly imitationTargetItems: readonly ImitationTargetItem[];
 
     readonly generalLearningFactor: number;
 
@@ -91,12 +103,20 @@ export class ClanSkillChange {
         const t = skill.value;
         this.originalValue = t;
         this.educationTarget = Math.min(cms, t);
-        [this.imitationTarget, this.imitationTargetTable] = traitWeightedAverage(
-            [...clan.settlement!.clans],
-            c => c.name,
-            c => clan.prestigeViewOf(c).value,
-            c => c.skills.v(skillDef),
-        );
+
+        this.imitationTargetItems = [...clan.settlement!.clans].map(
+            c => new ImitationTargetItem(
+                c.name,
+                c.skills.v(skillDef),
+                clan.prestigeViewOf(c).value,
+            ));
+        const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
+        let weightedSum = 0;
+        for (const item of this.imitationTargetItems) {
+            item.weight /= totalWeight;
+            weightedSum += item.weight * item.trait;
+        }
+        this.imitationTarget = weightedSum;
 
         // Imitation with error (education) by children. For now children
         // learn by doing, so they also depend on experience.
@@ -137,12 +157,6 @@ export class ClanSkillChange {
 
     get imitationTargetDelta(): number {
         return this.imitationTarget - this.originalValue;
-    }
-
-    get imitationTooltip(): string[][] {
-        return WeightedValue.tooltip(this.imitationTargetTable,
-            ['Model', 'V', 'P', 'W', 'WV'],
-        );
     }
 
     get changeSourcesTooltip(): string[][] {

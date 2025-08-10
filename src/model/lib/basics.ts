@@ -109,7 +109,7 @@ export function shuffled<T>(arr: T[]): T[] {
     return result;
 }
 
-export function sortedByKey<T>(arr: T[], key: (t: T) => number): T[] {
+export function sortedByKey<T>(arr: readonly T[], key: (t: T) => number): T[] {
     return arr.toSorted((a, b) => {
         const aKey = key(a);
         const bKey = key(b);

@@ -10,7 +10,13 @@
             x   Agricultural productivity bonus
             x   Make ditching skill actually improve
             x   Update ditch quality so they can get to 100% in reasonable time
-    -   Skill bias in imitiation learning to help boost ditching
+    -   Make it easier to gain enough skill to stay in one spot
+        x   Skill bias in imitiation learning to help boost ditching
+        -   Tune down amount of skill change: people can uphold skill better,
+            and then probably also tune down gains, but in a way that they
+            can get to a higher level
+        -   Maybe establish some population or usage requirements to maintain
+            skill.
     -   Update stationarity indicators
         -   Change shifting every N to a moving average
         x   Update tell height

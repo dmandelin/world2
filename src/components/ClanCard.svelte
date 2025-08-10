@@ -8,6 +8,7 @@
     import Tooltip from "./Tooltip.svelte";
     import { clanTimelineGraphData } from "../model/records/timeline";
     import HousingDecision from "./decisions/HousingDecision.svelte";
+    import { skillImitationTable } from "./tables";
 
     let { clan } = $props();
 
@@ -242,7 +243,7 @@
                             {#if skill.lastChange}
                                 <h4>Imitation Sources (t={skill.lastChange.imitationTarget.toFixed(1)})</h4>
                                 <h4>Imitation Target = {skill.lastChange.imitationTarget.toFixed(1)}</h4>
-                                <DataTable rows={skill.lastChange.imitationTooltip} />
+                                <DataTable rows={skillImitationTable(skill.lastChange)} />
                                 <h4>Learning factor = {spct(skill.lastChange.generalLearningFactor)} (Int = {clan.intelligence.toFixed()})</h4>
                                 <h4>Skill Changes</h4>
                                 <DataTable rows={skill.lastChange.changeSourcesTooltip} />

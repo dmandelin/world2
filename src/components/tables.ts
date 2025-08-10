@@ -5,6 +5,8 @@ import { Clan } from '../model/people/people';
 import { pct, signed } from '../model/lib/format';
 import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
+import type { ClanSkillChange } from '../model/people/skillchange';
+import { sortedByKey } from '../model/lib/basics';
 
 export type SettlementRitesTable = {
     header: string[];
@@ -192,4 +194,16 @@ export function averageAttitudeTable<AC extends AttitudeCalc<IC>, IC extends Inf
     });
 
     return { header, rows };
+}
+
+export function skillImitationTable(sc: ClanSkillChange) {
+    const header = ['Source', '𝕊', 'ℙ', '𝕎'];
+    const rows = sortedByKey(sc.imitationTargetItems, i => -i.weight).map(item => [
+        item.label, 
+        item.trait.toFixed(),
+        item.prestige.toFixed(),
+        item.weight.toFixed(2),
+    ]);
+    return [header, ...rows];
+
 }
