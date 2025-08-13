@@ -121,5 +121,14 @@ Thinking things through:
 
 Trying to make some decisions:
 
-*   Let's rebase skill to 100 with discrete 1-point steps.
-*   Adjust skill change details per notes above
+x   Let's rebase skill to 100 with discrete 1-point steps.
+x   Adjust skill change details per notes above
+x   Update migration calculation
+
+Further stuff to figure out/do
+
+*   Tune error vs improvement, get some sense of learning rates
+*   Update productivity calculations
+*   Bring back expected loss/gain calculations
+*   Somehow get settlements stabler -- they still can't quite manage
+    to stay the same place for that long

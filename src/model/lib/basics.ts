@@ -82,7 +82,7 @@ export function chooseFrom<T>(arr: T[], remove: boolean = false): T {
     return remove ? arr.splice(i, 1)[0] : arr[i];
 }
 
-export function chooseWeighted<T>(arr: T[], weightFn: (t: T) => number): T {
+export function chooseWeighted<T>(arr: readonly T[], weightFn: (t: T) => number): T {
     const totalWeight = arr.reduce((acc, cur) => acc + weightFn(cur), 0);
     if (totalWeight === 0) {
         throw new Error("Total weight is zero, cannot choose a weighted element.");

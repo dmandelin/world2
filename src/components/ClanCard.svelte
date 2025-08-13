@@ -241,8 +241,7 @@
                         {signed(skill.lastChange?.delta || 0)}
                         <div slot="tooltip" class="ttt">
                             {#if skill.lastChange}
-                                <h4>Imitation Sources (t={skill.lastChange.imitationTarget.toFixed(1)})</h4>
-                                <h4>Imitation Target = {skill.lastChange.imitationTarget.toFixed(1)}</h4>
+                                <h4>Imitation Sources</h4>
                                 <DataTable rows={skillImitationTable(skill.lastChange)} />
                                 <h4>Learning factor = {spct(skill.lastChange.generalLearningFactor)} (Int = {clan.intelligence.toFixed()})</h4>
                                 <h4>Skill Changes</h4>

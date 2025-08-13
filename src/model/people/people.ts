@@ -296,6 +296,11 @@ export class Clan implements TradePartner {
         return this.migrationPlan_;
     }
 
+    get isMigrating(): boolean {
+        return this.migrationPlan !== undefined
+            && this.migrationPlan_.willMigrate;
+    }
+
     planMigration() {
         this.migrationPlan_ = new MigrationCalc(this);
     }

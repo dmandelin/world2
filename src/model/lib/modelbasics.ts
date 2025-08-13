@@ -161,3 +161,13 @@ export function createTwoSidedQuadratic(
         }
     };
 }
+
+export function moveToward(value: number, target: number, stepSize: number) {
+    if (value < target) {
+        return Math.min(value + stepSize, target);
+    }
+    if (value > target) {
+        return Math.max(value - stepSize, target);
+    }
+    return value;
+}
