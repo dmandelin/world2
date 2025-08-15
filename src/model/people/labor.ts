@@ -41,7 +41,5 @@ export class LaborAllocation {
         for (const [skill, fraction] of this.planned_.entries()) {
             this.allocs.set(skill, fraction * remainder);
         }
-
-        console.log("YYY", this.clan.name, this.clan.housing.name, this.allocs);
     }
 }

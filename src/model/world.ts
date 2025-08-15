@@ -12,6 +12,7 @@ import { SettlementCluster } from "./people/cluster";
 import { NewSettlementSupplier } from "./people/migration";
 import { randomFloodLevel } from "./environment/flood";
 import { createTrends } from "./records/trends";
+import { simulateSkillGrowth } from "./sims/skillgrowth";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();

@@ -132,3 +132,133 @@ Further stuff to figure out/do
 *   Bring back expected loss/gain calculations
 *   Somehow get settlements stabler -- they still can't quite manage
     to stay the same place for that long
+
+## Tuning experiments
+
+Base experiments go for 50 turns with 5 "clans".
+
+*   10% learning up or down with equal-chance adoption
+    *   Skill can go up or down during the time, by maybe 1-5
+        points. There's no upward bias, so it should be a sort
+        of random walk.
+*   10% learning up only with equal-chance adoption
+    *   Skill goes up 3-5 points. 
+    *   It takes a few tries for skill improvements to be adopted,
+        so the benefit of imitation is limited.
+*   10% learning up or down with always adoption of best
+    *   Dramatic improvement: skill goes up 15 points
+    *   Given that each clan gets about 15 points total, apparently
+        they adopted on around 12 turns.
+    *   That leaves 38 turns to possibly improve, and there we'd
+        expect 3-4 points of learning per clan
+*   10% learning up or down with 2x weight for best
+    *   5-10 points total
+    *   Roughly 50% faster learning than all alone, not bad
+    *   Similar result if we use 2 ** skill
+*   10% learning up or down with 5x weight for best
+    *   10-15 points total
+*   10% learning up or down with 1.3x weight for best
+    *   0-10 points: not much better than equal-chance
+    *   Have to go to at least 1.7 to see significant difference
+        with equal-chance adoption
+*   20% learning up or down with 2 ** skill weighting
+    *   10-20 points total
+    *   proportional with 10% version
+    *   similar proportionality with 5% version
+
+From the above, we have some basic notions of how learning and
+adoption parameters influence the overall rate. Another point
+that comes up is migration: newcomers tend to arrive with lower
+skill, so this will tend to retard skill growth, but now much?
+
+For migration experiments, there's a probability that a random
+"clan" will be replaced by one with fewer skill points each turn.
+
+*   10% migration chance, -1 skill on migration
+    *   7-10 points total, seems no worse than without migration
+*   50% migration chance, -1 skill
+    *   5-10 points total, still not much difference
+    *   It seems such a small penalty is easily washed out
+*   50% migration chance, -3 skill
+    *   3-8, although still some 10s
+    *   Clans can learn 3 per turn so that's easily washed out
+*   50% migration chance, -10 skill
+    *   0-10, but with lots of variance among clans, presumably
+        from recent replacements
+*   50% migration chance, -3 skill, limit imitating 1 point/turn
+    *   0-10, but with less variance
+    *   key seems to be that if it takes newcomers multiple turns
+        to learn, incumbents will imitate them and regress unless
+        there's an effect for that
+
+We haven't looked too much at biasing learning as going up or down.
+Turn migration off and try that.
+
+*   10% up, 1% down, 2 ** skill imitation
+    *   about 10
+*   10% up, 2% down
+    *   7-10
+*   10% up, 5% down
+    *   8-10
+
+Not too sensitive to this, apparently because regressions are usually
+quickly learned back. So, we can expect errors to be better corrected
+in larger groups. Group size was the next thing to try anyway. Here
+we'll use 10% up, 10% down, 2 ** skill.
+
+*   1 clan
+    *   Growth varies but it averages 0: random walk
+*   3 clans
+    *   5-10, similar to 5, maybe slightly lower
+*   7 clans
+    *   7-13, somewhat higher
+    *   10 clans is a similar result
+*   20 clans
+    *   10-15, almost double the 5-clan result
+    *   Corresponds to an exponent around 0.3, a bit high but not
+        too bad
+
+In the full model, the higher skill is, the harder it is to gain
+and the easier it is to lose, which can create a natural equilibrium,
+but with imitation, maybe those can be washed out. So let's try
+a downward bias and see if #clans can counter that.
+
+*   10% down, 5% up
+    *   1 clan: -2 to -3
+    *   5 clans: 1-10, still positive but lower
+    *   20 clans: about 10, still positive but lower
+*   10% down, 2% up
+    *   1 clan: -2 to -6
+    *   5 clans: 0-1, but once was 4
+    *   20 clans: 5, still positive but substantially lower
+*   10% down, 1% up
+    *   1 clan: -4 to -6
+    *   5 clans: 0
+    *   20 clans: 3-5
+        *   With 20 clans, it's practically impossible to get them
+            to regress
+
+Now, we're looking for skill change about like this in the first
+50 turns:
+
+*    5 points farming
+*   20 points irrigation
+
+In general, there doesn't seem to be any reason for different skills
+to have the same learning curve, so we could scale arbitrarily. And
+given that farming keeps improving over time, there's no reason we
+have to be near any sort of ceiling; but the total productivity gain
+ever with preindustrial agriculture will be only so much, vaguely 2x.
+That's about 25 skill points, so we could start at skill 75, which
+is a 3-1 down/up bias.
+
+*   We get 3-7 points if we use 10% migration, 2 ** skill, and
+    5% up/15% down
+
+*   If we use the opposite bias (for irrigation), we get around 10
+    points, which is not enough
+    *   Might be a reasonable amount of learning; could retune
+        flood control calculations to match
+    *   It also seems reasonble to make learning significantly
+        easier at the bottom end. 2.5x faster seems to get us
+        there in this case
