@@ -3,7 +3,7 @@ import { clamp, remove } from "../lib/basics";
 import { normal } from "../lib/distributions";
 import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
 import { PrestigeCalc } from "./prestige";
-import { INITIAL_POPULATION_RATIOS, PopulationChange } from "./population";
+import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } from "./population";
 import { QolCalc } from "./qol";
 import { Rites, RitualGoodsUsage } from "../rites";
 import type { Clans } from "./clans";
@@ -174,7 +174,7 @@ export class Clan implements TradePartner {
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 2;
     
-    lastPopulationChange: PopulationChange = new PopulationChange(this, true);
+    lastPopulationChange: PopulationChange = PopulationChangeBuilder.empty(this);
 
     skills = new ClanSkills(this);
 
@@ -476,7 +476,7 @@ export class Clan implements TradePartner {
     }
 
     advancePopulation() {
-        this.lastPopulationChange = new PopulationChange(this);
+        this.lastPopulationChange = new PopulationChangeBuilder(this).build();
         for (let i = 0; i < this.slices.length; ++i) {
             this.slices[i][0] = this.lastPopulationChange.newSlices[i][0];
             this.slices[i][1] = this.lastPopulationChange.newSlices[i][1];

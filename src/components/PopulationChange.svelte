@@ -1,6 +1,10 @@
 <script>
     let { clan } = $props();
     let c = $derived(clan.lastPopulationChange);
+    $effect(() => {
+        console.log('PopulationChange', c);
+        console.log('total', c.total);
+    });
 </script>
 
 <style>

@@ -28,13 +28,13 @@ import type { Settlement } from "../people/settlement";
 //
 // To change:
 // - Update the model to have 100-year and 500-year floods:
-//   - 100-year: significant losses
-//   - 500-year: settlement may be wiped out; however, people
+//   x 100-year: significant losses
+//   x 500-year: settlement may be wiped out; however, people
 //               could rebuild in place depending on exactly
 //               what happened
-//   - Flood damage
+//   x Flood damage
 //     x Housing rebuild costs
-//     - Hazard casualties with display
+//     x Hazard casualties with display
 //   - Tells of 1m+ should offer significant protection
 // x Update ditch quality formula to tune
 // - Update display:
