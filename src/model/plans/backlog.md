@@ -4,22 +4,12 @@
 
 -   Settlement permanance
     x   Calculate moves/move frequency
-        x   Show in UI
-        x   Update ditching effect calculations
-            x   Update main move model
-            x   Agricultural productivity bonus
-            x   Make ditching skill actually improve
-            x   Update ditch quality so they can get to 100% in reasonable time
     -   Make it easier to gain enough skill to stay in one spot
-        x   Skill bias in imitiation learning to help boost ditching
-        -   Tune down amount of skill change: people can uphold skill better,
-            and then probably also tune down gains, but in a way that they
-            can get to a higher level
-        -   Maybe establish some population or usage requirements to maintain
-            skill.
+        -   Comprehensively tune ditching: establish some skill level that
+            would enable (approximate) permanence with reasonably defined
+            state and timeline
     -   Update stationarity indicators
         -   Change shifting every N to a moving average
-        x   Update tell height
     -   Move effects
         -   Birth rate decrease, smaller death rate increase
         -   Productivity decrease

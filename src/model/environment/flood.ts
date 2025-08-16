@@ -1,6 +1,47 @@
 import { poisson } from "../lib/distributions";
 import type { Settlement } from "../people/settlement";
 
+// Flood control and permanent settlements
+//
+// Flooding causes settlements to move for two reasons:
+// - Shifting currents change which areas are naturally
+//   flooded and thus arable. Small-scale ditching enables
+//   more permanent fields.
+// - Major flooding can dry up an entire area or inundate
+//   a settlement. Resisting these effects requires larger
+//   flood control systems.
+//
+// The aim is to have a progression something like this:
+// - At first, settlements shift every few years to where
+//   the really fertile fields are.
+//   - (P2) High productivity for fresh soils and low
+//     preperation labor
+// - Over 3-12 turns (75-300 years), irrigation skill rises
+//   high enough to avoid small shifts for 100+ years at a
+//   time.
+// - There's still flood damage to settlements, and major
+//   moves every some centuries, motivating continued
+//   development
+// - 500-1000 years after start (25-50 turns), irrigation
+//   skill is high enough to resist most floods, but there
+//   should be some risk over a millennium.
+//
+// To change:
+// - Update the model to have 100-year and 500-year floods:
+//   - 100-year: significant losses
+//   - 500-year: settlement may be wiped out; however, people
+//               could rebuild in place depending on exactly
+//               what happened
+//   - Tells of 1m+ should offer significant protection
+// - Update shift avoidance:
+//   - 10 skill: not much
+//   - 20 skill: have to move for fields every 200 years or so
+//   - 30 skill: have to move for fields every 1000 years or so
+// - Update display:
+//   - Moving average of shifts
+//   - Full in-persona tenure indicator
+// - Get some population growth going again
+
 export class FloodLevel {
     constructor(
         readonly index: number,
