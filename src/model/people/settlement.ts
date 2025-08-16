@@ -136,6 +136,7 @@ export class Settlement {
     }
 
     updateForFloodLevel(level: FloodLevel): void {
+        // River shifts that force farm fields to move.
         this.forcedMigrations_ = 0;
         this.preventedForcedMigrations_ = 0;
 
@@ -147,6 +148,8 @@ export class Settlement {
                 ++this.preventedForcedMigrations_;
             }
         }
+
+        // Damage is calculated during the maintenance phase.
     }
 
     advance(noEffect: boolean = false) {

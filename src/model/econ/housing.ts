@@ -28,7 +28,11 @@ export class Housing {
             // Forced moves might be more expensive.
             * 2;
 
-        return initialConstructionCost + forcedMigrationCost + this.maintenanceCost;
+        // Direct damage to houses from flooding.
+        const damageCost = this.constructionCost * clan.settlement.floodLevel.damageFactor;
+
+        return initialConstructionCost
+             + forcedMigrationCost + this.maintenanceCost + damageCost;
     }
 }   
 

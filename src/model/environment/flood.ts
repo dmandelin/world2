@@ -32,11 +32,16 @@ import type { Settlement } from "../people/settlement";
 //   - 500-year: settlement may be wiped out; however, people
 //               could rebuild in place depending on exactly
 //               what happened
+//   - Flood damage
+//     x Housing rebuild costs
+//     - Hazard casualties with display
 //   - Tells of 1m+ should offer significant protection
 // x Update ditch quality formula to tune
 // - Update display:
 //   - Moving average of shifts
 //   - Full in-persona tenure indicator
+// - Make sure we have some negative happiness effect from
+//   flooding
 // - Get some population growth going again
 
 export class FloodLevel {
