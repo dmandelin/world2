@@ -1,9 +1,8 @@
-import { weightedGeometricMean, weightedHarmonicMean } from './lib/basics';
 import type { Settlement } from './people/settlement';
+import { weightedGeometricMean, weightedHarmonicMean } from './lib/basics';
+import { eloSuccessProbability } from './lib/modelbasics';
 import { SkillDefs } from './people/skills';
 import { pct, spct } from './lib/format';
-import { clamp } from './lib/basics';
-import { eloSuccessProbability } from './lib/modelbasics';
 
 export class MaintenanceCalcItem {
     constructor(
@@ -30,7 +29,8 @@ export class DitchMaintenanceCalc {
                     c.population,
                     skill,
                     c.productivity(SkillDefs.Irrigation),
-                    eloSuccessProbability(skill, 30),
+                    // Quality of about 50/90/99 at skill levels 10/20/30.
+                    eloSuccessProbability(skill, 10, 10),
                 );
             });
 

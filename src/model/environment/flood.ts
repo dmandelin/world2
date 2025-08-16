@@ -33,10 +33,7 @@ import type { Settlement } from "../people/settlement";
 //               could rebuild in place depending on exactly
 //               what happened
 //   - Tells of 1m+ should offer significant protection
-// - Update shift avoidance:
-//   - 10 skill: not much
-//   - 20 skill: have to move for fields every 200 years or so
-//   - 30 skill: have to move for fields every 1000 years or so
+// x Update ditch quality formula to tune
 // - Update display:
 //   - Moving average of shifts
 //   - Full in-persona tenure indicator
@@ -49,8 +46,8 @@ export class FloodLevel {
         readonly description: string,
         readonly baseAgriculturalProductivity: number,
         readonly maxAgriculturalProductivity: number,
-        readonly baseExpectedForcedMigrations: number,
-        readonly majorEventForcedMigrations: number,
+        readonly expectedRiverShifts: number,
+        readonly damageFactor: number,
         readonly qolModifier: number,
     ) {}
 
@@ -68,7 +65,7 @@ export const FloodLevels = {
         0.8,
         1.1,
         3,
-        0,
+        0.02,
         2,
     ),
     Normal: new FloodLevel(
@@ -78,7 +75,7 @@ export const FloodLevels = {
         1.0,
         1.2,
         5,
-        0,
+        0.03,
         0,
     ),
     Higher: new FloodLevel(
@@ -88,7 +85,7 @@ export const FloodLevels = {
         0.65,
         1.0,
         7,
-        0,
+        0.04,
         -2,
     ),
     Major: new FloodLevel(
@@ -98,7 +95,7 @@ export const FloodLevels = {
         1.2,
         0.6,
         6,
-        0.5,
+        0.2,
         -10,
     ),
     Extreme: new FloodLevel(
@@ -119,9 +116,9 @@ export function randomFloodLevel(): FloodLevel {
         return FloodLevels.Lower;
     } else if (roll < 0.65) {
         return FloodLevels.Normal;
-    } else if (roll < 0.9) {
+    } else if (roll < 0.8) {
         return FloodLevels.Higher;
-    } else if (roll < 0.98) {
+    } else if (roll < 0.96) {
         return FloodLevels.Major;
     } else {
         return FloodLevels.Extreme;

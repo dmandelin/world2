@@ -136,10 +136,10 @@ export class Settlement {
     }
 
     updateForFloodLevel(level: FloodLevel): void {
-        this.forcedMigrations_ = level.majorEventForcedMigrations;
+        this.forcedMigrations_ = 0;
         this.preventedForcedMigrations_ = 0;
 
-        const potentialMigrations = poisson(level.baseExpectedForcedMigrations);
+        const potentialMigrations = poisson(level.expectedRiverShifts);
         for (let i = 0; i < potentialMigrations; ++i) {
             if (Math.random() >= this.ditchQuality) {
                 ++this.forcedMigrations_;
