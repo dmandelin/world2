@@ -3,13 +3,6 @@
 ## Next items in latest plans
 
 -   Settlement permanance
-    x   Calculate moves/move frequency
-    -   Make it easier to gain enough skill to stay in one spot
-        -   Comprehensively tune ditching: establish some skill level that
-            would enable (approximate) permanence with reasonably defined
-            state and timeline
-    -   Update stationarity indicators
-        -   Change shifting every N to a moving average
     -   Move effects
         -   Birth rate decrease, smaller death rate increase
         -   Productivity decrease
@@ -34,9 +27,6 @@
         but they might be aware, especially if massively overforaged.
     -   We need to think about what people could see and understand in
         this case and how they'll learn to change.
-
--   Farming skill doesn't grow that high, so clans have a hard time
-    getting their productivity up.
 
 -   It's slowly seeming more important to have a real happiness metric.
     Will need to think about how to get started on that.
