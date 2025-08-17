@@ -10,6 +10,7 @@ import { ProductionNode } from "../econ/productionnode";
 import { SkillDef, SkillDefs } from "./skills";
 import type { FloodLevel } from "../environment/flood";
 import { poisson } from "../lib/distributions";
+import type { Year } from "../records/year";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -60,6 +61,9 @@ export class Settlement {
 
     private forcedMigrations_ = 0;
     private preventedForcedMigrations_ = 0;
+    private movingAverageForcedMigrations_: number[] = [];
+
+    private lastShiftYear_: Year;
     
     constructor(
         readonly world: World,
@@ -82,6 +86,8 @@ export class Settlement {
             new ProductionNode('Farms', this, 40, SkillDefs.Agriculture, this.distributionNode),
             new ProductionNode('Fisheries', this, 40, SkillDefs.Fishing, this.distributionNode),
         );
+
+        this.lastShiftYear_ = this.world.year;
     }
 
     get cluster(): SettlementCluster {
@@ -90,6 +96,10 @@ export class Settlement {
 
     setCluster(cluster: SettlementCluster) {
         this.cluster_ = cluster;
+    }
+
+    get yearsInPlace(): number {
+        return this.world.year.sub(this.lastShiftYear_);
     }
 
     get tellHeightInMeters() {
@@ -135,6 +145,21 @@ export class Settlement {
         return this.preventedForcedMigrations_;
     }
 
+    get movingAverageForcedMigrations(): number {
+        let average = 0;
+        for (const [i, m] of this.movingAverageForcedMigrations_.entries()) {
+            if (i === 0) {
+                average = m;
+            } else if (i === this.movingAverageForcedMigrations_.length - 1) {
+                // The last one represents the turn to come.
+                break;
+            } else {
+                average = (average + m) / 2;
+            }
+        }
+        return average;
+    }
+
     updateForFloodLevel(level: FloodLevel): void {
         // River shifts that force farm fields to move.
         this.forcedMigrations_ = 0;
@@ -149,7 +174,19 @@ export class Settlement {
             }
         }
 
-        // Damage is calculated during the maintenance phase.
+        // Damage is calculated during the maintenance and
+        // labor allocation phases.
+
+        this.movingAverageForcedMigrations_.push(this.forcedMigrations_);
+        if (this.movingAverageForcedMigrations_.length > 5) {
+            this.movingAverageForcedMigrations_.shift();
+        }
+
+        if (this.forcedMigrations_ > 0) {
+            // The shift could be late in the turn, so we'll count it as
+            // at the end of the turn.
+            this.lastShiftYear_ = this.world.year.add(this.world.yearsPerTurn);
+        }
     }
 
     advance(noEffect: boolean = false) {

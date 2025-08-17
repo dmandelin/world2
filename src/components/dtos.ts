@@ -211,6 +211,7 @@ class SettlementProductionDTO {
 
 export class SettlementDTO {
     readonly name: string;
+    readonly yearsInPlace: number;
     readonly tellHeightInMeters: number;
     readonly population: number;
     readonly averageQoL: number;
@@ -226,6 +227,7 @@ export class SettlementDTO {
     readonly floodLevel: FloodLevel;
     readonly forcedMigrations: number;
     readonly preventedForcedMigrations: number;
+    readonly movingAverageForcedMigrations: number;
 
     readonly condorcet: CondorcetCalc;
 
@@ -236,6 +238,7 @@ export class SettlementDTO {
             clanDTO(clan, world)), clan => -clan.averagePrestige);
 
         this.name = settlement.name;
+        this.yearsInPlace = settlement.yearsInPlace;
         this.tellHeightInMeters = settlement.tellHeightInMeters;
         this.population = settlement.population;
         this.averageQoL = settlement.averageQoL;
@@ -250,6 +253,7 @@ export class SettlementDTO {
         this.floodLevel = settlement.floodLevel;
         this.forcedMigrations = settlement.forcedMigrations;
         this.preventedForcedMigrations = settlement.preventedForcedMigrations;
+        this.movingAverageForcedMigrations = settlement.movingAverageForcedMigrations;
 
         this.rites = settlement.clans.rites.clone();
             

@@ -71,10 +71,15 @@
                      style="padding-bottom: 8px;"
                 />{signed(selectedSettlement.averageQoL, 0)}</h1>
             <div>
-                {#if selectedSettlement.forcedMigrations}
-                    Shifting about every {(20/selectedSettlement.forcedMigrations).toFixed()} years ({selectedSettlement.forcedMigrations}/20y)
-                {:else}
-                    {formatTellHeight(selectedSettlement.tellHeightInMeters)}
+                {#if selectedSettlement.yearsInPlace >= 100}
+                    Settled &ndash; {formatTellHeight(selectedSettlement.tellHeightInMeters)}
+                    <span style="color:grey">(founded {selectedSettlement.yearsInPlace} years ago)</span>
+                {:else if selectedSettlement.yearsInPlace >= 50}
+                    {selectedSettlement.yearsInPlace} years in place
+                {:else if selectedSettlement.movingAverageForcedMigrations}
+                    Shifting about every 
+                    {(20/selectedSettlement.movingAverageForcedMigrations).toFixed()} years
+                    ({selectedSettlement.movingAverageForcedMigrations.toFixed(1)}/20y)
                 {/if}
             </div>
 

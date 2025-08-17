@@ -36,10 +36,11 @@ import type { Settlement } from "../people/settlement";
 //     x Housing rebuild costs
 //     x Hazard casualties with display
 //   - Tells of 1m+ should offer significant protection
+//   x Make sure we have housing rebuild costs for major floods
 // x Update ditch quality formula to tune
-// - Update display:
-//   - Moving average of shifts
-//   - Full in-persona tenure indicator
+// x Update display:
+//   x Moving average of shifts
+//   x Full in-persona tenure indicator
 // - Make sure we have some negative happiness effect from
 //   flooding
 // - Get some population growth going again
