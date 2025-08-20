@@ -20,6 +20,7 @@ import { LaborAllocation } from "./labor";
 import { AlignmentCalc } from "./alignment";
 import { TradeGoods } from "../trade";
 import { HousingTypes } from "../econ/housing";
+import { HappinessCalc } from "./happiness";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -209,6 +210,7 @@ export class Clan implements TradePartner {
     consumption = new ConsumptionCalc(this);
 
     private qolCalc_: QolCalc|undefined;
+    private happinessCalc_: HappinessCalc;
 
     constructor(
         readonly world: World,
@@ -246,6 +248,8 @@ export class Clan implements TradePartner {
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.
         this.rites = new Rites(`${this.name} rites`, 35, 30, 0.15, [this], [], [], this.world);
+
+        this.happinessCalc_ = new HappinessCalc(this, true);
     }
 
     get moniker(): string {
@@ -282,6 +286,7 @@ export class Clan implements TradePartner {
 
     consume() {
         this.qolCalc_ = new QolCalc(this);
+        this.happinessCalc_ = new HappinessCalc(this);
     }
 
     get qolCalc() {
@@ -290,6 +295,14 @@ export class Clan implements TradePartner {
 
     get qol(): number {
         return this.qolCalc?.value || 0;
+    }
+
+    get happiness(): HappinessCalc {
+        return this.happinessCalc_;
+    }
+
+    get happinessValue(): number {
+        return this.happiness.total.value;
     }
 
     get migrationPlan(): MigrationCalc|undefined {

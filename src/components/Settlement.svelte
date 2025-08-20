@@ -7,6 +7,7 @@
     import SettlementRites from "./SettlementRites.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
     import TabbedView from "./TabbedView.svelte";
+    import SettlementHappiness from "./SettlementHappiness.svelte";
 
     let { settlement } = $props();
 
@@ -14,6 +15,7 @@
         { label: "People", snippet: peopleTab },
         { label: "Health", snippet: healthTab },
         { label: "Relationships", snippet: relationshipsTab },
+        { label: "Happiness", snippet: happinessTab },
         { label: "Quality of Life", snippet: consumptionTab },
         { label: "Rites", snippet: ritesTab },
         { label: "Production", snippet: economyTab },
@@ -43,6 +45,10 @@
 
 {#snippet consumptionTab()}
     <SettlementConsumption settlement={settlement} />
+{/snippet}
+
+{#snippet happinessTab()}
+    <SettlementHappiness settlement={settlement} />
 {/snippet}
 
 {#snippet relationshipsTab()}
