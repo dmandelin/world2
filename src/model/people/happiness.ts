@@ -16,6 +16,7 @@ export class HappinessCalcItem {
 export class HappinessCalc {
     readonly items: HappinessCalcItem[] = [];
     readonly total: HappinessCalcItem;
+    readonly rows: HappinessCalcItem[];
 
     constructor(readonly clan: Clan, empty = false) {
         // TODO - variable expectations
@@ -54,5 +55,7 @@ export class HappinessCalc {
             sumFun(this.items, item => item.expectation),
             sumFun(this.items, item => item.value),
         );
+
+        this.rows = [...this.items, this.total];
     }
 }

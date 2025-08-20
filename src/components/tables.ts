@@ -207,3 +207,36 @@ export function skillImitationTable(sc: ClanSkillChange) {
     return [header, ...rows];
 
 }
+
+export class HappinessTable {
+    readonly header: string[];
+    readonly rows: string[][];
+
+    constructor(readonly s: SettlementDTO,
+    ) {
+        this.header = ['Source', ...s.clans.map(c => c.name), 'Average'];
+        const subheaderGroup = ['E', 'A', 'V'];
+        const subheader = ['', ...s.clans.flatMap(c => subheaderGroup), ...subheaderGroup];
+        const rows: string[][] = [subheader];
+        if (s.clans.length > 0) {
+            for (let i = 0; i < s.clans[0].happiness.rows.length; i++) {
+                const row = [s.clans[0].happiness.rows[i].label];
+                let [totalExpectation, totalAppeal, totalValue] = [0, 0, 0];
+                for (const clan of s.clans) {
+                    row.push(clan.happiness.rows[i].expectation.toFixed(1));
+                    row.push(clan.happiness.rows[i].appeal.toFixed(1));
+                    row.push(clan.happiness.rows[i].value.toFixed(1));
+
+                    totalExpectation += clan.happiness.rows[i].expectation * clan.population;
+                    totalAppeal += clan.happiness.rows[i].appeal * clan.population;
+                    totalValue += clan.happiness.rows[i].value * clan.population;
+                }
+                row.push((totalExpectation / s.population).toFixed(1));
+                row.push((totalAppeal / s.population).toFixed(1));
+                row.push((totalValue / s.population).toFixed(1));
+                rows.push(row);
+            }
+        }
+        this.rows = rows;
+    }
+}

@@ -23,6 +23,7 @@ import type { AlignmentCalc } from "../model/people/alignment";
 import type { TrendDTO } from "../model/records/trends";
 import type { Housing } from "../model/econ/housing";
 import type { DiseaseLoadCalc } from "../model/environment/pathogens";
+import type { HappinessCalc } from "../model/people/happiness";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -122,6 +123,7 @@ export type ClanDTO = {
 
     qol: number;
     qolCalc: QolCalc;
+    happiness: HappinessCalc;
 
     skills: ClanSkills;
     intelligence: number;
@@ -168,6 +170,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 
         qol: clan.qol,
         qolCalc: clan.qolCalc,
+        happiness: clan.happiness,
 
         skills: clan.skills,
         intelligence: clan.intelligence,
