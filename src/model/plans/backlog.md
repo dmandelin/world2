@@ -2,12 +2,65 @@
 
 ## Next items in latest plans
 
+-   Happiness updates
+    -   Show values happiness factors are derived from in the table
+    -   Food quality
+        -   Also food quality for population/health effects
+    -   Learn expectations for subsistence
+    -   Learn expectations for flooding
+    -   Learn expectations for rituals
+    -   Normalize status or learn expectations
+    -   Consider idiosyncratic factor
+
+-   Consider getting a settlement display: reviewing the different
+    clan displays ends up being a lot of data
+    -   Or break out population into its own tab
+
+-   Move effects
+    -   Birth rate decrease, smaller death rate increase
+    -   Productivity decrease
+    -   Appeal/happiness effects
+    -   Get clear sequencing in the model
+
+-   Farming options: population doesn't grow much because they don't
+    start farming more
+    -   Thinking this through:
+        -   We could just say clans randomly shift food strategies if
+            unhappy about their food: they'd eventually get to the
+            right place.
+        -   It's not clear clans would have a bias either way, though
+            they might, so we might want an idiosyncratic factor
+        -   However, since turns are 20 years, there's a decent chance
+            clans would iterate to the right place in less than one
+            turn. So they can get some information. Without close
+            coordination, they wouldn't necessarily experiment all
+            together, though, so we can give them a fairly moderate
+            chance of success.
+        -   Another point is religion: if they're investing a lot in
+            farming-related rituals, then it should be a more appealing
+            choice.
+        -   At some point we might want to let clans coordinate on these
+            choices with various effects, but we can leave that a
+            something to add to help them solve problems for now
+    -   Calculate appeal for labor allocation shifts
+        -   Start with appeal of output, but scaled down 50% to account
+            for limited knowledge.
+            -   Limit knowledge even more for anonymity
+        -   Ritual bonus for appeal: can start as a constant, because
+            there isn't any particular reason to assume differences
+            there.
+            -   It would make sense to make this proportional to ritual
+                appeal. The idea is that ritual and farming are linked,
+                so that doing less farming equals less ritual effect
+                (and vice versa?) and thus ritual appeal should count in
+                the decision. Could be greatly scaled down, though, tune
+                as needed.
+    -   Trigger change if food happiness is negative
+        -   Don't need to bother with prospective changes yet, because
+            the effects will be pretty diluted anyway.
+
+
 -   Settlement permanance
-    -   Move effects
-        -   Birth rate decrease, smaller death rate increase
-        -   Productivity decrease
-        -   Appeal/happiness effects
-        -   Get clear sequencing in the model
     -   Options for usage level
     -   Display usage levels on map and panels
     -   More prominent notifications for key firsts
