@@ -203,9 +203,9 @@ society" scale.
 Now let's try to specify some model changes to make all that work:
 
 *   Health
-    +   Calculate and show a health score
-    +   Health affects population growth, productivity, and happiness
-    +   Flooding casualties and moving costs go in this general category;
+    *   Calculate and show a health score
+    *   Health affects population growth, productivity, and happiness
+    x   Flooding casualties and moving costs go in this general category;
         moves themselves would have to use relative happiness, but
         hardship due to moving can use a fixed baseline.
     *   Fixed happiness baseline OK

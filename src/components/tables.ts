@@ -210,14 +210,15 @@ export function skillImitationTable(sc: ClanSkillChange) {
 
 export class HappinessTable {
     readonly header: string[];
+    readonly subheader: string[];
     readonly rows: string[][];
 
     constructor(readonly s: SettlementDTO,
     ) {
         this.header = ['Source', ...s.clans.map(c => c.name), 'Average'];
         const subheaderGroup = ['E', 'A', 'V'];
-        const subheader = ['', ...s.clans.flatMap(c => subheaderGroup), ...subheaderGroup];
-        const rows: string[][] = [subheader];
+        this.subheader = ['', ...s.clans.flatMap(c => subheaderGroup), ...subheaderGroup];
+        const rows: string[][] = [];
         if (s.clans.length > 0) {
             for (let i = 0; i < s.clans[0].happiness.rows.length; i++) {
                 const row = [s.clans[0].happiness.rows[i].label];
