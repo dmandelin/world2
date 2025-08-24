@@ -2,6 +2,10 @@
 
 ## Next items in latest plans
 
+-   Primary stat displays
+    x   Show happiness separate from welfare
+    -   Show health separate from welfare
+
 -   Happiness updates
     -   Show values happiness factors are derived from in the table
     -   Food quality

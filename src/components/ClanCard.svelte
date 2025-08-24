@@ -170,10 +170,16 @@
                 </td>
                 <td>
                     <Tooltip>
-                        <img src="stat-qol-256.png" alt="Quality of Life" width="24" height="24" />
-                        <div slot="tooltip">Quality of Life</div>
+                        <img src="stat-welfare-256.png" alt="Welfare" width="24" height="24" />
+                        <div slot="tooltip">Welfare</div>
                     </Tooltip>
                 </td>
+                <td>
+                    <Tooltip>
+                        <img src="stat-happiness-256.png" alt="Happiness" width="24" height="24" />
+                        <div slot="tooltip">Happiness</div>
+                    </Tooltip>
+                </td>            
             </tr>
             <tr>
                 <td>
@@ -200,6 +206,15 @@
                             <DataTable rows={clan.qolCalc.satsTable} />
                             <h4>Sources</h4>
                             <DataTable rows={clan.qolCalc.itemsTable} />
+                        </div>
+                    </Tooltip>
+                </td>
+                <td>
+                    <Tooltip>
+                        {signed(clan.happiness.total.value)}
+                        <div slot="tooltip" class="ttt">
+                            <h4>Happiness Sources</h4>
+                            <DataTable rows={clan.happiness.rows} />
                         </div>
                     </Tooltip>
                 </td>
