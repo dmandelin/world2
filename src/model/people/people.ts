@@ -20,7 +20,7 @@ import { LaborAllocation } from "./labor";
 import { AlignmentCalc } from "./alignment";
 import { TradeGoods } from "../trade";
 import { HousingTypes } from "../econ/housing";
-import { HappinessCalc } from "./happiness";
+import { Expectations, HappinessCalc } from "./happiness";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -210,6 +210,7 @@ export class Clan implements TradePartner {
     consumption = new ConsumptionCalc(this);
 
     private qolCalc_: QolCalc|undefined;
+    private expectations_: Expectations = new Expectations();
     private happinessCalc_: HappinessCalc;
 
     constructor(
@@ -287,6 +288,10 @@ export class Clan implements TradePartner {
     consume() {
         this.qolCalc_ = new QolCalc(this);
         this.happinessCalc_ = new HappinessCalc(this);
+        // Update expectations afterward. The earlier expectations are snapshotted
+        // in the HappinessCalc.
+        this.expectations_.updateFrom(this.happinessCalc_);
+
     }
 
     get qolCalc() {
@@ -297,12 +302,20 @@ export class Clan implements TradePartner {
         return this.qolCalc?.value || 0;
     }
 
+    get expectations(): Expectations {
+        return this.expectations_;
+    }
+
     get happiness(): HappinessCalc {
         return this.happinessCalc_;
     }
 
     get happinessValue(): number {
         return this.happiness.total.value;
+    }
+
+    get appeal(): number {
+        return this.happiness.total.appeal;
     }
 
     get migrationPlan(): MigrationCalc|undefined {

@@ -13,12 +13,12 @@
     -   Colorization for happiness table
 
 -   Happiness updates
+    x   Learn expectations for rituals
     -   Show values happiness factors are derived from in the table
     -   Food quality
         -   Also food quality for population/health effects
-    -   Learn expectations for subsistence
-    -   Learn expectations for flooding
-    -   Learn expectations for rituals
+    x   Learn expectations for subsistence
+    x   Learn expectations for flooding
     -   Normalize status or learn expectations
     -   Consider idiosyncratic factor
 
@@ -26,6 +26,7 @@
     clan displays ends up being a lot of data
     -   Or break out population into its own tab
     -   Can start simple, with just a few items
+        x   Display welfare and happiness for settlement
 
 -   Move effects
     -   Birth rate decrease, smaller death rate increase

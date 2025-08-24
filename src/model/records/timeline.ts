@@ -35,12 +35,14 @@ export class Timeline<T> {
 
 export class ClanTimePoint {
     readonly population: number;
-    readonly qol: number;
+    readonly appeal: number;
+    readonly happiness: number;
     readonly averagePrestige: number;
 
     constructor(clan: Clan) {
         this.population = clan.population;
-        this.qol = clan.qol;
+        this.appeal = clan.appeal;
+        this.happiness = clan.happinessValue;
         this.averagePrestige = clan.averagePrestige;
     }
 }
@@ -48,24 +50,24 @@ export class ClanTimePoint {
 export class TimePoint {
     readonly year: Year;
     readonly totalPopulation: number;
-    readonly averageQoL: number;
+    readonly averageAppeal: number;
     readonly averageSubsistenceSat: number;
-    readonly averageRitualSat: number;
+    readonly averageHappiness: number;
     readonly clans: Map<string, ClanTimePoint>;
     
     constructor(world: World) {
         this.year = world.year.clone();
         this.totalPopulation = world.totalPopulation;
 
-        this.averageQoL = weightedAverage(
-            world.allClans, clan => clan.qol, clan => clan.population);
+        this.averageAppeal = weightedAverage(
+            world.allClans, clan => clan.appeal, clan => clan.population);
         this.averageSubsistenceSat = znan(weightedAverage(
             world.allClans, 
             clan => clan.qolCalc.getSat('Subsistence'), 
             clan => clan.population));
-        this.averageRitualSat = znan(weightedAverage(
+        this.averageHappiness = znan(weightedAverage(
              world.allClans, 
-            clan => clan.qolCalc.getSat('Ritual'), 
+            clan => clan.happinessValue,
             clan => clan.population));
 
         this.clans = new Map<string, ClanTimePoint>();
@@ -104,7 +106,7 @@ export function clanTimelineGraphData(clan: ClanDTO): GraphData {
         const clanData = tp.clans.get(clan.uuid);
         if (clanData) {
             graphData.datasets[0].data.push(clanData.population);
-            graphData.secondYAxis?.datasets[0].data.push(clanData.qol);
+            graphData.secondYAxis?.datasets[0].data.push(clanData.appeal);
             graphData.secondYAxis?.datasets[1].data.push(clanData.averagePrestige);
         } else {
             graphData.datasets[0].data.push(undefined);

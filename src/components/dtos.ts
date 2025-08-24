@@ -217,7 +217,8 @@ export class SettlementDTO {
     readonly yearsInPlace: number;
     readonly tellHeightInMeters: number;
     readonly population: number;
-    readonly averageQoL: number;
+    readonly averageAppeal: number;
+    readonly averageHappiness: number;
     readonly lastSizeChange: number;
 
     readonly clans: ClanDTO[];
@@ -244,7 +245,8 @@ export class SettlementDTO {
         this.yearsInPlace = settlement.yearsInPlace;
         this.tellHeightInMeters = settlement.tellHeightInMeters;
         this.population = settlement.population;
-        this.averageQoL = settlement.averageQoL;
+        this.averageAppeal = settlement.averageAppeal;
+        this.averageHappiness = settlement.averageHappiness;
         this.lastSizeChange = settlement.lastSizeChange;
 
         this.production = new SettlementProductionDTO(settlement);
@@ -268,14 +270,16 @@ export class ClusterDTO {
     readonly name: string;
     readonly settlements: SettlementDTO[];
     readonly population: number;
-    readonly averageQoL: number;
+    readonly averageAppeal: number;
+    readonly averageHappiness: number;
     readonly diseaseLoad: DiseaseLoadCalc;
 
     constructor(private readonly cluster: SettlementCluster, readonly world: WorldDTO) {
         this.name = cluster.name;
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this, world));
         this.population = cluster.population;
-        this.averageQoL = cluster.qol;
+        this.averageAppeal = cluster.appeal;
+        this.averageHappiness = cluster.happiness;
         this.diseaseLoad = cluster.diseaseLoad;
     }
 
@@ -311,9 +315,9 @@ export class WorldDTO {
     get stats() {
         const tp = this.timeline.points[this.timeline.points.length - 1];
         return [
-            ['Quality of life', tp.averageQoL.toFixed(1)],
+            ['Appeal', tp.averageAppeal.toFixed(1)],
             ['Subsistence satisfaction', tp.averageSubsistenceSat.toFixed(1)],
-            ['Ritual satisfaction', tp.averageRitualSat.toFixed(1)],
+            ['Happiness', tp.averageHappiness.toFixed(1)],
         ];
     }
 

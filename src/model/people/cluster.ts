@@ -5,6 +5,7 @@ import { Clans } from "./clans";
 import { Settlement } from "./settlement";
 import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { DiseaseLoadCalc } from "../environment/pathogens";
+import { weightedAverage } from "../lib/modelbasics";
 
 export class SettlementCluster {
     readonly settlements: Settlement[];
@@ -38,8 +39,12 @@ export class SettlementCluster {
         return sumFun(this.settlements, s => s.lastSizeChange);
     }
 
-    get qol(): number {
-        return averageFun(this.settlements, s => s.clans.averageQoL);
+    get appeal(): number {
+        return weightedAverage(this.clans, clan => clan.appeal, clan => clan.population);
+    }
+
+    get happiness(): number {
+        return weightedAverage(this.clans, clan => clan.happinessValue, clan => clan.population);
     }
 
     get floodLevel(): FloodLevel {

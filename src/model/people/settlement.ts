@@ -11,6 +11,7 @@ import { SkillDef, SkillDefs } from "./skills";
 import type { FloodLevel } from "../environment/flood";
 import { poisson } from "../lib/distributions";
 import type { Year } from "../records/year";
+import { weightedAverage } from "../lib/modelbasics";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -123,8 +124,12 @@ export class Settlement {
         return [this.clans.rites, ...this.clans.map(clan => clan.rites)];
     }
 
-    get averageQoL() {
-        return average(this.clans.map(clan => clan.qol));
+    get averageAppeal() {
+        return weightedAverage(this.clans, clan => clan.appeal, clan => clan.population);
+    }
+
+    get averageHappiness() {
+        return weightedAverage(this.clans, clan => clan.happinessValue, clan => clan.population);
     }
 
     private lastSizeChange_ = 0;

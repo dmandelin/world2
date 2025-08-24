@@ -62,14 +62,20 @@
                 />{selectedSettlement.cluster.population}&nbsp;
                 <img src="stat-welfare-256.png" alt="Welfare" width="20" height="20"
                      style="padding-bottom: 4px;"
-                />{signed(selectedSettlement.cluster.averageQoL, 0)}</h4>
+                />{signed(selectedSettlement.cluster.averageAppeal, 0)}
+                <img src="stat-happiness-256.png" alt="Happiness" width="20" height="20"
+                     style="padding-bottom: 4px;"
+                />{signed(selectedSettlement.cluster.averageHappiness, 0)}</h4>
             <h1 style="white-space: nowrap;">{selectedSettlement.name} |
                 <img src="stat-population-256.png" alt="Population" width="40" height="40"
                      style="padding-bottom: 4px;"
                 />{selectedSettlement.size}&nbsp;
                 <img src="stat-welfare-256.png" alt="Welfare" width="40" height="40"
                      style="padding-bottom: 8px;"
-                />{signed(selectedSettlement.averageQoL, 0)}</h1>
+                />{signed(selectedSettlement.averageAppeal, 0)}
+                <img src="stat-happiness-256.png" alt="Happiness" width="40" height="40"
+                     style="padding-bottom: 8px;"
+                />{signed(selectedSettlement.averageHappiness, 0)}</h1>
             <div>
                 {#if selectedSettlement.yearsInPlace >= 100}
                     Settled &ndash; {formatTellHeight(selectedSettlement.tellHeightInMeters)}

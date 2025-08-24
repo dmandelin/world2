@@ -204,7 +204,7 @@
                 </td>
                 <td>
                     <Tooltip>
-                        {signed(clan.happiness.subsistenceTotal.value)}
+                        {signed(clan.happiness.subsistenceTotal.appeal, 1)}
                         <div slot="tooltip" class="ttt">
                             <h4>Sources</h4>
                             <DataTable rows={appealTable(clan.happiness.subsistenceItems)} />
