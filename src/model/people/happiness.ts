@@ -1,12 +1,40 @@
 import { sumFun } from "../lib/basics";
+import { createTwoSidedQuadratic } from "../lib/modelbasics";
+import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
+
+// Food variety
+// - "Fish" represents a balanced hunter-gather diet and has base appeal.
+// - Adding some cereals typically has higher appeal:
+//   - Ritual emphasis, including direct usage
+//   - Beer
+//   - Storable food
+// - A high percentage of cereals only in the diet has lower appeal and health.
+
+const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 5, 1, 0);
+
+function fishRatio(clan: Clan): number {
+    const cereals = clan.consumption.perCapita(TradeGoods.Cereals);
+    const fish = clan.consumption.perCapita(TradeGoods.Fish);
+    return fish / (cereals + fish);
+}
+
+export function foodVarietyAppeal(clan: Clan): number {
+    return foodVarietyAppealFun(fishRatio(clan));
+}
+
+export function foodVarietyHealthFactor(clan: Clan): number {
+    const p = 1 - fishRatio(clan);
+    return 1 - 0.25 * p * p;
+}
 
 export class Expectations {
     readonly map_ = new Map<string, number>();
     readonly alpha = 0.5;
 
     constructor() {
-        this.map_.set('Food', 0);
+        this.map_.set('Food Quantity', 0);
+        this.map_.set('Food Quality', 0);
         this.map_.set('Shelter', 1);
         this.map_.set('Flood', 0);
         this.map_.set('Rituals', 10);
@@ -50,10 +78,14 @@ export class HappinessCalc {
     constructor(readonly clan: Clan, empty = false) {
         // TODO - positive network effects
         // TODO - disease load
+        // TODO - trade goods
 
         if (!empty) {
             const foodAppeal = 50 * Math.log2(this.clan.consumption.perCapitaSubsistence());
-            this.add('Food', foodAppeal, true);
+            this.add('Food Quantity', foodAppeal, true);
+
+            const foodQualityAppeal = foodVarietyAppeal(this.clan);
+            this.add('Food Quality', foodQualityAppeal, true);
 
             const shelterAppeal = this.clan.housing.shelter;
             this.add('Shelter', shelterAppeal, true);

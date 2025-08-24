@@ -1,6 +1,7 @@
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { clamp, sum } from "../lib/basics";
 import { spct } from "../lib/format";
+import { foodVarietyHealthFactor } from "./happiness";
 import type { Clan } from "./people";
 
 export const INITIAL_POPULATION_RATIOS = [
@@ -93,6 +94,7 @@ export class PopulationChangeBuilder {
     readonly migrationBrModifier: number;
     readonly migrationDrModifier: number;
     readonly shelterModifier: number;
+    readonly foodQualityModifier: number;
     readonly newSlices: number[][] = [];
 
     births = 0;
@@ -123,6 +125,8 @@ export class PopulationChangeBuilder {
         // Up to 10% increase/decrease in birth/death rates for shelter.
         // That's for a warm environment and assuming some shelter always.
         this.shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
+
+        this.foodQualityModifier = foodVarietyHealthFactor(clan);
     }
 
     build(): PopulationChange {
@@ -160,7 +164,7 @@ export class PopulationChangeBuilder {
     calculateBirths() {
         // For now, birth rate depends on nutrition and shelter.
         const brFactor = clamp(this.clan.consumption.perCapitaSubsistence(), 0, 2)
-            * this.shelterModifier * this.migrationBrModifier;
+            * this.shelterModifier * this.migrationBrModifier * this.foodQualityModifier;
         const pmbr = brFactor * BASE_BIRTH_RATE;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
@@ -203,7 +207,8 @@ export class PopulationChangeBuilder {
         const subsistenceDrFactor = subsistence >= 1
                        ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
                        : 1 + clamp((1 - subsistence) / 2, 0, 0.5)
-        const drFactor = subsistenceDrFactor / this.shelterModifier * this.migrationDrModifier;
+        const drFactor = subsistenceDrFactor / this.shelterModifier
+             * this.migrationDrModifier / this.foodQualityModifier;
 
         const sources = [];
         if (this.floodLevel.damageFactor >= 0.1) {

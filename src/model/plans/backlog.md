@@ -16,8 +16,8 @@
 -   Happiness updates
     x   Learn expectations for rituals
     -   Show values happiness factors are derived from in the table
-    -   Food quality
-        -   Also food quality for population/health effects
+    x   Food quality
+        x   Also food quality for population/health effects
     x   Learn expectations for subsistence
     x   Learn expectations for flooding
     -   Normalize status or learn expectations
@@ -30,10 +30,12 @@
         x   Display welfare and happiness for settlement
 
 -   Move effects
-    x   Birth rate decrease, smaller death rate increase
-    -   Productivity decrease
-    -   Appeal/happiness effects
-    -   Get clear sequencing in the model
+    -   For shifts
+        x   Birth rate decrease, smaller death rate increase
+        -   Productivity decrease
+        -   Appeal/happiness effects
+    -   Add effects for intentional moves
+        -   Get clear sequencing in the model
 
 -   Farming options: population doesn't grow much because they don't
     start farming more

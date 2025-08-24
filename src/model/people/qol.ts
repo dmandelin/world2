@@ -50,7 +50,6 @@ export class QolCalc {
             new QolItem('Clan rituals', clan.rites.appeal, 0),
             new QolItem('Village rituals', this.ritualAppeal, 0),
             new QolItem('Goods', qolFromPerCapitaGoods(this.satisfaction), 0, this.satisfactionItems),
-            new QolItem('Food variety', foodVarietyQolModifier(clan), 1),
             new QolItem('Housing', clan.housing.basePrestige, 0),
             new QolItem('Flooding', clan.settlement.floodLevel.qolModifier
                 * (1 - clan.settlement.ditchQuality), 0),
@@ -114,14 +113,7 @@ export function crowdingValue(clan: Clan, overrideSettlement?: Settlement): numb
     return Math.min(0, (b - d) * 100);
 }
 
-const foodVarietyFun = createTwoSidedQuadratic(0, -10, 0.5, 0, 1, -5);
 
-export function foodVarietyQolModifier(clan: Clan): number {
-    const cereals = clan.consumption.perCapita(TradeGoods.Cereals);
-    const fish = clan.consumption.perCapita(TradeGoods.Fish);
-    const fishRatio = fish / (cereals + fish);
-    return foodVarietyFun(fishRatio);
-}
 
 
 // Doubling per-capita goods increases QoL by 50 points.
