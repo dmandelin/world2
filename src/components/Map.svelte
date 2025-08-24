@@ -142,25 +142,24 @@
         // Lens label (e.g., population)
         drawLensLabel(settlement, x, y, s + 32);
 
-        // Basic QoL stats
-        const food = weightedAverage(
+        // Basic stats
+        const subsistence = weightedAverage(
             settlement.clans,
-            c => c.qolCalc.items.find(i => i.name === 'Goods')?.value ?? 0,
+            c => c.happiness.subsistenceTotal.appeal,
             c => c.population,
         );
-        const ritual = weightedAverage(
+        const appeal = weightedAverage(
             settlement.clans,
-            c => (c.qolCalc.items.find(i => i.name === 'Clan rituals')?.value ?? 0)
-               + (c.qolCalc.items.find(i => i.name === 'Village rituals')?.value ?? 0),
+            c => c.happiness.total.appeal,
             c => c.population,
         );
-        const qol = weightedAverage(
+        const happiness = weightedAverage(
             settlement.clans,
-            c => c.qol,
+            c => c.happiness.total.value,
             c => c.population,
         );
 
-        const stats = `${food.toFixed()} | ${ritual.toFixed()} | ${qol.toFixed()}`;
+        const stats = `${signed(subsistence)} | ${signed(appeal)} | ${signed(happiness)}`;
 
         let yo = 49;
         //context!.font = '12px sans-serif';

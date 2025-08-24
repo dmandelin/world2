@@ -36,7 +36,8 @@ export class Expectations {
         this.map_.set('Food Quantity', 0);
         this.map_.set('Food Quality', 0);
         this.map_.set('Shelter', 1);
-        this.map_.set('Flood', 0);
+        this.map_.set('Migrations', -5);
+        this.map_.set('Flood', -1);
         this.map_.set('Rituals', 10);
     }
 
@@ -89,6 +90,12 @@ export class HappinessCalc {
 
             const shelterAppeal = this.clan.housing.shelter;
             this.add('Shelter', shelterAppeal, true);
+
+            // Some people will be neutral or positive on migration, but we'll
+            // assume that convenience ("laziness") and the needs of babies and
+            // elders create a mild absolute preference to stay.
+            const migrationAppeal = -this.clan.settlement.forcedMigrations;
+            this.add('Migrations', migrationAppeal);
 
             const floodAppeal = -this.clan.settlement.floodLevel.damageFactor * 20;
             this.add('Flood', floodAppeal);

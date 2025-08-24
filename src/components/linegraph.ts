@@ -43,7 +43,7 @@ export class PopulationScaler extends YAxisScaler {
 
 export class ZeroCenteredScaler extends YAxisScaler {
   endpoints(datasets: Dataset[]): [number, number] {
-    return [-100, 100];
+    return [-30, 30];
   }
 
   ticks(datasets: Dataset[]): number[] {

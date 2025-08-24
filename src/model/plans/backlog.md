@@ -2,6 +2,11 @@
 
 ## Next items in latest plans
 
+-   Themes
+    -   Give people ways to raise their appeal
+    -   More detail on population change factors
+    -   More aggregate data displays
+
 -   Primary stat displays
     x   Show happiness separate from welfare
     x   Show subsistence separate from welfare
@@ -33,8 +38,8 @@
     -   For shifts
         x   Birth rate decrease, smaller death rate increase
         x   Productivity decrease
-        -   Appeal/happiness effects
-    -   Add effects for intentional moves
+        x   Appeal/happiness effects
+    -   Add back intentional moves, with effects
         -   Get clear sequencing in the model
 
 -   Farming options: population doesn't grow much because they don't

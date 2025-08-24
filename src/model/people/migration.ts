@@ -1,7 +1,6 @@
 import { clamp, sumFun } from "../lib/basics";
 import { selectBySoftmax } from "../lib/modelbasics";
 import { Clan, PersonalityTraits } from "./people";
-import { crowdingValue } from "./qol";
 import { randomHamletName } from "./names";
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
@@ -71,7 +70,9 @@ export class MigrationCalc {
     }
 
     private trigger() {
+        // TODO - restore
         // TODO - make clans that just split want to move more often.
+        /*
         if (Math.random() < 0.05) {
             this.wantToMove = true;
             this.wantToMoveReason = 'Clan events';
@@ -85,6 +86,7 @@ export class MigrationCalc {
             this.wantToMove = true;
             this.wantToMoveReason = `QoL ${this.clan.qol.toFixed(1)} < ${this.qolThreshold} (${this.qolThresholdReason})`;
         }
+        */
     }
 
     private filter() {
@@ -191,7 +193,7 @@ export class CandidateMigrationCalc {
         if (this.target === 'new') {
             item = {name: 'Pop', reason: 'New settlement', value: -2};
         } else {
-            item = {name: 'Pop', reason: 'Crowding', value: crowdingValue(this.clan, this.target)};
+            item = {name: 'Pop', reason: 'Crowding', value: 0 /* TODO */ };
         }
         return item;
     }
@@ -205,13 +207,13 @@ export class CandidateMigrationCalc {
             item = {
                 name: 'Goods',
                 reason: 'Goods like home', 
-                value: qlFactor * this.clan.settlement.averageQoL,
+                value: 0, //qlFactor * this.clan.settlement.averageQoL,
             };
         } else {
             item = {
                 name: 'Goods',
                 reason: 'Local goods', 
-                value: qlFactor * this.target.averageQoL,
+                value: 0, //qlFactor * this.target.averageQoL,
             };
         }
         
