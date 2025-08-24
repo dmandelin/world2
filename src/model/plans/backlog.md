@@ -5,11 +5,12 @@
 -   Primary stat displays
     x   Show happiness separate from welfare
     x   Show subsistence separate from welfare
-    -   Actually show welfare instead of qol
+    x   Actually show welfare instead of qol
     -   Show disease load
-    -   Tooltip for subsistence
-    -   Tooltip for welfare
+    x   Tooltip for subsistence
+    x   Tooltip for welfare
     -   Retire qol code
+    -   Colorization for happiness table
 
 -   Happiness updates
     -   Show values happiness factors are derived from in the table

@@ -8,7 +8,7 @@
     import Tooltip from "./Tooltip.svelte";
     import { clanTimelineGraphData } from "../model/records/timeline";
     import HousingDecision from "./decisions/HousingDecision.svelte";
-    import { skillImitationTable } from "./tables";
+    import { appealTable, happinessTable, skillImitationTable } from "./tables";
 
     let { clan } = $props();
 
@@ -206,21 +206,17 @@
                     <Tooltip>
                         {signed(clan.happiness.subsistenceTotal.value)}
                         <div slot="tooltip" class="ttt">
-                            <h4>Subsistence Sources</h4>
-                            <DataTable rows={clan.subsistenceItems} />
+                            <h4>Sources</h4>
+                            <DataTable rows={appealTable(clan.happiness.subsistenceItems)} />
                         </div>
                     </Tooltip>
                 </td>
                 <td>
                     <Tooltip>
-                        {signed(clan.qol)}
+                        {signed(clan.happiness.total.appeal)}
                         <div slot="tooltip" class="ttt">
-                            <h4>Subsistence</h4>
-                            <DataTable rows={clan.qolCalc.subsistenceTable} />
-                            <h4>Needs & Satisfaction</h4>
-                            <DataTable rows={clan.qolCalc.satsTable} />
                             <h4>Sources</h4>
-                            <DataTable rows={clan.qolCalc.itemsTable} />
+                            <DataTable rows={appealTable(clan.happiness.items)} />
                         </div>
                     </Tooltip>
                 </td>
@@ -228,8 +224,8 @@
                     <Tooltip>
                         {signed(clan.happiness.total.value)}
                         <div slot="tooltip" class="ttt">
-                            <h4>Happiness Sources</h4>
-                            <DataTable rows={clan.happiness.rows} />
+                            <h4>Sources</h4>
+                            <DataTable rows={happinessTable(clan.happiness.items)} />
                         </div>
                     </Tooltip>
                 </td>

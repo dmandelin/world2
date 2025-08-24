@@ -7,6 +7,7 @@ import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
 import type { ClanSkillChange } from '../model/people/skillchange';
 import { sortedByKey } from '../model/lib/basics';
+import type { HappinessCalcItem } from '../model/people/happiness';
 
 export type SettlementRitesTable = {
     header: string[];
@@ -240,4 +241,25 @@ export class HappinessTable {
         }
         this.rows = rows;
     }
+}
+
+export function appealTable(items: readonly HappinessCalcItem[]): string[][] {
+    const header = ['Source', 'A'];
+    const rows = items.map(item => [
+        item.label,
+        item.appeal.toFixed(1),
+    ]);
+    return [header, ...rows];
+}
+
+
+export function happinessTable(items: readonly HappinessCalcItem[]): string[][] {
+    const header = ['Source', 'E', 'A', 'V'];
+    const rows = items.map(item => [
+        item.label,
+        item.expectation.toFixed(1),
+        item.appeal.toFixed(1),
+        item.value.toFixed(1),
+    ]);
+    return [header, ...rows];
 }
