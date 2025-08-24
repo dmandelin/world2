@@ -9,8 +9,9 @@
     -   Show disease load
     x   Tooltip for subsistence
     x   Tooltip for welfare
-    -   Retire qol code
+    -   Retire qol code (need to implement any missing pieces first)
     -   Colorization for happiness table
+    -   Show birth and death rate modifier details
 
 -   Happiness updates
     x   Learn expectations for rituals
@@ -29,7 +30,7 @@
         x   Display welfare and happiness for settlement
 
 -   Move effects
-    -   Birth rate decrease, smaller death rate increase
+    x   Birth rate decrease, smaller death rate increase
     -   Productivity decrease
     -   Appeal/happiness effects
     -   Get clear sequencing in the model

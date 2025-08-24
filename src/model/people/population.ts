@@ -10,8 +10,11 @@ export const INITIAL_POPULATION_RATIOS = [
     [0.0324, 0.0256],
 ];
 
-// Per 20-year turn, for childbearing-age women.
-const BASE_BIRTH_RATE = 4.5;
+// Per 20-year turn, for childbearing-age women with:
+// - standard nutrition
+// - minimal shelter
+// - no migration
+const BASE_BIRTH_RATE = 5;
 
 // Per 20-year turn by age tier.
 const BASE_DEATH_RATES = [0.25, 0.35, 0.5, 1.0];
@@ -87,6 +90,8 @@ export class PopulationChange {
 }
 
 export class PopulationChangeBuilder {
+    readonly migrationBrModifier: number;
+    readonly migrationDrModifier: number;
     readonly shelterModifier: number;
     readonly newSlices: number[][] = [];
 
@@ -99,6 +104,22 @@ export class PopulationChangeBuilder {
     maleDiseaseDeaths = 0;
 
     constructor(readonly clan: Clan) {
+        // Migration has a significant effect on birth rates. Let's say
+        // that a clan that moves all the time has a TFR of K0 (e.g., 4-5),
+        // while a fully settled clan has a TFR of K2 (e.g., 7-8). Some
+        // of that difference might relate to food storage, so the difference
+        // between min and max migration might be about 1.5x. In our start
+        // state, we are in between with 4-5 moves per turn, so maybe each
+        // move is worth about a 5% difference. That would be too high with
+        // 10 moves, but for our actual numbers it's close enough.
+        this.migrationBrModifier = clamp(1 - 0.05 * this.clan.settlement.forcedMigrations, 0.5, 1);
+        // Migration has a smaller effect on death rates. A fairly substantial
+        // migration might involve a 1% total death rate, which is about 25%
+        // of the typical base rate. That seems like a reasonable hazard ratio,
+        // but here we have so far only local moves, so it might be like 5%.
+        // But intuitively it's not as a big a deal here, so use a lower number.
+        this.migrationDrModifier = clamp(1 + 0.025 * this.clan.settlement.forcedMigrations, 1, 1.5);
+
         // Up to 10% increase/decrease in birth/death rates for shelter.
         // That's for a warm environment and assuming some shelter always.
         this.shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
@@ -139,7 +160,7 @@ export class PopulationChangeBuilder {
     calculateBirths() {
         // For now, birth rate depends on nutrition and shelter.
         const brFactor = clamp(this.clan.consumption.perCapitaSubsistence(), 0, 2)
-            * this.shelterModifier;
+            * this.shelterModifier * this.migrationBrModifier;
         const pmbr = brFactor * BASE_BIRTH_RATE;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
@@ -182,7 +203,7 @@ export class PopulationChangeBuilder {
         const subsistenceDrFactor = subsistence >= 1
                        ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
                        : 1 + clamp((1 - subsistence) / 2, 0, 0.5)
-        const drFactor = subsistenceDrFactor / this.shelterModifier;
+        const drFactor = subsistenceDrFactor / this.shelterModifier * this.migrationDrModifier;
 
         const sources = [];
         if (this.floodLevel.damageFactor >= 0.1) {
