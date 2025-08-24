@@ -6,20 +6,20 @@
     x   Show happiness separate from welfare
     x   Show subsistence separate from welfare
     x   Actually show welfare instead of qol
-    -   Show disease load
     x   Tooltip for subsistence
     x   Tooltip for welfare
-    -   Retire qol code (need to implement any missing pieces first)
-    -   Colorization for happiness table
+    x   Retire qol code (need to implement any missing pieces first)
     -   Show birth and death rate modifier details
+    -   Colorization for happiness table
+    -   Show disease load
 
 -   Happiness updates
     x   Learn expectations for rituals
-    -   Show values happiness factors are derived from in the table
     x   Food quality
         x   Also food quality for population/health effects
     x   Learn expectations for subsistence
     x   Learn expectations for flooding
+    -   Show values happiness factors are derived from in the table
     -   Normalize status or learn expectations
     -   Consider idiosyncratic factor
 

@@ -5,7 +5,6 @@ import { pct } from "../model/lib/format";
 import type { Note } from "../model/records/notifications";
 import { Clan, type ConsumptionCalc } from "../model/people/people";
 import type { PrestigeCalc } from "../model/people/prestige";
-import type { QolCalc } from "../model/people/qol";
 import type { Rites } from "../model/rites";
 import type { Settlement } from "../model/people/settlement";
 import type { TimePoint, Timeline } from "../model/records/timeline";
@@ -121,8 +120,6 @@ export type ClanDTO = {
     lastPopulationChange: PopulationChange;
     population: number;
 
-    qol: number;
-    qolCalc: QolCalc;
     happiness: HappinessCalc;
 
     skills: ClanSkills;
@@ -168,8 +165,6 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         lastPopulationChange: clan.lastPopulationChange,
         tradeRelationships: tradeRelationshipsDTO(clan),
 
-        qol: clan.qol,
-        qolCalc: clan.qolCalc,
         happiness: clan.happiness,
 
         skills: clan.skills,
@@ -339,8 +334,8 @@ export class WorldDTO {
             ['Least productive', minbyWithValue, clan => clan.productivity, pct],
             ['Most correct', maxbyWithValue, clan => clan.ritualEffectiveness, pct],
             ['Least correct', minbyWithValue, clan => clan.ritualEffectiveness, pct],
-            ['Highest QoL', maxbyWithValue, clan => clan.qol, n => n.toFixed()],
-            ['Lowest QoL', minbyWithValue, clan => clan.qol, n => n.toFixed()],
+            ['Highest welfare', maxbyWithValue, clan => clan.happiness.total.appeal, n => n.toFixed()],
+            ['Lowest welfare', minbyWithValue, clan => clan.happiness.total.appeal, n => n.toFixed()],
             ['Most influential', maxbyWithValue, clan => clan.influence, pct],
             ['Least influential', minbyWithValue, clan => clan.influence, pct],
         ]

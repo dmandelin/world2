@@ -4,8 +4,7 @@ import { normal } from "../lib/distributions";
 import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
 import { PrestigeCalc } from "./prestige";
 import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } from "./population";
-import { QolCalc } from "./qol";
-import { Rites, RitualGoodsUsage } from "../rites";
+import { Rites } from "../rites";
 import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
@@ -209,7 +208,6 @@ export class Clan implements TradePartner {
     readonly tradeRelationships = new Set<TradeRelationship>();
     consumption = new ConsumptionCalc(this);
 
-    private qolCalc_: QolCalc|undefined;
     private expectations_: Expectations = new Expectations();
     private happinessCalc_: HappinessCalc;
 
@@ -286,20 +284,10 @@ export class Clan implements TradePartner {
     }
 
     consume() {
-        this.qolCalc_ = new QolCalc(this);
         this.happinessCalc_ = new HappinessCalc(this);
         // Update expectations afterward. The earlier expectations are snapshotted
         // in the HappinessCalc.
         this.expectations_.updateFrom(this.happinessCalc_);
-
-    }
-
-    get qolCalc() {
-        return this.qolCalc_!;
-    }
-
-    get qol(): number {
-        return this.qolCalc?.value || 0;
     }
 
     get expectations(): Expectations {

@@ -1,5 +1,4 @@
 <script>
-    import SettlementConsumption from "./SettlementConsumption.svelte";
     import SettlementEconomy from "./SettlementEconomy.svelte";
     import SettlementPeople from "./SettlementPeople.svelte";
     import SettlementHealth from "./SettlementHealth.svelte";
@@ -16,7 +15,6 @@
         { label: "Health", snippet: healthTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Happiness", snippet: happinessTab },
-        { label: "Quality of Life", snippet: consumptionTab },
         { label: "Rites", snippet: ritesTab },
         { label: "Production", snippet: economyTab },
         { label: "Trade", snippet: tradeTab },
@@ -41,10 +39,6 @@
 
 {#snippet tradeTab()}
     <SettlementTrade settlement={settlement} />
-{/snippet}
-
-{#snippet consumptionTab()}
-    <SettlementConsumption settlement={settlement} />
 {/snippet}
 
 {#snippet happinessTab()}
