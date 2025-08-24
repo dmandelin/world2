@@ -52,6 +52,11 @@ export class ProductivityCalc {
             const productivity = (1-ditchQuality)*baseProductivity + ditchQuality*maxProductivity;
             const differentialProductivity = productivity / baseProductivity;
 
+            // For now we'll assume migrations are neutral, because although they
+            // take work, in the early days people might have been migrating to
+            // small patches of the best land. The real importance of permanence
+            // will be in enabling durable infrastructure.
+
             this.items.push(new SimpleProductivityCalcItem(
                 'Flooding',
                 clan.settlement.floodLevel.name,

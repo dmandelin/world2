@@ -32,7 +32,7 @@
 -   Move effects
     -   For shifts
         x   Birth rate decrease, smaller death rate increase
-        -   Productivity decrease
+        x   Productivity decrease
         -   Appeal/happiness effects
     -   Add effects for intentional moves
         -   Get clear sequencing in the model
