@@ -18,15 +18,21 @@ export class HappinessCalc {
     readonly total: HappinessCalcItem;
     readonly rows: HappinessCalcItem[];
 
+    readonly subsistenceItems: HappinessCalcItem[] = [];
+    readonly subsistenceTotal: HappinessCalcItem;
+
     constructor(readonly clan: Clan, empty = false) {
         // TODO - variable expectations
         // TODO - positive network effects
+        // TODO - disease load
 
         if (!empty) {
             const subsistenceAppeal = 50 * Math.log2(this.clan.consumption.perCapitaSubsistence());
+            this.subsistenceItems.push(new HappinessCalcItem('Subsistence', 0, subsistenceAppeal));
             this.items.push(new HappinessCalcItem('Subsistence', 0, subsistenceAppeal));
 
             const shelterAppeal = this.clan.housing.shelter;
+            this.subsistenceItems.push(new HappinessCalcItem('Shelter', 1, shelterAppeal));
             this.items.push(new HappinessCalcItem('Shelter', 1, shelterAppeal));
 
             const floodAppeal = -this.clan.settlement.floodLevel.damageFactor * 20;
@@ -49,6 +55,12 @@ export class HappinessCalc {
             const societyAppeal = population <= limit ? 0 : -20 * (population - limit) / population;
             this.items.push(new HappinessCalcItem('Anonymity', 0, societyAppeal));
         }
+
+        this.subsistenceTotal = new HappinessCalcItem(
+            'Total', 
+            sumFun(this.subsistenceItems, item => item.expectation),
+            sumFun(this.subsistenceItems, item => item.value),
+        );
 
         this.total = new HappinessCalcItem(
             'Total', 

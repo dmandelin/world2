@@ -4,7 +4,12 @@
 
 -   Primary stat displays
     x   Show happiness separate from welfare
-    -   Show health separate from welfare
+    x   Show subsistence separate from welfare
+    -   Actually show welfare instead of qol
+    -   Show disease load
+    -   Tooltip for subsistence
+    -   Tooltip for welfare
+    -   Retire qol code
 
 -   Happiness updates
     -   Show values happiness factors are derived from in the table
@@ -19,6 +24,7 @@
 -   Consider getting a settlement display: reviewing the different
     clan displays ends up being a lot of data
     -   Or break out population into its own tab
+    -   Can start simple, with just a few items
 
 -   Move effects
     -   Birth rate decrease, smaller death rate increase

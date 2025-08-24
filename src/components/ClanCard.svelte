@@ -170,6 +170,12 @@
                 </td>
                 <td>
                     <Tooltip>
+                        <img src="stat-subsistence-256.png" alt="Subsistence" width="24" height="24" />
+                        <div slot="tooltip">Subsistence</div>
+                    </Tooltip>
+                </td>
+                <td>
+                    <Tooltip>
                         <img src="stat-welfare-256.png" alt="Welfare" width="24" height="24" />
                         <div slot="tooltip">Welfare</div>
                     </Tooltip>
@@ -195,6 +201,15 @@
                 </td> 
                 <td>
                     {clan.seniority}
+                </td>
+                <td>
+                    <Tooltip>
+                        {signed(clan.happiness.subsistenceTotal.value)}
+                        <div slot="tooltip" class="ttt">
+                            <h4>Subsistence Sources</h4>
+                            <DataTable rows={clan.subsistenceItems} />
+                        </div>
+                    </Tooltip>
                 </td>
                 <td>
                     <Tooltip>
