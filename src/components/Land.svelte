@@ -42,16 +42,16 @@
             yAxisScaler: new ZeroCenteredScaler(),
             labels: world.timeline.map(timePoint => timePoint.year.toString()),
             datasets: [{
-                label: 'QoL',
-                data: world.timeline.map(timePoint => timePoint.averageQoL),
+                label: 'Welfare',
+                data: world.timeline.map(timePoint => timePoint.averageAppeal),
                 color: 'black',
             }, {
-                label: 'Subsistence sat',
+                label: 'Subsistence',
                 data: world.timeline.map(timePoint => timePoint.averageSubsistenceSat),
                 color: 'green',
             }, {
-                label: 'Ritual sat',
-                data: world.timeline.map(timePoint => timePoint.averageRitualSat),
+                label: 'Happiness',
+                data: world.timeline.map(timePoint => timePoint.averageHappiness),
                 color: 'red',
             }]
         };

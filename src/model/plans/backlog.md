@@ -79,6 +79,8 @@
     -   More prominent notifications for key firsts
 -   Further sub-items
 
+-   Dynamically scale happiness graphs so they're easier to read
+
 ## Bug fixes
 
 -   Bring back nutritional balance between cereals and fish as having
