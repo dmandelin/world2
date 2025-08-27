@@ -20,6 +20,7 @@ import { AlignmentCalc } from "./alignment";
 import { TradeGoods } from "../trade";
 import { HousingTypes } from "../econ/housing";
 import { Expectations, HappinessCalc } from "./happiness";
+import { ResidenceLevels, type ResidenceLevel } from "./residence";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -170,6 +171,7 @@ export class Clan implements TradePartner {
     static maxDesiredSize = 75;
 
     private settlement_: Settlement|undefined;
+    private residenceLevel_: ResidenceLevel;
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 2;
@@ -243,6 +245,8 @@ export class Clan implements TradePartner {
             ++error;
         }
 
+        this.residenceLevel_ = ResidenceLevels.Work;
+
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.
@@ -281,6 +285,19 @@ export class Clan implements TradePartner {
 
     get ritualSkill() {
         return this.skills.v(SkillDefs.Ritual);
+    }
+
+    get residenceLevel(): ResidenceLevel {
+        return this.residenceLevel_;
+    }   
+
+    get residenceFraction(): number {
+        const farmingRatio = this.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0;
+        return this.residenceLevel_.useFraction(farmingRatio);
+    }
+
+    get effectiveResidentPopulation(): number {
+        return this.population * this.residenceFraction;
     }
 
     consume() {

@@ -77,6 +77,7 @@
                      style="padding-bottom: 8px;"
                 />{signed(selectedSettlement.averageHappiness, 0)}</h1>
             <div>
+                {pct(selectedSettlement.residenceFraction)} resident &centerdot;
                 {#if selectedSettlement.yearsInPlace >= 100}
                     Settled &ndash; {formatTellHeight(selectedSettlement.tellHeightInMeters)}
                     <span style="color:grey">(founded {selectedSettlement.yearsInPlace} years ago)</span>

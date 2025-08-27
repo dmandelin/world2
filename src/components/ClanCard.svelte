@@ -133,6 +133,11 @@
                 </Tooltip>
             </tr>
             <tr>
+                <td colspan="3" class="full-row">
+                    {clan.residenceLevel.description} 
+                    ({pct(clan.residenceFraction)} resident)</td>
+            </tr>
+            <tr>
                 <td colspan="3" class="full-row">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>
             </tr>
             <tr>

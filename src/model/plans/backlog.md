@@ -7,6 +7,18 @@
     -   More detail on population change factors
     -   More aggregate data displays
 
+-   Residence
+    x   Calculate an effective residence level
+    -   Effects of effective residence
+        x   Tell height scaled down if not full-time
+        -   Technology learning boost
+        -   Social learning boost
+        -   Mutual knowledge boost
+        -   Benefits of local cooperation
+        -   Disease load boost
+        -   Fertility boost
+    -   Update seniority logic for residence logic
+
 -   Primary stat displays
     x   Show happiness separate from welfare
     x   Show subsistence separate from welfare

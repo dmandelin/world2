@@ -1,4 +1,4 @@
-import { average, chooseFrom } from "../lib/basics";
+import { average, chooseFrom, sumFun } from "../lib/basics";
 import type { Clans } from "./clans";
 import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
@@ -112,7 +112,15 @@ export class Settlement {
     }
 
     get population() {
-        return this.clans.reduce((acc, clan) => acc + clan.population, 0);
+        return sumFun(this.clans, clan => clan.population); 
+    }
+
+    get effectiveResidentPopulation() {
+        return sumFun(this.clans, clan => clan.effectiveResidentPopulation);
+    }
+
+    get residenceFraction() {
+        return this.effectiveResidentPopulation / this.population;
     }
 
     productionNode(skillDef: SkillDef): ProductionNode {
@@ -195,7 +203,7 @@ export class Settlement {
     }
 
     advance(noEffect: boolean = false) {
-        const sizeBefore = this.population;
+        const sizeBefore = this.effectiveResidentPopulation;
 
         // Split and merge at the start of the turn so that normal update
         // logic correctly updates the new clans.
@@ -290,7 +298,7 @@ export class Settlement {
         }
     }
 
-    growTell(previousPopulation: number) {
+    growTell(previousEffectiveResidentPopulation: number) {
         // If the settlement shifts, there would be no tell at the new
         // location, but substantial tells would still be there on the
         // land and probably resettled at some point. As a simplification,
@@ -301,11 +309,13 @@ export class Settlement {
         }
 
         // If population grew, scale down.
-        if (this.population > previousPopulation) {
-            this.tellHeightInMeters_ = this.tellHeightInMeters_ * previousPopulation / this.population;
+        if (this.effectiveResidentPopulation > previousEffectiveResidentPopulation) {
+            this.tellHeightInMeters_ = this.tellHeightInMeters_
+              * previousEffectiveResidentPopulation
+              / this.effectiveResidentPopulation;
         }
 
-        // 2cm per turn (1m/millennium)
-        this.tellHeightInMeters_ += 0.001 * this.world.yearsPerTurn;
+        // 2cm per turn (1m/millennium) if full-time resident.
+        this.tellHeightInMeters_ += 0.001 * this.world.yearsPerTurn * this.residenceFraction;
     }
 }

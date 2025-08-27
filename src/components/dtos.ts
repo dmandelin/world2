@@ -23,6 +23,7 @@ import type { TrendDTO } from "../model/records/trends";
 import type { Housing } from "../model/econ/housing";
 import type { DiseaseLoadCalc } from "../model/environment/pathogens";
 import type { HappinessCalc } from "../model/people/happiness";
+import type { ResidenceLevel } from "../model/people/residence";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -92,13 +93,16 @@ export type ClanDTO = {
     name: string;
     color: string;
 
+    housing: Housing;
+    housingDecision: HousingDecision|undefined;
+    residenceLevel: ResidenceLevel;
+    residenceFraction: number;
+    settlement: Settlement;
+
     cadets: Clan[];
     parent: Clan|undefined;
     tradeRelationships: TradeRelationshipsDTO[];
-    settlement: Settlement;
     rites: Rites;
-    housing: Housing;
-    housingDecision: HousingDecision|undefined;
     slices: number[][];
 
     prestige: Map<Clan, PrestigeCalc>;
@@ -119,6 +123,7 @@ export type ClanDTO = {
     migrationPlan: MigrationCalc|undefined;
     lastPopulationChange: PopulationChange;
     population: number;
+    effectiveResidentPopulation: number;
 
     happiness: HappinessCalc;
 
@@ -142,12 +147,14 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         averagePrestige: clan.averagePrestige,
         influence: clan.influence,
 
-        cadets: clan.cadets,
-        parent: clan.parent,
-        settlement: clan.settlement,
-        rites: clan.rites.clone(),
         housing: clan.housing,
         housingDecision: clan.housingDecision,
+        residenceLevel: clan.residenceLevel,
+        settlement: clan.settlement,
+
+        cadets: clan.cadets,
+        parent: clan.parent,
+        rites: clan.rites.clone(),
         migrationPlan: clan.migrationPlan,
         slices: clan.slices,
 
@@ -162,6 +169,8 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         ritualEffectivenessTooltip: clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [],
         seniority: clan.seniority,
         population: clan.population,
+        effectiveResidentPopulation: clan.effectiveResidentPopulation,
+        residenceFraction: clan.residenceFraction,
         lastPopulationChange: clan.lastPopulationChange,
         tradeRelationships: tradeRelationshipsDTO(clan),
 
@@ -212,6 +221,8 @@ export class SettlementDTO {
     readonly yearsInPlace: number;
     readonly tellHeightInMeters: number;
     readonly population: number;
+    readonly effectiveResidentPopulation: number;
+    readonly residenceFraction: number;
     readonly averageAppeal: number;
     readonly averageHappiness: number;
     readonly lastSizeChange: number;
@@ -240,6 +251,8 @@ export class SettlementDTO {
         this.yearsInPlace = settlement.yearsInPlace;
         this.tellHeightInMeters = settlement.tellHeightInMeters;
         this.population = settlement.population;
+        this.effectiveResidentPopulation = settlement.effectiveResidentPopulation;
+        this.residenceFraction = settlement.residenceFraction;
         this.averageAppeal = settlement.averageAppeal;
         this.averageHappiness = settlement.averageHappiness;
         this.lastSizeChange = settlement.lastSizeChange;
