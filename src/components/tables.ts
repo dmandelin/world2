@@ -6,8 +6,10 @@ import { pct, signed } from '../model/lib/format';
 import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
 import type { ClanSkillChange } from '../model/people/skillchange';
-import { sortedByKey } from '../model/lib/basics';
+import { sortedByKey, sumFun } from '../model/lib/basics';
 import type { HappinessCalcItem } from '../model/people/happiness';
+import type PopulationChange from './PopulationChange.svelte';
+import type { PopulationChangeItem } from '../model/people/population';
 
 export type SettlementRitesTable = {
     header: string[];
@@ -262,4 +264,79 @@ export function happinessTable(items: readonly HappinessCalcItem[]): string[][] 
         item.value.toFixed(1),
     ]);
     return [header, ...rows];
+}
+
+class PopulationChangeTableItem {
+    constructor(
+        readonly name: string,
+        readonly previousPopulation: number,
+        public standardRate: number,
+        public expectedRate: number,
+        public actualRate: number,
+        public actual: number,
+    ) {}
+
+    add(other: PopulationChangeItem, previousPopulation: number): void {
+        this.standardRate += other.standardRate * previousPopulation;
+        this.expectedRate += other.expectedRate * previousPopulation;
+        this.actualRate += other.actualRate * previousPopulation;
+        this.actual += other.actual;
+    }
+
+    asRow(previousPopulation: number): string[] {
+        return [
+            this.name,
+            (this.standardRate * 1000 / previousPopulation).toFixed(),
+            (this.expectedRate * 1000 / previousPopulation).toFixed(),
+            (this.actualRate * 1000 / previousPopulation).toFixed(),
+            this.actual.toFixed(),
+        ];
+    }   
+}
+
+export type PopulationChangeTable = {
+    births: number;
+    deaths: number;
+    header: string[];
+    rows: string[][];
+}
+
+export function populationChangeTable(settlement: SettlementDTO): PopulationChangeTable {
+    let previousPopulation = 0;
+    let [births, deaths] = [0, 0];
+    const items: Map<string, PopulationChangeTableItem> = new Map();
+    for (const clan of settlement.clans) {
+        previousPopulation += clan.lastPopulationChange.previousSize;
+        births += clan.lastPopulationChange.births;
+        deaths += clan.lastPopulationChange.deaths;
+        for (const item of clan.lastPopulationChange.items) {
+            const existingItem = items.get(item.name);
+            if (existingItem) {
+                existingItem.add(item, clan.lastPopulationChange.previousSize);
+            } else {
+                items.set(item.name, 
+                    new PopulationChangeTableItem(
+                        item.name, 
+                        clan.lastPopulationChange.previousSize,
+                        item.standardRate * clan.lastPopulationChange.previousSize, 
+                        item.expectedRate * clan.lastPopulationChange.previousSize, 
+                        item.actualRate * clan.lastPopulationChange.previousSize, 
+                        item.actual));
+            }
+        }
+    }
+
+    const totalItem = new PopulationChangeTableItem(
+        'Total',
+        previousPopulation,
+        sumFun([...items.values()], i => i.standardRate),
+        sumFun([...items.values()], i => i.expectedRate),
+        sumFun([...items.values()], i => i.actualRate),
+        sumFun([...items.values()], i => i.actual),
+    );
+    items.set('Total', totalItem);
+
+    const header = ['Source', 'S', 'E', 'A', 'Δ'];
+    const rows = [...items.values()].map(item => item.asRow(previousPopulation));
+    return { births, deaths, header, rows };
 }
