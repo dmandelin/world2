@@ -26,7 +26,15 @@
                 label: 'Population',
                 data: settlement.timeline.map((timePoint: SettlementTimePoint) => timePoint.population),
                 color: '#666',
-            }]
+            }],
+            secondYAxis: {
+                scaler: new PopulationScaler(),
+                datasets: [{
+                    label: 'Disease Load',
+                    data: settlement.timeline.map((timePoint: SettlementTimePoint) => timePoint.diseaseLoad * 1000),
+                    color: 'green',
+                }],
+            },
         };
     });
 </script>
@@ -112,5 +120,9 @@
                 {/each}
             </tbody>
         </table>
+    </div>
+    <div>
+        <h4>Disease</h4>
+        <p>{(settlement.cluster.diseaseLoad.value * 1000).toFixed()}</p>
     </div>
 </div>

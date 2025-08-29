@@ -51,10 +51,12 @@ export class ClanTimePoint {
 export class SettlementTimePoint {
     readonly year: Year;
     readonly population: number;
+    readonly diseaseLoad: number;
 
     constructor(settlement: Settlement) {
         this.year = settlement.world.year.clone();
         this.population = settlement.clans.population;
+        this.diseaseLoad = settlement.cluster.diseaseLoad.value;
     }
 }
 

@@ -4,8 +4,14 @@
 
 -   Themes
     -   Give people ways to raise their appeal
+        -   The new demographics panel makes it clear that limited food
+            supply is limiting population growth, so that can be a priority
     -   More detail on population change factors
+        x   Did a bunch of this
+        -   Disease load detail is the main thing
     -   More aggregate data displays
+        x   Did a demographics panel for this
+        -   More as needed
 
 -   Residence
     x   Calculate an effective residence level
@@ -28,7 +34,8 @@
     x   Retire qol code (need to implement any missing pieces first)
     x   Show birth and death rate modifier details
     -   Colorization for happiness table
-    -   Show disease load
+    x   Show disease load and graph
+    -   Show disease load calculations
 
 -   Happiness updates
     x   Learn expectations for rituals
