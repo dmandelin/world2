@@ -1,16 +1,34 @@
-<script>
+<script lang="ts">
     import { populationChangeModifierTable, populationChangeTable } from "./tables";
+    import LineGraph from "./LineGraph.svelte";
+    import { PopulationScaler } from "./linegraph";
+    import type { SettlementTimePoint } from "../model/records/timeline";
 
     let { settlement } = $props();
     let table = $derived(populationChangeTable(settlement));
+
     let brModifiers = $derived(populationChangeModifierTable(
         settlement, 
         clan => clan.lastPopulationChange.brModifiers,
         clan => clan.lastPopulationChange.brModifier));
+
     let drModifiers = $derived(populationChangeModifierTable(
         settlement, 
         clan => clan.lastPopulationChange.drModifiers,
         clan => clan.lastPopulationChange.drModifier));
+
+    let popData = $derived.by(() => {
+        return {
+            title: 'Population',
+            yAxisScaler: new PopulationScaler(),
+            labels: settlement.timeline.map((timePoint: SettlementTimePoint) => timePoint.year.toString()),
+            datasets: [{
+                label: 'Population',
+                data: settlement.timeline.map((timePoint: SettlementTimePoint) => timePoint.population),
+                color: '#666',
+            }]
+        };
+    });
 </script>
 
 <style>
@@ -28,7 +46,7 @@
     }
 </style>
 
-<div style="display: flex">
+<div style="display: flex; gap: 4rem">
     <div>
         <table>
             <thead>
@@ -48,6 +66,9 @@
                 {/each}
             </tbody>
         </table>
+    </div>
+    <div class="graph-container">
+        <LineGraph data={popData} />
     </div>
 </div>
 

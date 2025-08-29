@@ -12,6 +12,7 @@ import type { FloodLevel } from "../environment/flood";
 import { poisson } from "../lib/distributions";
 import type { Year } from "../records/year";
 import { weightedAverage } from "../lib/modelbasics";
+import { SettlementTimePoint, Timeline } from "../records/timeline";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -65,6 +66,7 @@ export class Settlement {
     private movingAverageForcedMigrations_: number[] = [];
 
     private lastShiftYear_: Year;
+    readonly timeline = new Timeline<SettlementTimePoint>();
     
     constructor(
         readonly world: World,
@@ -317,5 +319,9 @@ export class Settlement {
 
         // 2cm per turn (1m/millennium) if full-time resident.
         this.tellHeightInMeters_ += 0.001 * this.world.yearsPerTurn * this.residenceFraction;
+    }
+
+    addTimePoint() {
+        this.timeline.add(this.world.year, new SettlementTimePoint(this));
     }
 }

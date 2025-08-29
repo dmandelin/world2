@@ -7,7 +7,7 @@ import { Clan, type ConsumptionCalc } from "../model/people/people";
 import type { PrestigeCalc } from "../model/people/prestige";
 import type { Rites } from "../model/rites";
 import type { Settlement } from "../model/people/settlement";
-import type { TimePoint, Timeline } from "../model/records/timeline";
+import type { SettlementTimePoint, TimePoint, Timeline } from "../model/records/timeline";
 import { TradeGood, TradeGoods } from "../model/trade";
 import type { World } from "../model/world";
 import type { SettlementCluster } from "../model/people/cluster";
@@ -242,6 +242,7 @@ export class SettlementDTO {
     readonly condorcet: CondorcetCalc;
 
     readonly rites: Rites;
+    readonly timeline: Timeline<SettlementTimePoint>;
 
     constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
         this.clans = sortedByKey([...settlement.clans].map(clan => 
@@ -269,7 +270,8 @@ export class SettlementDTO {
         this.movingAverageForcedMigrations = settlement.movingAverageForcedMigrations;
 
         this.rites = settlement.clans.rites.clone();
-            
+        this.timeline = settlement.timeline;
+
         this.condorcet = settlement.clans.condorcetLeader;
     }
 }

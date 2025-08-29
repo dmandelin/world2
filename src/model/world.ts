@@ -190,7 +190,12 @@ export class World implements NoteTaker {
         // Update timeline.
         if (!noEffect) {
             this.year.advance(this.yearsPerTurn);
+
             this.timeline.add(this.year, new TimePoint(this));
+            for (const settlement of this.allSettlements) {
+                settlement.addTimePoint();
+            }
+
             for (const trend of this.trends) trend.update(this.year);
             this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
         }

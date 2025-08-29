@@ -5,6 +5,7 @@ import { weightedAverage } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
 import type { World } from "../world";
 import type { Year } from "./year";
+import type { Settlement } from "../people/settlement";
 
 export class Timeline<T> {
     private readonly years_: Year[] = [];
@@ -44,6 +45,16 @@ export class ClanTimePoint {
         this.appeal = clan.appeal;
         this.happiness = clan.happinessValue;
         this.averagePrestige = clan.averagePrestige;
+    }
+}
+
+export class SettlementTimePoint {
+    readonly year: Year;
+    readonly population: number;
+
+    constructor(settlement: Settlement) {
+        this.year = settlement.world.year.clone();
+        this.population = settlement.clans.population;
     }
 }
 

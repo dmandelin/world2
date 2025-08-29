@@ -26,7 +26,7 @@
     x   Tooltip for subsistence
     x   Tooltip for welfare
     x   Retire qol code (need to implement any missing pieces first)
-    -   Show birth and death rate modifier details
+    x   Show birth and death rate modifier details
     -   Colorization for happiness table
     -   Show disease load
 
