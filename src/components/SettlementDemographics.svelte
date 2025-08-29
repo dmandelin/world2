@@ -1,8 +1,16 @@
 <script>
-    import { populationChangeTable } from "./tables";
+    import { populationChangeModifierTable, populationChangeTable } from "./tables";
 
     let { settlement } = $props();
     let table = $derived(populationChangeTable(settlement));
+    let brModifiers = $derived(populationChangeModifierTable(
+        settlement, 
+        clan => clan.lastPopulationChange.brModifiers,
+        clan => clan.lastPopulationChange.brModifier));
+    let drModifiers = $derived(populationChangeModifierTable(
+        settlement, 
+        clan => clan.lastPopulationChange.drModifiers,
+        clan => clan.lastPopulationChange.drModifier));
 </script>
 
 <style>
@@ -20,23 +28,68 @@
     }
 </style>
 
-<h3>Population change</h3>
-
-<table>
-    <thead>
-        <tr>
-            {#each table.header as cell}
-                <th>{cell}</th>
-            {/each}
-        </tr>
-    </thead>
-    <tbody>
-        {#each table.rows as row}
-            <tr>
-                {#each row as cell}
-                    <td>{cell}</td>
+<div style="display: flex">
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    {#each table.header as cell}
+                        <th>{cell}</th>
+                    {/each}
+                </tr>
+            </thead>
+            <tbody>
+                {#each table.rows as row}
+                    <tr>
+                        {#each row as cell}
+                            <td>{cell}</td>
+                        {/each}
+                    </tr>
                 {/each}
-            </tr>
-        {/each}
-    </tbody>
-</table>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="display: flex; gap: 2rem; margin-top: 1rem;">
+    <div>
+        <h4>Birth rate modifiers</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Modifier</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each brModifiers.rows as row}
+                    <tr>
+                        {#each row as cell}
+                            <td>{cell}</td>
+                        {/each}
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <h4>Death rate modifiers</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Modifier</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each drModifiers.rows as row}
+                    <tr>
+                        {#each row as cell}
+                            <td>{cell}</td>
+                        {/each}
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+</div>

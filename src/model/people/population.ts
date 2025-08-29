@@ -61,6 +61,10 @@ export class PopulationChange {
         readonly diseaseLoad: DiseaseLoadCalc|undefined,
         readonly items: PopulationChangeItem[],
         readonly newSlices: number[][],
+        readonly brModifiers: PopulationChangeModifier[],
+        readonly brModifier: number,
+        readonly drModifiers: PopulationChangeModifier[],
+        readonly drModifier: number,
     ) {
         this.previousSize = clan.population;
         let [births, deaths] = [0, 0];
@@ -105,10 +109,6 @@ export class PopulationChangeBuilder {
     readonly brModifier: number;
     readonly drModifier: number;
 
-    readonly migrationBrModifier: number;
-    readonly migrationDrModifier: number;
-    readonly shelterModifier: number;
-    readonly foodQualityModifier: number;
     readonly newSlices: number[][] = [];
 
     births = 0;
@@ -130,17 +130,17 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Food Quantity', this.clan.consumption.perCapitaSubsistence().toString(), subsistenceDrModifier));
 
-        this.foodQualityModifier = foodVarietyHealthFactor(clan);
+        const foodQualityModifier = foodVarietyHealthFactor(clan);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quality', this.clan.consumption.perCapitaSubsistence().toString(), this.foodQualityModifier));
+            'Food Quality', '', foodQualityModifier));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quality', this.clan.consumption.perCapitaSubsistence().toString(), 1 / this.foodQualityModifier));
+            'Food Quality', '', 1 / foodQualityModifier));
 
         // Up to 10% increase/decrease in birth/death rates for shelter.
         // That's for a warm environment and assuming some shelter always.
-        this.shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
+        const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
         this.brModifiers.push(new PopulationChangeModifier(
-            'Shelter', this.clan.housing.name, this.shelterModifier));
+            'Shelter', this.clan.housing.name, shelterModifier));
 
         // Migration has a significant effect on birth rates. Let's say
         // that a clan that moves all the time has a TFR of K0 (e.g., 4-5),
@@ -150,18 +150,18 @@ export class PopulationChangeBuilder {
         // state, we are in between with 4-5 moves per turn, so maybe each
         // move is worth about a 5% difference. That would be too high with
         // 10 moves, but for our actual numbers it's close enough.
-        this.migrationBrModifier = clamp(1 - 0.05 * this.clan.settlement.forcedMigrations, 0.5, 1);
+        const migrationBrModifier = clamp(1 - 0.05 * this.clan.settlement.forcedMigrations, 0.5, 1);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Migration', this.clan.settlement.forcedMigrations.toString(), this.migrationBrModifier));
+            'Migration', this.clan.settlement.forcedMigrations.toString(), migrationBrModifier));
 
         // Migration has a smaller effect on death rates. A fairly substantial
         // migration might involve a 1% total death rate, which is about 25%
         // of the typical base rate. That seems like a reasonable hazard ratio,
         // but here we have so far only local moves, so it might be like 5%.
         // But intuitively it's not as a big a deal here, so use a lower number.
-        this.migrationDrModifier = clamp(1 + 0.025 * this.clan.settlement.forcedMigrations, 1, 1.5);
+        const migrationDrModifier = clamp(1 + 0.025 * this.clan.settlement.forcedMigrations, 1, 1.5);
         this.drModifiers.push(new PopulationChangeModifier(
-            'Migration', this.clan.settlement.forcedMigrations.toString(), this.migrationDrModifier));
+            'Migration', this.clan.settlement.forcedMigrations.toString(), migrationDrModifier));
 
         this.brModifier = productFun(this.brModifiers, m => m.value);
         this.drModifier = productFun(this.drModifiers, m => m.value);
@@ -184,7 +184,16 @@ export class PopulationChangeBuilder {
             ...hazardsItems,
         ];
 
-        return new PopulationChange(this.clan, this.diseaseLoad, items, this.newSlices);
+        return new PopulationChange(
+            this.clan, 
+            this.diseaseLoad, 
+            items, 
+            this.newSlices,
+            this.brModifiers,
+            this.brModifier,
+            this.drModifiers,
+            this.drModifier,
+        );
     }
 
     get initialPopulation() {
@@ -200,10 +209,7 @@ export class PopulationChangeBuilder {
     }
 
     calculateBirths() {
-        // For now, birth rate depends on nutrition and shelter.
-        const brFactor = clamp(this.clan.consumption.perCapitaSubsistence(), 0, 2)
-            * this.shelterModifier * this.migrationBrModifier * this.foodQualityModifier;
-        const pmbr = brFactor * BASE_BIRTH_RATE;
+        const pmbr = this.brModifier * BASE_BIRTH_RATE;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
         for (let i = 0; i < this.births; ++i) {
@@ -212,7 +218,7 @@ export class PopulationChangeBuilder {
         this.maleBirths = this.births - this.femaleBirths;
         return new PopulationChangeItem(
             'Births',
-            brFactor,
+            this.brModifier,
             INITIAL_POPULATION_RATIOS[1][0] * pmbr,
             eb / this.initialPopulation,
             this.births / this.initialPopulation,
@@ -241,12 +247,7 @@ export class PopulationChangeBuilder {
     }
 
     calculateHazards() {
-        const subsistence = this.clan.consumption.perCapitaSubsistence();
-        const subsistenceDrFactor = subsistence >= 1
-                       ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
-                       : 1 + clamp((1 - subsistence) / 2, 0, 0.5)
-        const drFactor = subsistenceDrFactor / this.shelterModifier
-             * this.migrationDrModifier / this.foodQualityModifier;
+        const drFactor = this.drModifier;
 
         const sources = [];
         if (this.floodLevel.damageFactor >= 0.1) {
@@ -332,6 +333,6 @@ export class PopulationChangeBuilder {
     }
 
     static empty(clan: Clan) {
-        return new PopulationChange(clan, undefined, [], clan.slices);
+        return new PopulationChange(clan, undefined, [], clan.slices, [], 1, [], 1);
     }
 }

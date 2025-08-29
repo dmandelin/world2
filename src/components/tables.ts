@@ -2,14 +2,14 @@ import type { ProductionItemDTO, SettlementDTO } from './dtos';
 import type { AttitudeCalc, InferenceCalc } from '../model/people/attitude';
 import type { ClanDTO } from './dtos';
 import { Clan } from '../model/people/people';
-import { pct, signed } from '../model/lib/format';
+import { pct, signed, spct } from '../model/lib/format';
 import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
 import type { ClanSkillChange } from '../model/people/skillchange';
 import { sortedByKey, sumFun } from '../model/lib/basics';
 import type { HappinessCalcItem } from '../model/people/happiness';
 import type PopulationChange from './PopulationChange.svelte';
-import type { PopulationChangeItem } from '../model/people/population';
+import type { PopulationChangeItem, PopulationChangeModifier } from '../model/people/population';
 
 export type SettlementRitesTable = {
     header: string[];
@@ -292,6 +292,53 @@ class PopulationChangeTableItem {
             this.actual.toFixed(),
         ];
     }   
+}
+
+export type PopulationChangeModifierTable = {
+    header: string[];
+    rows: string[][];
+}
+
+class PopulationChangeModifierTableItem {
+    constructor(
+        readonly source: string,
+        public inputValue: string,
+        public value: number,
+    ) {}
+}
+
+export function populationChangeModifierTable(
+    settlement: SettlementDTO, 
+    modifiersFun: (clan: ClanDTO) => PopulationChangeModifier[],
+    modifierFun: (clan: ClanDTO) => number): PopulationChangeModifierTable {
+    const items: Map<string, PopulationChangeModifierTableItem> = new Map();
+    for (const clan of settlement.clans) {
+        for (const mod of modifiersFun(clan)) {
+            const existingItem = items.get(mod.source);
+            if (existingItem) {
+                existingItem.value += mod.value * clan.population / settlement.population;
+            } else {
+                items.set(mod.source, 
+                    new PopulationChangeModifierTableItem(
+                        mod.source, mod.inputValue, mod.value * clan.population / settlement.population));
+            }
+        }
+        const totalMod = modifierFun(clan);
+        const existingTotal = items.get('Total');
+        if (existingTotal) {
+            existingTotal.value += totalMod * clan.population / settlement.population;
+        } else {
+            items.set('Total', 
+                new PopulationChangeModifierTableItem(
+                    'Total', '', totalMod * clan.population / settlement.population));
+        }
+    }
+    const header = ['Source', 'Modifier'];
+    const rows = [...items.values()].map(mod => [
+        mod.source,
+        spct(mod.value, 1),
+    ]);
+    return { header, rows };
 }
 
 export type PopulationChangeTable = {
