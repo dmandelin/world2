@@ -141,15 +141,15 @@ export function sum(aa: number[]): number {
 }
 
 export function sumFun<T>(
-        aa: readonly T[], 
+        aa: Iterable<T>,
         fn: (t: T) => number,
         weightFn?: (t: T) => number,
     ): number {
-    if (weightFn === undefined) {
-        return aa.reduce((acc, cur) => acc + fn(cur), 0);
-    } else {
-        return aa.reduce((acc, cur) => acc + fn(cur) * weightFn(cur), 0);
-    }
+        let sum = 0;
+        for (const item of aa) {
+            sum += fn(item) * (weightFn ? weightFn(item) : 1);
+        }
+        return sum;
 }
 
 export function product(aa: number[]): number {

@@ -5,6 +5,7 @@ import { randomHamletName } from "./names";
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
+import { normal } from "../lib/distributions";
 
 export type MigrationTarget = Settlement | 'new';
 
@@ -28,9 +29,6 @@ export class NewSettlementSupplier {
 }
 
 export class MigrationCalc {
-    qolThreshold: number = 0;
-    qolThresholdReason: string = '';
-
     wantToMove: boolean = false;
     wantToMoveReason: string = '';
 
@@ -41,7 +39,6 @@ export class MigrationCalc {
     constructor(readonly clan: Clan, dummy: boolean = false) {
         if (dummy) return;
 
-        this.prepare();
         this.trigger();
 
         // We really only need this if moving but it can be nice to
@@ -53,40 +50,26 @@ export class MigrationCalc {
         }
     }
 
-    private prepare() {
-        switch (true) {
-            case this.clan.traits.has(PersonalityTraits.MOBILE):
-                this.qolThreshold = 0;
-                this.qolThresholdReason = 'Mobile';
-                break;
-            case this.clan.traits.has(PersonalityTraits.SETTLED):
-                this.qolThreshold = -20;
-                this.qolThresholdReason = 'Settled';
-                break;
-            default:
-                this.qolThreshold = -10;
-                this.qolThresholdReason = 'Settling';
-        }
-    }
-
     private trigger() {
         // TODO - restore
         // TODO - make clans that just split want to move more often.
-        /*
         if (Math.random() < 0.05) {
             this.wantToMove = true;
             this.wantToMoveReason = 'Clan events';
-        } else if (this.clan.qol >= this.qolThreshold) {
-            this.wantToMove = false;
-            this.wantToMoveReason = `QoL ${this.clan.qol.toFixed(1)} >= ${this.qolThreshold} (${this.qolThresholdReason})`;
-        } else if (Math.random() < 0.75) {
-            this.wantToMove = false;
-            this.wantToMoveReason = `Not ready to go, although QoL ${this.clan.qol.toFixed(1)} < ${this.qolThreshold} (${this.qolThresholdReason})`;
-        } else {
-            this.wantToMove = true;
-            this.wantToMoveReason = `QoL ${this.clan.qol.toFixed(1)} < ${this.qolThreshold} (${this.qolThresholdReason})`;
+            return;
         }
-        */
+
+        if (this.clan.happiness.getAppealNonNull('Food Quality') + this.clan.happiness.getAppealNonNull('Food Quantity') < 0) {
+            this.wantToMove = true;
+            this.wantToMoveReason = 'Hunger';
+            return;
+        }
+
+        if (this.clan.happiness.getAppealNonNull('Society') < 0) {
+            this.wantToMove = true;
+            this.wantToMoveReason = 'Crowding';
+            return;
+        }
     }
 
     private filter() {
@@ -144,6 +127,7 @@ export class CandidateMigrationCalc {
             this.inertia(),
             this.fromPopulation(),
             this.fromLocalGoods(),
+            this.idiosyncratic(),
         ];
         this.value = sumFun(this.items, item => item.value);
 
@@ -191,35 +175,41 @@ export class CandidateMigrationCalc {
     private fromPopulation(): CandidateMigrationCalcItem {
         let item: CandidateMigrationCalcItem;
         if (this.target === 'new') {
-            item = {name: 'Pop', reason: 'New settlement', value: -2};
+            item = {name: 'Pop', reason: 'New settlement', value: 0};
         } else {
-            item = {name: 'Pop', reason: 'Crowding', value: 0 /* TODO */ };
+            item = {name: 'Pop', reason: 'Society', value: this.target.averageAppealFrom('Society') };
         }
         return item;
     }
 
     private fromLocalGoods(): CandidateMigrationCalcItem {
-        // Giving full credit for QoL differences causes everyone
-        // to quickly collect in one place.
-        const qlFactor = 0.25;
         let item: CandidateMigrationCalcItem;
         if (this.target === 'new') {
             item = {
                 name: 'Goods',
-                reason: 'Goods like home', 
-                value: 0, //qlFactor * this.clan.settlement.averageQoL,
+                reason: 'Baseline', 
+                value: 0,
             };
         } else {
             item = {
                 name: 'Goods',
                 reason: 'Local goods', 
-                value: 0, //qlFactor * this.target.averageQoL,
+                value: this.target.averageAppealFrom('Food Quality')
+                     + this.target.averageAppealFrom('Food Quantity'),
             };
         }
         
         // Don't let this get too huge.
         item.value = clamp(item.value, -5, 5);
         return item;
+    }
+
+    private idiosyncratic(): CandidateMigrationCalcItem {
+        return {
+            name: 'Clan',
+            reason: '',
+            value: normal(0, 2),
+        }
     }
 }
 

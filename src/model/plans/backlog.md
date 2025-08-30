@@ -14,6 +14,8 @@
     -   Give people ways to raise their appeal
         x   Simple model for switching farming/gathering labor allocation
         -   Ability to found new villages when crowded or low on farmland
+            -   Basic ability to found new villages
+            -   Have fishing in villages in a cluster use the same land
     -   More detail on population change factors
         x   Did a bunch of this
         -   Disease load detail

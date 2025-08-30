@@ -63,7 +63,7 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
         for (const clan of settlement.clans) {
             const citem: ProductionItemDTO|undefined = clan.production.goods.find(g => g.good === item.good);
             if (citem) {
-                row.push(
+                rowSuffix.push(
                     citem.land === Infinity ? '' : citem.land.toFixed(),
                     pct(citem.workerFraction),
                     citem.workers.toFixed(), 

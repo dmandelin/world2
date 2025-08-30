@@ -11,7 +11,7 @@ import { SkillDef, SkillDefs } from "./skills";
 import type { FloodLevel } from "../environment/flood";
 import { poisson } from "../lib/distributions";
 import type { Year } from "../records/year";
-import { weightedAverage } from "../lib/modelbasics";
+import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
 
 class DaughterSettlementPlacer {
@@ -136,6 +136,12 @@ export class Settlement {
 
     get averageAppeal() {
         return weightedAverage(this.clans, clan => clan.appeal, clan => clan.population);
+    }
+
+    averageAppealFrom(source: string) {
+        return populationAverage(
+            this.clans,
+            clan => clan.happiness.getAppeal(source) ?? 0);
     }
 
     get averageHappiness() {

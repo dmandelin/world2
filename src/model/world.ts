@@ -205,9 +205,14 @@ export class World implements NoteTaker {
     }
 
     migrate() {
+        // Limit to 20% of clans migrating in a turn so they don't
+        // all move out at once.
+        let remaining = Math.max(1, Math.floor(this.allClans.length * 0.2));
+
         const nss = new NewSettlementSupplier();
         for (const clan of shuffled(this.allClans)) {
             clan.advanceMigration(nss);
+            if (--remaining <= 0) break;
         }
     }
 

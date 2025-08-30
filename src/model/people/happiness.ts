@@ -69,7 +69,7 @@ export class HappinessCalcItem {
 }
 
 export class HappinessCalc {
-    readonly items: HappinessCalcItem[] = [];
+    readonly items: Map<string, HappinessCalcItem> = new Map();
     readonly total: HappinessCalcItem;
     readonly rows: HappinessCalcItem[];
 
@@ -126,26 +126,30 @@ export class HappinessCalc {
 
         this.total = new HappinessCalcItem(
             'Total', 
-            sumFun(this.items, item => item.expectation),
-            sumFun(this.items, item => item.appeal),
+            sumFun(this.items.values(), item => item.expectation),
+            sumFun(this.items.values(), item => item.appeal),
         );
 
-        this.rows = [...this.items, this.total];
+        this.rows = [...this.items.values(), this.total];
     }
 
     private add(label: string, appeal: number, isSubsistence = false): void {
         const item = new HappinessCalcItem(label, this.clan.expectations.get(label), appeal);
-        this.items.push(item);
+        this.items.set(label, item);
         if (isSubsistence) {
             this.subsistenceItems.push(item);
         }
     }
 
     get(label: string): HappinessCalcItem | undefined {
-        return this.items.find(item => item.label === label);
+        return this.items.get(label);
     }
 
     getAppeal(label: string): number|undefined {
         return this.get(label)?.appeal;
+    }
+
+    getAppealNonNull(label: string): number {
+        return this.get(label)?.appeal ?? 0;
     }
 }
