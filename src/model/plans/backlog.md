@@ -2,16 +2,31 @@
 
 ## Next items in latest plans
 
+-   Latest observations:
+    -   Clans can now randomly reallocate labor if hungry, which is in fact
+        enough to get them doing more agriculture.
+    -   Population now grows to about 300, but at that point it slows down
+        for reasons that are somewhat unclear. So we need to figure that out.
+        But running low on local farmland is probably part of the issue, so
+        we should restore the ability to found new villages.
+
 -   Themes
-    -   Give people ways to raise their appeal
-        -   The new demographics panel makes it clear that limited food
-            supply is limiting population growth, so that can be a priority
+    -   Give people ways to raise their 
+        x   Simple model for switching farming/gathering labor allocation
+        -   Ability to found new villages when crowded or low on farmland
     -   More detail on population change factors
         x   Did a bunch of this
-        -   Disease load detail is the main thing
-    -   More aggregate data displays
+        -   Disease load detail
+    -   More aggregate data displays and general display improvements
         x   Did a demographics panel for this
+        x   Show percentage of farming allocation in main view
+        -   Move averages/totals to start so they're easier to see
+        -   Show per capita subsistence in convenient places
+        -   Show enough tooltips and cross-references so we can understand how
+            health and happiness relate to food quantity/quality and if there
+            are any bugs there
         -   More as needed
+    -   Consider working in some absolute effects for survival goods in happiness model
 
 -   Residence
     x   Calculate an effective residence level
@@ -19,6 +34,8 @@
         x   Tell height scaled down if not full-time
         -   Technology learning boost
         -   Social learning boost
+            -   Might want to tie smarter labor allocation to this -- make it
+                easier for people to reallocate if interacting more
         -   Mutual knowledge boost
         -   Benefits of local cooperation
         -   Disease load boost
@@ -108,9 +125,6 @@
 -   Dynamically scale happiness graphs so they're easier to read
 
 ## Bug fixes
-
--   Bring back nutritional balance between cereals and fish as having
-    demographic and appeal effects
 
 -   Clean up production table code, especially for construction items
 

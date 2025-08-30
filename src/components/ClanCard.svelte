@@ -9,6 +9,7 @@
     import { clanTimelineGraphData } from "../model/records/timeline";
     import HousingDecision from "./decisions/HousingDecision.svelte";
     import { appealTable, happinessTable, skillImitationTable } from "./tables";
+    import { SkillDefs } from "../model/people/skills";
 
     let { clan } = $props();
 
@@ -131,6 +132,11 @@
                             <PopulationChange clan={clan} />
                         </div>
                 </Tooltip>
+            </tr>
+            <tr>
+                <td colspan="3" class="full-row">
+                    {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture))} farming
+                </td>
             </tr>
             <tr>
                 <td colspan="3" class="full-row">

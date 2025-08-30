@@ -24,6 +24,7 @@ import type { Housing } from "../model/econ/housing";
 import type { DiseaseLoadCalc } from "../model/environment/pathogens";
 import type { HappinessCalc } from "../model/people/happiness";
 import type { ResidenceLevel } from "../model/people/residence";
+import { populationAverage } from "../model/lib/modelbasics";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -273,6 +274,12 @@ export class SettlementDTO {
         this.timeline = settlement.timeline;
 
         this.condorcet = settlement.clans.condorcetLeader;
+    }
+
+    get farmingRatio(): number {
+        return populationAverage(
+            this.clans, 
+            clan => clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture));
     }
 }
 

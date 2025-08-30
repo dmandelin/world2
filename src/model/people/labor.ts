@@ -22,9 +22,33 @@ export class LaborAllocation {
         return this.clan.population / 3;
     }
 
+    plannedRatioFor(skill: SkillDef): number {
+        return this.planned_.get(skill) ?? 0;
+    }
+
     plan(): void {
         this.allocs.clear();
+        this.updatePlanned();
+        this.updateAllocs();
+    }
 
+    private updatePlanned() {
+        // Happens during world initialization.
+        if (!this.clan.consumption) return;
+        // Initial very simple model: if there is hunger, do 
+        // something different.
+        if (this.clan.consumption.perCapitaSubsistence() < 1.0) {
+            const r = this.planned_.get(SkillDefs.Agriculture);
+            if (r === undefined) return;
+            const sign = Math.random() < 0.5 ? -1 : 1;
+            const delta = sign * (0.1 + 0.1 * Math.random());
+            const newR = clamp(r + delta, 0, 1);
+            this.planned_.set(SkillDefs.Agriculture, newR);
+            this.planned_.set(SkillDefs.Fishing, 1 - newR);
+        }
+    }
+
+    private updateAllocs() {
         // Mandatory allocations.
         const housing = this.clan.housing.cost(this.clan);
         this.allocs.set(SkillDefs.Construction, housing);

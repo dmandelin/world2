@@ -77,6 +77,12 @@ export function weightedAverage<T>(
     return totalValue / totalWeight;
 }
 
+export function populationAverage<T extends { population: number }>(
+    items: readonly T[],
+    valueFun: (t: T) => number): number {
+    return weightedAverage(items, valueFun, item => item.population);
+}
+
 export function meanAndStdDev(values: readonly number[]): [number, number] {
     const n = values.length;
     if (n === 0) return [0, 0];
