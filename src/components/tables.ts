@@ -305,7 +305,7 @@ export type PopulationChangeModifierTable = {
 class PopulationChangeModifierTableItem {
     constructor(
         readonly source: string,
-        public inputValue: string,
+        public inputValue: number|string,
         public value: number,
     ) {}
 }
@@ -320,10 +320,19 @@ export function populationChangeModifierTable(
             const existingItem = items.get(mod.source);
             if (existingItem) {
                 existingItem.value += mod.value * clan.population / settlement.population;
+                if (typeof mod.inputValue === 'string' || typeof existingItem.inputValue === 'string') {
+                    existingItem.inputValue = '';
+                } else {
+                    existingItem.inputValue += mod.inputValue * clan.population / settlement.population;
+                }
             } else {
                 items.set(mod.source, 
                     new PopulationChangeModifierTableItem(
-                        mod.source, mod.inputValue, mod.value * clan.population / settlement.population));
+                        mod.source, 
+                        typeof mod.inputValue === 'string'
+                        ? ''
+                        : mod.inputValue * clan.population / settlement.population,
+                        mod.value * clan.population / settlement.population));
             }
         }
         const totalMod = modifierFun(clan);
@@ -336,11 +345,27 @@ export function populationChangeModifierTable(
                     'Total', '', totalMod * clan.population / settlement.population));
         }
     }
-    const header = ['Source', 'Modifier'];
-    const rows = [...items.values()].map(mod => [
-        mod.source,
-        spct(mod.value, 1),
-    ]);
+    const header = ['Source', '', 'Modifier'];
+    const rows = [...items.values()].map(mod => {
+        let ref = '';
+        if (typeof mod.inputValue === 'number') {
+            switch (mod.source) {
+                case 'Food Quantity':
+                    ref = pct(mod.inputValue);
+                    break;
+                case 'Food Quality':
+                    ref = `${pct(1 - mod.inputValue)} cereals`;
+                    break;
+                case 'Migration':
+                    ref = mod.inputValue.toFixed();
+                    break;
+            }
+        }
+        return [
+            mod.source,
+            ref,
+            spct(mod.value, 1)];
+    });
     return { header, rows };
 }
 

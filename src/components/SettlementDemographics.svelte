@@ -86,7 +86,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Source</th>
+                    <th colspan="2">Source</th>
                     <th>Modifier</th>
                 </tr>
             </thead>
@@ -106,7 +106,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Source</th>
+                    <th colspan="2">Source</th>
                     <th>Modifier</th>
                 </tr>
             </thead>

@@ -13,7 +13,7 @@ import type { Clan } from "./people";
 
 const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 5, 1, 0);
 
-function fishRatio(clan: Clan): number {
+export function fishRatio(clan: Clan): number {
     const cereals = clan.consumption.perCapita(TradeGoods.Cereals);
     const fish = clan.consumption.perCapita(TradeGoods.Fish);
     return fish / (cereals + fish);

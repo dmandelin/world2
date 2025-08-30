@@ -1,7 +1,7 @@
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { clamp, productFun, sum } from "../lib/basics";
 import { spct } from "../lib/format";
-import { foodVarietyHealthFactor } from "./happiness";
+import { fishRatio, foodVarietyHealthFactor } from "./happiness";
 import type { Clan } from "./people";
 
 export const INITIAL_POPULATION_RATIOS = [
@@ -45,7 +45,7 @@ export class PopulationChangeItem {
 export class PopulationChangeModifier {
     constructor(
         readonly source: string,
-        readonly inputValue: string,
+        readonly inputValue: string|number,
         readonly value: number,
     ) {}
 }
@@ -123,18 +123,18 @@ export class PopulationChangeBuilder {
         const subsistence = this.clan.consumption.perCapitaSubsistence();
         const foodQuantityBrModifier = clamp(subsistence, 0, 2);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', this.clan.consumption.perCapitaSubsistence().toString(), foodQuantityBrModifier));
+            'Food Quantity', this.clan.consumption.perCapitaSubsistence(), foodQuantityBrModifier));
         const subsistenceDrModifier = subsistence >= 1
             ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
             : 1 + clamp((1 - subsistence) / 2, 0, 0.5);
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', this.clan.consumption.perCapitaSubsistence().toString(), subsistenceDrModifier));
+            'Food Quantity', this.clan.consumption.perCapitaSubsistence(), subsistenceDrModifier));
 
         const foodQualityModifier = foodVarietyHealthFactor(clan);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quality', '', foodQualityModifier));
+            'Food Quality', fishRatio(clan), foodQualityModifier));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quality', '', 1 / foodQualityModifier));
+            'Food Quality', fishRatio(clan), 1 / foodQualityModifier));
 
         // Up to 10% increase/decrease in birth/death rates for shelter.
         // That's for a warm environment and assuming some shelter always.
@@ -152,7 +152,7 @@ export class PopulationChangeBuilder {
         // 10 moves, but for our actual numbers it's close enough.
         const migrationBrModifier = clamp(1 - 0.05 * this.clan.settlement.forcedMigrations, 0.5, 1);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Migration', this.clan.settlement.forcedMigrations.toString(), migrationBrModifier));
+            'Migration', this.clan.settlement.forcedMigrations, migrationBrModifier));
 
         // Migration has a smaller effect on death rates. A fairly substantial
         // migration might involve a 1% total death rate, which is about 25%
@@ -161,7 +161,7 @@ export class PopulationChangeBuilder {
         // But intuitively it's not as a big a deal here, so use a lower number.
         const migrationDrModifier = clamp(1 + 0.025 * this.clan.settlement.forcedMigrations, 1, 1.5);
         this.drModifiers.push(new PopulationChangeModifier(
-            'Migration', this.clan.settlement.forcedMigrations.toString(), migrationDrModifier));
+            'Migration', this.clan.settlement.forcedMigrations, migrationDrModifier));
 
         this.brModifier = productFun(this.brModifiers, m => m.value);
         this.drModifier = productFun(this.drModifiers, m => m.value);

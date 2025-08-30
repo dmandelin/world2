@@ -21,10 +21,7 @@
         x   Did a demographics panel for this
         x   Show percentage of farming allocation in main view
         x   Move averages/totals to start so they're easier to see
-        -   Show per capita subsistence in convenient places
-        -   Show enough tooltips and cross-references so we can understand how
-            health and happiness relate to food quantity/quality and if there
-            are any bugs there
+        x   Show per capita subsistence in convenient places
         -   More as needed
     -   Consider working in some absolute effects for survival goods in 
         happiness model
