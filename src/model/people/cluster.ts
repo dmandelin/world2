@@ -1,4 +1,4 @@
-import { averageFun, sumFun } from "../lib/basics";
+import { averageFun, removeAll, sumFun } from "../lib/basics";
 import type { Clan } from "./people";
 import type { NoteTaker } from "../records/notifications";
 import { Clans } from "./clans";
@@ -64,6 +64,10 @@ export class SettlementCluster {
         for (const settlement of this.settlements) {
             settlement.advance(noEffect);
         }
+
+        // Prune empty daughter settlements.
+        removeAll(this.settlements, s => s.population === 0 && s !== this.mother);
+        removeAll(this.mother.daughters, s => s.population === 0);
     }
 
     updatePerceptions(): void {

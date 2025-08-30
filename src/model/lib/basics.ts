@@ -26,6 +26,14 @@ export function matchingFraction<T>(aa: Iterable<T>, predicate: (t: T) => boolea
     return count ? count / total : 0;
 }
 
+export function removeAll<T>(aa: T[], predicate: (t: T) => boolean): void {
+    for (let i = aa.length - 1; i >= 0; --i) {
+        if (predicate(aa[i])) {
+            aa.splice(i, 1);
+        }
+    }
+}
+
 export function clamp(value: number, min: number = 0.0, max: number = 1.0) {
     return Math.min(Math.max(value, min), max);
 }

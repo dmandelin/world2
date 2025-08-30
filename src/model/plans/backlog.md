@@ -18,7 +18,7 @@
             x   Have fishing in villages in a cluster use the same land
             -   Make people a little more reluctant to move so they're not
                 all departing at once for a small benefit
-            -   Prune empty villages
+            x   Prune empty villages
             -   Give a bit more preference for leading village of cluster
     -   More detail on population change factors
         x   Did a bunch of this
