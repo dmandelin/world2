@@ -59,6 +59,7 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
         const row = [item.good.name];
 
         // Clans
+        const rowSuffix = [];
         for (const clan of settlement.clans) {
             const citem: ProductionItemDTO|undefined = clan.production.goods.find(g => g.good === item.good);
             if (citem) {
@@ -70,7 +71,7 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
                     citem.amount !== undefined ? citem.amount.toFixed() : '',               
                 );
             } else {
-                row.push('', '', '', '', '');
+                rowSuffix.push('', '', '', '', '');
             }
         }
 
@@ -83,10 +84,10 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
             item.amount !== undefined ? item.amount.toFixed() : '',               
         );
 
-        return row;
+        return [...row, ...rowSuffix];
     });
 
-    const header = [...[...settlement.clans].map(c => c.name), 'Total'];
+    const header = ['Total', ...[...settlement.clans].map(c => c.name)];
     const subheader = ['Good', ...[...settlement.clans]
         .map(c => c.name)
         .flatMap(name => [name, 'K', 'L%', 'L', 'P', 'Y'])];
@@ -115,21 +116,22 @@ export function settlementConsumptionTable(settlement: SettlementDTO): Settlemen
         }
         if (!nonzero) continue;
 
-        const row = [good.name];
         let settlementTotal = 0;
         let settlementPopulation = 0;
+        const rowSuffix = [];
         for (const clan of settlement.clans) {
             const total = totalMap.get(clan)!;
             if (total === 0) {
-                row.push('', '');
+                rowSuffix.push('', '');
             } else {
-                row.push(total.toFixed(), (total / clan.consumption.population).toFixed(2));
+                rowSuffix.push(total.toFixed(), (total / clan.consumption.population).toFixed(2));
             }
 
             settlementTotal += total;
             settlementPopulation += clan.consumption.population;
         }
-        rows.push([...row, settlementTotal.toFixed(), (settlementTotal / settlementPopulation).toFixed(2)]);
+        rows.push([good.name, settlementTotal.toFixed(), (settlementTotal / settlementPopulation).toFixed(2), 
+            ...rowSuffix]);
 
         const settlementSourceMap = new Map<string, number>();
         for (const [source, clanMap] of sourceClanMap.entries()) {
@@ -150,11 +152,11 @@ export function settlementConsumptionTable(settlement: SettlementDTO): Settlemen
         }
     }
 
-    const header = [...[...settlement.clans].map(c => c.name), 'Total'];
+    const header = ['Total', ...[...settlement.clans].map(c => c.name)];
     const subheader = ['Good', ...[...settlement.clans]
         .map(c => c.name)
         .flatMap(name => [name, 'Q', 'R'])];
-    return { header, subheader, rows };
+    return { header, subheader, rows }; 
 }
 
 export type AverageAttitudeTable = {
@@ -218,7 +220,7 @@ export class HappinessTable {
 
     constructor(readonly s: SettlementDTO,
     ) {
-        this.header = ['Source', ...s.clans.map(c => c.name), 'Average'];
+        this.header = ['Source', 'Average', ...s.clans.map(c => c.name)];
         const subheaderGroup = ['E', 'A', 'V'];
         this.subheader = ['', ...s.clans.flatMap(c => subheaderGroup), ...subheaderGroup];
         const rows: string[][] = [];
@@ -226,10 +228,11 @@ export class HappinessTable {
             for (let i = 0; i < s.clans[0].happiness.rows.length; i++) {
                 const row = [s.clans[0].happiness.rows[i].label];
                 let [totalExpectation, totalAppeal, totalValue] = [0, 0, 0];
+                const rowSuffix = [];
                 for (const clan of s.clans) {
-                    row.push(clan.happiness.rows[i].expectation.toFixed(1));
-                    row.push(clan.happiness.rows[i].appeal.toFixed(1));
-                    row.push(clan.happiness.rows[i].value.toFixed(1));
+                    rowSuffix.push(clan.happiness.rows[i].expectation.toFixed(1));
+                    rowSuffix.push(clan.happiness.rows[i].appeal.toFixed(1));
+                    rowSuffix.push(clan.happiness.rows[i].value.toFixed(1));
 
                     totalExpectation += clan.happiness.rows[i].expectation * clan.population;
                     totalAppeal += clan.happiness.rows[i].appeal * clan.population;
@@ -238,7 +241,7 @@ export class HappinessTable {
                 row.push((totalExpectation / s.population).toFixed(1));
                 row.push((totalAppeal / s.population).toFixed(1));
                 row.push((totalValue / s.population).toFixed(1));
-                rows.push(row);
+                rows.push([...row, ...rowSuffix]);
             }
         }
         this.rows = rows;

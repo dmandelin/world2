@@ -11,7 +11,7 @@
         we should restore the ability to found new villages.
 
 -   Themes
-    -   Give people ways to raise their 
+    -   Give people ways to raise their appeal
         x   Simple model for switching farming/gathering labor allocation
         -   Ability to found new villages when crowded or low on farmland
     -   More detail on population change factors
@@ -20,13 +20,19 @@
     -   More aggregate data displays and general display improvements
         x   Did a demographics panel for this
         x   Show percentage of farming allocation in main view
-        -   Move averages/totals to start so they're easier to see
+        x   Move averages/totals to start so they're easier to see
         -   Show per capita subsistence in convenient places
         -   Show enough tooltips and cross-references so we can understand how
             health and happiness relate to food quantity/quality and if there
             are any bugs there
         -   More as needed
-    -   Consider working in some absolute effects for survival goods in happiness model
+    -   Consider working in some absolute effects for survival goods in 
+        happiness model
+        -   In general, index to what's possible, so that the benchmark for
+            status is the area average, not the clan's history only.
+        -   Maybe a similar principle can be used for survival goods, make
+            the downward adjustment relatively slow and keep "subsisting
+            reasonably well" as a floor that's hard to go below
 
 -   Residence
     x   Calculate an effective residence level
