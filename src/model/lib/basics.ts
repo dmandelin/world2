@@ -136,8 +136,12 @@ export function compareLexically<T>(aa: T[], bb: T[]): number {
     return aa.length - bb.length;
 }
 
-export function sum(aa: number[]): number {
-    return aa.reduce((acc, cur) => acc + cur, 0);
+export function sum(aa: Iterable<number>): number {
+    let sum = 0;
+    for (const item of aa) {
+        sum += item;
+    }
+    return sum;
 }
 
 export function sumFun<T>(

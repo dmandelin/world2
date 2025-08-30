@@ -2,8 +2,8 @@ import { Clan } from '../people/people';
 import { Settlement } from '../people/settlement';
 import { TradeGood } from '../trade';
 import type { DistributionNode } from './distributionnode';
-import { type SkillDef } from '../people/skills';
-import { sumFun } from '../lib/basics';
+import { SkillDefs, type SkillDef } from '../people/skills';
+import { sum, sumFun } from '../lib/basics';
 
 export class ProductionNode {
     workers_ = new Map<Clan, number>();
@@ -21,7 +21,7 @@ export class ProductionNode {
     constructor(
         readonly name: string,
         readonly settlement: Settlement,
-        readonly totalLand: number,
+        readonly originalTotalLand: number,
         readonly skillDef: SkillDef,
         readonly sink: DistributionNode,
     ) {}
@@ -38,7 +38,7 @@ export class ProductionNode {
     }
 
     land(clan?: Clan): number {
-        return clan ? this.land_.get(clan)! : this.totalLand;
+        return clan ? this.land_.get(clan)! : sum(this.land_.values());
     }
 
     output(clan?: Clan): Map<TradeGood, number> {
@@ -87,7 +87,7 @@ export class ProductionNode {
         // Assume output is linear in workers and land at this scale, with both
         // required.
         for (const [clan, workers] of this.workers_.entries()) {
-            const land = this.totalLand * this.workers(clan) / this.totalWorkers_;
+            const land = this.landFor(clan);
             this.land_.set(clan, land);
 
             const inputs = Math.min(land, workers);
@@ -103,6 +103,30 @@ export class ProductionNode {
                 this.output_.set(this.skillDef.outputGood!, goods);
             }
         }
+    }
+
+    private landFor(clan: Clan) {
+        // Fishing "land" is shared across the cluster.
+        if (this.skillDef === SkillDefs.Fishing) {
+            let ourFishers = 0;
+            let totalFishers = 0;
+            for (const settlement of clan.settlement.cluster.settlements) {
+                for (const pn of settlement.productionNodes) {
+                    if (pn.skillDef === SkillDefs.Fishing) {
+                        for (const fishingClan of settlement.clans) {
+                            const fishers = pn.workers(fishingClan);
+                            if (fishingClan === clan) {
+                                ourFishers += fishers;
+                            }
+                            totalFishers += fishers;
+                        }
+                    }
+                }
+            }
+            return this.originalTotalLand * ourFishers / totalFishers;
+        }
+
+        return this.originalTotalLand * this.workers(clan) / this.totalWorkers_;
     }
 
     commit(): void {
