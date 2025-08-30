@@ -148,6 +148,9 @@ export class CandidateMigrationCalc {
                 case this.clan.traits.has(PersonalityTraits.MOBILE):
                      return {name: 'Inertia', reason: 'Home area', value: 0};
                 default: 
+                    if (this.clan.settlement === this.clan.settlement.cluster.mother) {
+                        return {name: 'Inertia', reason: 'Home village', value: 2};
+                    }
                     return {name: 'Inertia', reason: 'Home', value: 0};
             }
         }

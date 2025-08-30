@@ -3,12 +3,16 @@
 ## Next items in latest plans
 
 -   Latest observations:
-    -   Clans can now randomly reallocate labor if hungry, which is in fact
-        enough to get them doing more agriculture.
-    -   Population now grows to about 300, but at that point it slows down
-        for reasons that are somewhat unclear. So we need to figure that out.
-        But running low on local farmland is probably part of the issue, so
-        we should restore the ability to found new villages.
+    -   Clans seem to be moving too much. The basic reason seems to be
+        fluctuations in local prosperity and idiosyncratic factors
+        -   Have to think about how to fix this, but one simple option
+            is to give them only a chance of moving
+    -   Clans seem to be having a hard time figuring out they need to
+        start farming more
+        -   Check how labor allocations are initialized for split clans
+            and make sure they retain any learning
+        -   Otherwise, we may need to give them a bit of ability to tell
+            whether a shift helped rather than pure guessing
 
 -   Themes
     -   Give people ways to raise their appeal
@@ -19,7 +23,7 @@
             -   Make people a little more reluctant to move so they're not
                 all departing at once for a small benefit
             x   Prune empty villages
-            -   Give a bit more preference for leading village of cluster
+            x   Give a bit more preference for leading village of cluster
     -   More detail on population change factors
         x   Did a bunch of this
         -   Disease load detail
