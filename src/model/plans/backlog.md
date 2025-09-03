@@ -7,12 +7,28 @@
         fluctuations in local prosperity and idiosyncratic factors
         -   Have to think about how to fix this, but one simple option
             is to give them only a chance of moving
+        -   Specific reasons for moving too much
+            x   Clans in trade relationships take a consumption hit from
+                goods traded away but don't gain anything from it, but
+                moving won't help on that -> nullify trade cost for now
+            -   Clans don't expect to take any hit in ritual quality,
+                when in fact there are expected to be changes when moving
+                to a new village.
+                -   Time to take a look at the ritual appeal code and
+                    see how that goes with population change
+                -   In fact it changes greatly so we should take this
+                    into account when moving
+            -   Clans will move due to low food when the problem is
+                that they're fishing too much
     -   Clans seem to be having a hard time figuring out they need to
         start farming more
         -   Check how labor allocations are initialized for split clans
             and make sure they retain any learning
         -   Otherwise, we may need to give them a bit of ability to tell
             whether a shift helped rather than pure guessing
+
+-   Temp stuff to undo
+    -   Make sure trade costs something when we add a benefit
 
 -   Themes
     -   Give people ways to raise their appeal

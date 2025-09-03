@@ -448,7 +448,8 @@ export class Clan implements TradePartner {
             const sustenanceAvailable = 
                   this.consumption.amount(TradeGoods.Cereals)
                 + this.consumption.amount(TradeGoods.Fish);
-            const cost = sustenanceAvailable * 0.05;
+            //const cost = sustenanceAvailable * 0.05;
+            const cost = 0; // TODO - add back cost when we add a real benefit
             if (this.consumption.remove(`To ${relationship.partner.name}`, TradeGoods.Cereals, cost)) {
                 this.consumption.accept(`From ${relationship.partner.name}`, TradeGoods.ClayFigurines, 1);
             }
