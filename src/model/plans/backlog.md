@@ -22,6 +22,17 @@
             and make sure they retain any learning
         -   Otherwise, we may need to give them a bit of ability to tell
             whether a shift helped rather than pure guessing
+    -   But there's also an issue that when they do, if they end up 90%
+        cereals, food quality is giving them 80% birth rate and 125% death
+        rate, which stops population growth. But that's too severe a
+        population penalty. Remembering that "cereals" also includes
+        lentils and some other things, maybe 90% cereals isn't preferred
+        taste-wise or for maximum health, but it should mostly get the
+        job done for supporting a population. We could trade off by
+        adding a health productivity penalty or more appeal delta.
+    -   Starting to need more of an overall or multi-item panel
+        -   One would be key facts about labor, production, consumption,
+            pop change
 
 -   Key bugs
     x   UI annoyance where selected settlement resets on next turn
