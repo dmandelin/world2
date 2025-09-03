@@ -1,20 +1,23 @@
-<script>
+<script lang="ts">
     import Land from '../components/Land.svelte';
     import Map from '../components/Map.svelte';
-    import SettlementArea from '../components/SettlementCluster.svelte';
+    import SettlementCluster from '../components/SettlementCluster.svelte';
     import Sidebar from '../components/Sidebar.svelte';
     import { world as _world } from '../model/world';
 
     let world = $state(_world.dto);
-    let _selectedSettlement = $state(_world.allSettlements[0]);
-    let selectedSettlement = $derived.by(() => 
-        _selectedSettlement
-            ? world.settlements.find(s => s.name === _selectedSettlement.name) || undefined
-            : undefined);
+    let selectedSettlementUUID: string|undefined = $state(_world.allSettlements[0]!.uuid);
+    let selectedSettlement = $derived.by(() =>
+        selectedSettlementUUID &&
+        world.settlements.find(s => s.uuid === selectedSettlementUUID));
 
     _world.watch(() => {
         world = _world.dto;
     });
+
+    function selectSettlement(uuid: string|undefined) {
+        selectedSettlementUUID = uuid;
+    }
 </script>
 
 <style>
@@ -46,11 +49,11 @@
     &#x1F517; What is this?
 </a>
 <div style="display: flex;">
-    <Map bind:selection={_selectedSettlement} />
+    <Map onSelect={selectSettlement} />
     {#if selectedSettlement}
-    <SettlementArea settlement={selectedSettlement} />
+        <SettlementCluster settlement={selectedSettlement} onSelect={selectSettlement} />
     {:else}
-    <Land world={world}/>
+        <Land world={world}/>
     {/if}
 </div>
 <Sidebar world={world} />

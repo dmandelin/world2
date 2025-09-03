@@ -24,7 +24,8 @@
             whether a shift helped rather than pure guessing
 
 -   Key bugs
-    -   UI annoyance where selected settlement resets on next turn
+    x   UI annoyance where selected settlement resets on next turn
+    -   Smaller UI annoyance where settlement button panel doesn't correctly bold
     -   Check if village productivity is lower than it should be
 
 -   Temp stuff to undo

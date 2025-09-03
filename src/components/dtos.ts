@@ -218,6 +218,7 @@ class SettlementProductionDTO {
 }
 
 export class SettlementDTO {
+    readonly uuid: string;
     readonly name: string;
     readonly yearsInPlace: number;
     readonly tellHeightInMeters: number;
@@ -249,6 +250,7 @@ export class SettlementDTO {
         this.clans = sortedByKey([...settlement.clans].map(clan => 
             clanDTO(clan, world)), clan => -clan.averagePrestige);
 
+        this.uuid = settlement.uuid;
         this.name = settlement.name;
         this.yearsInPlace = settlement.yearsInPlace;
         this.tellHeightInMeters = settlement.tellHeightInMeters;

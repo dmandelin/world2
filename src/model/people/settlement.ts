@@ -44,6 +44,8 @@ class DaughterSettlementPlacer {
 }
 
 export class Settlement {
+    readonly uuid = crypto.randomUUID();
+
     private cluster_: SettlementCluster|undefined;
 
     private tellHeightInMeters_: number = 0;

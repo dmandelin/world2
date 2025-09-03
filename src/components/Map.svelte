@@ -10,7 +10,7 @@
     import TrendsPanel from './TrendsPanel.svelte';
     import { weightedAverage } from '../model/lib/modelbasics';
     
-    let { selection = $bindable() } = $props();
+    let { onSelect } = $props();
     let selectedLens = $state('Pop');
 
     let canvas: HTMLCanvasElement|null;
@@ -39,9 +39,9 @@
 
         if (best) {
             console.log('select', best.name, event);
-            selection = best;
+            onSelect(best.uuid);
         } else {
-            selection = undefined;
+            onSelect(undefined);
         }
     }
 

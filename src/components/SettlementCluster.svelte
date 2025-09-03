@@ -7,10 +7,9 @@
     import Tooltip from "./Tooltip.svelte";
     import DataTable from "./DataTable.svelte";
 
-    let { settlement } = $props();
-    let selectedSettlement = $state(settlement);
+    let { settlement, onSelect } = $props();
+
     $effect(() => {
-        selectedSettlement = settlement;
     });
 </script>
 
@@ -40,65 +39,65 @@
     <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
         <div>
             <img style="display: block" src="residents.png" alt="Residents" width="150" height="100" />
-            <div class="sm">Flood level: {selectedSettlement.floodLevel.name}</div>
+            <div class="sm">Flood level: {settlement.floodLevel.name}</div>
             <div class="sm">
                 <Tooltip>
-                    {#if selectedSettlement.ditchingLevel}
-                        Ditch: {pct(selectedSettlement.ditchQuality)}
-                        (holding {selectedSettlement.preventedForcedMigrations}x)
+                    {#if settlement.ditchingLevel}
+                        Ditch: {pct(settlement.ditchQuality)}
+                        (holding {settlement.preventedForcedMigrations}x)
                     {:else}
                         No ditch
                     {/if}
                     <div slot="tooltip">
-                        <DataTable rows={selectedSettlement.ditchTooltip} />
+                        <DataTable rows={settlement.ditchTooltip} />
                     </div>
                 </Tooltip>
             </div>
         </div>
         <div>
-            <h4>{selectedSettlement.cluster.name} |
+            <h4>{settlement.cluster.name} |
                 <img src="stat-population-256.png" alt="Population" width="20" height="20"
                      style="padding-bottom: 2px;"
-                />{selectedSettlement.cluster.population}&nbsp;
+                />{settlement.cluster.population}&nbsp;
                 <img src="stat-welfare-256.png" alt="Welfare" width="20" height="20"
                      style="padding-bottom: 4px;"
-                />{signed(selectedSettlement.cluster.averageAppeal, 0)}
+                />{signed(settlement.cluster.averageAppeal, 0)}
                 <img src="stat-happiness-256.png" alt="Happiness" width="20" height="20"
                      style="padding-bottom: 4px;"
-                />{signed(selectedSettlement.cluster.averageHappiness, 0)}</h4>
-            <h1 style="white-space: nowrap;">{selectedSettlement.name} |
+                />{signed(settlement.cluster.averageHappiness, 0)}</h4>
+            <h1 style="white-space: nowrap;">{settlement.name} |
                 <img src="stat-population-256.png" alt="Population" width="40" height="40"
                      style="padding-bottom: 4px;"
-                />{selectedSettlement.size}&nbsp;
+                />{settlement.size}&nbsp;
                 <img src="stat-welfare-256.png" alt="Welfare" width="40" height="40"
                      style="padding-bottom: 8px;"
-                />{signed(selectedSettlement.averageAppeal, 0)}
+                />{signed(settlement.averageAppeal, 0)}
                 <img src="stat-happiness-256.png" alt="Happiness" width="40" height="40"
                      style="padding-bottom: 8px;"
-                />{signed(selectedSettlement.averageHappiness, 0)}</h1>
+                />{signed(settlement.averageHappiness, 0)}</h1>
             <div>
-                {pct(selectedSettlement.farmingRatio)} farming
+                {pct(settlement.farmingRatio)} farming
             </div>
             <div>
-                {pct(selectedSettlement.residenceFraction)} resident &centerdot;
-                {#if selectedSettlement.yearsInPlace >= 100}
-                    Settled &ndash; {formatTellHeight(selectedSettlement.tellHeightInMeters)}
-                    <span style="color:grey">(founded {selectedSettlement.yearsInPlace} years ago)</span>
-                {:else if selectedSettlement.yearsInPlace >= 50}
-                    {selectedSettlement.yearsInPlace} years in place
-                {:else if selectedSettlement.movingAverageForcedMigrations}
+                {pct(settlement.residenceFraction)} resident &centerdot;
+                {#if settlement.yearsInPlace >= 100}
+                    Settled &ndash; {formatTellHeight(settlement.tellHeightInMeters)}
+                    <span style="color:grey">(founded {settlement.yearsInPlace} years ago)</span>
+                {:else if settlement.yearsInPlace >= 50}
+                    {settlement.yearsInPlace} years in place
+                {:else if settlement.movingAverageForcedMigrations}
                     Shifting about every 
-                    {(20/selectedSettlement.movingAverageForcedMigrations).toFixed()} years
-                    ({selectedSettlement.movingAverageForcedMigrations.toFixed(1)}/20y)
+                    {(20/settlement.movingAverageForcedMigrations).toFixed()} years
+                    ({settlement.movingAverageForcedMigrations.toFixed(1)}/20y)
                 {/if}
             </div>
 
             <ButtonPanel config={{
         buttons: settlement.cluster.settlements.map((s: SettlementDTO) => 
         ({ label: `${s.name}<br>${s.population}`, data: s })),
-    }} onSelected={(_, data) => { selectedSettlement = data; } } />
+    }} onSelected={(_, data) => { onSelect(data.uuid); } } />
         </div>
     </div>
 
-    <Settlement settlement={selectedSettlement} />
+    <Settlement settlement={settlement} />
 </div>
