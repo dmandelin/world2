@@ -1,9 +1,6 @@
-import { clamp, mapNormalized, maxby, maxbyWithValue, sum, sumFun, weightedHarmonicMean } from "./lib/basics";
-import { pct, xm } from "./lib/format";
-import { ces } from "./lib/modelbasics";
-import type { NoteTaker } from "./records/notifications";
 import type { Clan } from "./people/people";
-import { OwnPrestigeCalc } from "./people/prestige";
+import type { NoteTaker } from "./records/notifications";
+import { mapNormalized, sumFun, weightedHarmonicMean } from "./lib/basics";
 import { SkillDefs } from "./people/skills";
 
 export const RitualGoodsUsage = {
@@ -72,29 +69,31 @@ export class Rites {
     }
 
     updateAppeal() {
+        const participantCount = sumFun(this.participants, c => c.population);
+
         this.add('Quality', this.quality());
-        this.add('Numbers', this.numbers());
-        this.add('Friction', this.friction());
+        this.add('Numbers', this.numbers(participantCount));
+        this.add('Friction', this.friction(participantCount));
 
         this.appeal = sumFun([...this.items.values()], i => i.value);
     }
 
-    private get participantCount() {
-        return sumFun(this.participants, c => c.population)
+    estimatedAppealWith(participantCount: number): number {
+        return this.quality() + this.numbers(participantCount) + this.friction(participantCount);
     }
 
     private quality(): number {
         return this.skillFactor * (this.skill - this.skillRequirement);
     }
 
-    private numbers(): number {
-        const n = this.participantCount ? this.participantCount : 1;
+    private numbers(participantCount: number): number {
+        const n = participantCount ? participantCount : 1;
         const r = n / this.expectedParticipantCount;
         return Math.log2(r) * 5;
     }
 
-    private friction(): number {
-        const extras = this.participantCount - this.expectedParticipantCount;
+    private friction(participantCount: number): number {
+        const extras = participantCount - this.expectedParticipantCount;
         if (extras <= 0) return 0;
 
         return -extras / 30;
@@ -114,6 +113,6 @@ export class Rites {
         clone.skill = this.skill;
         clone.items = new Map(this.items);
         clone.appeal = this.appeal;
-        return clone;    
+        return clone;
     }
 }

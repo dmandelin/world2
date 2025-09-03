@@ -12,7 +12,7 @@ export type MigrationTarget = Settlement | 'new';
 export class NewSettlementSupplier {
     private readonly newBySource: Map<Settlement, Settlement> = new Map();
 
-    constructor() {}
+    constructor() { }
 
     get(cluster: SettlementCluster, source: Settlement): Settlement {
         // We assume that clans from the same source found a village
@@ -33,7 +33,7 @@ export class MigrationCalc {
     wantToMoveReason: string = '';
 
     targets: Map<MigrationTarget, CandidateMigrationCalc> = new Map();
-    best: CandidateMigrationCalc| undefined;
+    best: CandidateMigrationCalc | undefined;
     willMigrate: boolean = false;
 
     constructor(readonly clan: Clan, dummy: boolean = false) {
@@ -44,7 +44,7 @@ export class MigrationCalc {
         // We really only need this if moving but it can be nice to
         // see the data.
         this.filter();
-        if (this.wantToMove) {  
+        if (this.wantToMove) {
             this.select();
             this.decide();
         }
@@ -75,14 +75,14 @@ export class MigrationCalc {
     private filter() {
         const stayCalc = new CandidateMigrationCalc(this.clan, undefined, this.clan.settlement);
         for (const target of this.clan.settlement.cluster.settlements) {
-            this.targets.set(target,  new CandidateMigrationCalc(this.clan, stayCalc, target));
+            this.targets.set(target, new CandidateMigrationCalc(this.clan, stayCalc, target));
         }
         this.targets.set('new', new CandidateMigrationCalc(this.clan, stayCalc, 'new'));
     }
 
     private select() {
         this.best = selectBySoftmax(
-            this.targets.values().filter(v => v.isEligible), 
+            this.targets.values().filter(v => v.isEligible),
             item => item.value);
     }
 
@@ -117,7 +117,7 @@ export class CandidateMigrationCalc {
     readonly items: CandidateMigrationCalcItem[];
     readonly value: number;
 
-    constructor(readonly clan: Clan, readonly stayCalc: CandidateMigrationCalc|undefined, readonly target: MigrationTarget) {
+    constructor(readonly clan: Clan, readonly stayCalc: CandidateMigrationCalc | undefined, readonly target: MigrationTarget) {
         if (target !== 'new' && target.population > 400) {
             this.isEligible = false;
             this.isIneligibleReason = `Crowded, not accepting newcomers`;
@@ -127,6 +127,7 @@ export class CandidateMigrationCalc {
             this.inertia(),
             this.fromPopulation(),
             this.fromLocalGoods(),
+            this.fromRitual(),
             this.idiosyncratic(),
         ];
         this.value = sumFun(this.items, item => item.value);
@@ -146,23 +147,23 @@ export class CandidateMigrationCalc {
         if (this.target === this.clan.settlement) {
             switch (true) {
                 case this.clan.traits.has(PersonalityTraits.MOBILE):
-                     return {name: 'Inertia', reason: 'Home area', value: 0};
-                default: 
+                    return { name: 'Inertia', reason: 'Home area', value: 0 };
+                default:
                     if (this.clan.settlement === this.clan.settlement.cluster.mother) {
-                        return {name: 'Inertia', reason: 'Home village', value: 2};
+                        return { name: 'Inertia', reason: 'Home village', value: 2 };
                     }
-                    return {name: 'Inertia', reason: 'Home', value: 0};
+                    return { name: 'Inertia', reason: 'Home', value: 0 };
             }
         }
 
         let item: CandidateMigrationCalcItem;
         switch (true) {
-            case this.clan.traits.has(PersonalityTraits.MOBILE): 
-                item = {name: 'Inertia', reason: 'Mobile', value: -0.5}; break;
-            case this.clan.traits.has(PersonalityTraits.SETTLED): 
-                item = {name: 'Inertia', reason: 'Settled', value: -2}; break;
-            default: 
-                item = {name: 'Inertia', reason: 'Settling', value: -1}; break;
+            case this.clan.traits.has(PersonalityTraits.MOBILE):
+                item = { name: 'Inertia', reason: 'Mobile', value: -0.5 }; break;
+            case this.clan.traits.has(PersonalityTraits.SETTLED):
+                item = { name: 'Inertia', reason: 'Settled', value: -2 }; break;
+            default:
+                item = { name: 'Inertia', reason: 'Settling', value: -1 }; break;
         }
 
         if (this.target !== 'new' && this.target.cluster !== this.clan.settlement.cluster) {
@@ -178,9 +179,9 @@ export class CandidateMigrationCalc {
     private fromPopulation(): CandidateMigrationCalcItem {
         let item: CandidateMigrationCalcItem;
         if (this.target === 'new') {
-            item = {name: 'Pop', reason: 'New settlement', value: 0};
+            item = { name: 'Pop', reason: 'New settlement', value: 0 };
         } else {
-            item = {name: 'Pop', reason: 'Society', value: this.target.averageAppealFrom('Society') };
+            item = { name: 'Pop', reason: 'Society', value: this.target.averageAppealFrom('Society') };
         }
         return item;
     }
@@ -190,20 +191,45 @@ export class CandidateMigrationCalc {
         if (this.target === 'new') {
             item = {
                 name: 'Goods',
-                reason: 'Baseline', 
+                reason: 'Baseline',
                 value: 0,
             };
         } else {
             item = {
                 name: 'Goods',
-                reason: 'Local goods', 
+                reason: 'Local goods',
                 value: this.target.averageAppealFrom('Food Quality')
-                     + this.target.averageAppealFrom('Food Quantity'),
+                    + this.target.averageAppealFrom('Food Quantity'),
             };
         }
-        
+
         // Don't let this get too huge.
         item.value = clamp(item.value, -5, 5);
+        return item;
+    }
+
+    private fromRitual(): CandidateMigrationCalcItem {
+        let item: CandidateMigrationCalcItem;
+        if (this.target === 'new') {
+            item = {
+                name: 'Ritual',
+                reason: 'New village',
+                value: this.clan.settlement.rites[0]?.estimatedAppealWith(
+                    // Assume the clan expects neighbors soon enough.
+                    this.clan.population * 2) ?? 0,
+            };
+        } else {
+            // This will help them avoid immediate overcrowding.
+            const newPop = this.target == this.clan.settlement
+                ? this.target.population
+                : this.target.population + this.clan.population;
+            item = {
+                name: 'Ritual',
+                reason: 'Rituals',
+                value: this.target.rites[0]?.estimatedAppealWith(newPop) ?? 0,
+            };
+        }
+
         return item;
     }
 
@@ -223,10 +249,10 @@ type CandidateMigrationCalcItem = {
 };
 
 function migrateClan(
-        clan: Clan, 
-        target: MigrationTarget,
-        newSettlementSupplier: NewSettlementSupplier,
-        noteTaker: NoteTaker) {
+    clan: Clan,
+    target: MigrationTarget,
+    newSettlementSupplier: NewSettlementSupplier,
+    noteTaker: NoteTaker) {
 
     const source = clan.settlement!;
     let actualTarget: Settlement;
