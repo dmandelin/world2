@@ -3,6 +3,7 @@
     import SettlementEconomy from "./SettlementEconomy.svelte";
     import SettlementHappiness from "./SettlementHappiness.svelte";
     import SettlementHealth from "./SettlementHealth.svelte";
+    import SettlementOverview from "./SettlementOverview.svelte";
     import SettlementPeople from "./SettlementPeople.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRites from "./SettlementRites.svelte";
@@ -12,6 +13,7 @@
     let { settlement } = $props();
 
     const tabs = [
+        { label: "Overview", snippet: overviewTab },
         { label: "People", snippet: peopleTab },
         { label: "Demographics", snippet: demographicsTab },
         { label: "Health", snippet: healthTab },
@@ -22,6 +24,10 @@
         { label: "Trade", snippet: tradeTab },
     ];
 </script>
+
+{#snippet overviewTab()}
+    <SettlementOverview settlement={settlement} />
+{/snippet}
 
 {#snippet peopleTab()}
     <SettlementPeople settlement={settlement} />
