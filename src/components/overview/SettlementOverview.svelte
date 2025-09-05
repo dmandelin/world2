@@ -9,4 +9,5 @@
 <SettlementPopulationOverview settlement={settlement} />
 <SettlementEconomyOverview settlement={settlement} />
 
-<div>Migration info</div>
+<h3>Issues, happiness, and migration interest</h3>
+Placeholder

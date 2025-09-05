@@ -6,7 +6,7 @@ import { pct, signed, spct } from '../model/lib/format';
 import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
 import type { ClanSkillChange } from '../model/people/skillchange';
-import { sortedByKey, sumFun } from '../model/lib/basics';
+import { sortedByKey, sum, sumFun } from '../model/lib/basics';
 import type { HappinessCalcItem } from '../model/people/happiness';
 import type PopulationChange from './PopulationChange.svelte';
 import type { PopulationChangeItem, PopulationChangeModifier } from '../model/people/population';
@@ -447,10 +447,20 @@ export type BasicTable = {
 }
 
 export function settlementEconomyTable(settlement: SettlementDTO): BasicTable {
-    const header = ['Product', 'K', 'L', 'L%', 'P', 'Y'];
+    const header = ['Product', 'K', 'L', 'L%', 'P', 'Y', 'C', 'C/'];
     const rows = [];
+    let [totalLand, totalWorkers, totalWf, totalProduction, totalConsumption] = [0, 0, 0, 0, 0];
+    const totalPopulation = sumFun(
+        settlement.clans, c => c.consumption.population);
     for (const item of settlement.production.goods.values()) {
         if (item.workers === 0) continue;
+
+        const consumption = sumFun(
+            settlement.clans, c => c.consumption.amount(item.good));
+        const perCapitaConsumption = totalPopulation > 0
+            ? consumption / totalPopulation
+            : 0;
+
         rows.push([
             item.good.name,
             item.land.toFixed(),
@@ -458,7 +468,25 @@ export function settlementEconomyTable(settlement: SettlementDTO): BasicTable {
             pct(item.workerFraction),
             item.tfp?.toFixed(2) ?? '',
             item.amount?.toFixed() ?? '',
+            consumption.toFixed(),
+            perCapitaConsumption.toFixed(2),
         ]);
+
+        totalLand += item.land;
+        totalWorkers += item.workers;
+        totalWf += item.workerFraction;
+        totalProduction += item.amount ?? 0;
+        totalConsumption += consumption;
     }
+    rows.push([
+        'Total',
+        totalLand.toFixed(),
+        totalWorkers.toFixed(),
+        pct(totalWf),
+        '',
+        totalProduction.toFixed(),
+        totalConsumption.toFixed(),
+        (totalPopulation > 0 ? (totalConsumption / totalPopulation).toFixed(2) : ''),
+    ]);
     return { header, rows };
 }
