@@ -440,3 +440,25 @@ export function populationChangeTable(settlement: SettlementDTO): PopulationChan
     const rows = [...items.values()].map(item => item.asRow(previousPopulation));
     return { births, deaths, header, rows };
 }
+
+export type BasicTable = {
+    header: string[];
+    rows: string[][];
+}
+
+export function settlementEconomyTable(settlement: SettlementDTO): BasicTable {
+    const header = ['Product', 'K', 'L', 'L%', 'P', 'Y'];
+    const rows = [];
+    for (const item of settlement.production.goods.values()) {
+        if (item.workers === 0) continue;
+        rows.push([
+            item.good.name,
+            item.land.toFixed(),
+            item.workers.toFixed(),
+            pct(item.workerFraction),
+            item.tfp?.toFixed(2) ?? '',
+            item.amount?.toFixed() ?? '',
+        ]);
+    }
+    return { header, rows };
+}

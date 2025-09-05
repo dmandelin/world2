@@ -212,6 +212,10 @@ export class PopulationChangeBuilder {
         const pmbr = this.brModifier * BASE_BIRTH_RATE;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
+        if (this.births > 1000) {
+            debugger;
+            throw new Error("Too many births for simple model");
+        }
         for (let i = 0; i < this.births; ++i) {
             if (Math.random() < 0.48) ++this.femaleBirths;
         }
