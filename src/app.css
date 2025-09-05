@@ -1,0 +1,26 @@
+/* Global styles for the application */
+
+table.basic {
+    border-collapse: collapse;
+}
+
+table.basic th, table.basic td {
+    border: 1px solid grey;
+    padding: 0.125em 0.25em;
+}
+
+table.basic th:first-child, table.basic td:first-child {
+    text-align: left;
+}
+
+table.basic td {
+    text-align: right;
+}
+
+table.basic tr:last-child td {
+    font-weight: bold;
+}
+
+.msm {
+    font-size: 0.9em;
+}

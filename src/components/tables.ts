@@ -369,6 +369,31 @@ export function populationChangeModifierTable(
     return { header, rows };
 }
 
+export function combinedPopulationChangeModifierTable(settlement: SettlementDTO): 
+    PopulationChangeModifierTable {
+
+    const brTable = populationChangeModifierTable(
+        settlement,
+        c => c.lastPopulationChange.brModifiers,
+        c => c.lastPopulationChange.brModifier);
+    const drTable = populationChangeModifierTable(
+        settlement,
+        c => c.lastPopulationChange.drModifiers,
+        c => c.lastPopulationChange.drModifier);
+
+    const drMap = new Map(drTable.rows.map(r => [r[0], r[r.length - 1]]));
+    const header = ['Source', '', 'BR', 'DR'];
+    const rows = [];
+    for (const [i, row] of brTable.rows.entries()) {
+        rows.push([...row, drMap.get(row[0]) || '']);
+        drMap.delete(row[0]);
+    }
+    for (const [source, value] of drMap.entries()) {
+        rows.push([source, '', '', ...value]);
+    }
+    return { header, rows };
+}
+
 export type PopulationChangeTable = {
     births: number;
     deaths: number;

@@ -246,8 +246,9 @@ export class Settlement {
 
             // Population effects.
             this.clans.marry();
-            for (const clan of this.clans) clan.advancePopulation();
-
+        }
+        for (const clan of this.clans) clan.advancePopulation(noEffect);
+        if (!noEffect) {
             // Tell height.
             this.growTell(sizeBefore);
         }

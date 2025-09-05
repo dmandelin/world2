@@ -3,7 +3,7 @@
     import SettlementEconomy from "./SettlementEconomy.svelte";
     import SettlementHappiness from "./SettlementHappiness.svelte";
     import SettlementHealth from "./SettlementHealth.svelte";
-    import SettlementOverview from "./SettlementOverview.svelte";
+    import SettlementOverview from "./overview/SettlementOverview.svelte";
     import SettlementPeople from "./SettlementPeople.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRites from "./SettlementRites.svelte";

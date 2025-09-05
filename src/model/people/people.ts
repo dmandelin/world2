@@ -507,13 +507,15 @@ export class Clan implements TradePartner {
         return this.slices.reduce((acc, slice) => acc + slice[0] + slice[1], 0);
     }
 
-    advancePopulation() {
+    advancePopulation(noEffect: boolean = false) {
         this.lastPopulationChange = new PopulationChangeBuilder(this).build();
         for (let i = 0; i < this.slices.length; ++i) {
             this.slices[i][0] = this.lastPopulationChange.newSlices[i][0];
             this.slices[i][1] = this.lastPopulationChange.newSlices[i][1];
         }
-        this.population = this.slicesTotal;
+        if (!noEffect) {
+            this.population = this.slicesTotal;
+        }
     }
 
     getTrait(trait: string): number {
