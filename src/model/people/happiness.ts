@@ -25,7 +25,7 @@ export function foodVarietyAppeal(clan: Clan): number {
 
 export function foodVarietyHealthFactor(clan: Clan): number {
     const p = 1 - fishRatio(clan);
-    return 1 - 0.25 * p * p;
+    return 1 - 0.125 * p * p;
 }
 
 export class Expectations {

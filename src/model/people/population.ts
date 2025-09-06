@@ -1,8 +1,8 @@
+import type { Clan } from "./people";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { clamp, productFun, sum } from "../lib/basics";
 import { spct } from "../lib/format";
 import { fishRatio, foodVarietyHealthFactor } from "./happiness";
-import type { Clan } from "./people";
 
 export const INITIAL_POPULATION_RATIOS = [
     [0.2157, 0.2337],
