@@ -60,6 +60,15 @@
         x   Show percentage of farming allocation in main view
         x   Move averages/totals to start so they're easier to see
         x   Show per capita subsistence in convenient places
+        -   Settlement overview panel
+            x   Demographics subpanel
+            x   Production/consumption subpanel (also explains demographics)
+            -   Issues/migrations subpanel (to show problems to solve)
+                x   Basic version with just titles
+                -   Show # of clans impacted
+                -   Show reasons for migration interest
+                -   Show clan names if there are not too many
+                -   Consider distinguishing absolute vs relative issues
         -   More as needed
     -   Consider working in some absolute effects for survival goods in 
         happiness model
