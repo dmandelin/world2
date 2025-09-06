@@ -59,7 +59,7 @@ export class MigrationCalc {
             return;
         }
 
-        if (this.clan.happiness.getAppealNonNull('Food Quality') + this.clan.happiness.getAppealNonNull('Food Quantity') < 0) {
+        if (this.clan.happiness.getAppealNonNull('Food Quantity') < 0) {
             this.wantToMove = true;
             this.wantToMoveReason = 'Hunger';
             return;

@@ -53,10 +53,6 @@ function checkHunger(settlement: SettlementDTO): SettlementIssue | undefined {
     if (lowQuantity) {
         return { title: `${lowQuantity} clans are unhappy due to lack of food` };
     }
-    const lowQuality = settlement.clans.filter(c => c.happiness.getAppealNonNull('Food Quality') < 0).length;
-    if (lowQuality) {
-        return { title: `${lowQuality} clans are unhappy due to lack of food variety` };
-    }
     return undefined;
 }
 
