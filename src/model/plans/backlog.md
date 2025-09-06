@@ -38,7 +38,7 @@
     x   UI annoyance where selected settlement resets on next turn
     -   Make productivity less confusing
         -   Show last turn flooding instead of next
-        -   Show flooding on the overview page
+        x   Show flooding on the overview page
     -   Smaller UI annoyance where settlement button panel doesn't correctly bold
     -   Check if village productivity is lower than it should be
 

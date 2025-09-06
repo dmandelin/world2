@@ -13,6 +13,7 @@ export function settlementIssues(settlement: SettlementDTO): SettlementIssue[] {
     const issues: SettlementIssue[] = [];
 
     const checks = [
+        checkFlooding,
         checkMigrations,
         checkHunger,
         checkAnomie,
@@ -26,6 +27,13 @@ export function settlementIssues(settlement: SettlementDTO): SettlementIssue[] {
     }
 
     return issues;
+}
+
+function checkFlooding(settlement: SettlementDTO): SettlementIssue | undefined {
+    if (settlement.floodLevel.damageFactor >= 0.05) {
+        return { title: `${settlement.floodLevel.name} flooding!` };
+    }
+    return undefined;
 }
 
 function checkMigrations(settlement: SettlementDTO): SettlementIssue | undefined {
