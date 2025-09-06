@@ -18,7 +18,7 @@
                 that they're fishing too much
     -   Clans seem to be having a hard time figuring out they need to
         start farming more
-        -   Check how labor allocations are initialized for split clans
+        x   Check how labor allocations are initialized for split clans
             and make sure they retain any learning
         -   Otherwise, we may need to give them a bit of ability to tell
             whether a shift helped rather than pure guessing
@@ -36,6 +36,9 @@
 
 -   Key bugs
     x   UI annoyance where selected settlement resets on next turn
+    -   Make productivity less confusing
+        -   Show last turn flooding instead of next
+        -   Show flooding on the overview page
     -   Smaller UI annoyance where settlement button panel doesn't correctly bold
     -   Check if village productivity is lower than it should be
 

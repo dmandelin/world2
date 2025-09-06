@@ -18,6 +18,19 @@ export class LaborAllocation {
         this.plan();
     }
 
+    clone(): LaborAllocation {
+        const clone = new LaborAllocation(this.clan);
+        clone.planned_.clear();
+        for (const [skill, fraction] of this.planned_.entries()) {
+            clone.planned_.set(skill, fraction);
+        }
+        clone.allocs.clear();
+        for (const [skill, fraction] of this.allocs.entries()) {
+            clone.allocs.set(skill, fraction);
+        }
+        return clone;
+    }
+
     get workers(): number { 
         return this.clan.population / 3;
     }

@@ -636,6 +636,8 @@ export class Clan implements TradePartner {
         // planning phase. Note that we also need to update productivity, otherwise
         // it will be 0 and so the clan won't produce anything.
         newClan.updateProductivity();
+        newClan.laborAllocation = this.laborAllocation.clone();
+        newClan.laborAllocation.plan();
         newClan.planMaintenance();
         newClan.planHousing();
         newClan.planMigration();
