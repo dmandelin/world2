@@ -3,26 +3,20 @@
 ## Next items in latest plans
 
 -   Latest observations:
-    -   Clans seem to be moving too much. The basic reason seems to be
-        fluctuations in local prosperity and idiosyncratic factors
-        -   Have to think about how to fix this, but one simple option
-            is to give them only a chance of moving
-        -   Specific reasons for moving too much
-            x   Clans in trade relationships take a consumption hit from
-                goods traded away but don't gain anything from it, but
-                moving won't help on that -> nullify trade cost for now
-            x   Clans don't expect to take any hit in ritual quality,
-                when in fact there are expected to be changes when moving
-                to a new village -> incorporate that
-            -   Clans will move due to low food when the problem is
-                that they're fishing too much
-    -   Clans seem to be having a hard time figuring out they need to
-        start farming more
-        x   Check how labor allocations are initialized for split clans
-            and make sure they retain any learning
-        -   Otherwise, we may need to give them a bit of ability to tell
-            whether a shift helped rather than pure guessing
-    -   But there's also an issue that when they do, if they end up 90%
+    -   Clans are somewhat better about learning to rely more on farming,
+        but they still stick too long with fishing, or move when that
+        won't really help.
+        -   There are various reasons we can give clans a bias toward
+            farming more when hungry
+        -   An easy one is cultural/ritual, where there doesn't have to
+            be any direct cost, they just have a culture in that direction.
+            Magnitude of the effect could depend on ritual appeal though.
+        -   We could also assume they experiment a bit and then pick
+            what works. 20 years is probably enough to make the correct
+            move, but we can charge them an experimentation cost.
+    -   Food quality is often an issue, but clans can probably get used
+        to this, so we should model that and dial down the notifications.
+    -   There's also an issue that when they do, if they end up 90%
         cereals, food quality is giving them 80% birth rate and 125% death
         rate, which stops population growth. But that's too severe a
         population penalty. Remembering that "cereals" also includes
@@ -30,49 +24,23 @@
         taste-wise or for maximum health, but it should mostly get the
         job done for supporting a population. We could trade off by
         adding a health productivity penalty or more appeal delta.
-    -   Starting to need more of an overall or multi-item panel
-        -   One would be key facts about labor, production, consumption,
-            pop change
 
 -   Key bugs
     x   UI annoyance where selected settlement resets on next turn
     -   Make productivity less confusing
         -   Show last turn flooding instead of next
+            -   Will probably have to redo sequencing somewhat to make it work
+        -   Check if village productivity is lower than it should be
         x   Show flooding on the overview page
     -   Smaller UI annoyance where settlement button panel doesn't correctly bold
-    -   Check if village productivity is lower than it should be
 
 -   Temp stuff to undo
     -   Make sure trade costs something when we add a benefit
 
 -   Themes
     -   Give people ways to raise their appeal
-        x   Simple model for switching farming/gathering labor allocation
-        -   Ability to found new villages when crowded or low on farmland
-            x   Basic ability to found new villages
-            x   Have fishing in villages in a cluster use the same land
-            -   Make people a little more reluctant to move so they're not
-                all departing at once for a small benefit
-            x   Prune empty villages
-            x   Give a bit more preference for leading village of cluster
     -   More detail on population change factors
-        x   Did a bunch of this
         -   Disease load detail
-    -   More aggregate data displays and general display improvements
-        x   Did a demographics panel for this
-        x   Show percentage of farming allocation in main view
-        x   Move averages/totals to start so they're easier to see
-        x   Show per capita subsistence in convenient places
-        -   Settlement overview panel
-            x   Demographics subpanel
-            x   Production/consumption subpanel (also explains demographics)
-            -   Issues/migrations subpanel (to show problems to solve)
-                x   Basic version with just titles
-                x   Show # of clans impacted
-                -   Show reasons for migration interest
-                -   Show clan names if there are not too many
-                -   Consider distinguishing absolute vs relative issues
-        -   More as needed
     -   Consider working in some absolute effects for survival goods in 
         happiness model
         -   In general, index to what's possible, so that the benchmark for
@@ -80,6 +48,8 @@
         -   Maybe a similar principle can be used for survival goods, make
             the downward adjustment relatively slow and keep "subsisting
             reasonably well" as a floor that's hard to go below
+        -   Would also make sense to have expectations ratchet upward faster
+            than downward
 
 -   Residence
     x   Calculate an effective residence level
