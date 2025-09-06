@@ -65,7 +65,7 @@
             x   Production/consumption subpanel (also explains demographics)
             -   Issues/migrations subpanel (to show problems to solve)
                 x   Basic version with just titles
-                -   Show # of clans impacted
+                x   Show # of clans impacted
                 -   Show reasons for migration interest
                 -   Show clan names if there are not too many
                 -   Consider distinguishing absolute vs relative issues

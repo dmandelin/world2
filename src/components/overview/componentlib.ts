@@ -29,28 +29,33 @@ export function settlementIssues(settlement: SettlementDTO): SettlementIssue[] {
 }
 
 function checkMigrations(settlement: SettlementDTO): SettlementIssue | undefined {
-    if (settlement.clans.some(c => c.migrationPlan?.willMigrate)) {
-        return { title: 'Some clans will migrate' };
+    const willMigrate = settlement.clans.filter(c => c.migrationPlan?.willMigrate).length;
+    if (willMigrate) {
+        return { title: `${willMigrate} clans will migrate` };
     }
-    if (settlement.clans.some(c => c.migrationPlan?.wantToMove)) {
-        return { title: 'Some clans want to migrate' };
+    const wantToMove = settlement.clans.filter(c => c.migrationPlan?.wantToMove).length;
+    if (wantToMove) {
+        return { title: `${wantToMove} clans want to migrate` };
     }
     return undefined;
 }
 
 function checkHunger(settlement: SettlementDTO): SettlementIssue | undefined {
-    if (settlement.clans.some(c => c.happiness.getAppealNonNull('Food Quantity') < 0)) {
-        return { title: 'Some clans are unhappy due to lack of food' };
+    const lowQuantity = settlement.clans.filter(c => c.happiness.getAppealNonNull('Food Quantity') < 0).length;
+    if (lowQuantity) {
+        return { title: `${lowQuantity} clans are unhappy due to lack of food` };
     }
-    if (settlement.clans.some(c => c.happiness.getAppealNonNull('Food Quality') < 0)) {
-        return { title: 'Some clans are unhappy due to lack of food variety' };
+    const lowQuality = settlement.clans.filter(c => c.happiness.getAppealNonNull('Food Quality') < 0).length;
+    if (lowQuality) {
+        return { title: `${lowQuality} clans are unhappy due to lack of food variety` };
     }
     return undefined;
 }
 
 function checkAnomie(settlement: SettlementDTO): SettlementIssue | undefined {
-    if (settlement.clans.some(c => c.happiness.getAppealNonNull('Society') < 0)) {
-        return { title: 'Some clans are unhappy due to crowding' };
+    const unhappyClans = settlement.clans.filter(c => c.happiness.getAppealNonNull('Society') < 0).length;
+    if (unhappyClans) {
+        return { title: `${unhappyClans} clans are unhappy due to crowding` };
     }
 
     return undefined;
