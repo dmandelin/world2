@@ -14,15 +14,15 @@
         font-weight: bold;
     }
 
-    td {
+    td, th {
         padding: 0.1em 0.5em;
     }
 
-    td:first-child {
+    td:first-child, th:first-child {
         text-align: left;
     }
 
-    td:not(:first-child) {
+    td:not(:first-child), th:not(:first-child) {
         text-align: right;
     }
 </style>

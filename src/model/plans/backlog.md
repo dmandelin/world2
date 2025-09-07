@@ -43,12 +43,17 @@
     x   Basic appeal-based reallocation allowing increase only and only logging
     x   Expose calculation in UI
     x   Also allow decreasing farming
+    x   Display TFP in the tooltip to make the calculation more understandable
+    -   Refine the calculation
+    -   Show what the actual decision would be in the UI
+    -   Actually reallocate
     -   Better knowledge if more connected
     -   Reallocation more likely if consumption is low
     -   Ag rituals boost ag appeal
     -   Consider idiosyncratic factor
     -   Consider intelligence bonus
     -   Consider doing the skill they're good at
+    -   Make there be an experimentation cost
 
 -   Key bugs
     x   UI annoyance where selected settlement resets on next turn

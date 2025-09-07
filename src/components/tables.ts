@@ -507,6 +507,8 @@ export function laborAllocationPlanTable(clan: ClanDTO): BasicTable {
         'T',
         'C',
         'F',
+        'PC',
+        'PF',
     ];
     const rows = clan.laborAllocation.allocationPlan.scenarios.map(scenario => [
         scenario.label,
@@ -517,6 +519,8 @@ export function laborAllocationPlanTable(clan: ClanDTO): BasicTable {
         scenario.perCapitaSubsistence.toFixed(2),
         scenario.perCapitaCereals.toFixed(2),
         scenario.perCapitaFish.toFixed(2),
+        scenario.cerealsTFP.toFixed(2),
+        scenario.fishTFP.toFixed(2),
     ]);
 
     return { header, rows };

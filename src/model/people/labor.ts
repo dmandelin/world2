@@ -95,6 +95,8 @@ export class LaborAllocationPlanScenario {
         readonly label: string,
         readonly perCapitaCereals: number,
         readonly perCapitaFish: number,
+        readonly cerealsTFP: number,
+        readonly fishTFP: number,
     ) {}
 
     get perCapitaSubsistence(): number {
@@ -153,6 +155,8 @@ export class LaborAllocationPlan {
                     : 'More fishing',
                 ac + acDelta,
                 fc + fcDelta,
+                agTFP,
+                fiTFP,
             );
         });
     }
