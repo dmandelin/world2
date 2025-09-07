@@ -76,7 +76,7 @@ export class TimePoint {
             world.allClans, clan => clan.appeal, clan => clan.population);
         this.averageSubsistenceSat = znan(weightedAverage(
             world.allClans, 
-            clan => clan.happiness.subsistenceTotal.appeal,
+            clan => clan.happiness.subsistenceAppeal,
             clan => clan.population));
         this.averageHappiness = znan(weightedAverage(
              world.allClans, 

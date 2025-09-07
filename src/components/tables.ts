@@ -6,9 +6,8 @@ import { pct, signed, spct } from '../model/lib/format';
 import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
 import type { ClanSkillChange } from '../model/people/skillchange';
-import { sortedByKey, sum, sumFun } from '../model/lib/basics';
-import type { HappinessCalcItem } from '../model/people/happiness';
-import type PopulationChange from './PopulationChange.svelte';
+import { sortedByKey, sumFun } from '../model/lib/basics';
+import type { HappinessItem } from '../model/people/happiness';
 import type { PopulationChangeItem, PopulationChangeModifier } from '../model/people/population';
 
 export type SettlementRitesTable = {
@@ -220,35 +219,43 @@ export class HappinessTable {
 
     constructor(readonly s: SettlementDTO,
     ) {
+        const digits = 0;
         this.header = ['Source', 'Average', ...s.clans.map(c => c.name)];
         const subheaderGroup = ['E', 'A', 'V'];
         this.subheader = ['', ...s.clans.flatMap(c => subheaderGroup), ...subheaderGroup];
-        const rows: string[][] = [];
+        this.rows = [];
+        const totalNumbers: number[] = [];
         if (s.clans.length > 0) {
-            for (let i = 0; i < s.clans[0].happiness.rows.length; i++) {
-                const row = [s.clans[0].happiness.rows[i].label];
-                let [totalExpectation, totalAppeal, totalValue] = [0, 0, 0];
-                const rowSuffix = [];
+            for (const label of s.clans[0].happiness.items.keys()) {
+                let clanNumbers: number[] = [];
+                let [ae, aa, av] = [0, 0, 0];  // Averages
                 for (const clan of s.clans) {
-                    rowSuffix.push(clan.happiness.rows[i].expectation.toFixed(1));
-                    rowSuffix.push(clan.happiness.rows[i].appeal.toFixed(1));
-                    rowSuffix.push(clan.happiness.rows[i].value.toFixed(1));
+                    const w = clan.population / s.population;
+                    const i = clan.happiness.items.get(label)!;
 
-                    totalExpectation += clan.happiness.rows[i].expectation * clan.population;
-                    totalAppeal += clan.happiness.rows[i].appeal * clan.population;
-                    totalValue += clan.happiness.rows[i].value * clan.population;
+                    const e = i.expectedAppeal;
+                    const a = i.appeal;
+                    const v = i.value;
+
+                    ae += e * w;
+                    aa += a * w;
+                    av += v * w;
+
+                    clanNumbers.push(e, a, v);
                 }
-                row.push((totalExpectation / s.population).toFixed(1));
-                row.push((totalAppeal / s.population).toFixed(1));
-                row.push((totalValue / s.population).toFixed(1));
-                rows.push([...row, ...rowSuffix]);
+                const rowNumbers = [ae, aa, av, ...clanNumbers];
+                this.rows.push([label, ...rowNumbers.map(n => n.toFixed(digits))]);
+                for (let i = 0; i < rowNumbers.length; i++) {
+                    totalNumbers[i] = (totalNumbers[i] ?? 0) + rowNumbers[i];
+                }
             }
+            const row = ['Total', ...totalNumbers.map(n => n.toFixed(digits))];
+            this.rows.push(row);
         }
-        this.rows = rows;
     }
 }
 
-export function appealTable(items: readonly HappinessCalcItem[]): string[][] {
+export function appealTable(items: readonly HappinessItem[]): string[][] {
     const header = ['Source', 'A'];
     const rows = items.map(item => [
         item.label,
@@ -257,12 +264,11 @@ export function appealTable(items: readonly HappinessCalcItem[]): string[][] {
     return [header, ...rows];
 }
 
-
-export function happinessTable(items: readonly HappinessCalcItem[]): string[][] {
+export function happinessTable(items: readonly HappinessItem[]): string[][] {
     const header = ['Source', 'E', 'A', 'V'];
     const rows = items.map(item => [
         item.label,
-        item.expectation.toFixed(1),
+        item.expectedAppeal.toFixed(1),
         item.appeal.toFixed(1),
         item.value.toFixed(1),
     ]);

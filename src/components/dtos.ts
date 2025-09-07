@@ -358,8 +358,8 @@ export class WorldDTO {
             ['Least productive', minbyWithValue, clan => clan.productivity, pct],
             ['Most correct', maxbyWithValue, clan => clan.ritualEffectiveness, pct],
             ['Least correct', minbyWithValue, clan => clan.ritualEffectiveness, pct],
-            ['Highest welfare', maxbyWithValue, clan => clan.happiness.total.appeal, n => n.toFixed()],
-            ['Lowest welfare', minbyWithValue, clan => clan.happiness.total.appeal, n => n.toFixed()],
+            ['Highest welfare', maxbyWithValue, clan => clan.happiness.appeal, n => n.toFixed()],
+            ['Lowest welfare', minbyWithValue, clan => clan.happiness.appeal, n => n.toFixed()],
             ['Most influential', maxbyWithValue, clan => clan.influence, pct],
             ['Least influential', minbyWithValue, clan => clan.influence, pct],
         ]

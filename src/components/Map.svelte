@@ -145,17 +145,17 @@
         // Basic stats
         const subsistence = weightedAverage(
             settlement.clans,
-            c => c.happiness.subsistenceTotal.appeal,
+            c => c.happiness.subsistenceAppeal,
             c => c.population,
         );
         const appeal = weightedAverage(
             settlement.clans,
-            c => c.happiness.total.appeal,
+            c => c.happiness.appeal,
             c => c.population,
         );
         const happiness = weightedAverage(
             settlement.clans,
-            c => c.happiness.total.value,
+            c => c.happiness.value,
             c => c.population,
         );
 

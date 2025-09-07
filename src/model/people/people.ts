@@ -19,7 +19,7 @@ import { LaborAllocation } from "./labor";
 import { AlignmentCalc } from "./alignment";
 import { TradeGoods } from "../trade";
 import { HousingTypes } from "../econ/housing";
-import { Expectations, HappinessCalc } from "./happiness";
+import { HappinessCalc } from "./happiness";
 import { ResidenceLevels, type ResidenceLevel } from "./residence";
 
 const CLAN_NAMES: string[] = [
@@ -210,8 +210,7 @@ export class Clan implements TradePartner {
     readonly tradeRelationships = new Set<TradeRelationship>();
     consumption = new ConsumptionCalc(this);
 
-    private expectations_: Expectations = new Expectations();
-    private happinessCalc_: HappinessCalc;
+    private readonly happinessCalc_: HappinessCalc;
 
     constructor(
         readonly world: World,
@@ -252,7 +251,7 @@ export class Clan implements TradePartner {
         // as the ancestors are watching, among other things.
         this.rites = new Rites(`${this.name} rites`, 35, 30, 0.15, [this], [], [], this.world);
 
-        this.happinessCalc_ = new HappinessCalc(this, true);
+        this.happinessCalc_ = new HappinessCalc(this);
     }
 
     get moniker(): string {
@@ -301,14 +300,7 @@ export class Clan implements TradePartner {
     }
 
     consume() {
-        this.happinessCalc_ = new HappinessCalc(this);
-        // Update expectations afterward. The earlier expectations are snapshotted
-        // in the HappinessCalc.
-        this.expectations_.updateFrom(this.happinessCalc_);
-    }
-
-    get expectations(): Expectations {
-        return this.expectations_;
+        this.happinessCalc_.update();
     }
 
     get happiness(): HappinessCalc {
@@ -316,11 +308,11 @@ export class Clan implements TradePartner {
     }
 
     get happinessValue(): number {
-        return this.happiness.total.value;
+        return this.happiness.value;
     }
 
     get appeal(): number {
-        return this.happiness.total.appeal;
+        return this.happiness.appeal;
     }
 
     get migrationPlan(): MigrationCalc|undefined {

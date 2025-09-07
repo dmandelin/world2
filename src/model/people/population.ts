@@ -130,7 +130,7 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Food Quantity', this.clan.consumption.perCapitaSubsistence(), subsistenceDrModifier));
 
-        const foodQualityModifier = foodVarietyHealthFactor(clan);
+        const foodQualityModifier = foodVarietyHealthFactor(fishRatio(clan));
         this.brModifiers.push(new PopulationChangeModifier(
             'Food Quality', fishRatio(clan), foodQualityModifier));
         this.drModifiers.push(new PopulationChangeModifier(

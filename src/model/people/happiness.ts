@@ -3,6 +3,94 @@ import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
 
+export abstract class HappinessItem {
+    private expectedAppeal_: number;
+    protected state_: number;
+
+    constructor(
+        expectedAppeal: number = 0,
+        state: number = 0,
+    ) {
+        this.expectedAppeal_ = expectedAppeal;
+        this.state_ = state;
+    }
+
+    // Display label.
+    abstract get label(): string;
+
+    get isSubsistence(): boolean {
+        return false;
+    }
+
+    get appeal(): number {
+        return this.appealOf(this.state_);
+    }
+
+    // Appeal as a function of state. Should be pure.
+    abstract appealOf(state: number): number;
+
+    // Update the state from the model. We track a copy of the state
+    // in this structure so that we have a stable record of what
+    // state the appeal was based on.
+    abstract updateState(clan: Clan): void;
+
+    get expectedAppeal(): number {
+        return this.expectedAppeal_;
+    }
+
+    updateExpectedAppeal(): void {
+        // Expectations adjust upward more easily than downward.
+        const error = this.appeal - this.expectedAppeal_;
+        this.expectedAppeal_ += error >= 0
+            ? 0.5 * error
+            : 0.1 * error;
+    }
+
+    get state(): number {
+        return this.state_;
+    }
+
+    get value(): number {
+        return this.appeal - this.expectedAppeal_;
+    }
+}
+
+class FoodQuantityHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Food Quantity';
+    }
+
+    get isSubsistence(): boolean {
+        return true;
+    }
+
+    appealOf(perCapitaSubsistence: number): number {
+        return 50 * Math.log2(perCapitaSubsistence);
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = clan.consumption.perCapitaSubsistence();
+    }
+}
+
+class FoodQualityHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Food Quality';
+    }
+
+    get isSubsistence(): boolean {
+        return true;
+    }
+
+    appealOf(fishRatio: number): number {
+        return foodVarietyAppeal(fishRatio);
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = fishRatio(clan);
+    }
+}
+
 // Food variety
 // - "Fish" represents a balanced hunter-gather diet and has base appeal.
 // - Adding some cereals typically has higher appeal:
@@ -19,40 +107,163 @@ export function fishRatio(clan: Clan): number {
     return fish / (cereals + fish);
 }
 
-export function foodVarietyAppeal(clan: Clan): number {
-    return foodVarietyAppealFun(fishRatio(clan));
+export function foodVarietyAppeal(fishRatio: number): number {
+    return foodVarietyAppealFun(fishRatio);
 }
 
-export function foodVarietyHealthFactor(clan: Clan): number {
-    const p = 1 - fishRatio(clan);
+export function foodVarietyHealthFactor(fishRatio: number): number {
+    const p = 1 - fishRatio;
     return 1 - 0.125 * p * p;
 }
 
-export class Expectations {
-    readonly map_ = new Map<string, number>();
-    readonly alpha = 0.5;
-
-    constructor() {
-        this.map_.set('Food Quantity', 0);
-        this.map_.set('Food Quality', 0);
-        this.map_.set('Shelter', 1);
-        this.map_.set('Migrations', -5);
-        this.map_.set('Flood', -1);
-        this.map_.set('Rituals', 10);
+class ShelterHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Shelter';
     }
 
-    get(label: string): number {
-        return this.map_.get(label) ?? 0;
+    appealOf(shelterAppeal: number): number {
+        return shelterAppeal;
     }
 
-    updateFrom(happiness: HappinessCalc): void {
-        for (const [label, current] of this.map_.entries()) {
-            const recent = happiness.getAppeal(label);
-            if (recent !== undefined) {
-                const updated = this.alpha * current + (1 - this.alpha) * recent;
-                this.map_.set(label, updated);
-            }
+    updateState(clan: Clan): void {
+        this.state_ = clan.housing.shelter;
+    }
+}
+
+class MigrationHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Migration';
+    }
+
+    appealOf(forcedMigrations: number): number {
+        return -forcedMigrations;
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = clan.settlement.forcedMigrations;
+    }
+}
+
+class FloodHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Flood';
+    }
+
+    appealOf(damageFactor: number): number {
+        return -damageFactor * 20;
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = clan.settlement.floodLevel.damageFactor;
+    }
+}
+
+class RitualHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Rituals';
+    }
+
+    appealOf(ritualAppeal: number): number {
+        return ritualAppeal;
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = clan.settlement.clans.rites.appeal;
+    }
+}
+
+class StatusHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Status';
+    }
+
+    appealOf(averagePrestige: number): number {
+        return averagePrestige;
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = clan.averagePrestige;
+    }
+}
+
+class SocietyHappinessItem extends HappinessItem {
+    get label(): string {
+        return 'Society';
+    }
+
+    appealOf(population: number): number {
+        const limit = 300;
+        return population <= limit ? 0 : -20 * (population - limit) / population;
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = clan.settlement.population;
+    }
+}
+
+export class HappinessCalc {
+    readonly items: Map<string, HappinessItem> = new Map();
+    readonly subsistenceItems: HappinessItem[] = [];
+
+    constructor(readonly clan: Clan) {}
+
+    private initialize(): void {
+        this.add(
+            new FoodQuantityHappinessItem(), 
+            new FoodQualityHappinessItem(),
+            new ShelterHappinessItem(),
+            new MigrationHappinessItem(),
+            new FloodHappinessItem(),
+            new RitualHappinessItem(),
+            new StatusHappinessItem(),
+            new SocietyHappinessItem(),
+        );
+    }
+
+    private add(...items: HappinessItem[]): void {
+        for (const item of items) {
+            this.items.set(item.label, item);
         }
+    }
+
+    update(): void {
+        this.updateAppeal();
+        this.updateExpectations();
+    }
+
+    private updateAppeal(): void {
+        if (this.items.size === 0) {
+            this.initialize();
+        }
+        for (const item of this.items.values()) {
+            item.updateState(this.clan);
+        }
+    }
+
+    private updateExpectations(): void {
+        for (const item of this.items.values()) {
+            item.updateExpectedAppeal();
+        }
+    }
+
+    get appeal(): number {
+        return sumFun(this.items.values(), item => item.appeal);
+    }
+
+    get subsistenceAppeal(): number {
+        return sumFun(this.items.values(), item => item.isSubsistence ? item.appeal : 0);
+    }
+
+    get value(): number {
+        return sumFun(this.items.values(), item => item.value);
+    }
+
+    getAppeal(label: string): number|undefined {
+        return this.items.get(label)?.appeal;
+    }
+
+    getAppealNonNull(label: string): number {
+        return this.items.get(label)?.appeal ?? 0;
     }
 }
 
@@ -65,91 +276,5 @@ export class HappinessCalcItem {
 
     get value(): number {
         return this.appeal - this.expectation;
-    }
-}
-
-export class HappinessCalc {
-    readonly items: Map<string, HappinessCalcItem> = new Map();
-    readonly total: HappinessCalcItem;
-    readonly rows: HappinessCalcItem[];
-
-    readonly subsistenceItems: HappinessCalcItem[] = [];
-    readonly subsistenceTotal: HappinessCalcItem;
-
-    constructor(readonly clan: Clan, empty = false) {
-        // TODO - positive network effects
-        // TODO - disease load
-        // TODO - trade goods
-
-        if (!empty) {
-            const foodAppeal = 50 * Math.log2(this.clan.consumption.perCapitaSubsistence());
-            this.add('Food Quantity', foodAppeal, true);
-
-            const foodQualityAppeal = foodVarietyAppeal(this.clan);
-            this.add('Food Quality', foodQualityAppeal, true);
-
-            const shelterAppeal = this.clan.housing.shelter;
-            this.add('Shelter', shelterAppeal, true);
-
-            // Some people will be neutral or positive on migration, but we'll
-            // assume that convenience ("laziness") and the needs of babies and
-            // elders create a mild absolute preference to stay.
-            const migrationAppeal = -this.clan.settlement.forcedMigrations;
-            this.add('Migrations', migrationAppeal);
-
-            const floodAppeal = -this.clan.settlement.floodLevel.damageFactor * 20;
-            this.add('Flood', floodAppeal);
-
-            // These define our relationship with powerful beings, so we are 
-            // definitely happier if we've done well for them.
-            const ritualAppeal = this.clan.settlement.clans.rites.appeal;
-            this.add('Rituals', ritualAppeal);
-
-            // In everyone-knows-everyone societies, status is determined by
-            // our relationships.
-            const statusAppeal = this.clan.averagePrestige;
-            this.add('Status', statusAppeal);
-
-            // "Village society": We like everyone to know everyone, so the fraction
-            // not covered by our gossip network is a disamenity.
-            const population = this.clan.settlement.population;
-            const limit = 300;
-            const societyAppeal = population <= limit ? 0 : -20 * (population - limit) / population;
-            this.add('Society', societyAppeal);
-        }
-
-        this.subsistenceTotal = new HappinessCalcItem(
-            'Total', 
-            sumFun(this.subsistenceItems, item => item.expectation),
-            sumFun(this.subsistenceItems, item => item.appeal),
-        );
-
-        this.total = new HappinessCalcItem(
-            'Total', 
-            sumFun(this.items.values(), item => item.expectation),
-            sumFun(this.items.values(), item => item.appeal),
-        );
-
-        this.rows = [...this.items.values(), this.total];
-    }
-
-    private add(label: string, appeal: number, isSubsistence = false): void {
-        const item = new HappinessCalcItem(label, this.clan.expectations.get(label), appeal);
-        this.items.set(label, item);
-        if (isSubsistence) {
-            this.subsistenceItems.push(item);
-        }
-    }
-
-    get(label: string): HappinessCalcItem | undefined {
-        return this.items.get(label);
-    }
-
-    getAppeal(label: string): number|undefined {
-        return this.get(label)?.appeal;
-    }
-
-    getAppealNonNull(label: string): number {
-        return this.get(label)?.appeal ?? 0;
     }
 }

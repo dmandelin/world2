@@ -215,7 +215,7 @@
                 </td>
                 <td>
                     <Tooltip>
-                        {signed(clan.happiness.subsistenceTotal.appeal)}
+                        {signed(clan.happiness.subsistenceAppeal)}
                         <div slot="tooltip" class="ttt">
                             <h4>Sources</h4>
                             <DataTable rows={appealTable(clan.happiness.subsistenceItems)} />
@@ -224,7 +224,7 @@
                 </td>
                 <td>
                     <Tooltip>
-                        {signed(clan.happiness.total.appeal)}
+                        {signed(clan.happiness.appeal)}
                         <div slot="tooltip" class="ttt">
                             <h4>Sources</h4>
                             <DataTable rows={appealTable([...clan.happiness.items.values()])} />
@@ -233,7 +233,7 @@
                 </td>
                 <td>
                     <Tooltip>
-                        {signed(clan.happiness.total.value)}
+                        {signed(clan.happiness.value)}
                         <div slot="tooltip" class="ttt">
                             <h4>Sources</h4>
                             <DataTable rows={happinessTable([...clan.happiness.items.values()])} />

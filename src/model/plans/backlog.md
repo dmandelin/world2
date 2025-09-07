@@ -3,6 +3,8 @@
 ## Next items in latest plans
 
 -   Latest observations:
+    -   Village productivity seems very low compared to clan base
+        productivity. Need to sort that out.
     -   Clans are somewhat better about learning to rely more on farming,
         but they still stick too long with fishing, or move when that
         won't really help.

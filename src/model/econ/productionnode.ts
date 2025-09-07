@@ -57,6 +57,12 @@ export class ProductionNode {
         }
     }
 
+    tfp(clan?: Clan): number {
+        return clan 
+          ? this.output(clan).get(this.skillDef.outputGood!)! / this.workers(clan)
+          : (this.totalOutput_.get(this.skillDef.outputGood!) ?? 0) / this.totalWorkers_;
+    }
+
     reset(): void {
         this.workerFractions_.clear();
         this.workers_.clear();
@@ -91,8 +97,8 @@ export class ProductionNode {
             this.land_.set(clan, land);
 
             const inputs = Math.min(land, workers);
-            const tfp = clan.productivity(this.skillDef);
-            let output = Math.round(ProductionNode.outputPerWorker * inputs * tfp);
+            const lp = clan.productivity(this.skillDef);
+            let output = Math.round(ProductionNode.outputPerWorker * inputs * lp);
 
             if (output > 0) {
                 this.totalOutput_.set(this.skillDef.outputGood!, 
