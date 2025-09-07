@@ -45,10 +45,14 @@
     x   Also allow decreasing farming
     x   Display TFP in the tooltip to make the calculation more understandable
     -   Refine the calculation
+        x   If total consumption is high, people are unlikely to reallocate
+            (in later cultures this may change)
+        -   If under stress, they could try some experiments.
+            -   This will have some cost
+            -   They'll then gain some appeal data about what works
     -   Show what the actual decision would be in the UI
     -   Actually reallocate
     -   Better knowledge if more connected
-    -   Reallocation more likely if consumption is low
     -   Ag rituals boost ag appeal
     -   Consider idiosyncratic factor
     -   Consider intelligence bonus

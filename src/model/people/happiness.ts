@@ -38,12 +38,22 @@ export abstract class HappinessItem {
         return this.expectedAppeal_;
     }
 
+    get expectedAppealFloor(): number|undefined {
+        return undefined;
+    }
+
     updateExpectedAppeal(): void {
         // Expectations adjust upward more easily than downward.
         const error = this.appeal - this.expectedAppeal_;
         this.expectedAppeal_ += error >= 0
             ? 0.5 * error
             : 0.1 * error;
+        
+        // There can be a floor. Starving is never considered acceptable.
+        const floor = this.expectedAppealFloor;
+        if (floor !== undefined) {
+            this.expectedAppeal_ = Math.max(this.expectedAppeal_, floor);
+        }
     }
 
     get state(): number {
@@ -62,6 +72,10 @@ class FoodQuantityHappinessItem extends HappinessItem {
 
     get isSubsistence(): boolean {
         return true;
+    }
+
+    get expectedAppealFloor(): number|undefined {
+        return this.appealOf(0.75);
     }
 
     appealOf(perCapitaSubsistence: number): number {

@@ -1,13 +1,14 @@
 import type Settlement from '../../components/Settlement.svelte';
 import { clamp } from '../lib/basics';
 import { normal } from '../lib/distributions';
+import { eloSuccessProbability } from '../lib/modelbasics';
 import { TradeGoods } from '../trade';
 import { foodVarietyAppeal } from './happiness';
 import { Clan } from './people';
 import { SkillDefs, type SkillDef } from './skills';
 
 export class LaborAllocation {
-    allocationPlan_ = new LaborAllocationPlan(this, true);
+    allocationPlan_: LaborAllocationPlan;
 
     // Planned allocations for labor left over after maintenance and other 
     // required allocations. Value is fraction and values must sum to 1.
@@ -20,6 +21,8 @@ export class LaborAllocation {
         this.planned_.set(SkillDefs.Agriculture, r);
         this.planned_.set(SkillDefs.Fishing, 1 - r);
         this.plan();
+
+        this.allocationPlan_ = new LaborAllocationPlan(this, true);
     }
 
     clone(): LaborAllocation {
@@ -125,18 +128,30 @@ export class LaborAllocationPlanScenario {
 }
 
 export class LaborAllocationPlan {
+    readonly happiness: number;
+    readonly experimentProbability: number;
+    readonly experimenting: boolean;
+
     readonly scenarios: LaborAllocationPlanScenario[];
 
-    constructor(readonly laborAllocation: LaborAllocation, empty: boolean = false) {
-        if (empty) {
+    constructor(readonly laborAllocation: LaborAllocation, noChange: boolean = false) {
+        // First decide whether to experiment with new allocations. For now,
+        // we have a conservative culture that will mostly try new things
+        // only if hungry, but not absolutely.
+        const h = laborAllocation.clan.happiness;
+        this.happiness = h ? h.getAppealNonNull('Food Quantity') + h.getAppealNonNull('Food Quality') : 0;
+        this.experimentProbability = noChange
+            ? 0
+            : eloSuccessProbability(-5, this.happiness, 5);
+        this.experimenting = Math.random() < this.experimentProbability;
+        if (!this.experimenting) {
             this.scenarios = [];
-            return;
+            return; 
         }
-
-        const clan = laborAllocation.clan;
 
         // Consider three scenarios: status quo, shifting 10% of output
         // to agriculture, shifting 10% of output to fishing.
+        const clan = laborAllocation.clan;
         const outputDeltas = [0, 0.1, -0.1];
         this.scenarios = outputDeltas.map(delta => {
             const apn = clan.settlement.productionNode(SkillDefs.Agriculture)!;
