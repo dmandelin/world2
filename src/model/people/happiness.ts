@@ -262,8 +262,11 @@ export class HappinessCalc {
         return this.items.get(label)?.appeal;
     }
 
-    getAppealNonNull(label: string): number {
-        return this.items.get(label)?.appeal ?? 0;
+    getAppealNonNull(label: string, stateOverride: number|undefined = undefined): number {
+        const item = this.items.get(label);
+        if (!item) return 0;
+
+        return stateOverride !== undefined ? item.appealOf(stateOverride) : item.appeal ?? 0;
     }
 }
 

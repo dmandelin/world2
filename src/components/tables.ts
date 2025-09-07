@@ -496,3 +496,28 @@ export function settlementEconomyTable(settlement: SettlementDTO): BasicTable {
     ]);
     return { header, rows };
 }
+
+export function laborAllocationPlanTable(clan: ClanDTO): BasicTable {
+    const header = [
+        'Scenario',
+        'A',
+        'A#',
+        'A*',
+        'f%',
+        'T',
+        'C',
+        'F',
+    ];
+    const rows = clan.laborAllocation.allocationPlan.scenarios.map(scenario => [
+        scenario.label,
+        scenario.appeal.toFixed(1),
+        scenario.foodQuantityAppeal.toFixed(1),
+        scenario.foodQualityAppeal.toFixed(1),
+        pct(scenario.fishRatio),
+        scenario.perCapitaSubsistence.toFixed(2),
+        scenario.perCapitaCereals.toFixed(2),
+        scenario.perCapitaFish.toFixed(2),
+    ]);
+
+    return { header, rows };
+}

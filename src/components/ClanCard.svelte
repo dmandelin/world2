@@ -8,8 +8,9 @@
     import Tooltip from "./Tooltip.svelte";
     import { clanTimelineGraphData } from "../model/records/timeline";
     import HousingDecision from "./decisions/HousingDecision.svelte";
-    import { appealTable, happinessTable, skillImitationTable } from "./tables";
+    import { appealTable, happinessTable, laborAllocationPlanTable, skillImitationTable } from "./tables";
     import { SkillDefs } from "../model/people/skills";
+    import DataTable2 from "./DataTable2.svelte";
 
     let { clan } = $props();
 
@@ -135,7 +136,12 @@
             </tr>
             <tr>
                 <td colspan="3" class="full-row">
+                    <Tooltip>
                     {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture))} farming
+                    <div slot="tooltip" class="ttt">
+                        <DataTable2 table={laborAllocationPlanTable(clan)} />
+                    </div>
+                    </Tooltip>
                 </td>
             </tr>
             <tr>

@@ -1,10 +1,14 @@
 import type Settlement from '../../components/Settlement.svelte';
 import { clamp } from '../lib/basics';
 import { normal } from '../lib/distributions';
+import { TradeGoods } from '../trade';
+import { foodVarietyAppeal } from './happiness';
 import { Clan } from './people';
 import { SkillDefs, type SkillDef } from './skills';
 
 export class LaborAllocation {
+    allocationPlan_ = new LaborAllocationPlan(this, true);
+
     // Planned allocations for labor left over after maintenance and other 
     // required allocations. Value is fraction and values must sum to 1.
     readonly planned_= new Map<SkillDef, number>();
@@ -35,6 +39,10 @@ export class LaborAllocation {
         return this.clan.population / 3;
     }
 
+    get allocationPlan(): LaborAllocationPlan {
+        return this.allocationPlan_;
+    }
+
     plannedRatioFor(skill: SkillDef): number {
         return this.planned_.get(skill) ?? 0;
     }
@@ -49,55 +57,16 @@ export class LaborAllocation {
         // Happens during world initialization.
         if (!this.clan.consumption) return;
 
-        if (this.clan.consumption.perCapitaSubsistence() >= 1.0) {
-            return;
-        }
+        this.allocationPlan_ = new LaborAllocationPlan(this);
 
+        /*
         const r = this.planned_.get(SkillDefs.Agriculture);
         if (r === undefined) return;
         const sign = Math.random() < 0.5 ? -1 : 1;
-        const delta = sign * (1 + Math.random() + Math.random()) * 0.1;
+        const delta = sign * (0.1 + 0.1 * Math.random());
         const newR = clamp(r + delta, 0, 1);
         this.planned_.set(SkillDefs.Agriculture, newR);
         this.planned_.set(SkillDefs.Fishing, 1 - newR);
-        
-        // TODO - finish
-        // If there is hunger, consider doing something different.
-        // - Assume that there's a period of experimentation in
-        //   the beginning of the turn, so that clans have some
-        //   visibility into what will work.
-        // - There's still a fair amount of variance, so the signal
-        //   won't necessarily be obvious to them, but larger
-        //   interacting populations will have a better chance.
-        // - Village rituals are assumed to emphasize agriculture,
-        //   so ritual activity increases its appeal.
-
-        // There will always be some inequality of food distribution,
-        // so we have to be a bit above subsistence for no one to be
-        // hungry.
-
-        /*
-        // Appeal of the status quo.
-        const statusQuoAppeal = (this.clan.happiness.getAppeal('Food Quantity') ?? 0)
-                              + (this.clan.happiness.getAppeal('Food Quality') ?? 0);
-        if (statusQuoAppeal === undefined) return;
-
-        // Use total factor productivity to estimate the output
-        // effects of changing allocations.
-        const agTFP = this.clan.settlement.productionNode(SkillDefs.Agriculture).tfp(this.clan);
-        const fiTFP = this.clan.settlement.productionNode(SkillDefs.Fishing).tfp(this.clan);
-
-        if (this.clan.consumption.perCapitaSubsistence() >= 1.1) {
-            return;
-        }
-            const r = this.planned_.get(SkillDefs.Agriculture);
-            if (r === undefined) return;
-            const sign = Math.random() < 0.5 ? -1 : 1;
-            const delta = sign * (0.1 + 0.1 * Math.random());
-            const newR = clamp(r + delta, 0, 1);
-            this.planned_.set(SkillDefs.Agriculture, newR);
-            this.planned_.set(SkillDefs.Fishing, 1 - newR);
-        }
         */
     }
 
@@ -118,5 +87,73 @@ export class LaborAllocation {
         for (const [skill, fraction] of this.planned_.entries()) {
             this.allocs.set(skill, fraction * remainder);
         }
+    }
+}
+
+export class LaborAllocationPlanScenario { 
+    constructor(
+        readonly label: string,
+        readonly perCapitaCereals: number,
+        readonly perCapitaFish: number,
+    ) {}
+
+    get perCapitaSubsistence(): number {
+        return this.perCapitaCereals + this.perCapitaFish;
+    }
+
+    get fishRatio(): number {
+        return this.perCapitaSubsistence > 0
+            ? this.perCapitaFish / this.perCapitaSubsistence
+            : 0;
+    }
+
+    // TODO - remove code duplication
+    get foodQuantityAppeal(): number {
+        return 50 * Math.log2(this.perCapitaSubsistence);
+    }
+
+    // TODO - consider better factoring
+    get foodQualityAppeal(): number {
+        return foodVarietyAppeal(this.fishRatio);
+    }
+
+    get appeal(): number {
+        return this.foodQuantityAppeal + this.foodQualityAppeal;
+    }
+}
+
+export class LaborAllocationPlan {
+    readonly scenarios: LaborAllocationPlanScenario[];
+
+    constructor(readonly laborAllocation: LaborAllocation, empty: boolean = false) {
+        if (empty) {
+            this.scenarios = [];
+            return;
+        }
+
+        const clan = laborAllocation.clan;
+
+        // Consider three scenarios: status quo, shifting 10% of output
+        // to agriculture, shifting 10% of output to fishing.
+        const outputDeltas = [0, 0.1, -0.1];
+        this.scenarios = outputDeltas.map(delta => {
+            const apn = clan.settlement.productionNode(SkillDefs.Agriculture)!;
+            const fpn = clan.settlement.productionNode(SkillDefs.Fishing)!;
+            const agTFP = apn.tfp(clan);
+            const fiTFP = fpn.tfp(clan);
+
+            const ac = clan.consumption.perCapita(TradeGoods.Cereals);
+            const fc = clan.consumption.perCapita(TradeGoods.Fish);
+            const tc = ac + fc;
+            const acDelta = delta * tc;
+            const fcDelta = Math.max(-fc, -acDelta * fiTFP / agTFP);
+            return new LaborAllocationPlanScenario(
+                delta === 0 ? 'Status quo'
+                    : delta > 0 ? 'More farming'
+                    : 'More fishing',
+                ac + acDelta,
+                fc + fcDelta,
+            );
+        });
     }
 }

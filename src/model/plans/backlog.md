@@ -38,6 +38,18 @@
             big rituals from the main town. This will start to create a
             notion of urban amenities.
 
+-   Improved labor reallocation
+    x   Update happiness model for what-ifs
+    x   Basic appeal-based reallocation allowing increase only and only logging
+    x   Expose calculation in UI
+    x   Also allow decreasing farming
+    -   Better knowledge if more connected
+    -   Reallocation more likely if consumption is low
+    -   Ag rituals boost ag appeal
+    -   Consider idiosyncratic factor
+    -   Consider intelligence bonus
+    -   Consider doing the skill they're good at
+
 -   Key bugs
     x   UI annoyance where selected settlement resets on next turn
     -   Make productivity less confusing
