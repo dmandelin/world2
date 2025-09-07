@@ -68,7 +68,7 @@
             <h1 style="white-space: nowrap;">{settlement.name} |
                 <img src="stat-population-256.png" alt="Population" width="40" height="40"
                      style="padding-bottom: 4px;"
-                />{settlement.size}&nbsp;
+                />{settlement.population}&nbsp;
                 <img src="stat-welfare-256.png" alt="Welfare" width="40" height="40"
                      style="padding-bottom: 8px;"
                 />{signed(settlement.averageAppeal, 0)}

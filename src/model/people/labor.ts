@@ -48,6 +48,7 @@ export class LaborAllocation {
     private updatePlanned() {
         // Happens during world initialization.
         if (!this.clan.consumption) return;
+        
         // Initial very simple model: if there is hunger, do 
         // something different.
         if (this.clan.consumption.perCapitaSubsistence() < 1.0) {
