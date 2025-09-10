@@ -130,6 +130,7 @@ export class LaborAllocationPlanScenario {
 export class LaborAllocationPlan {
     readonly happiness: number;
     readonly experimentProbability: number;
+    readonly experimentingRoll: number;
     readonly experimenting: boolean;
 
     readonly scenarios: LaborAllocationPlanScenario[];
@@ -139,11 +140,12 @@ export class LaborAllocationPlan {
         // we have a conservative culture that will mostly try new things
         // only if hungry, but not absolutely.
         const h = laborAllocation.clan.happiness;
-        this.happiness = h ? h.getAppealNonNull('Food Quantity') + h.getAppealNonNull('Food Quality') : 0;
+        this.happiness = h ? h.getValue('Food Quantity') + h.getValue('Food Quality') : 0;
         this.experimentProbability = noChange
             ? 0
             : eloSuccessProbability(-5, this.happiness, 5);
-        this.experimenting = Math.random() < this.experimentProbability;
+        this.experimentingRoll = Math.random();
+        this.experimenting = this.experimentingRoll < this.experimentProbability;
         if (!this.experimenting) {
             this.scenarios = [];
             return; 

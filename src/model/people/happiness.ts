@@ -282,6 +282,10 @@ export class HappinessCalc {
 
         return stateOverride !== undefined ? item.appealOf(stateOverride) : item.appeal ?? 0;
     }
+
+    getValue(label: string): number {
+        return this.items.get(label)?.value ?? 0;
+    }
 }
 
 export class HappinessCalcItem {

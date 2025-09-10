@@ -141,6 +141,12 @@
                     <div slot="tooltip" class="ttt">
                         H {clan.laborAllocation.allocationPlan.happiness.toFixed()} |
                         {pct(clan.laborAllocation.allocationPlan.experimentProbability)}
+                        ({(clan.laborAllocation.allocationPlan.experimentingRoll * 100).toFixed()})
+                        {#if clan.laborAllocation.allocationPlan.experimenting}
+                            - experimenting
+                        {:else}
+                            - maintaining traditions
+                        {/if}
                         <DataTable2 table={laborAllocationPlanTable(clan)} />
                     </div>
                     </Tooltip>
