@@ -1,11 +1,11 @@
 import { clamp, sumFun } from "../lib/basics";
-import { selectBySoftmax } from "../lib/modelbasics";
 import { Clan, PersonalityTraits } from "./people";
+import { normal } from "../lib/distributions";
 import { randomHamletName } from "./names";
+import { selectBySoftmax } from "../lib/modelbasics";
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
-import { normal } from "../lib/distributions";
 
 export type MigrationTarget = Settlement | 'new';
 
@@ -128,7 +128,6 @@ export class CandidateMigrationCalc {
             this.fromPopulation(),
             this.fromLocalGoods(),
             this.fromRitual(),
-            this.idiosyncratic(),
         ];
         this.value = sumFun(this.items, item => item.value);
 
@@ -231,14 +230,6 @@ export class CandidateMigrationCalc {
         }
 
         return item;
-    }
-
-    private idiosyncratic(): CandidateMigrationCalcItem {
-        return {
-            name: 'Clan',
-            reason: '',
-            value: normal(0, 2),
-        }
     }
 }
 
