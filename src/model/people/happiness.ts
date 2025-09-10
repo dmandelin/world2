@@ -113,7 +113,7 @@ class FoodQualityHappinessItem extends HappinessItem {
 //   - Storable food
 // - A high percentage of cereals only in the diet has lower appeal and health.
 
-const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 5, 1, 0);
+const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 2, 1, 0);
 
 export function fishRatio(clan: Clan): number {
     const cereals = clan.consumption.perCapita(TradeGoods.Cereals);
