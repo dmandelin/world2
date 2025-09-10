@@ -59,8 +59,8 @@ export class ProductionNode {
 
     tfp(clan?: Clan): number {
         return clan 
-          ? this.output(clan).get(this.skillDef.outputGood!)! / this.workers(clan)
-          : (this.totalOutput_.get(this.skillDef.outputGood!) ?? 0) / this.totalWorkers_;
+          ? this.output(clan).get(this.skillDef.outputGood!)! / this.workers(clan) / ProductionNode.outputPerWorker
+          : (this.totalOutput_.get(this.skillDef.outputGood!) ?? 0) / this.totalWorkers_ / ProductionNode.outputPerWorker;
     }
 
     reset(): void {

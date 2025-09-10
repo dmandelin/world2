@@ -5,6 +5,34 @@
 -   Latest observations:
     -   Village productivity seems very low compared to clan base
         productivity. Need to sort that out.
+        -   Really need to deal with this. It's way too hard understanding
+            labor and migration shifts when it's very unclear what production
+            is or why.
+        -   Debugging ideas:
+            -   Show clan labor productivity in the production panel so
+                we can better see how it changes wrt to TFP
+            -   Start with the clan productivity value and trace through
+                the other productivity values. Verify each calculation
+                and record what time point it belongs to. Comb everything
+                out
+            -   In general it could make sense to show predicted next-turn
+                values, last-turn values, or both. But we should make the
+                UI reasonably clear on this
+            -   Keep in mind that the main points are to understand labor
+                allocation and migration:
+                -   Productivity update is done during the planning phase
+                    so that planning can use it. It might also make sense
+                    for planning to use the last-turn value, but if they
+                    can see and react next-turn is fine.
+                -   Labor allocation happens near the end of the planning
+                    phase. Other than productivity it should generally be
+                    based on last-turn data. The reallocation happens during
+                    planning before we show the UI.
+                    -   We could consider allowing more real-time reallocation
+                -   Migration is planned during the planning phase. It's
+                    then executed as the start of the advance phase. I think
+                    the decision is based on values generated during the
+                    previous turn.
     -   Clans are somewhat better about learning to rely more on farming,
         but they still stick too long with fishing, or move when that
         won't really help.
