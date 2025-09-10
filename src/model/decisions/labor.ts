@@ -3,9 +3,9 @@ import { clamp } from '../lib/basics';
 import { normal } from '../lib/distributions';
 import { eloSuccessProbability } from '../lib/modelbasics';
 import { TradeGoods } from '../trade';
-import { foodVarietyAppeal } from './happiness';
-import { Clan } from './people';
-import { SkillDefs, type SkillDef } from './skills';
+import { foodVarietyAppeal } from '../people/happiness';
+import { Clan } from '../people/people';
+import { SkillDefs, type SkillDef } from '../people/skills';
 
 export class LaborAllocation {
     allocationPlan_: LaborAllocationPlan;

@@ -17,7 +17,7 @@ import type { ProductivityCalc } from "../model/people/productivity";
 import type { HousingDecision } from "../model/decisions/housingdecision";
 import type { FloodLevel } from "../model/environment/flood";
 import { ProductionNode } from "../model/econ/productionnode";
-import type { LaborAllocation } from "../model/people/labor";
+import type { LaborAllocation } from "../model/decisions/labor";
 import type { AlignmentCalc } from "../model/people/alignment";
 import type { TrendDTO } from "../model/records/trends";
 import type { Housing } from "../model/econ/housing";

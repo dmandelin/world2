@@ -15,7 +15,7 @@ import { ProductivityCalc } from "./productivity";
 import { Traits } from "./traits";
 import { HousingDecision } from "../decisions/housingdecision";
 import { type FloodLevel, FloodLevels } from "../environment/flood";
-import { LaborAllocation } from "./labor";
+import { LaborAllocation } from "../decisions/labor";
 import { AlignmentCalc } from "./alignment";
 import { TradeGoods } from "../trade";
 import { HousingTypes } from "../econ/housing";
