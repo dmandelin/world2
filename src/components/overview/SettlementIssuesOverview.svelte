@@ -10,7 +10,7 @@
 <div id="top">
     <h3>Issues</h3>
     {#each issues as issue}
-        <div>{issue.title}</div>
+        <div>{issue.title}{#if issue.details}: {issue.details.join(', ')}{/if}</div>
     {:else}
         <div>None this generation</div>
     {/each}

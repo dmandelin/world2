@@ -1,7 +1,9 @@
+import type { MigrationCalc } from "../../model/people/migration";
 import type { SettlementDTO } from "../dtos";
 
 export type SettlementIssue = {
     title: string;
+    details?: string[];
 };
 
    // include:
@@ -20,9 +22,13 @@ export function settlementIssues(settlement: SettlementDTO): SettlementIssue[] {
     ];
 
     for (const check of checks) {
-        const issue = check(settlement);
-        if (issue) {
-            issues.push(issue);
+        const issueOrIssues = check(settlement);
+        if (issueOrIssues) {
+            if (Array.isArray(issueOrIssues)) {
+                issues.push(...issueOrIssues);
+            } else {
+                issues.push(issueOrIssues);
+            }
         }
     }
 
@@ -36,16 +42,40 @@ function checkFlooding(settlement: SettlementDTO): SettlementIssue | undefined {
     return undefined;
 }
 
-function checkMigrations(settlement: SettlementDTO): SettlementIssue | undefined {
-    const willMigrate = settlement.clans.filter(c => c.migrationPlan?.willMigrate).length;
+function checkMigrations(settlement: SettlementDTO): SettlementIssue[] {
+    let [willMigrate, wantToMove] = [0, 0];
+    let willMigrateDetails = new Set<string>();
+    let wantToMoveDetails = new Set<string>();
+
+    for (const clan of settlement.clans) {
+        if (!clan.migrationPlan) continue;
+        if (clan.migrationPlan.willMigrate) {
+            ++willMigrate;
+            if (clan.migrationPlan.wantToMoveReason) {
+                willMigrateDetails.add(clan.migrationPlan.wantToMoveReason);
+            }
+        } else if (clan.migrationPlan.wantToMove) {
+            ++wantToMove;
+            if (clan.migrationPlan.wantToMoveReason) {
+                wantToMoveDetails.add(clan.migrationPlan.wantToMoveReason);
+            }
+        }
+    }
+
+    const issues: SettlementIssue[] = [];
     if (willMigrate) {
-        return { title: `${willMigrate} clans will migrate` };
+        issues.push({ 
+            title: `${willMigrate} clans will migrate`, 
+            details: Array.from(willMigrateDetails) 
+        });
     }
-    const wantToMove = settlement.clans.filter(c => c.migrationPlan?.wantToMove).length;
     if (wantToMove) {
-        return { title: `${wantToMove} clans want to migrate` };
+        issues.push({ 
+            title: `${wantToMove} clans want to migrate`, 
+            details: Array.from(wantToMoveDetails) 
+        });
     }
-    return undefined;
+    return issues;
 }
 
 function checkHunger(settlement: SettlementDTO): SettlementIssue | undefined {
