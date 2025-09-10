@@ -98,7 +98,7 @@ export class ProductionNode {
 
             const inputs = Math.min(land, workers);
             const lp = clan.productivity(this.skillDef);
-            let output = Math.round(ProductionNode.outputPerWorker * inputs * lp);
+            let output = ProductionNode.outputPerWorker * inputs * lp;
 
             if (output > 0) {
                 this.totalOutput_.set(this.skillDef.outputGood!, 

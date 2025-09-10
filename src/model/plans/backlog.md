@@ -38,6 +38,11 @@
             big rituals from the main town. This will start to create a
             notion of urban amenities.
 
+-   Overview panel
+    -   Show food happiness to make it clearer what's going on with migration
+    -   Name migrating plans with migration tooltips
+    -   Consider showing labor allocation changes
+
 -   Improved labor reallocation
     x   Update happiness model for what-ifs
     x   Basic appeal-based reallocation allowing increase only and only logging
@@ -50,6 +55,7 @@
         -   If under stress, they could try some experiments.
             -   This will have some cost
             -   They'll then gain some appeal data about what works
+    -   Try to base decision on happiness, not appeal
     -   Show what the actual decision would be in the UI
     -   Actually reallocate
     -   Better knowledge if more connected
