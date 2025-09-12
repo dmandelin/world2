@@ -66,11 +66,12 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
                     citem.land === Infinity ? '' : citem.land.toFixed(),
                     pct(citem.workerFraction),
                     citem.workers.toFixed(), 
+                    citem.laborProductivity !== undefined ? citem.laborProductivity.toFixed(2) : '',
                     citem.tfp !== undefined ? citem.tfp.toFixed(2) : '',
                     citem.amount !== undefined ? citem.amount.toFixed() : '',               
                 );
             } else {
-                rowSuffix.push('', '', '', '', '');
+                rowSuffix.push('', '', '', '', '', '');
             }
         }
 
@@ -79,6 +80,7 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
             item.land === Infinity ? '' : item.land.toFixed(),
             pct(item.workerFraction),
             item.workers.toFixed(), 
+            item.laborProductivity !== undefined ? item.laborProductivity.toFixed(2) : '',
             item.tfp !== undefined ? item.tfp.toFixed(2) : '',
             item.amount !== undefined ? item.amount.toFixed() : '',               
         );
