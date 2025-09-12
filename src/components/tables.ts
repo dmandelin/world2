@@ -63,12 +63,12 @@ export function settlementProductionTable(settlement: SettlementDTO): Settlement
             const citem: ProductionItemDTO|undefined = clan.production.goods.find(g => g.good === item.good);
             if (citem) {
                 rowSuffix.push(
-                    citem.land === Infinity ? '' : citem.land.toFixed(),
+                    citem.land === Infinity ? '' : citem.land.toFixed(2),
                     pct(citem.workerFraction),
-                    citem.workers.toFixed(), 
+                    citem.workers.toFixed(2), 
                     citem.laborProductivity !== undefined ? citem.laborProductivity.toFixed(2) : '',
                     citem.tfp !== undefined ? citem.tfp.toFixed(2) : '',
-                    citem.amount !== undefined ? citem.amount.toFixed() : '',               
+                    citem.amount !== undefined ? citem.amount.toFixed(2) : '',               
                 );
             } else {
                 rowSuffix.push('', '', '', '', '', '');

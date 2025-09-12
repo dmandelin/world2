@@ -8,6 +8,7 @@ import { sum, sumFun, weightedHarmonicMean } from '../lib/basics';
 export class ProductionNode {
     workers_ = new Map<Clan, number>();
     workerFractions_ = new Map<Clan, number>();
+    laborProductivity_ = new Map<Clan, number>();
     output_ = new Map<TradeGood, Map<Clan, number>>();
 
     land_ = new Map<Clan, number>();
@@ -16,6 +17,7 @@ export class ProductionNode {
     static readonly populationPerWorker = 3;
 
     totalWorkers_: number = 0;
+    totalLaborProductivity_: number = 0;
     totalOutput_ = new Map<TradeGood, number>();
 
     constructor(
@@ -59,11 +61,8 @@ export class ProductionNode {
 
     laborProductivity(clan?: Clan): number {
         return clan 
-          ? clan.productivity(this.skillDef)
-          : weightedHarmonicMean(
-                this.workers_.entries(),
-                ([c, _]) => c.productivity(this.skillDef),
-                ([_, w]) => w);
+          ? this.laborProductivity_.get(clan)!
+          : this.totalLaborProductivity_;
     }
 
     tfp(clan?: Clan): number {
@@ -76,6 +75,7 @@ export class ProductionNode {
         this.workerFractions_.clear();
         this.workers_.clear();
         this.land_.clear();
+        this.laborProductivity_.clear();
         this.output_.clear();
         this.totalWorkers_ = 0;
         this.totalOutput_.clear();
@@ -101,12 +101,15 @@ export class ProductionNode {
     produce(): void {
         // Assume output is linear in workers and land at this scale, with both
         // required.
+        let reciprocalLaborProductivity = 0;
         for (const [clan, workers] of this.workers_.entries()) {
             const land = this.landFor(clan);
             this.land_.set(clan, land);
 
             const inputs = Math.min(land, workers);
             const lp = clan.productivity(this.skillDef);
+            this.laborProductivity_.set(clan, lp);
+            reciprocalLaborProductivity += workers / lp;
             let output = ProductionNode.outputPerWorker * inputs * lp;
 
             if (output > 0) {
@@ -118,6 +121,7 @@ export class ProductionNode {
                 this.output_.set(this.skillDef.outputGood!, goods);
             }
         }
+        this.totalLaborProductivity_ = this.totalWorkers_ / reciprocalLaborProductivity;
     }
 
     private landFor(clan: Clan) {
