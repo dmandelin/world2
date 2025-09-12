@@ -6,7 +6,7 @@ import { pct, signed, spct } from '../model/lib/format';
 import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
 import type { ClanSkillChange } from '../model/people/skillchange';
-import { sortedByKey, sumFun } from '../model/lib/basics';
+import { harmonicMean, sortedByKey, sumFun, weightedHarmonicMean } from '../model/lib/basics';
 import type { HappinessItem } from '../model/people/happiness';
 import type { PopulationChangeItem, PopulationChangeModifier } from '../model/people/population';
 
@@ -453,7 +453,7 @@ export type BasicTable = {
 }
 
 export function settlementEconomyTable(settlement: SettlementDTO): BasicTable {
-    const header = ['Product', 'K', 'L', 'L%', 'P', 'Y', 'C', 'C/'];
+    const header = ['Product', 'K', 'L', 'L%', 'LP', 'TFP', 'Y', 'C', 'C/'];
     const rows = [];
     let [totalLand, totalWorkers, totalWf, totalProduction, totalConsumption] = [0, 0, 0, 0, 0];
     const totalPopulation = sumFun(
@@ -472,6 +472,7 @@ export function settlementEconomyTable(settlement: SettlementDTO): BasicTable {
             item.land.toFixed(),
             item.workers.toFixed(),
             pct(item.workerFraction),
+            item.laborProductivity?.toFixed(2) ?? '',
             item.tfp?.toFixed(2) ?? '',
             item.amount?.toFixed() ?? '',
             consumption.toFixed(),
@@ -489,6 +490,7 @@ export function settlementEconomyTable(settlement: SettlementDTO): BasicTable {
         totalLand.toFixed(),
         totalWorkers.toFixed(),
         pct(totalWf),
+        '',
         '',
         totalProduction.toFixed(),
         totalConsumption.toFixed(),

@@ -3,7 +3,7 @@ import { Settlement } from '../people/settlement';
 import { TradeGood } from '../trade';
 import type { DistributionNode } from './distributionnode';
 import { SkillDefs, type SkillDef } from '../people/skills';
-import { sum, sumFun } from '../lib/basics';
+import { sum, sumFun, weightedHarmonicMean } from '../lib/basics';
 
 export class ProductionNode {
     workers_ = new Map<Clan, number>();
@@ -55,6 +55,15 @@ export class ProductionNode {
         } else {
             return this.totalOutput_;
         }
+    }
+
+    laborProductivity(clan?: Clan): number {
+        return clan 
+          ? clan.productivity(this.skillDef)
+          : weightedHarmonicMean(
+                this.workers_.entries(),
+                ([c, _]) => c.productivity(this.skillDef),
+                ([_, w]) => w);
     }
 
     tfp(clan?: Clan): number {

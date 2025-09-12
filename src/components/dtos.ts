@@ -54,14 +54,10 @@ export class ProductionItemDTO {
         readonly land: number,
         readonly workerFraction: number,
         readonly workers: number,
+        readonly laborProductivity: number,
+        readonly tfp: number,
         readonly amount: number|undefined,
     ) {}
-
-    get tfp(): number|undefined {
-        return this.amount !== undefined
-            ? this.amount / this.workers / ProductionNode.outputPerWorker
-            : undefined;
-    }
 }
 
 class ClanProductionDTO {
@@ -71,18 +67,23 @@ class ClanProductionDTO {
         for (const pn of clan.settlement.productionNodes) {
             for (const [good, amount] of pn.output(clan).entries()) {
                 const item = new ProductionItemDTO(
-                    good, pn.land(clan), pn.workerFraction(clan), pn.workers(clan), amount);
+                    good, pn.land(clan), pn.workerFraction(clan), 
+                    pn.workers(clan), pn.laborProductivity(clan), pn.tfp(clan), amount);
                 this.goods.push(item);
             }
         }
 
         const housingWf = clan.laborAllocation.allocs.get(SkillDefs.Construction) ?? 0;
         this.goods.push(new ProductionItemDTO(
-            TradeGoods.Housing, Infinity, housingWf, housingWf * clan.population, undefined));
+            TradeGoods.Housing, Infinity, housingWf, housingWf * clan.population, 
+            clan.productivity(SkillDefs.Construction), clan.productivity(SkillDefs.Construction), 
+            undefined));
 
         const ditchingWf = clan.laborAllocation.allocs.get(SkillDefs.Irrigation) ?? 0;
         this.goods.push(new ProductionItemDTO(
-            TradeGoods.Ditching, Infinity, ditchingWf, ditchingWf * clan.population, undefined));
+            TradeGoods.Ditching, Infinity, ditchingWf, ditchingWf * clan.population, 
+            clan.productivity(SkillDefs.Irrigation), clan.productivity(SkillDefs.Irrigation), 
+            undefined));
     }
 }
 
@@ -191,7 +192,8 @@ class SettlementProductionDTO {
         for (const pn of settlement.productionNodes) {
             for (const [good, amount] of pn.output().entries()) {
                 const item = new ProductionItemDTO(
-                    good, pn.land(), pn.workerFraction(), pn.workers(), amount);
+                    good, pn.land(), pn.workerFraction(), pn.workers(), 
+                    pn.laborProductivity(), pn.tfp(), amount);
                 const existingItem = this.goods.get(good);
                 if (existingItem) {
                     const newAmount = existingItem.amount !== undefined && item.amount !== undefined
@@ -202,6 +204,8 @@ class SettlementProductionDTO {
                         existingItem.land + item.land, 
                         existingItem.workerFraction + item.workerFraction,
                         existingItem.workers + item.workers, 
+                        -1,
+                        -1,
                         newAmount));
                 } else {
                     this.goods.set(good, item);
@@ -211,9 +215,9 @@ class SettlementProductionDTO {
 
         // Add items for construction, because the table code keys off of this.
         this.goods.set(TradeGoods.Housing, new ProductionItemDTO(
-            TradeGoods.Housing, Infinity, 0, 0, undefined));
+            TradeGoods.Housing, Infinity, 0, 0, 0, 0, undefined));
         this.goods.set(TradeGoods.Ditching, new ProductionItemDTO(
-            TradeGoods.Ditching, Infinity, 0, 0, undefined));
+            TradeGoods.Ditching, Infinity, 0, 0, 0, 0, undefined));
     }
 }
 

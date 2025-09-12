@@ -228,14 +228,17 @@ export function harmonicMean(aa: number[]): number {
 }
 
 export function weightedHarmonicMean<T>(
-    aa: T[],
+    aa: Iterable<T>,
     value: (t: T) => number,
     weight: (t: T) => number
 ): number {
-    if (aa.length === 0) return 0;
-    if (aa.length === 1) return value(aa[0]);
-    const sum = aa.reduce((acc, cur) => acc + weight(cur) / value(cur), 0);
-    return sum === 0 ? 0 : aa.reduce((acc, cur) => acc + weight(cur), 0) / sum;
+    let sum = 0;
+    let totalWeight = 0;
+    for (const item of aa) {
+        sum += weight(item) / value(item);
+        totalWeight += weight(item);
+    }
+    return(totalWeight === 0) ? 0 : totalWeight / sum;
 }
 
 export function mapNormalized<T, U>(

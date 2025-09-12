@@ -23,10 +23,6 @@ export class Clans extends Array<Clan> {
       return this.reduce((total, clan) => total + clan.population, 0);
     }
 
-    get averageQoL(): number {
-        return averageFun(this, clan => clan.qol, clan => clan.population);
-    }
-
     // Population-weighted average of views of this one.
     averagePrestige(clan: Clan): number {
         let totalPrestige = 0;

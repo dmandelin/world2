@@ -15,6 +15,10 @@
                 the other productivity values. Verify each calculation
                 and record what time point it belongs to. Comb everything
                 out
+                x   Trace labor productivity and show it on the overview
+                    panel
+                -   Investigate why labor and total factor productivity are
+                    different for cereals only.
             -   In general it could make sense to show predicted next-turn
                 values, last-turn values, or both. But we should make the
                 UI reasonably clear on this
