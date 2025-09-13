@@ -448,8 +448,8 @@ export class Clan implements TradePartner {
         }
     }
 
-    updateProductivity() {
-        this.productivityCalcs = this.skills.createProductivityCalcs();
+    updateProductivity(forPlanning: boolean) {
+        this.productivityCalcs = this.skills.createProductivityCalcs(forPlanning);
     }
 
     productivity(skillDef: SkillDef): number {
@@ -625,9 +625,8 @@ export class Clan implements TradePartner {
         this.cadets.push(newClan);
 
         // Plan for the new clan, since it didn't get a chance to during the main
-        // planning phase. Note that we also need to update productivity, otherwise
-        // it will be 0 and so the clan won't produce anything.
-        newClan.updateProductivity();
+        // planning phase. We don't need to update productivity because that happens
+        // at the start of production during the advance phase.
         newClan.laborAllocation = this.laborAllocation.clone();
         newClan.laborAllocation.plan();
         newClan.planMaintenance();

@@ -1,18 +1,17 @@
 import { Annals } from "./annals";
+import { chooseFrom, sumFun, shuffled } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { Clans } from "./people/clans";
-import { chooseFrom, sumFun, shuffled } from "./lib/basics";
-import { Settlement } from "./people/settlement";
-import { Timeline, TimePoint } from "./records/timeline";
+import { createTrends } from "./records/trends";
+import { NewSettlementSupplier } from "./people/migration";
+import { Note, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
+import { randomFloodLevel } from "./environment/flood";
+import { Settlement } from "./people/settlement";
+import { SettlementCluster } from "./people/cluster";
+import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./records/year";
-import { Note, type NoteTaker } from "./records/notifications";
-import { SettlementCluster } from "./people/cluster";
-import { NewSettlementSupplier } from "./people/migration";
-import { randomFloodLevel } from "./environment/flood";
-import { createTrends } from "./records/trends";
-import { simulateSkillGrowth } from "./sims/skillgrowth";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -160,7 +159,7 @@ export class World implements NoteTaker {
 
         for (const clan of this.allClans) {
             // Update productivity values so that planning can see them.
-            clan.updateProductivity();
+            clan.updateProductivity(true);
 
             // Don't move immediately.
             if (!priming) clan.planMigration();

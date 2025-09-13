@@ -39,7 +39,7 @@
     <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
         <div>
             <img style="display: block" src="residents.png" alt="Residents" width="150" height="100" />
-            <div class="sm">Flood level: {settlement.floodLevel.name}</div>
+            <div class="sm">Last flood level: {settlement.floodLevel.name}</div>
             <div class="sm">
                 <Tooltip>
                     {#if settlement.ditchingLevel}

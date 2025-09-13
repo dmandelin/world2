@@ -310,7 +310,7 @@
                     <Tooltip>
                         {spct(clan.productivityCalcs.get(def)?.tfp ?? 0)}
                         <div slot="tooltip" class="ttt">
-                            <h4>Productivity</h4>
+                            <h4>Predicted Productivity</h4>
                             <DataTable rows={clan.productivityCalcs.get(def)?.tooltip ?? []} />
                         </div>
                     </Tooltip>

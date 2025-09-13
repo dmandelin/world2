@@ -10,11 +10,13 @@ The update sequence:
     -   Reads stat values (updated last turn)
     -   Reads last-turn flooding value, which is incorrect!
         -   To fix:
-            -   We still want to use predicted productivity
+            x   We still want to use predicted productivity
                 during the planning phase
-            -   But we should make sure we update labor
+            x   But we should make sure we update labor
                 productivity again before computing production
-            -   UI should still display last turn
+            x   UI should still display last-turn flooding
+            -   Also need to separate issues from events in the
+                overview
 
 The UI elements:
 

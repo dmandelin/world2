@@ -112,10 +112,10 @@ export class ClanSkills {
         return clone;
     }
 
-    createProductivityCalcs(): Map<SkillDef, ProductivityCalc> {
+    createProductivityCalcs(forPlanning: boolean): Map<SkillDef, ProductivityCalc> {
         const calcs = new Map<SkillDef, ProductivityCalc>();
         for (const skillDef of this.m_.keys()) {
-            calcs.set(skillDef, new ProductivityCalc(this.clan, skillDef));
+            calcs.set(skillDef, new ProductivityCalc(this.clan, skillDef, forPlanning));
         }
         return calcs;
     }

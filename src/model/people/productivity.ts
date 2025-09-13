@@ -3,6 +3,7 @@ import { SkillDef, SkillDefs } from './skills';
 import { pct, spct } from '../lib/format';
 import { product } from '../lib/basics';
 import { scaleFactorEffect } from '../lib/modelbasics';
+import { FloodLevels } from '../environment/flood';
 
 interface ProductivityCalcItem {
     label: string;
@@ -35,7 +36,7 @@ export class ProductivityCalc {
     readonly skill: number;
     readonly items: ProductivityCalcItem[];
 
-    constructor(readonly clan: Clan, readonly skillDef: SkillDef) {
+    constructor(readonly clan: Clan, readonly skillDef: SkillDef, forPlanning: boolean) {
         this.skill = clan.skills.v(skillDef);
         this.items = [...skillDef.traitFactors.entries()].map(tf => {
             const [statName, statFactor] = tf;
@@ -46,9 +47,13 @@ export class ProductivityCalc {
         });
 
         if (skillDef === SkillDefs.Agriculture) {
+            const floodLevel = forPlanning
+                ? FloodLevels.Normal
+                : clan.settlement.floodLevel;
+            
             const ditchQuality = clan.settlement.ditchQuality;
-            const baseProductivity = clan.settlement.floodLevel.baseAgriculturalProductivity;
-            const maxProductivity = clan.settlement.floodLevel.maxAgriculturalProductivity;
+            const baseProductivity = floodLevel.baseAgriculturalProductivity;
+            const maxProductivity = floodLevel.maxAgriculturalProductivity;
             const productivity = (1-ditchQuality)*baseProductivity + ditchQuality*maxProductivity;
             const differentialProductivity = productivity / baseProductivity;
 
@@ -59,7 +64,7 @@ export class ProductivityCalc {
 
             this.items.push(new SimpleProductivityCalcItem(
                 'Flooding',
-                clan.settlement.floodLevel.name,
+                floodLevel.name,
                 baseProductivity,
             ));
             this.items.push(new SimpleProductivityCalcItem(

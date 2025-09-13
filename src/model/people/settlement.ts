@@ -226,6 +226,7 @@ export class Settlement {
         // Economic production.
         // Maintenance goes before production, because it represents capital
         // that can be built in much less than a turn.
+        for (const clan of this.clans) clan.updateProductivity(false);
         this.resetEconomicNodes();
         this.maintain();
         this.produce();
