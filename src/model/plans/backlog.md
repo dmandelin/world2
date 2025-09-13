@@ -2,6 +2,8 @@
 
 ## Next items in latest plans
 
+-   Pull some top items in the settlement panel into the overview.
+
 -   Latest observations:
     -   Village productivity seems very low compared to clan base
         productivity. Need to sort that out.

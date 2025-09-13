@@ -6,33 +6,42 @@ export type SettlementIssue = {
     details?: string[];
 };
 
-   // include:
-    // - migration interest: any clans considering leaving
-    // - hunger: nutrition below 1.0
-    // - anomie: happiness penalty from population
-    // - depopulation: negative population growth
-export function settlementIssues(settlement: SettlementDTO): SettlementIssue[] {
-    const issues: SettlementIssue[] = [];
+export type SettlementEvent = {
+    title: string;
+    details?: string[];
+};
 
-    const checks = [
+export function settlementEvents(settlement: SettlementDTO): SettlementEvent[] {
+    return settlementChecks(settlement, [
         checkFlooding,
+    ]);
+}
+
+export function settlementIssues(settlement: SettlementDTO): SettlementIssue[] {
+    return settlementChecks(settlement, [
         checkMigrations,
         checkHunger,
         checkAnomie,
-    ];
+    ]);
+}
+
+type SettlementCheck<T> = (settlement: SettlementDTO) => T | T[] | undefined;
+
+export function settlementChecks<T>(settlement: SettlementDTO, checks: SettlementCheck<T>[]): T[] {
+    const items: T[] = [];
 
     for (const check of checks) {
-        const issueOrIssues = check(settlement);
-        if (issueOrIssues) {
-            if (Array.isArray(issueOrIssues)) {
-                issues.push(...issueOrIssues);
+        const itemOrItems = check(settlement);
+        if (itemOrItems) {
+            if (Array.isArray(itemOrItems)) {
+                items.push(...itemOrItems);
             } else {
-                issues.push(issueOrIssues);
+                items.push(itemOrItems);
             }
         }
     }
 
-    return issues;
+    return items;
 }
 
 function checkFlooding(settlement: SettlementDTO): SettlementIssue | undefined {
