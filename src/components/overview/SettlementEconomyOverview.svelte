@@ -7,7 +7,7 @@
 </script>
 
 <div id="top">
-    <h3 style="margin-block-end: 0.5em;">Economy</h3>
+    <h3 style="margin-block-end: 0.5em;">Economy &#x1F834;</h3>
     <table class="basic msm">
         <thead>
             <tr>

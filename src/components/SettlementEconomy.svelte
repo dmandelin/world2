@@ -49,7 +49,7 @@
 </style>
 
 <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-<h3>Production</h3>
+<h3>Production &#x1F834;</h3>
 <div class="table-container">
     <table>
         <thead>
@@ -85,7 +85,7 @@
     </table>
 </div>
 
-<h3>Consumption</h3>
+<h3>Consumption &#x1F834;</h3>
 <div class="table-container">
     <table>
         <thead>
