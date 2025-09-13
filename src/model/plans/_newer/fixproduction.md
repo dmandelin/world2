@@ -3,9 +3,18 @@ out the bugs.
 
 The update sequence:
 
+-   Flooding (nature)
+    -   Set at the beginning of the advance phase.
 -   Labor productivity
     -   Happens early in the planning phase
     -   Reads stat values (updated last turn)
+    -   Reads last-turn flooding value, which is incorrect!
+        -   To fix:
+            -   We still want to use predicted productivity
+                during the planning phase
+            -   But we should make sure we update labor
+                productivity again before computing production
+            -   UI should still display last turn
 
 The UI elements:
 
@@ -19,8 +28,14 @@ The UI elements:
         override the clans' choices.
 -   It would be logical, then, to indicate in the UI anywhere
     that we're instead displaying "last turn" values.
+
+-   Settlement
+    -   Shows last-turn 
 -   Clan card
     -   Shows current (planning phase, value to be used in
         upcoming turn) labor productivity values.
 -   Economy panels
     -   Show last-turn economic results
+
+*   Maybe a better way of distinguishing between last and
+    current turn is to mark certain panels as "Review".
