@@ -5,6 +5,12 @@ I need to give clans more ways to interact for various reasons:
   to certain other clans
 - create more ways for them to differentiate from each other
 
+I also need to update the production model to be less completely
+communal. It seems there could have been some communal activities
+when there's lots of work to do, and various levels of sharing,
+but not automatic total sharing. This will create differential
+production and favor-trading opportunities.
+
 List of basic actions:
 
 - marriage/marriage alliance
