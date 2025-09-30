@@ -11,6 +11,36 @@ when there's lots of work to do, and various levels of sharing,
 but not automatic total sharing. This will create differential
 production and favor-trading opportunities.
 
+Initial set:
+
+*   marriages
+    *   marriage will create relationships among clans
+    *   TODO - detail
+*   food exchange
+    *   retain production in clans by default
+    *   create institutions and interactions for exchange
+    *   TODO - detail
+*   ritual production
+    *   start with communal production
+    *   offer ability to put on special rituals
+    *   also crises and omens
+    *   TODO - detail
+*   justice
+    *   disputes over marriages, abuses, respect, and so on
+    *   TODO - detail
+
+## Discussions
+
+### Marriage
+
+### Food exchange
+
+### Ritual production
+
+### Justice
+
+## Brainstormed lists
+
 List of basic actions:
 
 - marriage/marriage alliance
