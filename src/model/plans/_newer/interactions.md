@@ -78,7 +78,102 @@ Then we can give them ways to interact:
 
 ### Ritual production
 
+We could start by assuming that clans of a village put on the ritual
+cycle collectively. There could be some cost in labor and/or cereals
+or other goods.
+
+But let's instead think in somewhat more detail, and simplify later.
+There are both clan- and village-level rituals. There are certain
+occasions for rituals, such as harvest, planting, weddings, funerals,
+weekly meetings of some sort, and so on. For village-level rituals,
+we initially assume that everything is collective or based on turn-
+taking, so there is equal participation.
+
+However, participation is not necessarily identical. There might be
+certain clans that handle food, drinks, decorations, costumes, 
+sacrifices, and so on. So in a complicated model we could have
+different roles with different types of skills. This structure also
+creates the space for a clan to start doing something different with
+its part of the rituals without necessarily changing the entire
+structure.
+
+Another difference is that we can allow clans to upgrade their clan
+rituals. These could raise the self-prestige (sometimes called
+"morale") of the clan and possibly have other effects.
+
+The simplest specialization is probably "ritual leader" for the major
+rituals. This can have an outsized impact on the result. There could
+be different leader selection practices, such as equal/collective,
+consensus, common assent, majority voice (and any of those on the
+entire collective or elders). Giving more time to the most ritually
+skilled clan or clans could produce better rituals, which people will
+tend to like, but will also tend to raise the prestige and influence
+of that clan, which they could use in different ways. In our first
+millennium or two, it seems those uses were mostly prosocial, implying
+that they did rely on the consent of the population in some way.
+
+There can of course be difficulty in getting a leader selection that
+everyone agrees with. This gets harder with scale, and may require new
+practices to deal with.
+
+TODO - more on how that works
+
+We could also allow clans to put on "special rituals" that represent
+innovations on the normal collective ritual cycle. These could either
+be small-scale (e.g., healing rituals for individuals) or large-scale
+(a sacrifice to a heroic ancestor that everyone is invited to).
+
+TODO - more detail
+
+TODO - more on omens and responses to crises
+
 ### Justice
+
+Various kinds of disputes can arise:
+
+*   Family: Disputes over marriage, divorce, parentage, etc. This is
+    a staple of courts today and probably always has been.
+
+*   Minor local issues: Getting kicked by a neighbor's cow, drunken
+    youths breaking things, etc. There will be fairly regular events
+    of this type, so people will need to be able to resolve things.
+
+*   Significant disputes: Arguments over major business transactions,
+    social developments, or major crimes. These won't happen as often,
+    might be harder to deal with, might prompt changes of practice,
+    and the outcomes might have simulation-noticeable effects.
+
+Let's start with local issues, family and otherwise. The basic idea
+is that some amount of these issues will arise, which can have 
+negative effects, but practices such as community mediation can
+mitigate them. It can also be possible for certain people to excel
+at mediation.
+
+What do these issues look like? One basic form would be a neighbor
+damaging or taking property of another. If people are in a regular
+relationship in good standing with each other, they can probably
+resolve this by agreement, but not every time. But if they don't
+know each other, it's less likely they can resolve, and even less
+likely if they are already hostile to each other.
+
+The number of such incidents should scale superlinearly, because
+there will be generally more opportunities to "collide" in bigger,
+denser settlements.
+
+Incidents that can't be handled by the parties involved may be
+brought to a communal assembly, court of elders, or other such
+thing. These give another chance to resolve the issue, but success
+will depend on the prestige of the court, its power (e.g., the
+level of community alignment with a communal assembly's decision),
+incentives it offers, and possibly other factors.
+
+Issues that aren't resolved can result in a feud between two clans,
+which will be bad for both of them. Like other disputes, the feud
+can be resolved, by the clans involved or by other parties. Splits
+in a community assembly could cause fission events, community
+breakdown, or other significant changes.
+
+TODO - another pass, more detail
 
 ## Brainstormed lists
 
