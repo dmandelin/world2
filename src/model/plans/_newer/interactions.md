@@ -121,6 +121,60 @@ Then we can give them ways to interact:
         *   Communal relationship, may involve a regular exchange
             of some percentage, may require effort to keep going
 
+Implementation notes:
+
+*   Switch to individual production
+    *   At the start we can assume land is regularly redistributed
+    *   But as soon as we get any real capital investments we'll have
+        to have land ownership
+*   Add collective sharing of some amount (10%?) of production
+    by default
+    *   Consider adding cooperate-defect choices around this
+    *   Consider adding option to share larger amounts
+*   Add trade relationship action
+    *   This should probably be a "thick" relationship, possibly
+        requiring marriage ties to initiate. This isn't a simple
+        market exchange, it's a complex relationship that includes
+        the exchange of goods and is expected to persist over time.
+    *   On that basis, they could trade relatively specific amounts.
+        We could allow various simple or complicated negotiation
+        options.
+*   Add crop failures/insurance
+    *   Simplest model would simply be to give some bonus points for
+        insurance relationships, but this can do some other interesting
+        things, so we probably want more detail.
+    *   First point is that people will want to be in some relationships
+        where they're covered.
+        *   In starting villages, we can say there's a communal insurance
+            model where everyone will help out if someone gets a crop
+            failure.
+            *   However, we may want to give people the option not to
+                help, or to help extra, if they choose.
+            *   One way or another, this will have limits to scale.
+                *   One point is that typically people will do stuff to
+                    confirm and signal these relationships, which has a
+                    cost.
+        *   People founding a new village will want some ties with people
+            back home.
+            *   If they have related clans there, that might be enough.
+                We'll then need to extend the model so that the related
+                clans can help
+            *   Otherwise, they may need a sponsor, who is then in some
+                sort of relationship with them and probably expects
+                reciprocation of some sort.
+        *   In some cases, people may have to go begging, which might
+            put them in debt or in some sort of subordinate relationship.
+    *   Crop failure if unmitigated would cause some sort of famine event.
+        A mild one might simply reduce nutrition somewhat, but a serious
+        one could cause deaths during that year.
+    *   Clans providing insurance directly provide food, which reduces
+        the famine effects
+    *   We can also allow clans storage to mitigate against crop failure,
+        but this will typically require technology and/or investment.
+*   Add gifts
+    *   Clans with high output can give gifts to increase alignment and
+        prestige.
+
 ### Ritual production
 
 We could start by assuming that clans of a village put on the ritual
@@ -161,7 +215,103 @@ There can of course be difficulty in getting a leader selection that
 everyone agrees with. This gets harder with scale, and may require new
 practices to deal with.
 
-TODO - more on how that works
+#### Discussion: Simple ritual leadership modeling
+
+Let's try to detail in this in a simple model. We can also think by
+analogy to a pioneer church, which might start up without much
+preaching expertise. But people probably find that there are significant
+differences in preaching ability. What that means depends on how
+homogeneous preferences are. If people mostly want the same things
+(which seems likely in our case as there seems to be a lot of common
+culture) then that's pretty simple. Another possibility would be
+immigrants from all over the place with quite different expectations.
+In that case, I think leaders would have to be loose and syncretic,
+and perhaps a more common culture could form over time.
+
+It also seems that in small-scale societies, influence can be very fluid.
+Imagine that there's a great speaker in clan S in generation 1. They'll
+have on average only 2 children who survive to adulthood, and depending
+on the culture maybe only one gender could become a great speaker, so only
+1 child. Some ability can be inherited, as well as relationships and
+position, but there will be some regression to the mean. Also, the great
+speaker might not have any children at all. Over time there will be more
+physical, intellectual, and dynastic capital needed for these things and
+then inheritance will become more important.
+
+One way to make this work is to have the clan leader be an individual
+with their own ritual leadership stat. That can then be partially inherited,
+but of course with much higher variance than the clan ritual leadership
+stat, which should create more turnover.
+
+Back to our pioneer churches: We imagine that at first, people take turns,
+but pretty quickly start to figure out who the best ritual leaders are.
+But if there is more than one, how to decide which one? At first, people
+might simply tussle over this, but they'd probably soon develop some
+"norms", some standard way of selecting the leader.
+
+#### Leader selection ways
+
+This can be all over the place, but a few points:
+
+*   In the most fluid societies, this may happen from personal callings
+    such as visions, as well as training by elders. Anyone paying much
+    attention could be largely voluntary, so this would depend greatly
+    on individual qualities.
+*   In our case, we think that later on there will be (not strictly)
+    inherited "priesthoods", so we can start by considering that lineage,
+    knowledge, personal skill, relationships, and circumstance can all
+    count, and that there's an inherited clan chief who will be the
+    eligible leader.
+    *   At the start, certain clans perhaps have more or older connections
+        to the people they learned farming from, so they would have more
+        lineage points.
+    *   But this might not be a greatly secure status at first.
+*   In general, any given leader could be suddenly discredited, e.g.,
+    by messing up a ritual and then having a bad event happen.
+*   We might also assume that the village ritual leader is chosen by
+    consensus of the elders.
+    *   Elders are roughly the oldest 10% of the population, which is
+        20-30 people in a village.
+        *   We're basically assuming that they're influential enough
+            that their collective decision will determine the overall
+            decision. That's not literally true but may be a close
+            enough approximation for now.
+    *   It's reasonable to say that the consensus process can generally
+        work well, if people are reasonably aligned to start with, up
+        to that size.
+    *   However, even if people are aligned, it will get harder going
+        past that size. What happens is quite complicated and apparently
+        includes:
+        *   Meetings take too long and can't hear everyone. Participation
+            may start to get pretty unequal and/or pointless.
+        *   More factions and cliques may start to form.
+        *   More chance of holdouts makes it harder to ever make a
+            decision.
+    *   Since this is all so complicated, it may be too hard to design
+        all that much of it upfront, but rather to create a decision
+        model and start looking at its emergent behaviors.
+*   Another general point is that there are going to be different ritual
+    leaders, e.g., there could be different leaders for different ceremonies,
+    but also different roles such as healer or astronomer.
+    *   This could get complicated eventually with specialties.
+    *   But even in simple models, it implies that leadership can be
+        fractional.
+*   Putting those two together, then the natural thing would be to 
+    have all clans vote on their preferred leader(s), convert the
+    votes to fractional leadership, and then see if all clans will
+    consent to that.
+*   What would people conflict over?
+    *   They could conflict over some new innovation. For example, if
+        some leader started doing a different thing, maybe some people
+        like that, some don't.
+    *   They could conflict over some clan gaining too much influence,
+        if that's counter to their existing practices. I'm not sure we
+        have evidence for that much of this dynamic here.
+    *   There could be conflict because of two leaders with matched
+        skill who don't want to share (or their followers don't want
+        them to share). For this to kick in, I think we need some desire
+        for aggrandizement, and it's not clear that's a major force
+        early on.
 
 We could also allow clans to put on "special rituals" that represent
 innovations on the normal collective ritual cycle. These could either
