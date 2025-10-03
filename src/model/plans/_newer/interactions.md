@@ -59,7 +59,52 @@ In order to marry:
 
 Marriages will cause clans to become more aligned with each other.
 
-TODO - say more about alignment and how it plays out over time
+Implementation notes:
+
+*   Current marriage code does approximately the right basic thing,
+    but completely scoped to the local settlement.
+    *   It would be nice to keep that pattern for simplicity, but 
+        it's too unrealistic to not have any marriage ties crossing
+        settlements.
+    *   Eventually we'll have more villages, so for now we'll have
+        to run a more restricted version of this. It's probably
+        enough to allow marriages with clans in other villages, but
+        if needed we can have off-map marriage partners.
+*   Initial steps are to marry more broadly, and record those
+    relationships.
+    *   Depending on size, each clan will have 5-20 people to
+        marry per turn.
+    *   Marrying one person into another clan will typically account 
+        for 5-20% of the population of that clan.
+    *   We can make 20%, rounded up, the maximum number of people
+        that each clan will marry with a single other clan.
+        *   If needed, we could allow higher values, but then
+            possibly have the clans merge. Or just give them an
+            option to merge.
+    *   We may want to record the marriages for display in the UI.
+    *   A basic idea would be to have the clans become more related
+        according to the number of marriage partners.
+        *   What happens to this over time?
+            *   Let's say two clans become 20% more related each
+                turn. Then in 3 turns they'll be 50% related.
+                *   One simple solution is not to let people
+                    marry if total relatedness would go over, say
+                    30%.
+            *   Let's say two clans have some marriages and become
+                20% related, but then don't marry each other.
+                *   In a genetic sense, they could probably become
+                    basically unrelated, highly related, or something
+                    in between.
+                *   But either way, people may forget the relationship
+                    over time. The typical dropping by half each
+                    turn could be about right.
+    *   We need to let clans marry outside their settlement.
+        *   Eventually, we'll need to make this more complicated,
+            but for now, let's just let people get spouses from
+            any settlement as long as total population is under 
+            some limit like 2000. At that point limit everyone
+            to their own settlement as a signal that we need to
+            add more features.
 
 ### Food exchange
 
