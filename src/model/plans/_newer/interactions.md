@@ -318,9 +318,25 @@ innovations on the normal collective ritual cycle. These could either
 be small-scale (e.g., healing rituals for individuals) or large-scale
 (a sacrifice to a heroic ancestor that everyone is invited to).
 
-TODO - more detail
+#### Omens and crises
 
-TODO - more on omens and responses to crises
+People in ancient societies apparently regularly consulted omens.
+Exactly how that affected their beliefs and decisions is complicated,
+but we can consider these features:
+
+*   Omens can affect the appeal of decisions:
+    *   Can be "random"
+    *   Can be swayed by an interpreter
+        *   Note: Interpreters were sometimes accused of fraud or bias!
+*   Using omens can increase or decrease confidence/alignment for a
+    decision.
+*   Bad omens may lead to scapegoating
+*   There could be conflict over the meaning of an omen
+*   Repeated bad omens or other disasters could cause people to lose
+    faith, create a splinter sect, start a new religious movement, or
+    replace leaders
+
+TODO - implementation notes
 
 ### Justice
 
