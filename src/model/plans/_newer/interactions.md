@@ -25,6 +25,16 @@ Initial set:
 *   justice
     *   disputes over marriages, abuses, respect, and so on
 
+## Topical backlog
+
+*   Marriage model changes
+    *   Record relationships
+    *   Update relatedness
+    *   Marry more broadly
+*   Food exchange and mutual aid
+    *   Switch to individual clan production
+    *   Add crop failures
+
 ## Discussions
 
 ### Marriages
