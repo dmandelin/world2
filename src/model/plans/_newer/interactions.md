@@ -27,13 +27,24 @@ Initial set:
 
 ## Topical backlog
 
-*   Marriage model changes
-    *   Record relationships
-    *   Update relatedness
-    *   Marry more broadly
 *   Food exchange and mutual aid
     *   Switch to individual clan production
-    *   Add crop failures
+    *   Add crop failures and disasters
+    *   Add crop failure responses
+
+*   Marriage model changes
+    x   Record relationships
+    x   Update relatedness
+    x   Marry more broadly
+    *   Visualize better in the UI
+        x   Show relatedness
+        *   Show marriages this turn
+        *   (P2) Show people moving in and out for marriage in
+            population change panels.
+    x   Have marriage affect alignment
+    *   (Soon) Limit how much two clans can marry together. At first
+        there's not too much point because scale is so small, though.
+    *   (Later) Consider prestige effects for marriage
 
 ## Discussions
 

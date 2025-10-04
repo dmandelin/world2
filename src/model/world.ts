@@ -12,6 +12,7 @@ import { SettlementCluster } from "./people/cluster";
 import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./records/year";
+import { marry } from "./people/marriage";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -181,7 +182,11 @@ export class World implements NoteTaker {
         }
 
         // Main advance phase.
-        if (!noEffect) this.migrate();
+        if (!noEffect) {
+            this.migrate();
+            marry(this);
+        }
+
         for (const cl of this.clusters) {
             cl.advance(noEffect);
         }

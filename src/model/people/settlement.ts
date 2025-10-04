@@ -103,6 +103,10 @@ export class Settlement {
         this.cluster_ = cluster;
     }
 
+    get lastSizeChange(): number {
+        return sumFun(this.clans, c => c.lastPopulationChange.change);
+    }
+
     get yearsInPlace(): number {
         return this.world.year.sub(this.lastShiftYear_);
     }
@@ -148,12 +152,6 @@ export class Settlement {
 
     get averageHappiness() {
         return weightedAverage(this.clans, clan => clan.happinessValue, clan => clan.population);
-    }
-
-    private lastSizeChange_ = 0;
-
-    get lastSizeChange() {
-        return this.lastSizeChange_;
     }
 
     get floodLevel() {
@@ -213,8 +211,6 @@ export class Settlement {
     }
 
     advance(noEffect: boolean = false) {
-        const sizeBefore = this.effectiveResidentPopulation;
-
         // Split and merge at the start of the turn so that normal update
         // logic correctly updates the new clans.
         if (!noEffect) {
@@ -244,17 +240,13 @@ export class Settlement {
             for (const clan of this.clans) clan.prepareTraitChanges();
             for (const clan of this.clans) clan.commitTraitChanges();
             for (const clan of this.clans) clan.advanceSeniority();
-
-            // Population effects.
-            this.clans.marry();
         }
+        const sizeBefore = this.effectiveResidentPopulation;
         for (const clan of this.clans) clan.advancePopulation(noEffect);
         if (!noEffect) {
             // Tell height.
             this.growTell(sizeBefore);
         }
-
-        this.lastSizeChange_ = this.population - sizeBefore;
     }
 
     resetEconomicNodes() {

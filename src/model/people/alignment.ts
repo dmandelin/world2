@@ -17,6 +17,7 @@ class AlignmentInferenceCalc {
 
     constructor(readonly clan: Clan, readonly other: Clan) {
         this.add('Kinship', this.kinship());
+        this.add('Marriage', this.clan.marriagePartners.get(this.other) ?? 0);
         if (this.clan !== this.other) {
             this.add('Neighborhood', this.neighborhood());
             this.add('Random', normal(0, 0.1));

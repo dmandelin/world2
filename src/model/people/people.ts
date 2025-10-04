@@ -186,6 +186,9 @@ export class Clan implements TradePartner {
     // Relationships
     parent: Clan|undefined;
     cadets: Clan[] = [];
+    // Maps a clan to a relatedness factor based on the marriage history of
+    // the two clans.
+    readonly marriagePartners: Map<Clan, number> = new Map();
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 

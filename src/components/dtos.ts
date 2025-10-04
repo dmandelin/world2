@@ -103,6 +103,7 @@ export type ClanDTO = {
 
     cadets: Clan[];
     parent: Clan|undefined;
+    marriagePartners: Map<string, number>;
     tradeRelationships: TradeRelationshipsDTO[];
     rites: Rites;
     slices: number[][];
@@ -156,6 +157,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 
         cadets: clan.cadets,
         parent: clan.parent,
+        marriagePartners: new Map([...clan.marriagePartners].map(([c, v]) => [c.name, v])),
         rites: clan.rites.clone(),
         migrationPlan: clan.migrationPlan,
         slices: clan.slices,

@@ -18,13 +18,8 @@ export function simulateSkillGrowth() {
             values[i] -= 3;
         }
 
-        //const top = Math.max(...values);
-        const weights = values.map(v =>
-            2 ** v
-        );
-
         for (let i = 0; i < values.length; ++i) {
-            const imitationRoll = weightedRandInt(weights);
+            const imitationRoll = weightedRandInt(values, v => 2 ** v);
             if (values[imitationRoll] != values[i]) {
                 newValues[i] = moveToward(values[i], values[imitationRoll], 3)
             } else {
