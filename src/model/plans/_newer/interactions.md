@@ -15,19 +15,15 @@ Initial set:
 
 *   marriages
     *   marriage will create relationships among clans
-    *   TODO - detail
 *   food exchange
     *   retain production in clans by default
     *   create institutions and interactions for exchange
-    *   TODO - detail
 *   ritual production
     *   start with communal production
     *   offer ability to put on special rituals
     *   also crises and omens
-    *   TODO - detail
 *   justice
     *   disputes over marriages, abuses, respect, and so on
-    *   TODO - detail
 
 ## Discussions
 
@@ -384,7 +380,59 @@ can be resolved, by the clans involved or by other parties. Splits
 in a community assembly could cause fission events, community
 breakdown, or other significant changes.
 
-TODO - another pass, more detail
+Implementation notes:
+
+*   This could easily get incredibly complicated, so let's start
+    with something relatively simple.
+*   First, let's imagine that things start with a community
+    assembly for disputes: everyone can speak, but there is
+    probably more influence by elders, the more prestigious, etc.
+*   There will be some "dispute" level, e.g., number of notional
+    issues referred to the assembly per turn, maybe starting
+    around 400 per turn for a village of 20.
+    *   Or we could imagine these are scaled by dispute seriousness
+        and let the measure be more abstract.
+*   Dispute resolution systems could have a number of disputes
+    they can handle and a success rate for handling them
+    *   Community assembly can handle a fixed amount because everyone
+        has to be present
+    *   Probability of success depends on alignment and skill
+*   Resolved and unresolved disputes will have an impact on trust
+    levels.
+    *   For this, we might need trust and order ratings separate
+        from the alignment ratings. Individual disputes could be
+        dyadic, but if we're treating them in the aggregate,
+        some people might be happier than others with dispute
+        resolution outcomes, but this starts to look more like a
+        relation of clans to the community as a whole.
+    *   Unresolved disputes lower trust.
+    *   Resolved disputes put trust toward a midpoint: they might 
+        drop trust a bit if it's very high, but if it's already low,
+        having some disputes and mitigating them might help.
+*   In the community assembly, some person or clan might speak
+    particularly successfully and gain prestige (and also help
+    resolve more disputes)
+*   Major disputes
+    *   These can be over social issues, major business dealings, or
+        major crimes
+    *   Ideally these get narrative treatment and come in different
+        kinds, but for now let's map out just a couple of categories
+    *   Social issues
+        *   Could be things like ritual leadership, property ownership
+            models, changing mores, etc. Each one should be a concrete
+            issue.
+        *   Could use common political models here
+    *   Crimes
+        *   The idea is that there's a crime so serious it could really
+            affect one more clan's standing
+        *   Result is a major trial.
+        *   Each actor who has influence over the result must choose a
+            a strategy: follow divine omen, favor community harmony,
+            favor party A or B, etc.
+        *   Then have to play out voting/consensus/etc with whatever
+            structure exists
+        *   Apply verdicts with meaningful effects
+        *   Judges and counselors may gain prestige.
 
 ## Brainstormed lists
 
