@@ -5,6 +5,26 @@
 -   Capture productivity calcs used during production and show them
     in the UI so we can better understand production stats.
 
+-   Help clans to learn from each other to farm more
+    -   Add a consumption component to prestige. Since this is just
+        food for now, it's not highly visible, but clans living
+        closely in a village, related by marriages, or otherwise
+        interacting with each other a lot can see some of this.
+    -   Give clients the ability to imitate each other's labor choices
+        instead of only experimenting.
+        -   It seems reasonable to think clans will make this decision
+            based on how much other clans are eating, and not just their
+            prestige.
+        -   Each turn, consider changing allocation, and give each
+            choice an appeal based on:
+            -   consumption of other clans that farm like that choice
+            -   influence of other clans that farm like that choice
+            -   experiments done by the clan
+                -   experiments cost productivity so they need a motivation,
+                    such as:
+                    -   hungry
+                    -   random chance
+                    -   no clans trying that other choice
 -   Also give clans the ability to copy other clans' labor allocation
     choices
     -   Also also make consumption affect prestige
