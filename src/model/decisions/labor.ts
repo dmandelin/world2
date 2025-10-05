@@ -1,5 +1,5 @@
 import type Settlement from '../../components/Settlement.svelte';
-import { clamp } from '../lib/basics';
+import { clamp, maxby } from '../lib/basics';
 import { normal } from '../lib/distributions';
 import { eloSuccessProbability } from '../lib/modelbasics';
 import { TradeGoods } from '../trade';
@@ -8,7 +8,7 @@ import { Clan } from '../people/people';
 import { SkillDefs, type SkillDef } from '../people/skills';
 
 export class LaborAllocation {
-    allocationPlan_: LaborAllocationPlan;
+    decision_: LaborAllocationDecision;
 
     // Planned allocations for labor left over after maintenance and other 
     // required allocations. Value is fraction and values must sum to 1.
@@ -22,7 +22,7 @@ export class LaborAllocation {
         this.planned_.set(SkillDefs.Fishing, 1 - r);
         this.plan();
 
-        this.allocationPlan_ = new LaborAllocationPlan(this, true);
+        this.decision_ = new LaborAllocationDecision(this, true);
     }
 
     clone(): LaborAllocation {
@@ -42,37 +42,54 @@ export class LaborAllocation {
         return this.clan.population / 3;
     }
 
-    get allocationPlan(): LaborAllocationPlan {
-        return this.allocationPlan_;
+    get allocationPlan(): LaborAllocationDecision {
+        return this.decision_;
     }
 
     plannedRatioFor(skill: SkillDef): number {
         return this.planned_.get(skill) ?? 0;
     }
 
+    // Planning phase: update allocations.
     plan(): void {
         this.allocs.clear();
-        this.updatePlanned();
+
+        // The decision normally relies on consumption data, which
+        // we always have, except during world initialization.
+        if (this.clan.consumption) {
+            this.decision_ = new LaborAllocationDecision(this);
+            this.updatePlanned();
+        }
+
         this.updateAllocs();
     }
 
+    // Update planned "discretionary" allocations based on the latest
+    // decision.
     private updatePlanned() {
-        // Happens during world initialization.
-        if (!this.clan.consumption) return;
-
-        this.allocationPlan_ = new LaborAllocationPlan(this);
-
-        /*
         const r = this.planned_.get(SkillDefs.Agriculture);
         if (r === undefined) return;
-        const sign = Math.random() < 0.5 ? -1 : 1;
-        const delta = sign * (0.1 + 0.1 * Math.random());
+
+        let sign;
+        const choice = this.decision_.choice;
+        switch (choice) {
+            case LaborAllocationChange.MORE_FARMING:
+                sign = 1;
+                break;
+            case LaborAllocationChange.LESS_FARMING:
+                sign = -1;
+                break;
+            default:
+                return;
+        }
+
+        const delta = sign * (0.05 + 0.1 * Math.random());
         const newR = clamp(r + delta, 0, 1);
         this.planned_.set(SkillDefs.Agriculture, newR);
         this.planned_.set(SkillDefs.Fishing, 1 - newR);
-        */
     }
 
+    // Update actual allocations based on plans.
     private updateAllocs() {
         // Mandatory allocations.
         const housing = this.clan.housing.cost(this.clan);
@@ -93,8 +110,15 @@ export class LaborAllocation {
     }
 }
 
-export class LaborAllocationPlanScenario { 
+enum LaborAllocationChange {
+    NO_CHANGE,
+    MORE_FARMING,
+    LESS_FARMING,
+}
+
+export class LaborAllocationDecisionScenario { 
     constructor(
+        readonly change: LaborAllocationChange,
         readonly label: string,
         readonly perCapitaCereals: number,
         readonly perCapitaFish: number,
@@ -127,13 +151,13 @@ export class LaborAllocationPlanScenario {
     }
 }
 
-export class LaborAllocationPlan {
+export class LaborAllocationDecision {
     readonly happiness: number;
     readonly experimentProbability: number;
     readonly experimentingRoll: number;
     readonly experimenting: boolean;
 
-    readonly scenarios: LaborAllocationPlanScenario[];
+    readonly scenarios: LaborAllocationDecisionScenario[];
 
     constructor(readonly laborAllocation: LaborAllocation, noChange: boolean = false) {
         // First decide whether to experiment with new allocations. For now,
@@ -166,7 +190,10 @@ export class LaborAllocationPlan {
             const tc = ac + fc;
             const acDelta = delta * tc;
             const fcDelta = Math.max(-fc, -acDelta * fiTFP / agTFP);
-            return new LaborAllocationPlanScenario(
+            return new LaborAllocationDecisionScenario(
+                delta === 0 ? LaborAllocationChange.NO_CHANGE
+                    : delta > 0 ? LaborAllocationChange.MORE_FARMING
+                    : LaborAllocationChange.LESS_FARMING,
                 delta === 0 ? 'Status quo'
                     : delta > 0 ? 'More farming'
                     : 'More fishing',
@@ -176,5 +203,22 @@ export class LaborAllocationPlan {
                 fiTFP,
             );
         });
+    }
+
+    get bestScenario(): LaborAllocationDecisionScenario | undefined {
+        if (this.scenarios.length === 0) return undefined;
+        return maxby(this.scenarios, s => s.appeal);
+    }
+
+    get best(): LaborAllocationChange | undefined {
+        return this.bestScenario?.change;
+    }
+
+    get chosenScenario(): LaborAllocationDecisionScenario | undefined {
+        return this.experimenting ? this.bestScenario : undefined;
+    }
+
+    get choice(): LaborAllocationChange | undefined {
+        return this.experimenting ? this.best : undefined;
     }
 }

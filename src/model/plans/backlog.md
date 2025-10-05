@@ -5,10 +5,12 @@
 -   Some planned migrations shown in the UI don't actually occur
 -   Debug labor allocation choices - they seem a bit stuck
     -   0% farming leads to NaNs and may get them stuck at that level
-    -   Other than that, it's not too clear what's going on, but some
-        seem stuck at low levels
+    x   Even when they make a decision, it doesn't take effect
+-   Also give clans the ability to copy other clans' labor allocation
+    choices
 
 -   Pull some top items in the settlement panel into the overview.
+-   Make it easier to read off total consumption per clan
 
 -   Latest observations:
     -   Village productivity seems very low compared to clan base

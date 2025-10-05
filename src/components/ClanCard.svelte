@@ -138,6 +138,7 @@
                 <td colspan="3" class="full-row">
                     <Tooltip>
                     {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture))} farming
+                    {clan.laborAllocation.allocationPlan.experimenting ? ' (E)' : ''}
                     <div slot="tooltip" class="ttt">
                         H {clan.laborAllocation.allocationPlan.happiness.toFixed()} |
                         {pct(clan.laborAllocation.allocationPlan.experimentProbability)}
