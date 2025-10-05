@@ -20,7 +20,7 @@ export class LaborAllocation {
         const r = clamp(normal(0.2, 0.1), 0, 1);
         this.planned_.set(SkillDefs.Agriculture, r);
         this.planned_.set(SkillDefs.Fishing, 1 - r);
-        this.plan();
+        this.plan(true);
 
         this.decision_ = new LaborAllocationDecision(this, true);
     }
@@ -51,12 +51,12 @@ export class LaborAllocation {
     }
 
     // Planning phase: update allocations.
-    plan(): void {
+    plan(priming: boolean): void {
         this.allocs.clear();
 
-        // The decision normally relies on consumption data, which
-        // we always have, except during world initialization.
-        if (this.clan.consumption) {
+        // The decision normally relies in data that's not present
+        // during priming.
+        if (!priming) {
             this.decision_ = new LaborAllocationDecision(this);
             this.updatePlanned();
         }
