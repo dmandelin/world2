@@ -2,10 +2,13 @@
 
 ## Next items in latest plans
 
+-   Capture productivity calcs used during production and show them
+    in the UI so we can better understand production stats.
+
 -   Also give clans the ability to copy other clans' labor allocation
     choices
     -   Also also make consumption affect prestige
--   Some planned migrations shown in the UI don't actually occur
+x   Some planned migrations shown in the UI don't actually occur
 x   Debug labor allocation choices - they seem a bit stuck
     x   0% farming leads to NaNs and may get them stuck at that level
     x   Even when they make a decision, it doesn't take effect

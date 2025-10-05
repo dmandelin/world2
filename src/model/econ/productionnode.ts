@@ -42,6 +42,15 @@ export class ProductionNode {
         return clan ? this.land_.get(clan)! : sum(this.land_.values());
     }
 
+    landPerWorker(clan?: Clan): number {
+        const w = this.workers(clan);
+        if (w === 0) {
+            return 1.0;
+        }
+        const lpw = this.land(clan) / this.workers(clan);
+        return Math.min(lpw, 1.0);
+    }
+
     output(clan?: Clan): Map<TradeGood, number> {
         if (clan) {
             const m = new Map<TradeGood, number>();

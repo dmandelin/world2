@@ -6,6 +6,7 @@ import { selectBySoftmax } from "../lib/modelbasics";
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
+import { SkillDefs } from "./skills";
 
 export type MigrationTarget = Settlement | 'new';
 
@@ -31,6 +32,8 @@ export class NewSettlementSupplier {
 export class MigrationCalc {
     wantToMove: boolean = false;
     wantToMoveReason: string = '';
+
+    othersLeftFirst: boolean = false;
 
     targets: Map<MigrationTarget, CandidateMigrationCalc> = new Map();
     best: CandidateMigrationCalc | undefined;
@@ -90,9 +93,12 @@ export class MigrationCalc {
         this.willMigrate = Boolean(this.best?.isEligible);
     }
 
-    advance(newSettlementSupplier: NewSettlementSupplier) {
+    advance(newSettlementSupplier: NewSettlementSupplier): boolean {
         if (this.willMigrate) {
             migrateClan(this.clan, this.best!.target, newSettlementSupplier, this.clan.world);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -126,7 +132,7 @@ export class CandidateMigrationCalc {
         this.items = [
             this.inertia(),
             this.fromPopulation(),
-            this.fromLocalGoods(),
+            this.fromLandAvailability(),
             this.fromRitual(),
         ];
         this.value = sumFun(this.items, item => item.value);
@@ -185,26 +191,25 @@ export class CandidateMigrationCalc {
         return item;
     }
 
-    private fromLocalGoods(): CandidateMigrationCalcItem {
-        let item: CandidateMigrationCalcItem;
-        if (this.target === 'new') {
-            item = {
-                name: 'Goods',
-                reason: 'Baseline',
-                value: 0,
-            };
-        } else {
-            item = {
-                name: 'Goods',
-                reason: 'Local goods',
-                value: this.target.averageAppealFrom('Food Quality')
-                    + this.target.averageAppealFrom('Food Quantity'),
-            };
-        }
+    private fromLandAvailability(): CandidateMigrationCalcItem {
+        // Originally we had an item for local standard of living, but this
+        // caused clans to move a lot to be near the richest clan, which isn't
+        // totally wrong, but wasn't actually helping them.
+        //
+        // But to the extent a clan depends on farmland, if they can plant
+        // more than they have locally, that's a reason.
+        const farmingFraction = this.clan.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0;
+        const landRatio = this.clan.settlement.productionNode(SkillDefs.Agriculture)
+            .landPerWorker(this.clan);
+        const targetLandRatio = this.target === 'new' 
+            ? 1.0
+            : this.target.productionNode(SkillDefs.Agriculture).landPerWorker();
 
-        // Don't let this get too huge.
-        item.value = clamp(item.value, -5, 5);
-        return item;
+        return {
+            name: 'Land',
+            reason: 'Farming land',
+            value: (targetLandRatio - landRatio) * farmingFraction * 50,
+        }
     }
 
     private fromRitual(): CandidateMigrationCalcItem {

@@ -56,7 +56,11 @@
         {#if plan.willMigrate}
             <div><b>Will migrate</b></div>
         {:else}
-            <div>Will not migrate</div>
+            <div>Will not migrate
+                {#if plan.othersLeftFirst}
+                    (others left first)
+                {/if}
+            </div>
         {/if}
     {/if}
 {/if}

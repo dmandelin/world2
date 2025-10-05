@@ -1,4 +1,4 @@
-import { average, chooseFrom, sumFun } from "../lib/basics";
+import { average, chooseFrom, shuffled, sumFun } from "../lib/basics";
 import type { Clans } from "./clans";
 import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
@@ -207,6 +207,26 @@ export class Settlement {
             // The shift could be late in the turn, so we'll count it as
             // at the end of the turn.
             this.lastShiftYear_ = this.world.year.add(this.world.yearsPerTurn);
+        }
+    }
+
+    planMigrations(): void {
+        // Precondition: Clans have individually considered whether they
+        // want to move.
+
+        // At this point, if clans do want to move, it's mainly due to
+        // crowding, so there would never be any need for all clans to
+        // move out at once.
+        let remaining = this.population / 3;
+        for (const clan of shuffled(this.clans)) {
+            if (clan.migrationPlan?.willMigrate) {
+                if (remaining > 0) {
+                    remaining -= clan.population;
+                } else {
+                    clan.migrationPlan.othersLeftFirst = true;
+                    clan.migrationPlan.willMigrate = false;
+                }
+            }
         }
     }
 

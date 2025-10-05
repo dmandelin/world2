@@ -217,7 +217,6 @@ class SocietyHappinessItem extends HappinessItem {
 
 export class HappinessCalc {
     readonly items: Map<string, HappinessItem> = new Map();
-    readonly subsistenceItems: HappinessItem[] = [];
 
     constructor(readonly clan: Clan) {}
 
@@ -232,6 +231,14 @@ export class HappinessCalc {
             new StatusHappinessItem(),
             new SocietyHappinessItem(),
         );
+    }
+
+    clone(): HappinessCalc {
+        const clone = new HappinessCalc(this.clan);
+        for (const item of this.items.values()) {
+            clone.add(item);
+        }
+        return clone;
     }
 
     private add(...items: HappinessItem[]): void {

@@ -327,12 +327,13 @@ export class Clan implements TradePartner {
             && this.migrationPlan_.willMigrate;
     }
 
-    planMigration() {
+    considerMigration() {
         this.migrationPlan_ = new MigrationCalc(this);
     }
 
-    advanceMigration(newSettlementSupplier: NewSettlementSupplier) {
-        this.migrationPlan?.advance(newSettlementSupplier);
+    advanceMigration(newSettlementSupplier: NewSettlementSupplier): boolean {
+        if (this.migrationPlan === undefined) return false;
+        return this.migrationPlan.advance(newSettlementSupplier);
     }
 
     get averagePrestige(): number {
@@ -634,7 +635,7 @@ export class Clan implements TradePartner {
         newClan.laborAllocation.plan(false);
         newClan.planMaintenance();
         newClan.planHousing();
-        newClan.planMigration();
+        newClan.considerMigration();
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
         return newClan;

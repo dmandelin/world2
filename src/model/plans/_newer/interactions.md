@@ -38,6 +38,9 @@ Initial set:
                 *   Eventually we'll probably want clans to be able to
                     own land, but that can be done in a settlement-level
                     node too
+    *   Add more skill variance
+        *   Now that clans are producing individually they don't as
+            automatically sync on all doing the same thing
     *   Add crop failures and disasters
     *   Add crop failure responses
 
