@@ -28,7 +28,16 @@ Initial set:
 ## Topical backlog
 
 *   Food exchange and mutual aid
-    *   Switch to individual clan production
+    x   Switch to individual clan production
+        *   Implementation notes
+            *   Today everything is in settlement-level production nodes
+                *   Long-term it may be that way again if in larger scale
+                    societies we don't have the clan structure
+                *   Seems simpler to reuse existing production node but
+                    distribute back to individual producers
+                *   Eventually we'll probably want clans to be able to
+                    own land, but that can be done in a settlement-level
+                    node too
     *   Add crop failures and disasters
     *   Add crop failure responses
 

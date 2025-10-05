@@ -2,6 +2,12 @@
 
 ## Next items in latest plans
 
+-   Some planned migrations shown in the UI don't actually occur
+-   Debug labor allocation choices - they seem a bit stuck
+    -   0% farming leads to NaNs and may get them stuck at that level
+    -   Other than that, it's not too clear what's going on, but some
+        seem stuck at low levels
+
 -   Pull some top items in the settlement panel into the overview.
 
 -   Latest observations:

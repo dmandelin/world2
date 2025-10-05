@@ -88,8 +88,8 @@ export class Settlement {
 
         this.distributionNode = new DistributionNode(this);
         this.productionNodes.push(
-            new ProductionNode('Farms', this, 40, SkillDefs.Agriculture, this.distributionNode),
-            new ProductionNode('Fisheries', this, 40, SkillDefs.Fishing, this.distributionNode),
+            new ProductionNode('Farms', this, 40, SkillDefs.Agriculture),
+            new ProductionNode('Fisheries', this, 40, SkillDefs.Fishing),
         );
 
         this.lastShiftYear_ = this.world.year;
@@ -271,7 +271,7 @@ export class Settlement {
         for (const pn of this.productionNodes) {
             pn.acceptFrom(this);
             pn.produce();
-            pn.commit();
+            pn.commitToProducers();
         }
     }
 

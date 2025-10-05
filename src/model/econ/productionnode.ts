@@ -25,7 +25,6 @@ export class ProductionNode {
         readonly settlement: Settlement,
         readonly originalTotalLand: number,
         readonly skillDef: SkillDef,
-        readonly sink: DistributionNode,
     ) {}
 
     workers(clan?: Clan): number {
@@ -148,10 +147,18 @@ export class ProductionNode {
         return this.originalTotalLand * this.workers(clan) / this.totalWorkers_;
     }
 
-    commit(): void {
+    commitToProducers(): void {
+        for (const [good, clanProduce] of this.output_.entries()) {
+            for (const [clan, amount] of clanProduce.entries()) {
+                clan.accept(this.name, good, amount);
+            }
+        }
+    }
+
+    commit(sink: DistributionNode): void {
         for (const [good, goods] of this.output_) {
             for (const [clan, amount] of goods) {
-                this.sink.accept(clan.name, good, amount);
+                sink.accept(clan.name, good, amount);
             }
         }
     }
