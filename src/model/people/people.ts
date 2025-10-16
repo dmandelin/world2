@@ -107,10 +107,28 @@ export class ConsumptionCalc {
         return this.ledger_.get(good) ?? new Map<string, number>();
     }
 
+    get amounts(): Record<string, number> {
+        const result: Record<string, number> = {};
+        for (const [good, sourceMap] of this.ledger_) {
+            result[good.name] = [...sourceMap.values()].reduce((acc, amount) => acc + amount, 0);
+        }
+        return result;
+    }
+
     amount(good: TradeGood): number {
         const sourceMap = this.ledger_.get(good);
         if (!sourceMap) return 0;
         return [...sourceMap.values()].reduce((acc, amount) => acc + amount, 0);
+    }
+
+    get perCapitaAmounts(): Record<string, number> {
+        const amounts = this.amounts;
+        for (const key of Object.keys(amounts)) {
+            if (this.population !== 0) {
+                amounts[key] /= this.population;
+            }
+        }
+        return amounts;
     }
 
     perCapita(good: TradeGood): number {

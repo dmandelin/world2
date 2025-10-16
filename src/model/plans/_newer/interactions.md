@@ -29,15 +29,6 @@ Initial set:
 
 *   Food exchange and mutual aid
     x   Switch to individual clan production
-        *   Implementation notes
-            *   Today everything is in settlement-level production nodes
-                *   Long-term it may be that way again if in larger scale
-                    societies we don't have the clan structure
-                *   Seems simpler to reuse existing production node but
-                    distribute back to individual producers
-                *   Eventually we'll probably want clans to be able to
-                    own land, but that can be done in a settlement-level
-                    node too
     *   Add more skill variance
         *   Now that clans are producing individually they don't as
             automatically sync on all doing the same thing
@@ -427,6 +418,11 @@ Implementation notes:
         and let the measure be more abstract.
 *   Dispute resolution systems could have a number of disputes
     they can handle and a success rate for handling them
+    *   Kin relations can help, especially if the dispute is between
+        two clans that are related. People have an interest in
+        resolving the dispute and can pressure clan members
+        *   This may break down if people aren't related enough,
+            and then people may move away or create new practices.
     *   Community assembly can handle a fixed amount because everyone
         has to be present
     *   Probability of success depends on alignment and skill

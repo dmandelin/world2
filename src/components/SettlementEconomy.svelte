@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { settlementConsumptionTable, settlementProductionTable } from "./tables";
+    import { buildConsumptionTable } from "./tablebuilders";
+    import { settlementProductionTable } from "./tables";
+    import TableView from "./TableView.svelte";
 
     let { settlement } = $props();
 
     let prodTable = $derived.by(() => settlementProductionTable(settlement));
-    let consTable = $derived.by(() => settlementConsumptionTable(settlement));
 </script>
 
 <style>
@@ -48,7 +49,11 @@
     }
 </style>
 
-<div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 1rem;">
+<h3>Consumption Review</h3>
+
+<TableView table={buildConsumptionTable(settlement)}></TableView>
+
 <h3>Production &#x1F834;</h3>
 <div class="table-container">
     <table>
@@ -76,38 +81,6 @@
             <tr>
                 {#each row as cell, index}
                 <td class={(index - 1) % 6 === 0 ? 'lb' : ''}>
-                    {cell}
-                </td>
-                {/each}
-            </tr>
-            {/each}
-        </tbody>
-    </table>
-</div>
-
-<h3>Consumption &#x1F834;</h3>
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th></th>
-                {#each consTable.header as cell}
-                    <th colspan="2">{cell}</th>
-                {/each}
-            </tr>
-            <tr>
-                <th></th>
-                {#each consTable.header as cell}
-                    <th>Q</th>
-                    <th>R</th>
-                {/each}
-            </tr>
-        </thead>
-        <tbody>
-            {#each consTable.rows as row}
-            <tr>
-                {#each row as cell, index}
-                <td class={(index - 1) % 2 === 0 ? 'lb' : ''}>
                     {cell}
                 </td>
                 {/each}
