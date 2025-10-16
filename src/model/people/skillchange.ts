@@ -29,6 +29,7 @@ export class ClanSkillChange {
     readonly originalValue: number;
     readonly imitationTargetItems: readonly ImitationTargetItem[];
 
+    readonly generalImitationFactor: number;
     readonly generalLearningFactor: number;
 
     readonly items: ClanSkillChangeItem[] = [];
@@ -44,11 +45,11 @@ export class ClanSkillChange {
             //experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
             this.intensity = 1;
         } else if (skillDef === SkillDefs.Construction) {
-            // For now assume rougbly fixed amount of experience. Thus no adjustment,
+            // For now assume roughly fixed amount of experience. Thus no adjustment,
             // because we don't want to penalize for having less than 100% labor allocation.
             this.intensity = 1;
         } else if (skillDef === SkillDefs.Irrigation) {
-            // For now assume rougbly fixed amount of experience. Thus no adjustment,
+            // For now assume roughly fixed amount of experience. Thus no adjustment,
             // because we don't want to penalize for having less than 100% labor allocation.
             this.intensity = clan.isDitching ? 1 : 0;
         } else {
@@ -60,9 +61,13 @@ export class ClanSkillChange {
                 : 1;
         }
 
+        this.generalImitationFactor = this.intensity
+            * this.clan.settlement.residenceFraction
+            * clamp(traitFactor(clan.intelligence, 1.01), 0.5, 2);
+
         const t = skill.value;
         this.originalValue = t;
-        this.generalLearningFactor = clamp(traitFactor(clan.intelligence, 1.02), 0.5, 2);
+        this.generalLearningFactor = clamp(traitFactor(clan.intelligence, 1.02), 0.25, 4);
 
         if (clan.isMigrating) {
             // Skills typically won't work exactly as well at the new location,
@@ -96,7 +101,7 @@ export class ClanSkillChange {
             if (t !== imitationTarget.trait) {
                 this.items.push(new ClanSkillChangeItem(
                     imitationTarget.label, 
-                    moveToward(t, imitationTarget.trait, maxImitationDelta) - t,
+                    (moveToward(t, imitationTarget.trait, maxImitationDelta) - t) * this.generalImitationFactor,
                 ));
             } else {
                 this.items.push(new ClanSkillChangeItem('Tradition', 0));

@@ -5,6 +5,15 @@
 -   Capture productivity calcs used during production and show them
     in the UI so we can better understand production stats.
 
+-   Clans now learn from each other very slowly because learning is
+    scaled by residence factor, which starts low
+    -   Give clans additional basic ways of interacting that will
+        boost their learning from each other
+        -   Might be a choice
+        -   Might depend on relationship
+    -   Give clans options to teach/learn, with relationship effects
+    -   Give clans reasons to increase residence!
+
 -   Help clans to learn from each other to farm more
     -   Add a consumption component to prestige. Since this is just
         food for now, it's not highly visible, but clans living

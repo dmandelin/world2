@@ -30,9 +30,7 @@ Initial set:
 *   Food exchange and mutual aid
     x   Switch to individual clan production
     x   Add more skill variance
-    *   Make cleans sync up more slowly on skills:
-        *   Now that clans are producing individually they don't as
-            automatically sync on all doing the same thing
+    x   Make clans sync up more slowly on skills:
     *   Add crop failures and disasters
     *   Add crop failure responses
 

@@ -295,7 +295,8 @@
                             {#if skill.lastChange}
                                 <h4>Imitation Sources</h4>
                                 <DataTable rows={skillImitationTable(skill.lastChange)} />
-                                <h4>Learning factor = {spct(skill.lastChange.generalLearningFactor)} (Int = {clan.intelligence.toFixed()})</h4>
+                                <h4>Imitation factor = {pct(skill.lastChange.generalImitationFactor)}</h4>
+                                <h4>Learning factor = {pct(skill.lastChange.generalLearningFactor)} (Int = {clan.intelligence.toFixed()})</h4>
                                 <h4>Skill Changes</h4>
                                 <DataTable rows={skill.lastChange.changeSourcesTooltip} />
                             {/if}
