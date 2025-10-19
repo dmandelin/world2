@@ -94,8 +94,10 @@ export class World implements NoteTaker {
             'First permanent settlements founded!'
         );
 
-        // Initialize state not intialized above
+        // Initialize state not intialized above.
         this.initializeTradeGoods();
+        // Seed initial marriage relationships.
+        marry(this);
 
         // Run an initial turn so that there is state for all the output
         // variables but don't apply the effects that mutate clans.

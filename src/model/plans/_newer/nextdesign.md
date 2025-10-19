@@ -1,12 +1,19 @@
 Detailed design on next stuff
 
 *   Marriage
+    x   Seed initial marriages
+    *   Fix: reduce neighbor alignment a bit so that it's smaller than
+        close marriage alliances
     *   Clans A and B marrying:
-        *   Increases alignment to each other
+        x   Increases alignment to each other
         *   Raises or lowers each other's prestige to be more similar
+        *   Blends attributes and skills too
         *   Increases knowledge of each other (and impact on prestige)
         *   Increases ability to imitate each other
         *   Optional: regular gift exchange
+
+*   Favor exchange relationships
+    *   Benefits from exchange with neighbors and family
 
 *   Feasts and gifts
     *   The key point on this for now is that we want clans that are
@@ -19,7 +26,7 @@ Detailed design on next stuff
             *   Cost food and/or labor per attendee
                 *   Eventually gets too big to invite everyone
             *   Transfer some fraction of food resources
-            *   +prestige
+            *   +prestige (even if just heard about)
             *   +alignment
             *   +happiness for everyone
 
