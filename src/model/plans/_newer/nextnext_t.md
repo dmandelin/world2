@@ -1,0 +1,17 @@
+|    #   | Prestige Factor                               | Get news about                               | Know                                          | Neighbor                                      |
+| :----: | --------------------------------------------- | -------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+|  **1** | **Food production success / stored surplus**  | M – rumors of good harvests or hunger spread | MH – seen when visiting or exchanging food    | VH – everyone watches who has grain left      |
+|  **2** | **Irrigation & water control skill**          | L – technical details rarely travel          | M – can observe results seasonally            | VH – constant visibility; failures are public |
+|  **3** | **Craftsmanship & tool quality**              | M – via traded goods                         | MH – see tools, hear who made them            | H – directly see production and outcomes      |
+|  **4** | **Ritual efficacy & priestly reputation**     | H – rumors of successful rites travel far    | VH – shared rites, omens, healing             | H – observe frequency and success locally     |
+|  **5** | **Generosity / feasting**                     | MH – stories circulate widely                | VH – attend feasts or receive gifts           | VH – repeated firsthand experience            |
+|  **6** | **Lineage seniority / ancestry**              | H – genealogies are common knowledge         | H – ritually reaffirmed                       | MH – familiar, but novelty fades locally      |
+|  **7** | **Marriage connections**                      | MH – kin gossip spreads                      | VH – everyone tracks alliances                | H – continuous interaction                    |
+|  **8** | **Health, beauty, vigor**                     | L – heard about exceptional cases            | MH – noted during visits                      | VH – constant social comparison               |
+|  **9** | **Wisdom / judgment / mediation skill**       | M – stories circulate                        | MH – seen in councils or crises               | H – daily decision observation                |
+| **10** | **Moral reputation / ritual purity**          | MH – rumors carry moral weight               | H – taboo violations known                    | H – neighbors monitor behavior                |
+| **11** | **Feast ornamentation / aesthetic style**     | M – motifs spread through trade              | MH – visibly distinct decoration              | H – continuous exposure                       |
+| **12** | **Connection to distant places / rare goods** | VH – stories of exotic goods travel fast     | H – occasional viewing of imports             | M – rarer locally, mystique fades             |
+| **13** | **House / settlement permanence**             | L – few know remote architecture             | M – seen on visits                            | VH – symbol of stability & prestige           |
+| **14** | **Control of labor / coordination skill**     | M – rumors of big works                      | MH – see when visiting irrigation or building | H – observe labor organization directly       |
+| **15** | **Storytelling / charisma / oratory**         | MH – good tales travel                       | H – experienced in gatherings                 | H – repeated personal exposure                |

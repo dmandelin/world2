@@ -37,14 +37,6 @@
 -   Also give clans the ability to copy other clans' labor allocation
     choices
     -   Also also make consumption affect prestige
-x   Some planned migrations shown in the UI don't actually occur
-x   Debug labor allocation choices - they seem a bit stuck
-    x   0% farming leads to NaNs and may get them stuck at that level
-    x   Even when they make a decision, it doesn't take effect
-
--   Pull some top items in the settlement panel into the overview.
--   Make it easier to read off total consumption per clan
-    -   In general would be nice to have more compact clans overview
 
 -   Latest observations:
     -   Village productivity seems very low compared to clan base
