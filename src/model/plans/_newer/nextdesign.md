@@ -2,7 +2,7 @@ Detailed design on next stuff
 
 *   Marriage
     x   Seed initial marriages
-    *   Fix: reduce neighbor alignment a bit so that it's smaller than
+    x   Fix: reduce neighbor alignment a bit so that it's smaller than
         close marriage alliances
     *   Clans A and B marrying:
         x   Increases alignment to each other

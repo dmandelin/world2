@@ -45,7 +45,7 @@ class AlignmentInferenceCalc {
         if (this.clan.seniority === 0 || this.other.seniority === 0) {
             return 0;
         }
-        return 0.5 / (1 + this.clan.settlement.population / 150);
+        return 0.25 / (1 + this.clan.settlement.population / 150);
     }
 
     get value(): number {
