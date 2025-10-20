@@ -4,6 +4,14 @@ export function assert(condition: boolean, message?: string): asserts condition 
     }
 }
 
+export function randInt(a: number, b?: number): number {
+    if (b === undefined) {
+        b = a;
+        a = 0;
+    }
+    return Math.floor(Math.random() * (b - a)) + a;
+}
+
 export function matchingCount<T>(aa: Iterable<T>, predicate: (t: T) => boolean): number {
     let count = 0;
     for (const item of aa) {
@@ -162,6 +170,18 @@ export function sumFun<T>(
             sum += fn(item) * (weightFn ? weightFn(item) : 1);
         }
         return sum;
+}
+
+export function sumValues<T>(
+    aa: Record<string, T>,
+    valueFn: (t: T) => number,
+    weightFn?: (t: T) => number,
+): number {
+    let sum = 0;
+    for (const item of Object.values(aa)) {
+        sum += valueFn(item) * (weightFn ? weightFn(item) : 1);
+    }
+    return sum;
 }
 
 export function product(aa: number[]): number {

@@ -1,3 +1,7 @@
+import { sum, sumFun } from "../model/lib/basics";
+import { weightedAverage } from "../model/lib/modelbasics";
+import type { ClanDTO } from "./dtos";
+
 export interface Table {
     columns: TableColumn[];
     rows: TableRow[];
@@ -10,6 +14,10 @@ export interface TableColumn {
 export interface TableRow {
     label: string;
     items: Record<string, number>;
+
+    obj?: Object;
+
+    bold?: boolean;
 }
 
 export class TableBuilder {
@@ -40,18 +48,47 @@ export class TableBuilder {
         return new TableBuilder({ columns, rows: Object.values(rowsObj) });
     }
 
-    addTotalRow(): TableBuilder {
-        const totalRow: TableRow = { label: "Total", items: {} };
-        for (const column of this.table_.columns) {
-            totalRow.items[column.label] = 0;
-        }
-        for (const row of this.table_.rows) {
-            for (const column of this.table_.columns) {
-                totalRow.items[column.label] += row.items[column.label] ?? 0;
+    static crossTab<K extends Object>(
+        data: Iterable<K>,
+        labelFn: (item: K) => string,
+        cellFn: (row: K, col: K) => number,
+    ): TableBuilder {
+        const items = [...data];
+        const columns: TableColumn[] = items.map(item => ({ label: labelFn(item) }));
+        const rows: TableRow[] = [];
+        for (const rowKey of data) {
+            const row: TableRow = { label: labelFn(rowKey), items: {}, obj: rowKey };
+            rows.push(row);
+            for (const colKey of data) {
+                const value = cellFn(rowKey, colKey);
+                row.items[labelFn(colKey)] = value;
             }
         }
-        this.table_.rows.push(totalRow);
+        return new TableBuilder({ columns, rows });
+    }
+
+    addAggregateRow(
+        label: string,
+        aggregateFn: (items: [Object, number][]) => number,
+    ): TableBuilder {
+        const aggregateRow: TableRow = { label, items: {}, bold: true };
+        for (const column of this.table_.columns) {
+            const values = this.table_.rows.map(
+                row => [row.obj, row.items[column.label] ?? 0] as [Object, number]);
+            aggregateRow.items[column.label] = aggregateFn(values);
+        }
+        this.table_.rows.push(aggregateRow);
         return this;
+    }
+
+    addTotalRow(): TableBuilder {
+        return this.addAggregateRow('Total', items => sumFun(items, o => o[1]));
+    }
+
+    addAverageRow(weightFn?: (obj: Object) => number): TableBuilder {
+        return this.addAggregateRow(
+            'Average', 
+            items => weightedAverage(items, o => o[1], o => weightFn ? weightFn(o[0]) : 1));
     }
 }
 

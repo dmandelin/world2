@@ -7,6 +7,12 @@ Detailed design on next stuff
     *   Clans A and B marrying:
         x   Increases alignment to each other
         *   Raises or lowers each other's prestige to be more similar
+            x   Introduce new respect concept to give something to hang
+                this off of
+            *   Add tooltips to respect crosstab
+            *   Show respect item breakout soon
+            *   Introduce communication to update respect dependent on
+                relationships and proximity
         *   Blends attributes and skills too
         *   Increases knowledge of each other (and impact on prestige)
         *   Increases ability to imitate each other

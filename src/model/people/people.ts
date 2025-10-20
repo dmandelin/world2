@@ -21,6 +21,7 @@ import { TradeGoods } from "../trade";
 import { HousingTypes } from "../econ/housing";
 import { HappinessCalc } from "./happiness";
 import { ResidenceLevels, type ResidenceLevel } from "./residence";
+import { RespectCalc } from "./respect";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -210,6 +211,8 @@ export class Clan implements TradePartner {
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 
+    private respectMap_ = new Map<Clan, RespectCalc>();
+
     // This clan's views of itself and others.
     private prestigeViews_ = new Map<Clan, PrestigeCalc>();
     // Local prestige-generated share of influence.
@@ -372,6 +375,54 @@ export class Clan implements TradePartner {
 
     get alignmentViews(): Map<Clan, AlignmentCalc> {
         return this.alignmentViews_;
+    }
+
+    get respectMap(): Map<Clan, RespectCalc> {
+        return this.respectMap_;
+    }
+
+    respectFor(other: Clan): RespectCalc | undefined {
+        return this.respectMap_.get(other);
+    }
+
+    updateRespect() {
+        // We can observe ourselves.
+        const known = new Set<Clan>();
+        this.createOrUpdateRespectFor(this, known, 0);
+
+        // We have good visibility on neighbors.
+        for (const other of this.settlement.clans) {
+            // Maximum interaction factor is living in the same settlement
+            // full-time without too big total population, but there is
+            // some interaction even if in the local area.
+            const scaleFactor = Math.min(1, 150 / (1 + this.settlement.population));
+            const residenceFactor = 0.25 + 0.75 * Math.min(this.residenceFraction, other.residenceFraction);
+            const interactionFactor = scaleFactor * residenceFactor;
+            this.createOrUpdateRespectFor(other, known, interactionFactor);
+        }
+
+        // We have a view on relatives by marriage who are not neighbors,
+        // but don't interact as much.
+        for (const [other, relatedness] of this.marriagePartners.entries()) {
+            this.createOrUpdateRespectFor(other, known, relatedness / 2);
+        }
+
+        // Remove respect calcs for clans we no longer know about.
+        for (const other of this.respectMap_.keys()) {
+            if (!known.has(other)) {
+                this.respectMap_.delete(other);
+            }
+        }
+    }
+
+    private createOrUpdateRespectFor(other: Clan, known: Set<Clan>, interactionFactor: number) {
+        if (known.has(other)) return;
+        known.add(other);
+
+        if (!this.respectMap_.has(other)) {
+            this.respectMap_.set(other, new RespectCalc(other));
+        }
+        this.respectMap_.get(other)!.update(interactionFactor);
     }
 
     startUpdatingPrestige() {

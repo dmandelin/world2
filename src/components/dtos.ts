@@ -25,6 +25,7 @@ import type { DiseaseLoadCalc } from "../model/environment/pathogens";
 import type { HappinessCalc } from "../model/people/happiness";
 import type { ResidenceLevel } from "../model/people/residence";
 import { populationAverage } from "../model/lib/modelbasics";
+import type { RespectCalc } from "../model/people/respect";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -108,6 +109,7 @@ export type ClanDTO = {
     rites: Rites;
     slices: number[][];
 
+    respect: Map<Clan, RespectCalc>;
     prestige: Map<Clan, PrestigeCalc>;
     alignment: Map<Clan, AlignmentCalc>;
     averagePrestige: number;
@@ -145,6 +147,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         name: clan.name,
         color: clan.color,
 
+        respect: clan.respectMap,
         prestige: prestigeDTO(clan),
         alignment: alignmentDTO(clan),
         averagePrestige: clan.averagePrestige,

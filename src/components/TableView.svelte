@@ -20,6 +20,10 @@
     td:not(:first-child), th:not(:first-child) {
         text-align: right;
     }
+
+    .bold {
+        font-weight: bold;
+    }
 </style>
 
 <table>
@@ -34,9 +38,9 @@
     <tbody>
         {#each table.rows as row}
             <tr>
-                <td>{row.label}</td>
+                <td class:bold={true}>{row.label}</td>
                 {#each table.columns as column}
-                    <td>{row.items[column.label]?.toFixed(2)}</td>
+                    <td class:bold={row.bold}>{row.items[column.label]?.toFixed(2)}</td>
                 {/each}
             </tr>
         {/each}

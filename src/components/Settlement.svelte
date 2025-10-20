@@ -10,6 +10,7 @@
     import TabbedView from "./TabbedView.svelte";
     import SettlementOpinions from "./SettlementOpinions.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
+    import SettlementRespect from "./SettlementRespect.svelte";
 
     let { settlement } = $props();
 
@@ -17,6 +18,7 @@
         { label: "Overview", snippet: overviewTab },
         { label: "People", snippet: peopleTab },
         { label: "Demographics", snippet: demographicsTab },
+        { label: "Respect", snippet: respectTab },
         { label: "Health", snippet: healthTab },
         { label: "Opinions", snippet: opinionsTab },
         { label: "Relationships", snippet: relationshipsTab },
@@ -37,6 +39,10 @@
 
 {#snippet demographicsTab()}
     <SettlementDemographics settlement={settlement} />
+{/snippet}
+
+{#snippet respectTab()}
+    <SettlementRespect settlement={settlement} />
 {/snippet}
 
 {#snippet healthTab()}
