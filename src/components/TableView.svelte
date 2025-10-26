@@ -52,7 +52,14 @@
                 <td class:bold={true}>{row.label}</td>
                 {#each table.columns as column}
                     <td class:bold={row.bold}>
-                        {#if row.tooltip}
+                        {#if column.tooltip}
+                            <Tooltip>
+                                {cellValue(row, column)}
+                                 <div slot="tooltip">
+                                    {@render column.tooltip(row.data, column.data)}
+                                 </div>
+                            </Tooltip>
+                        {:else if row.tooltip}
                             <Tooltip>
                                 {cellValue(row, column)}
                                  <div slot="tooltip">

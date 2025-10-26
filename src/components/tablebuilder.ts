@@ -3,14 +3,15 @@ import { sumFun } from "../model/lib/basics";
 import { weightedAverage } from "../model/lib/modelbasics";
 
 export interface Table<RowData extends Object, ColumnData extends Object> {
-    columns: TableColumn<ColumnData>[];
+    columns: TableColumn<RowData, ColumnData>[];
     rows: TableRow<RowData, ColumnData>[];
 }
 
-export interface TableColumn<ColumnData extends Object> {
+export interface TableColumn<RowData extends Object, ColumnData extends Object> {
     label: string;
     data?: ColumnData;
     formatFn?: (value: number) => string;
+    tooltip?: Snippet<[RowData, ColumnData]>;
 }
 
 export interface TableRow<RowData extends Object, ColumnData extends Object> {
@@ -23,10 +24,11 @@ export interface TableRow<RowData extends Object, ColumnData extends Object> {
     bold?: boolean;
 }
 
-export interface ColumnSpec<RowData extends Object> {
+export interface ColumnSpec<RowData extends Object, ColumnData extends Object> {
     label: string;
     valueFn: (row: RowData) => number;
     formatFn?: (value: number) => string;
+    tooltip?: Snippet<[RowData, ColumnData]>;
 }
 
 export class TableBuilder<RowData extends Object, ColumnData extends Object> {
@@ -36,12 +38,12 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
         return this.table_;
     }
 
-    private static _fromItems<Item extends Object>(
+    private static fromItems<Item extends Object>(
         items: Iterable<[string, Item]>,
-        columnSpecs: ColumnSpec<Item>[],
+        columnSpecs: ColumnSpec<Item, string>[],
     ): TableBuilder<Item, string> {
-        const columns: TableColumn<string>[] = columnSpecs.map(
-            spec => ({ label: spec.label, formatFn: spec.formatFn }));
+        const columns: TableColumn<Item, string>[] = columnSpecs.map(
+            spec => ({ label: spec.label, formatFn: spec.formatFn, tooltip: spec.tooltip }));
         const rows: TableRow<Item, string>[] = [];
         for (const [label, item] of items) {
             const row: TableRow<Item, string> = {
@@ -56,7 +58,7 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
 
     static fromNamedItems<Item extends { name: string }>(
         items: Iterable<Item>,
-        columnSpecs: ColumnSpec<Item>[],
+        columnSpecs: ColumnSpec<Item, string>[],
     ): TableBuilder<Item, string> {
         function* toEntries(items: Iterable<Item>): Iterable<[string, Item]> {
             for (const item of items) {
@@ -64,26 +66,34 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
             }
         }
 
-        return TableBuilder._fromItems(toEntries(items), columnSpecs);
+        return TableBuilder.fromItems(toEntries(items), columnSpecs);
     }
 
-    static fromRecordItems<RecordItem extends Object>(
-        rowData: Record<string, RecordItem>,
-        columnSpecs: ColumnSpec<RecordItem>[],
-    ): TableBuilder<RecordItem, string> {
-        return TableBuilder._fromItems(Object.entries(rowData), columnSpecs);
+    static fromRecordItems<Item extends Object>(
+        rowData: Record<string, Item>,
+        columnSpecs: ColumnSpec<Item, string>[],
+    ): TableBuilder<Item, string> {
+        return TableBuilder.fromItems(Object.entries(rowData), columnSpecs);
+    }
+
+    static fromMapItems<Item extends Object>(
+        rowData: Map<string, Item>,
+        columnSpecs: ColumnSpec<Item, string>[],
+    ): TableBuilder<Item, string> {
+        return TableBuilder.fromItems(rowData.entries(), columnSpecs);
     }
 
     static fromColumnData<ColumnData extends Object>(
         columnData: Iterable<ColumnData>,
         columnLabelFn: (col: ColumnData) => string,
         columnItemFn: (col: ColumnData) => Record<string, number>,
+        formatFn: (value: number) => string,
     ): TableBuilder<string, ColumnData> {
-        const columns: TableColumn<ColumnData>[] = [];
+        const columns: TableColumn<string, ColumnData>[] = [];
         const rowsObj: Record<string, TableRow<string, ColumnData>> = {};
         for (const columnDataItem of columnData) {
             const label = columnLabelFn(columnDataItem);
-            columns.push({ data: columnDataItem, label });
+            columns.push({ data: columnDataItem, label, formatFn });
             for (const [rowLabel, value] of Object.entries(columnItemFn(columnDataItem))) {
                 if (!rowsObj[rowLabel]) {
                     rowsObj[rowLabel] = { label: rowLabel, items: {} };
@@ -98,11 +108,13 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
     static crossTab<Data extends Object>(
         data: Iterable<Data>,
         labelFn: (item: Data) => string,
-        cellFn: (row: Data, col: Data) => number,
+        valueFn: (row: Data, col: Data) => number,
+        formatFn: (value: number) => string,
         rowTooltip?: Snippet<[Data, Data]>,
     ): TableBuilder<Data, Data> {
         const items = [...data];
-        const columns: TableColumn<Data>[] = items.map(item => ({ data: item, label: labelFn(item) }));
+        const columns: TableColumn<Data, Data>[] = items.map(item => 
+            ({ data: item, label: labelFn(item), formatFn }));
         const rows: TableRow<Data, Data>[] = [];
         for (const rowKey of data) {
             const row: TableRow<Data, Data> = { label: labelFn(rowKey), items: {}, data: rowKey };
@@ -112,7 +124,7 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
             rows.push(row);
 
             for (const colKey of data) {
-                const value = cellFn(rowKey, colKey);
+                const value = valueFn(rowKey, colKey);
                 row.items[labelFn(colKey)] = value;
             }
         }
