@@ -3,6 +3,15 @@
     import Tooltip from "./Tooltip.svelte";
 
     let { table } = $props<{ table: Table }>();
+
+    function cellValue<RowData extends Object, ColumnData extends Object>(
+        row: TableRow<RowData, ColumnData>,
+        column: TableColumn<ColumnData>
+    ): string {
+        const value = row.items[column.label];
+        const formatFn = column.formatFn ?? String;
+        return formatFn(value);
+    }
 </script>
 
 <style>
@@ -45,13 +54,13 @@
                     <td class:bold={row.bold}>
                         {#if row.tooltip}
                             <Tooltip>
-                                {row.items[column.label]?.toFixed(2)}
+                                {cellValue(row, column)}
                                  <div slot="tooltip">
                                     {@render row.tooltip(row.data, column.data)}
                                  </div>
                             </Tooltip>
                         {:else}
-                            {row.items[column.label]?.toFixed(2)}
+                            {cellValue(row, column)}
                         {/if}
                     </td>
                 {/each}

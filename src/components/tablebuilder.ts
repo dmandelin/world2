@@ -8,8 +8,9 @@ export interface Table<RowData extends Object, ColumnData extends Object> {
 }
 
 export interface TableColumn<ColumnData extends Object> {
-    data?: ColumnData;
     label: string;
+    data?: ColumnData;
+    formatFn?: (value: number) => string;
 }
 
 export interface TableRow<RowData extends Object, ColumnData extends Object> {
@@ -25,6 +26,7 @@ export interface TableRow<RowData extends Object, ColumnData extends Object> {
 export interface ColumnSpec<RowData extends Object> {
     label: string;
     valueFn: (row: RowData) => number;
+    formatFn?: (value: number) => string;
 }
 
 export class TableBuilder<RowData extends Object, ColumnData extends Object> {
@@ -34,23 +36,42 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
         return this.table_;
     }
 
+    private static _fromItems<Item extends Object>(
+        items: Iterable<[string, Item]>,
+        columnSpecs: ColumnSpec<Item>[],
+    ): TableBuilder<Item, string> {
+        const columns: TableColumn<string>[] = columnSpecs.map(
+            spec => ({ label: spec.label, formatFn: spec.formatFn }));
+        const rows: TableRow<Item, string>[] = [];
+        for (const [label, item] of items) {
+            const row: TableRow<Item, string> = {
+                data: item, label, items: {} };
+            for (const spec of columnSpecs) {
+                row.items[spec.label] = spec.valueFn(item);
+            }
+            rows.push(row);
+        }
+        return new TableBuilder({ columns, rows });
+    }
+
+    static fromNamedItems<Item extends { name: string }>(
+        items: Iterable<Item>,
+        columnSpecs: ColumnSpec<Item>[],
+    ): TableBuilder<Item, string> {
+        function* toEntries(items: Iterable<Item>): Iterable<[string, Item]> {
+            for (const item of items) {
+                yield [item.name, item];
+            }
+        }
+
+        return TableBuilder._fromItems(toEntries(items), columnSpecs);
+    }
+
     static fromRecordItems<RecordItem extends Object>(
         rowData: Record<string, RecordItem>,
         columnSpecs: ColumnSpec<RecordItem>[],
     ): TableBuilder<RecordItem, string> {
-        const columns: TableColumn<string>[] = columnSpecs.map(
-            spec => ({ label: spec.label }));
-        const rows: TableRow<RecordItem, string>[] = [];
-        for (const [rowLabel, recordItem] of Object.entries(rowData)) {
-            const row: TableRow<RecordItem, string> = { 
-                data: recordItem, label: rowLabel, items: {} };
-            for (const spec of columnSpecs) {
-                row.items[spec.label] = spec.valueFn(recordItem);
-            }
-            rows.push(row);
-        }
-
-        return new TableBuilder({ columns, rows });
+        return TableBuilder._fromItems(Object.entries(rowData), columnSpecs);
     }
 
     static fromColumnData<ColumnData extends Object>(
