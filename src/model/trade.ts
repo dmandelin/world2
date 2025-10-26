@@ -1,13 +1,13 @@
 export class TradeGood {
-    constructor(readonly name: string, readonly bulk: number) {}
+    constructor(readonly name: string, readonly bulk: number, readonly isSubsistence: boolean = false) {}
 }
 
 export const TradeGoods = {
-    Subsistence: new TradeGood('Subsistence', 1000),
+    Subsistence: new TradeGood('Subsistence', 1000, true),
 
-    Cereals: new TradeGood('Cereals', 50),
-    Livestock: new TradeGood('Livestock', 10),
-    Fish: new TradeGood('Fish', 30),
+    Cereals: new TradeGood('Cereals', 50, true),
+    Livestock: new TradeGood('Livestock', 10, true),
+    Fish: new TradeGood('Fish', 30, true),
 
     Bitumen: new TradeGood('Bitumen', 10),
     Flint: new TradeGood('Flint', 20),

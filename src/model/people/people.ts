@@ -132,6 +132,17 @@ export class ConsumptionCalc {
         return amounts;
     }
 
+    get perCapitaSubistenceAmounts(): Record<string, number> {
+        const result: Record<string, number> = {};
+        for (const [good, sourceMap] of this.ledger_) {
+            if (good.isSubsistence) {
+                result[good.name] = [...sourceMap.values()]
+                    .reduce((acc, amount) => acc + amount / this.population, 0);
+            }
+        }
+        return result;
+    }
+
     perCapita(good: TradeGood): number {
         const amount = this.amount(good);
         if (this.population === 0) return amount;

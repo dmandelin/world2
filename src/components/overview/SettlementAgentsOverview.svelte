@@ -16,6 +16,7 @@
                 label: "Sus",
                 valueFn: c => c.consumption.perCapitaSubsistence(),
                 formatFn: v => (100 * v).toFixed(),
+                tooltip: clanSustenanceTooltip,
             },
             {
                 label: "SoL",
@@ -33,6 +34,17 @@
                 label: "Res",
                 valueFn: c => c.averagePrestige,
                 formatFn: v => signed(v, 0),
+            },
+        ])
+        .table;
+    }
+
+    function clanSustenanceTooltipTable(clan: ClanDTO) {
+        return TableBuilder.fromRecordItems(clan.consumption.perCapitaSubistenceAmounts, [
+            {
+                label: "Q",
+                valueFn: i => i,
+                formatFn: v => (100 * v).toFixed(),
             },
         ])
         .table;
@@ -59,6 +71,10 @@
         .table;
     }
 </script>
+
+{#snippet clanSustenanceTooltip(clan: ClanDTO)}
+  <TableView table={clanSustenanceTooltipTable(clan)}></TableView>
+{/snippet}
 
 {#snippet clanHappinessTooltip(clan: ClanDTO)}
   <TableView table={clanHappinessTooltipTable(clan)}></TableView>
