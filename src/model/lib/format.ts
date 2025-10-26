@@ -1,5 +1,9 @@
-export function pct(x: number, places: number = 0): string {
-    return `${(x * 100).toFixed(places)}%`;
+export function pct(x: number, places: number = 0, symbol: boolean = true): string {
+    return `${(x * 100).toFixed(places)}${symbol ? '%' : ''}`;
+}
+
+export function pctFormat(places: number = 0, symbol: boolean = true): (n: number) => string {
+    return (n: number) => pct(n, places, symbol);
 }
     
 export function rpct(x: number, places: number = 0): string {
@@ -18,6 +22,10 @@ export function xm(x: number, places: number = 2): string {
 export function signed(x: number, places: number = 0): string {
     const sgn = x < 0 ? '' : '+';
     return `${sgn}${x.toFixed(places)}`;
+}
+
+export function signedFormat(places: number = 0): (n: number) => string {
+    return (n: number) => signed(n, places);
 }
 
 export function grade(t: number) {

@@ -38,14 +38,16 @@
 </style>
 
 <table>
-    <thead>
-        <tr>
-            <td></td>
-            {#each table.columns as column}
-                <th>{column.label}</th>
-            {/each}
-        </tr>
-    </thead>
+    {#if !table.hideColumnHeaders}
+        <thead>
+            <tr>
+                <td></td>
+                {#each table.columns as column}
+                    <th>{column.label}</th>
+                {/each}
+            </tr>
+        </thead>
+    {/if}
     <tbody>
         {#each table.rows as row}
             <tr>
@@ -53,7 +55,10 @@
                     {row.label}
                 </td>
                 {#each table.columns as column}
-                    <td class:bold={row.bold}>
+                    <td 
+                        class:bold={row.bold} 
+                        class:clickable={!!column.onClickCell}
+                        onclick={() => column.onClickCell?.(row.data, column.data)}>
                         {#if column.tooltip}
                             <Tooltip>
                                 {cellValue(row, column)}

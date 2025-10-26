@@ -6,6 +6,7 @@ export interface Table<RowData extends Object, ColumnData extends Object> {
     columns: TableColumn<RowData, ColumnData>[];
     rows: TableRow<RowData, ColumnData>[];
     onClickRowHeader?: (row: RowData) => void;
+    hideColumnHeaders?: boolean;
 }
 
 export interface TableColumn<RowData extends Object, ColumnData extends Object> {
@@ -19,7 +20,7 @@ export interface TableRow<RowData extends Object, ColumnData extends Object> {
     data?: RowData;
     label: string;
 
-    items: Record<string, number>;
+    items: Record<string, number|string>;
 
     tooltip?: Snippet<[RowData, ColumnData]>;
     bold?: boolean;
@@ -27,9 +28,10 @@ export interface TableRow<RowData extends Object, ColumnData extends Object> {
 
 export interface ColumnSpec<RowData extends Object, ColumnData extends Object> {
     label: string;
-    valueFn: (row: RowData) => number;
+    valueFn: (row: RowData) => number|string;
     formatFn?: (value: number) => string;
     tooltip?: Snippet<[RowData, ColumnData]>;
+    onClickCell?: (row: RowData, col: ColumnData) => void;
 }
 
 export class TableBuilder<RowData extends Object, ColumnData extends Object> {
@@ -39,12 +41,17 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
         return this.table_;
     }
 
-    private static fromItems<Item extends Object>(
+    static fromItems<Item extends Object>(
         items: Iterable<[string, Item]>,
         columnSpecs: ColumnSpec<Item, string>[],
     ): TableBuilder<Item, string> {
         const columns: TableColumn<Item, string>[] = columnSpecs.map(
-            spec => ({ label: spec.label, formatFn: spec.formatFn, tooltip: spec.tooltip }));
+            spec => ({ 
+                label: spec.label, 
+                formatFn: spec.formatFn, 
+                tooltip: spec.tooltip,
+                onClickCell: spec.onClickCell,
+            }));
         const rows: TableRow<Item, string>[] = [];
         for (const [label, item] of items) {
             const row: TableRow<Item, string> = {
@@ -154,6 +161,11 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
         return this.addAggregateRow(
             'Average', 
             items => weightedAverage(items, o => o[1], o => weightFn ? weightFn(o[0]) : 1));
+    }
+
+    hideColumnHeaders(): this {
+        this.table_.hideColumnHeaders = true;
+        return this;
     }
 
     onClickRowHeader(fn: (row: RowData) => void): this {

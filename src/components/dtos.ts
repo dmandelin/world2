@@ -358,27 +358,7 @@ export class WorldDTO {
             }
         }
     }
-
-    get notableClans() {
-        const items: [string, OptByWithValue<ClanDTO>, (clan: ClanDTO) => number, (n: number) => string][] = [
-            ['Biggest', maxbyWithValue, clan => clan.population, n => n.toFixed()],
-            ['Smallest', minbyWithValue,  clan => clan.population, n => n.toFixed()],
-            ['Most productive', maxbyWithValue, clan => clan.productivity, pct],
-            ['Least productive', minbyWithValue, clan => clan.productivity, pct],
-            ['Most correct', maxbyWithValue, clan => clan.ritualEffectiveness, pct],
-            ['Least correct', minbyWithValue, clan => clan.ritualEffectiveness, pct],
-            ['Highest welfare', maxbyWithValue, clan => clan.happiness.appeal, n => n.toFixed()],
-            ['Lowest welfare', minbyWithValue, clan => clan.happiness.appeal, n => n.toFixed()],
-            ['Most influential', maxbyWithValue, clan => clan.influence, pct],
-            ['Least influential', minbyWithValue, clan => clan.influence, pct],
-        ]
-        const clans = [...this.clans()];
-        return items.map(([name, opt, key, fmt]) => {
-            const [clan, value] = opt(clans, key);
-            return [name, `${clan.name} of ${clan.settlement!.name}`, fmt(value)];
-        });
-    }
-
+    
     advanceFromPlanningView() {
         this.world.advanceFromPlanningView();
     }

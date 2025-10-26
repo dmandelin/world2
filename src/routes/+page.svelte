@@ -4,6 +4,7 @@
     import Map from '../components/Map.svelte';
     import SettlementCluster from '../components/SettlementCluster.svelte';
     import Sidebar from '../components/Sidebar.svelte';
+    import EntityLink from '../components/state/EntityLink.svelte';
     import {selectSettlement, uiState, worldState} from '../components/state/uistate.svelte';
 </script>
 
@@ -40,11 +41,7 @@
     {#if uiState().selectedClan}
         <div>
             <h4 style="margin-top: 0">
-                <span 
-                    class="clickable" 
-                    onclick={() => selectSettlement(uiState().selectedClan!.ref.settlement)}>
-                    {uiState().selectedClan!.ref.settlement.name}
-                </span>
+                <EntityLink entity={uiState().selectedClan!.ref.settlement} />
                 &gt;
                 Clan {uiState().selectedClan!.name}
             </h4>
