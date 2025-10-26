@@ -1,5 +1,12 @@
 Detailed design on next stuff
 
+*   Key focus areas right now:
+    *   Get clans interacting with each other and having reactions to
+        each other
+    *   UI focus on clans as much as needed to give the detail to
+        understand their situations
+    *   News/chronicle to better understand events and progression
+
 *   Marriage
     x   Seed initial marriages
     x   Fix: reduce neighbor alignment a bit so that it's smaller than
