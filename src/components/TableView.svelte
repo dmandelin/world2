@@ -51,7 +51,10 @@
     <tbody>
         {#each table.rows as row}
             <tr>
-                <td class:bold={true} onclick={() => table.onClickRowHeader?.(row.data)}>
+                <td 
+                    class:bold={true} 
+                    class:clickable={!!table.onClickRowHeader}
+                    onclick={() => table.onClickRowHeader?.(row.data)}>
                     {row.label}
                 </td>
                 {#each table.columns as column}
