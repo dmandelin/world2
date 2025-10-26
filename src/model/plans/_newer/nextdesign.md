@@ -10,7 +10,8 @@ Detailed design on next stuff
             x   Introduce new respect concept to give something to hang
                 this off of
             *   Add tooltips to respect crosstab
-            *   Show respect item breakout soon
+                x   Tooltips for cells
+                *   Tooltips for aggregate row
             *   Introduce communication to update respect dependent on
                 relationships and proximity
         *   Blends attributes and skills too
@@ -81,6 +82,10 @@ Detailed design on next stuff
             *   If the later result is good, it can be retained, and +prestige
                 for the innovator
             *   If the later result is bad, -prestige for the innovator
+
+*   Trade
+    *   At some point should add the needed flint trade based on these
+        relationships
 
 *   Benefits of prestige
     *   What we have for now is OK but here are more ideas

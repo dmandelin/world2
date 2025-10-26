@@ -26,7 +26,7 @@ export class RespectCalc {
     }
 }
 
-class RespectCalcItem {
+export class RespectCalcItem {
     constructor(
         readonly name: string,
         readonly value: number) {}

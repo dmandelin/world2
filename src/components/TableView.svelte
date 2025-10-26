@@ -1,11 +1,13 @@
 <script lang="ts">
     import type { Table } from "./tablebuilder";
+    import Tooltip from "./Tooltip.svelte";
 
     let { table } = $props<{ table: Table }>();
 </script>
 
 <style>
     table {
+        cursor: default;
         border-collapse: collapse;
     }
 
@@ -40,7 +42,18 @@
             <tr>
                 <td class:bold={true}>{row.label}</td>
                 {#each table.columns as column}
-                    <td class:bold={row.bold}>{row.items[column.label]?.toFixed(2)}</td>
+                    <td class:bold={row.bold}>
+                        {#if row.tooltip}
+                            <Tooltip>
+                                {row.items[column.label]?.toFixed(2)}
+                                 <div slot="tooltip">
+                                    {@render row.tooltip(row.data, column.data)}
+                                 </div>
+                            </Tooltip>
+                        {:else}
+                            {row.items[column.label]?.toFixed(2)}
+                        {/if}
+                    </td>
                 {/each}
             </tr>
         {/each}
