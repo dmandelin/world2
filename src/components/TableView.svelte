@@ -49,7 +49,9 @@
     <tbody>
         {#each table.rows as row}
             <tr>
-                <td class:bold={true}>{row.label}</td>
+                <td class:bold={true} onclick={() => table.onClickRowHeader?.(row.data)}>
+                    {row.label}
+                </td>
                 {#each table.columns as column}
                     <td class:bold={row.bold}>
                         {#if column.tooltip}

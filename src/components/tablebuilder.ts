@@ -5,6 +5,7 @@ import { weightedAverage } from "../model/lib/modelbasics";
 export interface Table<RowData extends Object, ColumnData extends Object> {
     columns: TableColumn<RowData, ColumnData>[];
     rows: TableRow<RowData, ColumnData>[];
+    onClickRowHeader?: (row: RowData) => void;
 }
 
 export interface TableColumn<RowData extends Object, ColumnData extends Object> {
@@ -153,6 +154,11 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
         return this.addAggregateRow(
             'Average', 
             items => weightedAverage(items, o => o[1], o => weightFn ? weightFn(o[0]) : 1));
+    }
+
+    onClickRowHeader(fn: (row: RowData) => void): this {
+        this.table_.onClickRowHeader = fn;
+        return this;
     }
 }
 

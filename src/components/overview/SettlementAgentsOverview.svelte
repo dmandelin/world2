@@ -1,6 +1,7 @@
 <script lang="ts">
     import { signed } from "../../model/lib/format";
     import type { ClanDTO, SettlementDTO } from "../dtos";
+    import { selectClan } from "../state/uistate.svelte";
     import { TableBuilder } from "../tablebuilder";
     import TableView from "../TableView.svelte";
 
@@ -36,6 +37,9 @@
                 formatFn: v => signed(v, 0),
             },
         ])
+        .onClickRowHeader((clan: ClanDTO) => {
+            selectClan(clan);
+        })
         .table;
     }
 

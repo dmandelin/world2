@@ -24,3 +24,10 @@ table.basic tr:last-child td {
 .msm {
     font-size: 0.9em;
 }
+
+.clickable {
+    cursor: pointer;
+    &:hover {
+        color:saddlebrown;
+    }
+}
