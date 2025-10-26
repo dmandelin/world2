@@ -7,6 +7,30 @@ Detailed design on next stuff
         understand their situations
     *   News/chronicle to better understand events and progression
 
+*   Current issues limiting growth:
+    *   In general it's hard to understand how well a clan is poised
+        to grow and what they're doing about any issues
+        *   Time to create clan-specific view
+            *   Stuff to show:
+                *   Happiness conditions that might motivate action
+                *   Factors determining those happiness ratings
+                *   Decisions and considered and the decision outcome
+                *   Demographic panel and also:
+                    *   Recent population history
+                    *   Expected vs actual changes
+                    *   In general need to understand if our random
+                        and actual changes are matching up
+    *   Clans initially spend little time together, so it's hard for
+        them to learn skills and ideas from each other
+        *   Allow information about amount of time spent farming
+            to propagate with relatively minimal contact
+            *   Review how this works, check it with prestige
+        *   Don't penalize them linearly for limited time together:
+            even a small amount of contact allows some information
+            exchange
+        *   Give them a decision to spend more time near the farms,
+            with initial random choice
+
 *   Marriage
     x   Seed initial marriages
     x   Fix: reduce neighbor alignment a bit so that it's smaller than
