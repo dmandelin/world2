@@ -463,5 +463,9 @@ export function laborAllocationPlanTable(clan: ClanDTO): BasicTable {
         scenario.fishTFP.toFixed(2),
     ]);
 
+    if (rows.some(r => isNaN(r[1] as unknown as number))) {
+        debugger;
+    }
+
     return { header, rows };
 }

@@ -74,9 +74,27 @@ export class ProductionNode {
     }
 
     tfp(clan?: Clan): number {
-        return clan 
-          ? this.output(clan).get(this.skillDef.outputGood!)! / this.workers(clan) / ProductionNode.outputPerWorker
-          : (this.totalOutput_.get(this.skillDef.outputGood!) ?? 0) / this.totalWorkers_ / ProductionNode.outputPerWorker;
+        if (clan) {
+            const output = this.output(clan).get(this.skillDef.outputGood!) ?? 0;
+            const workers = this.workers(clan);
+            return workers === 0
+                ? clan.productivity(this.skillDef)
+                : ProductionNode.tfpOf(output, workers);
+        }
+
+        const output = this.totalOutput_.get(this.skillDef.outputGood!) ?? 0;
+        const workers = this.totalWorkers_;
+        return workers === 0
+            ? weightedHarmonicMean(
+                [...this.workers_.entries()], ([c, w]) => c.productivity(this.skillDef), ([c, w]) => w)
+            : ProductionNode.tfpOf(output, workers);
+    }
+
+    static tfpOf(output: number, workers: number): number {
+        if (workers === 0) {
+            return 1;
+        }
+        return output / workers / ProductionNode.outputPerWorker;
     }
 
     reset(): void {
