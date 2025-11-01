@@ -2,11 +2,6 @@
 
 ## Next items in latest plans
 
--   Deal with floods tanking farming. Productivity goes lower and
-    so people end up wanting to switch, but I don't think that's
-    what happened in reality. Fishing productivity should be perhaps
-    affected to some extent too.
-
 -   Let clans attend rituals in the mother village at some cost,
     because otherwise the lower ritual quality makes them move back
     right away.
