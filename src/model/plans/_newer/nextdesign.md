@@ -12,6 +12,7 @@ Detailed design on next stuff
         to grow and what they're doing about any issues
         *   Time to create clan-specific view
             *   Stuff to show:
+                x   Labor allocation decisions
                 *   Happiness conditions that might motivate action
                 *   Factors determining those happiness ratings
                 *   Decisions and considered and the decision outcome

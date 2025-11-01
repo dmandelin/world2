@@ -2,6 +2,10 @@
 
 ## Next items in latest plans
 
+-   Sort respect table by respect value
+-   Show respect breakdown in totals line
+-   Make consumption respect value relative to expectations
+
 -   (P2) Let clans attend rituals in the mother village at some cost,
     because otherwise the lower ritual quality makes them move back
     right away.

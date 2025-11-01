@@ -32,7 +32,7 @@ export function buildRespectTooltip(
     return TableBuilder.fromRecordItems(
         respectCalc.items,
         [
-            { label: '', valueFn: item => item.value },
+            { label: '', valueFn: item => item.value, formatFn: value => signed(value, 2) },
 
         ])
         .addTotalRow()

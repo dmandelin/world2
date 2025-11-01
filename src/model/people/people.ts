@@ -431,7 +431,7 @@ export class Clan implements TradePartner {
         known.add(other);
 
         if (!this.respectMap_.has(other)) {
-            this.respectMap_.set(other, new RespectCalc(other));
+            this.respectMap_.set(other, new RespectCalc(this, other));
         }
         this.respectMap_.get(other)!.update(interactionFactor);
     }

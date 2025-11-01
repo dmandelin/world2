@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { pct } from "../model/lib/format";
     import { type ClanDTO } from "./dtos";
     import { buildRespectTable, buildRespectTooltip } from "./tablebuilders";
     import TableView from "./TableView.svelte";
@@ -10,6 +11,7 @@
 </style>
 
 {#snippet respectCellToolTip(clan: ClanDTO, targetClan: ClanDTO)}
+  {pct(clan.respect.get(targetClan.ref)?.informationLevel ?? 0)} informed
   <TableView table={buildRespectTooltip(clan, targetClan)}></TableView>
 {/snippet}
 
