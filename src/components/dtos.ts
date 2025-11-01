@@ -104,7 +104,7 @@ export type ClanDTO = {
 
     cadets: Clan[];
     parent: Clan|undefined;
-    marriagePartners: Map<string, number>;
+    marriagePartners: Map<Clan, number>;
     tradeRelationships: TradeRelationshipsDTO[];
     rites: Rites;
     slices: number[][];
@@ -160,7 +160,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 
         cadets: clan.cadets,
         parent: clan.parent,
-        marriagePartners: new Map([...clan.marriagePartners].map(([c, v]) => [c.name, v])),
+        marriagePartners: clan.marriagePartners,
         rites: clan.rites.clone(),
         migrationPlan: clan.migrationPlan,
         slices: clan.slices,
@@ -358,7 +358,7 @@ export class WorldDTO {
             }
         }
     }
-    
+
     advanceFromPlanningView() {
         this.world.advanceFromPlanningView();
     }

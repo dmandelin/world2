@@ -1,6 +1,8 @@
 <script lang="ts">
     import type { SettlementDTO } from "./dtos";
     import { pct } from "../model/lib/format";
+    import { sortedByKey } from "../model/lib/basics";
+    import EntityLink from "./state/EntityLink.svelte";
     
     let { settlement }: { settlement: SettlementDTO }= $props();
     let clans = $derived(settlement.clans);
@@ -14,8 +16,13 @@
 {#each clans as c}
 <div>
     <h4 style="color: {c.color}">{c.name}</h4>
-    {#each c.marriagePartners.entries() as [name, r]}
-        <div>{pct(r)}: {name}</div>
+    {#each sortedByKey(c.marriagePartners, ([clan, r]) => -r) as [clan, r]}
+        <div>
+            {pct(r)}: 
+            <EntityLink entity={clan} />
+            of
+            <EntityLink entity={clan.settlement} />
+        </div>
     {/each}
 </div>
 {/each}
