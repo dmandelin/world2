@@ -112,7 +112,11 @@ export function marry(world: World): void {
             const existing = clan.marriagePartners.get(spouseClan) ?? 0;
             const added = newGenerationRelatedness.get(spouseClan) ?? 0;
             const updated = 0.5 * existing + 0.5 * added;
-            clan.marriagePartners.set(spouseClan, updated);
+            if (updated >= 0.03) {
+                clan.marriagePartners.set(spouseClan, updated);
+            } else {
+                clan.marriagePartners.delete(spouseClan);
+            }
         }
     }
 }
