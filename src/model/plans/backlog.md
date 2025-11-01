@@ -2,9 +2,10 @@
 
 ## Next items in latest plans
 
--   Let clans attend rituals in the mother village at some cost,
+-   (P2) Let clans attend rituals in the mother village at some cost,
     because otherwise the lower ritual quality makes them move back
     right away.
+    -   This stopped being as much of an issue recently but might come back.
 
 -   Consider:
     -   Personality trait for how much clans care about food quality
@@ -82,20 +83,6 @@
                     then executed as the start of the advance phase. I think
                     the decision is based on values generated during the
                     previous turn.
-    -   Clans are somewhat better about learning to rely more on farming,
-        but they still stick too long with fishing, or move when that
-        won't really help.
-        -   There are various reasons we can give clans a bias toward
-            farming more when hungry
-        -   An easy one is cultural/ritual, where there doesn't have to
-            be any direct cost, they just have a culture in that direction.
-            Magnitude of the effect could depend on ritual appeal though.
-        -   We could also assume they experiment a bit and then pick
-            what works. 20 years is probably enough to make the correct
-            move, but we can charge them an experimentation cost.
-        -   It also may be good to reduce the magnitude of the shifts a
-            bit -- they bounce around a bunch
-        -   Also maybe only sometimes do a shift instead of always
     -   Otherwise, populations are growing reasonably well for the first
         millennium. We can go back to modeling the shifts more:
         -   Give clans an option to visit the farms, giving a bonus to

@@ -22,6 +22,7 @@
             <EntityLink entity={clan} />
             of
             <EntityLink entity={clan.settlement} />
+            {#if clan.settlement.parent}(<EntityLink entity={clan.settlement.parent} />){/if}
         </div>
     {/each}
 </div>
