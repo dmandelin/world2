@@ -2,14 +2,16 @@
 
 ## Next items in latest plans
 
--   Clans have somewhat too strong of a preference for food quality,
-    causing them to go hungry.
-    -   It might be interesting to add a personality trait for this.
-    -   In general, if they're really hungry, quantity should be the
-        main thing and they should be more indifferent to quality.
-    -   If well fed, then they would look for higher quality.
--   It also might be a good idea to allow them to experiment harder
-    if things are way off, otherwise do smaller random shifts
+-   Fix bug where labor decision table is full of NaN.
+
+-   Let clans attend rituals in the mother village at some cost,
+    because otherwise the lower ritual quality makes them move back
+    right away.
+
+-   Consider:
+    -   Personality trait for how much clans care about food quality
+    -   Experiment with smaller or bigger changes in farming amounts
+        depending on precedent and need for improvement.
 
 -   Capture productivity calcs used during production and show them
     in the UI so we can better understand production stats.

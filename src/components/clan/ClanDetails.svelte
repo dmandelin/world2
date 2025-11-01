@@ -12,6 +12,9 @@
 </script>
 
 <style>
+    td {
+        padding: 0.01em 1em 0.01em 0;
+    }
 </style>
 
 <div>
@@ -20,8 +23,8 @@
     <h4>Experiment?</h4>
     <table>
         <tbody>
-            {#each Object.entries(decision.happinessItems) as [key, value]}
-                <tr><td>{key}</td><td>{signed(value, 0)}</td></tr>
+            {#each Object.entries(decision.happinessItems) as [key, item]}
+                <tr><td>{key}</td><td>{item.stateDisplay}</td><td>{signed(item.value, 0)}</td></tr>
             {/each}
             <tr><td>Contentment</td><td>{signed(decision.happiness, 0)}</td></tr>
             <tr><td>Chance to experiment</td><td>{pct(decision.experimentProbability)}</td></tr>

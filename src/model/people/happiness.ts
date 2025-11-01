@@ -1,15 +1,16 @@
 import { sumFun } from "../lib/basics";
+import { pct } from "../lib/format";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
 
-export abstract class HappinessItem {
+export abstract class HappinessItem<T> {
     private expectedAppeal_: number;
-    protected state_: number;
+    protected state_: T;
 
     constructor(
         expectedAppeal: number = 0,
-        state: number = 0,
+        state: T,
     ) {
         this.expectedAppeal_ = expectedAppeal;
         this.state_ = state;
@@ -17,6 +18,9 @@ export abstract class HappinessItem {
 
     // Display label.
     abstract get label(): string;
+
+    // Display text for current state.
+    abstract get stateDisplay(): string;
 
     get isSubsistence(): boolean {
         return false;
@@ -27,7 +31,7 @@ export abstract class HappinessItem {
     }
 
     // Appeal as a function of state. Should be pure.
-    abstract appealOf(state: number): number;
+    abstract appealOf(state: T): number;
 
     // Update the state from the model. We track a copy of the state
     // in this structure so that we have a stable record of what
@@ -56,7 +60,7 @@ export abstract class HappinessItem {
         }
     }
 
-    get state(): number {
+    get state(): T {
         return this.state_;
     }
 
@@ -65,9 +69,22 @@ export abstract class HappinessItem {
     }
 }
 
-class FoodQuantityHappinessItem extends HappinessItem {
+abstract class NumericHappinessItem extends HappinessItem<number> {
+    constructor(
+        expectedAppeal: number = 0,
+        state: number = 0,
+    ) {
+        super(expectedAppeal, state);
+    }
+}
+
+export class FoodQuantityHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Food Quantity';
+    }
+
+    get stateDisplay(): string {
+        return pct(this.state_);
     }
 
     get isSubsistence(): boolean {
@@ -79,6 +96,10 @@ class FoodQuantityHappinessItem extends HappinessItem {
     }
 
     appealOf(perCapitaSubsistence: number): number {
+            return FoodQuantityHappinessItem.appealOf(perCapitaSubsistence);
+    }
+
+    static appealOf(perCapitaSubsistence: number): number {
         return 50 * Math.log2(perCapitaSubsistence);
     }
 
@@ -87,21 +108,42 @@ class FoodQuantityHappinessItem extends HappinessItem {
     }
 }
 
-class FoodQualityHappinessItem extends HappinessItem {
+export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, fishRatio: number}> {
+    constructor(
+        expectedAppeal: number = 0,
+        state: {quantity: number, fishRatio: number} = {quantity: 0, fishRatio: 0},
+    ) {
+        super(expectedAppeal, state);
+    }
+
     get label(): string {
         return 'Food Quality';
     }
+
+    get stateDisplay(): string {
+        return `${pct(this.state_.fishRatio)} fish / ${pct(FoodQualityHappinessItem.careOf(this.state_.quantity))} care`;
+    }
+
 
     get isSubsistence(): boolean {
         return true;
     }
 
-    appealOf(fishRatio: number): number {
-        return foodVarietyAppeal(fishRatio);
+    appealOf(state: {quantity: number, fishRatio: number}): number {
+        return FoodQualityHappinessItem.appealOf(state);
+    }
+
+    static careOf(quantity: number): number {
+        return quantity >= 1 ? 1 : 2 ** (10 * (quantity - 1));
+    }
+
+    static appealOf({quantity, fishRatio}: {quantity: number, fishRatio: number}): number {
+        // People only care about quality if there's enough quantity.
+        return FoodQualityHappinessItem.careOf(quantity) * foodVarietyAppeal(fishRatio);
     }
 
     updateState(clan: Clan): void {
-        this.state_ = fishRatio(clan);
+        this.state_ = { quantity: clan.consumption.perCapitaSubsistence(), fishRatio: fishRatio(clan) };
     }
 }
 
@@ -130,9 +172,13 @@ export function foodVarietyHealthFactor(fishRatio: number): number {
     return 1 - 0.125 * p * p;
 }
 
-class ShelterHappinessItem extends HappinessItem {
+class ShelterHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Shelter';
+    }
+
+    get stateDisplay(): string {
+        return this.state_.toFixed(0);
     }
 
     appealOf(shelterAppeal: number): number {
@@ -144,9 +190,13 @@ class ShelterHappinessItem extends HappinessItem {
     }
 }
 
-class MigrationHappinessItem extends HappinessItem {
+class MigrationHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Migration';
+    }
+
+    get stateDisplay(): string {
+        return this.state_.toFixed(0);
     }
 
     appealOf(forcedMigrations: number): number {
@@ -158,9 +208,13 @@ class MigrationHappinessItem extends HappinessItem {
     }
 }
 
-class FloodHappinessItem extends HappinessItem {
+class FloodHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Flood';
+    }
+
+    get stateDisplay(): string {
+        return pct(this.state);
     }
 
     appealOf(damageFactor: number): number {
@@ -172,9 +226,13 @@ class FloodHappinessItem extends HappinessItem {
     }
 }
 
-class RitualHappinessItem extends HappinessItem {
+class RitualHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Rituals';
+    }
+
+    get stateDisplay(): string {
+        return this.state_.toFixed(1);
     }
 
     appealOf(ritualAppeal: number): number {
@@ -186,9 +244,13 @@ class RitualHappinessItem extends HappinessItem {
     }
 }
 
-class StatusHappinessItem extends HappinessItem {
+class StatusHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Status';
+    }
+
+    get stateDisplay(): string {
+        return this.state_.toFixed(1);
     }
 
     appealOf(averagePrestige: number): number {
@@ -200,9 +262,13 @@ class StatusHappinessItem extends HappinessItem {
     }
 }
 
-class SocietyHappinessItem extends HappinessItem {
+class SocietyHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Society';
+    }
+
+    get stateDisplay(): string {
+        return `pop ${this.state_.toFixed(0)}`;
     }
 
     appealOf(population: number): number {
@@ -216,7 +282,7 @@ class SocietyHappinessItem extends HappinessItem {
 }
 
 export class HappinessCalc {
-    readonly items: Map<string, HappinessItem> = new Map();
+    readonly items: Map<string, HappinessItem<any>> = new Map();
 
     constructor(readonly clan: Clan) {}
 
@@ -241,7 +307,7 @@ export class HappinessCalc {
         return clone;
     }
 
-    private add(...items: HappinessItem[]): void {
+    private add(...items: HappinessItem<any>[]): void {
         for (const item of items) {
             this.items.set(item.label, item);
         }
@@ -277,6 +343,10 @@ export class HappinessCalc {
 
     get value(): number {
         return sumFun(this.items.values(), item => item.value);
+    }
+
+    get(label: string): HappinessItem<any>|undefined {
+        return this.items.get(label);
     }
 
     getAppeal(label: string): number|undefined {

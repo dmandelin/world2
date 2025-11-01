@@ -1,9 +1,9 @@
 import type Settlement from '../../components/Settlement.svelte';
-import { clamp, maxby, sum } from '../lib/basics';
+import { clamp, maxby, sum, sumFun } from '../lib/basics';
 import { normal } from '../lib/distributions';
 import { eloSuccessProbability } from '../lib/modelbasics';
 import { TradeGoods } from '../trade';
-import { foodVarietyAppeal } from '../people/happiness';
+import { FoodQualityHappinessItem, FoodQuantityHappinessItem, foodVarietyAppeal, HappinessCalcItem, HappinessItem } from '../people/happiness';
 import { Clan } from '../people/people';
 import { SkillDefs, type SkillDef } from '../people/skills';
 
@@ -144,14 +144,15 @@ export class LaborAllocationDecisionScenario {
             : 0;
     }
 
-    // TODO - remove code duplication
     get foodQuantityAppeal(): number {
-        return 50 * Math.log2(this.perCapitaSubsistence);
+        return FoodQuantityHappinessItem.appealOf(this.perCapitaSubsistence);
     }
 
-    // TODO - consider better factoring
     get foodQualityAppeal(): number {
-        return foodVarietyAppeal(this.fishRatio);
+        return FoodQualityHappinessItem.appealOf({ 
+            quantity: this.perCapitaSubsistence, 
+            fishRatio: this.fishRatio,
+        });
     }
 
     get appeal(): number {
@@ -162,7 +163,7 @@ export class LaborAllocationDecisionScenario {
 export class LaborAllocationDecision {
     readonly previousPlan: Map<SkillDef, number>;
 
-    readonly happinessItems: { [key: string]: number };
+    readonly happinessItems: { [key: string]: HappinessItem<any> };
     readonly happiness: number;
 
     readonly experimentProbability: number;
@@ -179,14 +180,13 @@ export class LaborAllocationDecision {
         // only if hungry, but not absolutely.
         const h = laborAllocation.clan.happiness;
         this.happinessItems = h ? {
-            'Food Quantity': h.getValue('Food Quantity'),
-            'Food Quality': h.getValue('Food Quality'),
+            'Food Quantity': h.get('Food Quantity')!,
+            'Food Quality': h.get('Food Quality')!,
         } : {};
-        this.happiness = sum(Object.values(this.happinessItems));
+        this.happiness = sumFun(Object.values(this.happinessItems), item => item.value);
         this.experimentProbability = noChange
             ? 0
             : eloSuccessProbability(-5, this.happiness, 5);
-        console.log(this.experimentProbability, noChange)
         this.experimentingRoll = Math.random();
         this.experimenting = this.experimentingRoll < this.experimentProbability;
         if (!this.experimenting) {

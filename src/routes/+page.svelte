@@ -45,7 +45,7 @@
                 &gt;
                 Clan {uiState().selectedClan!.name}
             </h4>
-            <ClanDetails clan={uiState().selectedClan!.ref} />
+            <ClanDetails clan={uiState().selectedClan!} />
         </div>
     {:else if uiState().selectedSettlement}
         <SettlementCluster settlement={uiState().selectedSettlement!} onSelect={selectSettlement} />

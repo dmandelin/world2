@@ -192,8 +192,8 @@ export class HappinessTable {
         }
     }
 }
-
-export function appealTable(items: readonly HappinessItem[]): string[][] {
+    
+export function appealTable(items: readonly HappinessItem<any>[]): string[][] {
     const header = ['Source', 'A'];
     const rows = items.map(item => [
         item.label,
@@ -202,7 +202,7 @@ export function appealTable(items: readonly HappinessItem[]): string[][] {
     return [header, ...rows];
 }
 
-export function happinessTable(items: readonly HappinessItem[]): string[][] {
+export function happinessTable(items: readonly HappinessItem<any>[]): string[][] {
     const header = ['Source', 'E', 'A', 'V'];
     const rows = items.map(item => [
         item.label,
