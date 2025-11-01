@@ -1,5 +1,13 @@
 /* Global styles for the application */
 
+.bold {
+    font-weight: bold;
+}
+
+.mtop {
+    margin-top: 0.5em;
+}
+
 table.basic {
     border-collapse: collapse;
 }

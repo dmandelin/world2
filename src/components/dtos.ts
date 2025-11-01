@@ -167,7 +167,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
 
         consumption: clan.consumption.clone(),
         isDitching: clan.isDitching,
-        laborAllocation: clan.laborAllocation,
+        laborAllocation: clan.laborAllocation.clone(),
         productivityCalcs: clan.productivityCalcs,
         productivity: clan.agriculturalProductivity,
         productivityTooltip: clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [],

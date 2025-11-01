@@ -1,5 +1,5 @@
 import type Settlement from '../../components/Settlement.svelte';
-import { clamp, maxby } from '../lib/basics';
+import { clamp, maxby, sum } from '../lib/basics';
 import { normal } from '../lib/distributions';
 import { eloSuccessProbability } from '../lib/modelbasics';
 import { TradeGoods } from '../trade';
@@ -16,17 +16,17 @@ export class LaborAllocation {
 
     readonly allocs = new Map<SkillDef, number>();
 
-    constructor(readonly clan: Clan) {
+    constructor(readonly clan: Clan, decision: LaborAllocationDecision|undefined = undefined) {
         const r = clamp(normal(0.2, 0.1), 0, 1);
         this.planned_.set(SkillDefs.Agriculture, r);
         this.planned_.set(SkillDefs.Fishing, 1 - r);
         this.plan(true);
 
-        this.decision_ = new LaborAllocationDecision(this, true);
+        this.decision_ = decision ?? new LaborAllocationDecision(this, true);
     }
 
     clone(): LaborAllocation {
-        const clone = new LaborAllocation(this.clan);
+        const clone = new LaborAllocation(this.clan, this.decision_);
         clone.planned_.clear();
         for (const [skill, fraction] of this.planned_.entries()) {
             clone.planned_.set(skill, fraction);
@@ -34,6 +34,14 @@ export class LaborAllocation {
         clone.allocs.clear();
         for (const [skill, fraction] of this.allocs.entries()) {
             clone.allocs.set(skill, fraction);
+        }
+        return clone;
+    }
+
+    clonePlan(): Map<SkillDef, number> {
+        const clone = new Map<SkillDef, number>();
+        for (const [skill, fraction] of this.planned_.entries()) {
+            clone.set(skill, fraction);
         }
         return clone;
     }
@@ -152,7 +160,11 @@ export class LaborAllocationDecisionScenario {
 }
 
 export class LaborAllocationDecision {
+    readonly previousPlan: Map<SkillDef, number>;
+
+    readonly happinessItems: { [key: string]: number };
     readonly happiness: number;
+
     readonly experimentProbability: number;
     readonly experimentingRoll: number;
     readonly experimenting: boolean;
@@ -160,14 +172,21 @@ export class LaborAllocationDecision {
     readonly scenarios: LaborAllocationDecisionScenario[];
 
     constructor(readonly laborAllocation: LaborAllocation, noChange: boolean = false) {
+        this.previousPlan = laborAllocation.clonePlan();
+
         // First decide whether to experiment with new allocations. For now,
         // we have a conservative culture that will mostly try new things
         // only if hungry, but not absolutely.
         const h = laborAllocation.clan.happiness;
-        this.happiness = h ? h.getValue('Food Quantity') + h.getValue('Food Quality') : 0;
+        this.happinessItems = h ? {
+            'Food Quantity': h.getValue('Food Quantity'),
+            'Food Quality': h.getValue('Food Quality'),
+        } : {};
+        this.happiness = sum(Object.values(this.happinessItems));
         this.experimentProbability = noChange
             ? 0
             : eloSuccessProbability(-5, this.happiness, 5);
+        console.log(this.experimentProbability, noChange)
         this.experimentingRoll = Math.random();
         this.experimenting = this.experimentingRoll < this.experimentProbability;
         if (!this.experimenting) {
