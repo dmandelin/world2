@@ -24,7 +24,7 @@
     <table>
         <tbody>
             {#each Object.entries(decision.happinessItems) as [key, item]}
-                <tr><td>{key}</td><td>{item.stateDisplay}</td><td>{signed(item.value, 0)}</td></tr>
+                <tr><td>{key}</td><td>{signed(item.value, 0)}</td><td>{item.stateDisplay}</td></tr>
             {/each}
             <tr><td>Contentment</td><td>{signed(decision.happiness, 0)}</td></tr>
             <tr><td>Chance to experiment</td><td>{pct(decision.experimentProbability)}</td></tr>
