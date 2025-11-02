@@ -4,6 +4,7 @@
 
 -   Clans have too much of a tendency to move back and forth
     between the same villages due to land pressure.
+    -   Show migration decisions in the clan details panel.
 
 x   Sort respect table by respect value
 -   Add some sort of status badge by respect level

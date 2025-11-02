@@ -12,7 +12,7 @@ export interface Table<RowData extends Object, ColumnData extends Object> {
 export interface TableColumn<RowData extends Object, ColumnData extends Object> {
     label: string;
     data?: ColumnData;
-    formatFn?: (value: number) => string;
+    formatFn?: 'imgsrc' | ((value: number) => string);
     tooltip?: Snippet<[RowData, ColumnData]>;
 }
 
@@ -29,7 +29,7 @@ export interface TableRow<RowData extends Object, ColumnData extends Object> {
 export interface ColumnSpec<RowData extends Object, ColumnData extends Object> {
     label: string;
     valueFn: (row: RowData) => number|string;
-    formatFn?: (value: number) => string;
+    formatFn?: 'imgsrc' | ((value: number) => string);
     tooltip?: Snippet<[RowData, ColumnData]>;
     onClickCell?: (row: RowData, col: ColumnData) => void;
 }

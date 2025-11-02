@@ -9,8 +9,14 @@
         column: TableColumn<ColumnData>
     ): string {
         const value = row.items[column.label];
-        const formatFn = column.formatFn ?? String;
-        return formatFn(value);
+        switch (column.formatFn) {
+            case 'imgsrc':
+                return value;
+            case undefined:
+                return String(value);
+            default:
+                return column.formatFn(value);
+        }
     }
 </script>
 
@@ -36,6 +42,16 @@
         font-weight: bold;
     }
 </style>
+
+{#snippet cellHTML(row: TableRow<any, any>, column: TableColumn<any>)}
+    {#if column.formatFn === 'imgsrc'}
+        {#if row.items[column.label]}
+            <img src={row.items[column.label]} alt="icon" width="16" height="16" />
+        {/if}
+    {:else}
+        {cellValue(row, column)}
+    {/if}
+{/snippet}
 
 <table>
     {#if !table.hideColumnHeaders}
@@ -64,20 +80,20 @@
                         onclick={() => column.onClickCell?.(row.data, column.data)}>
                         {#if column.tooltip}
                             <Tooltip>
-                                {cellValue(row, column)}
+                                {@render cellHTML(row, column)}
                                  <div slot="tooltip">
                                     {@render column.tooltip(row.data, column.data)}
                                  </div>
                             </Tooltip>
                         {:else if row.tooltip}
                             <Tooltip>
-                                {cellValue(row, column)}
+                                {@render cellHTML(row, column)}
                                  <div slot="tooltip">
                                     {@render row.tooltip(row.data, column.data)}
                                  </div>
                             </Tooltip>
                         {:else}
-                            {cellValue(row, column)}
+                                {@render cellHTML(row, column)}
                         {/if}
                     </td>
                 {/each}

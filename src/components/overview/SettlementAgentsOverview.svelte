@@ -2,6 +2,7 @@
     import { signed, spct } from "../../model/lib/format";
     import type { PopulationChangeModifier } from "../../model/people/population";
     import type { ClanDTO, SettlementDTO } from "../dtos";
+    import MigrationPlan from "../MigrationPlan.svelte";
     import { selectClan } from "../state/uistate.svelte";
     import { TableBuilder } from "../tablebuilder";
     import TableView from "../TableView.svelte";
@@ -10,6 +11,12 @@
 
     function settlementClanTable(settlement: SettlementDTO) {
         return TableBuilder.fromNamedItems(settlement.clans, [
+            {
+                label: "★",
+                valueFn: c => migrationPlanValue(c),
+                formatFn: 'imgsrc',
+                tooltip: clanMigrationPlanTooltip,
+            },
             {
                 label: "Pop",
                 valueFn: c => c.population,
@@ -54,6 +61,16 @@
             selectClan(clan);
         })
         .table;
+    }
+
+    function migrationPlanValue(clan: ClanDTO): string {
+        if (clan.migrationPlan?.willMigrate) {
+            return "migrate-yes-256.png";
+        } else if (clan.migrationPlan?.wantToMove) {
+            return "migrate-want-256.png";
+        } else {
+            return "";
+        }
     }
 
     function clanPopChangeModifierTooltip(modifiers: readonly PopulationChangeModifier[]) {
@@ -104,6 +121,10 @@
         .table;
     }
 </script>
+
+{#snippet clanMigrationPlanTooltip(clan: ClanDTO)}
+    <MigrationPlan plan={clan.migrationPlan} />
+{/snippet}
 
 {#snippet clanSustenanceTooltip(clan: ClanDTO)}
   <TableView table={clanSustenanceTooltipTable(clan)}></TableView>
