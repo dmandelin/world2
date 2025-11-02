@@ -61,7 +61,6 @@ export class MigrationCalc {
     }
 
     private trigger() {
-        // TODO - restore
         // TODO - make clans that just split want to move more often.
         if (Math.random() < 0.05) {
             this.wantToMove = true;
@@ -69,10 +68,19 @@ export class MigrationCalc {
             return;
         }
 
+        this.clan.settlement.productionNode(SkillDefs.Agriculture).landPerWorker(this.clan)
         if (this.clan.happiness.getAppealNonNull('Food Quantity') < 0) {
-            this.wantToMove = true;
-            this.wantToMoveReason = 'Hunger';
-            return;
+            // Hungry, but this creates a desire to move only if there's
+            // some reason to think moving will help. At present the main
+            // thing that changes is farmland availability.
+            // TODO - consider opportunities to learn productive skills
+            // TODO - consider local infrastructure
+            if ((this.clan.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0 > 0) &&
+                this.clan.settlement.productionNode(SkillDefs.Agriculture).landPerWorker(this.clan) < 1) {
+                this.wantToMove = true;
+                this.wantToMoveReason = 'Hunger';
+                return;
+            }
         }
 
         if (this.clan.happiness.getAppealNonNull('Society') < 0) {
