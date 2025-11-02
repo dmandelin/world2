@@ -63,18 +63,26 @@ export class TableBuilder<RowData extends Object, ColumnData extends Object> {
         }
         return new TableBuilder({ columns, rows });
     }
+    
+    static fromKeyedItems<K extends PropertyKey, Item extends { [key in K]: string }>(
+        items: Iterable<Item>,
+        key: K,
+        columnSpecs: ColumnSpec<Item, string>[],
+    ): TableBuilder<Item, string> {
+        function* toEntries(items: Iterable<Item>): Iterable<[string, Item]> {
+            for (const item of items) {
+                yield [item[key], item];
+            }
+        }
+
+        return TableBuilder.fromItems(toEntries(items), columnSpecs);
+    }
 
     static fromNamedItems<Item extends { name: string }>(
         items: Iterable<Item>,
         columnSpecs: ColumnSpec<Item, string>[],
     ): TableBuilder<Item, string> {
-        function* toEntries(items: Iterable<Item>): Iterable<[string, Item]> {
-            for (const item of items) {
-                yield [item.name, item];
-            }
-        }
-
-        return TableBuilder.fromItems(toEntries(items), columnSpecs);
+        return TableBuilder.fromKeyedItems(items, 'name', columnSpecs);
     }
 
     static fromRecordItems<Item extends Object>(

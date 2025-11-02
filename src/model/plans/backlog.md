@@ -2,10 +2,19 @@
 
 ## Next items in latest plans
 
+-   Clans have too much of a tendency to move back and forth
+    between the same villages due to land pressure.
+
 x   Sort respect table by respect value
 -   Add some sort of status badge by respect level
 -   Show respect breakdown in totals line
 -   Make consumption respect value relative to expectations
+
+-   Consider tracking lineages of related clans so we can track
+    growth across clan splits.
+
+-   See if there's a bug where food quality expectations don't
+    downgrade quickly enough.
 
 -   (P2) Let clans attend rituals in the mother village at some cost,
     because otherwise the lower ritual quality makes them move back

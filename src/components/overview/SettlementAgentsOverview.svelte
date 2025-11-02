@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { signed } from "../../model/lib/format";
+    import { signed, spct } from "../../model/lib/format";
+    import type { PopulationChangeModifier } from "../../model/people/population";
     import type { ClanDTO, SettlementDTO } from "../dtos";
     import { selectClan } from "../state/uistate.svelte";
     import { TableBuilder } from "../tablebuilder";
@@ -12,6 +13,18 @@
             {
                 label: "Pop",
                 valueFn: c => c.population,
+            },
+            {
+                label: "BR",
+                valueFn: c => c.lastPopulationChange.brModifier,
+                formatFn: v => spct(v),
+                tooltip: clanBrModifiersTooltip,
+            },
+            {
+                label: "DR",
+                valueFn: c => c.lastPopulationChange.drModifier,
+                formatFn: v => spct(v),
+                tooltip: clanDrModifiersTooltip,
             },
             {
                 label: "Sus",
@@ -40,6 +53,22 @@
         .onClickRowHeader((clan: ClanDTO) => {
             selectClan(clan);
         })
+        .table;
+    }
+
+    function clanPopChangeModifierTooltip(modifiers: readonly PopulationChangeModifier[]) {
+        return TableBuilder.fromKeyedItems(modifiers, 'source', [
+            {
+                label: "",
+                valueFn: i => i.inputValue,
+                formatFn: v => typeof v === "number" ? v.toFixed(2) : v,
+            },
+            {
+                label: "",
+                valueFn: i => i.value,
+                formatFn: v => spct(v),
+            },
+        ])
         .table;
     }
 
@@ -82,6 +111,14 @@
 
 {#snippet clanHappinessTooltip(clan: ClanDTO)}
   <TableView table={clanHappinessTooltipTable(clan)}></TableView>
+{/snippet}
+
+{#snippet clanBrModifiersTooltip(clan: ClanDTO)}
+  <TableView table={clanPopChangeModifierTooltip(clan.lastPopulationChange.brModifiers)}></TableView>
+{/snippet}
+
+{#snippet clanDrModifiersTooltip(clan: ClanDTO)}
+  <TableView table={clanPopChangeModifierTooltip(clan.lastPopulationChange.drModifiers)}></TableView>
 {/snippet}
 
 <div id="top">
