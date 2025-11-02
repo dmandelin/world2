@@ -15,7 +15,8 @@ Detailed design on next stuff
                 x   Labor allocation decisions
                 *   Happiness conditions that might motivate action
                 *   Factors determining those happiness ratings
-                *   Decisions and considered and the decision outcome
+                x   Decisions and considered and the decision outcome
+                x   Demographic modifiers
                 *   Demographic panel and also:
                     *   Recent population history
                     *   Expected vs actual changes

@@ -2,11 +2,26 @@
 
 ## Next items in latest plans
 
+-   Create a proper cluster view similar to the settlement view.
+    This will help us track cluster-level population effects,
+    find regionally successful clans, etc.
+
+-   Recheck happiness model and better display the data
+    -   Show a full happiness panel in the clan details
+    -   Show relevant values in the tooltip also
+    -   Expectations should be based not only on clan experience
+        but on the experience of people they know
+    -   Flag in the UI the most significant sources of happiness
+        and unhappiness.
+    -   Give clans appropriate avenues to address unhappiness or
+        register that there isn't a way to improve and do something
+        with that.
+
 -   Clans have too much of a tendency to move back and forth
     between the same villages due to land pressure.
     x   Show migration decisions in the clan details panel.
 
--   Recheck how clans migrate due to food issues. They shouldn't
+x   Recheck how clans migrate due to food issues. They shouldn't
     really migrate just because of hunger, but rather because
     there is some reason a different location would have more food.
 
