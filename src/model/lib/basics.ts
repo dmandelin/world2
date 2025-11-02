@@ -125,7 +125,13 @@ export function shuffled<T>(arr: T[]): T[] {
     return result;
 }
 
-export function sortedByKey<T>(iterable: Iterable<T>, key: (t: T) => number): T[] {
+export type ComparisonKeyFn<T> = (
+    ((t: T) => number) |
+    ((t: T) => string) |
+    ((t: T) => Date)
+);
+
+export function sortedByKey<T>(iterable: Iterable<T>, key: ComparisonKeyFn<T>): T[] {
     const arr = Array.from(iterable);
     return arr.toSorted((a, b) => {
         const aKey = key(a);

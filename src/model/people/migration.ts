@@ -1,6 +1,5 @@
-import { clamp, sumFun } from "../lib/basics";
+import { sumFun } from "../lib/basics";
 import { Clan, PersonalityTraits } from "./people";
-import { normal } from "../lib/distributions";
 import { randomHamletName } from "./names";
 import { selectBySoftmax } from "../lib/modelbasics";
 import { Settlement } from "./settlement";
@@ -8,7 +7,15 @@ import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
 import { SkillDefs } from "./skills";
 
-export type MigrationTarget = Settlement | 'new';
+class NewSettlementMigrationTarget {
+    get name(): string { return 'New settlement'; }
+    get population(): number { return 0; }
+    get cluster(): SettlementCluster | undefined { return undefined; }
+}
+
+export const NewSettlement = new NewSettlementMigrationTarget();
+
+export type MigrationTarget = Settlement | NewSettlementMigrationTarget;
 
 export class NewSettlementSupplier {
     private readonly newBySource: Map<Settlement, Settlement> = new Map();
@@ -80,7 +87,7 @@ export class MigrationCalc {
         for (const target of this.clan.settlement.cluster.settlements) {
             this.targets.set(target, new CandidateMigrationCalc(this.clan, stayCalc, target));
         }
-        this.targets.set('new', new CandidateMigrationCalc(this.clan, stayCalc, 'new'));
+        this.targets.set(NewSettlement, new CandidateMigrationCalc(this.clan, stayCalc, NewSettlement));
     }
 
     private select() {
@@ -105,7 +112,7 @@ export class MigrationCalc {
     get targetsTable(): string[][] {
         const header = ['Target', 'Value'];
         const rows = Array.from(this.targets.entries()).map(([target, calc]) => [
-            target === 'new' ? 'New settlement' : target.name,
+            target.name,
             calc.value.toFixed(1)
         ]);
         return [header, ...rows];
@@ -124,7 +131,7 @@ export class CandidateMigrationCalc {
     readonly value: number;
 
     constructor(readonly clan: Clan, readonly stayCalc: CandidateMigrationCalc | undefined, readonly target: MigrationTarget) {
-        if (target !== 'new' && target.population > 400) {
+        if (target !== NewSettlement && target.population > 400) {
             this.isEligible = false;
             this.isIneligibleReason = `Crowded, not accepting newcomers`;
         }
@@ -171,7 +178,7 @@ export class CandidateMigrationCalc {
                 item = { name: 'Inertia', reason: 'Settling', value: -1 }; break;
         }
 
-        if (this.target !== 'new' && this.target.cluster !== this.clan.settlement.cluster) {
+        if (this.target !== NewSettlement && this.target.cluster !== this.clan.settlement.cluster) {
             item.reason = `Far (${item.reason})`;
             item.value = -4 + 2 * item.value;
         } else {
@@ -183,7 +190,7 @@ export class CandidateMigrationCalc {
 
     private fromPopulation(): CandidateMigrationCalcItem {
         let item: CandidateMigrationCalcItem;
-        if (this.target === 'new') {
+        if (this.target instanceof NewSettlementMigrationTarget) {
             item = { name: 'Pop', reason: 'New settlement', value: 0 };
         } else {
             item = { name: 'Pop', reason: 'Society', value: this.target.averageAppealFrom('Society') };
@@ -201,7 +208,7 @@ export class CandidateMigrationCalc {
         const farmingFraction = this.clan.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0;
         const landRatio = this.clan.settlement.productionNode(SkillDefs.Agriculture)
             .landPerWorker(this.clan);
-        const targetLandRatio = this.target === 'new' 
+        const targetLandRatio = this.target instanceof NewSettlementMigrationTarget 
             ? 1.0
             : this.target.productionNode(SkillDefs.Agriculture).landPerWorker();
 
@@ -214,7 +221,7 @@ export class CandidateMigrationCalc {
 
     private fromRitual(): CandidateMigrationCalcItem {
         let item: CandidateMigrationCalcItem;
-        if (this.target === 'new') {
+        if (this.target instanceof NewSettlementMigrationTarget) {
             item = {
                 name: 'Ritual',
                 reason: 'New village',
@@ -254,7 +261,7 @@ function migrateClan(
     let actualTarget: Settlement;
     let isNew = false;
 
-    if (target === 'new') {
+    if (target instanceof NewSettlementMigrationTarget) {
         actualTarget = newSettlementSupplier.get(source.cluster, source);
         isNew = true;
     } else {

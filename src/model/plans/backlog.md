@@ -4,7 +4,15 @@
 
 -   Clans have too much of a tendency to move back and forth
     between the same villages due to land pressure.
-    -   Show migration decisions in the clan details panel.
+    x   Show migration decisions in the clan details panel.
+
+-   Recheck how clans migrate due to food issues. They shouldn't
+    really migrate just because of hunger, but rather because
+    there is some reason a different location would have more food.
+
+-   Clans are too reluctant to migrate to new farmland because of
+    ritual issues. Various things can be tried, e.g., treating
+    ritual as a superior good.
 
 x   Sort respect table by respect value
 -   Add some sort of status badge by respect level
