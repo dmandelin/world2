@@ -112,6 +112,7 @@ export type ClanDTO = {
     respect: Map<Clan, RespectCalc>;
     prestige: Map<Clan, PrestigeCalc>;
     alignment: Map<Clan, AlignmentCalc>;
+    averageRespect: number;
     averagePrestige: number;
     influence: number;
     
@@ -150,6 +151,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         respect: clan.respectMap,
         prestige: prestigeDTO(clan),
         alignment: alignmentDTO(clan),
+        averageRespect: clan.averageRespect,
         averagePrestige: clan.averagePrestige,
         influence: clan.influence,
 

@@ -3,6 +3,7 @@ import type { ClanDTO, SettlementDTO } from "./dtos";
 import { TableBuilder, type Table } from "./tablebuilder";
 import type { RespectCalc, RespectCalcItem } from "../model/people/respect";
 import { signed } from "../model/lib/format";
+import { sortedByKey } from "../model/lib/basics";
 
 export function buildConsumptionTable(settlement: SettlementDTO): Table<string, ClanDTO> {
     return TableBuilder.fromColumnData(
@@ -17,7 +18,7 @@ export function buildRespectTable(
     settlement: SettlementDTO, respectCellTooltip: Snippet<[ClanDTO, ClanDTO]>): Table<ClanDTO, ClanDTO> {
 
     return TableBuilder.crossTab(
-        settlement.clans,
+        sortedByKey(settlement.clans, c => -c.averageRespect),
         clan => clan.name,
         (rowClan, colClan) => rowClan.respect.get(colClan.ref)?.value ?? 0,
         value => signed(value, 2),

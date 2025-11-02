@@ -22,6 +22,7 @@ import { HousingTypes } from "../econ/housing";
 import { HappinessCalc } from "./happiness";
 import { ResidenceLevels, type ResidenceLevel } from "./residence";
 import { RespectCalc } from "./respect";
+import { weightedAverage } from "../lib/modelbasics";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -366,6 +367,13 @@ export class Clan implements TradePartner {
     advanceMigration(newSettlementSupplier: NewSettlementSupplier): boolean {
         if (this.migrationPlan === undefined) return false;
         return this.migrationPlan.advance(newSettlementSupplier);
+    }
+
+    get averageRespect(): number {
+        return weightedAverage(
+            this.settlement.clans, 
+            clan => clan.respectFor(this)?.value ?? 0, 
+            clan => clan.population);
     }
 
     get averagePrestige(): number {

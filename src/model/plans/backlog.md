@@ -2,7 +2,8 @@
 
 ## Next items in latest plans
 
--   Sort respect table by respect value
+x   Sort respect table by respect value
+-   Add some sort of status badge by respect level
 -   Show respect breakdown in totals line
 -   Make consumption respect value relative to expectations
 
@@ -14,13 +15,16 @@
 -   Consider:
     -   Personality trait for how much clans care about food quality
     -   Experiment with smaller or bigger changes in farming amounts
-        depending on precedent and need for improvement.
+        depending on precedent and need fSoor improvement.
 
 -   Capture productivity calcs used during production and show them
     in the UI so we can better understand production stats.
 
 -   Clans now learn from each other very slowly because learning is
     scaled by residence factor, which starts low
+    *   Note that there is substantial skill dispersion now, which
+        leads to substantial prosperity and respect difference, so
+        update for that
     -   Give clans additional basic ways of interacting that will
         boost their learning from each other
         -   Might be a choice
