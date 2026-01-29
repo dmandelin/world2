@@ -8,7 +8,7 @@ Clans are motivated to get:
 *   Belonging - being accepted, liked, having allies
 *   Prestige - being considered important, valuable, competent
 *   Luxury - comfort, pleasure
-*   Power - agency, freedom, ability
+*   Power/Liberty - agency, freedom, ability
 *   Meaning - ritual, meaning, sacredness
 
 Clans and leaders may weight these differently, by personality.
@@ -92,3 +92,33 @@ Let's try to make this all quite visible:
         *   Give to those we know
         *   Give to those in need
     
+Some key events and actions:
+
+*   Host/participate
+    *   Hold feasts and participate in rituals in the normal way
+        *   Also have options for higher and lower levels
+    *   Clans must choose who they'll host, and there's a cost for each
+        *   Thus at some point they can't do this with everyone
+    *   Relatedness and prestige boost
+        *   But the boost depends on what else they are receiving
+    *   This is a place different logics of cooperation could be used:
+        *   Communal sharing - Participation doesn't necessarily cost
+            anything, as long as you belong.
+        *   Ranked authority - There are explicitly defined classes to
+            participate in, with different costs and benefits.
+        *   Equal turns - Everyone pays the same cost in order to be
+            allowed to participate.
+        *   Market pricing - People participate as much as they want
+            and get that much reputation.
+*   Floods and crop failures
+    *   Might severely affect ~1 clan per village in a typical turn
+        *   On their own: reduced happiness, population growth
+        *   With help: smaller effects
+*   Bumper crops
+    *   Might happen for ~1 clan per village in a typical turn, but
+        sometimes the whole village
+    *   Creates opportunity to take special actions:
+        *   Help someone else more easily and better in case of crop failure
+        *   Throw extra-large feasts (longer-term reputation bonus)
+        *   Fund bigger labor project
+        *   Trade for other goods
