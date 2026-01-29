@@ -122,3 +122,4 @@ Some key events and actions:
         *   Throw extra-large feasts (longer-term reputation bonus)
         *   Fund bigger labor project
         *   Trade for other goods
+*   Major offense (justice event)
