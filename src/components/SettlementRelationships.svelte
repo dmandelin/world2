@@ -24,31 +24,55 @@
         .addAverageRow(rowClan => (rowClan as Clan).population).table;
     }
 
-    /*
-export function buildRespectTooltip(
-    subject: Clan, object: Clan): Table<RespectCalcItem, string> {
-    const respectCalc: RespectCalc = subject.relationships.get(object.ref)!;
-    return TableBuilder.fromRecordItems(
-        respectCalc.items,
-        [
-            { label: '', valueFn: item => item.value, formatFn: value => signed(value, 2) },
+    function buildCellTooltip(
+        subject: Clan, object: Clan): Table<string, string> {
+            const r = subject.relationships.get(object);
+            if (!r) {
+                return {
+                    columns: [
+                        { label: 'Value'},
+                    ],
+                    rows: [
+                    ]
+                }
+            }
+            const d = r.interactionVolume;
+            return {
+                columns: [
+                    { label: 'Value'},
+                ],
+                rows: [
+                    {
+                        label: 'Attention',
+                        items: {'Value': unsigned(d.attentionFraction, 2)}
+                    },
+                    {
+                        label: 'Nomadic Contact',
+                        items: {'Value': unsigned(d.nomadicVolume, 2)}
+                    },
+                    {
+                        label: 'Coresidence',
+                        items: {'Value': unsigned(d.coresidenceFactor, 2)}
+                    },
+                    {
+                        label: 'Settlement Scale Factor',
+                        items: {'Value': unsigned(d.settlementScaleFactor, 2)}
+                    },
+                    {
+                        label: 'Settlement Contact',
+                        items: {'Value': unsigned(d.coresidentVolume, 2)}
+                    },
 
-        ])
-        .addTotalRow()
-        .table;
-}
-*/
+                ]
+            }
+    }
 </script>
 
 <style>
 </style>
 
 {#snippet cellTooltip(subject: Clan, object: Clan)}
-TOOLTIP
-<!--
-  {pct(subject.relationships.get(object)?.informationLevel ?? 0)} informed
-  <TableView table={buildRelationshipsTooltip(subject, object)}></TableView>
--->
+  <TableView table={buildCellTooltip(subject, object)}></TableView>
 {/snippet}
 
 <div style="display: flex; flex-direction: row; gap: 2rem;">
