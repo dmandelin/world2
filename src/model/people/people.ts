@@ -23,6 +23,7 @@ import { HappinessCalc } from "./happiness";
 import { ResidenceLevels, type ResidenceLevel } from "./residence";
 import { RespectCalc } from "./respect";
 import { weightedAverage } from "../lib/modelbasics";
+import { Relationships } from "./relationship";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -215,6 +216,8 @@ export class Clan implements TradePartner {
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
 
     // Relationships
+    readonly relationships = new Relationships(this);
+
     parent: Clan|undefined;
     cadets: Clan[] = [];
     // Maps a clan to a relatedness factor based on the marriage history of

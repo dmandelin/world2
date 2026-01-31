@@ -17,11 +17,11 @@
     const tabs = [
         { label: "Overview", snippet: overviewTab },
         { label: "People", snippet: peopleTab },
+        { label: "Relationships", snippet: relationshipsTab },
         { label: "Demographics", snippet: demographicsTab },
         { label: "Respect", snippet: respectTab },
         { label: "Health", snippet: healthTab },
         { label: "Opinions", snippet: opinionsTab },
-        { label: "Relationships", snippet: relationshipsTab },
         { label: "Happiness", snippet: happinessTab },
         { label: "Rites", snippet: ritesTab },
         { label: "Production", snippet: economyTab },

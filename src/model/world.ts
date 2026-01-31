@@ -158,6 +158,7 @@ export class World implements NoteTaker {
     private plan(priming: boolean = false) {
         console.log('[World]   Planning.');
 
+        this.updateRelationships();
         this.updatePerceptions();
 
         for (const clan of this.allClans) {
@@ -218,6 +219,12 @@ export class World implements NoteTaker {
         const nss = new NewSettlementSupplier();
         for (const clan of shuffled(this.allClans)) {
             clan.advanceMigration(nss);
+        }
+    }
+
+    updateRelationships() {
+        for (const clan of this.allClans) {
+            clan.relationships.update();
         }
     }
 

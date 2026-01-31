@@ -26,6 +26,7 @@ import type { HappinessCalc } from "../model/people/happiness";
 import type { ResidenceLevel } from "../model/people/residence";
 import { populationAverage } from "../model/lib/modelbasics";
 import type { RespectCalc } from "../model/people/respect";
+import type { Relationships } from "../model/people/relationship";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -105,6 +106,7 @@ export type ClanDTO = {
     cadets: Clan[];
     parent: Clan|undefined;
     marriagePartners: Map<Clan, number>;
+    relationships: Relationships;
     tradeRelationships: TradeRelationshipsDTO[];
     rites: Rites;
     slices: number[][];
@@ -148,6 +150,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         name: clan.name,
         color: clan.color,
 
+        relationships: clan.relationships,
         respect: clan.respectMap,
         prestige: prestigeDTO(clan),
         alignment: alignmentDTO(clan),
