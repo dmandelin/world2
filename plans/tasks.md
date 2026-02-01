@@ -1,8 +1,8 @@
 *   Interactions
-    *   Interaction intensity factor
-        *   Can start with the local one in People.updateRespect
-        *   Add to renamed Respect panel in UI
-        *   Consider implementing this with a new Relationship class
+    x   Interaction intensity factor
+        x   Can start with the local one in People.updateRespect
+        x   Add to renamed Respect panel in UI
+        x   Consider implementing this with a new Relationship class
             that can encapsulate all the aspects
     *   Redo alignment concept with proper name inside Relationship
         *   Get that appropriately displayed in the UI
@@ -15,6 +15,23 @@
     *   Add flood relief event dependent on interactions
     *   (P2) Add justice event dependent on interactions
     *   (P2) Add religious event (clan or local crisis) dependent on interactions
+
+*   Make happiness view actually readable
+
+*   Interaction effects
+    *   Specific items to add
+        x   Appeal effect
+        *   Productivity boost
+        *   We should make learning indexed on interactions to boost the incentive
+            *   Learning skills
+            *   Learning behaviors
+            *   Learning opinions
+        *   Disease load: maybe relate to an interaction intensity
+    *   General plan
+        *   help when sick or other misfortunes
+        *   food variety/availability improvement
+        *   learning skills and opinions from each other
+        *   disease transmission
 
 *   "UI clean slate"
     *   Notionally clear out the UI, then build up exactly

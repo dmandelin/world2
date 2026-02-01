@@ -1,29 +1,29 @@
+import { AlignmentCalc } from "./alignment";
 import { Annals } from "../annals";
 import { clamp, remove } from "../lib/basics";
-import { normal } from "../lib/distributions";
-import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
-import { PrestigeCalc } from "./prestige";
+import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
+import { HappinessCalc } from "./happiness";
+import { HousingDecision } from "../decisions/housingdecision";
+import { HousingTypes } from "../econ/housing";
 import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } from "./population";
+import { LaborAllocation } from "../decisions/labor";
+import { MigrationCalc, type NewSettlementSupplier} from "./migration";
+import { normal } from "../lib/distributions";
+import { PrestigeCalc } from "./prestige";
+import { ProductivityCalc } from "./productivity";
+import { Relationships } from "./relationships";
+import { ResidenceLevels, type ResidenceLevel } from "./residence";
+import { RespectCalc } from "./respect";
 import { Rites } from "../rites";
+import { TradeGoods } from "../trade";
+import { Traits } from "./traits";
+import { type FloodLevel, FloodLevels } from "../environment/flood";
+import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
+import { weightedAverage } from "../lib/modelbasics";
 import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { MigrationCalc, type NewSettlementSupplier} from "./migration";
-import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
-import { ProductivityCalc } from "./productivity";
-import { Traits } from "./traits";
-import { HousingDecision } from "../decisions/housingdecision";
-import { type FloodLevel, FloodLevels } from "../environment/flood";
-import { LaborAllocation } from "../decisions/labor";
-import { AlignmentCalc } from "./alignment";
-import { TradeGoods } from "../trade";
-import { HousingTypes } from "../econ/housing";
-import { HappinessCalc } from "./happiness";
-import { ResidenceLevels, type ResidenceLevel } from "./residence";
-import { RespectCalc } from "./respect";
-import { weightedAverage } from "../lib/modelbasics";
-import { Relationships } from "./relationship";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",

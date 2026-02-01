@@ -1,3 +1,4 @@
+import { sumFun } from "../lib/basics";
 import type { Clan } from "./people";
 
 export class CalcBase {}
@@ -9,6 +10,10 @@ export class Relationships {
 
     get(object: Clan): Relationship | undefined {
         return this.m.get(object);
+    }
+
+    get totalInteractionVolume(): number {
+        return sumFun(this.m.values(), relationship => relationship.interactionVolume.amount);
     }
 
     update() {

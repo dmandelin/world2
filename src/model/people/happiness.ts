@@ -226,6 +226,24 @@ class FloodHappinessItem extends NumericHappinessItem {
     }
 }
 
+class SocietyHappinessItem extends NumericHappinessItem {
+    get label(): string {
+        return 'Society';
+    }
+
+    get stateDisplay(): string {
+        return `interaction volume ${this.state_.toFixed(2)}`;
+    }
+
+    appealOf(interactionVolume: number): number {
+        return 20 * interactionVolume;
+    }
+    
+    updateState(clan: Clan): void {
+        this.state_ = clan.relationships.totalInteractionVolume;
+    }
+}
+
 class RitualHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Rituals';
@@ -259,25 +277,6 @@ class StatusHappinessItem extends NumericHappinessItem {
 
     updateState(clan: Clan): void {
         this.state_ = clan.averagePrestige;
-    }
-}
-
-class SocietyHappinessItem extends NumericHappinessItem {
-    get label(): string {
-        return 'Society';
-    }
-
-    get stateDisplay(): string {
-        return `pop ${this.state_.toFixed(0)}`;
-    }
-
-    appealOf(population: number): number {
-        const limit = 300;
-        return population <= limit ? 0 : -20 * (population - limit) / population;
-    }
-
-    updateState(clan: Clan): void {
-        this.state_ = clan.settlement.population;
     }
 }
 

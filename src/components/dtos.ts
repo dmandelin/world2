@@ -26,7 +26,7 @@ import type { HappinessCalc } from "../model/people/happiness";
 import type { ResidenceLevel } from "../model/people/residence";
 import { populationAverage } from "../model/lib/modelbasics";
 import type { RespectCalc } from "../model/people/respect";
-import type { Relationships } from "../model/people/relationship";
+import type { Relationships } from "../model/people/relationships";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
