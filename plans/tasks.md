@@ -4,8 +4,8 @@
         x   Add to renamed Respect panel in UI
         x   Consider implementing this with a new Relationship class
             that can encapsulate all the aspects
-    *   Redo alignment concept with proper name inside Relationship
-        *   Get that appropriately displayed in the UI
+    x   Redo alignment concept with proper name inside Relationship
+        x   Get that appropriately displayed in the UI
     *   Create belongingness satisfaction
         *   Get that appropriately displayed in the UI
         *   Consider how to link this to settlement scale preferences
@@ -16,6 +16,11 @@
     *   (P2) Add justice event dependent on interactions
     *   (P2) Add religious event (clan or local crisis) dependent on interactions
 
+*   Add visit bonus for interactions between related clans
+*   Consider making interactions more effective when alignment is high
+*   Consider appeal for high alignment
+*   Handle self better for interaction volume
+*   Handle self better for alignment
 *   Make happiness view actually readable
 
 *   Interaction effects

@@ -1,7 +1,10 @@
-import { sumFun } from "../lib/basics";
+import { sum, sumFun, sumValues } from "../lib/basics";
+import { normal } from "../lib/distributions";
 import type { Clan } from "./people";
 
-export class CalcBase {}
+export class CalcBase {
+    value: number = 0;
+}
 
 export class Relationships {
     private m: Map<Clan, Relationship> = new Map();
@@ -13,7 +16,7 @@ export class Relationships {
     }
 
     get totalInteractionVolume(): number {
-        return sumFun(this.m.values(), relationship => relationship.interactionVolume.amount);
+        return sumFun(this.m.values(), relationship => relationship.interactionVolume.value);
     }
 
     update() {
@@ -43,16 +46,19 @@ export class Relationships {
 
 export class Relationship {
     interactionVolume: InteractionVolume;
+    alignment: Alignment;
 
     constructor(
         readonly subject: Clan,
         readonly object: Clan) 
     {
         this.interactionVolume = new InteractionVolume(subject, object);
+        this.alignment = new Alignment(subject, object);
     }
 
     update(attentionFraction: number) {
         this.interactionVolume.update(attentionFraction);
+        this.alignment.update();
     }
 }
 
@@ -65,7 +71,7 @@ export class InteractionVolume extends CalcBase {
     settlementScaleFactor = 0;
     coresidentVolume = 0;
 
-    amount = 0;
+    value = 0;
 
     constructor(
         readonly subject: Clan,
@@ -86,6 +92,28 @@ export class InteractionVolume extends CalcBase {
         this.settlementScaleFactor = Math.min(1, Math.sqrt(150 / this.subject.settlement.population));
         this.coresidentVolume = attentionFraction * this.coresidenceFactor * this.settlementScaleFactor;
 
-        this.amount = this.nomadicVolume + this.coresidentVolume;
+        this.value = this.nomadicVolume + this.coresidentVolume;
+    }
+}
+
+export class Alignment extends CalcBase {
+    items: Record<string, number> = {};
+
+    constructor(
+        readonly subject: Clan,
+        readonly object: Clan
+    ) {
+        super();
+        this.update();
+    }
+
+    update() {
+        this.items['Society'] = this.subject.relationships.get(this.object)?.interactionVolume.value ?? 0;
+        this.items['Kinship'] = this.subject.kinshipTo(this.object);
+        this.items['Marriage'] = this.subject.marriagePartners.get(this.object) ?? 0;
+        if (this.subject !== this.object) {
+            this.items['Random'] = normal(0, 0.1);
+        }
+        this.value = sumValues(this.items, v => v);
     }
 }
