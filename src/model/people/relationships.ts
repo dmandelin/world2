@@ -44,9 +44,30 @@ export class Relationships {
     }
 }
 
+export enum Stance {
+    Generous = 'Generous',
+    Stingy = 'Stingy',
+};
+
 export class Relationship {
     interactionVolume: InteractionVolume;
     alignment: Alignment;
+
+    stance: Stance = Stance.Generous;
+
+    // Implementation notes on stance:
+    // - Turns are 20 years so we can assume clans respond to each other.
+    //   A generous clan will get burned by a stingy clan a little bit,
+    //   but will then change their behavior to protect themselves for
+    //   most of a turn.
+    // - Stance interactions:
+    //   - Generous vs Generous: both interact in high-trust ways, full
+    //     benefits.
+    //   - Stingy vs Stingy: interaction is reduced and more guarded, so
+    //     lower benefits. Could be applied at both volume and effect levels.
+    //   - Generous vs Stingy: result is similar to stingy vs stingy,
+    //     except that there is slightly more interaction and also a
+    //     small zero-sum transfer from generous to stingy.
 
     constructor(
         readonly subject: Clan,
