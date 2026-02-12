@@ -1,23 +1,8 @@
 <script lang="ts">
-    import type { Table, TableRow, TableColumn } from "./tablebuilder";
-    import Tooltip from "./Tooltip.svelte";
+    import type { Table, TableColumn, TableRow } from "./tables2";
+    import Tooltip from "../Tooltip.svelte";
 
-    let { table } = $props<{ table: Table<any, any[]> }>();
-
-    function cellValue<RowData extends Object, ColumnData extends Object>(
-        row: TableRow<RowData, ColumnData>,
-        column: TableColumn<RowData, ColumnData>
-    ): string {
-        const value = row.items[column.label];
-        switch (column.formatFn) {
-            case 'imgsrc':
-                return value.toString();
-            case undefined:
-                return String(value);
-            default:
-                return column.formatFn((value as number));
-        }
-    }
+    let { table } : { table: Table<any, any>} = $props<{ table: Table<any, any>}>();
 </script>
 
 <style>
@@ -43,18 +28,18 @@
     }
 </style>
 
-{#snippet cellHTML(row: TableRow<any, any>, column: TableColumn<any, any>)}
-    {#if column.formatFn === 'imgsrc'}
-        {#if row.items[column.label]}
-            <img src={row.items[column.label].toString()} alt="icon" width="16" height="16" />
+{#snippet cellHTML(row: TableRow<any>, column: TableColumn<any, any>)}
+    {#if column.imgsrc}
+        {#if column.value(row)}
+             <img src={column.value(row)} alt="icon" width="16" height="16" />
         {/if}
     {:else}
-        {cellValue(row, column)}
+        {column.value(row)}
     {/if}
 {/snippet}
 
 <table>
-    {#if !table.hideColumnHeaders}
+    {#if !table.hideHeader}
         <thead>
             <tr>
                 <td></td>
@@ -77,19 +62,19 @@
                     <td 
                         class:bold={row.bold} 
                         class:clickable={!!column.onClickCell}
-                        onclick={() => column.onClickCell?.(row.data, column.data)}>
+                        onclick={() => column.onClickCell?.(column.value(row), row.data, column)}>
                         {#if column.tooltip}
                             <Tooltip>
                                 {@render cellHTML(row, column)}
                                  <div slot="tooltip">
-                                    {@render column.tooltip(row.data, column.data)}
+                                    {@render column.tooltip(column.value(row), row.data, column)}
                                  </div>
                             </Tooltip>
                         {:else if row.tooltip}
                             <Tooltip>
                                 {@render cellHTML(row, column)}
                                  <div slot="tooltip">
-                                    {@render row.tooltip(row.data, column.data)}
+                                    {@render row.tooltip(row.data, column)}
                                  </div>
                             </Tooltip>
                         {:else}

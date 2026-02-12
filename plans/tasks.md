@@ -6,6 +6,7 @@
             that can encapsulate all the aspects
     x   Redo alignment concept with proper name inside Relationship
         x   Get that appropriately displayed in the UI
+    *   Interaction stance effects
     *   Create belongingness satisfaction
         *   Get that appropriately displayed in the UI
         *   Consider how to link this to settlement scale preferences
