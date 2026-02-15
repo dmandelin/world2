@@ -1,3 +1,9 @@
+*   Better tables library
+    x   Draft initial version
+    *   Get tooltips working
+    *   Get aggregate rows working
+    *   Omit self crosstabs where applicable
+
 *   Interactions
     x   Interaction intensity factor
         x   Can start with the local one in People.updateRespect

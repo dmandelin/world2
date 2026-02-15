@@ -23,6 +23,10 @@ export function unsigned(x: number, places: number = 0): string {
     return x.toFixed(places);
 }
 
+export function unsignedFormat(places: number = 0): (n: number) => string {
+    return (n: number) => unsigned(n, places);
+}
+
 export function signed(x: number, places: number = 0): string {
     const sgn = x < 0 ? '' : '+';
     return `${sgn}${x.toFixed(places)}`;

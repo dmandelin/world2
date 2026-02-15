@@ -3,6 +3,16 @@
     import Tooltip from "../Tooltip.svelte";
 
     let { table } : { table: Table<any, any>} = $props<{ table: Table<any, any>}>();
+
+    function cellValue(row: TableRow<any>, column: TableColumn<any, any>) {
+        return column.valueFn(row.data);
+    }
+
+    function cellText(row: TableRow<any>, column: TableColumn<any, any>) {
+        return column.formatFn 
+            ? column.formatFn(cellValue(row, column))
+            : cellValue(row, column).toString();
+    }
 </script>
 
 <style>
@@ -30,11 +40,11 @@
 
 {#snippet cellHTML(row: TableRow<any>, column: TableColumn<any, any>)}
     {#if column.imgsrc}
-        {#if column.value(row)}
-             <img src={column.value(row)} alt="icon" width="16" height="16" />
+        {#if cellValue(row, column)}
+             <img src={cellValue(row, column)} alt="icon" width="16" height="16" />
         {/if}
     {:else}
-        {column.value(row)}
+        {cellText(row, column)}
     {/if}
 {/snippet}
 
@@ -62,12 +72,12 @@
                     <td 
                         class:bold={row.bold} 
                         class:clickable={!!column.onClickCell}
-                        onclick={() => column.onClickCell?.(column.value(row), row.data, column)}>
+                        onclick={() => column.onClickCell?.(cellValue(row, column), row.data, column)}>
                         {#if column.tooltip}
                             <Tooltip>
                                 {@render cellHTML(row, column)}
                                  <div slot="tooltip">
-                                    {@render column.tooltip(column.value(row), row.data, column)}
+                                    {@render column.tooltip(cellValue(row, column), row.data, column)}
                                  </div>
                             </Tooltip>
                         {:else if row.tooltip}
