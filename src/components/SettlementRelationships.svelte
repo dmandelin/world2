@@ -15,22 +15,16 @@
     function buildRelationshipsTable<CellValue>(
         valueFn: (rowClan: Clan, colClan: Clan) => CellValue,
         formatFn: (value: CellValue) => string,
-        cellTooltip: Snippet<[Clan, Clan]>): CrossTab<Clan, CellValue> {
+        cellTooltip: Snippet<[CellValue, Clan, Clan]>): CrossTab<Clan, CellValue> {
 
         const clans = sortedByKey(settlement.clans.map(c => c.ref), c => -c.averageRespect);
             
-        const tooltip = (rowClan: Clan, column: TableColumn<Clan, CellValue>) => {
-            // TODO: More reliable way of getting column clan.
-            const columnClan = clans.find(c => c.name === rowClan.name);
-            return cellTooltip(rowClan, columnClan!);
-        }
-
         return new CrossTab<Clan, CellValue>(
             clans,
             (clan: Clan) => clan.name,
             valueFn,
             formatFn,
-            tooltip,
+            cellTooltip,
         )
     }
 
@@ -59,13 +53,13 @@
     }
 
     function buildCellTooltip(
-        subject: Clan, object: Clan, field: 'interactionVolume' | 'alignment'): Table<string, [number]> {
+        subject: Clan, object: Clan, field: 'interactionVolume' | 'alignment'): Table<string, string, [number]> {
         
         const r = subject.relationships.get(object);
         if (!r) {
             return {
                 columns: [
-                    { label: 'Value', valueFn: row => 0 },
+                    { data: 'Value', label: 'Value', valueFn: row => 0 },
                 ],
                 rows: [
                 ]
@@ -78,7 +72,7 @@
         }
     }
 
-    function buildInteractionVolumeCellTooltip(r: Relationship): Table<string, [number]> {
+    function buildInteractionVolumeCellTooltip(r: Relationship): Table<string, string, [number]> {
         const d = r.interactionVolume;
         return new SingleRecordTable({
             'Attention': d.attentionFraction,
@@ -89,7 +83,7 @@
         });
     }
 
-    function buildAlignmentCellTooltip(r: Relationship): Table<string, [number]> {
+    function buildAlignmentCellTooltip(r: Relationship): Table<string, string, [number]> {
         const d = r.alignment;
         return new SingleRecordTable(d.items);
     }
@@ -98,15 +92,16 @@
 <style>
 </style>
 
-{#snippet interactionVolumeCellTooltip(subject: Clan, object: Clan)}
+{#snippet interactionVolumeCellTooltip(value: number, subject: Clan, object: Clan)}
   <TableView2 table={buildCellTooltip(subject, object, 'interactionVolume')}></TableView2>
 {/snippet}
 
-{#snippet alignmentCellTooltip(subject: Clan, object: Clan)}
+{#snippet alignmentCellTooltip(value: number, subject: Clan, object: Clan)}
   <TableView2 table={buildCellTooltip(subject, object, 'alignment')}></TableView2>
 {/snippet}
 
-{#snippet stanceCellTooltip(subject: Clan, object: Clan)}
+{#snippet stanceCellTooltip(value: Stance, subject: Clan, object: Clan)}
+n/a
 {/snippet}
 
 <div style="display: flex; flex-direction: row; gap: 2rem;">

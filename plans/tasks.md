@@ -1,6 +1,6 @@
 *   Better tables library
     x   Draft initial version
-    *   Get tooltips working
+    x   Get tooltips working
     *   Get aggregate rows working
     *   Omit self crosstabs where applicable
 
