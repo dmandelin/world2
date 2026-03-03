@@ -1,4 +1,4 @@
-import { sumFun } from "../lib/basics";
+import { clamp, sumFun } from "../lib/basics";
 import { pct } from "../lib/format";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { TradeGoods } from "../trade";
@@ -244,6 +244,44 @@ class SocietyHappinessItem extends NumericHappinessItem {
     }
 }
 
+function conflictAppeal(conflictLevel: number): number {
+    // There's some appeal to the drama and the competition,
+    // with diminishing returns.
+    const benefit = clamp(2 + Math.log2(conflictLevel), 0, 5);
+
+    // Some conflicts can be resolved by the community.
+    const resolved = Math.min(conflictLevel, 1);
+    const resolvedCost = 2 * resolved;
+
+    // Unresolved conflicts have an accelerating cost, because 
+    // conflict can spill over.
+    const unresolved = conflictLevel - resolved;
+    const unresolvedCost = Math.max(0, 5 * (unresolved ** 1.5));
+
+    return benefit - resolvedCost - unresolvedCost;
+}
+
+class ConflictHappinessItem extends NumericHappinessItem {
+    get label(): string {
+        return 'Conflict';
+    }
+
+    get stateDisplay(): string {
+        return this.state_.toFixed(1);
+    }
+
+    appealOf(conflictLevel: number): number {
+        return conflictAppeal(conflictLevel);
+    }
+
+    updateState(clan: Clan): void {
+        // TODO - Some dependence on relations
+        // Conflict level relative to value of 1 for a reference
+        // settlement of 100.
+        this.state_ = (clan.settlement.population / 100) ** 1.5;
+    }
+}
+
 class RitualHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Rituals';
@@ -295,6 +333,7 @@ export class HappinessCalc {
             new RitualHappinessItem(),
             new StatusHappinessItem(),
             new SocietyHappinessItem(),
+            new ConflictHappinessItem(),
         );
     }
 

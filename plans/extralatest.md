@@ -50,6 +50,7 @@ by Alan Fiske) early on are:
 Let's take initial goals to be:
 
 *   Stabilizing the models for founding new villages and for migration.
+    *   (This part looks OK for now.)
     *   First, we need to establish some sort of model for land 
         availability, no matter how simple.
         *   Current model of collective allocation *is* actually
@@ -72,6 +73,12 @@ Let's take initial goals to be:
         *   Ideas are reasonably well worked out here.
 *   Model in proper detail what happens as society expands beyond
     "everybody knows everybody"
+    *   (Next step is to figure out what are the first triggers
+        that will cause some settlements to grow larger. Consider
+        that it could be a scale factor to generate a certain
+        amount of resources or rich clans (e.g., in a Boltzmann
+        model). Consider also bigger food storage, local trade
+        opportunities.)
     *   One point is relationship of daughter village to mother
         village: how did that usually work? Did people in each
         rely on the other for anything? Was there a ritual or

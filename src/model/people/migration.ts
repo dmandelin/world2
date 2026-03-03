@@ -83,9 +83,12 @@ export class MigrationCalc {
             }
         }
 
-        if (this.clan.happiness.getAppealNonNull('Society') < 0) {
+        // TODO - Make this depend on happiness, since people can get used to
+        //        conflict, but maybe make those expectations kind of sticky.
+        // TODO - Don't trigger 100% on a hard boundary.
+        if (this.clan.happiness.getAppealNonNull('Conflict') < -3) {
             this.wantToMove = true;
-            this.wantToMoveReason = 'Crowding';
+            this.wantToMoveReason = 'Conflict';
             return;
         }
     }
@@ -139,16 +142,15 @@ export class CandidateMigrationCalc {
     readonly value: number;
 
     constructor(readonly clan: Clan, readonly stayCalc: CandidateMigrationCalc | undefined, readonly target: MigrationTarget) {
-        if (target !== NewSettlement && target.population > 400) {
+        if (target !== NewSettlement) {
             this.isEligible = false;
-            this.isIneligibleReason = `Crowded, not accepting newcomers`;
+            this.isIneligibleReason = `No place for newcomers in ${target.name}`;
         }
 
         this.items = [
             this.inertia(),
-            this.fromPopulation(),
+            this.fromConflict(),
             this.fromLandAvailability(),
-            this.fromRitual(),
         ];
         this.value = sumFun(this.items, item => item.value);
 
@@ -196,12 +198,12 @@ export class CandidateMigrationCalc {
         return item;
     }
 
-    private fromPopulation(): CandidateMigrationCalcItem {
+    private fromConflict(): CandidateMigrationCalcItem {
         let item: CandidateMigrationCalcItem;
         if (this.target instanceof NewSettlementMigrationTarget) {
-            item = { name: 'Pop', reason: 'New settlement', value: 0 };
+            item = { name: 'Conflict', reason: 'New settlement', value: 0 };
         } else {
-            item = { name: 'Pop', reason: 'Society', value: this.target.averageAppealFrom('Society') };
+            item = { name: 'Conflict', reason: 'Conflict', value: this.target.averageAppealFrom('Conflict') };
         }
         return item;
     }
@@ -225,31 +227,6 @@ export class CandidateMigrationCalc {
             reason: 'Farming land',
             value: (targetLandRatio - landRatio) * farmingFraction * 50,
         }
-    }
-
-    private fromRitual(): CandidateMigrationCalcItem {
-        let item: CandidateMigrationCalcItem;
-        if (this.target instanceof NewSettlementMigrationTarget) {
-            item = {
-                name: 'Ritual',
-                reason: 'New village',
-                value: this.clan.settlement.rites[0]?.estimatedAppealWith(
-                    // Assume the clan expects neighbors soon enough.
-                    this.clan.population * 2) ?? 0,
-            };
-        } else {
-            // This will help them avoid immediate overcrowding.
-            const newPop = this.target == this.clan.settlement
-                ? this.target.population
-                : this.target.population + this.clan.population;
-            item = {
-                name: 'Ritual',
-                reason: 'Rituals',
-                value: this.target.rites[0]?.estimatedAppealWith(newPop) ?? 0,
-            };
-        }
-
-        return item;
     }
 }
 
