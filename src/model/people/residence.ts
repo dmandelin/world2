@@ -7,24 +7,17 @@ export class ResidenceLevel {
     ) {}
 }
 
-// We assume that if people are living near the farms only when
-// working, that's 50% residence.
-
 export const ResidenceLevels = {
     Work: new ResidenceLevel(0, 'Work',
         'Farming only',
-        (farmingRatio: number) => 0.5 * farmingRatio,
+        (farmingRatio: number) => 0.4 * farmingRatio,
     ),
-    Visiting: new ResidenceLevel(1, 'Visiting',
-        'Visiting',
-        (farmingRatio: number) => 0.5 * farmingRatio + 0.1,
-    ),
-    Birthing: new ResidenceLevel(2, 'Birthing',
-        'Birthing',
-        (farmingRatio: number) => 0.5 * farmingRatio + 0.4,
+    Births: new ResidenceLevel(2, 'Births',
+        'Births',
+        (farmingRatio: number) => 0.4 * farmingRatio + 0.4,
     ),
     Full: new ResidenceLevel(3, 'Full',
-        'Residing',
+        'Full-time',
         (_: number) => 1,
     ),
 };
