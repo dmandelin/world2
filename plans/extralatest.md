@@ -501,7 +501,9 @@ List of changes implied by the above:
             *   disease transmission
             *   entertainment/annoyance
         *   Deltas to the model
-            *   add interaction type to relationship, "nomad" or "hamlet"
+            x   Reindex interaction level so that 100% is the "culturally
+                typical" closest interaction level
+            x   add interaction type to relationship, "nomad" or "hamlet"
                 *   nomad
                     *   a little contact goes a long way
                     *   exchange information, some food, some help
@@ -509,9 +511,12 @@ List of changes implied by the above:
                     *   exchange everything
                     *   higher ceiling that nomad for exchange amounts
                     *   more disease transmission
-            *   track interaction intensity separately per type
+            x   track interaction intensity separately per type
             *   (P2) add health stat with causes and effects
                 *   caused by: food, shelter, disease load
+            *   (P1.5) figure out what to do about self interaction
+                *   For now might be OK to assume fixed clan structure
+                    and remove it
             *   add effects and appeal per relationship type
     *   Then can have clans select based on appeal
 *   Make sure dependency ratio affects per capita produce as expected

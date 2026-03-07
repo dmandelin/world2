@@ -1,6 +1,28 @@
-import { sum, sumFun, sumValues } from "../lib/basics";
 import { normal } from "../lib/distributions";
+import { sumFun, sumValues } from "../lib/basics";
 import type { Clan } from "./people";
+
+// Attention
+//
+// Attention represents how much of an agent's interaction capacity
+// (time and people) is taken up by a particular relationship, 
+// including its relationship with itself. Units are scaled so that
+// in a reference size community, it takes N units of attention to
+// have a full reference ("culturally normal") relationship with a
+// clan of N people.
+//
+// A larger clan might tend to have more attention capacity, although
+// at some point holding the clan together would itself take up most
+// of their attention. For now, we'll assume an "everyone knows everyone"
+// type of culture, in which case it's reasonable to give a clan of
+// any size an attention capacity equal to the reference size, and
+// require them to use enough capacity to have a full relationship with
+// themselves.
+//
+// Since attention budget is fixed for now, most calculations can
+// still be done in terms of attention fraction.
+
+const REFERENCE_COMMUNITY_SIZE = 150;
 
 export class CalcBase {
     value: number = 0;
@@ -16,7 +38,7 @@ export class Relationships {
     }
 
     get totalInteractionVolume(): number {
-        return sumFun(this.m.values(), relationship => relationship.interactionVolume.value);
+        return sumFun(this.m.values(), relationship => relationship.totalInteractionVolume);
     }
 
     update() {
@@ -32,9 +54,23 @@ export class Relationships {
             }
         }
 
-        // Update the relationships.
+        const totalAttention = REFERENCE_COMMUNITY_SIZE;
+        const totalContactedPopulation = sumFun(this.m.values(), relationship => relationship.object.population);
+
+        // For now, clans are required to pay full attention to themselves. Otherwise,
+        // we'd have to implement internal dissolution effects.
+        const selfAttention = Math.min(totalAttention, this.subject.population);
+        const selfAttentionFraction = selfAttention / totalAttention;
+        const remainingAttentionFraction = 1 - selfAttentionFraction;
+        const remainingPopulation = totalContactedPopulation - this.subject.population;
+
         for (const [object, relationship] of this.m) {
-            relationship.update(1/this.m.size);
+            if (object === this.subject) {
+                relationship.update(selfAttentionFraction);
+            } else {
+                relationship.update(remainingAttentionFraction
+                     * (relationship.object.population / remainingPopulation));
+            }
         }
     }
 
@@ -50,7 +86,11 @@ export enum Stance {
 };
 
 export class Relationship {
-    interactionVolume: InteractionVolume;
+    private attentionFraction_ = 0;
+    private relativeAttention_ = 0;
+    private coresidenceFraction_ = 0;
+
+    interactions: {'Settled': SettledOngoingInteraction, 'Nomadic': NomadicOngoingInteraction};
     alignment: Alignment;
 
     stance: Stance = Stance.Generous;
@@ -73,49 +113,98 @@ export class Relationship {
         readonly subject: Clan,
         readonly object: Clan) 
     {
-        this.interactionVolume = new InteractionVolume(subject, object);
+        this.interactions = {
+            'Settled': new SettledOngoingInteraction(subject, object),
+            'Nomadic': new NomadicOngoingInteraction(subject, object),
+        };
         this.alignment = new Alignment(subject, object);
     }
 
     update(attentionFraction: number) {
-        this.interactionVolume.update(attentionFraction);
+        this.attentionFraction_ = attentionFraction;
+        this.relativeAttention_ = attentionFraction / (this.object.population / REFERENCE_COMMUNITY_SIZE);
+
+        this.coresidenceFraction_ = this.subject.settlement === this.object.settlement
+            ? Math.min(this.subject.residenceFraction, this.object.residenceFraction)
+            : 0;
+
+        for (const interaction of Object.values(this.interactions)) {
+            interaction.update(this.relativeAttention, this.coresidenceFraction_);
+        }
         this.alignment.update();
+    }
+
+    get attentionFraction(): number {
+        return this.attentionFraction_;
+    }
+
+    get relativeAttention(): number {
+        return this.relativeAttention_;
+    }
+
+    get coresidenceFraction(): number {
+        return this.coresidenceFraction_;
+    }
+
+    get totalInteractionVolume(): number {
+        return sumValues(this.interactions, interaction => interaction.volume);
     }
 }
 
-export class InteractionVolume extends CalcBase {
-    attentionFraction = 0;
+export abstract class OngoingInteraction {
+    volume = 0;
 
-    nomadicVolume = 0;
-
+    baseFromAttention = 0.1;
     coresidenceFactor = 0;
-    settlementScaleFactor = 0;
-    coresidentVolume = 0;
 
-    value = 0;
+    constructor(
+        readonly name: string,
+        readonly subject: Clan,
+        readonly object: Clan
+    ) {
+        this.update(0.1, 0.1);
+    }
+
+    update(relativeAttention: number, coresidenceFraction: number): void {
+        this.baseFromAttention = relativeAttention;
+        this.coresidenceFactor = this.getCoresidenceFactor(coresidenceFraction);
+        
+        this.volume = this.baseFromAttention * this.coresidenceFactor;
+    }
+
+    abstract getCoresidenceFactor(coresidenceFraction: number): number;
+}
+
+export class NomadicOngoingInteraction extends OngoingInteraction {
+    constructor(
+        readonly subject: Clan,
+        readonly object: Clan
+    ) {
+        // Nomadic interactions scale up larger because they spend less time together, so
+        // it costs less to get everyone together and there's less continuous friction.
+        super("Nomadic", subject, object);
+    }
+
+    getCoresidenceFactor(coresidenceFraction: number): number {
+        return 1 - coresidenceFraction;
+    }
+}    
+
+export class SettledOngoingInteraction extends OngoingInteraction {
+    baseFromAttention = 0;
+    settlementScaleFactor = 0;
 
     constructor(
         readonly subject: Clan,
         readonly object: Clan
     ) {
-        super();
-        this.update();
+        super("Settled", subject, object);
     }
 
-    update(attentionFraction = 0.1) {
-        this.attentionFraction = attentionFraction;
-
-        this.nomadicVolume = attentionFraction * 0.25;
-
-        this.coresidenceFactor = this.subject.settlement === this.object.settlement
-            ? Math.min(this.subject.residenceFraction, this.object.residenceFraction)
-            : 0;
-        this.settlementScaleFactor = Math.min(1, Math.sqrt(150 / this.subject.settlement.population));
-        this.coresidentVolume = attentionFraction * this.coresidenceFactor * this.settlementScaleFactor;
-
-        this.value = this.nomadicVolume + this.coresidentVolume;
+    getCoresidenceFactor(coresidenceFraction: number): number {
+        return coresidenceFraction;
     }
-}
+}    
 
 export class Alignment extends CalcBase {
     items: Record<string, number> = {};
@@ -129,7 +218,8 @@ export class Alignment extends CalcBase {
     }
 
     update() {
-        this.items['Society'] = this.subject.relationships.get(this.object)?.interactionVolume.value ?? 0;
+        // TODO - Bring back alignment effect of interactions.
+        //this.items['Society'] = this.subject.relationships.get(this.object)?.interactionVolume.value ?? 0;
         this.items['Kinship'] = this.subject.kinshipTo(this.object);
         this.items['Marriage'] = this.subject.marriagePartners.get(this.object) ?? 0;
         if (this.subject !== this.object) {

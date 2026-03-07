@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Clan } from "../model/people/people";
-    import { pct, signed, unsigned, unsignedFormat } from "../model/lib/format";
+    import { pct, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
@@ -33,7 +33,7 @@
         if (!r) {
             return 0;
         }
-        return r.interactionVolume.value;
+        return r.totalInteractionVolume;
     }
 
     function alignmentCellValue(rowClan: Clan, colClan: Clan): number {
@@ -73,14 +73,13 @@
     }
 
     function buildInteractionVolumeCellTooltip(r: Relationship): Table<string, string, [number]> {
-        const d = r.interactionVolume;
-        return new SingleRecordTable({
-            'Attention': d.attentionFraction,
-            'Nomadic Contact': d.nomadicVolume,
-            'Coresidence': d.coresidenceFactor,
-            'Settlement Scale Factor': d.settlementScaleFactor,
-            'Settlement Contact': d.coresidentVolume,
-        });
+        const items: Record<string, number> = {};
+        items['Attention'] = r.attentionFraction;
+        items['Relative Attention'] = r.relativeAttention;
+        items['Coresidence'] = r.coresidenceFraction;
+        items['Settlement Contact'] = r.interactions['Settled'].volume;
+        items['Nomadic Contact'] = r.interactions['Nomadic'].volume;
+        return new SingleRecordTable(items);
     }
 
     function buildAlignmentCellTooltip(r: Relationship): Table<string, string, [number]> {
