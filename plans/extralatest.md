@@ -486,6 +486,34 @@ than prestige, so in the process those models should be firmed up.
 List of changes implied by the above:
 
 *   Variable settlement permanence levels
+    *   Need residence appeal/effect model
+        *   Factors
+            *   help when sick or other misfortunes
+                *   bonus to health (which should influece productivity)
+                *   bonus to productivity (help with repair, lost animal, etc)
+                *   bonus to relatedness
+            *   help with child care
+                *   bonus to birth rate, productivity
+                *   bonus to relatedness
+            *   (P2) food variety/availability improvement
+            *   (P2) learning skills from each other
+            *   (P2) learning opinions from each other
+            *   disease transmission
+            *   entertainment/annoyance
+        *   Deltas to the model
+            *   add interaction type to relationship, "nomad" or "hamlet"
+                *   nomad
+                    *   a little contact goes a long way
+                    *   exchange information, some food, some help
+                *   hamlet
+                    *   exchange everything
+                    *   higher ceiling that nomad for exchange amounts
+                    *   more disease transmission
+            *   track interaction intensity separately per type
+            *   (P2) add health stat with causes and effects
+                *   caused by: food, shelter, disease load
+            *   add effects and appeal per relationship type
+    *   Then can have clans select based on appeal
 *   Make sure dependency ratio affects per capita produce as expected
 *   Variable land quality
 *   Commute distance disamenity
