@@ -2,7 +2,6 @@ import { Clan } from '../people/people';
 import { SkillDef, SkillDefs } from './skills';
 import { pct, spct } from '../lib/format';
 import { product } from '../lib/basics';
-import { scaleFactorEffect } from '../lib/modelbasics';
 import { FloodLevels } from '../environment/flood';
 
 interface ProductivityCalcItem {
@@ -37,6 +36,11 @@ export class ProductivityCalc {
     readonly items: ProductivityCalcItem[];
 
     constructor(readonly clan: Clan, readonly skillDef: SkillDef, forPlanning: boolean) {
+        // TODO - Rework per latest plans. Biggest factors in how all this plays out
+        //        should be:
+        // - Clan dependency ratio
+        // - Community
+        // - Land quality
         this.skill = clan.skills.v(skillDef);
         this.items = [...skillDef.traitFactors.entries()].map(tf => {
             const [statName, statFactor] = tf;

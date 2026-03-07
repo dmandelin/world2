@@ -125,6 +125,7 @@ export type ClanDTO = {
     productivity: number;
     productivityTooltip: string[][];
     production: ClanProductionDTO;
+    workers: number;
     ritualEffectiveness: number;
     ritualEffectivenessTooltip: string[][];
     seniority: number;
@@ -181,6 +182,7 @@ export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
         ritualEffectivenessTooltip: clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [],
         seniority: clan.seniority,
         population: clan.population,
+        workers: clan.workers,
         effectiveResidentPopulation: clan.effectiveResidentPopulation,
         residenceFraction: clan.residenceFraction,
         lastPopulationChange: clan.lastPopulationChange,

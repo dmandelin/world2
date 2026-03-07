@@ -70,6 +70,7 @@
                     <th class='lb'>K</th>
                     <th>L%</th>
                     <th>L</th>
+                    <th>L/C</th>
                     <th>LP</th>
                     <th>TFP</th>
                     <th>Y</th>
@@ -80,7 +81,7 @@
             {#each prodTable.rows as row}
             <tr>
                 {#each row as cell, index}
-                <td class={(index - 1) % 6 === 0 ? 'lb' : ''}>
+                <td class={(index - 1) % 7 === 0 ? 'lb' : ''}>
                     {cell}
                 </td>
                 {/each}

@@ -503,6 +503,11 @@ List of changes implied by the above:
         *   Deltas to the model
             x   Reindex interaction level so that 100% is the "culturally
                 typical" closest interaction level
+            *   Rework productivity to depend a lot more on this factor
+                *   Land quality
+                x   Actual worker count
+                *   Worker type mix
+                *   Community
             x   add interaction type to relationship, "nomad" or "hamlet"
                 *   nomad
                     *   a little contact goes a long way

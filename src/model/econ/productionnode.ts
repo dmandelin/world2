@@ -14,7 +14,6 @@ export class ProductionNode {
     land_ = new Map<Clan, number>();
 
     static readonly outputPerWorker = 3;
-    static readonly populationPerWorker = 3;
 
     totalWorkers_: number = 0;
     totalLaborProductivity_: number = 0;
@@ -110,7 +109,7 @@ export class ProductionNode {
     acceptFrom(settlement: Settlement): void {
         for (const clan of settlement.clans) {
             const laborFraction = clan.laborAllocation.allocs.get(this.skillDef) ?? 0;
-            const workers = laborFraction * clan.population / ProductionNode.populationPerWorker;
+            const workers = laborFraction * clan.workers;
             this.accept(clan, laborFraction, workers);
         }
     }

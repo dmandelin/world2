@@ -136,6 +136,12 @@
             </tr>
             <tr>
                 <td colspan="3" class="full-row">
+                    {clan.workers} workers ({pct(clan.workers / clan.population)}, 
+                    DR {((clan.population - clan.workers) / clan.workers).toFixed(1)})
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" class="full-row">
                     <Tooltip>
                     {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture))} farming
                     {clan.laborAllocation.allocationPlan.experimenting ? ' (E)' : ''}
