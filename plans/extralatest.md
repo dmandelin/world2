@@ -507,7 +507,9 @@ List of changes implied by the above:
                 *   Land quality
                 x   Actual worker count
                 *   Worker type mix
-                *   Community
+                *   Debug zero productivity issue clans get into
+                x   Relationships
+                    *   Show details of relationships calculation in the UI
             x   add interaction type to relationship, "nomad" or "hamlet"
                 *   nomad
                     *   a little contact goes a long way
@@ -538,6 +540,7 @@ List of changes implied by the above:
 *   Ritual skill specialization
 *   Ritual leadership/specialist roles
 *   Ritual elaboration
+*   Inter-village relationships
 *   Firm up ritual prestige model
 *   Precarity model
 *   Action to build first temple

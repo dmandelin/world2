@@ -1,6 +1,7 @@
 import { normal } from "../lib/distributions";
-import { sumFun, sumValues } from "../lib/basics";
+import { clamp, productFun, sumFun, sumValues, weightedGeometricMean } from "../lib/basics";
 import type { Clan } from "./people";
+import type { SkillDef } from "./skills";
 
 // Attention
 //
@@ -21,6 +22,23 @@ import type { Clan } from "./people";
 //
 // Since attention budget is fixed for now, most calculations can
 // still be done in terms of attention fraction.
+
+// Productivity factors
+//
+// A clan having full interactions in a settlement will be tuned to
+// get up to a 45% productivity boost, so that perhaps 100 attention
+// spent on interactions yields that amount. This is multiplied by a
+// factor from alignment. Neutral people can cooperate with each other,
+// so perhaps they can get 20-50% of the normal benefit. This implies
+// a "frenemy" category where alignment is subzero but interaction is
+// still beneficial. 
+// *   Clans both resident for farming should be able to get the full
+//     boost, so they'll need only 0.4 attention for full benefit.
+// *   There should be diminishing returns, so maybe a square root
+//     makes it work out reasonably well.
+// *   Nomadic interactions will give a smaller productivity boost.
+//     Their interactions are still important, but mathematically
+//     they don't spend as much time together.
 
 const REFERENCE_COMMUNITY_SIZE = 150;
 
@@ -60,15 +78,14 @@ export class Relationships {
         // For now, clans are required to pay full attention to themselves. Otherwise,
         // we'd have to implement internal dissolution effects.
         const selfAttention = Math.min(totalAttention, this.subject.population);
-        const selfAttentionFraction = selfAttention / totalAttention;
-        const remainingAttentionFraction = 1 - selfAttentionFraction;
+        const remainingAttention = totalAttention - selfAttention;
         const remainingPopulation = totalContactedPopulation - this.subject.population;
 
         for (const [object, relationship] of this.m) {
             if (object === this.subject) {
-                relationship.update(selfAttentionFraction);
+                relationship.update(selfAttention);
             } else {
-                relationship.update(remainingAttentionFraction
+                relationship.update(remainingAttention
                      * (relationship.object.population / remainingPopulation));
             }
         }
@@ -78,6 +95,31 @@ export class Relationships {
         return object !== this.subject &&
             object.settlement === this.subject.settlement;
     }
+
+    alignmentToward(object: Clan): number {
+        const relationship = this.m.get(object);
+        return relationship ? relationship.alignment.value : 0;
+    }
+
+    cooperationLevelWith(object: Clan): number {
+        const alignment = this.alignmentToward(object);
+        if (alignment > 0) {
+            return 0.4 + 0.6 * alignment;
+        } else if (alignment > -0.2) {
+            return 2 * (alignment + 0.2);
+        } else {
+            return 1 / .8 * (alignment + 0.2);
+        }
+    }
+
+    getProductivityFactor(skill: SkillDef): number {
+        const v = weightedGeometricMean(
+            this.m.values(), 
+            relationship => relationship.getProductivityFactor(skill),
+            relationship => relationship.relativeAttention);
+        if (isNaN(v)) debugger;
+        return v;
+    }
 }
 
 export enum Stance {
@@ -86,8 +128,7 @@ export enum Stance {
 };
 
 export class Relationship {
-    private attentionFraction_ = 0;
-    private relativeAttention_ = 0;
+    private attention_ = 0;
     private coresidenceFraction_ = 0;
 
     interactions: {'Settled': SettledOngoingInteraction, 'Nomadic': NomadicOngoingInteraction};
@@ -120,26 +161,30 @@ export class Relationship {
         this.alignment = new Alignment(subject, object);
     }
 
-    update(attentionFraction: number) {
-        this.attentionFraction_ = attentionFraction;
-        this.relativeAttention_ = attentionFraction / (this.object.population / REFERENCE_COMMUNITY_SIZE);
+    update(attention: number) {
+        if (isNaN(attention)) debugger;
+        this.attention_ = attention;
 
         this.coresidenceFraction_ = this.subject.settlement === this.object.settlement
             ? Math.min(this.subject.residenceFraction, this.object.residenceFraction)
             : 0;
 
         for (const interaction of Object.values(this.interactions)) {
-            interaction.update(this.relativeAttention, this.coresidenceFraction_);
+            interaction.update(this.attention, this.coresidenceFraction_);
         }
         this.alignment.update();
     }
 
+    get attention(): number {
+        return this.attention_;
+    }
+
     get attentionFraction(): number {
-        return this.attentionFraction_;
+        return this.attention_ / REFERENCE_COMMUNITY_SIZE;
     }
 
     get relativeAttention(): number {
-        return this.relativeAttention_;
+        return this.attention / this.object.population;
     }
 
     get coresidenceFraction(): number {
@@ -149,12 +194,20 @@ export class Relationship {
     get totalInteractionVolume(): number {
         return sumValues(this.interactions, interaction => interaction.volume);
     }
+
+    getProductivityFactor(skill: SkillDef): number {
+        return productFun(
+            Object.values(this.interactions), 
+            interaction => interaction.getProductivityFactor(
+                skill, 
+                this.subject.relationships.cooperationLevelWith(this.object)));
+    }
 }
 
 export abstract class OngoingInteraction {
     volume = 0;
 
-    baseFromAttention = 0.1;
+    attention = 0;
     coresidenceFactor = 0;
 
     constructor(
@@ -165,17 +218,23 @@ export abstract class OngoingInteraction {
         this.update(0.1, 0.1);
     }
 
-    update(relativeAttention: number, coresidenceFraction: number): void {
-        this.baseFromAttention = relativeAttention;
+    update(attention: number, coresidenceFraction: number): void {
+        this.attention = attention;
         this.coresidenceFactor = this.getCoresidenceFactor(coresidenceFraction);
-        
-        this.volume = this.baseFromAttention * this.coresidenceFactor;
+        this.volume = this.attention * this.coresidenceFactor;
+    }
+
+    getProductivityFactor(skill: SkillDef, cooperationFactor: number) {
+        return 1 + cooperationFactor * Math.sqrt(this.volume / 100) * this.maxProductivityBonus;
     }
 
     abstract getCoresidenceFactor(coresidenceFraction: number): number;
+    abstract get maxProductivityBonus(): number;
 }
 
 export class NomadicOngoingInteraction extends OngoingInteraction {
+    readonly maxProductivityBonus = 0.2;
+
     constructor(
         readonly subject: Clan,
         readonly object: Clan
@@ -191,8 +250,7 @@ export class NomadicOngoingInteraction extends OngoingInteraction {
 }    
 
 export class SettledOngoingInteraction extends OngoingInteraction {
-    baseFromAttention = 0;
-    settlementScaleFactor = 0;
+    readonly maxProductivityBonus = 0.45;
 
     constructor(
         readonly subject: Clan,

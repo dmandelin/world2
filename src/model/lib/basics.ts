@@ -234,18 +234,18 @@ export function geometricMean(aa: number[]): number {
 }
 
 export function weightedGeometricMean<T>(
-    aa: T[],
+    aa: Iterable<T>,
     value: (t: T) => number,
     weight?: (t: T) => number
 ): number {
-    if (aa.length === 0) return 0;
-    if (aa.length === 1) return value(aa[0]);
-    const product = aa.reduce((acc, cur) => acc * value(cur) ** (weight ? weight(cur) : 1), 1);
-    const totalWeight = weight ? sumFun(aa, t => 1, weight) : aa.length;
-    if (totalWeight === 0) return 0;
-    return Math.pow(product, 1 / totalWeight);
+    let product = 1;
+    let totalWeight = 0;
+    for (const item of aa) {
+        product *= value(item) ** (weight ? weight(item) : 1);
+        totalWeight += weight ? weight(item) : 1;
+    }
+    return totalWeight === 0 ? 0 : Math.pow(product, 1 / totalWeight);
 }
-
 
 export function harmonicMean(aa: number[]): number {
     if (aa.length === 0) return 0;

@@ -33,7 +33,7 @@
         if (!r) {
             return 0;
         }
-        return r.totalInteractionVolume;
+        return r.relativeAttention;
     }
 
     function alignmentCellValue(rowClan: Clan, colClan: Clan): number {
@@ -74,7 +74,8 @@
 
     function buildInteractionVolumeCellTooltip(r: Relationship): Table<string, string, [number]> {
         const items: Record<string, number> = {};
-        items['Attention'] = r.attentionFraction;
+        items['Attention Fraction'] = r.attentionFraction;
+        items['Attention'] = r.attention;
         items['Relative Attention'] = r.relativeAttention;
         items['Coresidence'] = r.coresidenceFraction;
         items['Settlement Contact'] = r.interactions['Settled'].volume;

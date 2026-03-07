@@ -36,19 +36,26 @@ export class ProductivityCalc {
     readonly items: ProductivityCalcItem[];
 
     constructor(readonly clan: Clan, readonly skillDef: SkillDef, forPlanning: boolean) {
+        this.items = [];
         // TODO - Rework per latest plans. Biggest factors in how all this plays out
         //        should be:
-        // - Clan dependency ratio
+        // x Clan dependency ratio
         // - Community
         // - Land quality
+        this.items.push(new SimpleProductivityCalcItem(
+            'Relationships',
+            clan.relationships.getProductivityFactor(skillDef).toFixed(2),
+            clan.relationships.getProductivityFactor(skillDef),
+         ));       
+
         this.skill = clan.skills.v(skillDef);
-        this.items = [...skillDef.traitFactors.entries()].map(tf => {
+        this.items.push(...[...skillDef.traitFactors.entries()].map(tf => {
             const [statName, statFactor] = tf;
             const statValue = statName === 'Skill'
                 ? this.skill
                 : clan.getTrait(statName);
             return new StatBasedProductivityCalcItem(statName, statValue, statFactor);
-        });
+        }));
 
         if (skillDef === SkillDefs.Agriculture) {
             const floodLevel = forPlanning

@@ -90,7 +90,7 @@ export class ClanSkillChange {
                 c => new ImitationTargetItem(
                     c.name,
                     c.skills.v(skillDef),
-                    clan.prestigeViewOf(c).value,
+                    clan.prestigeViewOf(c)?.value || 0,
                 ));
             const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
             for (const item of this.imitationTargetItems) {

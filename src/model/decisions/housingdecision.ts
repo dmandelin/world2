@@ -48,13 +48,14 @@ export class HousingDecision {
         // Choosing a model by prestige weight combines:
         // - legacy: keeping doing the same thing
         // - imitation: becoming more like prestigious clans
+
         this.imitationItems = mapNormalized(
             clan.selfAndNeighbors,
-            other => traitFactor(clan.prestigeViewOf(other)!.value),
+            other => traitFactor(clan.prestigeViewOf(other)?.value || 0),
             (other, weight) => new HousingImitationItem(
                 other.name,
                 other.housing,
-                clan.prestigeViewOf(other)!.value,
+                clan.prestigeViewOf(other)?.value || 0,
                 weight));
         this.model = chooseWeighted(
             this.imitationItems,

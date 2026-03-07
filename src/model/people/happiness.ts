@@ -160,7 +160,7 @@ const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 2, 1, 0);
 export function fishRatio(clan: Clan): number {
     const cereals = clan.consumption.perCapita(TradeGoods.Cereals);
     const fish = clan.consumption.perCapita(TradeGoods.Fish);
-    return fish / (cereals + fish);
+    return cereals + fish === 0 ? 0.5 : fish / (cereals + fish);
 }
 
 export function foodVarietyAppeal(fishRatio: number): number {
@@ -236,7 +236,7 @@ class SocietyHappinessItem extends NumericHappinessItem {
     }
 
     appealOf(interactionVolume: number): number {
-        return 20 * interactionVolume;
+        return 0.1 * interactionVolume;
     }
     
     updateState(clan: Clan): void {

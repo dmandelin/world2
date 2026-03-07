@@ -164,7 +164,9 @@ export class PopulationChangeBuilder {
             'Migration', this.clan.settlement.forcedMigrations, migrationDrModifier));
 
         this.brModifier = productFun(this.brModifiers, m => m.value);
+        if (isNaN(this.brModifier)) debugger;
         this.drModifier = productFun(this.drModifiers, m => m.value);
+        if (isNaN(this.drModifier)) debugger;
     }
 
     build(): PopulationChange {
@@ -220,6 +222,9 @@ export class PopulationChangeBuilder {
             if (Math.random() < 0.48) ++this.femaleBirths;
         }
         this.maleBirths = this.births - this.femaleBirths;
+        if (isNaN(this.femaleBirths) || isNaN(this.maleBirths)) {
+            debugger;
+        }
         return new PopulationChangeItem(
             'Births',
             this.brModifier,

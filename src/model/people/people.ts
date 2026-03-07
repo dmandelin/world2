@@ -320,7 +320,7 @@ export class Clan implements TradePartner {
     get workers(): number {
         const workingAgeWomen = this.slices[1][0] + this.slices[1][0];
         const workingAgeMen = this.slices[1][1] + this.slices[1][1];
-        return Math.round(workingAgeMen * 0.9 + workingAgeWomen * 0.6);
+        return Math.max(1, Math.round(workingAgeMen * 0.9 + workingAgeWomen * 0.6));
     }
 
     get skill() {
