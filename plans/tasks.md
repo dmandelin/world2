@@ -1,3 +1,6 @@
+x   Fix bug where clan sustenance goes to 0
+*   Fix bug where relationship productivity factor can be NaN
+
 *   Better tables library
     x   Draft initial version
     x   Get tooltips working

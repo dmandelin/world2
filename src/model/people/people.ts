@@ -725,6 +725,9 @@ export class Clan implements TradePartner {
         newClan.parent = this;
         this.cadets.push(newClan);
 
+        // It's important to make sure the new clan has relationships right away.
+        newClan.relationships.update();
+
         // Plan for the new clan, since it didn't get a chance to during the main
         // planning phase. We don't need to update productivity because that happens
         // at the start of production during the advance phase.

@@ -490,7 +490,7 @@ List of changes implied by the above:
         *   Factors
             *   help when sick or other misfortunes
                 *   bonus to health (which should influece productivity)
-                *   bonus to productivity (help with repair, lost animal, etc)
+                x   bonus to productivity (help with repair, lost animal, etc)
                 *   bonus to relatedness
             *   help with child care
                 *   bonus to birth rate, productivity
@@ -504,12 +504,14 @@ List of changes implied by the above:
             x   Reindex interaction level so that 100% is the "culturally
                 typical" closest interaction level
             *   Rework productivity to depend a lot more on this factor
-                *   Land quality
-                x   Actual worker count
-                *   Worker type mix
                 *   Debug zero productivity issue clans get into
+                *   Land quality
+                *   Worker type mix
+                x   Actual worker count
                 x   Relationships
                     *   Show details of relationships calculation in the UI
+                        Maybe have a relationship details panel showing the
+                        whole thing.
             x   add interaction type to relationship, "nomad" or "hamlet"
                 *   nomad
                     *   a little contact goes a long way
