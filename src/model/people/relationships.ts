@@ -89,6 +89,10 @@ export class Relationships {
                      * (relationship.object.population / remainingPopulation));
             }
         }
+
+        for (const [object, relationship] of this.m) {
+            if (relationship.attention < 0)            debugger;
+        }
     }
 
     private shouldHaveRelationshipWith(object: Clan): boolean {
@@ -117,7 +121,14 @@ export class Relationships {
             this.m.values(), 
             relationship => relationship.getProductivityFactor(skill),
             relationship => relationship.relativeAttention);
-        if (isNaN(v)) debugger;
+        if (isNaN(v))  {
+            debugger;
+                    const w = weightedGeometricMean(
+            this.m.values(), 
+            relationship => relationship.getProductivityFactor(skill),
+            relationship => relationship.relativeAttention);
+            console.log(w);
+        }
         return v;
     }
 }
