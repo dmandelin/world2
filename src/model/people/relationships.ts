@@ -1,7 +1,7 @@
 import { normal } from "../lib/distributions";
 import { clamp, productFun, sumFun, sumValues, weightedGeometricMean } from "../lib/basics";
 import type { Clan } from "./people";
-import type { SkillDef } from "./skills";
+import { SkillDefs, type SkillDef } from "./skills";
 
 // Attention
 //
@@ -117,19 +117,10 @@ export class Relationships {
     }
 
     getProductivityFactor(skill: SkillDef): number {
-        const v = weightedGeometricMean(
+        return weightedGeometricMean(
             this.m.values(), 
             relationship => relationship.getProductivityFactor(skill),
             relationship => relationship.relativeAttention);
-        if (isNaN(v))  {
-            debugger;
-                    const w = weightedGeometricMean(
-            this.m.values(), 
-            relationship => relationship.getProductivityFactor(skill),
-            relationship => relationship.relativeAttention);
-            console.log(w);
-        }
-        return v;
     }
 }
 
@@ -235,11 +226,12 @@ export abstract class OngoingInteraction {
         this.volume = this.attention * this.coresidenceFactor;
     }
 
-    getProductivityFactor(skill: SkillDef, cooperationFactor: number) {
+    getBaseProductivityFactor(skill: SkillDef, cooperationFactor: number) {
         return 1 + cooperationFactor * Math.sqrt(this.volume / 100) * this.maxProductivityBonus;
     }
 
     abstract getCoresidenceFactor(coresidenceFraction: number): number;
+    abstract getProductivityFactor(skill: SkillDef, cooperationFactor: number): number;
     abstract get maxProductivityBonus(): number;
 }
 
@@ -258,6 +250,19 @@ export class NomadicOngoingInteraction extends OngoingInteraction {
     getCoresidenceFactor(coresidenceFraction: number): number {
         return 1 - coresidenceFraction;
     }
+
+    getProductivityFactor(skill: SkillDef, cooperationFactor: number): number {
+        // Nomadic interactions are highly effective for nomadic-type activities,
+        // and also quite effective for part-time, high-importance activities,
+        // but less so for agriculture and routine construction.
+        const baseFactor = this.getBaseProductivityFactor(skill, cooperationFactor);
+        if (skill === SkillDefs.Agriculture) {
+            return Math.pow(baseFactor, 0.25);
+        } else if (skill === SkillDefs.Construction) {
+            return Math.pow(baseFactor, 0.5);
+        }
+        return baseFactor;
+    }
 }    
 
 export class SettledOngoingInteraction extends OngoingInteraction {
@@ -272,6 +277,10 @@ export class SettledOngoingInteraction extends OngoingInteraction {
 
     getCoresidenceFactor(coresidenceFraction: number): number {
         return coresidenceFraction;
+    }
+
+    getProductivityFactor(skill: SkillDef, cooperationFactor: number): number {
+        return this.getBaseProductivityFactor(skill, cooperationFactor);
     }
 }    
 
