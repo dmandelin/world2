@@ -283,7 +283,7 @@ export class Clan implements TradePartner {
             ++error;
         }
 
-        this.residenceLevel_ = ResidenceLevels.Work;
+        this.residenceLevel_ = ResidenceLevels.SemiNomadic;
 
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
