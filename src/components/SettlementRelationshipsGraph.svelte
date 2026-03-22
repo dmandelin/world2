@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { linear } from 'svelte/easing';
     import { randomClanColor, type Clan } from '../model/people/people';
     import ButtonPanel from './ButtonPanel.svelte';
     import type { ClanDTO, SettlementDTO } from './dtos';
@@ -43,28 +44,27 @@
         directed: boolean;
     }
 
+    type RelationshipDirection = '>' | '<' | '-';
+
     abstract class RelationshipDisplayOption {
-        abstract directed: boolean;
-        abstract relationships(clan: Clan): Iterable<[Clan, number]>;
+        abstract relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]>;
     }
 
     class MarriageRelationshipDisplayOption extends RelationshipDisplayOption {
-        directed = false;
-
-        relationships(clan: Clan): Iterable<[Clan, number]> {
-            return clan.marriagePartners;
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
+            for (const [partner, r] of clan.marriagePartners) {
+                yield [partner, '-', r];
+            }
         }
     }
 
     class KinshipRelationshipDisplayOption extends RelationshipDisplayOption {
-        directed = true;
-
-        *relationships(clan: Clan): Iterable<[Clan, number]> {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
             if (clan.parent) {
-                yield [clan.parent, clan.kinshipTo(clan.parent)];
+                yield [clan.parent, '>', clan.kinshipTo(clan.parent)];
             }
             for (const cadet of clan.cadets) {
-                yield [cadet, clan.kinshipTo(cadet)];
+                yield [cadet, '<', clan.kinshipTo(cadet)];
             }
         }
     }
@@ -121,13 +121,13 @@
         const lines: RelationshipDisplay[] = [];
         // Snapshot values, because we're going to modify this map but should
         // iterate only over the initial values.
-        for (const subject of [...clanDisplays.values()]) {
-            for (const [objectClan, r] of rdo.relationships(subject.clan)) {
+        for (const subjectCD of [...clanDisplays.values()]) {
+            for (const [objectClan, direction, r] of rdo.relationships(subjectCD.clan)) {
                 let objectDisplay = clanDisplays.get(objectClan.uuid);
                 if (!objectDisplay) {
                     // Object is an external clan - add it to the display. Choose a
                     // random angle now but we'll fix up better later.
-                    const angle = subject.angle + ((Math.random() * 2) - 1) * 2 * Math.PI / 8;
+                    const angle = subjectCD.angle + ((Math.random() * 2) - 1) * 2 * Math.PI / 8;
                     objectDisplay = {
                         clan: objectClan,
                         x: cx + outerRadius * Math.cos(angle),
@@ -139,11 +139,11 @@
                     clanDisplays.set(objectClan.uuid, objectDisplay);
                 }
                 lines.push({
-                    key: `${subject.clan.uuid}-${objectClan.uuid}`,
-                    cd1: subject,
-                    cd2: objectDisplay,
+                    key: `${subjectCD.clan.uuid}${direction}${objectClan.uuid}`,
+                    cd1: direction !== '<' ? subjectCD : objectDisplay,
+                    cd2: direction !== '<' ? objectDisplay : subjectCD,
                     thickness: r * 20,
-                    directed: rdo.directed,
+                    directed: direction !== '-',
                 });
             }
         }
@@ -224,6 +224,24 @@
     function onClick() {
         stepPositionNonLocalClanDisplays(display);
     }
+
+    function adjustedXY2(cd1: ClanDisplay, cd2: ClanDisplay): [number, number] {
+        const dx = cd2.x - cd1.x;
+        const dy = cd2.y - cd1.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist === 0) return [cd2.x, cd2.y];
+        const adjustX = (dx / dist) * (cd2.radius + 6);
+        const adjustY = (dy / dist) * (cd2.radius + 6);
+        return [cd2.x - adjustX, cd2.y - adjustY];
+    }
+
+    function adjustedX2(cd1: ClanDisplay, cd2: ClanDisplay): number {
+        return adjustedXY2(cd1, cd2)[0];
+    }
+
+    function adjustedY2(cd1: ClanDisplay, cd2: ClanDisplay): number {
+        return adjustedXY2(cd1, cd2)[1];
+    }
 </script>
 
 <style>
@@ -258,16 +276,30 @@
 <!-- svelte-ignore event_directive_deprecated -->
 <div class="relationship-graph" on:click={onClick}>
   <svg {width} {height} viewBox="0 0 {width} {height}">
+    <defs>
+      <marker
+        id="arrowhead"
+        viewBox="0 0 10 10"
+        refX="5"
+        refY="5"
+        markerWidth="3"
+        markerHeight="3"
+        orient="auto-start-reverse"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+      </marker>
+    </defs>
     <g class="lines">
       {#each display.relationships as line (line.key)}
         <line
           class="relationship-line"
           x1={line.cd1.x}
           y1={line.cd1.y}
-          x2={line.cd2.x}
-          y2={line.cd2.y}
+          x2={adjustedX2(line.cd1, line.cd2)}
+          y2={adjustedY2(line.cd1, line.cd2)}
           stroke="grey"
           stroke-width={line.thickness}
+          marker-end={line.directed ? 'url(#arrowhead)' : null}
         />
       {/each}
     </g>
