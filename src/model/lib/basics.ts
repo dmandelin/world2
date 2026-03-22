@@ -294,3 +294,15 @@ export function mapNormalized<T, U>(
 export function znan(value: number): number {
     return isNaN(value) ? 0 : value;
 }
+
+type RGB = [number, number, number];
+
+export function colorInterpolator(color1: RGB, color2: RGB, lo: number = 0, hi: number = 1): (t: number) => string {
+    return (t: number) => {
+        const u = clamp((t - lo) / (hi - lo), 0, 1);
+        const r = Math.round(color1[0] + (color2[0] - color1[0]) * u);
+        const g = Math.round(color1[1] + (color2[1] - color1[1]) * u);
+        const b = Math.round(color1[2] + (color2[2] - color1[2]) * u);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+}

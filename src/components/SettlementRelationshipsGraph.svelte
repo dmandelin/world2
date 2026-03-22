@@ -3,6 +3,7 @@
     import { randomClanColor, type Clan } from '../model/people/people';
     import ButtonPanel from './ButtonPanel.svelte';
     import type { ClanDTO, SettlementDTO } from './dtos';
+    import { colorInterpolator } from '../model/lib/basics';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
@@ -41,46 +42,64 @@
         cd1: ClanDisplay;
         cd2: ClanDisplay;
         thickness: number;
+        color: string;
         directed: boolean;
     }
+
+    const DEFAULT_RELATIONSHIP_COLOR = 'grey';
 
     type RelationshipDirection = '>' | '<' | '-';
 
     abstract class RelationshipDisplayOption {
-        abstract relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]>;
+        abstract relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]>;
     }
 
     class MarriageRelationshipDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
             for (const [partner, r] of clan.marriagePartners) {
-                yield [partner, '-', r];
+                yield [partner, '-', r, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
 
     class KinshipRelationshipDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
             if (clan.parent) {
-                yield [clan.parent, '>', clan.kinshipTo(clan.parent)];
+                yield [clan.parent, '>', clan.kinshipTo(clan.parent), DEFAULT_RELATIONSHIP_COLOR];
             }
             for (const cadet of clan.cadets) {
-                yield [cadet, '<', clan.kinshipTo(cadet)];
+                yield [cadet, '<', clan.kinshipTo(cadet), DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
 
     class InteractionVolumeDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
             for (const [other, r] of clan.relationships) {
-                yield [other, '-', 0.01 * r.totalInteractionVolume];
+                yield [other, '-', 0.01 * r.totalInteractionVolume, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
 
     class RelativeAttentionDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
             for (const [other, r] of clan.relationships) {
-                yield [other, '-', 0.1 * r.relativeAttention];
+                yield [other, '-', 0.1 * r.relativeAttention, DEFAULT_RELATIONSHIP_COLOR];
+            }
+        }
+    }
+
+    const alignmentColorInterpolator = colorInterpolator(
+        [200, 50, 50],
+        [50, 50, 200],
+        -1,
+        1,
+    );
+
+    class AlignmentDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
+            for (const [other, r] of clan.relationships) {
+                yield [other, '-', 0.01 * r.totalInteractionVolume, alignmentColorInterpolator(r.alignment.value)];
             }
         }
     }
@@ -138,7 +157,7 @@
         // Snapshot values, because we're going to modify this map but should
         // iterate only over the initial values.
         for (const subjectCD of [...clanDisplays.values()]) {
-            for (const [objectClan, direction, r] of rdo.relationships(subjectCD.clan)) {
+            for (const [objectClan, direction, r, color] of rdo.relationships(subjectCD.clan)) {
                 let objectDisplay = clanDisplays.get(objectClan.uuid);
                 if (!objectDisplay) {
                     // Object is an external clan - add it to the display. Choose a
@@ -159,6 +178,7 @@
                     cd1: direction !== '<' ? subjectCD : objectDisplay,
                     cd2: direction !== '<' ? objectDisplay : subjectCD,
                     thickness: r * 20,
+                    color,
                     directed: direction !== '-',
                 });
             }
@@ -287,6 +307,7 @@
         { label: "K", data: new KinshipRelationshipDisplayOption() },
         { label: "IV", data: new InteractionVolumeDisplayOption() },
         { label: "RA", data: new RelativeAttentionDisplayOption() },
+        { label: "A", data: new AlignmentDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -315,7 +336,7 @@
           y1={line.cd1.y}
           x2={adjustedX2(line.cd1, line.cd2)}
           y2={adjustedY2(line.cd1, line.cd2)}
-          stroke="grey"
+          stroke={line.color}
           stroke-width={line.thickness}
           marker-end={line.directed ? 'url(#arrowhead)' : null}
         />
