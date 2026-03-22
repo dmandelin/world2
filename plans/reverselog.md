@@ -32,10 +32,14 @@ We'll also need some visualizations to make sense out of all this.
 TODOs:
 
 *   Visualizations for existing models
-    *   Marriage links among clans
-    *   Marriage links across settlements
-    *   Productivity bonus links among clans
-    *   Productivity bonus links across settlements
+    *   Further upgrade relationships graph
+        *   Option to show kinship relations
+        *   Option to show multiple relationships
+        *   Options to show productivity exchange relationship
+        *   Option to show interaction volume
+        *   Option to show relatedness
+        *   Option to show respect
+        *   Option to show attention
 *   Marriage
     *   Make sure it can happen across clusters
     *   Make sure clans with 0-1 neighbors need this to find partners
