@@ -46,10 +46,14 @@ export class CalcBase {
     value: number = 0;
 }
 
-export class Relationships {
+export class Relationships implements Iterable<[Clan, Relationship]> {
     private m: Map<Clan, Relationship> = new Map();
 
     constructor(readonly subject: Clan) {}
+
+    [Symbol.iterator](): Iterator<[Clan, Relationship]> {
+        return this.m.entries();
+    }
 
     get(object: Clan): Relationship | undefined {
         return this.m.get(object);

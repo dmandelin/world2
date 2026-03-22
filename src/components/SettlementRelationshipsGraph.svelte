@@ -68,6 +68,14 @@
             }
         }
     }
+
+    class InteractionVolumeDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
+            for (const [other, r] of clan.relationships) {
+                yield [other, '-', 0.01 * r.totalInteractionVolume];
+            }
+        }
+    }
     
     let display: Display = $state({
         clans: [] as ClanDisplay[],
@@ -269,6 +277,7 @@
     <ButtonPanel config={{buttons: [
         { label: "M", data: new MarriageRelationshipDisplayOption() },
         { label: "K", data: new KinshipRelationshipDisplayOption() },
+        { label: "IV", data: new InteractionVolumeDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>
 <!-- svelte-ignore a11y_click_events_have_key_events -->

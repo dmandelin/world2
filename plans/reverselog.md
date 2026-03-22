@@ -34,8 +34,8 @@ TODOs:
 *   Visualizations for existing models
     *   Further upgrade relationships graph
         x   Get nonlocal clans not to display on top of each other
-        *   Option to show kinship relations
-        *   Option to show multiple relationships
+        x   Option to show kinship relations
+        x   Option to show multiple relationships
         *   Options to show productivity exchange relationship
         *   Option to show interaction volume
         *   Option to show relatedness
