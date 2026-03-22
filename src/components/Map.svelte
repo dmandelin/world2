@@ -134,10 +134,14 @@
 
         // Name
         if (!settlement.parent && !settlement.abandoned) {
-            fillTextCentered(settlement.name, x, y + s + 15);
+            fillTextCentered(settlement.name, x + 18, y + s + 14);
         }
 
         if (settlement.parent) return;
+
+        // TODO - Clean this up. For now, it's just too much,
+        // especially when sites are near each other or water.
+        return;
 
         // Lens label (e.g., population)
         drawLensLabel(settlement, x, y, s + 32);

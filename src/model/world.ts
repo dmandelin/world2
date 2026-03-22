@@ -56,6 +56,8 @@ enum TurnState {
     Reviewing,
 }
 
+const MILES_PER_UNIT = 0.16666667;
+
 export class World implements NoteTaker {
     private turnState = TurnState.Planning;
 
@@ -69,8 +71,8 @@ export class World implements NoteTaker {
     readonly notes: Note[] = [];
 
     readonly clusters = new SettlementsBuilder(this).createClusters([
-        ['Eridu', 290, 425, 3],
-        ['Ur', 350, 350, 3],
+        ['Eridu', 382, 378, 3],
+        ['Ur', 425, 325, 3],
         ['Uruk', 200, 287, 3],
     ]);
 
@@ -115,6 +117,16 @@ export class World implements NoteTaker {
 
         // Run planning because we're about to activate planning view.
         this.plan(true);
+
+        // Log distances between clusters.
+        for (let i = 0; i < this.clusters.length; i++) {
+            for (let j = i + 1; j < this.clusters.length; j++) {
+                const c1 = this.clusters[i];
+                const c2 = this.clusters[j];
+                const distance = Math.sqrt((c1.mother.x - c2.mother.x) ** 2 + (c1.mother.y - c2.mother.y) ** 2);
+                console.log(`Distance between ${c1.mother.name} and ${c2.mother.name}: ${(MILES_PER_UNIT * distance).toFixed(2)} miles`);
+            }
+        }
     }
 
     initializeTradeGoods() {

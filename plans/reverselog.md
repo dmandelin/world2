@@ -3,16 +3,19 @@ Issues with the latest noted on top:
 ## Villages in a cluster: how do they relate?
 
 The latest issues here are around scale and what connections are
-needed. First, we need to establish some idea how far apart our
-people are so that we can tell how much it costs them to interact.
+needed. First, we need to understand scale: Eridu and Ur are about
+11 miles apart, close enough for ordinary contact, but both are
+40 miles from Uruk and would not necessarily be in contact. However,
+there would likely be some other sites in between.
 
-Second, we need to start making them "do stuff" to maintain any
+Now we need to start making clans "do stuff" to maintain any
 connections outside their settlement that they need, which so far
 have been largely assumed.
 
 The first item there is marriage, which right now is free throughout
-the region. Let's get an idea of scaling first so that we can see
-if we need to add more settlements or anything.
+the region.
+
+*   Limit marriages to a 12-mile radius and see what happens.
 
 ### First take
 
