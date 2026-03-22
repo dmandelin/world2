@@ -76,6 +76,14 @@
             }
         }
     }
+
+    class RelativeAttentionDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number]> {
+            for (const [other, r] of clan.relationships) {
+                yield [other, '-', 0.1 * r.relativeAttention];
+            }
+        }
+    }
     
     let display: Display = $state({
         clans: [] as ClanDisplay[],
@@ -278,6 +286,7 @@
         { label: "M", data: new MarriageRelationshipDisplayOption() },
         { label: "K", data: new KinshipRelationshipDisplayOption() },
         { label: "IV", data: new InteractionVolumeDisplayOption() },
+        { label: "RA", data: new RelativeAttentionDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>
 <!-- svelte-ignore a11y_click_events_have_key_events -->
