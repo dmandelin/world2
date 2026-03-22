@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Clan } from '../model/people/people';
   import type { ClanDTO, SettlementDTO } from './dtos';
 
   let { settlement }: { settlement: SettlementDTO } = $props();
@@ -7,26 +8,37 @@
   const height = 400;
   const cx = width / 2;
   const cy = height / 2;
-  const radius = Math.min(width, height) / 2 - 40; // Paddiing
+  const innerRadius = Math.min(width, height) / 2 - 60; // Paddiing
+  const outerRadius = Math.min(width, height) / 2 - 20; // Paddiing
+
+  const localClanRadius = 15;
+  const externalClanRadius = 8;
 
   interface ClanDisplay {
-    clan: ClanDTO;
+    clan: Clan;
     x: number;
     y: number;
+    angle: number;
+    radius: number;
   }
 
-  let clanDisplays: ClanDisplay[] = $derived.by(() => {
+  let localClanDisplays: ClanDisplay[] = $derived.by(() => {
     const clans = settlement.clans;
     if (!clans) return [];
+
+    // Local clans
     const angleStep = clans.length > 0 ? (2 * Math.PI) / clans.length : 0;
-    return clans.map((clan, i) => {
+    const localClans = clans.map((clan, i) => {
       const angle = i * angleStep;
       return {
-        clan,
-        x: cx + radius * Math.cos(angle),
-        y: cy + radius * Math.sin(angle),
+        clan: clan.ref,
+        x: cx + innerRadius * Math.cos(angle),
+        y: cy + innerRadius * Math.sin(angle),
+        angle: angle,
+        radius: localClanRadius,
       };
     });
+    return localClans;
   });
 
   interface RelationshipDisplay {
@@ -38,12 +50,32 @@
     thickness: number;
   }
 
-  let relationshipDisplays: RelationshipDisplay[] = $derived.by(() => {
+  let [clanDisplays, relationshipDisplays] = $derived.by(() => {
+    // Index existing clan displays.
+    const clanDisplayIndex: Record<string, ClanDisplay> = {};
+    const clanDisplays = [];
+    for (const cd of localClanDisplays) {
+      clanDisplayIndex[cd.clan.uuid] = cd;
+      clanDisplays.push(cd);
+    }
+
     const lines: RelationshipDisplay[] = [];
-    for (const subject of clanDisplays) {
-        for (const [objectClan, r] of subject.clan.ref.marriagePartners) {
-            const objectDisplay = clanDisplays.find(c => c.clan.ref === objectClan);
-            if (!objectDisplay) continue;
+    for (const subject of localClanDisplays) {
+        for (const [objectClan, r] of subject.clan.marriagePartners) {
+            let objectDisplay = clanDisplayIndex[objectClan.uuid];
+            if (!objectDisplay) {
+                // Object is an external clan - add it to the display.
+                const angle = subject.angle + ((Math.random() * 2) - 1) * 2 * Math.PI / 8;
+                objectDisplay = {
+                    clan: objectClan,
+                    x: cx + outerRadius * Math.cos(angle),
+                    y: cy + outerRadius * Math.sin(angle),
+                    angle,
+                    radius: externalClanRadius,
+                };
+                clanDisplayIndex[objectClan.uuid] = objectDisplay;
+                clanDisplays.push(objectDisplay);
+            }
             lines.push({
                 key: `${subject.clan.uuid}-${objectClan.uuid}`,
                 x1: subject.x,
@@ -54,7 +86,7 @@
             });
         }
     }
-    return lines;
+    return [clanDisplays, lines];
   });
 </script>
 
@@ -98,7 +130,7 @@
     <g class="clans">
       {#each clanDisplays as pos (pos.clan.uuid)}
         <g class="clan-node" transform="translate({pos.x}, {pos.y})">
-          <circle r="15" fill={pos.clan.color}></circle>
+          <circle r="{pos.radius}" fill={pos.clan.color}></circle>
           <text
             text-anchor="middle"
             y="-20"
