@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { Clan } from '../model/people/people';
+    import { randomClanColor, type Clan } from '../model/people/people';
+    import ButtonPanel from './ButtonPanel.svelte';
     import type { ClanDTO, SettlementDTO } from './dtos';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
@@ -39,12 +40,35 @@
         cd1: ClanDisplay;
         cd2: ClanDisplay;
         thickness: number;
-    }    
+    }
+
+    abstract class RelationshipDisplayOption {
+        abstract relationships(clan: Clan): Iterable<[Clan, number]>;
+    }
+
+    class MarriageRelationshipDisplayOption extends RelationshipDisplayOption {
+        relationships(clan: Clan): Iterable<[Clan, number]> {
+            return clan.marriagePartners;
+        }
+    }
+
+    class KinshipRelationshipDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: Clan): Iterable<[Clan, number]> {
+            if (clan.parent) {
+                yield [clan.parent, clan.kinshipTo(clan.parent)];
+            }
+            for (const cadet of clan.cadets) {
+                yield [cadet, clan.kinshipTo(cadet)];
+            }
+        }
+    }
     
     let display: Display = $state({
         clans: [] as ClanDisplay[],
         relationships: [] as RelationshipDisplay[],
     });
+
+    let rdo = $state(new MarriageRelationshipDisplayOption());
 
     $effect(() => {
         const newDisplay = buildDisplay(settlement);
@@ -92,7 +116,7 @@
         // Snapshot values, because we're going to modify this map but should
         // iterate only over the initial values.
         for (const subject of [...clanDisplays.values()]) {
-            for (const [objectClan, r] of subject.clan.marriagePartners) {
+            for (const [objectClan, r] of rdo.relationships(subject.clan)) {
                 let objectDisplay = clanDisplays.get(objectClan.uuid);
                 if (!objectDisplay) {
                     // Object is an external clan - add it to the display. Choose a
@@ -152,7 +176,7 @@
             }
 
             // Attraction to local clan partners.
-            for (const [partnerClan, r] of cd1.clan.marriagePartners) {
+            for (const [partnerClan, r] of rdo.relationships(cd1.clan)) {
                 const partnerDisplay = display.clans.find(cd => cd.clan.uuid === partnerClan.uuid);
                 if (!partnerDisplay) continue; // Shouldn't happen
                 const dx = partnerDisplay.x - cd1.x;
@@ -191,7 +215,7 @@
     }
 
     function onClick() {
-        stepPositionNonLocalClanDisplays();
+        stepPositionNonLocalClanDisplays(display);
     }
 </script>
 
@@ -216,6 +240,12 @@
   }
 </style>
 
+<div>
+    <ButtonPanel config={{buttons: [
+        { label: "M", data: new MarriageRelationshipDisplayOption() },
+        { label: "K", data: new KinshipRelationshipDisplayOption() },
+     ]}} onSelected={(label, data) => rdo = data} />
+</div>
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore event_directive_deprecated -->
