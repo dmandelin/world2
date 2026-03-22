@@ -7,6 +7,8 @@ import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { weightedAverage } from "../lib/modelbasics";
 
+export const MILES_PER_UNIT = 0.16666667;
+
 export class SettlementCluster {
     readonly settlements: Settlement[];
     private floodLevel_: FloodLevel = FloodLevels.Normal;
@@ -25,6 +27,13 @@ export class SettlementCluster {
 
     get daughters(): Settlement[] {
         return this.mother.daughters;
+    }
+
+    milesTo(other: SettlementCluster): number {
+        const c1 = this.mother;
+        const c2 = other.mother;
+        const distance = Math.sqrt((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2);
+        return MILES_PER_UNIT * distance;
     }
 
     get clans(): Clan[] {

@@ -47,7 +47,8 @@ export function marry(world: World): void {
         const offers: PotentialPartnerSet[] = [];
         for (const husbandSet of potentialHusbands) {
             if (husbandSet.clan.settlement === wifeSet.clan.settlement ||
-                Math.random() < 0.1) {
+                (Math.random() < 0.25 && 
+                 husbandSet.clan.settlement.milesTo(wifeSet.clan.settlement) < 12)) {
                 offers.push(husbandSet);
             }
         }

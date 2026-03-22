@@ -8,7 +8,7 @@ import { Note, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
 import { Settlement } from "./people/settlement";
-import { SettlementCluster } from "./people/cluster";
+import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "../components/dtos";
 import { Year } from "./records/year";
@@ -55,8 +55,6 @@ enum TurnState {
     // See results of executing the previous turn.
     Reviewing,
 }
-
-const MILES_PER_UNIT = 0.16666667;
 
 export class World implements NoteTaker {
     private turnState = TurnState.Planning;

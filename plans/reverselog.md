@@ -16,6 +16,9 @@ The first item there is marriage, which right now is free throughout
 the region.
 
 *   Limit marriages to a 12-mile radius and see what happens.
+    *   Display on the map connections between settlement regions
+        that are close enough to marry
+    *   Limit marriage offers to a 12-mile radius
 
 ### First take
 

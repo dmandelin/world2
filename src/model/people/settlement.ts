@@ -1,9 +1,9 @@
-import { average, chooseFrom, shuffled, sumFun } from "../lib/basics";
+import { chooseFrom, shuffled, sumFun } from "../lib/basics";
 import type { Clans } from "./clans";
 import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
-import type { SettlementCluster } from "./cluster";
+import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
 import { DitchMaintenanceCalc } from "../infrastructure";
 import { DistributionNode } from "../econ/distributionnode";
 import { ProductionNode } from "../econ/productionnode";
@@ -101,6 +101,11 @@ export class Settlement {
 
     setCluster(cluster: SettlementCluster) {
         this.cluster_ = cluster;
+    }
+
+    milesTo(other: Settlement): number {
+        const distance = Math.sqrt((this.x - other.x) ** 2 + (this.y - other.y) ** 2);
+        return MILES_PER_UNIT * distance;
     }
 
     get lastSizeChange(): number {
