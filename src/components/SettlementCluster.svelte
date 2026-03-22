@@ -1,11 +1,12 @@
 <script lang="ts">
     import { formatTellHeight, signed } from "../model/lib/format";
-    import ButtonPanel from "./ButtonPanel.svelte";
-    import Settlement from "./Settlement.svelte";
-    import { SettlementDTO } from "./dtos";
     import { pct } from "../model/lib/format";
-    import Tooltip from "./Tooltip.svelte";
+    import { SettlementDTO } from "./dtos";
+    import { groupSedentismDescription } from "../model/people/residence";
+    import ButtonPanel from "./ButtonPanel.svelte";
     import DataTable from "./DataTable.svelte";
+    import Settlement from "./Settlement.svelte";
+    import Tooltip from "./Tooltip.svelte";
 
     let { settlement, onSelect } = $props();
 
@@ -74,12 +75,11 @@
                 />{signed(settlement.averageAppeal, 0)}
                 <img src="stat-happiness-256.png" alt="Happiness" width="40" height="40"
                      style="padding-bottom: 8px;"
-                />{signed(settlement.averageHappiness, 0)}</h1>
+                />{signed(settlement.averageHappiness, 0)}
+            </h1>
             <div>
-                {pct(settlement.farmingRatio)} farming
-            </div>
-            <div>
-                {pct(settlement.residenceFraction)} resident &centerdot;
+                {groupSedentismDescription(settlement.residenceFraction)} 
+                ({pct(settlement.residenceFraction)} resident) &centerdot;
                 {#if settlement.yearsInPlace >= 100}
                     Settled &ndash; {formatTellHeight(settlement.tellHeightInMeters)}
                     <span style="color:grey">(founded {settlement.yearsInPlace} years ago)</span>
@@ -90,6 +90,9 @@
                     {(20/settlement.movingAverageForcedMigrations).toFixed()} years
                     ({settlement.movingAverageForcedMigrations.toFixed(1)}/20y)
                 {/if}
+            </div>
+            <div>
+                {pct(settlement.farmingRatio)} farming
             </div>
 
             <ButtonPanel config={{

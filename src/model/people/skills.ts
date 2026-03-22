@@ -5,12 +5,19 @@ import { Traits } from './traits';
 import { normal } from '../lib/distributions';
 import { TradeGoods, type TradeGood } from '../trade';
 
+export enum SkillUseLocation {
+    HomeOnly,
+    AwayOnly,
+    Either,
+}
+
 export class SkillDef {
     constructor(
         readonly name: string,
         readonly icon: string,
         readonly outputGood: TradeGood|undefined,
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
+        readonly useLocation: SkillUseLocation = SkillUseLocation.Either,
         readonly diseaseLoadFactor: number = 0,
     ) {}
 }
@@ -18,16 +25,19 @@ export class SkillDef {
 export const SkillDefs = {
     Fishing: new SkillDef('Fishing', 'skill-fishing-256.png', TradeGoods.Fish,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
-        1),
+        SkillUseLocation.AwayOnly, 1),
     Agriculture: new SkillDef('Agriculture', 'skill-farming-256.png', TradeGoods.Cereals,
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
-        2),
+        SkillUseLocation.HomeOnly, 2),
     Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png', undefined,
-        new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]])),
+        new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]]),
+        SkillUseLocation.HomeOnly, 3),
     Construction: new SkillDef('Construction', 'skill-construction-256.png', undefined,
-        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]])),
+        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
+        SkillUseLocation.HomeOnly, 1),
     Ritual: new SkillDef('Ritual', 'skill-ritual-256.png', undefined,
-        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]])),
+        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
+        SkillUseLocation.Either, 1),
 };
 
 export class ClanSkill {

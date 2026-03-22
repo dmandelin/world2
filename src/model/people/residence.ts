@@ -47,37 +47,99 @@
 // -    A tell
 // and perhaps rate the "kind of community" as area, village, town, etc.
 
+// More on putting this together
+//
+// - We have a standard assumption that 2/3 of adults are workers, 1/3
+//   are mothers
+// - Where workers spend their time is determined by labor choice. This is
+//   a simplification, because there may not actually be farm work to do
+//   100% of the time, but we'll assume they're doing other related activities
+
+import { sumFun } from "../lib/basics";
+import type { Clan } from "./people";
+import { SkillUseLocation } from "./skills";
+
 export class ResidenceLevel {
-    constructor(
-        readonly index: number,
-        readonly name: string,
-        readonly description: string,
-        readonly useFraction: (farmingRatio: number) => number,
-    ) {}
+    // Additive items of residence based on labor.
+    laborItems_: {skill: string, fraction: number}[] = [];
+
+    // Fraction of the time that mothers are specifically in the settlement.
+    // The rest of the time they are with workers, wherever they are.
+    mothersNestingFraction_: number = 0;
+
+    constructor(readonly clan: Clan) {}
+
+    update() {
+        this.laborItems_ = [];
+
+        const eitherItems: {skill: string, fraction: number}[] = [];
+        let [totalWeight, awayWeight]: [number, number] = [0, 0];
+
+        for (const [skill, laborFraction] of this.clan.laborAllocation.allocs) {
+            if (skill.useLocation === SkillUseLocation.HomeOnly) {
+                this.laborItems_.push({
+                    skill: skill.name,
+                    fraction: laborFraction,
+                });
+                totalWeight += laborFraction * laborFraction;
+            } else if (skill.useLocation === SkillUseLocation.AwayOnly) {
+                awayWeight += laborFraction * laborFraction;
+            } else if (skill.useLocation === SkillUseLocation.Either) {
+                eitherItems.push({
+                    skill: skill.name,
+                    fraction: laborFraction,
+                });
+            }
+        }
+
+        // Assign location for Either skills based on weights, but cut off near 0.
+        const baseHomeFraction = totalWeight / (totalWeight + awayWeight);
+        const homeFraction = baseHomeFraction < 0.05 ? 0 : baseHomeFraction > 0.95 ? 1 : baseHomeFraction;
+        for (const item of eitherItems) {
+            this.laborItems_.push({
+                skill: item.skill,
+                fraction: item.fraction * homeFraction,
+            });
+        }
+    }
+
+    get mothersNestingFraction(): number {
+        return this.mothersNestingFraction_;
+    }
+
+    get workersFractionInSettlement(): number {
+        return sumFun(this.laborItems_, item => item.fraction);
+    }
+
+    get mothersFractionInSettlement(): number {
+        return this.mothersNestingFraction_ + (1 - this.mothersNestingFraction_) * this.workersFractionInSettlement;
+    }
+
+    get fractionInSettlement(): number {
+            return 2/3 * this.workersFractionInSettlement + 1/3 * this.mothersFractionInSettlement;
+    }
 }
 
-export const ResidenceLevels = {
-    // Nomadic, no agriculture.
-    Nomadic: new ResidenceLevel(0, 'Nomadic',
-        'Nomadic',
-        (_: number) => 0,
-    ),
-    // Living near fields while working on them, but otherwise
-    // mostly nomadic.
-    SemiNomadic: new ResidenceLevel(1, 'Semi-nomadic',
-        'Semi-nomadic',
-        (farmingRatio: number) => farmingRatio,
-    ),
-    // Living near fields most of the time, especially when taking
-    // care of children, but still spending some time on nomadic
-    // hunting and collecting.
-    SemiPermanent: new ResidenceLevel(2, 'Semi-permanent',
-        'Semi-permanent',
-        (farmingRatio: number) => 0.5 * farmingRatio + 0.5,
-    ),
-    // Permanent: living near the village.
-    Permanent: new ResidenceLevel(3, 'Permanent',
-        'Permanent',
-        (_: number) => 1,
-    ),
-};
+export function groupSedentismDescription(sedentismFraction: number): string {
+    if (sedentismFraction < 0.25) {
+        return 'Cereal Fields';
+    } else if (sedentismFraction < 0.5) {
+        return 'Farm Camp';
+    } else if (sedentismFraction < 0.75) {
+        return 'Home Camp';
+    } else {
+        return 'Settlement';
+    }
+}
+
+export function clanSedentismDescription(sedentismFraction: number): string {
+    if (sedentismFraction < 0.25) {
+        return 'Nomadic';
+    } else if (sedentismFraction < 0.5) {
+        return 'Seminomadic';
+    } else if (sedentismFraction < 0.75) {
+        return 'Semisedentary';
+    } else {
+        return 'Sedentary';
+    }
+}

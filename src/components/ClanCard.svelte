@@ -11,6 +11,7 @@
     import { appealTable, happinessTable, laborAllocationPlanTable, skillImitationTable } from "./tables";
     import { SkillDefs } from "../model/people/skills";
     import DataTable2 from "./DataTable2.svelte";
+    import { clanSedentismDescription } from "../model/people/residence";
 
     let { clan } = $props();
 
@@ -161,7 +162,7 @@
             </tr>
             <tr>
                 <td colspan="3" class="full-row">
-                    {clan.residenceLevel.description} 
+                    {clanSedentismDescription(clan.residenceFraction)} 
                     ({pct(clan.residenceFraction)} resident)</td>
             </tr>
             <tr>

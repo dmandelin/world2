@@ -12,7 +12,7 @@ import { normal } from "../lib/distributions";
 import { PrestigeCalc } from "./prestige";
 import { ProductivityCalc } from "./productivity";
 import { Relationships } from "./relationships";
-import { ResidenceLevels, type ResidenceLevel } from "./residence";
+import { ResidenceLevel } from "./residence";
 import { RespectCalc } from "./respect";
 import { Rites } from "../rites";
 import { TradeGoods } from "../trade";
@@ -203,7 +203,7 @@ export class Clan implements TradePartner {
     static maxDesiredSize = 75;
 
     private settlement_: Settlement|undefined;
-    private residenceLevel_: ResidenceLevel;
+    private residenceLevel_ = new ResidenceLevel(this);
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 2;
@@ -283,8 +283,6 @@ export class Clan implements TradePartner {
             ++error;
         }
 
-        this.residenceLevel_ = ResidenceLevels.SemiNomadic;
-
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.
@@ -333,11 +331,10 @@ export class Clan implements TradePartner {
 
     get residenceLevel(): ResidenceLevel {
         return this.residenceLevel_;
-    }   
+    }
 
     get residenceFraction(): number {
-        const farmingRatio = this.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0;
-        return this.residenceLevel_.useFraction(farmingRatio);
+        return this.residenceLevel_.fractionInSettlement;
     }
 
     get effectiveResidentPopulation(): number {
