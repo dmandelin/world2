@@ -1,5 +1,7 @@
 x   Fix bug where clan sustenance goes to 0
 x   Fix bug where relationship productivity factor can be NaN
+*   Display on the map connections between settlement regions
+    that are close enough to marry
 
 *   Better tables library
     x   Draft initial version

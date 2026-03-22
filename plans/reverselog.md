@@ -12,13 +12,19 @@ Now we need to start making clans "do stuff" to maintain any
 connections outside their settlement that they need, which so far
 have been largely assumed.
 
-The first item there is marriage, which right now is free throughout
-the region.
+x   Limit marriages to a 12-mile radius and see what happens.
 
-*   Limit marriages to a 12-mile radius and see what happens.
-    *   Display on the map connections between settlement regions
-        that are close enough to marry
-    *   Limit marriage offers to a 12-mile radius
+The next point is to firm up "productivity bonus relationships".
+
+*   Show what they're derived from in the UI
+*   Show something about this in the clan summary table
+    *   Maybe collapse BR/DR to "health" to make room
+*   Show in the graphical view
+*   Make sure clans aren't getting productivity bonuses from
+    themselves
+*   Have a smaller productivity bonus over longer distance
+    *   1/2 or 1/4 bonus for other villages in the cluster might work
+
 
 ### First take
 
@@ -61,9 +67,9 @@ TODOs:
         x   Option to show relatedness
         *   Option to show respect
         x   Option to show attention
-*   Marriage
-    *   Make sure it can happen across clusters
-    *   Make sure clans with 0-1 neighbors need this to find partners
+x   Marriage
+    x   Make sure it can happen across clusters
+    x   Make sure clans with 0-1 neighbors need this to find partners
 *   Productivity bonus
     *   Make sure it can happen across clusters, but with some difference
     *   Consider promoting this to be a tagged favor exchange relationship
