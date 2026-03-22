@@ -40,19 +40,25 @@
         cd1: ClanDisplay;
         cd2: ClanDisplay;
         thickness: number;
+        directed: boolean;
     }
 
     abstract class RelationshipDisplayOption {
+        abstract directed: boolean;
         abstract relationships(clan: Clan): Iterable<[Clan, number]>;
     }
 
     class MarriageRelationshipDisplayOption extends RelationshipDisplayOption {
+        directed = false;
+
         relationships(clan: Clan): Iterable<[Clan, number]> {
             return clan.marriagePartners;
         }
     }
 
     class KinshipRelationshipDisplayOption extends RelationshipDisplayOption {
+        directed = true;
+
         *relationships(clan: Clan): Iterable<[Clan, number]> {
             if (clan.parent) {
                 yield [clan.parent, clan.kinshipTo(clan.parent)];
@@ -137,6 +143,7 @@
                     cd1: subject,
                     cd2: objectDisplay,
                     thickness: r * 20,
+                    directed: rdo.directed,
                 });
             }
         }
