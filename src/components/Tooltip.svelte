@@ -31,6 +31,9 @@
     border: 2px solid #62531d;
     border-radius: 2px;
   }
+  .tooltip-inner {
+    all: revert;
+  }
   </style>
   
   <div class="tooltip-wrapper"
@@ -42,7 +45,9 @@
   
     {#if show}
       <div class="tooltip-content">
-        <slot name="tooltip" />
+        <div class="tooltip-inner">
+          <slot name="tooltip" />
+        </div>
       </div>
     {/if}
   </div>

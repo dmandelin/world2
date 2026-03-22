@@ -103,6 +103,10 @@ export class ResidenceLevel {
         }
     }
 
+    get laborItems(): {skill: string, fraction: number}[] {
+        return this.laborItems_;
+    }
+
     get mothersNestingFraction(): number {
         return this.mothersNestingFraction_;
     }
@@ -124,7 +128,7 @@ export function groupSedentismDescription(sedentismFraction: number): string {
     if (sedentismFraction < 0.25) {
         return 'Cereal Fields';
     } else if (sedentismFraction < 0.5) {
-        return 'Farm Camp';
+        return 'Farming Camp';
     } else if (sedentismFraction < 0.75) {
         return 'Home Camp';
     } else {

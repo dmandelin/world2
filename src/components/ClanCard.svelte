@@ -12,6 +12,7 @@
     import { SkillDefs } from "../model/people/skills";
     import DataTable2 from "./DataTable2.svelte";
     import { clanSedentismDescription } from "../model/people/residence";
+    import ClanResidence from "./items/ClanResidence.svelte";
 
     let { clan } = $props();
 
@@ -161,9 +162,7 @@
                 </td>
             </tr>
             <tr>
-                <td colspan="3" class="full-row">
-                    {clanSedentismDescription(clan.residenceFraction)} 
-                    ({pct(clan.residenceFraction)} resident)</td>
+                <td colspan="3" class="full-row"><ClanResidence clan={clan} /></td>
             </tr>
             <tr>
                 <td colspan="3" class="full-row">{clan.parent ? `Cadet of ${clan.parent.name}` : 'Senior clan'}</td>

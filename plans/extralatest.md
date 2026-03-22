@@ -486,10 +486,26 @@ than prestige, so in the process those models should be firmed up.
 List of changes implied by the above:
 
 *   Variable settlement permanence levels
+    *   Rework residence model
+        x   Introduce basic new model with visible calculations, tags
+            inferred from data
+        *   Residence level change options for carers
+        *   Update effects of co-residence, especially for
+            *   carer differentials
+                *   birth rate bonus
+                *   happiness effect?
+                *   safety effect?
+                *   productivity effect?
+                *   food security effect?
+            *   nomadic/concentrated differentials
+                *   skill learning
+                *   opinion effects
+                *   conflict/enterntainment/annoyance
+                *   disease
     *   Need residence appeal/effect model
         *   Factors
             *   help when sick or other misfortunes
-                *   bonus to health (which should influece productivity)
+                *   bonus to health (which should influence productivity)
                 x   bonus to productivity (help with repair, lost animal, etc)
                 *   bonus to relatedness
             *   help with child care
