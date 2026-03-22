@@ -2,6 +2,20 @@ Issues with the latest noted on top:
 
 ## Villages in a cluster: how do they relate?
 
+The latest issues here are around scale and what connections are
+needed. First, we need to establish some idea how far apart our
+people are so that we can tell how much it costs them to interact.
+
+Second, we need to start making them "do stuff" to maintain any
+connections outside their settlement that they need, which so far
+have been largely assumed.
+
+The first item there is marriage, which right now is free throughout
+the region. Let's get an idea of scaling first so that we can see
+if we need to add more settlements or anything.
+
+### First take
+
 Right now, this is quite unclear. This ends up being strange because
 a big ring of villages grows, but with no apparent relationship to or
 effect on each other.
@@ -37,16 +51,17 @@ TODOs:
         x   Option to show kinship relations
         x   Option to show multiple relationships
         *   Options to show productivity exchange relationship
-        *   Option to show interaction volume
-        *   Option to show relatedness
+        x   Option to show interaction volume
+        x   Option to show relatedness
         *   Option to show respect
-        *   Option to show attention
+        x   Option to show attention
 *   Marriage
     *   Make sure it can happen across clusters
     *   Make sure clans with 0-1 neighbors need this to find partners
 *   Productivity bonus
     *   Make sure it can happen across clusters, but with some difference
     *   Consider promoting this to be a tagged favor exchange relationship
+    *   Fix bug with clans getting big productivity bonus without neighbors
 *   Down-the-line trade
     *   Might be time to actually add soon but conflicts with the cluster
         model somewhat
