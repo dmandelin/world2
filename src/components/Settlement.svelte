@@ -11,7 +11,7 @@
     import SettlementOpinions from "./SettlementOpinions.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRespect from "./SettlementRespect.svelte";
-    import SettlementRelationships1 from "./SettlementRelationships1.svelte";
+    import SettlementRelationshipsGraph from "./SettlementRelationshipsGraph.svelte";
 
     let { settlement } = $props();
 
@@ -19,7 +19,7 @@
         { label: "Overview", snippet: overviewTab },
         { label: "People", snippet: peopleTab },
         { label: "Relationships", snippet: relationshipsTab },
-        { label: "Relationships1", snippet: relationships1Tab },
+        { label: "Graph", snippet: relationshipsGraphTab },
         { label: "Happiness", snippet: happinessTab },
         { label: "Demographics", snippet: demographicsTab },
         { label: "Respect", snippet: respectTab },
@@ -75,8 +75,8 @@
     <SettlementRelationships settlement={settlement} />
 {/snippet}
 
-{#snippet relationships1Tab()}
-    <SettlementRelationships1 settlement={settlement} />
+{#snippet relationshipsGraphTab()}
+    <SettlementRelationshipsGraph settlement={settlement} />
 {/snippet}
 
 <style>

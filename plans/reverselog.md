@@ -27,8 +27,15 @@ how it should work for the long run. For now, to avoid too much UI
 overhaul, we can think about modeling the villages in a cluster on
 a more equal footing.
 
+We'll also need some visualizations to make sense out of all this.
+
 TODOs:
 
+*   Visualizations for existing models
+    *   Marriage links among clans
+    *   Marriage links across settlements
+    *   Productivity bonus links among clans
+    *   Productivity bonus links across settlements
 *   Marriage
     *   Make sure it can happen across clusters
     *   Make sure clans with 0-1 neighbors need this to find partners
