@@ -136,6 +136,21 @@ export function groupSedentismDescription(sedentismFraction: number): string {
     }
 }
 
+export function groupSedentismImage(sedentismFraction: number): string {
+    if (sedentismFraction < 0.25) {
+        return 'habitation-1.png';
+    } else if (sedentismFraction < 0.5) {
+        return 'habitation-2.png';
+    } else if (sedentismFraction < 0.75) {
+        return 'habitation-3.png';
+    } else {
+        // The habitation-4 image has way too many buildings and way too
+        // many building types, but I couldn't get a proper intermediate
+        // between the current 2 and 3, which is what we'd really want.
+        return 'habitation-3.png';
+    }
+}
+
 export function clanSedentismDescription(sedentismFraction: number): string {
     if (sedentismFraction < 0.25) {
         return 'Nomadic';

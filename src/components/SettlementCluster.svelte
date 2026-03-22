@@ -2,16 +2,13 @@
     import { formatTellHeight, signed } from "../model/lib/format";
     import { pct } from "../model/lib/format";
     import { SettlementDTO } from "./dtos";
-    import { groupSedentismDescription } from "../model/people/residence";
+    import { groupSedentismDescription, groupSedentismImage } from "../model/people/residence";
     import ButtonPanel from "./ButtonPanel.svelte";
     import DataTable from "./DataTable.svelte";
     import Settlement from "./Settlement.svelte";
     import Tooltip from "./Tooltip.svelte";
 
     let { settlement, onSelect } = $props();
-
-    $effect(() => {
-    });
 </script>
 
 <style>
@@ -39,7 +36,7 @@
 <div id="top">
     <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
         <div>
-            <img style="display: block" src="residents.png" alt="Residents" width="150" height="100" />
+            <img style="display: block" src="{groupSedentismImage(settlement.residenceFraction)}" alt="Residents" width="150" height="100" />
             <div class="sm">Last flood level: {settlement.floodLevel.name}</div>
             <div class="sm">
                 <Tooltip>
