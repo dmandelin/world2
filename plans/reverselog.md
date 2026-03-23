@@ -25,6 +25,13 @@ The next point is to firm up "productivity bonus relationships".
 *   Have a smaller productivity bonus over longer distance
     *   1/2 or 1/4 bonus for other villages in the cluster might work
 
+We also seem to have issues with villages splitting too soon, which
+partly is a function of conflict levels. First steps could be:
+
+*   Visualize conflict calculations so we can see what the thresholds
+    are
+*   Increase inertia and/or decrease expected society appeal in new
+    village
 
 ### First take
 
