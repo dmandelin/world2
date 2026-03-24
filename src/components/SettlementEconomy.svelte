@@ -55,9 +55,6 @@
             <h3>Consumption Review</h3>
             <TableView table={buildConsumptionTable(settlement)}></TableView>
         </div>
-        <div>
-            <h3>Cooperation</h3>
-        </div>
     </div>
 
     <h3>Production &#x1F834;</h3>

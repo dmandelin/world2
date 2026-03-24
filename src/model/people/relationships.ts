@@ -166,22 +166,12 @@ export class Relationships implements Iterable<[Clan, Relationship]> {
         return relationship ? relationship.alignment.value : 0;
     }
 
-    cooperationLevelWith(object: Clan): number {
-        const alignment = this.alignmentToward(object);
-        if (alignment > 0) {
-            return 0.4 + 0.6 * alignment;
-        } else if (alignment > -0.2) {
-            return 2 * (alignment + 0.2);
-        } else {
-            return 1 / .8 * (alignment + 0.2);
-        }
-    }
-
     getProductivityFactor(skill: SkillDef): number {
-        return weightedGeometricMean(
-            this.m.values(), 
-            relationship => relationship.getProductivityFactor(skill),
-            relationship => relationship.relativeAttention);
+        return 1 + sumFun(this.m.values(), 
+            relationship =>
+                (relationship.interactions['Settled'].getBaseProductivityBonus(skill)
+               + relationship.interactions['Nomadic'].getBaseProductivityBonus(skill))
+             * relationship.cooperationLevel);
     }
 }
 
@@ -238,6 +228,16 @@ export class Relationship {
         this.alignment.update();
     }
 
+    get cooperationLevel(): number {
+        if (this.alignment.value > 0) {
+            return 0.4 + 0.6 * this.alignment.value;
+        } else if (this.alignment.value > -0.2) {
+            return 2 * (this.alignment.value + 0.2);
+        } else {
+            return 1 / .8 * (this.alignment.value + 0.2);
+        }
+    }
+    
     get attention(): number {
         return this.attention_;
     }
@@ -256,14 +256,6 @@ export class Relationship {
 
     get totalInteractionVolume(): number {
         return sumValues(this.interactions, interaction => interaction.volume);
-    }
-
-    getProductivityFactor(skill: SkillDef): number {
-        return productFun(
-            Object.values(this.interactions), 
-            interaction => interaction.getProductivityFactor(
-                skill, 
-                this.subject.relationships.cooperationLevelWith(this.object)));
     }
 }
 
@@ -287,13 +279,16 @@ export abstract class OngoingInteraction {
         this.volume = this.attention * this.coresidenceFactor;
     }
 
-    getBaseProductivityFactor(skill: SkillDef, cooperationFactor: number) {
-        return 1 + cooperationFactor * Math.sqrt(this.volume / 100) * this.maxProductivityBonus;
+    getBaseProductivityBonus(skill: SkillDef) {
+        return Math.sqrt(this.volume / 100)
+         * this.maxProductivityBonus
+         * this.getSkillEffectivenessFactor(skill)
+         * Math.max(1, this.object.population / this.subject.population);
     }
+    abstract get maxProductivityBonus(): number;
+    abstract getSkillEffectivenessFactor(skill: SkillDef): number;
 
     abstract getCoresidenceFactor(coresidenceFraction: number): number;
-    abstract getProductivityFactor(skill: SkillDef, cooperationFactor: number): number;
-    abstract get maxProductivityBonus(): number;
 }
 
 export class NomadicOngoingInteraction extends OngoingInteraction {
@@ -312,17 +307,16 @@ export class NomadicOngoingInteraction extends OngoingInteraction {
         return 1 - coresidenceFraction;
     }
 
-    getProductivityFactor(skill: SkillDef, cooperationFactor: number): number {
+    getSkillEffectivenessFactor(skill: SkillDef): number {
         // Nomadic interactions are highly effective for nomadic-type activities,
         // and also quite effective for part-time, high-importance activities,
         // but less so for agriculture and routine construction.
-        const baseFactor = this.getBaseProductivityFactor(skill, cooperationFactor);
         if (skill === SkillDefs.Agriculture) {
-            return Math.pow(baseFactor, 0.25);
+            return 0.25;
         } else if (skill === SkillDefs.Construction) {
-            return Math.pow(baseFactor, 0.5);
+            return 0.5;
         }
-        return baseFactor;
+        return 1;
     }
 }    
 
@@ -340,8 +334,8 @@ export class SettledOngoingInteraction extends OngoingInteraction {
         return coresidenceFraction;
     }
 
-    getProductivityFactor(skill: SkillDef, cooperationFactor: number): number {
-        return this.getBaseProductivityFactor(skill, cooperationFactor);
+    getSkillEffectivenessFactor(skill: SkillDef): number {
+        return 1;
     }
 }    
 
