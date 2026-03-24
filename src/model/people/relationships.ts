@@ -40,6 +40,63 @@ import { SkillDefs, type SkillDef } from "./skills";
 //     Their interactions are still important, but mathematically
 //     they don't spend as much time together.
 
+// Thinking through productivity factors again
+//
+// An immediate issue is that right now, clans can get the full bonus
+// regardless of the size of their interaction set, even if it's just
+// themselves. A second issue is that the calculation is complex and
+// spread among multiple functions, making it hard to visualize. So
+// let's overhaul.
+//
+// We could use a simple model where 1 point of mutual attention gives
+// a certain percentage bonus, but changes expected eventually will
+// complicate the picture. Let's think about what these productivity-
+// boosting interactions actually are:
+// -    Exchanging small favors to solve bottlenecks, such as borrowing
+//      a tool, helping fix a roof, etc.
+// -    Exchanging bigger help for bigger bottlenecks, such as at harvest
+//      time.
+// -    Helping out in case of emergencies and disasters. Note that as
+//      clans get their own food storage, this may become less important.
+// -    Exchanging somewhat specialized skills and services. There are
+//      probably not full-time specialists, but some people might be
+//      better at certain things.
+//
+// If we want to keep the model simple for now, it should work to have
+// a single bonus possibly with diminishing returns to represent some
+// kinds of mutual help being more valuable; however it probably also
+// takes more relationship investment to get people to want to do that.
+// Note also that we don't need a ton of interaction volume per se for
+// things like disaster insurance -- how often they interact doesn't
+// matter directly, it's about what's needed to maintain the relationship.
+//
+// Interaction volume will matter for learning and innovation processes.
+//
+// For our basic economic processes, instead of interaction volume,
+// what's going on? In order to interact economically, mechanically they
+// just need to interact economically -- swap the favor, or whatever.
+// But the point is that this kind of economy relies on people knowing
+// each other and having regular interactions. The idea will be that
+// clans can spend attention, which will unlock economic exchanges.
+//
+// Specifically:
+// *    Any amount of mutual attention means clans are aware of each
+//      other and could have economic interactions.
+// *    The richness of those interactions will depend on trust: if two
+//      clans trust each other greatly, they might back each up other
+//      in disasters, extend big favors, etc. But if they only trust each
+//      other a little, they might only cooperate on small things.
+// *    The amount of economic interaction would also depend on how much
+//      economic interaction they choose to have. To keep it simple for
+//      now, that will go by attention.
+// *    For now, let's make gains additive across economic partners for
+//      simplicity, especially in visualization.
+// *    Let's say that the base value is sqrt(attention/100). Thus, spreading
+//      attention across multiple clans gives a higher base value.
+// *    We also need to handle the issue of "nomadic" vs "settled" 
+//      attention. We can use the same attention value for both, for
+//      now, but they'll have different effects.
+
 const REFERENCE_COMMUNITY_SIZE = 150;
 
 export class CalcBase {

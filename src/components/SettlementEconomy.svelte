@@ -50,44 +50,50 @@
 </style>
 
 <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 1rem;">
-<h3>Consumption Review</h3>
+    <div style="display: flex; gap: 1rem;">
+        <div>
+            <h3>Consumption Review</h3>
+            <TableView table={buildConsumptionTable(settlement)}></TableView>
+        </div>
+        <div>
+            <h3>Cooperation</h3>
+        </div>
+    </div>
 
-<TableView table={buildConsumptionTable(settlement)}></TableView>
-
-<h3>Production &#x1F834;</h3>
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th></th>
-                {#each prodTable.header as cell}
-                    <th colspan="6">{cell}</th>
+    <h3>Production &#x1F834;</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    {#each prodTable.header as cell}
+                        <th colspan="6">{cell}</th>
+                    {/each}
+                </tr>
+                <tr>
+                    <th></th>
+                    {#each prodTable.header as cell}
+                        <th class='lb'>K</th>
+                        <th>L%</th>
+                        <th>L</th>
+                        <th>L/C</th>
+                        <th>LP</th>
+                        <th>TFP</th>
+                        <th>Y</th>
+                    {/each}
+                </tr>
+            </thead>
+            <tbody>
+                {#each prodTable.rows as row}
+                <tr>
+                    {#each row as cell, index}
+                    <td class={(index - 1) % 7 === 0 ? 'lb' : ''}>
+                        {cell}
+                    </td>
+                    {/each}
+                </tr>
                 {/each}
-            </tr>
-            <tr>
-                <th></th>
-                {#each prodTable.header as cell}
-                    <th class='lb'>K</th>
-                    <th>L%</th>
-                    <th>L</th>
-                    <th>L/C</th>
-                    <th>LP</th>
-                    <th>TFP</th>
-                    <th>Y</th>
-                {/each}
-            </tr>
-        </thead>
-        <tbody>
-            {#each prodTable.rows as row}
-            <tr>
-                {#each row as cell, index}
-                <td class={(index - 1) % 7 === 0 ? 'lb' : ''}>
-                    {cell}
-                </td>
-                {/each}
-            </tr>
-            {/each}
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 </div>
