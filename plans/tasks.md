@@ -2,6 +2,7 @@ x   Fix bug where clan sustenance goes to 0
 x   Fix bug where relationship productivity factor can be NaN
 *   Display on the map connections between settlement regions
     that are close enough to marry
+*   Tooltip for buttons on relationships graph display
 
 *   Better tables library
     x   Draft initial version
@@ -17,7 +18,7 @@ x   Fix bug where relationship productivity factor can be NaN
             that can encapsulate all the aspects
     x   Redo alignment concept with proper name inside Relationship
         x   Get that appropriately displayed in the UI
-    *   Make interaction type affect different productivities differently
+    x   Make interaction type affect different productivities differently
     *   Interaction stance effects
     *   Create belongingness satisfaction
         *   Get that appropriately displayed in the UI

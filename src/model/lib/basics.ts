@@ -196,14 +196,22 @@ export function product(aa: number[]): number {
 }
 
 export function productFun<T>(
-        aa: T[],
+        aa: Iterable<T>,
         fn: (t: T) => number,
         weightFn?: (t: T) => number,
     ): number {
     if (weightFn === undefined) {
-        return aa.reduce((acc, cur) => acc * fn(cur), 1);
+        let result = 1;
+        for (const item of aa) {
+            result *= fn(item);
+        }
+        return result;
     } else {
-        return aa.reduce((acc, cur) => acc * fn(cur) * weightFn(cur), 1);
+        let result = 1;
+        for (const item of aa) {
+            result *= fn(item) * weightFn(item);
+        }
+        return result;
     }
 }
 
@@ -213,16 +221,17 @@ export function average(aa: number[]): number {
 }
 
 export function averageFun<T>(
-        aa: T[], 
+        aa: Iterable<T>, 
         fn: (t: T) => number, 
         weightFn?: (t: T) => number): number {
-    if (aa.length === 0) return 0;
+    const arr = Array.from(aa);
+    if (arr.length === 0) return 0;
     if (weightFn === undefined) {
-        return sumFun(aa, fn) / aa.length;
+        return sumFun(arr, fn) / arr.length;
     } else {
-        const totalWeight = sumFun(aa, t => 1, weightFn);
+        const totalWeight = sumFun(arr, t => 1, weightFn);
         if (totalWeight === 0) return 0;
-        return sumFun(aa, fn, weightFn) / totalWeight;
+        return sumFun(arr, fn, weightFn) / totalWeight;
     }
 }
 

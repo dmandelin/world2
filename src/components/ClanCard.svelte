@@ -13,6 +13,7 @@
     import DataTable2 from "./DataTable2.svelte";
     import { clanSedentismDescription } from "../model/people/residence";
     import ClanResidence from "./items/ClanResidence.svelte";
+    import EntityLink from "./state/EntityLink.svelte";
 
     let { clan } = $props();
 
@@ -119,7 +120,9 @@
     <table>
         <tbody>
             <tr>
-                <td colspan="3" style:color={clan.color} style:font-weight="bold" style:text-align="center">{clan.name}</td>
+                <td colspan="3" style:color={clan.color} style:font-weight="bold" style:text-align="center">
+                    <EntityLink entity={clan} />
+                </td>
             </tr>
             <tr>
                 <td colspan="3" style="display: flex; text-align: left; vertical-align: middle; gap: 0.5em; justify-content: center;">

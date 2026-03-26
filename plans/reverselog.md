@@ -16,11 +16,12 @@ x   Limit marriages to a 12-mile radius and see what happens.
 
 The next point is to firm up "productivity bonus relationships".
 
-*   Show what they're derived from in the UI
-*   Show something about this in the clan summary table
+x   Show what they're derived from in the UI
+*   Show something about relationships in the clan summary table
     *   Maybe collapse BR/DR to "health" to make room
+    *   Use a tooltip to show other relationship data
 *   Show in the graphical view
-*   Make sure clans aren't getting productivity bonuses from
+x   Make sure clans aren't getting productivity bonuses from
     themselves
 *   Have a smaller productivity bonus over longer distance
     *   1/2 or 1/4 bonus for other villages in the cluster might work

@@ -1,5 +1,5 @@
 import { normal } from "../lib/distributions";
-import { clamp, productFun, sumFun, sumValues, weightedGeometricMean } from "../lib/basics";
+import { clamp, product, productFun, sumFun, sumValues, weightedGeometricMean } from "../lib/basics";
 import type { Clan } from "./people";
 import { SkillDefs, type SkillDef } from "./skills";
 
@@ -167,8 +167,10 @@ export class Relationships implements Iterable<[Clan, Relationship]> {
     }
 
     getProductivityFactor(skill: SkillDef): number {
-        return 1 + sumFun(this.m.values(), 
-            relationship =>
+        const values = [...this.m.entries()]
+            .filter(([object, _]) => object !== this.subject)
+
+        return 1 + sumFun(values, ([_, relationship]) =>
                 (relationship.interactions['Settled'].getBaseProductivityBonus(skill)
                + relationship.interactions['Nomadic'].getBaseProductivityBonus(skill))
              * relationship.cooperationLevel);
@@ -279,20 +281,31 @@ export abstract class OngoingInteraction {
         this.volume = this.attention * this.coresidenceFactor;
     }
 
-    getBaseProductivityBonus(skill: SkillDef) {
-        return Math.sqrt(this.volume / 100)
-         * this.maxProductivityBonus
-         * this.getSkillEffectivenessFactor(skill)
-         * Math.max(1, this.object.population / this.subject.population);
+    getBaseProductivityBonusFactors(skill: SkillDef): {
+        base: number,
+        fromVolume: number,
+        skillEffectiveness: number,
+        relativeSize: number,
+    } {
+        return {
+            base: this.maxProductivityBonus,
+            fromVolume: (this.volume / 100) ** 0.7,
+            skillEffectiveness: this.getSkillEffectivenessFactor(skill),
+            relativeSize: Math.min(1, this.object.population / this.subject.population),
+        };
     }
+
+    getBaseProductivityBonus(skill: SkillDef) {
+        return product(Object.values(this.getBaseProductivityBonusFactors(skill)));
+    }
+
     abstract get maxProductivityBonus(): number;
     abstract getSkillEffectivenessFactor(skill: SkillDef): number;
-
     abstract getCoresidenceFactor(coresidenceFraction: number): number;
 }
 
 export class NomadicOngoingInteraction extends OngoingInteraction {
-    readonly maxProductivityBonus = 0.2;
+    readonly maxProductivityBonus = 0.1;
 
     constructor(
         readonly subject: Clan,
@@ -321,7 +334,7 @@ export class NomadicOngoingInteraction extends OngoingInteraction {
 }    
 
 export class SettledOngoingInteraction extends OngoingInteraction {
-    readonly maxProductivityBonus = 0.45;
+    readonly maxProductivityBonus = 0.3;
 
     constructor(
         readonly subject: Clan,
