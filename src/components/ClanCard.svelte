@@ -112,6 +112,10 @@
         <Tooltip>
             <img width="24" height="24" src={clanUpperRightIcon} alt={clanUpperRightAlt} />    
             <div slot="tooltip" class="ttt">
+                Clan traits:
+                {#each clan.traits as trait}
+                    <span>{trait}</span>
+                {/each}
                 <MigrationPlan plan={clan.migrationPlan} />
             </div>
         </Tooltip>

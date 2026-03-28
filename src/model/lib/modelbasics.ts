@@ -126,6 +126,47 @@ export function selectBySoftmax<T>(
     }
 }
 
+export type SoftmaxSelection<T> = {
+    selected: T | undefined;
+    probabilities: Map<T, number>;
+    roll: number;
+};
+
+export function selectBySoftmaxVerbose<T>(
+    items: Iterable<T>,
+    fun: (t: T) => number,
+    temperature: number = 10,
+): SoftmaxSelection<T> {
+    let sum = 0;
+    const weights: number[] = [];
+    const savedItems: T[] = [];
+    for (const item of items) {
+        savedItems.push(item);
+        const weight = Math.exp(fun(item) / temperature);
+        weights.push(weight);
+        sum += weight;
+    }
+    if (sum === 0) return { selected: undefined, probabilities: new Map(), roll: 0 };
+    const probabilities = new Map<T, number>();
+    for (let i = 0; i < savedItems.length; i++) {
+        probabilities.set(savedItems[i], weights[i] / sum);
+    }
+    const randomValue = Math.random();
+    let cumulativeProbability = 0;
+    let index = 0;
+    const selected: T | undefined = undefined;
+    for (const [item, probability] of probabilities) {        
+        cumulativeProbability += probability;
+        if (randomValue < cumulativeProbability) {
+            return { selected: item, probabilities, roll: randomValue };
+        }
+        index++;
+    }
+    return { selected: savedItems[index], probabilities, roll: randomValue };
+}
+
+
+
 
 export type CESParams = {
     rho: number;       // substitution parameter

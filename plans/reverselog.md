@@ -12,18 +12,37 @@ Now we need to start making clans "do stuff" to maintain any
 connections outside their settlement that they need, which so far
 have been largely assumed.
 
-The next point is to firm up "productivity bonus relationships".
+We also need to make relationships critical, one way or another: we
+know that no family can really survive all alone for a long time,
+but rather families are absolutely interdependent for their needs.
+In our case:
+
+*   Clans should need some sort of attention or presence in order
+    to marry.
+*   Flint is a critical import.
+*   Clans will tend to fall behind on news and technology without
+    enough connections.
+*   Clans will need insurance or help in case of disaster, which
+    perhaps on average happens once a generation.
+*   Already, clans have a variable dependency ratio and other
+    factors that sometimes notably depress consumption, and they
+    would benefit from being able to insure each other.
+*   There can be rituals that take more than one clan to perform.
+*   Eventually, conflict may motivate banding together for defense.
+
+We also seem to have issues with villages splitting too soon, which
+partly is a function of conflict levels.
+
+*   Visualize eligibility for moves -- show relationships
+*   Decide exactly what relationship level is required to move in
+*   Have moving cost something in that-turn happiness
+*   Have moving cost something in that-turn agricultural productivity
+*   Have moving cost something in birth and death rates
+
+Finish firming up "productivity bonus relationships":
 
 *   Have a smaller productivity bonus over longer distance
     *   1/2 or 1/4 bonus for other villages in the cluster might work
-
-We also seem to have issues with villages splitting too soon, which
-partly is a function of conflict levels. First steps could be:
-
-*   Visualize conflict calculations so we can see what the thresholds
-    are
-*   Increase inertia and/or decrease expected society appeal in new
-    village
 
 ### First take
 

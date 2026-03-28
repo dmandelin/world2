@@ -45,6 +45,11 @@
 <style>
 </style>
 
+Clan traits:
+    {#each clan.traits as trait}
+        <span>{trait}</span>
+    {/each}
+
 {#if plan}
     {#if plan.wantToMove}
         <p>Want to move: {plan.wantToMoveReason}</p>
