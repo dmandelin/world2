@@ -1,5 +1,18 @@
 Issues with the latest noted on top:
 
+## Current vs Next Productivity
+
+Some parts of the UI show next-turn-predicted productivity
+values, while other parts show previous-turn productivity.
+It's often hard to tell which is which, and this makes it
+very hard to understand changes in population and productivity.
+
+Let's fix this up:
+
+*   In the overview, show clear "last turn" and "predicted" panels.
+    Demographics and productivity are the keys to show.
+*   For production history report, show details of K, L, and LP.
+
 ## Villages in a cluster: how do they relate?
 
 The latest issues here are around scale and what connections are
