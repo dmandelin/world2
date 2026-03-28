@@ -8,6 +8,7 @@
         config: { 
           buttons: Array<{
             label: string,
+            tooltip?: string,
             data?: any,
           }> 
         }, 
@@ -52,6 +53,7 @@
       type="button"
       class="tab-header {i === activeIndex ? 'active' : ''}"
       onclick={() => click(i)}
+      title={button.tooltip}
     >
       {@html button.label}
     </button>

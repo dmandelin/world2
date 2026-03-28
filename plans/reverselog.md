@@ -12,16 +12,8 @@ Now we need to start making clans "do stuff" to maintain any
 connections outside their settlement that they need, which so far
 have been largely assumed.
 
-x   Limit marriages to a 12-mile radius and see what happens.
-
 The next point is to firm up "productivity bonus relationships".
 
-x   Show what they're derived from in the UI
-x   Show something about relationships in the clan summary table
-    x   Use a tooltip to show other relationship data
-*   Show in the graphical view
-x   Make sure clans aren't getting productivity bonuses from
-    themselves
 *   Have a smaller productivity bonus over longer distance
     *   1/2 or 1/4 bonus for other villages in the cluster might work
 
@@ -66,21 +58,12 @@ TODOs:
 
 *   Visualizations for existing models
     *   Further upgrade relationships graph
-        x   Get nonlocal clans not to display on top of each other
-        x   Option to show kinship relations
-        x   Option to show multiple relationships
-        *   Options to show productivity exchange relationship
-        x   Option to show interaction volume
-        x   Option to show relatedness
+        *   Two-sided arrow for clearly visualizing each direction
         *   Option to show respect
-        x   Option to show attention
 x   Marriage
-    x   Make sure it can happen across clusters
-    x   Make sure clans with 0-1 neighbors need this to find partners
 *   Productivity bonus
     *   Make sure it can happen across clusters, but with some difference
     *   Consider promoting this to be a tagged favor exchange relationship
-    *   Fix bug with clans getting big productivity bonus without neighbors
 *   Down-the-line trade
     *   Might be time to actually add soon but conflicts with the cluster
         model somewhat

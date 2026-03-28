@@ -166,9 +166,10 @@ export class Relationships implements Iterable<[Clan, Relationship]> {
         return relationship ? relationship.alignment.value : 0;
     }
 
-    getProductivityFactor(skill: SkillDef): number {
-        const values = [...this.m.entries()]
-            .filter(([object, _]) => object !== this.subject)
+    getProductivityFactor(skill: SkillDef, object?: Clan): number {
+        const values: [Clan, Relationship][] = object === undefined
+            ? [...this.m.entries()].filter(([object, _]) => object !== this.subject)
+            : [[object, this.m.get(object)!]];
 
         return 1 + sumFun(values, ([_, relationship]) =>
                 (relationship.interactions['Settled'].getBaseProductivityBonus(skill)
