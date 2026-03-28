@@ -19,6 +19,8 @@ x   Fix bug where relationship productivity factor can be NaN
     x   Redo alignment concept with proper name inside Relationship
         x   Get that appropriately displayed in the UI
     x   Make interaction type affect different productivities differently
+    *   If necessary, add new effects such as crises to make relationships
+        as valuable as they should be
     *   Interaction stance effects
     *   Create belongingness satisfaction
         *   Get that appropriately displayed in the UI

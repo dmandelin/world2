@@ -1,6 +1,8 @@
 <script lang="ts">
     import { signed, spct } from "../../model/lib/format";
     import type { PopulationChangeModifier } from "../../model/people/population";
+    import { SkillDefs } from "../../model/people/skills";
+    import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import type { ClanDTO, SettlementDTO } from "../dtos";
     import MigrationPlan from "../MigrationPlan.svelte";
     import { selectClan } from "../state/uistate.svelte";
@@ -32,6 +34,18 @@
                 valueFn: c => c.lastPopulationChange.drModifier,
                 formatFn: v => spct(v),
                 tooltip: clanDrModifiersTooltip,
+            },
+            {
+                label: "APBR",
+                valueFn: c => c.relationships.getProductivityFactor(SkillDefs.Agriculture),
+                formatFn: v => spct(v),
+                tooltip: apbrTooltip,
+            },
+            {
+                label: "FPBR",
+                valueFn: c => c.relationships.getProductivityFactor(SkillDefs.Fishing),
+                formatFn: v => spct(v),
+                tooltip: fpbrTooltip,
             },
             {
                 label: "Sus",
@@ -140,6 +154,18 @@
 
 {#snippet clanDrModifiersTooltip(clan: ClanDTO)}
   <TableView table={clanPopChangeModifierTooltip(clan.lastPopulationChange.drModifiers)}></TableView>
+{/snippet}
+
+{#snippet apbrTooltip(clan: ClanDTO)}
+  <div>Productivity factor for agriculture:</div>
+  <div>{spct(clan.relationships.getProductivityFactor(SkillDefs.Agriculture))}</div>
+  <ClanRelationshipsDetails clan={clan} />
+{/snippet}
+
+{#snippet fpbrTooltip(clan: ClanDTO)}
+  <div>Productivity factor for fishing:</div>
+  <div>{spct(clan.relationships.getProductivityFactor(SkillDefs.Fishing))}</div>
+  <ClanRelationshipsDetails clan={clan} />
 {/snippet}
 
 <div id="top">

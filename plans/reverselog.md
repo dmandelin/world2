@@ -17,9 +17,8 @@ x   Limit marriages to a 12-mile radius and see what happens.
 The next point is to firm up "productivity bonus relationships".
 
 x   Show what they're derived from in the UI
-*   Show something about relationships in the clan summary table
-    *   Maybe collapse BR/DR to "health" to make room
-    *   Use a tooltip to show other relationship data
+x   Show something about relationships in the clan summary table
+    x   Use a tooltip to show other relationship data
 *   Show in the graphical view
 x   Make sure clans aren't getting productivity bonuses from
     themselves
