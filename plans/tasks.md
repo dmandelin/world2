@@ -1,3 +1,5 @@
+*   Somewhere in there split out carers from dependents and
+    track how busy they are
 x   Fix bug where clan sustenance goes to 0
 x   Fix bug where relationship productivity factor can be NaN
 *   Display on the map connections between settlement regions

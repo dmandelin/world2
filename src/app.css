@@ -4,6 +4,14 @@
     font-weight: bold;
 }
 
+.ca {
+    text-align: center;
+}
+
+.ra {
+    text-align: right;
+}
+
 .mtop {
     margin-top: 0.5em;
 }

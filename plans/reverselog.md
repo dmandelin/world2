@@ -13,6 +13,79 @@ Let's fix this up:
     Demographics and productivity are the keys to show.
 *   For production history report, show details of K, L, and LP.
 
+Let's think through what happens in a turn and what we would want
+to show:
+
+*   Start state
+    *   Population
+    *   Health
+    *   Skills and traits
+    *   Perceptions
+    *   Plans
+    *   Productivity
+*   Processes
+    *   Nature (flooding)
+    *   Movement
+        *   Migrations
+        *   Marriages
+        *   Splits and merges
+    *   Production
+        *   Produce
+        *   Exchange
+        *   Consume
+    *   Updates
+        *   Skills
+        *   Traits
+        *   Population
+*   End state
+    *   Population
+    *   Skills and traits
+*   Planning phase
+    *   Plans
+    *   Productivity
+
+We can show 7-15 items or so. Let's try to understand what the
+most important topics are and expand:
+
+*   Population
+    *   [cur] Population
+    *   Pop change
+    *   Birth rate modifier
+    *   Death rate modifier
+*   Perceptions
+    *   [cur?] [Belonging - for now, productivity bonus]
+    *   [cur?] Respect
+    *   [cur?] Food happiness
+    *   [cur?] Society happiness
+    *   [cur?] Happiness
+*   Plans
+    *   [cur] Residence %
+    *   [cur] Farming %
+    *   [cur] Special - migrations
+*   Economics
+    *   [cur] Capital
+    *   [cur] Labor
+    *   [cur?] Total factor productivity
+    *   [cur] Dependency ratio
+    *   Consumption
+*   [Culture -- later]
+
+Concept:
+    *   Show clans in columns again, data categories in rows
+    *   Optionally key predictions on the very top
+    *   Key states on the top; can show changes inline
+        *   Population
+            *   Maybe modifiers next to this or the change
+        *   Respect
+        *   Social success
+        *   Material success
+    *   Flows next
+        *   Capital
+        *   Labor
+        *   Consumption
+    *   Flow-determining values next
+        *   Productivity
+
 ## Villages in a cluster: how do they relate?
 
 The latest issues here are around scale and what connections are
