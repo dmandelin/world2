@@ -12,6 +12,11 @@
     text-align: right;
 }
 
+.rap {
+    text-align: right;
+    padding-right: 2em;
+}
+
 .mtop {
     margin-top: 0.5em;
 }

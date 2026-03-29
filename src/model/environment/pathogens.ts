@@ -8,6 +8,7 @@ export class WorkerDiseaseLoadItem {
     constructor(readonly skillDef: SkillDef, public workers: number) {}
 
     finish(): void {
+        if (this.workers == 0) return;
         this.load = 0.05 * Math.log10(this.workers) * this.skillDef.diseaseLoadFactor;
     }
 }
@@ -42,8 +43,6 @@ export class DiseaseLoadCalc {
             item.finish();
         }
         
-        // No endemic at the starting small scale.
-
         // Not enough traffic for cross-cluster effects at the start.
 
         this.value = sumFun([...this.workerDiseaseLoads.values()], item => item.load);

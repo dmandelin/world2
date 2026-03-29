@@ -76,6 +76,10 @@ export class PopulationChange {
             }
         }
         [this.births, this.deaths] = [births, deaths];
+
+        if (!isFinite(this.births) || !isFinite(this.deaths)) {
+            debugger;
+        }
     }
 
     get change() {
@@ -214,6 +218,7 @@ export class PopulationChangeBuilder {
         const pmbr = this.brModifier * BASE_BIRTH_RATE;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
         this.births = Math.round(eb);
+        if (!isFinite(this.births)) debugger;
         if (this.births > 1000) {
             debugger;
             throw new Error("Too many births for simple model");
@@ -242,6 +247,7 @@ export class PopulationChangeBuilder {
         // Fold in a term for other hazards.
         const mortality = this.diseaseLoad.value + 0.2;
         this.diseaseDeaths = Math.round(mortality * this.births);
+        if (!isFinite(this.diseaseDeaths)) debugger;
         const diseaseDeathRate = this.diseaseDeaths / this.initialPopulation;
         this.femaleDiseaseDeaths = Math.round(mortality * this.femaleBirths);
         this.maleDiseaseDeaths = this.diseaseDeaths - this.femaleDiseaseDeaths;

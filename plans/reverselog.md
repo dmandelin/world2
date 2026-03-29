@@ -71,10 +71,10 @@ most important topics are and expand:
 *   [Culture -- later]
 
 Concept:
-    *   Show clans in columns again, data categories in rows
+    x   Show clans in columns again, data categories in rows
     *   Optionally key predictions on the very top
     *   Key states on the top; can show changes inline
-        *   Population
+        x   Population
             *   Maybe modifiers next to this or the change
         *   Respect
         *   Social success
