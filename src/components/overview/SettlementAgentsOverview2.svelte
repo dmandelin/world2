@@ -3,11 +3,13 @@
     import type { HappinessItem } from "../../model/people/happiness";
     import { SkillDef, SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
+    import DataTable2 from "../DataTable2.svelte";
     import type { ClanDTO, SettlementDTO } from "../dtos";
     import ClanResidence from "../items/ClanResidence.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
+    import { laborAllocationPlanTable } from "../tables";
     import { SingleRecordTable, ValueMapTable } from "../tables/tables2";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
@@ -153,6 +155,27 @@
                             {pct(clan.residenceLevel.fractionInSettlement)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <ClanResidenceTooltip clan={clan} />
+                            </div>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr>
+                <td>Farming</td>
+                {#each settlement.clans as clan}
+                    <td class="ra">
+                        <Tooltip>
+                            {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture) ?? 0)}
+                            <div slot="tooltip" class="ttt">
+                                H {clan.laborAllocation.allocationPlan.happiness.toFixed()} |
+                                {pct(clan.laborAllocation.allocationPlan.experimentProbability)}
+                                ({(clan.laborAllocation.allocationPlan.experimentingRoll * 100).toFixed()})
+                                {#if clan.laborAllocation.allocationPlan.experimenting}
+                                    - experimenting
+                                {:else}
+                                    - maintaining traditions
+                                {/if}
+                                <DataTable2 table={laborAllocationPlanTable(clan)} />
                             </div>
                         </Tooltip>
                     </td>
