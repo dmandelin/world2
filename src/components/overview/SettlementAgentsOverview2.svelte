@@ -1,8 +1,11 @@
 <script lang="ts">
-    import { signed } from "../../model/lib/format";
+    import { pct, signed } from "../../model/lib/format";
+    import type { HappinessItem } from "../../model/people/happiness";
     import type { ClanDTO, SettlementDTO } from "../dtos";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
+    import { SingleRecordTable, ValueMapTable } from "../tables/tables2";
+    import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
 
 	let { settlement }: { settlement: SettlementDTO } = $props();
@@ -11,6 +14,20 @@
             console.log(c.lastPopulationChange);
         }
     });
+
+    function clanSustenanceTooltipTable(clan: ClanDTO) {
+        return new SingleRecordTable(
+            clan.consumption.perCapitaSubistenceAmounts,
+            v => v.toFixed(2));
+    }
+
+    function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
+        return new ValueMapTable(
+            clan.happiness.items,
+            (item: HappinessItem<any>) => item.appeal,
+            (item: HappinessItem<any>) => item.isSubsistence,
+            (v: number) => signed(v, 0));
+    }
 </script>
 
 <style>
@@ -19,7 +36,7 @@
     }
 
     td.rap {
-        padding-right: 1em;
+        padding-right: 1.3em;
     }
 
     .delta {
@@ -41,7 +58,7 @@
         </thead>
         <tbody>
             <tr>
-                <td rowspan="2">People</td>
+                <td>People</td>
                 {#each settlement.clans as clan}
                     <td class="rap">
                         <Tooltip>
@@ -58,6 +75,7 @@
                 {/each}
             </tr>
             <tr>
+                <td>&nbsp;&Delta;</td>
                 {#each settlement.clans as clan}
                     <td class="rap delta">
                         <Tooltip>
@@ -65,6 +83,41 @@
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <PopulationChange clan={clan} />
                             </div>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr>
+                <td>Food</td>
+                {#each settlement.clans as clan}
+                    <td class="ra">
+                        <Tooltip>
+                            {pct(clan.consumption.perCapitaSubsistence())}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanSustenanceTooltipTable(clan)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr>
+                <td>&nbsp;Sat</td>
+                {#each settlement.clans as clan}
+                    <td class="rap">
+                        <Tooltip>
+                            {signed(clan.happiness.subsistenceAppeal)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanSustenanceHappinessTooltipTable(clan)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr>
+                <td>&nbsp;Sat</td>
+                {#each settlement.clans as clan}
+                    <td class="rap">
+                        <Tooltip>
                         </Tooltip>
                     </td>
                 {/each}

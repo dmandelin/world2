@@ -48,14 +48,14 @@ We can show 7-15 items or so. Let's try to understand what the
 most important topics are and expand:
 
 *   Population
-    *   [cur] Population
-    *   Pop change
+    x   [cur] Population
+    x   Pop change
     *   Birth rate modifier
     *   Death rate modifier
 *   Perceptions
     *   [cur?] [Belonging - for now, productivity bonus]
     *   [cur?] Respect
-    *   [cur?] Food happiness
+    x   [cur?] Food happiness
     *   [cur?] Society happiness
     *   [cur?] Happiness
 *   Plans
@@ -67,7 +67,7 @@ most important topics are and expand:
     *   [cur] Labor
     *   [cur?] Total factor productivity
     *   [cur] Dependency ratio
-    *   Consumption
+    x   Consumption
 *   [Culture -- later]
 
 Concept:

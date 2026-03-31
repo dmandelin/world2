@@ -89,7 +89,7 @@ export class SingleRecordTable implements Table<string, string, [number]> {
             data: 'Value',
             label: 'Value',
             valueFn: (row: string) => data[row],
-            formatFn: (value: number) => value.toFixed(2),
+            formatFn,
         }];
 
         this.rows = Object.keys(data).map(label => ({
@@ -97,6 +97,30 @@ export class SingleRecordTable implements Table<string, string, [number]> {
             label,
         }));
 
+    }
+}
+
+export class ValueMapTable<RowData> implements Table<RowData, string, [number]> {
+    columns: [TableColumn<RowData, string, number>];
+    rows: TableRow<RowData, string>[];
+
+    constructor(
+        data: Map<string, RowData>,
+        valueFn: (row: RowData) => number,
+        filterFn: (row: RowData) => boolean = () => true,
+        formatFn: (value: number) => string = (value => value.toFixed(2))) {
+
+        this.columns = [{
+            data: 'Value',
+            label: 'Value',
+            valueFn: (row: RowData) => valueFn(row),
+            formatFn,
+        }];
+
+        this.rows = [...data.entries()].filter(([key, value]) => filterFn(value)).map(([key, value]) => ({
+            data: value,
+            label: key,
+        }));
     }
 }
 
