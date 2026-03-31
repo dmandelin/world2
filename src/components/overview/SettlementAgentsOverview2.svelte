@@ -181,6 +181,39 @@
                     </td>
                 {/each}
             </tr>
+            <tr><td style="height: 0.5em"></td></tr>
+            {#each settlement.ref.productionNodes as node}
+            <tr>
+                <td>{node.name}: workers</td>
+                {#each settlement.clans as clan}
+                    <td class="rap">
+                        {node.workers(clan.ref).toFixed()}
+                        <Tooltip>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr>
+                <td>{node.name}: land</td>
+                {#each settlement.clans as clan}
+                    <td class="rap">
+                        {node.land(clan.ref).toFixed()}
+                        <Tooltip>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr>
+                <td>{node.name}: land/worker</td>
+                {#each settlement.clans as clan}
+                    <td class="ra">
+                        {node.workers(clan.ref) ? (node.land(clan.ref) / node.workers(clan.ref)).toFixed(2) : '-'}
+                        <Tooltip>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            {/each}
         </tbody>
     </table>
 </div>

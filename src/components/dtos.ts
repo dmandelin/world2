@@ -235,6 +235,7 @@ class SettlementProductionDTO {
 
 export class SettlementDTO {
     readonly uuid: string;
+    readonly ref: Settlement;
     readonly name: string;
     readonly yearsInPlace: number;
     readonly tellHeightInMeters: number;
@@ -263,6 +264,7 @@ export class SettlementDTO {
     readonly timeline: Timeline<SettlementTimePoint>;
 
     constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
+        this.ref = settlement;
         this.clans = sortedByKey([...settlement.clans].map(clan => 
             clanDTO(clan, world)), clan => -clan.averagePrestige);
 

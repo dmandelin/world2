@@ -63,8 +63,8 @@ most important topics are and expand:
     x   [cur] Farming %
     *   [cur] Special - migrations
 *   Economics
-    *   [cur] Capital
-    *   [cur] Labor
+    x   [cur] Capital
+    x   [cur] Labor
     *   [cur?] Total factor productivity
     *   [cur] Dependency ratio
     x   Consumption
