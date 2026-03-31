@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { SettlementDTO } from "../dtos";
-    import SettlementAgentsOverview from "./SettlementAgentsOverview.svelte";
     import SettlementAgentsOverview2 from "./SettlementAgentsOverview2.svelte";
     import SettlementEconomyOverview from "./SettlementEconomyOverview.svelte";
     import SettlementEventsOverview from "./SettlementEventsOverview.svelte";
@@ -10,15 +9,14 @@
 	let { settlement }: { settlement: SettlementDTO } = $props();
 </script>
 
-<SettlementAgentsOverview2 settlement={settlement} />
 
 <div style="display: flex; gap: 8em;">
     <div>
-        <SettlementAgentsOverview settlement={settlement} />
-        <SettlementIssuesOverview settlement={settlement} />
-        <SettlementEventsOverview settlement={settlement} />
+        <SettlementAgentsOverview2 settlement={settlement} />
     </div>
     <div>
+        <SettlementIssuesOverview settlement={settlement} />
+        <SettlementEventsOverview settlement={settlement} />
         <SettlementPopulationOverview settlement={settlement} />
         <SettlementEconomyOverview settlement={settlement} />
     </div>
