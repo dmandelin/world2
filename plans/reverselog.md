@@ -59,7 +59,7 @@ most important topics are and expand:
     *   [cur?] Society happiness
     *   [cur?] Happiness
 *   Plans
-    *   [cur] Residence %s
+    x   [cur] Residence %s
     *   [cur] Farming %
     *   [cur] Special - migrations
 *   Economics

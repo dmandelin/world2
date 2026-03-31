@@ -4,6 +4,8 @@
     import { SkillDef, SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import type { ClanDTO, SettlementDTO } from "../dtos";
+    import ClanResidence from "../items/ClanResidence.svelte";
+    import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
     import { SingleRecordTable, ValueMapTable } from "../tables/tables2";
@@ -115,6 +117,7 @@
                     </td>
                 {/each}
             </tr>
+            <tr><td style="height: 0.5em"></td></tr>
             <tr>
                 <td>Agri Coop</td>
                 {#each settlement.clans as clan}
@@ -136,6 +139,20 @@
                             {spct(clan.relationships.getProductivityFactor(SkillDefs.Fishing))}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <ClanRelationshipsDetails clan={clan} skill={SkillDefs.Fishing} />
+                            </div>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr><td style="height: 0.5em"></td></tr>
+            <tr>
+                <td>Residence</td>
+                {#each settlement.clans as clan}
+                    <td class="ra">
+                        <Tooltip>
+                            {pct(clan.residenceLevel.fractionInSettlement)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <ClanResidenceTooltip clan={clan} />
                             </div>
                         </Tooltip>
                     </td>
