@@ -53,13 +53,13 @@ most important topics are and expand:
     *   Birth rate modifier
     *   Death rate modifier
 *   Perceptions
-    *   [cur?] [Belonging - for now, productivity bonus]
+    x   [cur?] [Belonging - for now, productivity bonus]
     *   [cur?] Respect
     x   [cur?] Food happiness
     *   [cur?] Society happiness
     *   [cur?] Happiness
 *   Plans
-    *   [cur] Residence %
+    *   [cur] Residence %s
     *   [cur] Farming %
     *   [cur] Special - migrations
 *   Economics

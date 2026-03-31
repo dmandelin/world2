@@ -1,9 +1,12 @@
 <script lang="ts">
     import type { ClanDTO } from "../dtos";
     import { pct, spct } from "../../model/lib/format";
-    import { SkillDefs } from "../../model/people/skills";
+    import { SkillDef, SkillDefs } from "../../model/people/skills";
     
-    let {clan: subject} : { clan: ClanDTO } = $props();
+    let { 
+        clan: subject,
+        skill 
+    } : { clan: ClanDTO, skill?: SkillDef } = $props();
     let relationships = subject.relationships;
 </script>
 
@@ -36,13 +39,13 @@
                         <td>&nbsp;&nbsp;{interaction.name}</td>
                         <td>{interaction.maxProductivityBonus}</td>
                         <td>{interaction.volume.toFixed()}</td>
-                        {#each [interaction.getBaseProductivityBonusFactors(SkillDefs.Agriculture)] as factor}
+                        {#each [interaction.getBaseProductivityBonusFactors(skill || SkillDefs.Agriculture)] as factor}
                         <td>{pct(factor.base)}</td>
                         <td>{pct(factor.fromVolume)}</td>
                         <td>{pct(factor.skillEffectiveness)}</td>
                         <td>{pct(factor.relativeSize)}</td>
                         {/each}
-                        <td>{spct(1 + interaction.getBaseProductivityBonus(SkillDefs.Agriculture))}</td>
+                        <td>{spct(1 + interaction.getBaseProductivityBonus(skill || SkillDefs.Agriculture))}</td>
                     </tr>
                 {/each}
             {/each}

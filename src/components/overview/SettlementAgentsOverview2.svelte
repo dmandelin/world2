@@ -1,6 +1,8 @@
 <script lang="ts">
-    import { pct, signed } from "../../model/lib/format";
+    import { pct, signed, spct } from "../../model/lib/format";
     import type { HappinessItem } from "../../model/people/happiness";
+    import { SkillDef, SkillDefs } from "../../model/people/skills";
+    import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import type { ClanDTO, SettlementDTO } from "../dtos";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
@@ -114,10 +116,27 @@
                 {/each}
             </tr>
             <tr>
-                <td>&nbsp;Sat</td>
+                <td>Agri Coop</td>
                 {#each settlement.clans as clan}
-                    <td class="rap">
+                    <td class="ra">
                         <Tooltip>
+                            {spct(clan.relationships.getProductivityFactor(SkillDefs.Agriculture))}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <ClanRelationshipsDetails clan={clan} skill={SkillDefs.Agriculture} />
+                            </div>
+                        </Tooltip>
+                    </td>
+                {/each}
+            </tr>
+            <tr>
+                <td>Fish Coop</td>
+                {#each settlement.clans as clan}
+                    <td class="ra">
+                        <Tooltip>
+                            {spct(clan.relationships.getProductivityFactor(SkillDefs.Fishing))}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <ClanRelationshipsDetails clan={clan} skill={SkillDefs.Fishing} />
+                            </div>
                         </Tooltip>
                     </td>
                 {/each}
