@@ -1,11 +1,10 @@
 <script lang="ts">
     import { pct, signed, spct } from "../../model/lib/format";
     import type { HappinessItem } from "../../model/people/happiness";
-    import { SkillDef, SkillDefs } from "../../model/people/skills";
+    import { SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import DataTable2 from "../DataTable2.svelte";
     import type { ClanDTO, SettlementDTO } from "../../model/records/dtos";
-    import ClanResidence from "../items/ClanResidence.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
@@ -177,32 +176,33 @@
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
-            {#each settlement.ref.productionNodes as node}
+            {#each settlement.localTradeGoods as tradeGood}
+            {@const productionsForGood = settlement.clans.map(clan => clan.production.goods.find(g => g.good === tradeGood))}
             <tr>
-                <td>{node.name}: workers</td>
-                {#each settlement.clans as clan}
+                <td>{tradeGood.name}: workers</td>
+                {#each productionsForGood as productionItem}
                     <td class="rap">
-                        {node.workers(clan.ref).toFixed()}
+                        {(productionItem?.workers ?? 0).toFixed(0)}
                         <Tooltip>
                         </Tooltip>
                     </td>
                 {/each}
             </tr>
             <tr>
-                <td>{node.name}: land</td>
-                {#each settlement.clans as clan}
+                <td>{tradeGood.name}: land</td>
+                {#each productionsForGood as productionItem}
                     <td class="rap">
-                        {node.land(clan.ref).toFixed()}
+                        {(productionItem?.land ?? 0).toFixed(0)}
                         <Tooltip>
                         </Tooltip>
                     </td>
                 {/each}
             </tr>
             <tr>
-                <td>{node.name}: land/worker</td>
-                {#each settlement.clans as clan}
+                <td>{tradeGood.name}: land/worker</td>
+                {#each productionsForGood as productionItem}
                     <td class="ra">
-                        {node.workers(clan.ref) ? (node.land(clan.ref) / node.workers(clan.ref)).toFixed(2) : '-'}
+                        {productionItem && productionItem.workers ? (productionItem.land / productionItem.workers).toFixed(2) : '-'}
                         <Tooltip>
                         </Tooltip>
                     </td>
