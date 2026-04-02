@@ -2,6 +2,23 @@ Issues with the latest noted on top:
 
 ## Current vs Next Productivity
 
+### Latest bugs
+
+This partially works but there are bugs to fix:
+
+*   Residence level always shows the same in latest snapshot
+    and current
+    
+*   It would make sense to show the population used for
+    worker calculations etc in the last turn report
+*   Might in general make sense to also show beginning of
+    last turn so we can see the full change over that turn
+    *   Also still need to show choices for next turn
+*   Idea: Slider to choose between showing current state
+    and current state + delta (optionally other variations)
+
+### Original
+
 Some parts of the UI show next-turn-predicted productivity
 values, while other parts show previous-turn productivity.
 It's often hard to tell which is which, and this makes it

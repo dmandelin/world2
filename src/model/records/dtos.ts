@@ -1,4 +1,4 @@
-import { maxbyWithValue, minbyWithValue, sortedByKey, sumFun, type OptByWithValue } from "../lib/basics";
+import { sortedByKey, sumFun } from "../lib/basics";
 import type { PopulationChange } from "../people/population";
 import type { CondorcetCalc } from "../people/clans";
 import type { Note } from "../records/notifications";
@@ -15,7 +15,6 @@ import { type ClanSkills, type SkillDef, SkillDefs } from "../people/skills";
 import type { ProductivityCalc } from "../people/productivity";
 import type { HousingDecision } from "../decisions/housingdecision";
 import type { FloodLevel } from "../environment/flood";
-import { ProductionNode } from "../econ/productionnode";
 import type { LaborAllocation } from "../decisions/labor";
 import type { AlignmentCalc } from "../people/alignment";
 import type { TrendDTO } from "../records/trends";
@@ -157,7 +156,7 @@ export function clanDTO(clan: Clan): ClanDTO {
 
         housing: clan.housing,
         housingDecision: clan.housingDecision,
-        residenceLevel: clan.residenceLevel,
+        residenceLevel: clan.residenceLevel.clone(),
         settlement: clan.settlement,
 
         cadets: clan.cadets,
@@ -258,11 +257,12 @@ export class StandaloneSettlementDTO {
 
     readonly rites: Rites;
     readonly timeline: Timeline<SettlementTimePoint>;
+    readonly endOfPreviousTurnSnapshot: StandaloneSettlementDTO;
 
     constructor(settlement: Settlement) {
         this.ref = settlement;
         this.clans = sortedByKey([...settlement.clans].map(clan => 
-            clanDTO(clan)), clan => -clan.averagePrestige);
+            clanDTO(clan)), clan => clan.name);
 
         this.uuid = settlement.uuid;
         this.name = settlement.name;
@@ -288,6 +288,7 @@ export class StandaloneSettlementDTO {
 
         this.rites = settlement.clans.rites.clone();
         this.timeline = settlement.timeline;
+        this.endOfPreviousTurnSnapshot = settlement.endOfPreviousTurnSnapshot || this;
 
         this.condorcet = settlement.clans.condorcetLeader;
     }

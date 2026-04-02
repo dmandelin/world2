@@ -10,7 +10,7 @@ import { randomFloodLevel } from "./environment/flood";
 import { Settlement } from "./people/settlement";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { Timeline, TimePoint } from "./records/timeline";
-import { WorldDTO } from "../components/dtos";
+import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { marry } from "./people/marriage";
 

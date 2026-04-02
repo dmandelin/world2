@@ -4,7 +4,7 @@
     import { SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import DataTable2 from "../DataTable2.svelte";
-    import type { ClanDTO, SettlementDTO } from "../../model/records/dtos";
+    import type { ClanDTO, StandaloneSettlementDTO } from "../../model/records/dtos";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
@@ -13,7 +13,15 @@
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
 
-	let { settlement }: { settlement: SettlementDTO } = $props();
+	let { 
+        settlement, 
+        title,
+        predictMode,
+     }: { 
+        settlement: StandaloneSettlementDTO, 
+        title: string, 
+        predictMode?: boolean,
+     } = $props();
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new SingleRecordTable(
@@ -42,10 +50,14 @@
     .delta {
         color: #464;
     }
+
+    .predict .actual {
+        opacity: 0.0;
+    }
 </style>
 
-<div id="top">
-    <h3 style="margin-block-end: 0.5em;">Situation</h3>
+<div id="top" class={predictMode ? 'predict' : ''}>
+    <h3 style="margin-block-end: 0.5em;">{title}</h3>
 
     <table>
         <thead>
@@ -57,7 +69,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
+            <tr class="actual">
                 <td>People</td>
                 {#each settlement.clans as clan}
                     <td class="rap">
@@ -74,7 +86,7 @@
                     </td>
                 {/each}
             </tr>
-            <tr>
+            <tr class="actual">
                 <td>&nbsp;&Delta;</td>
                 {#each settlement.clans as clan}
                     <td class="rap delta">
@@ -87,7 +99,7 @@
                     </td>
                 {/each}
             </tr>
-            <tr>
+            <tr class="actual">
                 <td>Food</td>
                 {#each settlement.clans as clan}
                     <td class="ra">
@@ -100,7 +112,7 @@
                     </td>
                 {/each}
             </tr>
-            <tr>
+            <tr class="actual">
                 <td>&nbsp;Sat</td>
                 {#each settlement.clans as clan}
                     <td class="rap">
@@ -114,7 +126,7 @@
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
-            <tr>
+            <tr class="actual">
                 <td>Agri Coop</td>
                 {#each settlement.clans as clan}
                     <td class="ra">
@@ -127,7 +139,7 @@
                     </td>
                 {/each}
             </tr>
-            <tr>
+            <tr class="actual">
                 <td>Fish Coop</td>
                 {#each settlement.clans as clan}
                     <td class="ra">
@@ -178,7 +190,7 @@
             <tr><td style="height: 0.5em"></td></tr>
             {#each settlement.localTradeGoods as tradeGood}
             {@const productionsForGood = settlement.clans.map(clan => clan.production.goods.find(g => g.good === tradeGood))}
-            <tr>
+            <tr class="actual">
                 <td>{tradeGood.name}: workers</td>
                 {#each productionsForGood as productionItem}
                     <td class="rap">
@@ -188,7 +200,7 @@
                     </td>
                 {/each}
             </tr>
-            <tr>
+            <tr class="actual">
                 <td>{tradeGood.name}: land</td>
                 {#each productionsForGood as productionItem}
                     <td class="rap">
@@ -198,7 +210,7 @@
                     </td>
                 {/each}
             </tr>
-            <tr>
+            <tr class="actual">
                 <td>{tradeGood.name}: land/worker</td>
                 {#each productionsForGood as productionItem}
                     <td class="ra">

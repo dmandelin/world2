@@ -69,6 +69,13 @@ export class ResidenceLevel {
 
     constructor(readonly clan: Clan) {}
 
+    clone() {
+        const clone = new ResidenceLevel(this.clan);
+        clone.laborItems_ = this.laborItems_.map(item => ({...item}));
+        clone.mothersNestingFraction_ = this.mothersNestingFraction_;
+        return clone;
+    }
+
     update() {
         this.laborItems_ = [];
 
