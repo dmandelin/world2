@@ -13,6 +13,7 @@ import { poisson } from "../lib/distributions";
 import type { Year } from "../records/year";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
+import { StandaloneSettlementDTO } from "../records/dtos";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -69,6 +70,8 @@ export class Settlement {
 
     private lastShiftYear_: Year;
     readonly timeline = new Timeline<SettlementTimePoint>();
+
+    endOfPreviousTurnSnapshot_: StandaloneSettlementDTO|undefined;
     
     constructor(
         readonly world: World,
@@ -351,5 +354,13 @@ export class Settlement {
 
     addTimePoint() {
         this.timeline.add(this.world.year, new SettlementTimePoint(this));
+    }
+
+    recordEndOfPreviousTurnSnapshot() {
+        this.endOfPreviousTurnSnapshot_ = new StandaloneSettlementDTO(this);
+    }
+
+    get endOfPreviousTurnSnapshot() {
+        return this.endOfPreviousTurnSnapshot_!;
     }
 }

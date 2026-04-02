@@ -89,8 +89,6 @@ class ClanProductionDTO {
 }
 
 export type ClanDTO = {
-    world: WorldDTO;
-
     ref: Clan;
     uuid: string;
     name: string;
@@ -141,9 +139,8 @@ export type ClanDTO = {
     traits: string[];
 }
 
-export function clanDTO(clan: Clan, world: WorldDTO): ClanDTO {
+export function clanDTO(clan: Clan): ClanDTO {
     return {
-        world,
         uuid: clan.uuid,
 
         ref: clan,
@@ -232,7 +229,7 @@ class SettlementProductionDTO {
     }
 }
 
-export class SettlementDTO {
+export class StandaloneSettlementDTO {
     readonly uuid: string;
     readonly ref: Settlement;
     readonly name: string;
@@ -262,10 +259,10 @@ export class SettlementDTO {
     readonly rites: Rites;
     readonly timeline: Timeline<SettlementTimePoint>;
 
-    constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
+    constructor(settlement: Settlement) {
         this.ref = settlement;
         this.clans = sortedByKey([...settlement.clans].map(clan => 
-            clanDTO(clan, world)), clan => -clan.averagePrestige);
+            clanDTO(clan)), clan => -clan.averagePrestige);
 
         this.uuid = settlement.uuid;
         this.name = settlement.name;
@@ -299,6 +296,16 @@ export class SettlementDTO {
         return populationAverage(
             this.clans, 
             clan => clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture));
+    }
+}
+
+export class SettlementDTO extends StandaloneSettlementDTO {
+    constructor(
+        settlement: Settlement, 
+        readonly cluster: ClusterDTO, 
+        readonly world: WorldDTO) {
+            
+        super(settlement);
     }
 }
 

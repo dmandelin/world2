@@ -215,6 +215,7 @@ export class World implements NoteTaker {
             this.timeline.add(this.year, new TimePoint(this));
             for (const settlement of this.allSettlements) {
                 settlement.addTimePoint();
+                settlement.recordEndOfPreviousTurnSnapshot();
             }
 
             for (const trend of this.trends) trend.update(this.year);
