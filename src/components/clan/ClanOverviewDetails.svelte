@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ClanDTO } from "../dtos";
+    import type { ClanDTO } from "../../model/records/dtos";
     import ClanRelationshipsDetails from "./ClanRelationshipsDetails.svelte";
 
     let {clan} : { clan: ClanDTO } = $props();

@@ -1,12 +1,10 @@
-import type { ProductionItemDTO, SettlementDTO } from './dtos';
+import type { ClanDTO, ProductionItemDTO, SettlementDTO } from '../model/records/dtos';
 import type { AttitudeCalc, InferenceCalc } from '../model/people/attitude';
-import type { ClanDTO } from './dtos';
 import { Clan } from '../model/people/people';
 import { pct, signed, spct } from '../model/lib/format';
-import { TradeGoods } from '../model/trade';
 import { type Rites } from '../model/rites';
 import type { ClanSkillChange } from '../model/people/skillchange';
-import { harmonicMean, sortedByKey, sumFun, weightedHarmonicMean } from '../model/lib/basics';
+import { sortedByKey, sumFun } from '../model/lib/basics';
 import type { HappinessItem } from '../model/people/happiness';
 import type { PopulationChangeItem, PopulationChangeModifier } from '../model/people/population';
 

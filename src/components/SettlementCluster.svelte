@@ -1,7 +1,7 @@
 <script lang="ts">
     import { formatTellHeight, signed } from "../model/lib/format";
     import { pct } from "../model/lib/format";
-    import { SettlementDTO } from "./dtos";
+    import { SettlementDTO } from "../model/records/dtos";
     import { groupSedentismDescription, groupSedentismImage } from "../model/people/residence";
     import ButtonPanel from "./ButtonPanel.svelte";
     import DataTable from "./DataTable.svelte";

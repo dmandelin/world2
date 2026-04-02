@@ -1,6 +1,6 @@
 <script lang="ts">
     import DataTable2 from "../DataTable2.svelte";
-    import type { ClanDTO } from "../dtos";
+    import type { ClanDTO } from "../../model/records/dtos";
     import { pct, signed } from "../../model/lib/format";
     import { SkillDefs } from "../../model/people/skills";
     import { laborAllocationPlanTable } from "../tables";

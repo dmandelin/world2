@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SettlementDTO } from "../dtos";
+    import type { SettlementDTO } from "../../model/records/dtos";
     import SettlementAgentsOverview2 from "./SettlementAgentsOverview2.svelte";
     import SettlementEconomyOverview from "./SettlementEconomyOverview.svelte";
     import SettlementEventsOverview from "./SettlementEventsOverview.svelte";

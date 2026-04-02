@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ClanDTO } from '../dtos';
+    import type { ClanDTO } from '../../model/records/dtos';
     import TabbedView from '../TabbedView.svelte';
     import ClanLaborDetails from './ClanLaborDetails.svelte';
     import ClanMigrationDetails from './ClanMigrationDetails.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SettlementDTO } from "../dtos";
+    import type { SettlementDTO } from "../../model/records/dtos";
     import { settlementEvents } from "./componentlib";
 
 	let { settlement }: { settlement: SettlementDTO } = $props();

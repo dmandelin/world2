@@ -1,5 +1,5 @@
 import type { Snippet } from "svelte";
-import type { ClanDTO, SettlementDTO } from "./dtos";
+import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
 import { TableBuilder, type Table } from "./tablebuilder";
 import type { RespectCalc, RespectCalcItem } from "../model/people/respect";
 import { signed } from "../model/lib/format";

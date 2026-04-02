@@ -1,6 +1,6 @@
 <script lang="ts">
     import { pct } from "../model/lib/format";
-    import { type ClanDTO } from "./dtos";
+    import { type ClanDTO } from "../model/records/dtos";
     import { buildRespectTable, buildRespectTooltip } from "./tablebuilders";
     import TableView from "./TableView.svelte";
 

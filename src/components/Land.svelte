@@ -22,7 +22,7 @@
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
     import TableView from "./TableView.svelte";
-    import type { ClanDTO, WorldDTO } from "./dtos";
+    import type { ClanDTO, WorldDTO } from "../model/records/dtos";
     import { PopulationScaler, ZeroCenteredScaler } from "./linegraph";
     import { selectClan, selectSettlement } from "./state/uistate.svelte";
     import { TableBuilder } from "./tablebuilder";

@@ -4,7 +4,7 @@
     import { SkillDef, SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import DataTable2 from "../DataTable2.svelte";
-    import type { ClanDTO, SettlementDTO } from "../dtos";
+    import type { ClanDTO, SettlementDTO } from "../../model/records/dtos";
     import ClanResidence from "../items/ClanResidence.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
@@ -15,11 +15,6 @@
     import Tooltip from "../Tooltip.svelte";
 
 	let { settlement }: { settlement: SettlementDTO } = $props();
-    $effect(() => {
-        for (const c of settlement.clans) {
-            console.log(c.lastPopulationChange);
-        }
-    });
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new SingleRecordTable(

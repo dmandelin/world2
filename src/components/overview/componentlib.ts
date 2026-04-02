@@ -1,5 +1,4 @@
-import type { MigrationCalc } from "../../model/people/migration";
-import type { SettlementDTO } from "../dtos";
+import type { SettlementDTO } from "../../model/records/dtos";
 
 export type SettlementIssue = {
     title: string;

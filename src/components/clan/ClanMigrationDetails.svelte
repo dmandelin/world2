@@ -3,7 +3,7 @@
     import { signed } from "../../model/lib/format";
     import { NewSettlement } from "../../model/people/migration";
     import DataTable from "../DataTable.svelte";
-    import type { ClanDTO } from "../dtos";
+    import type { ClanDTO } from "../../model/records/dtos";
 
     let { clan } : { clan: ClanDTO } = $props();
     let plan = $derived(clan.migrationPlan);

@@ -1,8 +1,6 @@
 <script lang="ts">
-    import { clanSedentismDescription } from "../../model/people/residence";
     import { pct } from "../../model/lib/format";
-    import { type ClanDTO } from "../dtos";
-    import Tooltip from "../Tooltip.svelte";
+    import { type ClanDTO } from "../../model/records/dtos";
 
     let { clan }: { clan: ClanDTO } = $props();
     let r = $derived(clan.residenceLevel);

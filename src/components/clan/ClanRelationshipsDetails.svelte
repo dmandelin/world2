@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ClanDTO } from "../dtos";
+    import type { ClanDTO } from "../../model/records/dtos";
     import { pct, spct } from "../../model/lib/format";
     import { SkillDef, SkillDefs } from "../../model/people/skills";
     

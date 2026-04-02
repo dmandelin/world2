@@ -5,7 +5,7 @@
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
     import { Stance, type Relationship } from "../model/people/relationships";
-    import type { SettlementDTO } from "./dtos";
+    import type { SettlementDTO } from "../model/records/dtos";
     import type { Snippet } from "svelte";
     import { type Table, type TableColumn, CrossTab, SingleRecordTable } from "./tables/tables2";
     

@@ -2,7 +2,7 @@
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
     import { averageAttitudeTable } from "./tables";
-    import type { ClanDTO, SettlementDTO } from "./dtos";
+    import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import type { AlignmentCalc } from "../model/people/alignment";
     import { signed } from "../model/lib/format";
     import type { PrestigeCalc } from "../model/people/prestige";
