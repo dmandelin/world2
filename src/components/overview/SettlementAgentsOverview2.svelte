@@ -17,11 +17,14 @@
         settlement, 
         title,
         predictMode,
-     }: { 
+    }: { 
         settlement: StandaloneSettlementDTO, 
         title: string, 
         predictMode?: boolean,
-     } = $props();
+    } = $props();
+
+    let botSnapshot = $derived(settlement.beginningOfTurnSnapshot);
+    let eotSnapshot = $derived(settlement.endOfTurnSnapshot);
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new SingleRecordTable(
@@ -63,7 +66,7 @@
         <thead>
             <tr>
                 <td></td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="bold">{clan.name}</td>
                 {/each}
             </tr>
@@ -71,7 +74,7 @@
         <tbody>
             <tr class="actual">
                 <td>People</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="rap">
                         <Tooltip>
                             {clan.population}
@@ -83,12 +86,13 @@
                                 <div>Population Per Worker: {(clan.population / clan.workers).toFixed(1)}</div>
                             </div>
                         </Tooltip>
+                        &rarr; 
                     </td>
                 {/each}
             </tr>
             <tr class="actual">
                 <td>&nbsp;&Delta;</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="rap delta">
                         <Tooltip>
                             {clan.lastPopulationChange ? signed(clan.lastPopulationChange.change) : ''}
@@ -101,7 +105,7 @@
             </tr>
             <tr class="actual">
                 <td>Food</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="ra">
                         <Tooltip>
                             {pct(clan.consumption.perCapitaSubsistence())}
@@ -114,7 +118,7 @@
             </tr>
             <tr class="actual">
                 <td>&nbsp;Sat</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="rap">
                         <Tooltip>
                             {signed(clan.happiness.subsistenceAppeal)}
@@ -128,7 +132,7 @@
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
                 <td>Agri Coop</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="ra">
                         <Tooltip>
                             {spct(clan.relationships.getProductivityFactor(SkillDefs.Agriculture))}
@@ -141,7 +145,7 @@
             </tr>
             <tr class="actual">
                 <td>Fish Coop</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="ra">
                         <Tooltip>
                             {spct(clan.relationships.getProductivityFactor(SkillDefs.Fishing))}
@@ -155,7 +159,7 @@
             <tr><td style="height: 0.5em"></td></tr>
             <tr>
                 <td>Residence</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="ra">
                         <Tooltip>
                             {pct(clan.residenceLevel.fractionInSettlement)}
@@ -168,7 +172,7 @@
             </tr>
             <tr>
                 <td>Farming</td>
-                {#each settlement.clans as clan}
+                {#each eotSnapshot.clans as clan}
                     <td class="ra">
                         <Tooltip>
                             {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture) ?? 0)}
@@ -189,7 +193,7 @@
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             {#each settlement.localTradeGoods as tradeGood}
-            {@const productionsForGood = settlement.clans.map(clan => clan.production.goods.find(g => g.good === tradeGood))}
+            {@const productionsForGood = eotSnapshot.clans.map(clan => clan.production.goods.find(g => g.good === tradeGood))}
             <tr class="actual">
                 <td>{tradeGood.name}: workers</td>
                 {#each productionsForGood as productionItem}

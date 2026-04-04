@@ -13,14 +13,8 @@
 <div style="display: flex; gap: 8em;">
     <div>
         <SettlementAgentsOverview2 
-            settlement={settlement.endOfTurnSnapshot} 
-            title={`As of ${settlement.world.year}`}/>
-    </div>
-    <div>
-        <SettlementAgentsOverview2 
             settlement={settlement} 
-            title="Next"
-            predictMode={true} />
+            title={`As of ${settlement.world.year}`}/>
     </div>
     <div>
         <SettlementIssuesOverview settlement={settlement} />
