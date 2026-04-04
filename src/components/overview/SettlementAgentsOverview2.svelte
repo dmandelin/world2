@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pct, signed, spct, tsigned } from "../../model/lib/format";
+    import { pct, pctFormat, signed, spct, tsigned } from "../../model/lib/format";
     import type { HappinessItem } from "../../model/people/happiness";
     import { SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
@@ -12,6 +12,8 @@
     import { SingleRecordTable, ValueMapTable } from "../tables/tables2";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
+    import type { TradeGood } from "../../model/trade";
+    import { safeDiv } from "../../model/lib/basics";
 
 	let { 
         settlement, 
@@ -26,6 +28,19 @@
     let tsnaps = $derived(settlement.turnSnapshots);
     let csnaps = $derived([...tsnaps.byClan.entries()]
         .map(([clan, snapshots]) => ({c: clan, b: snapshots.bot, e: snapshots.eot})));
+
+    function productionWorkers(clan: ClanDTO, good: TradeGood): number {
+        return clan.production.goods.find(g => g.good === good)?.workers ?? 0;
+    }
+
+    function productionLand(clan: ClanDTO, good: TradeGood): number {
+        return clan.production.goods.find(g => g.good === good)?.land ?? 0;
+    }
+
+    function productionLandPerWorker(clan: ClanDTO, good: TradeGood): number {
+        const prod = clan.production.goods.find(g => g.good === good);
+        return prod && prod.workers ? prod.land / prod.workers : 0;
+    }
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new SingleRecordTable(
@@ -51,14 +66,45 @@
         padding-right: 1.3em;
     }
 
-    .delta {
+    .delta-positive {
         color: #464;
+    }
+
+    .delta-negative {
+        color: #644;
     }
 
     .predict .actual {
         opacity: 0.0;
     }
+
+    .clan-header {
+        text-align: center;
+        font-weight: bold;
+    }
 </style>
+
+{#snippet deltaCell(cs: {b?: ClanDTO, e: ClanDTO}, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString())}
+    {@const delta = cs.b ? valueFunc(cs.e) - valueFunc(cs.b) : 0}
+    <td class={delta > 0 ? 'delta-positive' : delta < 0 ? 'delta-negative' : ''}>
+        <Tooltip>
+            {#if cs.b}
+                {tsigned(delta, fmt)}
+            {:else}
+                -
+            {/if}
+            <div slot="tooltip" style="text-align: left; color: initial;">
+                {#if cs.b}
+                    {fmt(valueFunc(cs.b))}
+                {:else}
+                    ?
+                {/if}
+                &rarr;
+                {fmt(valueFunc(cs.e))}
+            </div>
+        </Tooltip>
+    </td>
+{/snippet}
 
 <div id="top" class={predictMode ? 'predict' : ''}>
     <h3 style="margin-block-end: 0.5em;">{title}</h3>
@@ -68,7 +114,7 @@
             <tr>
                 <td></td>
                 {#each csnaps as cs}
-                    <td class="bold">{cs.c.name}</td>
+                    <td class="clan-header" colspan="2">{cs.c.name}</td>
                 {/each}
             </tr>
         </thead>
@@ -84,9 +130,11 @@
                                 <hr>
                                 <div>Workers: {cs.e.workers}</div>
                                 <div>Carers and Dependents: {cs.e.population - cs.e.workers}</div>
-                                <div>Population Per Worker: {(cs.e.population / cs.e.workers).toFixed(1)}</div>
+                                <div>Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}</div>
                             </div>
                         </Tooltip>
+                    </td>
+                    <td class="delta">
                         <Tooltip>
                             {cs.e.lastPopulationChange ? tsigned(cs.e.lastPopulationChange.change) : ''}
                             <div slot="tooltip" style="text-align: left; color: initial;">
@@ -94,6 +142,22 @@
                             </div>
                         </Tooltip>
                     </td>
+                {/each}
+            </tr>
+            <tr class="actual">
+                <td>&nbsp;Support Ratio</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        <Tooltip>
+                            {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}
+                            <div slot="tooltip">
+                                <div>Workers: {cs.e.workers}</div>
+                                <div>Carers and Dependents: {cs.e.population - cs.e.workers}</div>
+                                <div>Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}</div>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => safeDiv(c.population, c.workers), v => v.toFixed(1))}
                 {/each}
             </tr>
             <tr class="actual">
@@ -107,6 +171,7 @@
                             </div>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => c.consumption.perCapitaSubsistence(), pct)}
                 {/each}
             </tr>
             <tr class="actual">
@@ -120,6 +185,7 @@
                             </div>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => c.happiness.subsistenceAppeal, signed)}
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
@@ -134,6 +200,7 @@
                             </div>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => c.relationships.getProductivityFactor(SkillDefs.Agriculture), spct)}
                 {/each}
             </tr>
             <tr class="actual">
@@ -147,6 +214,7 @@
                             </div>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => c.relationships.getProductivityFactor(SkillDefs.Fishing), spct)}
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
@@ -161,6 +229,7 @@
                             </div>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => c.residenceLevel.fractionInSettlement, pct)}
                 {/each}
             </tr>
             <tr>
@@ -182,39 +251,42 @@
                             </div>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => c.laborAllocation.plannedRatioFor(SkillDefs.Agriculture) ?? 0, pct)}
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             {#each settlement.localTradeGoods as tradeGood}
-            {@const productionsForGood = csnaps.map(cs => cs.e.production.goods.find(g => g.good === tradeGood))}
             <tr class="actual">
                 <td>{tradeGood.name}: workers</td>
-                {#each productionsForGood as productionItem}
+                {#each csnaps as cs}
                     <td class="rap">
-                        {(productionItem?.workers ?? 0).toFixed(0)}
+                        {productionWorkers(cs.e, tradeGood).toFixed(0)}
                         <Tooltip>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => productionWorkers(c, tradeGood), v => v.toFixed(0))}
                 {/each}
             </tr>
             <tr class="actual">
                 <td>{tradeGood.name}: land</td>
-                {#each productionsForGood as productionItem}
+                {#each csnaps as cs}
                     <td class="rap">
-                        {(productionItem?.land ?? 0).toFixed(0)}
+                        {productionLand(cs.e, tradeGood).toFixed(0)}
                         <Tooltip>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => productionLand(c, tradeGood), v => v.toFixed(0))}
                 {/each}
             </tr>
             <tr class="actual">
                 <td>{tradeGood.name}: land/worker</td>
-                {#each productionsForGood as productionItem}
+                {#each csnaps as cs}
                     <td class="ra">
-                        {productionItem && productionItem.workers ? (productionItem.land / productionItem.workers).toFixed(2) : '-'}
+                        {productionLandPerWorker(cs.e, tradeGood).toFixed(2)}
                         <Tooltip>
                         </Tooltip>
                     </td>
+                    {@render deltaCell(cs, c => productionLandPerWorker(c, tradeGood), v => v.toFixed(2))}
                 {/each}
             </tr>
             {/each}

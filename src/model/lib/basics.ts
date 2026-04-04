@@ -4,6 +4,10 @@ export function assert(condition: boolean, message?: string): asserts condition 
     }
 }
 
+export function safeDiv(numerator: number, denominator: number, defaultValue: number = 0): number {
+    return denominator === 0 ? defaultValue : numerator / denominator;
+}
+
 export function randInt(a: number, b?: number): number {
     if (b === undefined) {
         b = a;

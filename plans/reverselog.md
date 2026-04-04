@@ -6,19 +6,9 @@ Issues with the latest noted on top:
 
 This partially works but there are bugs to fix:
 
-*   Residence level always shows the same in latest snapshot
-    and current
-
-*   It would make sense to show the population used for
-    worker calculations etc in the last turn report
-*   Might in general make sense to also show beginning of
-    last turn so we can see the full change over that turn
-    *   Also still need to show choices for next turn
-*   Idea: Slider to choose between showing current state
-    and current state + delta (optionally other variations)
-
-*   Should probably use per-clan snapshots instead of
-    settlement snapshot to better track around moves and splits
+*   Some items don't show any changes.
+    *   Causes may vary by items
+    *   Planning-type items are most often affected
 
 ### Original
 

@@ -16,10 +16,10 @@
             settlement={settlement} 
             title={`As of ${settlement.world.year}`}/>
     </div>
-    <div>
-        <SettlementIssuesOverview settlement={settlement} />
-        <SettlementEventsOverview settlement={settlement} />
-        <SettlementPopulationOverview settlement={settlement} />
-        <SettlementEconomyOverview settlement={settlement} />
-    </div>
+</div>
+<div>
+    <SettlementIssuesOverview settlement={settlement} />
+    <SettlementEventsOverview settlement={settlement} />
+    <SettlementPopulationOverview settlement={settlement} />
+    <SettlementEconomyOverview settlement={settlement} />
 </div>
