@@ -13,7 +13,7 @@ import { poisson } from "../lib/distributions";
 import type { Year } from "../records/year";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
-import { StandaloneSettlementDTO } from "../records/dtos";
+import { SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -370,6 +370,10 @@ export class Settlement {
     }
 
     get endOfTurnSnapshot() {
-        return this.endOfTurnSnapshot_!;
+        return this.endOfTurnSnapshot_;
+    }
+
+    get turnSnapshots() {
+        return new SettlementTurnSnapshots(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot!);
     }
 }

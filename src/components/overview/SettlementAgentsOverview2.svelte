@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pct, signed, spct } from "../../model/lib/format";
+    import { pct, signed, spct, tsigned } from "../../model/lib/format";
     import type { HappinessItem } from "../../model/people/happiness";
     import { SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
@@ -23,8 +23,9 @@
         predictMode?: boolean,
     } = $props();
 
-    let botSnapshot = $derived(settlement.beginningOfTurnSnapshot);
-    let eotSnapshot = $derived(settlement.endOfTurnSnapshot);
+    let tsnaps = $derived(settlement.turnSnapshots);
+    let csnaps = $derived([...tsnaps.byClan.entries()]
+        .map(([clan, snapshots]) => ({c: clan, b: snapshots.bot, e: snapshots.eot})));
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new SingleRecordTable(
@@ -66,38 +67,30 @@
         <thead>
             <tr>
                 <td></td>
-                {#each eotSnapshot.clans as clan}
-                    <td class="bold">{clan.name}</td>
+                {#each csnaps as cs}
+                    <td class="bold">{cs.c.name}</td>
                 {/each}
             </tr>
         </thead>
         <tbody>
             <tr class="actual">
                 <td>People</td>
-                {#each eotSnapshot.clans as clan}
+                {#each csnaps as cs}
                     <td class="rap">
                         <Tooltip>
-                            {clan.population}
+                            {cs.e.population}
                             <div slot="tooltip">
-                                <PopulationPyramid clan={clan} />
+                                <PopulationPyramid clan={cs.e} />
                                 <hr>
-                                <div>Workers: {clan.workers}</div>
-                                <div>Carers and Dependents: {clan.population - clan.workers}</div>
-                                <div>Population Per Worker: {(clan.population / clan.workers).toFixed(1)}</div>
+                                <div>Workers: {cs.e.workers}</div>
+                                <div>Carers and Dependents: {cs.e.population - cs.e.workers}</div>
+                                <div>Population Per Worker: {(cs.e.population / cs.e.workers).toFixed(1)}</div>
                             </div>
                         </Tooltip>
-                        &rarr; 
-                    </td>
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>&nbsp;&Delta;</td>
-                {#each eotSnapshot.clans as clan}
-                    <td class="rap delta">
                         <Tooltip>
-                            {clan.lastPopulationChange ? signed(clan.lastPopulationChange.change) : ''}
+                            {cs.e.lastPopulationChange ? tsigned(cs.e.lastPopulationChange.change) : ''}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <PopulationChange clan={clan} />
+                                <PopulationChange clan={cs.e} />
                             </div>
                         </Tooltip>
                     </td>
@@ -105,12 +98,12 @@
             </tr>
             <tr class="actual">
                 <td>Food</td>
-                {#each eotSnapshot.clans as clan}
+                {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {pct(clan.consumption.perCapitaSubsistence())}
+                            {pct(cs.e.consumption.perCapitaSubsistence())}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceTooltipTable(clan)}></TableView2>
+                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
@@ -118,12 +111,12 @@
             </tr>
             <tr class="actual">
                 <td>&nbsp;Sat</td>
-                {#each eotSnapshot.clans as clan}
+                {#each csnaps as cs}
                     <td class="rap">
                         <Tooltip>
-                            {signed(clan.happiness.subsistenceAppeal)}
+                            {signed(cs.e.happiness.subsistenceAppeal)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceHappinessTooltipTable(clan)}></TableView2>
+                                <TableView2 table={clanSustenanceHappinessTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
@@ -132,12 +125,12 @@
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
                 <td>Agri Coop</td>
-                {#each eotSnapshot.clans as clan}
+                {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {spct(clan.relationships.getProductivityFactor(SkillDefs.Agriculture))}
+                            {spct(cs.e.relationships.getProductivityFactor(SkillDefs.Agriculture))}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <ClanRelationshipsDetails clan={clan} skill={SkillDefs.Agriculture} />
+                                <ClanRelationshipsDetails clan={cs.e} skill={SkillDefs.Agriculture} />
                             </div>
                         </Tooltip>
                     </td>
@@ -145,12 +138,12 @@
             </tr>
             <tr class="actual">
                 <td>Fish Coop</td>
-                {#each eotSnapshot.clans as clan}
+                {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {spct(clan.relationships.getProductivityFactor(SkillDefs.Fishing))}
+                            {spct(cs.e.relationships.getProductivityFactor(SkillDefs.Fishing))}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <ClanRelationshipsDetails clan={clan} skill={SkillDefs.Fishing} />
+                                <ClanRelationshipsDetails clan={cs.e} skill={SkillDefs.Fishing} />
                             </div>
                         </Tooltip>
                     </td>
@@ -159,12 +152,12 @@
             <tr><td style="height: 0.5em"></td></tr>
             <tr>
                 <td>Residence</td>
-                {#each eotSnapshot.clans as clan}
+                {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {pct(clan.residenceLevel.fractionInSettlement)}
+                            {pct(cs.e.residenceLevel.fractionInSettlement)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <ClanResidenceTooltip clan={clan} />
+                                <ClanResidenceTooltip clan={cs.e} />
                             </div>
                         </Tooltip>
                     </td>
@@ -172,20 +165,20 @@
             </tr>
             <tr>
                 <td>Farming</td>
-                {#each eotSnapshot.clans as clan}
+                {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture) ?? 0)}
+                            {pct(cs.e.laborAllocation.plannedRatioFor(SkillDefs.Agriculture) ?? 0)}
                             <div slot="tooltip" class="ttt">
-                                H {clan.laborAllocation.allocationPlan.happiness.toFixed()} |
-                                {pct(clan.laborAllocation.allocationPlan.experimentProbability)}
-                                ({(clan.laborAllocation.allocationPlan.experimentingRoll * 100).toFixed()})
-                                {#if clan.laborAllocation.allocationPlan.experimenting}
+                                H {cs.e.laborAllocation.allocationPlan.happiness.toFixed()} |
+                                {pct(cs.e.laborAllocation.allocationPlan.experimentProbability)}
+                                ({(cs.e.laborAllocation.allocationPlan.experimentingRoll * 100).toFixed()})
+                                {#if cs.e.laborAllocation.allocationPlan.experimenting}
                                     - experimenting
                                 {:else}
                                     - maintaining traditions
                                 {/if}
-                                <DataTable2 table={laborAllocationPlanTable(clan)} />
+                                <DataTable2 table={laborAllocationPlanTable(cs.e)} />
                             </div>
                         </Tooltip>
                     </td>
@@ -193,7 +186,7 @@
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             {#each settlement.localTradeGoods as tradeGood}
-            {@const productionsForGood = eotSnapshot.clans.map(clan => clan.production.goods.find(g => g.good === tradeGood))}
+            {@const productionsForGood = csnaps.map(cs => cs.e.production.goods.find(g => g.good === tradeGood))}
             <tr class="actual">
                 <td>{tradeGood.name}: workers</td>
                 {#each productionsForGood as productionItem}

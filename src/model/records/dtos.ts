@@ -2,7 +2,7 @@ import { sortedByKey, sumFun } from "../lib/basics";
 import type { PopulationChange } from "../people/population";
 import type { CondorcetCalc } from "../people/clans";
 import type { Note } from "../records/notifications";
-import { Clan, type ConsumptionCalc } from "../people/people";
+import type { Clan, ConsumptionCalc } from "../people/people";
 import type { PrestigeCalc } from "../people/prestige";
 import type { Rites } from "../rites";
 import type { Settlement } from "../people/settlement";
@@ -257,8 +257,7 @@ export class StandaloneSettlementDTO {
 
     readonly rites: Rites;
     readonly timeline: Timeline<SettlementTimePoint>;
-    readonly beginningOfTurnSnapshot: StandaloneSettlementDTO;
-    readonly endOfTurnSnapshot: StandaloneSettlementDTO;
+    readonly turnSnapshots: SettlementTurnSnapshots;
 
     constructor(settlement: Settlement) {
         this.ref = settlement;
@@ -289,8 +288,7 @@ export class StandaloneSettlementDTO {
 
         this.rites = settlement.clans.rites.clone();
         this.timeline = settlement.timeline;
-        this.beginningOfTurnSnapshot = settlement.beginningOfTurnSnapshot || this;
-        this.endOfTurnSnapshot = settlement.endOfTurnSnapshot || this;
+        this.turnSnapshots = settlement.turnSnapshots;
 
         this.condorcet = settlement.clans.condorcetLeader;
     }
@@ -309,6 +307,23 @@ export class SettlementDTO extends StandaloneSettlementDTO {
         readonly world: WorldDTO) {
             
         super(settlement);
+    }
+}
+
+// Snapshots for a completed turn.
+export class SettlementTurnSnapshots {
+    // Clan snapshots conveniently grouped together.
+    readonly byClan = new Map<ClanDTO, {bot?: ClanDTO, eot: ClanDTO}>();
+
+    constructor(
+        readonly bot?: StandaloneSettlementDTO, 
+        readonly eot?: StandaloneSettlementDTO) {
+        for (const clan of eot?.clans ?? []) {
+            this.byClan.set(clan, {
+                bot: bot?.clans.find(c => c.name === clan.name),
+                eot: clan,
+            });
+        }
     }
 }
 

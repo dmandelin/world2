@@ -32,6 +32,12 @@ export function signed(x: number, places: number = 0): string {
     return `${sgn}${x.toFixed(places)}`;
 }
 
+export function tsigned(x: number, places: number = 0): string {
+  if (x === 0) return '-';
+  if (x > 0) return `▲${x.toFixed(places)}`;
+  return `▼${(-x).toFixed(places)}`;
+}
+
 export function signedFormat(places: number = 0): (n: number) => string {
     return (n: number) => signed(n, places);
 }
