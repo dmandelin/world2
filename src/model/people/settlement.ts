@@ -71,7 +71,8 @@ export class Settlement {
     private lastShiftYear_: Year;
     readonly timeline = new Timeline<SettlementTimePoint>();
 
-    endOfPreviousTurnSnapshot_: StandaloneSettlementDTO|undefined;
+    beginningOfTurnSnapshot_: StandaloneSettlementDTO|undefined;
+    endOfTurnSnapshot_: StandaloneSettlementDTO|undefined;
     
     constructor(
         readonly world: World,
@@ -356,11 +357,19 @@ export class Settlement {
         this.timeline.add(this.world.year, new SettlementTimePoint(this));
     }
 
-    recordEndOfPreviousTurnSnapshot() {
-        this.endOfPreviousTurnSnapshot_ = new StandaloneSettlementDTO(this);
+    recordBeginningOfTurnSnapshot() {
+        this.beginningOfTurnSnapshot_ = new StandaloneSettlementDTO(this);
     }
 
-    get endOfPreviousTurnSnapshot() {
-        return this.endOfPreviousTurnSnapshot_!;
+    get beginningOfTurnSnapshot() {
+        return this.beginningOfTurnSnapshot_!;
+    }
+
+    recordEndOfTurnSnapshot() {
+        this.endOfTurnSnapshot_ = new StandaloneSettlementDTO(this);
+    }
+
+    get endOfTurnSnapshot() {
+        return this.endOfTurnSnapshot_!;
     }
 }

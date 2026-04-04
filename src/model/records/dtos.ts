@@ -257,7 +257,8 @@ export class StandaloneSettlementDTO {
 
     readonly rites: Rites;
     readonly timeline: Timeline<SettlementTimePoint>;
-    readonly endOfPreviousTurnSnapshot: StandaloneSettlementDTO;
+    readonly beginningOfTurnSnapshot: StandaloneSettlementDTO;
+    readonly endOfTurnSnapshot: StandaloneSettlementDTO;
 
     constructor(settlement: Settlement) {
         this.ref = settlement;
@@ -288,7 +289,8 @@ export class StandaloneSettlementDTO {
 
         this.rites = settlement.clans.rites.clone();
         this.timeline = settlement.timeline;
-        this.endOfPreviousTurnSnapshot = settlement.endOfPreviousTurnSnapshot || this;
+        this.beginningOfTurnSnapshot = settlement.beginningOfTurnSnapshot || this;
+        this.endOfTurnSnapshot = settlement.endOfTurnSnapshot || this;
 
         this.condorcet = settlement.clans.condorcetLeader;
     }

@@ -200,6 +200,13 @@ export class World implements NoteTaker {
 
         // Main advance phase.
         if (!noEffect) {
+            for (const settlement of this.allSettlements) {
+                settlement.recordBeginningOfTurnSnapshot();
+            }
+            for (const clan of this.allClans) {
+                clan.recordBeginningOfTurnSnapshot();
+            }
+
             this.migrate();
             marry(this);
         }
@@ -215,7 +222,10 @@ export class World implements NoteTaker {
             this.timeline.add(this.year, new TimePoint(this));
             for (const settlement of this.allSettlements) {
                 settlement.addTimePoint();
-                settlement.recordEndOfPreviousTurnSnapshot();
+                settlement.recordBeginningOfTurnSnapshot();
+            }
+            for (const clan of this.allClans) {
+                clan.recordEndOfTurnSnapshot();
             }
 
             for (const trend of this.trends) trend.update(this.year);

@@ -13,7 +13,7 @@
 <div style="display: flex; gap: 8em;">
     <div>
         <SettlementAgentsOverview2 
-            settlement={settlement.endOfPreviousTurnSnapshot} 
+            settlement={settlement.endOfTurnSnapshot} 
             title={`As of ${settlement.world.year}`}/>
     </div>
     <div>
