@@ -20,7 +20,44 @@ it would be good to have some tooling and strategy.
 *   Create a clan DTO page on the clan details page
     *   For listed properties, show the different values
         across the snapshots and whether pointers are equal
-        
+
+Let's think about phasing and what snapshots make sense.
+Logically, we have this:
+
+1. Logical turn begins.
+2. Controllers (human and bot) can make decisions such as
+   farming ratio changes or migrations.
+*  advanceFromPlanningView() returns here
+3. End of planning phase: Decisions for this turn are now set.
+*  advanceFromPlanningView() is called here
+4. Advance: world state updates.
+5. End of advance phase: Outputs from this turn are done.
+6. Logical turn ends.
+
+*   "Decisions" are values that are set by agents more or less
+    by choice and not directly caused by model factors.
+*   "Outputs" are during-turn flows and end-of-turn state/stocks
+    computed from decisions and beginning-of-turn state.
+
+*   The values
+    *   Population is clearly a state
+        *   "True state variables" such as population should
+            not change during the planning phase, so end of
+            last turn and beginning of turn snapshot should
+            say the same thing anyway.
+    *   Subsistence consumption is a state, but is derived
+        from other states and flows
+        *   Specifically, (production flow) / (beginning of
+            turn population)
+        *   Beginning of turn snapshot is not a valid data
+            source for this -- production seen would be from
+            last turn flow, while population is current turn
+            (If it were a real beginning-of-turn snapshot,
+            it would work, but when it's a derived value,
+            in the current code it's not always clear every
+            last input was a proper snapshot)
+*   TODO - Save end of turn previous state and use for deltas
+
 ### Original
 
 Some parts of the UI show next-turn-predicted productivity

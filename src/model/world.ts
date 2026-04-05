@@ -105,7 +105,7 @@ export class World implements NoteTaker {
 
         // Run an initial turn so that there is state for all the output
         // variables but don't apply the effects that mutate clans.
-        this.plan(true);
+        this.behave(true);
         this.advance(true);
         for (const cluster of this.clusters) {
             // This depends on labor actually allocated to production nodes
@@ -118,7 +118,7 @@ export class World implements NoteTaker {
         for (const trend of this.trends) trend.initialize(this.year);
 
         // Run planning because we're about to activate planning view.
-        this.plan(true);
+        this.behave(true);
 
         // Log distances between clusters.
         if (loggingEnabled()) {
@@ -160,13 +160,84 @@ export class World implements NoteTaker {
         relationship.addExchange(clan, [...clan.tradeGoods][0], partner.tradeGoods[0]);
     }
 
+    // The Logical Turn
+    //
+    // The simulation runs a sequence of turns, each of which represents
+    // a time window in the world. Each turn has two main aspects, planning
+    // and advancing.
+    //
+    // - Planning
+    //   - Agents collect and process information, and make decisions 
+    //     about how to act.
+    //   - The world state does not change due to planning.
+    //
+    // - Advancing
+    //   - World state changes:
+    //     - (Variables: 
+    //          S0 = start of turn state,
+    //          P = plans made by agents, 
+    //          IV = intermediate values,
+    //          S1 = end of turn state)
+    //     - Intermediate values such as farming productivity are calculated
+    //       as functions of (S0, P, IV). This includes flows.
+    //     - End-of-turn states such as happiness and population are
+    //       calculated as functions of (S0, P, IV).
+    //   - Plans do not change due to advancing.
+    //
+    // Note that these "aspects" aren't phases: time and control flow
+    // are are a little more complicated and explained below.
+    //
+    // Note that agent *evaluations* are considered part of end-of-turn state,
+    // because intuitively we want things like happiness and prestige to be
+    // *results of our actions*, and to be able to answer questions such as,
+    // did agents get what they aimed at? Another way to look at this is that
+    // learning is a slow background process, and thus agent values that have
+    // to do with learning must be part of advancing-aspect values. However,
+    // it is logical and meaningful to capture a value for agent perceptions
+    // of the current situation that affect planning during planning as well.
+    //
+    // At any given time, control flow is either running (advancing state
+    // or planning automatically) or waiting on the user. A point where
+    // we let the user act is called a "view". The usual views are:
+    //
+    // *    Planning view. Part of the planning aspect. Automatic
+    //      planning can make place before (initial plan user can adjust),
+    //      during (invoked as a tool by the user), and/or after (automatic
+    //      detailing of user instructions) planning view is shown.
+    // *    Review. Omits next-turn planning information, making it easier 
+    //      to see how previous-turn plans related to previous-turn outcomes. 
+    //      Note that since nothing changes during this view, the data for it 
+    //      can be taken as a snapshot and then it can be shown at any time.
+    //
+    // One more point is that the primary concept is a simulation, with
+    // automated agents that have realistic behaviors. However, we could
+    // use all this with a UI that gives a human user full control over
+    // one or more agents, in which case the entire planning aspect would
+    // be in the UI. So we'll distinguish between different kinds of
+    // planning activity, with plain "planning" referring to the entire aspect.
+    //
+    // The sequential phases making up a turn are:
+    //
+    // 1.   Behave: Agents make decisions based on simulated motivations.
+    // 2.   User Plan: Show planning view to the human user.
+    //      *    There might be tools where the user can invoke some 
+    //           automated planning while staying in this view.
+    //      *    There could be a subphase or phase after this where user
+    //           plans are automatically refined and detailed, but we
+    //           don't need that yet.
+    // 3.   Advance: World computes intermediate values and end-of-turn state.
+    //      *    There's a subphase at the start where nature "plans".
+    //           This works for now but there are other valid choices.
+
     // ----------------------------------------------------------------
     // Action handlers to trigger turn substeps
 
     advanceFromPlanningView() {
         log('World >>> Advance from planning view');
+        // No automatic adjustments yet: Once the user has clicked Advance,
+        // planning phase has ended.
         this.advance();
-        this.plan();
+        this.behave();
         log('World <<< Advance from planning view');
         this.notify();
     }
@@ -174,9 +245,9 @@ export class World implements NoteTaker {
     // ----------------------------------------------------------------
     // Functions that carry out turn substeps
 
-    // Let agents predict results and make choices for how to act.
-    private plan(priming: boolean = false) {
-        log('World >>> Plan');
+    // Have (automatic) agents make their plans.
+    private behave(priming: boolean = false) {
+        log('World >>> Behave');
         this.updateRelationships();
         this.updatePerceptions();
 
@@ -195,7 +266,7 @@ export class World implements NoteTaker {
             settlement.planMigrations();
         }
 
-        log('World <<< Plan');
+        log('World <<< Behave');
     }
 
     private advance(noEffect: boolean = false) {
