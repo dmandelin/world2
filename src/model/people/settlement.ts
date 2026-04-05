@@ -14,6 +14,7 @@ import type { Year } from "../records/year";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
 import { SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
+import { logExperiment1 } from "../lib/debug";
 
 class DaughterSettlementPlacer {
     readonly places = 12;
@@ -374,6 +375,7 @@ export class Settlement {
     }
 
     get turnSnapshots() {
+        logExperiment1(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot);
         return new SettlementTurnSnapshots(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot!);
     }
 }

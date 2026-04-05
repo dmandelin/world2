@@ -13,7 +13,7 @@ import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { marry } from "./people/marriage";
-import { log, loggingEnabled } from "./lib/debug";
+import { log, loggingEnabled, setExemplarSettlementUUID } from "./lib/debug";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -90,6 +90,8 @@ export class World implements NoteTaker {
     }
 
     initialize() {
+        setExemplarSettlementUUID(this.clusters[0].mother.uuid);
+
         log('World >>> Initialize')
         this.addNote(
             '*',
@@ -130,6 +132,7 @@ export class World implements NoteTaker {
             }
         }
         log('World <<< Initialize')
+        this.notify();
     }
 
     initializeTradeGoods() {
@@ -164,8 +167,8 @@ export class World implements NoteTaker {
         log('World >>> Advance from planning view');
         this.advance();
         this.plan();
-        this.notify();
         log('World <<< Advance from planning view');
+        this.notify();
     }
 
     // ----------------------------------------------------------------
