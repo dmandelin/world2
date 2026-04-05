@@ -14,6 +14,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { marry } from "./people/marriage";
 import { log, loggingEnabled, setExemplarSettlementUUID } from "./lib/debug";
+import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -300,9 +301,6 @@ export class World implements NoteTaker {
         for (const settlement of this.allSettlements) {
             settlement.recordBeginningOfTurnSnapshot();
         }
-        for (const clan of this.allClans) {
-            clan.recordBeginningOfTurnSnapshot();
-        }
 
         // Advance for cross-cluster events.
         this.migrate();
@@ -333,10 +331,9 @@ export class World implements NoteTaker {
             // TODO - Combine this with newer logging.
             settlement.addTimePoint();
             settlement.recordEndOfTurnSnapshot();
-        }
-        // TODO - Don't create snapshots redundant with the ones in settlements.
-        for (const clan of this.allClans) {
-            clan.recordEndOfTurnSnapshot();
+            for (const clan of settlement.endOfTurnSnapshot!.clans) {
+                registerClanEndOfTurnSnapshot(clan);
+            }
         }
     }
 

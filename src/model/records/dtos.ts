@@ -120,7 +120,8 @@ class ClanProductionDTO {
     }
 }
 
-export type ClanDTO = {
+export class ClanDTO {
+    year: string;
     ref: Clan;
     uuid: string;
     name: string;
@@ -169,60 +170,59 @@ export type ClanDTO = {
     intelligence: number;
     strength: number;
     traits: string[];
-}
 
-export function clanDTO(clan: Clan): ClanDTO {
-    return {
-        uuid: clan.uuid,
+    constructor(clan: Clan) {
+        this.year = clan.world.year.toString();
+        this.uuid = clan.uuid;
 
-        ref: clan,
-        name: clan.name,
-        color: clan.color,
+        this.ref = clan;
+        this.name = clan.name;
+        this.color = clan.color;
 
-        relationships: clan.relationships,
-        respect: clan.respectMap,
-        prestige: prestigeDTO(clan),
-        alignment: alignmentDTO(clan),
-        averageRespect: clan.averageRespect,
-        averagePrestige: clan.averagePrestige,
-        influence: clan.influence,
+        this.relationships = clan.relationships;
+        this.respect = clan.respectMap;
+        this.prestige = prestigeDTO(clan);
+        this.alignment = alignmentDTO(clan);
+        this.averageRespect = clan.averageRespect;
+        this.averagePrestige = clan.averagePrestige;
+        this.influence = clan.influence;
 
-        housing: clan.housing,
-        housingDecision: clan.housingDecision,
-        residenceLevel: clan.residenceLevel.clone(),
-        settlement: clan.settlement,
+        this.housing = clan.housing;
+        this.housingDecision = clan.housingDecision;
+        this.residenceLevel = clan.residenceLevel.clone();
+        this.settlement = clan.settlement;
 
-        cadets: clan.cadets,
-        parent: clan.parent,
-        marriagePartners: clan.marriagePartners,
-        rites: clan.rites.clone(),
-        migrationPlan: clan.migrationPlan,
-        slices: clan.slices,
+        this.cadets = clan.cadets;
+        this.parent = clan.parent;
+        this.marriagePartners = clan.marriagePartners;
+        this.rites = clan.rites.clone();
+        this.migrationPlan = clan.migrationPlan;
+        this.slices = clan.slices;
 
-        consumption: clan.consumption.clone(),
-        isDitching: clan.isDitching,
-        laborAllocation: clan.laborAllocation.clone(),
-        productivityCalcs: clan.productivityCalcs,
-        productivity: clan.agriculturalProductivity,
-        productivityTooltip: clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [],
-        production: new ClanProductionDTO(clan),
-        ritualEffectiveness: clan.ritualEffectiveness,
-        ritualEffectivenessTooltip: clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [],
-        seniority: clan.seniority,
-        population: clan.population,
-        workers: clan.workers,
-        effectiveResidentPopulation: clan.effectiveResidentPopulation,
-        residenceFraction: clan.residenceFraction,
-        lastPopulationChange: clan.lastPopulationChange,
-        tradeRelationships: tradeRelationshipsDTO(clan),
+        this.consumption = clan.consumption.clone();
+        this.isDitching = clan.isDitching;
+        this.laborAllocation = clan.laborAllocation.clone();
+        this.productivityCalcs = clan.productivityCalcs;
+        this.productivity = clan.agriculturalProductivity;
+        this.productivityTooltip = clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [];
+        this.production = new ClanProductionDTO(clan);
+        this.ritualEffectiveness = clan.ritualEffectiveness;
+        this.ritualEffectivenessTooltip = clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [];
+        this.seniority = clan.seniority;
+        this.population = clan.population;
+        this.workers = clan.workers;
+        this.effectiveResidentPopulation = clan.effectiveResidentPopulation;
+        this.residenceFraction = clan.residenceFraction;
+        this.lastPopulationChange = clan.lastPopulationChange;
+        this.tradeRelationships = tradeRelationshipsDTO(clan);
 
-        happiness: clan.happiness.clone(),
+        this.happiness = clan.happiness.clone();
 
-        skills: clan.skills,
-        intelligence: clan.intelligence,
-        strength: clan.strength,
-        traits: [...clan.traits].map(t => t.name),
-    };
+        this.skills = clan.skills;
+        this.intelligence = clan.intelligence;
+        this.strength = clan.strength;
+        this.traits = [...clan.traits].map(t => t.name);
+    }
 }
 
 class SettlementProductionDTO {
@@ -296,7 +296,7 @@ export class StandaloneSettlementDTO {
     constructor(settlement: Settlement) {
         this.ref = settlement;
         this.clans = sortedByKey([...settlement.clans].map(clan => 
-            clanDTO(clan)), clan => clan.name);
+            new ClanDTO(clan)), clan => clan.name);
 
         this.uuid = settlement.uuid;
         this.name = settlement.name;

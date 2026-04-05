@@ -24,7 +24,6 @@ import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { clanDTO, type ClanDTO } from "../records/dtos";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -209,8 +208,6 @@ export class Clan implements TradePartner {
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 2;
     
-    beginningOfTurnSnapshot: ClanDTO|undefined;
-    endOfTurnSnapshot: ClanDTO|undefined;
     lastPopulationChange: PopulationChange = PopulationChangeBuilder.empty(this);
 
     skills = new ClanSkills(this);
@@ -740,13 +737,5 @@ export class Clan implements TradePartner {
         // We can't update relationships properly until the clan is added to the
         // settlement, so that's done elsewhere.
         return newClan;
-    }
-
-    recordBeginningOfTurnSnapshot() {
-        this.beginningOfTurnSnapshot = clanDTO(this);
-    }
-
-    recordEndOfTurnSnapshot() {
-        this.endOfTurnSnapshot = clanDTO(this);
     }
 }
