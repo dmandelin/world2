@@ -13,37 +13,10 @@ import { poisson } from "../lib/distributions";
 import type { Year } from "../records/year";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
-import { SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
+import { SettlementEndOfTurnSnapshot, SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
 import { logExperiment1 } from "../lib/debug";
 
-class DaughterSettlementPlacer {
-    readonly places = 12;
-    private radius = Math.random() * 10 + 15;
-    private originAngle = Math.random() * 2 * Math.PI;
-    readonly openPlaces = Array.from({ length: this.places }, (_, i) => i);
-    private jitter = 3;
-
-    constructor(readonly settlement: Settlement) {}
-
-    placeFor(parent: Settlement): [number, number] {
-        if (!this.openPlaces.length) {
-            this.radius *= 1.5;
-            this.jitter *= 1.5;
-            this.originAngle = Math.random() * 2 * Math.PI / this.places;
-            this.openPlaces.push(...Array.from({ length: this.places }, (_, i) => i));
-        }
-        const place = chooseFrom(this.openPlaces, true);
-
-        const angle = this.originAngle + place * (2 * Math.PI / this.places);
-        const x = this.settlement.x + this.radius * Math.cos(angle) + this.generateJitter();
-        const y = this.settlement.y + this.radius * Math.sin(angle) + this.generateJitter();
-        return [Math.round(x), Math.round(y)];
-    }
-
-    private generateJitter() {
-        return (Math.random() * 2 - 1) * this.jitter;
-    }
-}
+const maxEndOfTurnSnapshots = 5;
 
 export class Settlement {
     readonly uuid = crypto.randomUUID();
@@ -73,7 +46,8 @@ export class Settlement {
     readonly timeline = new Timeline<SettlementTimePoint>();
 
     beginningOfTurnSnapshot_: StandaloneSettlementDTO|undefined;
-    endOfTurnSnapshot_: StandaloneSettlementDTO|undefined;
+
+    recentEndOfTurnSnapshots: SettlementEndOfTurnSnapshot[] = [];
     
     constructor(
         readonly world: World,
@@ -367,15 +341,48 @@ export class Settlement {
     }
 
     recordEndOfTurnSnapshot() {
-        this.endOfTurnSnapshot_ = new StandaloneSettlementDTO(this);
+        this.recentEndOfTurnSnapshots.push(new SettlementEndOfTurnSnapshot(this));
+        if (this.recentEndOfTurnSnapshots.length > maxEndOfTurnSnapshots) {
+            this.recentEndOfTurnSnapshots.shift();
+        }
     }
 
-    get endOfTurnSnapshot() {
-        return this.endOfTurnSnapshot_;
+    get endOfTurnSnapshot(): SettlementEndOfTurnSnapshot|undefined {
+        return this.recentEndOfTurnSnapshots[this.recentEndOfTurnSnapshots.length - 1];
     }
 
     get turnSnapshots() {
         logExperiment1(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot);
         return new SettlementTurnSnapshots(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot!);
+    }
+}
+
+
+class DaughterSettlementPlacer {
+    readonly places = 12;
+    private radius = Math.random() * 10 + 15;
+    private originAngle = Math.random() * 2 * Math.PI;
+    readonly openPlaces = Array.from({ length: this.places }, (_, i) => i);
+    private jitter = 3;
+
+    constructor(readonly settlement: Settlement) {}
+
+    placeFor(parent: Settlement): [number, number] {
+        if (!this.openPlaces.length) {
+            this.radius *= 1.5;
+            this.jitter *= 1.5;
+            this.originAngle = Math.random() * 2 * Math.PI / this.places;
+            this.openPlaces.push(...Array.from({ length: this.places }, (_, i) => i));
+        }
+        const place = chooseFrom(this.openPlaces, true);
+
+        const angle = this.originAngle + place * (2 * Math.PI / this.places);
+        const x = this.settlement.x + this.radius * Math.cos(angle) + this.generateJitter();
+        const y = this.settlement.y + this.radius * Math.sin(angle) + this.generateJitter();
+        return [Math.round(x), Math.round(y)];
+    }
+
+    private generateJitter() {
+        return (Math.random() * 2 - 1) * this.jitter;
     }
 }

@@ -1,4 +1,4 @@
-import { sortedByKey, sumFun } from "../lib/basics";
+import { arrayMapAdd, recordMapSet, sortedByKey, sumFun } from "../lib/basics";
 import type { PopulationChange } from "../people/population";
 import type { CondorcetCalc } from "../people/clans";
 import type { Note } from "../records/notifications";
@@ -258,6 +258,7 @@ export class StandaloneSettlementDTO {
     readonly rites: Rites;
     readonly timeline: Timeline<SettlementTimePoint>;
     readonly turnSnapshots: SettlementTurnSnapshots;
+    readonly recentEndOfTurnSnapshots: SettlementEndOfTurnSnapshot[];
 
     constructor(settlement: Settlement) {
         this.ref = settlement;
@@ -289,7 +290,7 @@ export class StandaloneSettlementDTO {
         this.rites = settlement.clans.rites.clone();
         this.timeline = settlement.timeline;
         this.turnSnapshots = settlement.turnSnapshots;
-
+        this.recentEndOfTurnSnapshots = [...settlement.recentEndOfTurnSnapshots];
         this.condorcet = settlement.clans.condorcetLeader;
     }
 
@@ -297,6 +298,56 @@ export class StandaloneSettlementDTO {
         return populationAverage(
             this.clans, 
             clan => clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture));
+    }
+
+    // TODO - Have a more general registry of snapshot history. Right now
+    // each item in the snapshot history has its own history, which is redundant.
+
+    // Latest end-of-turn snapshot when this DTO was created. During user planning,
+    // that should be the snapshot for the end of the previous turn.
+    get e(): SettlementEndOfTurnSnapshot|undefined {
+        return this.recentEndOfTurnSnapshots[this.recentEndOfTurnSnapshots.length - 1];
+    }
+
+    // Previous end-of-turn snapshot before this.e.
+    get p(): SettlementEndOfTurnSnapshot|undefined {
+        return this.recentEndOfTurnSnapshots[this.recentEndOfTurnSnapshots.length - 2];
+    }
+
+    get endOfTurnSnapshotsByClan(): Map<string, {e?: ClanDTO, p?: ClanDTO}> {
+        const byClan = new Map<string, {e?: ClanDTO, p?: ClanDTO}>();
+
+        if (this.e) {
+            for (const ce of this.e.clans) {
+                recordMapSet(byClan, ce.uuid, 'e', ce);
+            }
+        }
+
+        if (this.p) {
+            for (const cp of this.p.clans) {
+                recordMapSet(byClan, cp.uuid, 'p', cp);
+            }
+        }
+
+        return byClan;
+    }
+}
+
+// The state of a settlement at the end of a turn. Defined as its own
+// type because even if it has the same data values as another kind of
+// snapshot, the logical meaning is different: values from these can
+// be maningfully compared in ways that values from arbitrary snapshots can't.
+//
+// Use with caution: Probably not hermetic.
+export class SettlementEndOfTurnSnapshot extends StandaloneSettlementDTO {
+    // Logical year that the snapshot gives the state of. Example: if the 
+    // turn for 5500-5480 BC has just completed, this would be 5480 BC.
+    readonly year: string;
+
+    constructor(settlement: Settlement) {
+        super(settlement);
+
+        this.year = settlement.world.year.toString();
     }
 }
 
@@ -393,6 +444,6 @@ export class WorldDTO {
     }
 
     advanceFromPlanningView() {
-        this.world.advanceFromPlanningView();
+        this.world.advanceFromUserPlanningView();
     }
 }

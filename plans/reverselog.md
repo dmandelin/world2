@@ -6,9 +6,13 @@ Issues with the latest noted on top:
 
 This partially works but there are bugs to fix:
 
-*   Some items don't show any changes.
-    *   Causes may vary by items
-    *   Planning-type items are most often affected
+*   Cooperation values don't show changes. One issue might be
+    that snapshotting is complicated by the mutually recursive
+    data structures.
+    *   We could snapshot the value easily enough though.
+*   We show a support ratio from previous end of turn that we
+    should really show as an intermediate value from current
+    turn.
 
 Thoughts on debugging these remaining issues: It's difficult, so
 it would be good to have some tooling and strategy.

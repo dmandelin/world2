@@ -25,9 +25,8 @@
         predictMode?: boolean,
     } = $props();
 
-    let tsnaps = $derived(settlement.turnSnapshots);
-    let csnaps = $derived([...tsnaps.byClan.entries()]
-        .map(([clan, snapshots]) => ({c: clan, b: snapshots.bot, e: snapshots.eot})));
+    let csnaps = $derived([...settlement.endOfTurnSnapshotsByClan.entries()]
+        .map(([clan, snapshots]) => ({c: clan, p: snapshots.p, e: snapshots.e!})));
 
     function productionWorkers(clan: ClanDTO, good: TradeGood): number {
         return clan.production.goods.find(g => g.good === good)?.workers ?? 0;
@@ -84,18 +83,18 @@
     }
 </style>
 
-{#snippet deltaCell(cs: {b?: ClanDTO, e: ClanDTO}, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString())}
-    {@const delta = cs.b ? valueFunc(cs.e) - valueFunc(cs.b) : 0}
+{#snippet deltaCell(cs: {p?: ClanDTO, e: ClanDTO}, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString())}
+    {@const delta = cs.p ? valueFunc(cs.e) - valueFunc(cs.p) : 0}
     <td class={delta > 0 ? 'delta-positive' : delta < 0 ? 'delta-negative' : ''}>
         <Tooltip>
-            {#if cs.b}
+            {#if cs.p}
                 {tsigned(delta, fmt)}
             {:else}
                 -
             {/if}
             <div slot="tooltip" style="text-align: left; color: initial;">
-                {#if cs.b}
-                    {fmt(valueFunc(cs.b))}
+                {#if cs.p}
+                    {fmt(valueFunc(cs.p))}
                 {:else}
                     ?
                 {/if}
@@ -114,7 +113,7 @@
             <tr>
                 <td></td>
                 {#each csnaps as cs}
-                    <td class="clan-header" colspan="2">{cs.c.name}</td>
+                    <td class="clan-header" colspan="2">{cs.e.name}</td>
                 {/each}
             </tr>
         </thead>
@@ -145,7 +144,7 @@
                 {/each}
             </tr>
             <tr class="actual">
-                <td>&nbsp;Support Ratio</td>
+                <td>&nbsp;Next support ratio</td>
                 {#each csnaps as cs}
                     <td class="rap">
                         <Tooltip>
@@ -255,6 +254,26 @@
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
+            <tr class="actual">
+                <td>Support Ratio</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        {#if cs.p}
+                            <Tooltip>
+                                {safeDiv(cs.p.population, cs.e.workers).toFixed(1)}
+                                <div slot="tooltip">
+                                    <div>Workers: {cs.p.workers}</div>
+                                    <div>Carers and Dependents: {cs.p.population - cs.e.workers}</div>
+                                    <div>Population Per Worker: {safeDiv(cs.p.population, cs.e.workers).toFixed(1)}</div>
+                                </div>
+                            </Tooltip>
+                        {:else}
+                        -
+                        {/if}
+                    </td>
+                    {@render deltaCell(cs, c => safeDiv(c.population, c.workers), v => v.toFixed(1))}
+                {/each}
+            </tr>
             {#each settlement.localTradeGoods as tradeGood}
             <tr class="actual">
                 <td>{tradeGood.name}: workers</td>

@@ -319,3 +319,25 @@ export function colorInterpolator(color1: RGB, color2: RGB, lo: number = 0, hi: 
         return `rgb(${r}, ${g}, ${b})`;
     }
 }
+
+export function arrayMapAdd<T, U>(map: Map<T, U[]>, key: T, value: U): void {
+    if (map.has(key)) {
+        map.get(key)!.push(value);
+    } else {
+        map.set(key, [value]);
+    }
+}
+
+export function recordMapSet<MapKey, Value>(
+    map: Map<MapKey, Record<string, Value>>, 
+    mapKey: MapKey, 
+    recordKey: string, 
+    value: Value): void {
+
+    const record = map.get(mapKey);
+    if (record) {
+        record[recordKey] = value;
+    } else {
+        map.set(mapKey, { [recordKey]: value } as Record<string, Value>);
+    }
+}

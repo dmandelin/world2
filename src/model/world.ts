@@ -183,6 +183,10 @@ export class World implements NoteTaker {
     //     - End-of-turn states such as happiness and population are
     //       calculated as functions of (S0, P, IV).
     //   - Plans do not change due to advancing.
+    //   - It *could* actually be valid to update IVs during planning, as
+    //     "what-if" views. We could even have IVs that represent a tenative
+    //     value of an output stock. It's only state that can't change
+    //     during planning.
     //
     // Note that these "aspects" aren't phases: time and control flow
     // are are a little more complicated and explained below.
@@ -232,13 +236,11 @@ export class World implements NoteTaker {
     // ----------------------------------------------------------------
     // Action handlers to trigger turn substeps
 
-    advanceFromPlanningView() {
-        log('World >>> Advance from planning view');
-        // No automatic adjustments yet: Once the user has clicked Advance,
-        // planning phase has ended.
+    advanceFromUserPlanningView() {
+        log('World >>> Advance from user planning view');
         this.advance();
         this.behave();
-        log('World <<< Advance from planning view');
+        log('World <<< Advance from user planning view');
         this.notify();
     }
 
@@ -248,9 +250,14 @@ export class World implements NoteTaker {
     // Have (automatic) agents make their plans.
     private behave(priming: boolean = false) {
         log('World >>> Behave');
+
+        // Update perceptions to base decisions on.
+        // TODO - See if we need this or if this all would have happened
+        //        during advance.
         this.updateRelationships();
         this.updatePerceptions();
 
+        // Make decisions.
         for (const clan of this.allClans) {
             // Update productivity values so that planning can see them.
             clan.updateProductivity(true);
@@ -261,7 +268,6 @@ export class World implements NoteTaker {
             clan.planHousing();
             clan.laborAllocation.plan(priming);
         }
-
         for (const settlement of this.allSettlements) {
             settlement.planMigrations();
         }
@@ -269,16 +275,25 @@ export class World implements NoteTaker {
         log('World <<< Behave');
     }
 
+    // Advance phase.
     private advance(noEffect: boolean = false) {
+        this.advanceState(noEffect);
+        this.recordEndOfTurnState(noEffect);
+    }
+
+    // Main advance phase: update state.
+    // TODO - Try to clean up noEffect.
+    private advanceState(noEffect: boolean = false) {
         log('World >>> Advance');
 
-        // Nature
+        // Nature decides.
         const floodLevel = randomFloodLevel();
         for (const cluster of this.clusters) {
             cluster.updateFloodLevel(floodLevel);
             cluster.updateDisease();
         }
 
+        // TODO - See if we actually need these
         for (const settlement of this.allSettlements) {
             settlement.recordBeginningOfTurnSnapshot();
         }
@@ -286,20 +301,26 @@ export class World implements NoteTaker {
             clan.recordBeginningOfTurnSnapshot();
         }
 
-        // Main advance phase.
+        // Advance for cross-cluster events.
         if (!noEffect) {
             this.migrate();
             marry(this);
         }
-
+        // Advance within clusters.
         for (const cl of this.clusters) {
             cl.advance(noEffect);
         }
-
-        // Update timeline.
+        // Advance the year.
         if (!noEffect) {
             this.year.advance(this.yearsPerTurn);
+        }
+        log('World <<< Advance');
+    }
 
+    recordEndOfTurnState(noEffect: boolean = false) {
+        // Update timeline.
+        // TODO - Combine this with newer logging.
+        if (!noEffect) {
             this.timeline.add(this.year, new TimePoint(this));
             for (const settlement of this.allSettlements) {
                 settlement.addTimePoint();
@@ -310,14 +331,14 @@ export class World implements NoteTaker {
         }
 
         for (const settlement of this.allSettlements) {
+            // TODO - Combine this with newer logging.
             settlement.addTimePoint();
             settlement.recordEndOfTurnSnapshot();
         }
+        // TODO - Don't create snapshots redundant with the ones in settlements.
         for (const clan of this.allClans) {
             clan.recordEndOfTurnSnapshot();
         }
-
-        log('World <<< Advance');
     }
 
     migrate() {
