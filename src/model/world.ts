@@ -13,6 +13,7 @@ import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { marry } from "./people/marriage";
+import { log, loggingEnabled } from "./lib/debug";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -89,6 +90,7 @@ export class World implements NoteTaker {
     }
 
     initialize() {
+        log('World >>> Initialize')
         this.addNote(
             '*',
             'First permanent settlements founded!'
@@ -117,14 +119,17 @@ export class World implements NoteTaker {
         this.plan(true);
 
         // Log distances between clusters.
-        for (let i = 0; i < this.clusters.length; i++) {
-            for (let j = i + 1; j < this.clusters.length; j++) {
-                const c1 = this.clusters[i];
-                const c2 = this.clusters[j];
-                const distance = Math.sqrt((c1.mother.x - c2.mother.x) ** 2 + (c1.mother.y - c2.mother.y) ** 2);
-                console.log(`Distance between ${c1.mother.name} and ${c2.mother.name}: ${(MILES_PER_UNIT * distance).toFixed(2)} miles`);
+        if (loggingEnabled()) {
+            for (let i = 0; i < this.clusters.length; i++) {
+                for (let j = i + 1; j < this.clusters.length; j++) {
+                    const c1 = this.clusters[i];
+                    const c2 = this.clusters[j];
+                    const distance = Math.sqrt((c1.mother.x - c2.mother.x) ** 2 + (c1.mother.y - c2.mother.y) ** 2);
+                    log(`Distance between ${c1.mother.name} and ${c2.mother.name}: ${(MILES_PER_UNIT * distance).toFixed(2)} miles`);
+                }
             }
         }
+        log('World <<< Initialize')
     }
 
     initializeTradeGoods() {
@@ -156,9 +161,11 @@ export class World implements NoteTaker {
     // Action handlers to trigger turn substeps
 
     advanceFromPlanningView() {
-        console.log('[World] Advance from planning view.');
+        log('World >>> Advance from planning view');
         this.advance();
         this.plan();
+        this.notify();
+        log('World <<< Advance from planning view');
     }
 
     // ----------------------------------------------------------------
@@ -166,8 +173,7 @@ export class World implements NoteTaker {
 
     // Let agents predict results and make choices for how to act.
     private plan(priming: boolean = false) {
-        console.log('[World]   Planning.');
-
+        log('World >>> Plan');
         this.updateRelationships();
         this.updatePerceptions();
 
@@ -186,11 +192,12 @@ export class World implements NoteTaker {
             settlement.planMigrations();
         }
 
-        // Notify observers.
-        this.notify();
+        log('World <<< Plan');
     }
 
     private advance(noEffect: boolean = false) {
+        log('World >>> Advance');
+
         // Nature
         const floodLevel = randomFloodLevel();
         for (const cluster of this.clusters) {
@@ -236,8 +243,7 @@ export class World implements NoteTaker {
             clan.recordEndOfTurnSnapshot();
         }
 
-        // Notify observers.
-        this.notify();
+        log('World <<< Advance');
     }
 
     migrate() {
