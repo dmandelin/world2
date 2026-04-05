@@ -183,7 +183,7 @@ export function clanDTO(clan: Clan): ClanDTO {
         lastPopulationChange: clan.lastPopulationChange,
         tradeRelationships: tradeRelationshipsDTO(clan),
 
-        happiness: clan.happiness,
+        happiness: clan.happiness.clone(),
 
         skills: clan.skills,
         intelligence: clan.intelligence,

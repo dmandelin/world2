@@ -10,6 +10,17 @@ This partially works but there are bugs to fix:
     *   Causes may vary by items
     *   Planning-type items are most often affected
 
+Thoughts on debugging these remaining issues: It's difficult, so
+it would be good to have some tooling and strategy.
+
+*   Add a mode/page for logging the major sequence of
+    phases, filterable by clan, and allowing tracing/logging
+    of property values
+
+*   Create a clan DTO page on the clan details page
+    *   For listed properties, show the different values
+        across the snapshots and whether pointers are equal
+        
 ### Original
 
 Some parts of the UI show next-turn-predicted productivity

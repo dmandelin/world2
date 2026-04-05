@@ -67,6 +67,10 @@ export abstract class HappinessItem<T> {
     get value(): number {
         return this.appeal - this.expectedAppeal_;
     }
+
+    clone(): HappinessItem<T> {
+        return Object.create(this);
+    }
 }
 
 abstract class NumericHappinessItem extends HappinessItem<number> {
@@ -340,7 +344,7 @@ export class HappinessCalc {
     clone(): HappinessCalc {
         const clone = new HappinessCalc(this.clan);
         for (const item of this.items.values()) {
-            clone.add(item);
+            clone.add(item.clone());
         }
         return clone;
     }
