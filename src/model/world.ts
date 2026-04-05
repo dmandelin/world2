@@ -77,7 +77,7 @@ export class World implements NoteTaker {
 
     readonly watchers = new Set<(world: World) => void>();
 
-    dto = new WorldDTO(this);
+    dto: WorldDTO|undefined;
 
     constructor() {
     }

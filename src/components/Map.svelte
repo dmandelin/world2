@@ -16,7 +16,7 @@
     let canvas: HTMLCanvasElement|null;
     let context: CanvasRenderingContext2D|null;
 
-    let worldDTO = $state(world.dto);
+    let worldDTO = $state(world.dto!);
 
     function click(e: MouseEvent) {
         console.log('click', e.offsetX, e.offsetY);
@@ -195,7 +195,7 @@ ${settlement.cluster.population} \
         context = canvas!.getContext('2d');
 
         world.watch(() => {
-            worldDTO = world.dto;
+            worldDTO = world.dto!;
             draw();
         });
         draw();

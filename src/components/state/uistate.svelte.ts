@@ -3,9 +3,9 @@ import { world as _world } from '../../model/world';
 export type Uuidable = string | { uuid: string } | undefined;
 
 // State of the world, private to this module and automatically updated.
-let _worldState = $state(_world.dto);
+let _worldState = $state(_world.dto!);
 _world.watch(() => {
-    _worldState = _world.dto;
+    _worldState = _world.dto!;
 });
 
 // Exported readonly state of the world.
