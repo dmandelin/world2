@@ -12,7 +12,7 @@
     import { SingleRecordTable, ValueMapTable } from "../tables/tables2";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
-    import type { TradeGood } from "../../model/trade";
+    import { TradeGoods, type TradeGood } from "../../model/trade";
     import { safeDiv } from "../../model/lib/basics";
 
 	let { 
@@ -27,6 +27,12 @@
 
     let csnaps = $derived([...settlement.endOfTurnSnapshotsByClan.entries()]
         .map(([clan, snapshots]) => ({c: clan, p: snapshots.p, e: snapshots.e!})));
+
+    function productionCooperationFactor(clan: ClanDTO, good: TradeGood): number {
+        const item = clan.production.goods.find(g => g.good === good);
+        if (!item) return 1;
+        return item.productivity.items.find(i => i.label === 'Relationships')?.fp ?? 1;
+    }
 
     function productionWorkers(clan: ClanDTO, good: TradeGood): number {
         return clan.production.goods.find(g => g.good === good)?.workers ?? 0;
@@ -193,13 +199,13 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {spct(cs.e.relationships.getProductivityFactor(SkillDefs.Agriculture))}
+                            {spct(productionCooperationFactor(cs.e, TradeGoods.Cereals))}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <ClanRelationshipsDetails clan={cs.e} skill={SkillDefs.Agriculture} />
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.relationships.getProductivityFactor(SkillDefs.Agriculture), spct)}
+                    {@render deltaCell(cs, c => productionCooperationFactor(c, TradeGoods.Cereals), pct)}
                 {/each}
             </tr>
             <tr class="actual">
@@ -207,13 +213,13 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {spct(cs.e.relationships.getProductivityFactor(SkillDefs.Fishing))}
+                            {spct(productionCooperationFactor(cs.e, TradeGoods.Fish))}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <ClanRelationshipsDetails clan={cs.e} skill={SkillDefs.Fishing} />
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.relationships.getProductivityFactor(SkillDefs.Fishing), spct)}
+                    {@render deltaCell(cs, c => productionCooperationFactor(c, TradeGoods.Fish), pct)}
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>

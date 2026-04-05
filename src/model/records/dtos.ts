@@ -1,4 +1,4 @@
-import { arrayMapAdd, recordMapSet, sortedByKey, sumFun } from "../lib/basics";
+import { arrayMapAdd, product, recordMapSet, sortedByKey, sumFun } from "../lib/basics";
 import type { PopulationChange } from "../people/population";
 import type { CondorcetCalc } from "../people/clans";
 import type { Note } from "../records/notifications";
@@ -48,41 +48,74 @@ function tradeRelationshipsDTO(clan: Clan) {
     }));
 }
 
-export class ProductionItemDTO {
+export class SettlementProductionItemDTO {
     constructor(
         readonly good: TradeGood,
         readonly land: number,
         readonly workerFraction: number,
         readonly workers: number,
-        readonly laborProductivity: number,
+        readonly productivity: number,
         readonly tfp: number,
         readonly amount: number|undefined,
     ) {}
 }
 
+export class ClanProductionItemDTO {
+    constructor(
+        readonly good: TradeGood,
+        readonly land: number,
+        readonly workerFraction: number,
+        readonly workers: number,
+        readonly productivity: ClanProductivitySnapshot,
+        readonly tfp: number,
+        readonly amount: number|undefined,
+    ) {}
+}
+
+export class ClanProductivitySnapshot {
+    readonly items: ClanProductivitySnapshotItem[];
+
+    constructor(clan: Clan, skillDef: SkillDef) {
+        this.items = clan.productivityCalcs.get(skillDef)?.items.map(i => 
+            new ClanProductivitySnapshotItem(i.label, i.value, i.fp)) ?? [];
+    }
+
+    get fp(): number {
+        return product(this.items.map(i => i.fp));
+    }
+}
+
+export class ClanProductivitySnapshotItem {
+    constructor(
+        readonly label: string,
+        readonly value: string|number,
+        readonly fp: number,
+    ) {}
+}
+
 class ClanProductionDTO {
-    readonly goods: ProductionItemDTO[] = [];
+    readonly goods: ClanProductionItemDTO[] = [];
 
     constructor(clan: Clan) {
         for (const pn of clan.settlement.productionNodes) {
             for (const [good, amount] of pn.output(clan).entries()) {
-                const item = new ProductionItemDTO(
+                const item = new ClanProductionItemDTO(
                     good, pn.land(clan), pn.workerFraction(clan), 
-                    pn.workers(clan), pn.laborProductivity(clan), pn.tfp(clan), amount);
+                    pn.workers(clan), new ClanProductivitySnapshot(clan, pn.skillDef), pn.tfp(clan), amount);
                 this.goods.push(item);
             }
         }
 
         const housingWf = clan.laborAllocation.allocs.get(SkillDefs.Construction) ?? 0;
-        this.goods.push(new ProductionItemDTO(
+        this.goods.push(new ClanProductionItemDTO(
             TradeGoods.Housing, Infinity, housingWf, housingWf * clan.population, 
-            clan.productivity(SkillDefs.Construction), clan.productivity(SkillDefs.Construction), 
+            new ClanProductivitySnapshot(clan, SkillDefs.Construction), new ClanProductivitySnapshot(clan, SkillDefs.Construction).fp, 
             undefined));
 
         const ditchingWf = clan.laborAllocation.allocs.get(SkillDefs.Irrigation) ?? 0;
-        this.goods.push(new ProductionItemDTO(
+        this.goods.push(new ClanProductionItemDTO(
             TradeGoods.Ditching, Infinity, ditchingWf, ditchingWf * clan.population, 
-            clan.productivity(SkillDefs.Irrigation), clan.productivity(SkillDefs.Irrigation), 
+            new ClanProductivitySnapshot(clan, SkillDefs.Irrigation), new ClanProductivitySnapshot(clan, SkillDefs.Irrigation).fp, 
             undefined));
     }
 }
@@ -193,12 +226,12 @@ export function clanDTO(clan: Clan): ClanDTO {
 }
 
 class SettlementProductionDTO {
-    readonly goods: Map<TradeGood, ProductionItemDTO> = new Map();
+    readonly goods: Map<TradeGood, SettlementProductionItemDTO> = new Map();
 
     constructor(settlement: Settlement) {
         for (const pn of settlement.productionNodes) {
             for (const [good, amount] of pn.output().entries()) {
-                const item = new ProductionItemDTO(
+                const item = new SettlementProductionItemDTO(
                     good, pn.land(), pn.workerFraction(), pn.workers(), 
                     pn.laborProductivity(), pn.tfp(), amount);
                 const existingItem = this.goods.get(good);
@@ -206,7 +239,7 @@ class SettlementProductionDTO {
                     const newAmount = existingItem.amount !== undefined && item.amount !== undefined
                         ? existingItem.amount + item.amount
                         : undefined;
-                    this.goods.set(good, new ProductionItemDTO(
+                    this.goods.set(good, new SettlementProductionItemDTO(
                         good, 
                         existingItem.land + item.land, 
                         existingItem.workerFraction + item.workerFraction,
@@ -221,9 +254,9 @@ class SettlementProductionDTO {
         }
 
         // Add items for construction, because the table code keys off of this.
-        this.goods.set(TradeGoods.Housing, new ProductionItemDTO(
+        this.goods.set(TradeGoods.Housing, new SettlementProductionItemDTO(
             TradeGoods.Housing, Infinity, 0, 0, 0, 0, undefined));
-        this.goods.set(TradeGoods.Ditching, new ProductionItemDTO(
+        this.goods.set(TradeGoods.Ditching, new SettlementProductionItemDTO(
             TradeGoods.Ditching, Infinity, 0, 0, 0, 0, undefined));
     }
 }
@@ -351,6 +384,7 @@ export class SettlementEndOfTurnSnapshot extends StandaloneSettlementDTO {
     }
 }
 
+// TODO - Try to avoid having the higher structures.
 export class SettlementDTO extends StandaloneSettlementDTO {
     constructor(
         settlement: Settlement, 
