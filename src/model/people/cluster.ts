@@ -69,9 +69,9 @@ export class SettlementCluster {
         this.diseaseLoad = new DiseaseLoadCalc(this);
     }
 
-    advance(noEffect: boolean = false): void {
+    advance(): void {
         for (const settlement of this.settlements) {
-            settlement.advance(noEffect);
+            settlement.advance();
         }
 
         // Prune empty daughter settlements.

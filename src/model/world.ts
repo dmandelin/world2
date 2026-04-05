@@ -103,10 +103,14 @@ export class World implements NoteTaker {
         // Seed initial marriage relationships.
         marry(this);
 
+        for (const settlement of this.allSettlements) {
+            settlement.recordEndOfTurnSnapshot();
+        }
+
         // Run an initial turn so that there is state for all the output
         // variables but don't apply the effects that mutate clans.
         this.behave(true);
-        this.advance(true);
+        this.advance();
         for (const cluster of this.clusters) {
             // This depends on labor actually allocated to production nodes
             // so we have to run it after the first production call.
@@ -276,14 +280,13 @@ export class World implements NoteTaker {
     }
 
     // Advance phase.
-    private advance(noEffect: boolean = false) {
-        this.advanceState(noEffect);
-        this.recordEndOfTurnState(noEffect);
+    private advance() {
+        this.advanceState();
+        this.recordEndOfTurnState();
     }
 
     // Main advance phase: update state.
-    // TODO - Try to clean up noEffect.
-    private advanceState(noEffect: boolean = false) {
+    private advanceState() {
         log('World >>> Advance');
 
         // Nature decides.
@@ -302,33 +305,29 @@ export class World implements NoteTaker {
         }
 
         // Advance for cross-cluster events.
-        if (!noEffect) {
-            this.migrate();
-            marry(this);
-        }
+        this.migrate();
+        marry(this);
+
         // Advance within clusters.
         for (const cl of this.clusters) {
-            cl.advance(noEffect);
+            cl.advance();
         }
         // Advance the year.
-        if (!noEffect) {
-            this.year.advance(this.yearsPerTurn);
-        }
+        this.year.advance(this.yearsPerTurn);
+
         log('World <<< Advance');
     }
 
-    recordEndOfTurnState(noEffect: boolean = false) {
+    recordEndOfTurnState() {
         // Update timeline.
         // TODO - Combine this with newer logging.
-        if (!noEffect) {
-            this.timeline.add(this.year, new TimePoint(this));
-            for (const settlement of this.allSettlements) {
-                settlement.addTimePoint();
-            }
-
-            for (const trend of this.trends) trend.update(this.year);
-            this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
+        this.timeline.add(this.year, new TimePoint(this));
+        for (const settlement of this.allSettlements) {
+            settlement.addTimePoint();
         }
+
+        for (const trend of this.trends) trend.update(this.year);
+        this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
 
         for (const settlement of this.allSettlements) {
             // TODO - Combine this with newer logging.

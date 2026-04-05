@@ -214,14 +214,12 @@ export class Settlement {
         }
     }
 
-    advance(noEffect: boolean = false) {
+    advance() {
         // Split and merge at the start of the turn so that normal update
         // logic correctly updates the new clans.
-        if (!noEffect) {
-            this.clans.split();
-            this.clans.merge();
-            this.clans.prune();
-        }
+        this.clans.split();
+        this.clans.merge();
+        this.clans.prune();
 
         // Economic production.
         // Maintenance goes before production, because it represents capital
@@ -240,18 +238,16 @@ export class Settlement {
         // Consume production.
         for (const clan of this.clans) clan.consume();
 
-        if (!noEffect) {
-            // Advance traits and seniority.
-            for (const clan of this.clans) clan.prepareTraitChanges();
-            for (const clan of this.clans) clan.commitTraitChanges();
-            for (const clan of this.clans) clan.advanceSeniority();
-        }
+        // Advance traits and seniority.
+        for (const clan of this.clans) clan.prepareTraitChanges();
+        for (const clan of this.clans) clan.commitTraitChanges();
+        for (const clan of this.clans) clan.advanceSeniority();
+
         const sizeBefore = this.effectiveResidentPopulation;
-        for (const clan of this.clans) clan.advancePopulation(noEffect);
-        if (!noEffect) {
-            // Tell height.
-            this.growTell(sizeBefore);
-        }
+        for (const clan of this.clans) clan.advancePopulation();
+        
+        // Tell height.
+        this.growTell(sizeBefore);
     }
 
     resetEconomicNodes() {
