@@ -10,57 +10,81 @@ This partially works but there are bugs to fix:
     that snapshotting is complicated by the mutually recursive
     data structures.
     *   We could snapshot the value easily enough though.
-*   We show a support ratio from previous end of turn that we
-    should really show as an intermediate value from current
-    turn.
 
-Thoughts on debugging these remaining issues: It's difficult, so
-it would be good to have some tooling and strategy.
+Besides that, for general consistency and comprehensibility,
+it will be good to clarify what's what. We also need to show
+current-turn planning results (the autoplans), and those
+we'd want to compare against from last time.
 
-*   Add a mode/page for logging the major sequence of
-    phases, filterable by clan, and allowing tracing/logging
-    of property values
+*   Minimal version: show latest plans and delta, which will
+    be from one turn ahead
+*   Possible concept: split up decisions, intermediate values,
+    and states in the UI to help show how one flows to another
+*   Another possibility: calculate next-turn intermediate values
+    and outputs during planning, so we can show that
+    *   Especially relevant if UI lets human make changes
+    *   Could also make agent decision-making easier
 
-*   Create a clan DTO page on the clan details page
-    *   For listed properties, show the different values
-        across the snapshots and whether pointers are equal
+### Latest model features to look at
 
-Let's think about phasing and what snapshots make sense.
-Logically, we have this:
+TODO - Show birth and death rate effects clearly in the UI, and
+make relationships have a major impact.
 
-1. Logical turn begins.
-2. Controllers (human and bot) can make decisions such as
-   farming ratio changes or migrations.
-*  advanceFromPlanningView() returns here
-3. End of planning phase: Decisions for this turn are now set.
-*  advanceFromPlanningView() is called here
-4. Advance: world state updates.
-5. End of advance phase: Outputs from this turn are done.
-6. Logical turn ends.
+The most important thing is to establish critical relationships
+for clans. We know that people and groups that are not very big
+absolutely need relationships with other people and groups for
+long-term survival. From that, we can infer that one way or
+another, people probably assign a high appeal value to those
+relationships.
 
-*   "Decisions" are values that are set by agents more or less
-    by choice and not directly caused by model factors.
-*   "Outputs" are during-turn flows and end-of-turn state/stocks
-    computed from decisions and beginning-of-turn state.
+Right now, clans mainly get a 10-20% productivity bonus if they
+have some neighbors. Now, that might actually be reasonable for
+basic production. In fact, clans need various things and relationships,
+and it's that sum total that's absolutely crucial.
 
-*   The values
-    *   Population is clearly a state
-        *   "True state variables" such as population should
-            not change during the planning phase, so end of
-            last turn and beginning of turn snapshot should
-            say the same thing anyway.
-    *   Subsistence consumption is a state, but is derived
-        from other states and flows
-        *   Specifically, (production flow) / (beginning of
-            turn population)
-        *   Beginning of turn snapshot is not a valid data
-            source for this -- production seen would be from
-            last turn flow, while population is current turn
-            (If it were a real beginning-of-turn snapshot,
-            it would work, but when it's a derived value,
-            in the current code it's not always clear every
-            last input was a proper snapshot)
-*   TODO - Save end of turn previous state and use for deltas
+A further problem here is that causal influences go like this:
+    food consumption -> population change
+    food consumption -> happiness
+    relationships -> food production
+    relationships -> happiness
+
+Population is where the rubber meets the road: it's the main
+output in the sense of increasing power. Thus, relationships
+can affect happiness a big amount and thus have a large motivational
+effect, but if we only do that, then better relationships won't
+have the evolutionary payoff. Right now the only way to do that
+is through food consumption, but it doesn't make a ton of sense
+to impact food consumption that much.
+
+We can clarify concepts here:
+
+*   Evolutionary payoff
+    *   Determines how much something proliferates. 
+    *   In the most general sense this could be either of:
+        *   Genetic: population increase; "health", above all
+            in the reproductive sense
+            *   Note that we could have a related but distinct
+                concept of health in the narrower senses of
+                bodily strength and disease resistance
+        *   Cultural: increased tendency to be imitated;
+            "prestige"
+*   Behavioral signal
+    *   Determines how much people want to do stuff
+    *   Happiness: how much do people like what they're doing
+    *   Note that prestige will be a component here as well
+
+What we really need is for relationships to impact everything:
+
+*   Population change
+*   Prestige
+*   Happiness
+*   Learning
+
+The main shift is that we need bigger impacts on population.
+One idea would be to apply birth and death rate shifts directly.
+We can then later split this out into trade benefits, food
+security, and so on, but summarizing as directly impacting
+population change and happiness should do it for now.
 
 ### Original
 
