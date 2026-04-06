@@ -14,6 +14,7 @@
     import Tooltip from "../Tooltip.svelte";
     import { TradeGoods, type TradeGood } from "../../model/trade";
     import { safeDiv } from "../../model/lib/basics";
+    import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
 
 	let { 
         settlement, 
@@ -25,8 +26,8 @@
         predictMode?: boolean,
     } = $props();
 
-    let csnaps = $derived([...settlement.endOfTurnSnapshotsByClan.entries()]
-        .map(([clan, snapshots]) => ({c: clan, p: snapshots.p, e: snapshots.e!})));
+    let csnaps = $derived([...getClanLastTurnSnapshots(settlement).entries()]
+        .map(([_, snapshots]) => ({ p: snapshots.p, e: snapshots.e!})));
 
     function productionCooperationFactor(clan: ClanDTO, good: TradeGood): number {
         const item = clan.production.goods.find(g => g.good === good);
@@ -266,11 +267,11 @@
                     <td class="rap">
                         {#if cs.p}
                             <Tooltip>
-                                {safeDiv(cs.p.population, cs.e.workers).toFixed(1)}
+                                {safeDiv(cs.p.population, cs.p.workers).toFixed(1)}
                                 <div slot="tooltip">
                                     <div>Workers: {cs.p.workers}</div>
-                                    <div>Carers and Dependents: {cs.p.population - cs.e.workers}</div>
-                                    <div>Population Per Worker: {safeDiv(cs.p.population, cs.e.workers).toFixed(1)}</div>
+                                    <div>Carers and Dependents: {cs.p.population - cs.p.workers}</div>
+                                    <div>Population Per Worker: {safeDiv(cs.p.population, cs.p.workers).toFixed(1)}</div>
                                 </div>
                             </Tooltip>
                         {:else}

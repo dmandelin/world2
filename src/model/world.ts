@@ -104,9 +104,8 @@ export class World implements NoteTaker {
         // Seed initial marriage relationships.
         marry(this);
 
-        for (const settlement of this.allSettlements) {
-            settlement.recordEndOfTurnSnapshot();
-        }
+        // Capture this state as the first point in the timeline.
+        this.recordEndOfTurnState();
 
         // Run an initial turn so that there is state for all the output
         // variables but don't apply the effects that mutate clans.
@@ -118,8 +117,6 @@ export class World implements NoteTaker {
             cluster.updateDisease();
         }
 
-        // Capture this state as the first point in the timeline.
-        this.timeline.add(this.year, new TimePoint(this));
         for (const trend of this.trends) trend.initialize(this.year);
 
         // Run planning because we're about to activate planning view.

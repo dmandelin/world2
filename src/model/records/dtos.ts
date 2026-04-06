@@ -346,24 +346,6 @@ export class StandaloneSettlementDTO {
     get p(): SettlementEndOfTurnSnapshot|undefined {
         return this.recentEndOfTurnSnapshots[this.recentEndOfTurnSnapshots.length - 2];
     }
-
-    get endOfTurnSnapshotsByClan(): Map<string, {e?: ClanDTO, p?: ClanDTO}> {
-        const byClan = new Map<string, {e?: ClanDTO, p?: ClanDTO}>();
-
-        if (this.e) {
-            for (const ce of this.e.clans) {
-                recordMapSet(byClan, ce.uuid, 'e', ce);
-            }
-        }
-
-        if (this.p) {
-            for (const cp of this.p.clans) {
-                recordMapSet(byClan, cp.uuid, 'p', cp);
-            }
-        }
-
-        return byClan;
-    }
 }
 
 // The state of a settlement at the end of a turn. Defined as its own

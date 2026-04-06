@@ -6,10 +6,10 @@ Issues with the latest noted on top:
 
 This partially works but there are bugs to fix:
 
-*   Cooperation values don't show changes. One issue might be
-    that snapshotting is complicated by the mutually recursive
-    data structures.
-    *   We could snapshot the value easily enough though.
+*   Cooperation values show the wrong delta at start.
+*   Bottom support ratio shows same change as top because
+    cellDelta bakes in too much. Should also encap more of
+    the value part, which would help with this bug.
 
 Besides that, for general consistency and comprehensibility,
 it will be good to clarify what's what. We also need to show
@@ -28,7 +28,23 @@ we'd want to compare against from last time.
 ### Latest model features to look at
 
 TODO - Show birth and death rate effects clearly in the UI, and
-make relationships have a major impact.
+make relationships have a major impact. Two components to that:
+
+*   Bigger direct BR/DR effects, could consider also folding in
+    bigger production bonus to account for trade
+*   Clans sometimes end up with a high support ratio, and then
+    they typically have low productivity
+    *   But if they have friends and neighbors, they might be
+        able to get a little help
+        *   Will depend on relatedness
+        *   Could also be done in exchange for goodwill/prestige
+
+Other stuff to maybe look at soon:
+
+*   Make early weaning a decision, not automatic, to moderate
+    early fertility levels a bit
+*   Generally try to have less support ratio overshoot, could
+    just tune down
 
 The most important thing is to establish critical relationships
 for clans. We know that people and groups that are not very big
