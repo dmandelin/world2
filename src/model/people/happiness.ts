@@ -26,6 +26,10 @@ export abstract class HappinessItem<T> {
         return false;
     }
 
+    get isSocial(): boolean {
+        return false;
+    }
+
     get appeal(): number {
         return this.appealOf(this.state_);
     }
@@ -231,20 +235,37 @@ class FloodHappinessItem extends NumericHappinessItem {
 }
 
 class SocietyHappinessItem extends NumericHappinessItem {
+    subitems: {
+        otherName: string;
+        interactionVolume: number;
+        cooperationLevel: number;
+        interactionValue: number;
+    }[] = [];
+
+    get isSocial(): boolean {
+        return true;
+    }
+
     get label(): string {
         return 'Society';
     }
 
     get stateDisplay(): string {
-        return `interaction volume ${this.state_.toFixed(2)}`;
+        return `interaction value ${this.state_.toFixed(2)}`;
     }
 
-    appealOf(interactionVolume: number): number {
-        return 0.1 * interactionVolume;
+    appealOf(interactionValue: number): number {
+        return 0.1 * interactionValue;
     }
     
     updateState(clan: Clan): void {
-        this.state_ = clan.relationships.totalInteractionVolume;
+        this.subitems = [...clan.relationships].map(([_, r]) => ({
+            otherName: r.object.name,
+            interactionVolume: r.totalInteractionVolume,
+            cooperationLevel: r.cooperationLevel,
+            interactionValue: r.totalInteractionVolume * r.cooperationLevel,
+        }));
+        this.state_ = sumFun(this.subitems, i => i.interactionValue);
     }
 }
 
@@ -266,6 +287,10 @@ function conflictAppeal(conflictLevel: number): number {
 }
 
 class ConflictHappinessItem extends NumericHappinessItem {
+    get isSocial(): boolean {
+        return true;
+    }
+
     get label(): string {
         return 'Conflict';
     }
@@ -287,6 +312,7 @@ class ConflictHappinessItem extends NumericHappinessItem {
 }
 
 class RitualHappinessItem extends NumericHappinessItem {
+    // TODO - Classify as social or spiritual and handle accordingly.
     get label(): string {
         return 'Rituals';
     }
@@ -305,6 +331,8 @@ class RitualHappinessItem extends NumericHappinessItem {
 }
 
 class StatusHappinessItem extends NumericHappinessItem {
+    // TODO - Rework and classify as social. Omitted for now
+    // as it's probably not tuned.
     get label(): string {
         return 'Status';
     }
@@ -381,6 +409,14 @@ export class HappinessCalc {
 
     get subsistenceAppeal(): number {
         return sumFun(this.items.values(), item => item.isSubsistence ? item.appeal : 0);
+    }
+
+    get socialAppeal(): number {
+        return sumFun(this.items.values(), item => item.isSocial ? item.appeal : 0);
+    }
+
+    getSocietyItem(): SocietyHappinessItem|undefined {
+        return this.items.get('Society') as SocietyHappinessItem|undefined;
     }
 
     get value(): number {

@@ -61,6 +61,48 @@
             (item: HappinessItem<any>) => item.isSubsistence,
             (v: number) => signed(v, 0));
     }
+
+    function clanSocialHappinessTooltipTable(clan: ClanDTO) {
+        return new ValueMapTable(
+            clan.happiness.items,
+            (item: HappinessItem<any>) => item.appeal,
+            (item: HappinessItem<any>) => item.isSocial,
+            (v: number) => signed(v, 0));
+    }
+
+    function clanSocietyHappinessDetailTooltipTable(clan: ClanDTO) {
+        const societyItem = clan.happiness.getSocietyItem();
+        if (!societyItem) {
+            return {
+                columns: [{
+                    data: 'No society item',
+                    label: 'No society item',
+                    valueFn: () => 0,
+                }],
+                rows: [],
+            };
+        }
+        return new RecordTable(
+            societyItem.subitems,
+            subitem => subitem.otherName,
+            [{
+                data: 'Vol',
+                label: 'Vol',
+                valueFn: subitem => subitem.interactionVolume,
+                formatFn: (v: number) => v.toFixed(0),
+            }, {
+                data: 'Rel',
+                label: 'Rel',
+                valueFn: subitem => subitem.cooperationLevel,
+                formatFn: (v: number) => pct(v, 0),
+            }, {
+                data: 'Appeal',
+                label: 'Appeal',
+                // TODO - Avoid having to hack in this 0.1 here.
+                valueFn: subitem => 0.1 * subitem.interactionValue,
+                formatFn: (v: number) => signed(v, 0),
+            }]);
+    }
 </script>
 
 <style>
@@ -225,7 +267,7 @@
                 {/each}
             </tr>
             <tr class="actual">
-                <td>&nbsp;Sat</td>
+                <td>Material Welfare</td>
                 {#each csnaps as cs}
                     <td class="rap">
                         <Tooltip>
@@ -236,6 +278,23 @@
                         </Tooltip>
                     </td>
                     {@render deltaCell(cs, c => c.happiness.subsistenceAppeal, signed)}
+                {/each}
+            </tr>
+            <tr class="actual">
+                <td>Social Welfare</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        <Tooltip>
+                            {signed(cs.e.happiness.socialAppeal)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <h4>Sources</h4>
+                                <TableView2 table={clanSocialHappinessTooltipTable(cs.e)}></TableView2>
+                                <h4>Society Detail</h4>
+                                <TableView2 table={clanSocietyHappinessDetailTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.happiness.socialAppeal, signed)}
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
