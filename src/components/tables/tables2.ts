@@ -77,6 +77,9 @@ export interface CrossTable<RowColData, CellData> {
     onClickRowHeader?: (row: RowColData) => void;
 }
 
+// Table from a single record with
+// - Row per key in the record
+// - Single column with value from the record
 export class SingleRecordTable implements Table<string, string, [number]> {
     columns: [TableColumn<string, string, number>];
     rows: TableRow<string, string>[];
@@ -124,6 +127,9 @@ export class ValueMapTable<RowData> implements Table<RowData, string, [number]> 
     }
 }
 
+// Table from an iterable of record with:
+// - Row per record
+// - Columns as set in the constructor
 export class RecordTable<RowData, ColumnCellDataTypes extends any[]> implements Table<RowData, string, ColumnCellDataTypes> {
     rows: TableRow<RowData, string>[];
 

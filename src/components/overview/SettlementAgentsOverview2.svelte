@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pct, pctFormat, signed, spct, tsigned } from "../../model/lib/format";
+    import { pct, signed, spct, tsigned, unsigned } from "../../model/lib/format";
     import type { HappinessItem } from "../../model/people/happiness";
     import { SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
@@ -9,7 +9,7 @@
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
     import { laborAllocationPlanTable } from "../tables";
-    import { SingleRecordTable, ValueMapTable } from "../tables/tables2";
+    import { RecordTable, SingleRecordTable, ValueMapTable } from "../tables/tables2";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
     import { TradeGoods, type TradeGood } from "../../model/trade";
@@ -164,6 +164,50 @@
                         </Tooltip>
                     </td>
                     {@render deltaCell(cs, c => safeDiv(c.population, c.workers), v => v.toFixed(1))}
+                {/each}
+            </tr>
+            <tr class="actual">
+                <td>Birth rate modifier</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        <Tooltip>
+                            {spct(cs.e.lastPopulationChange.brModifier)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={new RecordTable(
+                                    cs.e.lastPopulationChange.brModifiers,
+                                    item => item.source,
+                                    [{
+                                        data: 'Value',
+                                        label: '',
+                                        valueFn: item => item.value,
+                                        formatFn: (v: number) => spct(v, 0),
+                                    }])} />
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.lastPopulationChange.brModifier, pct)}
+                {/each}
+            </tr>
+            <tr class="actual">
+                <td>Death rate modifier</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        <Tooltip>
+                            {spct(cs.e.lastPopulationChange.drModifier)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={new RecordTable(
+                                    cs.e.lastPopulationChange.drModifiers,
+                                    item => item.source,
+                                    [{
+                                        data: 'Value',
+                                        label: '',
+                                        valueFn: item => item.value,
+                                        formatFn: (v: number) => spct(v, 0),
+                                    }])} />
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.lastPopulationChange.drModifier, pct)}
                 {/each}
             </tr>
             <tr class="actual">

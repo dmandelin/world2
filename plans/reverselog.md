@@ -25,6 +25,9 @@ we'd want to compare against from last time.
     *   Especially relevant if UI lets human make changes
     *   Could also make agent decision-making easier
 
+TODO - At some point it would be cool to visualize population
+       change in the population pyramid.
+
 ### Latest model features to look at
 
 TODO - Show birth and death rate effects clearly in the UI, and
