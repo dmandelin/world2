@@ -1,7 +1,7 @@
 export class Year {
     // Negative is BC, positive is AD, zero is unused.
-    // We account for a priming turn.
-    readonly start = -6500 - 20;
+    // We account for priming turns.
+    readonly start = -6500 - 40;
     private value = this.start;
 
     clone(): Year {

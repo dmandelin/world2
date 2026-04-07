@@ -6,7 +6,7 @@ Issues with the latest noted on top:
 
 This partially works but there are bugs to fix:
 
-*   Cooperation values show the wrong delta at start.
+*   Welfare rows aren't showing any deltas yet
 *   Bottom support ratio shows same change as top because
     cellDelta bakes in too much. Should also encap more of
     the value part, which would help with this bug.
@@ -24,6 +24,8 @@ we'd want to compare against from last time.
     and outputs during planning, so we can show that
     *   Especially relevant if UI lets human make changes
     *   Could also make agent decision-making easier
+
+TODO - Show history as line graphs
 
 TODO - At some point it would be cool to visualize population
        change in the population pyramid.

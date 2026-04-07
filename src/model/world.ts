@@ -94,30 +94,20 @@ export class World implements NoteTaker {
         setExemplarSettlementUUID(this.clusters[0].mother.uuid);
 
         log('World >>> Initialize')
-        this.addNote(
-            '*',
-            'First permanent settlements founded!'
-        );
 
-        // Initialize state not intialized above.
         this.initializeTradeGoods();
-        // Seed initial marriage relationships.
-        marry(this);
 
-        // Capture this state as the first point in the timeline.
-        this.recordEndOfTurnState();
+        // After this function, we should be able to show in the UI:
+        // - End of turn state and intermediate values for the start year
+        // - Change from one turn earlier
+        // To get two sets of intermediate values we need to run 
+        // two turns. We can put some restrictions on what happens,
+        // such as not having clans migrate.
 
-        // Run an initial turn so that there is state for all the output
-        // variables but don't apply the effects that mutate clans.
         this.behave(true);
         this.advance();
-        for (const cluster of this.clusters) {
-            // This depends on labor actually allocated to production nodes
-            // so we have to run it after the first production call.
-            cluster.updateDisease();
-        }
-
-        for (const trend of this.trends) trend.initialize(this.year);
+        this.behave(true);
+        this.advance();
 
         // Run planning because we're about to activate planning view.
         this.behave(true);
