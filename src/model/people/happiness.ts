@@ -72,9 +72,7 @@ export abstract class HappinessItem<T> {
         return this.appeal - this.expectedAppeal_;
     }
 
-    clone(): HappinessItem<T> {
-        return Object.create(this);
-    }
+    abstract clone(): HappinessItem<T>;
 }
 
 abstract class NumericHappinessItem extends HappinessItem<number> {
@@ -114,6 +112,10 @@ export class FoodQuantityHappinessItem extends NumericHappinessItem {
     updateState(clan: Clan): void {
         this.state_ = clan.consumption.perCapitaSubsistence();
     }
+
+    clone(): FoodQuantityHappinessItem {
+        return new FoodQuantityHappinessItem(this.expectedAppeal, this.state);
+    }
 }
 
 export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, fishRatio: number}> {
@@ -152,6 +154,10 @@ export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, f
 
     updateState(clan: Clan): void {
         this.state_ = { quantity: clan.consumption.perCapitaSubsistence(), fishRatio: fishRatio(clan) };
+    }
+
+    clone(): FoodQualityHappinessItem {
+        return new FoodQualityHappinessItem(this.expectedAppeal, this.state);
     }
 }
 
@@ -196,6 +202,10 @@ class ShelterHappinessItem extends NumericHappinessItem {
     updateState(clan: Clan): void {
         this.state_ = clan.housing.shelter;
     }
+
+    clone(): ShelterHappinessItem {
+        return new ShelterHappinessItem(this.expectedAppeal, this.state_);
+    }
 }
 
 class MigrationHappinessItem extends NumericHappinessItem {
@@ -214,6 +224,10 @@ class MigrationHappinessItem extends NumericHappinessItem {
     updateState(clan: Clan): void {
         this.state_ = clan.settlement.forcedMigrations;
     }
+
+    clone(): MigrationHappinessItem {
+        return new MigrationHappinessItem(this.expectedAppeal, this.state_);
+    }
 }
 
 class FloodHappinessItem extends NumericHappinessItem {
@@ -231,6 +245,10 @@ class FloodHappinessItem extends NumericHappinessItem {
 
     updateState(clan: Clan): void {
         this.state_ = clan.settlement.floodLevel.damageFactor;
+    }
+
+    clone(): FloodHappinessItem {
+        return new FloodHappinessItem(this.expectedAppeal, this.state_);
     }
 }
 
@@ -266,6 +284,12 @@ class SocietyHappinessItem extends NumericHappinessItem {
             interactionValue: r.totalInteractionVolume * r.cooperationLevel,
         }));
         this.state_ = sumFun(this.subitems, i => i.interactionValue);
+    }
+
+    clone(): SocietyHappinessItem {
+        const item = new SocietyHappinessItem(this.expectedAppeal, this.state_);
+        item.subitems = [...this.subitems];
+        return item;
     }
 }
 
@@ -309,6 +333,10 @@ class ConflictHappinessItem extends NumericHappinessItem {
         // settlement of 100.
         this.state_ = (clan.settlement.population / 100) ** 1.5;
     }
+
+    clone(): ConflictHappinessItem {
+        return new ConflictHappinessItem(this.expectedAppeal, this.state_);
+    }
 }
 
 class RitualHappinessItem extends NumericHappinessItem {
@@ -327,6 +355,10 @@ class RitualHappinessItem extends NumericHappinessItem {
 
     updateState(clan: Clan): void {
         this.state_ = clan.settlement.clans.rites.appeal;
+    }
+
+    clone(): RitualHappinessItem {
+        return new RitualHappinessItem(this.expectedAppeal, this.state_);
     }
 }
 
@@ -347,6 +379,10 @@ class StatusHappinessItem extends NumericHappinessItem {
 
     updateState(clan: Clan): void {
         this.state_ = clan.averagePrestige;
+    }
+
+    clone(): StatusHappinessItem {
+        return new StatusHappinessItem(this.expectedAppeal, this.state_);
     }
 }
 

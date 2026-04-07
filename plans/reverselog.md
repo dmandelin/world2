@@ -6,7 +6,6 @@ Issues with the latest noted on top:
 
 This partially works but there are bugs to fix:
 
-*   Welfare rows aren't showing any deltas yet
 *   Bottom support ratio shows same change as top because
     cellDelta bakes in too much. Should also encap more of
     the value part, which would help with this bug.
