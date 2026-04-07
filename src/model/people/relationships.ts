@@ -179,6 +179,11 @@ export class Relationships implements Iterable<[Clan, Relationship]> {
             // as a bonus, so productivities are too high.
             - 0.2;
     }
+
+    get totalRelationshipValue(): number {
+        return sumFun(this.m.values(), relationship => 
+            relationship.totalInteractionVolume * relationship.cooperationLevel);
+    }
 }
 
 export enum Stance {

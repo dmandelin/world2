@@ -219,6 +219,12 @@
                                     cs.e.lastPopulationChange.brModifiers,
                                     item => item.source,
                                     [{
+                                         data: 'State',
+                                         label: '',
+                                         valueFn: item => item.inputValue,
+                                         formatFn: (v: number|string) => typeof v === 'number' ? v.toFixed(2) : v,
+                                    },
+                                    {
                                         data: 'Value',
                                         label: '',
                                         valueFn: item => item.value,
@@ -241,6 +247,11 @@
                                     cs.e.lastPopulationChange.drModifiers,
                                     item => item.source,
                                     [{
+                                         data: 'State',
+                                         label: '',
+                                         valueFn: item => item.inputValue,
+                                         formatFn: (v: number|string) => typeof v === 'number' ? v.toFixed(2) : v,
+                                    }, {
                                         data: 'Value',
                                         label: '',
                                         valueFn: item => item.value,

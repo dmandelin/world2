@@ -31,10 +31,15 @@ TODO - At some point it would be cool to visualize population
 
 ### Latest model features to look at
 
-TODO - Show birth and death rate effects clearly in the UI, and
-make relationships have a major impact. Two components to that:
+This is the big one -- we now have a natural situation where
+clans would want to interact. We can explore this by having a
+clan with low consumption ask for help, look at their relationships,
+log various negotiations, etc.
 
-*   Direct BR/DR effects
+*   However, we should also check that the support ratios make
+    some kind of sense. Maybe we're just growing the population
+    too fast.
+
 *   Clans sometimes end up with a high support ratio, and then
     they typically have low productivity
     *   But if they have friends and neighbors, they might be
