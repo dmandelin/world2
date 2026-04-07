@@ -34,8 +34,7 @@ TODO - At some point it would be cool to visualize population
 TODO - Show birth and death rate effects clearly in the UI, and
 make relationships have a major impact. Two components to that:
 
-*   Bigger direct BR/DR effects, could consider also folding in
-    bigger production bonus to account for trade
+*   Direct BR/DR effects
 *   Clans sometimes end up with a high support ratio, and then
     they typically have low productivity
     *   But if they have friends and neighbors, they might be
@@ -49,6 +48,9 @@ Other stuff to maybe look at soon:
     early fertility levels a bit
 *   Generally try to have less support ratio overshoot, could
     just tune down
+*   Now when clans get isolated in a separate village they're
+    just stuck, but would probably try to move back with
+    neighbors or invite others to live there
 
 The most important thing is to establish critical relationships
 for clans. We know that people and groups that are not very big

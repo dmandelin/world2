@@ -174,7 +174,10 @@ export class Relationships implements Iterable<[Clan, Relationship]> {
         return 1 + sumFun(values, ([_, relationship]) =>
                 (relationship.interactions['Settled'].getBaseProductivityBonus(skill)
                + relationship.interactions['Nomadic'].getBaseProductivityBonus(skill))
-             * relationship.cooperationLevel);
+             * relationship.cooperationLevel)
+            // Without some minus factor, this just ends up always
+            // as a bonus, so productivities are too high.
+            - 0.2;
     }
 }
 
@@ -290,7 +293,11 @@ export abstract class OngoingInteraction {
     } {
         return {
             base: this.maxProductivityBonus,
-            fromVolume: (this.volume / 100) ** 0.7,
+            // Original was (this.volume / 100) ** 0.7. We're temporarily
+            // scaling up to account for the fact that the initial formula
+            // was for neighborly assistance, but many other types of
+            // cooperation would be in play that we're not modeling yet.
+            fromVolume: 2 * (this.volume / 100) ** 0.7,
             skillEffectiveness: this.getSkillEffectivenessFactor(skill),
             relativeSize: Math.min(1, this.object.population / this.subject.population),
         };
