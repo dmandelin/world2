@@ -15,6 +15,7 @@
     import { TradeGoods, type TradeGood } from "../../model/trade";
     import { safeDiv } from "../../model/lib/basics";
     import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
+    import EntityLink from "../state/EntityLink.svelte";
 
 	let { 
         settlement, 
@@ -162,7 +163,7 @@
             <tr>
                 <td></td>
                 {#each csnaps as cs}
-                    <td class="clan-header" colspan="2">{cs.e.name}</td>
+                    <td class="clan-header" colspan="2"><EntityLink entity={cs.e} /></td>
                 {/each}
             </tr>
         </thead>
