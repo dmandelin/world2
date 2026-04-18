@@ -56,6 +56,11 @@ Other stuff to maybe look at soon:
 *   Now when clans get isolated in a separate village they're
     just stuck, but would probably try to move back with
     neighbors or invite others to live there
+*   Existing clan relationships could be more granular, and we
+    could better distinguish urban (temporary or permanent) type
+    colocation, neighbors, etc., vs visits etc.
+    *   There seem to be bugs in relationship value calculations,
+        but it's probably better to fix by improving.
 
 The most important thing is to establish critical relationships
 for clans. We know that people and groups that are not very big
