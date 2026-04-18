@@ -142,10 +142,10 @@ export class PopulationChangeBuilder {
 
         const relationshipsValue = this.clan.relationships.totalRelationshipValue;
         const adjustedRelationshipsValue = relationshipsValue - 100;
-        const relationshipsBrModifier = clamp(1 + 0.01 * adjustedRelationshipsValue, 0.5, 1.5);
+        const relationshipsBrModifier = clamp(1 + 0.005 * adjustedRelationshipsValue, 0.5, 1.5);
         this.brModifiers.push(new PopulationChangeModifier(
             'Relationships', adjustedRelationshipsValue, relationshipsBrModifier));
-        const relationshipsDrModifier = clamp(1 - 0.01 * adjustedRelationshipsValue, 0.5, 1.5);
+        const relationshipsDrModifier = clamp(1 - 0.005 * adjustedRelationshipsValue, 0.5, 1.5);
         this.drModifiers.push(new PopulationChangeModifier(
             'Relationships', adjustedRelationshipsValue, relationshipsDrModifier));
 
