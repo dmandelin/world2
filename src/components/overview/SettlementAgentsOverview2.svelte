@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pct, signed, spct, tsigned, unsigned } from "../../model/lib/format";
+    import { pct, pctFormat, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat } from "../../model/lib/format";
     import type { HappinessItem } from "../../model/people/happiness";
     import { SkillDefs } from "../../model/people/skills";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
@@ -9,7 +9,7 @@
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
     import { laborAllocationPlanTable } from "../tables";
-    import { RecordTable, SingleRecordTable, ValueMapTable } from "../tables/tables2";
+    import { IterableTable, RecordTable, SingleRecordTable, ValueMapTable } from "../tables/tables2";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
     import { TradeGoods, type TradeGood } from "../../model/trade";
@@ -50,9 +50,39 @@
     }
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
-        return new SingleRecordTable(
-            clan.consumption.perCapitaSubistenceAmounts,
-            v => v.toFixed(2));
+        return new IterableTable(
+            clan.consumption.ledger.values(),
+            cg => cg.good.name,
+            cg => cg.good.isSubsistence,
+            [{
+                data: 'Consumed',
+                label: 'Consumed',
+                valueFn: cg => cg.consumed / clan.consumption.population,
+                formatFn: unsignedFormat(2),
+            }, {
+                data: 'Stored',
+                label: 'Stored',
+                valueFn: cg => cg.stock / clan.consumption.population,
+                formatFn: unsignedFormat(2),
+            }, {
+                data: 'Wasted',
+                label: 'Wasted',
+                valueFn: cg => cg.wasted / clan.consumption.population,
+                formatFn: unsignedFormat(2),
+            }]);
+    }
+
+    function clanFoodStockTooltipTable(clan: ClanDTO) {
+        return new IterableTable(
+            clan.consumption.ledger.values(),
+            cg => cg.good.name,
+            cg => cg.good.isSubsistence,
+            [{
+                data: 'Stock',
+                label: 'Stock',
+                valueFn: cg => cg.stock / clan.consumption.population,
+                formatFn: unsignedFormat(2),
+            }]);
     }
 
     function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
@@ -276,6 +306,20 @@
                         </Tooltip>
                     </td>
                     {@render deltaCell(cs, c => c.consumption.perCapitaSubsistence(), pct)}
+                {/each}
+            </tr>
+            <tr class="actual">
+                <td>Food Storage</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {pct(cs.e.consumption.perCapitaFoodStock())}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanFoodStockTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.consumption.perCapitaFoodStock(), pct)}
                 {/each}
             </tr>
             <tr class="actual">

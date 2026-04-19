@@ -1,7 +1,6 @@
 import { Clan } from '../people/people';
 import { Settlement } from '../people/settlement';
 import { TradeGood } from '../trade';
-import type { DistributionNode } from './distributionnode';
 import { SkillDefs, type SkillDef } from '../people/skills';
 import { sum, sumFun, weightedHarmonicMean } from '../lib/basics';
 
@@ -177,14 +176,6 @@ export class ProductionNode {
         for (const [good, clanProduce] of this.output_.entries()) {
             for (const [clan, amount] of clanProduce.entries()) {
                 clan.accept(this.name, good, amount);
-            }
-        }
-    }
-
-    commit(sink: DistributionNode): void {
-        for (const [good, goods] of this.output_) {
-            for (const [clan, amount] of goods) {
-                sink.accept(clan.name, good, amount);
             }
         }
     }

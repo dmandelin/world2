@@ -288,12 +288,12 @@ fascinating me the most right now.
         x   ** Somewhat like a low-strength semiautomatic friend relationship
         *   * Might also need a "town" interaction field, we'll see
         *   *** Convert productivity benefit to food security benefit
-            *   *** Food storage model base
-            *   ***/** Option for how much food to store
-            *   ***/*** Food insecurity rating based on food storage
-            *   * Happiness impact of food insecurity
-                *   Consider mitigating for people used to it
-            *   ***/*** Health impact of food insecurity
+            x   /*** Food storage model base
+            *   /** Option for how much food to store
+            *   /*** Food insecurity rating based on food storage
+            *   /* Happiness impact of food insecurity
+                /*   Consider mitigating for people used to it
+            *   /*** Health impact of food insecurity
         *   * Marriable and enhance marriage range
         *   ** +Mood
         *   ** ++Learning specific facts and gossip

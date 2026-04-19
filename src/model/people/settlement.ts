@@ -1,20 +1,20 @@
+import { logExperiment1 } from "../lib/debug";
+
 import { chooseFrom, shuffled, sumFun } from "../lib/basics";
+import { DitchMaintenanceCalc } from "../infrastructure";
+import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
+import { poisson } from "../lib/distributions";
+import { populationAverage, weightedAverage } from "../lib/modelbasics";
+import { ProductionNode } from "../econ/productionnode";
+import { SettlementEndOfTurnSnapshot, SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
+import { SettlementTimePoint, Timeline } from "../records/timeline";
+import { SkillDef, SkillDefs } from "./skills";
 import type { Clans } from "./clans";
+import type { FloodLevel } from "../environment/flood";
 import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
-import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
-import { DitchMaintenanceCalc } from "../infrastructure";
-import { DistributionNode } from "../econ/distributionnode";
-import { ProductionNode } from "../econ/productionnode";
-import { SkillDef, SkillDefs } from "./skills";
-import type { FloodLevel } from "../environment/flood";
-import { poisson } from "../lib/distributions";
 import type { Year } from "../records/year";
-import { populationAverage, weightedAverage } from "../lib/modelbasics";
-import { SettlementTimePoint, Timeline } from "../records/timeline";
-import { SettlementEndOfTurnSnapshot, SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
-import { logExperiment1 } from "../lib/debug";
 
 const maxEndOfTurnSnapshots = 5;
 
@@ -26,7 +26,6 @@ export class Settlement {
     private tellHeightInMeters_: number = 0;
 
     readonly productionNodes: ProductionNode[] = [];
-    readonly distributionNode: DistributionNode;
 
     readonly localTradeGoods = new Set<TradeGood>();
 
@@ -65,7 +64,6 @@ export class Settlement {
             clan.setSettlement(this);
         }
 
-        this.distributionNode = new DistributionNode(this);
         this.productionNodes.push(
             new ProductionNode('Farms', this, 40, SkillDefs.Agriculture),
             new ProductionNode('Fisheries', this, 40, SkillDefs.Fishing),
@@ -255,8 +253,6 @@ export class Settlement {
             clan.consumption.reset();
         }
 
-        this.distributionNode.reset();
-
         for (const pn of this.productionNodes) {
                 pn.reset();
         }
@@ -277,8 +273,9 @@ export class Settlement {
     }
 
     distribute() {
-        this.distributionNode.distribute();
-        this.distributionNode.commit();
+        for (const clan of this.clans) {
+            clan.consumption.handleSurplusFood();
+        }
     }
 
     exchange() {

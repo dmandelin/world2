@@ -103,6 +103,24 @@ export class SingleRecordTable implements Table<string, string, [number]> {
     }
 }
 
+export class IterableTable<RowData, ColumnCellDataTypes extends any[]> implements Table<RowData, string, ColumnCellDataTypes> {
+    rows: TableRow<RowData, string>[];
+
+    constructor(
+        data: Iterable<RowData>,
+        rowLabelFn: (row: RowData) => string,
+        filterFn: (row: RowData) => boolean = () => true,
+        readonly columns: { [K in keyof ColumnCellDataTypes]: TableColumn<RowData, string, ColumnCellDataTypes[K]> }) {
+        
+        this.rows = [...data]
+            .filter(filterFn)
+            .map((value, index) => ({
+                data: value,
+                label: rowLabelFn(value),
+            }));
+    }
+}
+
 export class ValueMapTable<RowData> implements Table<RowData, string, [number]> {
     columns: [TableColumn<RowData, string, number>];
     rows: TableRow<RowData, string>[];
@@ -119,14 +137,15 @@ export class ValueMapTable<RowData> implements Table<RowData, string, [number]> 
             valueFn: (row: RowData) => valueFn(row),
             formatFn,
         }];
-
-        this.rows = [...data.entries()].filter(([key, value]) => filterFn(value)).map(([key, value]) => ({
-            data: value,
-            label: key,
-        }));
+        
+        this.rows = [...data.entries()]
+            .filter(([key, value]) => filterFn(value))
+            .map(([key, value]) => ({
+                data: value,
+                label: key,
+            }));
     }
 }
-
 // Table from an iterable of record with:
 // - Row per record
 // - Columns as set in the constructor
