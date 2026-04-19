@@ -291,7 +291,9 @@ fascinating me the most right now.
         *   * Marriable and enhance marriage range
         *   ** +Mood
         *   ** ++Learning specific facts and gossip
-        *   *** +Goodwill
+        x   *** +Goodwill
+        *   ** Maybe bring back or keep a smaller productivity bonus, but
+            think about this carefully and what it will evolve into over time.
         *   * Need to think about how conflict works; it's fairly common
             but somewhat manageable as people know each other and have an
             incentive to get along
@@ -314,4 +316,7 @@ fascinating me the most right now.
         *   ** +Goodwill
         *   * +Learning specific facts and gossip
         *   ** -Conflict! but there can be conflict over various parts
+    *   Other stuff
+        *   Possible -Mood for farming base due to delayed returns, but
+            +Mood from beer and enhanced rituals available
         

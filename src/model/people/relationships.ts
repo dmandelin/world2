@@ -152,9 +152,13 @@ export abstract class InteractionChain {
 
     abstract cloneFor(newSubject: Clan): InteractionChain;
     abstract update(coresidenceFraction: number): void;
+
+    abstract get alignmentEffect(): number;
 }
 
 export class Neighbors extends InteractionChain {
+    private alignmentEffect_ = 0.01;
+
     constructor(subject: Clan, object: Clan) {
         super('Neighbors', subject, object);
     }
@@ -164,7 +168,14 @@ export class Neighbors extends InteractionChain {
     }
 
     update(coresidenceFraction: number) {
-        // TODO - Implement something
+        // There is a small alignment effect for regular neighbors who
+        // live near each other. If they don't live together, we'll still
+        // give them a tiny bump, but not much.
+        this.alignmentEffect_ = Math.max(0.01, coresidenceFraction * 0.1);
+    }
+
+    get alignmentEffect(): number {
+        return this.alignmentEffect_;
     }
 }
 
@@ -187,10 +198,11 @@ export class Alignment extends CalcBase {
     }
 
     update() {
-        // TODO - Bring back alignment effect of interactions.
-        //this.items['Society'] = this.subject.relationships.get(this.object)?.interactionVolume.value ?? 0;
         this.items['Kinship'] = this.subject.kinshipTo(this.object);
         this.items['Marriage'] = this.subject.marriagePartners.get(this.object) ?? 0;
+        for (const interactionChain of this.subject.relationships.get(this.object)?.interactionChains ?? []) {
+            this.items[interactionChain.name] = interactionChain.alignmentEffect;
+        }
         if (this.subject !== this.object) {
             this.items['Random'] = normal(0, 0.1);
         }
