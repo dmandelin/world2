@@ -290,7 +290,7 @@ fascinating me the most right now.
         *   *** Convert productivity benefit to food security benefit
             x   /*** Food storage model base
             *   /** Option for how much food to store
-            *   /*** Food insecurity rating based on food storage
+            x   /*** Food insecurity rating based on food storage
             *   /* Happiness impact of food insecurity
                 /*   Consider mitigating for people used to it
             *   /*** Health impact of food insecurity
@@ -329,4 +329,6 @@ fascinating me the most right now.
             in place
         *   We're really gonna need early weaning as a decision to make
             sense of the major birth rate effects of food supply
+        *   Have ditching affect the level of food security
+        *   Food security should affect productivity (e.g., coverage while sick)
         

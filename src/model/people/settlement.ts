@@ -229,6 +229,7 @@ export class Settlement {
         this.produce();
         this.distribute();
         this.exchange();
+        for (const clan of this.clans) clan.consumption.foodInsecurity.update();
 
         // Ritual production.
         this.advanceRites();

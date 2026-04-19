@@ -85,6 +85,29 @@
             }]);
     }
 
+    function clanFoodSecurityTooltipTable(clan: ClanDTO) {
+        return new IterableTable(
+            clan.consumption.foodInsecurity.productionInsecurityItems,
+            item => item.source,
+            _ => true,
+            [{
+                data: 'Base Risk',
+                label: 'Base Risk',
+                valueFn: item => item.insecurity,
+                formatFn: pctFormat(2),
+            }, {
+                data: 'Reliance',
+                label: 'Reliance',
+                valueFn: item => item.consumptionRatio,
+                formatFn: pctFormat(2),
+            }, {
+                data: 'Risk',
+                label: 'Risk',
+                valueFn: item => item.scaledInsecurity,
+                formatFn: pctFormat(2),
+            }]);
+    }
+
     function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
         return new ValueMapTable(
             clan.happiness.items,
@@ -320,6 +343,27 @@
                         </Tooltip>
                     </td>
                     {@render deltaCell(cs, c => c.consumption.perCapitaFoodStock(), pct)}
+                {/each}
+            </tr>
+            <tr class="actual">
+                <td>Food Security</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {pct(1 - cs.e.consumption.foodInsecurity.value)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <h3>Production Risks</h3>
+                                <TableView2 table={clanFoodSecurityTooltipTable(cs.e)}></TableView2>
+
+                                <p>Base risk: {pct(cs.e.consumption.foodInsecurity.productionInsecurity)}</p>
+                                <p>Buffering: {pct(cs.e.consumption.foodInsecurity.storageBuffering)}
+                                    from {(cs.e.consumption.foodInsecurity.storage*365).toFixed()} days stored
+                                </p>
+                                <p>Risk: {pct(cs.e.consumption.foodInsecurity.value)}</p>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => 1 - c.consumption.foodInsecurity.value, pct)}
                 {/each}
             </tr>
             <tr class="actual">
