@@ -24,7 +24,7 @@ import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { ConsumptionCalc } from "./consumption";
+import { Consumption } from "./consumption";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -124,7 +124,7 @@ export class Clan implements TradePartner {
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     laborAllocation = new LaborAllocation(this);
     readonly tradeRelationships = new Set<TradeRelationship>();
-    consumption = new ConsumptionCalc(this);
+    consumption = new Consumption(this);
 
     private readonly happinessCalc_: HappinessCalc;
 

@@ -288,6 +288,12 @@ fascinating me the most right now.
         x   ** Somewhat like a low-strength semiautomatic friend relationship
         *   * Might also need a "town" interaction field, we'll see
         *   *** Convert productivity benefit to food security benefit
+            *   *** Food storage model base
+            *   ***/** Option for how much food to store
+            *   ***/*** Food insecurity rating based on food storage
+            *   * Happiness impact of food insecurity
+                *   Consider mitigating for people used to it
+            *   ***/*** Health impact of food insecurity
         *   * Marriable and enhance marriage range
         *   ** +Mood
         *   ** ++Learning specific facts and gossip
@@ -319,4 +325,8 @@ fascinating me the most right now.
     *   Other stuff
         *   Possible -Mood for farming base due to delayed returns, but
             +Mood from beer and enhanced rituals available
+        x   Remove fish 0.9 consumption limit once food storage model is
+            in place
+        *   We're really gonna need early weaning as a decision to make
+            sense of the major birth rate effects of food supply
         

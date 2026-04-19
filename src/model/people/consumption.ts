@@ -1,10 +1,13 @@
 import { TradeGoods, type TradeGood } from "../trade";
 import type { Clan } from "./people";
 
-export class ConsumptionCalc {
-    // good -> source -> amount
-    private ledger_: Map<TradeGood, Map<string, number>> = new Map();
+export class Consumption {
+    // Population consuming these goods.
     private population_: number = 0;
+    // Ledger of all data on each good.
+    private ledger_: Map<TradeGood, ConsumptionGood> = new Map();
+    // Sources of goods, for informational purposes.
+    private sourceMaps_: Map<TradeGood, Map<string, number>> = new Map();
 
     constructor(readonly clan: Clan) {
     }
@@ -14,16 +17,11 @@ export class ConsumptionCalc {
         this.ledger_.clear();
     }
 
-    clone(): ConsumptionCalc {
-        const clone = new ConsumptionCalc(this.clan);
+    clone(): Consumption {
+        const clone = new Consumption(this.clan);
         clone.population_ = this.population_;
-        for (const [good, sourceMap] of this.ledger_) {
-            const newSourceMap = new Map<string, number>();
-            for (const [source, amount] of sourceMap) {
-                newSourceMap.set(source, amount);
-            }
-            clone.ledger_.set(good, newSourceMap);
-        }
+        clone.ledger_ = new Map(this.ledger_);
+        clone.sourceMaps_ = new Map(this.sourceMaps_);
         return clone;
     }
 
@@ -31,26 +29,20 @@ export class ConsumptionCalc {
         return this.population_;
     }
 
-    get ledger(): IterableIterator<[TradeGood, Map<string, number>]> {
-        return this.ledger_.entries();
-    }
-
     sourceMap(good: TradeGood): Map<string, number> {
-        return this.ledger_.get(good) ?? new Map<string, number>();
+        return this.sourceMaps_.get(good)!;
     }
 
     get amounts(): Record<string, number> {
         const result: Record<string, number> = {};
-        for (const [good, sourceMap] of this.ledger_) {
-            result[good.name] = [...sourceMap.values()].reduce((acc, amount) => acc + amount, 0);
+        for (const cg of this.ledger_.values()) {
+            result[cg.good.name] = cg.consumption;
         }
         return result;
     }
 
     amount(good: TradeGood): number {
-        const sourceMap = this.ledger_.get(good);
-        if (!sourceMap) return 0;
-        return [...sourceMap.values()].reduce((acc, amount) => acc + amount, 0);
+         return this.ledger_.get(good)?.consumption ?? 0;
     }
 
     get perCapitaAmounts(): Record<string, number> {
@@ -65,10 +57,9 @@ export class ConsumptionCalc {
 
     get perCapitaSubistenceAmounts(): Record<string, number> {
         const result: Record<string, number> = {};
-        for (const [good, sourceMap] of this.ledger_) {
-            if (good.isSubsistence) {
-                result[good.name] = [...sourceMap.values()]
-                    .reduce((acc, amount) => acc + amount / this.population, 0);
+        for (const cg of this.ledger_.values()) {
+            if (cg.good.isSubsistence) {
+                result[cg.good.name] = this.population === 0 ? cg.consumption : cg.consumption / this.population;
             }
         }
         return result;
@@ -87,40 +78,77 @@ export class ConsumptionCalc {
     remove(source: string, good: TradeGood, amount: number): boolean {
         if (amount <= 0) return false;
         if (this.amount(good) < amount) return false;
-        const sourceMap = this.ledger_.get(good)!;
-        sourceMap.set(source, (sourceMap.get(source) ?? 0) - amount);
+        this.ledger_.get(good)!.consumption -= amount;
+        const sourceMap = this.sourceMaps_.get(good)!;
+        const prevAmount = sourceMap.get(source) ?? 0;
+        sourceMap.set(source, prevAmount - amount);
         return true;
     }
 
+    // Accept goods produced or acquired into the consumption basket.
+    // Note however that some may be moved into storage before consumption.
     accept(source: string, good: TradeGood, amount: number) {
         if (amount <= 0) return;
-        if (!this.ledger_.has(good)) this.ledger_.set(good, new Map<string, number>());
-        const sourceMap = this.ledger_.get(good)!;
-        const prevAmount = sourceMap.get(source) ?? 0;
-        let newAmount = prevAmount + amount;
 
-        // Seasonal availability varies and forage is hard to store, so
-        // there will always be some shortfall if this is the only good.
-        if (good === TradeGoods.Fish) {
-            newAmount = Math.min(newAmount, this.population * 0.9)
+        // Update source map.
+        let sourceMap = this.sourceMaps_.get(good);
+        if (!sourceMap) {
+            sourceMap = new Map<string, number>();
+            this.sourceMaps_.set(good, sourceMap);
         }
+        const prevAmount = sourceMap.get(source) ?? 0;
+        sourceMap.set(source, prevAmount + amount);
 
-        sourceMap.set(source, newAmount);
+        // Update ledger.
+        let cg = this.ledger_.get(good);
+        if (!cg) {
+            cg = new ConsumptionGood(good, 0, 0, 0, 0);
+            this.ledger_.set(good, cg);
+        }
+        cg.consumption += amount;
+    }
+
+    store() {
+        // Fixed decision for now: If there is surplus 
     }
     
-    splitOff(newClan: Clan): ConsumptionCalc {
-        const originalPopulation = this.population_;
-        this.population_ -= newClan.population;
-        const newCalc = new ConsumptionCalc(this.clan);
-        for (const [good, sourceMap] of this.ledger_) {
-            const newSourceMap = new Map<string, number>();
-            for (const [source, amount] of sourceMap) {
-                const newAmount = amount * newClan.population / originalPopulation;
-                newSourceMap.set(source, newAmount);
-                this.ledger_.get(good)!.set(source, amount - newAmount);
-            }
-            newCalc.ledger_.set(good, newSourceMap);
+    splitOff(newClan: Clan): Consumption {
+        const newCalc = new Consumption(newClan);
+        const newClanFraction = newClan.population / this.clan.population;
+
+        // Split population.
+        newCalc.population_ = Math.round(this.population_ * newClanFraction);
+        this.population_ -= newCalc.population_;
+
+        // Split goods.
+        // TODO - Split other fields, although I'm not sure it actually matters.
+        for (const [good, cg] of this.ledger_) {
+            const newAmount = Math.round(cg.consumption * newClanFraction);
+            newCalc.ledger_.set(good, new ConsumptionGood(good, newAmount, 0, 0, 0));
+            cg.consumption -= newAmount;
         }
+
+        // Split sources.
+        for (const [good, sourceMap] of this.sourceMaps_) {
+            const newSourceMap = new Map<string, number>();
+            newCalc.sourceMaps_.set(good, newSourceMap);
+            for (const [source, amount] of sourceMap) {
+                const newAmount = Math.round(amount * newClanFraction);
+                newSourceMap.set(source, newAmount);
+                sourceMap.set(source, amount - newAmount);
+            }
+        }
+
         return newCalc;
     }
+}
+
+export class ConsumptionGood {
+    constructor(
+        readonly good: TradeGood,
+        public consumption: number,
+        public waste: number,
+        public storage: number,
+        public storageLoss: number,
+    ) {}
 }

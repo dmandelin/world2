@@ -5,7 +5,7 @@ import { type ClanSkills, type SkillDef, SkillDefs } from "../people/skills";
 import type { AlignmentCalc } from "../people/alignment";
 import type { Clan } from "../people/people";
 import type { CondorcetCalc } from "../people/clans";
-import type { ConsumptionCalc } from "../people/consumption";
+import type { Consumption } from "../people/consumption";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
 import type { FloodLevel } from "../environment/flood";
 import type { HappinessCalc } from "../people/happiness";
@@ -149,7 +149,7 @@ export class ClanDTO {
     averagePrestige: number;
     influence: number;
     
-    consumption: ConsumptionCalc;
+    consumption: Consumption;
     isDitching: boolean;
     laborAllocation: LaborAllocation;
     productivityCalcs: Map<SkillDef, ProductivityCalc>;
