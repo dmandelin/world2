@@ -40,13 +40,8 @@ export class ProductivityCalc {
         // TODO - Rework per latest plans. Biggest factors in how all this plays out
         //        should be:
         // x Clan dependency ratio
-        // - Community
+        // - Community -- but figure out what this really means
         // - Land quality
-        this.items.push(new SimpleProductivityCalcItem(
-            'Relationships',
-            clan.relationships.getProductivityFactor(skillDef).toFixed(2),
-            clan.relationships.getProductivityFactor(skillDef),
-         ));       
 
         this.skill = clan.skills.v(skillDef);
         this.items.push(...[...skillDef.traitFactors.entries()].map(tf => {

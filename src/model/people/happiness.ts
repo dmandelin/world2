@@ -252,6 +252,7 @@ class FloodHappinessItem extends NumericHappinessItem {
     }
 }
 
+// TODO - Overhaul
 class SocietyHappinessItem extends NumericHappinessItem {
     subitems: {
         otherName: string;
@@ -279,9 +280,9 @@ class SocietyHappinessItem extends NumericHappinessItem {
     updateState(clan: Clan): void {
         this.subitems = [...clan.relationships].map(([_, r]) => ({
             otherName: r.object.name,
-            interactionVolume: r.totalInteractionVolume,
+            interactionVolume: 1,
             cooperationLevel: r.cooperationLevel,
-            interactionValue: r.totalInteractionVolume * r.cooperationLevel,
+            interactionValue: 1,
         }));
         this.state_ = sumFun(this.subitems, i => i.interactionValue);
     }

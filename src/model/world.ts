@@ -15,6 +15,7 @@ import { Year } from "./records/year";
 import { marry } from "./people/marriage";
 import { log, loggingEnabled, setExemplarSettlementUUID } from "./lib/debug";
 import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
+import { Neighbors, Relationship } from "./people/relationships";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -332,8 +333,43 @@ export class World implements NoteTaker {
     }
 
     updateRelationships() {
-        for (const clan of this.allClans) {
-            clan.relationships.update();
+        // Update neighbor relationships:
+        // - Clans in the same settlement are automatically neighbors up 
+        //   to a certain size.
+        // - Clans not in the sames settlement are not neighbors.
+        for (const settlement of this.allSettlements) {
+            for (const c1 of settlement.clans) {
+                for (const [c2, relationship] of c1.relationships) {
+                    if (c1 === c2) continue;
+                    if (c1.settlement !== c2.settlement) {
+                        c1.relationships.removeInteractionChainWith(c2, Neighbors);
+                    }
+                }
+            }
+        }
+        for (const settlement of this.allSettlements) {
+            for (const c1 of settlement.clans) {
+                for (const c2 of settlement.clans) {
+                    if (c1 === c2) continue;
+                    if (c1.settlement === c2.settlement) {
+                        c1.relationships.ensureInteractionChainWith(c2, Neighbors);
+                    }
+                }
+            }
+        }
+
+        // Update the individual relationships. Note that the two clans share
+        // the same Relationship instance, so we should only update it once.
+        const seen = new Set<Relationship>();
+        for (const settlement of this.allSettlements) {
+            for (const c1 of settlement.clans) {
+                for (const [c2, relationship] of c1.relationships) {
+                    if (c1 === c2) continue;
+                    if (seen.has(relationship)) continue;
+                    relationship.update();
+                    seen.add(relationship);
+                }
+            }
         }
     }
 

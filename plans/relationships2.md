@@ -283,6 +283,18 @@ fascinating me the most right now.
         *   *** Add leisure allocation. We can assume that at first it's
             mostly used for rest, then intra-clan entertainment, then
             creativity.
+    *   Neighbors - pairs: for near neighbors we assume they know each
+        other and have individual opinions and interactions with each
+        x   ** Somewhat like a low-strength semiautomatic friend relationship
+        *   * Might also need a "town" interaction field, we'll see
+        *   *** Convert productivity benefit to food security benefit
+        *   * Marriable and enhance marriage range
+        *   ** +Mood
+        *   ** ++Learning specific facts and gossip
+        *   *** +Goodwill
+        *   * Need to think about how conflict works; it's fairly common
+            but somewhat manageable as people know each other and have an
+            incentive to get along
     *   Friends - pairs
         *   *** Convert productivity benefit to food security benefit
         *   * Marriable and enhance marriage range
@@ -302,9 +314,4 @@ fascinating me the most right now.
         *   ** +Goodwill
         *   * +Learning specific facts and gossip
         *   ** -Conflict! but there can be conflict over various parts
-    *   Neighbors
-        *   ** Somewhat like a low-strength automatic celebration
-        *   * More low-key fields of religious ritual can also fit within
-            this aspect
-
         

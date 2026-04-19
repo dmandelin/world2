@@ -140,15 +140,6 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Food Quality', fishRatio(clan), 1 / foodQualityModifier));
 
-        const relationshipsValue = this.clan.relationships.totalRelationshipValue;
-        const adjustedRelationshipsValue = relationshipsValue - 100;
-        const relationshipsBrModifier = clamp(1 + 0.005 * adjustedRelationshipsValue, 0.5, 1.5);
-        this.brModifiers.push(new PopulationChangeModifier(
-            'Relationships', adjustedRelationshipsValue, relationshipsBrModifier));
-        const relationshipsDrModifier = clamp(1 - 0.005 * adjustedRelationshipsValue, 0.5, 1.5);
-        this.drModifiers.push(new PopulationChangeModifier(
-            'Relationships', adjustedRelationshipsValue, relationshipsDrModifier));
-
         // Up to 10% increase/decrease in birth/death rates for shelter.
         // That's for a warm environment and assuming some shelter always.
         const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;

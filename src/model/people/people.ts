@@ -723,6 +723,12 @@ export class Clan implements TradePartner {
         newClan.parent = this;
         this.cadets.push(newClan);
 
+        // Inherit relationships from the parent clan.
+        for (const [other, relationship] of this.relationships) {
+            const newRelationship = relationship.cloneFor(newClan);
+            newClan.relationships.add(other, newRelationship);
+        }
+
         // Plan for the new clan, since it didn't get a chance to during the main
         // planning phase. We don't need to update productivity because that happens
         // at the start of production during the advance phase.

@@ -75,38 +75,6 @@
         }
     }
 
-    class InteractionVolumeDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            for (const [other, r] of clan.relationships) {
-                yield [other, '-', 0.01 * r.totalInteractionVolume, DEFAULT_RELATIONSHIP_COLOR];
-            }
-        }
-    }
-
-    class RelativeAttentionDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            for (const [other, r] of clan.relationships) {
-                yield [other, '-', 0.1 * r.relativeAttention, DEFAULT_RELATIONSHIP_COLOR];
-            }
-        }
-    }
-
-    class ProductivityBonusDisplayOption extends RelationshipDisplayOption {
-        skill: SkillDef;
-
-        constructor(skill: SkillDef) {
-            super();
-            this.skill = skill;
-        }
-
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            for (const [other, r] of clan.relationships) {
-                const bonus = clan.relationships.getProductivityFactor(this.skill, other) - 1;
-                yield [other, '-', bonus * 20, bonus > 0 ? DEFAULT_RELATIONSHIP_COLOR : 'red'];
-            }
-        }
-    }
-
     const alignmentColorInterpolator = colorInterpolator(
         [200, 50, 50],
         [50, 50, 200],
@@ -117,7 +85,7 @@
     class AlignmentDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
             for (const [other, r] of clan.relationships) {
-                yield [other, '-', 0.01 * r.totalInteractionVolume, alignmentColorInterpolator(r.alignment.value)];
+                yield [other, '-', 1, alignmentColorInterpolator(r.alignment.value)];
             }
         }
     }
@@ -323,10 +291,6 @@
     <ButtonPanel config={{buttons: [
         { label: "M", tooltip: "Marriage relationships", data: new MarriageRelationshipDisplayOption() },
         { label: "K", tooltip: "Kinship relationships", data: new KinshipRelationshipDisplayOption() },
-        { label: "IV", tooltip: "Interaction volume", data: new InteractionVolumeDisplayOption() },
-        { label: "RA", tooltip: "Relative attention", data: new RelativeAttentionDisplayOption() },
-        { label: "aP", tooltip: "Agricultural productivity bonus", data: new ProductivityBonusDisplayOption(SkillDefs.Agriculture) },
-        { label: "fP", tooltip: "Fishing productivity bonus", data: new ProductivityBonusDisplayOption(SkillDefs.Fishing) },
         { label: "A", tooltip: "Alignment", data: new AlignmentDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>

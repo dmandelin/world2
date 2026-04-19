@@ -33,7 +33,8 @@
         if (!r) {
             return 0;
         }
-        return r.relativeAttention;
+        // TODO - Remove
+        return 1;
     }
 
     function alignmentCellValue(rowClan: Clan, colClan: Clan): number {
@@ -72,15 +73,11 @@
         }
     }
 
+    // TODO - Remove
     function buildInteractionVolumeCellTooltip(r: Relationship): Table<string, string, [number]> {
-        const items: Record<string, number> = {};
-        items['Attention Fraction'] = r.attentionFraction;
-        items['Attention'] = r.attention;
-        items['Relative Attention'] = r.relativeAttention;
-        items['Coresidence'] = r.coresidenceFraction;
-        items['Settlement Contact'] = r.interactions['Settled'].volume;
-        items['Nomadic Contact'] = r.interactions['Nomadic'].volume;
-        return new SingleRecordTable(items);
+        return new SingleRecordTable({
+            'Interaction Volume': 1
+        });
     }
 
     function buildAlignmentCellTooltip(r: Relationship): Table<string, string, [number]> {
@@ -107,6 +104,7 @@ n/a
 <div style="display: flex; flex-direction: row; gap: 2rem;">
     <div>
         <div>
+            <!-- TODO - Update to something more sensible -->
             <h3>Interaction Level</h3>
             <TableView2 table={buildRelationshipsTable(interactionLevelCellValue, unsignedFormat(2), interactionVolumeCellTooltip)}></TableView2>
         </div>

@@ -106,12 +106,6 @@ export class Clans extends Array<Clan> {
             }
         }
         this.splice(0, this.length, ...newClans);
-
-        // Update relationships for the clans, since they are now in the
-        // settlement.
-        for (const clan of newClans) {
-            clan.relationships.update();
-        }
     }
 
     merge() {
