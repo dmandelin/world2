@@ -18,7 +18,7 @@
 <script lang="ts">
     import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/lib/basics";
     import { pctFormat, signedFormat } from "../model/lib/format";
-    import { ConsumptionCalc } from "../model/people/people";
+    import { ConsumptionCalc } from "../model/people/consumption";
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
     import TableView from "./TableView.svelte";
