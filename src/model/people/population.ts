@@ -140,6 +140,14 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Food Quality', fishRatio(clan), 1 / foodQualityModifier));
 
+        // The effect of food insecurity on death rates is modeled directly
+        // as famine. For birth rates, the direct effect isn't huge, because 
+        // there will be famine for only a small fraction of the turn at most,
+        // but there's also an optimism/pessimism effect.
+        const foodInsecurityBrModifier = 1 + clamp(-this.clan.consumption.foodInsecurity.value/4, -0.5, 0.2);
+        this.brModifiers.push(new PopulationChangeModifier(
+            'Famine', this.clan.consumption.foodInsecurity.value, foodInsecurityBrModifier));
+
         // Up to 10% increase/decrease in birth/death rates for shelter.
         // That's for a warm environment and assuming some shelter always.
         const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
@@ -279,6 +287,15 @@ export class PopulationChangeBuilder {
                 mod: drFactor,
                 drFun: (i: number) => BASE_DEATH_RATES[i] * drFactor,
             });
+        const famineDr = 0.1 * clamp(this.clan.consumption.foodInsecurity.value, 0, 1) ** 2;
+        if (famineDr * this.clan.population >= 1) {
+            sources.push({
+                name: 'Famine',
+                deaths: 0, ed: 0, sedr: 0,
+                mod: this.clan.consumption.foodInsecurity.value,
+                drFun: () => famineDr,
+            });
+        }
 
         for (let i = 0; i < this.clan.slices.length - 1; ++i) {
             // Calculate per-cause and overall death rates.

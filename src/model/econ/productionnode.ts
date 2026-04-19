@@ -12,7 +12,7 @@ export class ProductionNode {
 
     land_ = new Map<Clan, number>();
 
-    static readonly outputPerWorker = 2.3;
+    static readonly outputPerWorker = 2.4;
 
     totalWorkers_: number = 0;
     totalLaborProductivity_: number = 0;

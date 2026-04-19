@@ -292,8 +292,10 @@ fascinating me the most right now.
             *   /** Option for how much food to store
             x   /*** Food insecurity rating based on food storage
             *   /* Happiness impact of food insecurity
-                /*   Consider mitigating for people used to it
-            *   /*** Health impact of food insecurity
+                *   /*   Consider mitigating for people used to it
+            x   /*** Health impact of food insecurity
+            *   /*** Neighbors help out with food insecurity according to
+                alignment and co-residence
         *   * Marriable and enhance marriage range
         *   ** +Mood
         *   ** ++Learning specific facts and gossip
@@ -331,4 +333,6 @@ fascinating me the most right now.
             sense of the major birth rate effects of food supply
         *   Have ditching affect the level of food security
         *   Food security should affect productivity (e.g., coverage while sick)
+        *   Have famine intensify disease effects
+            *   Eventually make it more likely to trigger major epidemics
         
