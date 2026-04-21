@@ -259,7 +259,6 @@ export class ConsumptionGood {
 // 1.0 is high, but not the highest possible.
 export class FoodInsecurity {
     productionInsecurityItems: FoodProductionInsecurityItem[] = [];
-    productionInsecurity = 0;
 
     storage = 0;
     storageBuffering = 0;
@@ -268,13 +267,17 @@ export class FoodInsecurity {
         this.update();
     }
 
+
+    get productionInsecurity(): number {
+        return sumFun(this.productionInsecurityItems, item => item.scaledInsecurity);
+    }
+
     get value(): number {
         return this.productionInsecurity - this.storageBuffering;
     }
 
     reset() {
         this.productionInsecurityItems = [];
-        this.productionInsecurity = 0;
         this.storage = 0;
         this.storageBuffering = 0;
     }
@@ -282,7 +285,6 @@ export class FoodInsecurity {
     clone() {
         const clone = new FoodInsecurity(this.consumption);
         clone.productionInsecurityItems = this.productionInsecurityItems.slice();
-        clone.productionInsecurity = this.productionInsecurity;
         clone.storage = this.storage;
         clone.storageBuffering = this.storageBuffering;
         return clone;
@@ -316,8 +318,6 @@ export class FoodInsecurity {
             1.0,
             1 - fishRatio,
         ));
-
-        this.productionInsecurity = sumFun(this.productionInsecurityItems, item => item.scaledInsecurity);
     }
 
     updateStorageBuffering() {
