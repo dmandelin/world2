@@ -283,6 +283,13 @@ fascinating me the most right now.
         *   *** Add leisure allocation. We can assume that at first it's
             mostly used for rest, then intra-clan entertainment, then
             creativity.
+    *   **** More clans
+        *   *** Fix bug that causes fail on startup on labor allocation
+            sometimes if we decrease max desired clan size (could
+            relate to too many splits, maybe we're initializing clans
+            too big?)
+        *   *** Decrease clan size and increase number of clans per
+            settlement so we get more interactions
     *   Neighbors - pairs: for near neighbors we assume they know each
         other and have individual opinions and interactions with each
         x   ** Somewhat like a low-strength semiautomatic friend relationship
