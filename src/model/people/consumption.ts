@@ -264,10 +264,12 @@ export class FoodInsecurity {
     storage = 0;
     storageBuffering = 0;
 
-    value = 0;
-
     constructor(readonly consumption: Consumption) {
         this.update();
+    }
+
+    get value(): number {
+        return this.productionInsecurity - this.storageBuffering;
     }
 
     reset() {
@@ -275,7 +277,6 @@ export class FoodInsecurity {
         this.productionInsecurity = 0;
         this.storage = 0;
         this.storageBuffering = 0;
-        this.value = 0;
     }
 
     clone() {
@@ -284,14 +285,16 @@ export class FoodInsecurity {
         clone.productionInsecurity = this.productionInsecurity;
         clone.storage = this.storage;
         clone.storageBuffering = this.storageBuffering;
-        clone.value = this.value;
         return clone;
+    }
+
+    addProductionInsecurity(source: string, insecurity: number, consumptionRatio: number = 1) {
+        this.productionInsecurityItems.push(new FoodProductionInsecurityItem(source, insecurity, consumptionRatio));
     }
 
     update() {
         this.updateProductionInsecurity();
         this.updateStorageBuffering();
-        this.value = Math.max(0, this.productionInsecurity - this.storageBuffering);
     }
     
     updateProductionInsecurity() {

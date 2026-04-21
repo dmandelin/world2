@@ -294,8 +294,8 @@ fascinating me the most right now.
             *   /* Happiness impact of food insecurity
                 *   /*   Consider mitigating for people used to it
             x   /*** Health impact of food insecurity
-            *   /*** Neighbors help out with food insecurity according to
-                alignment and co-residence
+            x   /*** Neighbors help out with food insecurity
+            *   /** Option for how much to help with food insecurity
         *   * Marriable and enhance marriage range
         *   ** +Mood
         *   ** ++Learning specific facts and gossip
@@ -335,4 +335,35 @@ fascinating me the most right now.
         *   Food security should affect productivity (e.g., coverage while sick)
         *   Have famine intensify disease effects
             *   Eventually make it more likely to trigger major epidemics
+        *   Let clans ask neighbors for help with general scarcity
+        *   Show production in the consumption minipanel so we get a better
+            idea where stuff is coming from
+        *   Update production panels generally, incl on SAO2.
         
+## Issue writeups
+
+### Food security from neighbors
+
+We imagine that from time to time there are events that disrupt
+a clan's ability to produce food. Even without storing any food,
+clans can potentially help each other because when clan A goes
+hungry, clan B may have a little to spare, and vice versa. With
+stored food, it's more likely clan B has something to spare.
+
+This also depends on repeated interactions between the clans so
+that each has a realistic expectation that others will reciprocate
+later. The alignment rating tracks the baseline, but clans will
+eventually have choices for how much to share.
+
+I suppose for now we assume everyone is generous; in general it
+seems that even when clans don't like each other that much on a
+general level, they benefit from a food-security relationship, so
+they have a strong incentive to participate. It would seem that
+the basic version of this arrangement is essentially communal, as
+we'll want to keep our food-sharing partners alive even if it costs
+us more.
+
+For a stable food-sharing relationship like this, let's say that
+each clan reduces their neighbor partners' food insecurity at the
+cost of some food insecurity of their own (food is optionally
+transferred as well). 
