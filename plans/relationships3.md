@@ -231,7 +231,7 @@ Norms:
 
 ## Model changes to make:
 
-*   For the current primary food security benefit, count only defined
+x   For the current primary food security benefit, count only defined
     relationships: kin and friends
 *   Add friends relationship. With hunter-gatherers that can be quite
     fluid; for farming it will usually be with co-villagers

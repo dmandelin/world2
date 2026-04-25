@@ -310,15 +310,12 @@ export class Settlement {
             //   proportionally around the mean.
             const costFactor = 0.5; // Cost to decrease food security by 1
 
-            const reductionFactor = 0.8 ** (this.clans.length - 1);
+            const helperClans = this.clans.filter(c => c !== recipientClan && c.kinshipTo(recipientClan) > 0.05);
+            const reductionFactor = 0.8 ** helperClans.length;
             const amountToReduceTotal = recipientClan.consumption.foodInsecurity.value * (1 - reductionFactor);
-            const amountToReducePerHelper = amountToReduceTotal / (this.clans.length - 1);
+            const amountToReducePerHelper = amountToReduceTotal / helperClans.length;
 
-            for (const helperClan of this.clans) {
-                if (helperClan === recipientClan) {
-                    continue;
-                }
-
+            for (const helperClan of helperClans) {
                 const populationFactor = recipientClan.population / helperClan.population;
                 const amountToReduce = amountToReducePerHelper * Math.sqrt(populationFactor);
                 const costToHelper = amountToReduce * costFactor / Math.sqrt(populationFactor);
