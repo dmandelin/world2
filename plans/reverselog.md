@@ -1,5 +1,7 @@
 Issues with the latest noted on top:
 
+See relationships3.md for the very latest items.
+
 ## Current vs Next Productivity
 
 ### Latest bugs
