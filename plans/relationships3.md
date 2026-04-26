@@ -236,11 +236,13 @@ x   For the current primary food security benefit, count only defined
 *   Add friends relationship. With hunter-gatherers that can be quite
     fluid; for farming it will usually be with co-villagers
     x   Initially seed some random local relationships
+    *   Show allies count in the summary UI
     *   Friends relationships requires gifts and visits
     *   Extend kin relationships to also take effect when distant with
         gifts and visits
+    *   Extend friends relationships to take effect when distant
     *   Some sort of distance cost, but maybe low for mobile people
-    *   Limit on the number of gifts-and-visits relationships that can
+    x   Limit on the number of gifts-and-visits relationships that can
         be maintained, partially from time taken, partially from ability
         to correctly track and agree on whether they're keeping up their
         end

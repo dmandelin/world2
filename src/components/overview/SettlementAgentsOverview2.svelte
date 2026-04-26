@@ -381,6 +381,20 @@
                 {/each}
             </tr>
             <tr class="actual">
+                <td>Relationships</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        <Tooltip>
+                            {signed(cs.e.happiness.subsistenceAppeal)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanSustenanceHappinessTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.happiness.subsistenceAppeal, signed)}
+                {/each}
+            </tr>
+            <tr class="actual">
                 <td>Social Welfare</td>
                 {#each csnaps as cs}
                     <td class="rap">

@@ -65,8 +65,6 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
                 result.push(rv);
             }
         }
-        console.log(`Relationships with interaction chain ${ctor.name} for ${this.subject.name} ${this.subject.uuid}: ${result.map(r => r.object.name + ' ' + r.object.uuid).join(', ')}`);
-        console.log(result);
         return result;
     }
 
@@ -107,13 +105,13 @@ export class RelationshipView {
     }
 
     update() {
-        this.alignment.update();
-
         // Hack to make sure we update each relationship only once, assuming we update
         // all RelationshipViews: Update only if subject UUID is less than object UUID.
         if (this.subject.uuid < this.object.uuid) {
             this.relationship.update();
         }
+        
+        this.alignment.update(this.relationship);
     }
 
     get coresidenceFraction(): number {
@@ -163,24 +161,14 @@ export class Relationship {
         this.coresidenceFraction_ = this.clan1.settlement === this.clan2.settlement
             ? Math.min(this.clan1.residenceFraction, this.clan2.residenceFraction)
             : 0;
-
-        for (const interaction of this.interactionChains) {
-            interaction.update(this.coresidenceFraction_);
-        }
     }
 }
 
 // A typed chain of interactions between two clans.
 export abstract class InteractionChain {
-    constructor(
-        readonly name: string,
-    ) {
-    }
-
+    abstract readonly name: string;
+    abstract alignmentEffect(subject: Clan, object: Clan, relationship: Relationship): number;
     abstract clone(): InteractionChain;
-    abstract update(coresidenceFraction: number): void;
-
-    abstract get alignmentEffect(): number;
 }
 
 // A relationship that includes:
@@ -189,46 +177,29 @@ export abstract class InteractionChain {
 // - Aid when needed
 // - Expectation of reciprocity
 export class Friends extends InteractionChain {
-    private alignmentEffect_ = 0.25;
-
-    constructor() {
-        super('Friends');
-    }
+    readonly name = 'Friends';
 
     clone() {
         return new Friends();
     }
 
-    // TODO - See if we can avoid having any state in these
-    update(coresidenceFraction: number) {
-        this.alignmentEffect_ = 0.25;
-    }
-
-    get alignmentEffect(): number {
-        return this.alignmentEffect_;
+    alignmentEffect(subject: Clan, object: Clan, relationship: Relationship): number {
+        return 0.1;
     }
 }
 
 export class Neighbors extends InteractionChain {
-    private alignmentEffect_ = 0.01;
-
-    constructor() {
-        super('Neighbors');
-    }
+    readonly name = 'Neighbors';
 
     clone() {
         return new Neighbors();
     }
 
-    update(coresidenceFraction: number) {
+    alignmentEffect(subject: Clan, object: Clan, relationship: Relationship): number {
         // There is a small alignment effect for regular neighbors who
         // live near each other. If they don't live together, we'll still
         // give them a tiny bump, but not much.
-        this.alignmentEffect_ = Math.max(0.01, coresidenceFraction * 0.1);
-    }
-
-    get alignmentEffect(): number {
-        return this.alignmentEffect_;
+        return Math.max(0.01, 0.05 * relationship.coresidenceFraction);
     }
 }
 
@@ -240,7 +211,6 @@ export class Alignment extends CalcBase {
         readonly object: Clan
     ) {
         super();
-        this.update();
     }
 
     clone(): Alignment {
@@ -250,11 +220,12 @@ export class Alignment extends CalcBase {
         return a;
     }
 
-    update() {
+    update(relationship: Relationship) {
         this.items['Kinship'] = this.subject.kinshipTo(this.object);
         this.items['Marriage'] = this.subject.marriagePartners.get(this.object) ?? 0;
-        for (const interactionChain of this.subject.relationships.get(this.object)?.interactionChains ?? []) {
-            this.items[interactionChain.name] = interactionChain.alignmentEffect;
+        for (const interactionChain of relationship.interactionChains) {
+            this.items[interactionChain.name] = 
+                interactionChain.alignmentEffect(this.subject, this.object, relationship);
         }
         if (this.subject !== this.object) {
             this.items['Random'] = normal(0, 0.1);
