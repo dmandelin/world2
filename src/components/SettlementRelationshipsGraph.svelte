@@ -6,6 +6,7 @@
     import { colorInterpolator } from '../model/lib/basics';
     import { SkillDef, SkillDefs } from '../model/people/skills';
     import { Clans } from '../model/people/clans';
+    import { Friends } from '../model/people/relationships';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
@@ -71,6 +72,17 @@
             }
             for (const cadet of clan.cadets) {
                 yield [cadet, '<', clan.kinshipTo(cadet), DEFAULT_RELATIONSHIP_COLOR];
+            }
+        }
+    }
+
+    class FriendshipRelationshipDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
+            console.log(`Friend relationships for ${clan.name} ${clan.uuid}`);
+            console.log(clan.relationships);
+            for (const relationship of clan.relationships.withInteractionChain(Friends)) {
+                console.log(`  ${relationship.object.name} ${relationship.object.uuid} (${relationship.cooperationLevel})`);
+                yield [relationship.object, '-', relationship.cooperationLevel, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
@@ -167,6 +179,10 @@
                     color,
                     directed: direction !== '-',
                 });
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const other = lines[i];
+                    //if (other.key === lines[i].key) debugger;
+                }
             }
         }
 
@@ -291,6 +307,7 @@
     <ButtonPanel config={{buttons: [
         { label: "M", tooltip: "Marriage relationships", data: new MarriageRelationshipDisplayOption() },
         { label: "K", tooltip: "Kinship relationships", data: new KinshipRelationshipDisplayOption() },
+        { label: "F", tooltip: "Friendship relationships", data: new FriendshipRelationshipDisplayOption() },
         { label: "A", tooltip: "Alignment", data: new AlignmentDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>

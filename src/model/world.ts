@@ -15,7 +15,7 @@ import { Year } from "./records/year";
 import { marry } from "./people/marriage";
 import { log, loggingEnabled, setExemplarSettlementUUID } from "./lib/debug";
 import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
-import { Neighbors, Relationship } from "./people/relationships";
+import { Friends, Neighbors, Relationship } from "./people/relationships";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -358,17 +358,45 @@ export class World implements NoteTaker {
             }
         }
 
-        // Update the individual relationships. Note that the two clans share
-        // the same Relationship instance, so we should only update it once.
+        // Update friendship relations. At first we'll assume this is pretty
+        // fluid and have each clan find up to 2 non-kin friends in their
+        // local area, which can be different each turn.
+        for (const settlement of this.allSettlements) {
+            for (const c1 of settlement.clans) {
+                c1.relationships.removeAllInteractionChainsOfType(Friends);
+            }
+
+            const needs = new Map<Clan, number>();
+            let totalNeeds = 0;
+            for (const c1 of settlement.clans) {
+                needs.set(c1, 2);
+                totalNeeds += 2;
+            }
+
+            while (totalNeeds > 0) {
+                const c1 = chooseFrom(needs.keys());
+                const choices = Array.from(needs.keys()).filter(c => c !== c1);
+                if (choices.length === 0) break;
+                const c2 = chooseFrom(choices);
+                c1.relationships.ensureInteractionChainWith(c2, Friends);
+                console.log(`Forming friendship between ${c1.name} and ${c2.name} in ${settlement.name}`);
+                needs.set(c1, needs.get(c1)! - 1);
+                if (needs.get(c1)! <= 0) {
+                    needs.delete(c1);
+                }
+                needs.set(c2, needs.get(c2)! - 1);
+                if (needs.get(c2)! <= 0) {
+                    needs.delete(c2);
+                }
+                totalNeeds -= 2;
+            }
+        }
+
+        // Update the individual relationships.
         const seen = new Set<Relationship>();
         for (const settlement of this.allSettlements) {
             for (const c1 of settlement.clans) {
-                for (const [c2, relationship] of c1.relationships) {
-                    if (c1 === c2) continue;
-                    if (seen.has(relationship)) continue;
-                    relationship.update();
-                    seen.add(relationship);
-                }
+                c1.relationships.update();
             }
         }
     }

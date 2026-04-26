@@ -97,7 +97,8 @@ export function minbyWithValue<T>(arr: T[], key: (t: T) => number): [T, number] 
 }
 
 // A random element from the array. The array must not be empty.
-export function chooseFrom<T>(arr: T[], remove: boolean = false): T {
+export function chooseFrom<T>(iterable: Iterable<T>, remove: boolean = false): T {
+    const arr = Array.from(iterable);
     const i = Math.floor(Math.random() * arr.length);
     return remove ? arr.splice(i, 1)[0] : arr[i];
 }

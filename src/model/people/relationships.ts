@@ -9,43 +9,42 @@ export class CalcBase {
     value: number = 0;
 }
 
-export class Relationships implements Iterable<[Clan, Relationship]> {
-    private m: Map<Clan, Relationship> = new Map();
+export class Relationships implements Iterable<[Clan, RelationshipView]> {
+    private m: Map<Clan, RelationshipView> = new Map();
 
     constructor(readonly subject: Clan) {}
 
-    [Symbol.iterator](): Iterator<[Clan, Relationship]> {
+    [Symbol.iterator](): Iterator<[Clan, RelationshipView]> {
         return this.m.entries();
     }
 
-    get(object: Clan): Relationship | undefined {
+    get(object: Clan): RelationshipView | undefined {
         return this.m.get(object);
     }
 
-    add(object: Clan, relationship: Relationship): void {
-        this.m.set(object, relationship);
-        object.relationships.m.set(this.subject, relationship);
-    }
-
-    ensureInteractionChainWith(object: Clan, ctor: new (subject: Clan, object: Clan) => InteractionChain): void {
+    ensureInteractionChainWith(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): void {
         // Make sure a relationship exists.
-        let relationship = this.m.get(object);
-        if (!relationship) {
-            relationship = new Relationship(this.subject, object);
-            this.m.set(object, relationship);
-            object.relationships.m.set(this.subject, relationship);
+        let rv = this.m.get(object);
+        if (!rv) {
+            const r = new Relationship(this.subject, object);
+            rv = new RelationshipView(this.subject, object, r);
+            
+            this.m.set(object, rv);
+            object.relationships.m.set(
+                this.subject, 
+                new RelationshipView(object, this.subject, r));
         }
 
         // Make sure the interaction chain exists.
-        if (!relationship.interactionChains.some(interaction => interaction instanceof ctor)) {
-            relationship.interactionChains.push(new ctor(this.subject, object));
+        if (!rv.relationship.interactionChains.some(interaction => interaction instanceof ctor)) {
+            rv.relationship.interactionChains.push(new ctor(this.subject, object));
         }
     }
 
-    removeInteractionChainWith(object: Clan, ctor: new (subject: Clan, object: Clan) => InteractionChain): void {
-        const relationship = this.m.get(object);
-        if (relationship && relationship instanceof ctor) {
-            const stillHasInteractions = relationship.removeInteractionChain(ctor);
+    removeInteractionChainWith(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): void {
+        const rv = this.m.get(object);
+        if (rv) {
+            const stillHasInteractions = rv.relationship.removeInteractionChain(ctor);
             if (!stillHasInteractions) {
                 this.m.delete(object);
                 object.relationships.m.delete(this.subject);
@@ -53,15 +52,81 @@ export class Relationships implements Iterable<[Clan, Relationship]> {
         }
     }
 
+    removeAllInteractionChainsOfType(ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): void {
+        for (const [_, rv] of this.m) {
+            this.removeInteractionChainWith(rv.object, ctor);
+        }
+    }
+
+    withInteractionChain(ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): ReadonlyArray<RelationshipView> {
+        const result: RelationshipView[] = [];
+        for (const [_, rv] of this.m) {
+            if (rv.relationship.interactionChains.some(interaction => interaction instanceof ctor)) {
+                result.push(rv);
+            }
+        }
+        console.log(`Relationships with interaction chain ${ctor.name} for ${this.subject.name} ${this.subject.uuid}: ${result.map(r => r.object.name + ' ' + r.object.uuid).join(', ')}`);
+        console.log(result);
+        return result;
+    }
+
+    // Initialize this clan's relationships to be a copy of another clan's relationships.
+    // This should only be called on a fresh Relationships.
+    initializeFrom(other: Relationships): void {
+        for (const [object, rv] of other) {
+            const r = rv.relationship.cloneFor(this.subject, object);
+            const newRv = new RelationshipView(this.subject, object, r);
+            this.m.set(object, newRv);
+            object.relationships.m.set(this.subject, new RelationshipView(object, this.subject, r));
+        }
+    }
+
+
     update() {
-        for (const relationship of this.m.values()) {
-            relationship.update();
+        for (const rv of this.m.values()) {
+            rv.update();
         }
     }
 
     alignmentToward(object: Clan): number {
-        const relationship = this.m.get(object);
-        return relationship ? relationship.alignment.value : 0;
+        const rv = this.m.get(object);
+        return rv ? rv.alignment.value : 0;
+    }
+}
+
+// One clan's view of its relationship to another clan.
+// - Properties are values for the directed relations from subject to object
+// - The Relationship object carries undirected shared information about the
+//   relationship.
+export class RelationshipView {
+    alignment: Alignment;
+    stance: Stance = Stance.Generous;
+
+    constructor(readonly subject: Clan, readonly object: Clan, readonly relationship: Relationship) {
+        this.alignment = new Alignment(subject, object);
+    }
+
+    update() {
+        this.alignment.update();
+
+        // Hack to make sure we update each relationship only once, assuming we update
+        // all RelationshipViews: Update only if subject UUID is less than object UUID.
+        if (this.subject.uuid < this.object.uuid) {
+            this.relationship.update();
+        }
+    }
+
+    get coresidenceFraction(): number {
+        return this.relationship.coresidenceFraction;
+    }
+
+    // TODO - Do something real with this
+    get cooperationLevel(): number {
+        return 0.8;
+    }
+
+    get interactionChains(): InteractionChain[] {
+        return this.relationship.interactionChains;
     }
 }
 
@@ -71,46 +136,21 @@ export enum Stance {
 };
 
 export class Relationship {
+    interactionChains: InteractionChain[] = [];
     private coresidenceFraction_ = 0;
 
-    interactionChains: InteractionChain[] = [];
-    alignment: Alignment;
-
-    stance: Stance = Stance.Generous;
-
-    // Implementation notes on stance:
-    // - Turns are 20 years so we can assume clans respond to each other.
-    //   A generous clan will get burned by a stingy clan a little bit,
-    //   but will then change their behavior to protect themselves for
-    //   most of a turn.
-    // - Stance interactions:
-    //   - Generous vs Generous: both interact in high-trust ways, full
-    //     benefits.
-    //   - Stingy vs Stingy: interaction is reduced and more guarded, so
-    //     lower benefits. Could be applied at both volume and effect levels.
-    //   - Generous vs Stingy: result is similar to stingy vs stingy,
-    //     except that there is slightly more interaction and also a
-    //     small zero-sum transfer from generous to stingy.
-
-    constructor(
-        readonly subject: Clan,
-        readonly object: Clan) 
-    {
+    constructor(readonly clan1: Clan, readonly clan2: Clan) {
         this.interactionChains = [];
-        this.alignment = new Alignment(subject, object);
-    }
-
-    cloneFor(newSubject: Clan): Relationship {
-        const newRelationship = new Relationship(newSubject, this.object);
-        newRelationship.stance = this.stance;
-        newRelationship.alignment = this.alignment.clone();
-        newRelationship.interactionChains = this.interactionChains
-            .map(interaction => interaction.cloneFor(newSubject));
-        return newRelationship;
     }
 
     get coresidenceFraction(): number {
         return this.coresidenceFraction_;
+    }
+
+    cloneFor(newSubject: Clan, newObject: Clan): Relationship {
+        const r = new Relationship(newSubject, newObject);
+        r.interactionChains = this.interactionChains.map(interaction => interaction.clone());
+        return r;
     }
 
     // Returns whether there are still interactions left.
@@ -120,23 +160,12 @@ export class Relationship {
     }
 
     update() {
-        this.coresidenceFraction_ = this.subject.settlement === this.object.settlement
-            ? Math.min(this.subject.residenceFraction, this.object.residenceFraction)
+        this.coresidenceFraction_ = this.clan1.settlement === this.clan2.settlement
+            ? Math.min(this.clan1.residenceFraction, this.clan2.residenceFraction)
             : 0;
 
         for (const interaction of this.interactionChains) {
             interaction.update(this.coresidenceFraction_);
-        }
-        this.alignment.update();
-    }
-
-    get cooperationLevel(): number {
-        if (this.alignment.value > 0) {
-            return 0.4 + 0.6 * this.alignment.value;
-        } else if (this.alignment.value > -0.2) {
-            return 2 * (this.alignment.value + 0.2);
-        } else {
-            return 1 / .8 * (this.alignment.value + 0.2);
         }
     }
 }
@@ -145,26 +174,50 @@ export class Relationship {
 export abstract class InteractionChain {
     constructor(
         readonly name: string,
-        readonly subject: Clan,
-        readonly object: Clan,
     ) {
     }
 
-    abstract cloneFor(newSubject: Clan): InteractionChain;
+    abstract clone(): InteractionChain;
     abstract update(coresidenceFraction: number): void;
 
     abstract get alignmentEffect(): number;
 }
 
+// A relationship that includes:
+// - Regular visits
+// - Gift exchange
+// - Aid when needed
+// - Expectation of reciprocity
+export class Friends extends InteractionChain {
+    private alignmentEffect_ = 0.25;
+
+    constructor() {
+        super('Friends');
+    }
+
+    clone() {
+        return new Friends();
+    }
+
+    // TODO - See if we can avoid having any state in these
+    update(coresidenceFraction: number) {
+        this.alignmentEffect_ = 0.25;
+    }
+
+    get alignmentEffect(): number {
+        return this.alignmentEffect_;
+    }
+}
+
 export class Neighbors extends InteractionChain {
     private alignmentEffect_ = 0.01;
 
-    constructor(subject: Clan, object: Clan) {
-        super('Neighbors', subject, object);
+    constructor() {
+        super('Neighbors');
     }
 
-    cloneFor(newSubject: Clan): Neighbors {
-        return new Neighbors(newSubject, this.object);
+    clone() {
+        return new Neighbors();
     }
 
     update(coresidenceFraction: number) {

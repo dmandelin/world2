@@ -235,6 +235,7 @@ x   For the current primary food security benefit, count only defined
     relationships: kin and friends
 *   Add friends relationship. With hunter-gatherers that can be quite
     fluid; for farming it will usually be with co-villagers
+    x   Initially seed some random local relationships
     *   Friends relationships requires gifts and visits
     *   Extend kin relationships to also take effect when distant with
         gifts and visits
@@ -243,6 +244,12 @@ x   For the current primary food security benefit, count only defined
         be maintained, partially from time taken, partially from ability
         to correctly track and agree on whether they're keeping up their
         end
+    *   Add option to make friends relationships more permanent, but
+        this is predicated on clans being more stable
+    *   Extend food security help to take place across settlements
+*   Somehow add marriage ties and have those work sort of like friends
+*   Make marriage and friends not add up too much in alignment as there
+    would probably be some overlap in the relationship
 *   Make goodwill have some impact on effectiveness and fairness of
     food sharing relationships
 *   Implement neighbor sharing norm, with choices:
