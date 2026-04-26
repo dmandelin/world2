@@ -4,7 +4,7 @@
     import { sortedByKey } from "../model/lib/basics";
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
-    import { Stance, type Relationship } from "../model/people/relationships";
+    import { MarriagePartners, RelationshipView, Stance, type Relationship } from "../model/people/relationships";
     import type { SettlementDTO } from "../model/records/dtos";
     import type { Snippet } from "svelte";
     import { type Table, type TableColumn, CrossTab, SingleRecordTable } from "./tables/tables2";
@@ -74,13 +74,13 @@
     }
 
     // TODO - Remove
-    function buildInteractionVolumeCellTooltip(r: Relationship): Table<string, string, [number]> {
+    function buildInteractionVolumeCellTooltip(r: RelationshipView): Table<string, string, [number]> {
         return new SingleRecordTable({
             'Interaction Volume': 1
         });
     }
 
-    function buildAlignmentCellTooltip(r: Relationship): Table<string, string, [number]> {
+    function buildAlignmentCellTooltip(r: RelationshipView): Table<string, string, [number]> {
         const d = r.alignment;
         return new SingleRecordTable(d.items);
     }
@@ -123,13 +123,13 @@ n/a
         {#each clans as c}
         <div>
             <h4 style="color: {c.color}">{c.name}</h4>
-            {#each sortedByKey(c.marriagePartners, ([clan, r]) => -r) as [clan, r]}
+            {#each sortedByKey(c.relationships.withInteractionChain(MarriagePartners), ([rv, ic]) => -rv.relatedness) as [rv, ic]}
                 <div>
-                    {pct(r)}: 
-                    <EntityLink entity={clan} />
+                    {pct(rv.relatedness)}: 
+                    <EntityLink entity={rv.object} />
                     of
-                    <EntityLink entity={clan.settlement} />
-                    {#if clan.settlement.parent}(<EntityLink entity={clan.settlement.parent} />){/if}
+                    <EntityLink entity={rv.object.settlement} />
+                    {#if rv.object.settlement.parent}(<EntityLink entity={rv.object.settlement.parent} />){/if}
                 </div>
             {/each}
         </div>

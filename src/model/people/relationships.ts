@@ -22,7 +22,7 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         return this.m.get(object);
     }
 
-    ensureInteractionChainWith(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): void {
+    ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T): RelationshipView {
         // Make sure a relationship exists.
         let rv = this.m.get(object);
         if (!rv) {
@@ -36,12 +36,15 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         }
 
         // Make sure the interaction chain exists.
-        if (!rv.relationship.interactionChains.some(interaction => interaction instanceof ctor)) {
-            rv.relationship.interactionChains.push(new ctor(this.subject, object));
+        let interaction = rv.relationship.interactionChains.find(interaction => interaction instanceof ctor) as T | undefined;
+        if (!interaction) {
+            interaction = new ctor(this.subject, object);
+            rv.relationship.interactionChains.push(interaction);
         }
+        return rv;
     }
 
-    removeInteractionChainWith(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): void {
+    removeInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T): void {
         const rv = this.m.get(object);
         if (rv) {
             const stillHasInteractions = rv.relationship.removeInteractionChain(ctor);
@@ -52,17 +55,20 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         }
     }
 
-    removeAllInteractionChainsOfType(ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): void {
+    removeAllInteractionChainsOfType<T extends InteractionChain>(ctor: new (clan1: Clan, clan2: Clan) => T): void {
         for (const [_, rv] of this.m) {
             this.removeInteractionChainWith(rv.object, ctor);
         }
     }
 
-    withInteractionChain(ctor: new (clan1: Clan, clan2: Clan) => InteractionChain): ReadonlyArray<RelationshipView> {
-        const result: RelationshipView[] = [];
+    withInteractionChain<T extends InteractionChain>(ctor: new (clan1: Clan, clan2: Clan) => T): 
+            ReadonlyArray<[RelationshipView, T]> {
+        const result: [RelationshipView, T][] = [];
         for (const [_, rv] of this.m) {
-            if (rv.relationship.interactionChains.some(interaction => interaction instanceof ctor)) {
-                result.push(rv);
+            for (const interaction of rv.relationship.interactionChains) {
+                if (interaction instanceof ctor) {
+                    result.push([rv, interaction]);
+                }
             }
         }
         return result;
@@ -100,6 +106,9 @@ export class RelationshipView {
     alignment: Alignment;
     stance: Stance = Stance.Generous;
 
+    // Relatedness by marriage, 0-1.
+    relatedness = 0;
+
     constructor(readonly subject: Clan, readonly object: Clan, readonly relationship: Relationship) {
         this.alignment = new Alignment(subject, object);
     }
@@ -111,7 +120,7 @@ export class RelationshipView {
             this.relationship.update();
         }
         
-        this.alignment.update(this.relationship);
+        this.alignment.update(this);
     }
 
     get coresidenceFraction(): number {
@@ -167,8 +176,20 @@ export class Relationship {
 // A typed chain of interactions between two clans.
 export abstract class InteractionChain {
     abstract readonly name: string;
-    abstract alignmentEffect(subject: Clan, object: Clan, relationship: Relationship): number;
+    abstract alignmentEffect(rv: RelationshipView): number;
     abstract clone(): InteractionChain;
+}
+
+export class MarriagePartners extends InteractionChain {
+    readonly name = 'Marriage';
+
+    clone() {
+        return new MarriagePartners();
+    }
+
+    alignmentEffect(rv: RelationshipView): number {
+        return rv.relatedness;
+    }
 }
 
 // A relationship that includes:
@@ -183,7 +204,7 @@ export class Friends extends InteractionChain {
         return new Friends();
     }
 
-    alignmentEffect(subject: Clan, object: Clan, relationship: Relationship): number {
+    alignmentEffect(rv: RelationshipView): number {
         return 0.1;
     }
 }
@@ -195,11 +216,11 @@ export class Neighbors extends InteractionChain {
         return new Neighbors();
     }
 
-    alignmentEffect(subject: Clan, object: Clan, relationship: Relationship): number {
+    alignmentEffect(rv: RelationshipView): number {
         // There is a small alignment effect for regular neighbors who
         // live near each other. If they don't live together, we'll still
         // give them a tiny bump, but not much.
-        return Math.max(0.01, 0.05 * relationship.coresidenceFraction);
+        return Math.max(0.01, 0.05 * rv.coresidenceFraction);
     }
 }
 
@@ -220,12 +241,11 @@ export class Alignment extends CalcBase {
         return a;
     }
 
-    update(relationship: Relationship) {
+    update(rv: RelationshipView) {
         this.items['Kinship'] = this.subject.kinshipTo(this.object);
-        this.items['Marriage'] = this.subject.marriagePartners.get(this.object) ?? 0;
-        for (const interactionChain of relationship.interactionChains) {
+        for (const interactionChain of rv.relationship.interactionChains) {
             this.items[interactionChain.name] = 
-                interactionChain.alignmentEffect(this.subject, this.object, relationship);
+                interactionChain.alignmentEffect(rv);
         }
         if (this.subject !== this.object) {
             this.items['Random'] = normal(0, 0.1);

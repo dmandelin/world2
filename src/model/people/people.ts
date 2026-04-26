@@ -1,4 +1,3 @@
-import { AlignmentCalc } from "./alignment";
 import { Annals } from "../annals";
 import { clamp, remove } from "../lib/basics";
 import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
@@ -97,9 +96,6 @@ export class Clan implements TradePartner {
 
     parent: Clan|undefined;
     cadets: Clan[] = [];
-    // Maps a clan to a relatedness factor based on the marriage history of
-    // the two clans.
-    readonly marriagePartners: Map<Clan, number> = new Map();
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
 
@@ -109,8 +105,6 @@ export class Clan implements TradePartner {
     private prestigeViews_ = new Map<Clan, PrestigeCalc>();
     // Local prestige-generated share of influence.
     influence = 0;
-    // This clan's assessment of others as helpful or harmful.
-    private alignmentViews_ = new Map<Clan, AlignmentCalc>(); 
 
     readonly rites: Rites; // TODO - remove if not used
     ritualGoodsUsage: 'Private'|'Communal' = 'Private';
@@ -271,14 +265,6 @@ export class Clan implements TradePartner {
         return this.prestigeViews_;
     }
 
-    alignmentViewOf(other: Clan): AlignmentCalc {
-        return this.alignmentViews_.get(other) ?? new AlignmentCalc(this, other);
-    }
-
-    get alignmentViews(): Map<Clan, AlignmentCalc> {
-        return this.alignmentViews_;
-    }
-
     get respectMap(): Map<Clan, RespectCalc> {
         return this.respectMap_;
     }
@@ -303,11 +289,12 @@ export class Clan implements TradePartner {
             this.createOrUpdateRespectFor(other, known, interactionFactor);
         }
 
+        // TODO - Replace and delete
         // We have a view on relatives by marriage who are not neighbors,
         // but don't interact as much.
-        for (const [other, relatedness] of this.marriagePartners.entries()) {
-            this.createOrUpdateRespectFor(other, known, relatedness / 2);
-        }
+        // for (const [other, relatedness] of this.marriagePartners.entries()) {
+        //     this.createOrUpdateRespectFor(other, known, relatedness / 2);
+        // }
 
         // Remove respect calcs for clans we no longer know about.
         for (const other of this.respectMap_.keys()) {
@@ -345,27 +332,6 @@ export class Clan implements TradePartner {
     finishUpdatingPrestige() {
         for (const clan of this.settlement!.clans) {
             this.prestigeViews_.get(clan)!.commitUpdate();
-        }
-    }
-
-    startUpdatingAlignment() {
-        for (const clan of this.settlement!.clans) {
-            if (!this.alignmentViews_.has(clan)) {
-                this.alignmentViews_.set(clan, new AlignmentCalc(this, clan));
-            }
-            this.alignmentViews_.get(clan)!.startUpdate();
-        }
-
-        for (const clan of this.alignmentViews_.keys()) {
-            if (!this.settlement?.clans.includes(clan)) {
-                this.alignmentViews_.delete(clan);
-            }
-        }
-    }
-
-    finishUpdatingAlignment() {
-        for (const clan of this.settlement!.clans) {
-            this.alignmentViews_.get(clan)!.commitUpdate();
         }
     }
 

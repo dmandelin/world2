@@ -6,7 +6,7 @@
     import { colorInterpolator } from '../model/lib/basics';
     import { SkillDef, SkillDefs } from '../model/people/skills';
     import { Clans } from '../model/people/clans';
-    import { Friends } from '../model/people/relationships';
+    import { Friends, MarriagePartners } from '../model/people/relationships';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
@@ -59,8 +59,8 @@
 
     class MarriageRelationshipDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            for (const [partner, r] of clan.marriagePartners) {
-                yield [partner, '-', r, DEFAULT_RELATIONSHIP_COLOR];
+            for (const [rv, _] of clan.relationships.withInteractionChain(MarriagePartners)) {
+                yield [rv.object, '-', rv.relatedness, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
@@ -78,11 +78,8 @@
 
     class FriendshipRelationshipDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            console.log(`Friend relationships for ${clan.name} ${clan.uuid}`);
-            console.log(clan.relationships);
-            for (const relationship of clan.relationships.withInteractionChain(Friends)) {
-                console.log(`  ${relationship.object.name} ${relationship.object.uuid} (${relationship.cooperationLevel})`);
-                yield [relationship.object, '-', relationship.cooperationLevel, DEFAULT_RELATIONSHIP_COLOR];
+            for (const [rv, _] of clan.relationships.withInteractionChain(Friends)) {
+                yield [rv.object, '-', rv.cooperationLevel, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }

@@ -2,7 +2,6 @@ import { product, sortedByKey, sumFun } from "../lib/basics";
 import { populationAverage } from "../lib/modelbasics";
 import { TradeGood, TradeGoods } from "../trade";
 import { type ClanSkills, type SkillDef, SkillDefs } from "../people/skills";
-import type { AlignmentCalc } from "../people/alignment";
 import type { Clan } from "../people/people";
 import type { CondorcetCalc } from "../people/clans";
 import type { Consumption } from "../people/consumption";
@@ -29,10 +28,6 @@ import type { World } from "../world";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
-}
-
-function alignmentDTO(clan: Clan) {
-    return new Map(clan.alignmentViews);
 }
 
 export type TradeRelationshipsDTO = {
@@ -136,7 +131,6 @@ export class ClanDTO {
 
     cadets: Clan[];
     parent: Clan|undefined;
-    marriagePartners: Map<Clan, number>;
     relationships: Relationships;
     tradeRelationships: TradeRelationshipsDTO[];
     rites: Rites;
@@ -144,7 +138,6 @@ export class ClanDTO {
 
     respect: Map<Clan, RespectCalc>;
     prestige: Map<Clan, PrestigeCalc>;
-    alignment: Map<Clan, AlignmentCalc>;
     averageRespect: number;
     averagePrestige: number;
     influence: number;
@@ -183,7 +176,6 @@ export class ClanDTO {
         this.relationships = clan.relationships;
         this.respect = clan.respectMap;
         this.prestige = prestigeDTO(clan);
-        this.alignment = alignmentDTO(clan);
         this.averageRespect = clan.averageRespect;
         this.averagePrestige = clan.averagePrestige;
         this.influence = clan.influence;
@@ -195,7 +187,6 @@ export class ClanDTO {
 
         this.cadets = clan.cadets;
         this.parent = clan.parent;
-        this.marriagePartners = clan.marriagePartners;
         this.rites = clan.rites.clone();
         this.migrationPlan = clan.migrationPlan;
         this.slices = clan.slices;

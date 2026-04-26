@@ -62,7 +62,9 @@ function informationFromRelationships(respector: Clan, clan: Clan): number {
     if (respector === clan) {
         base = 1;
     } else {
-        base = (respector.marriagePartners.get(clan) ?? 0);
+        // TODO - remove
+        // base = (respector.marriagePartners.get(clan) ?? 0);
+        base = 0.5
     }
     
     let proximityFactor;

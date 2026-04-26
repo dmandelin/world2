@@ -83,7 +83,6 @@ export class SettlementCluster {
         for (const s of this.settlements) {
             s.clans.updateSeniority();
             s.clans.updatePrestigeViews();
-            s.clans.updateAlignmentViews();
 
             for (const clan of s.clans) {
                 clan.updateRespect();

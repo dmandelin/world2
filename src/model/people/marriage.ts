@@ -2,6 +2,7 @@ import { remove } from "../lib/basics";
 import { weightedRandInt } from "../lib/distributions";
 import type { World } from "../world";
 import type { Clan } from "./people";
+import { MarriagePartners } from "./relationships";
 
 // Marry people in the 20-40 age range in the given region.
 //
@@ -25,7 +26,8 @@ import type { Clan } from "./people";
 // but there could be some variable factors about clans.
 export function marry(world: World): void {
     const clans = world.allClans;
-    
+    const pairingCounts = new PairingCounts();
+
     const potentialHusbands = clans.map(clan => {
         const count = clan.slices[1][0];
         return new PotentialPartnerSet(clan, clan.averagePrestige, count);
@@ -63,6 +65,7 @@ export function marry(world: World): void {
 
             chosenHusbandSet.addMarriage(wifeSet.clan);
             wifeSet.addMarriage(chosenHusbandSet.clan);
+            pairingCounts.add(chosenHusbandSet.clan, wifeSet.clan);
 
             if (chosenHusbandSet.available === 0) {
                 remove(potentialHusbands, chosenHusbandSet);
@@ -71,53 +74,37 @@ export function marry(world: World): void {
         }
     }
 
-    // Move wives to their husbands' clans.
+    // Update clan marriage relationships:
+    // - New marriages increase thickness by the fraction of the generation
+    //   married to that clan.
+    // - Existing marriage relationships decay. They should cease to have
+    //   any effect within 3-6 generations if there are no new marriages.
+    for (const c1 of clans) {
+        for (const [rv, ic] of c1.relationships.withInteractionChain(MarriagePartners)) {
+            rv.relatedness *= 0.5;
+            if (rv.relatedness < 0.03) {
+                c1.relationships.removeInteractionChainWith(rv.object, MarriagePartners);
+            }
+        }
+    }
+    for (const [c1, m] of pairingCounts.counts) {
+        for (const [c2, count] of m) {
+            const rv = c1.relationships.ensureInteractionChainWith(c2, MarriagePartners);
+            rv.relatedness += count / c1.population;
+            if (rv.relatedness > 1) {
+                rv.relatedness = 1;
+            }
+        }
+    }
+
+    // Move wives to their husbands' clans. We do the moves last so that population
+    // counts are fixed during the computations above.
     for (const wifeSet of potentialWives) {
         for (const [husbandClan, count] of wifeSet.marriedTo) {
             wifeSet.clan.slices[1][0] -= count;
             wifeSet.clan.population -= count;
             husbandClan.slices[1][0] += count;
             husbandClan.population += count;
-        }
-    }
-
-    // Update relatedness:
-    // - Maintain Clan.marriagePartners as moving averages of how many
-    //   spouses are from each clan.
-    const husbandsMap = new Map<Clan, PotentialPartnerSet>();
-    for (const husbandSet of potentialHusbands) {
-        husbandsMap.set(husbandSet.clan, husbandSet);
-    }
-    const wivesMap = new Map<Clan, PotentialPartnerSet>();
-    for (const wifeSet of potentialWives) {
-        wivesMap.set(wifeSet.clan, wifeSet);
-    }
-    for (const clan of clans) {
-        const husbandSet = husbandsMap.get(clan);
-        const wifeSet = wivesMap.get(clan);
-        const totalSpouses = (husbandSet?.taken ?? 0) + (wifeSet?.taken ?? 0);
-        // Compute marriage relatedness for this generation.
-        const newGenerationRelatedness = new Map<Clan, number>();
-        if (husbandSet) {
-            for (const [spouseClan, count] of husbandSet.marriedTo) {
-                newGenerationRelatedness.set(spouseClan, count / totalSpouses);
-            }
-        }
-        if (wifeSet) {
-            for (const [spouseClan, count] of wifeSet.marriedTo) {
-                newGenerationRelatedness.set(spouseClan, (newGenerationRelatedness.get(spouseClan) ?? 0) + count / totalSpouses);
-            }
-        }
-        // Average into existing relatedness with a 50% weight.
-        for (const spouseClan of new Set([...clan.marriagePartners.keys(), ...newGenerationRelatedness.keys()])) {
-            const existing = clan.marriagePartners.get(spouseClan) ?? 0;
-            const added = newGenerationRelatedness.get(spouseClan) ?? 0;
-            const updated = 0.5 * existing + 0.5 * added;
-            if (updated >= 0.03) {
-                clan.marriagePartners.set(spouseClan, updated);
-            } else {
-                clan.marriagePartners.delete(spouseClan);
-            }
         }
     }
 }
@@ -135,4 +122,22 @@ class PotentialPartnerSet {
     }
 
     get available() { return this.count - this.taken; }
+}
+
+class PairingCounts {
+    counts: Map<Clan, Map<Clan, number>> = new Map();
+
+    add(clan1: Clan, clan2: Clan, count: number = 1) {
+        this.addOneWay(clan1, clan2, count);
+        this.addOneWay(clan2, clan1, count);
+    }
+
+    addOneWay(subject: Clan, object: Clan, count: number) {
+        let m = this.counts.get(subject);
+        if (!m) {
+            m = new Map();
+            this.counts.set(subject, m);
+        }
+        m.set(object, (m.get(object) ?? 0) + count);
+    }
 }
