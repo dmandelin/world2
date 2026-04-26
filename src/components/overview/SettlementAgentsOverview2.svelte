@@ -157,6 +157,50 @@
                 formatFn: (v: number) => signed(v, 0),
             }]);
     }
+
+    function clanStrongTiesTooltipTable(clan: ClanDTO) {
+        return new IterableTable(
+            clan.relationships.strongTies(),
+            rv => rv.object.name,
+             _ => true,
+             [{
+                data: 'r',
+                label: 'r',
+                valueFn: rv => rv.relatedness,
+                formatFn: (v: number) => pct(v, 0),
+            },{
+                data: 'Res',
+                label: 'Res',
+                valueFn: rv => rv.coresidenceFraction,
+                formatFn: (v: number) => pct(v, 0),
+            },{
+                data: 'Kind',
+                label: 'Kind',
+                valueFn: rv => rv.interactionChains.map(ic => ic.name).join(', '),
+            }]);
+    }
+
+    function clanWeakTiesTooltipTable(clan: ClanDTO) {
+        return new IterableTable(
+            clan.relationships.weakTies(),
+            rv => rv.object.name,
+             _ => true,
+             [{
+                data: 'r',
+                label: 'r',
+                valueFn: rv => rv.relatedness,
+                formatFn: (v: number) => pct(v, 0),
+            },{
+                data: 'Res',
+                label: 'Res',
+                valueFn: rv => rv.coresidenceFraction,
+                formatFn: (v: number) => pct(v, 0),
+            },{
+                data: 'Kind',
+                label: 'Kind',
+                valueFn: rv => rv.interactionChains.map(ic => ic.name).join(', '),
+            }]);
+    }
 </script>
 
 <style>
@@ -317,6 +361,7 @@
                     {@render deltaCell(cs, c => c.lastPopulationChange.drModifier, pct)}
                 {/each}
             </tr>
+            <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
                 <td>Food</td>
                 {#each csnaps as cs}
@@ -378,6 +423,35 @@
                         </Tooltip>
                     </td>
                     {@render deltaCell(cs, c => c.happiness.subsistenceAppeal, signed)}
+                {/each}
+            </tr>
+            <tr><td style="height: 0.5em"></td></tr>
+            <tr class="actual">
+                <td>Strong ties</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        <Tooltip>
+                            {cs.e.relationships.strongTies().length}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanStrongTiesTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => cs.e.relationships.strongTies().length, signed)}
+                {/each}
+            </tr>
+            <tr class="actual">
+                <td>Weak ties</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        <Tooltip>
+                            {cs.e.relationships.weakTies().length}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanWeakTiesTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => cs.e.relationships.weakTies().length, signed)}
                 {/each}
             </tr>
             <tr class="actual">

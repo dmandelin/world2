@@ -234,9 +234,12 @@ Norms:
 x   For the current primary food security benefit, count only defined
     relationships: kin and friends
 x   Refactor marriage to be a standard relationship
+*   Food security benefits for marriage relationships
 *   Refactor kin to be a standard relationship
+*   Food security benefits for kin relationships
 *   Show relationships in a standard order in alignment view
-*   Show relationship counts in main panel
+x   Show relationship counts in main panel
+*   Have clans absorb relationships when they merge
 *   Add friends relationship. With hunter-gatherers that can be quite
     fluid; for farming it will usually be with co-villagers
     x   Initially seed some random local relationships

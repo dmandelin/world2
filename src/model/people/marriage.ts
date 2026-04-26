@@ -94,6 +94,9 @@ export function marry(world: World): void {
             if (rv.relatedness > 1) {
                 rv.relatedness = 1;
             }
+            if (rv.relatedness < 0.03) {
+                c1.relationships.removeInteractionChainWith(rv.object, MarriagePartners);
+            }
         }
     }
 

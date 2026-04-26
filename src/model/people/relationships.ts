@@ -22,6 +22,26 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         return this.m.get(object);
     }
 
+    strongTies(): RelationshipView[] {
+        const result: RelationshipView[] = [];
+        for (const [_, rv] of this.m) {
+            if (rv.relationship.interactionChains.some(ic => !ic.isWeakTie)) {
+                result.push(rv);
+            }
+        }
+        return result;
+    }
+
+    weakTies(): RelationshipView[] {
+        const result: RelationshipView[] = [];
+        for (const [_, rv] of this) {
+            if (rv.relationship.interactionChains.every(ic => ic.isWeakTie)) {
+                result.push(rv);
+            }
+        }
+        return result;
+    }
+
     ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T): RelationshipView {
         // Make sure a relationship exists.
         let rv = this.m.get(object);
@@ -176,12 +196,14 @@ export class Relationship {
 // A typed chain of interactions between two clans.
 export abstract class InteractionChain {
     abstract readonly name: string;
+    abstract readonly isWeakTie: boolean;
     abstract alignmentEffect(rv: RelationshipView): number;
     abstract clone(): InteractionChain;
 }
 
 export class MarriagePartners extends InteractionChain {
     readonly name = 'Marriage';
+    readonly isWeakTie = false;
 
     clone() {
         return new MarriagePartners();
@@ -199,6 +221,7 @@ export class MarriagePartners extends InteractionChain {
 // - Expectation of reciprocity
 export class Friends extends InteractionChain {
     readonly name = 'Friends';
+    readonly isWeakTie = false;
 
     clone() {
         return new Friends();
@@ -211,6 +234,7 @@ export class Friends extends InteractionChain {
 
 export class Neighbors extends InteractionChain {
     readonly name = 'Neighbors';
+    readonly isWeakTie = true;
 
     clone() {
         return new Neighbors();
