@@ -162,6 +162,7 @@ export class PopulationChangeBuilder {
         // state, we are in between with 4-5 moves per turn, so maybe each
         // move is worth about a 5% difference. That would be too high with
         // 10 moves, but for our actual numbers it's close enough.
+        // Exactly how much effect mobility has on birth rates
         const migrationBrModifier = clamp(1 - 0.05 * this.clan.settlement.forcedMigrations, 0.5, 1);
         this.brModifiers.push(new PopulationChangeModifier(
             'Migration', this.clan.settlement.forcedMigrations, migrationBrModifier));

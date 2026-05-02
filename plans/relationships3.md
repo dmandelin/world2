@@ -231,6 +231,39 @@ Norms:
 
 ## Model changes to make:
 
+*   Get food security and migration affecting birth rates properly
+    and update birth rates generally
+    *   Discussion: Birth rate factors generally
+        *   more food -> mild bonus for more energy, better health,
+            some food substitution for nursing
+        *   decision to wean early -> substantial bonus
+        *   mobility is apparently not decisive, but makes it
+            difficult to have 2 very young children at once
+        *   alloparenting -> meaningful bonus
+    *   Discussion: How to actually apply the mobility limit
+        *   The most direct route would be by starting to model
+            child care explicitly. That's more work than an abstract
+            model but perhaps we will need this eventually anyway.
+    *   Discussion: Child care model
+        *   Children can hang out while adults do local work, do
+            chores, be taken care of as a group, etc., so it doesn't
+            necessarily require a ton of people
+        *   More work required if mobile
+        *   Less work required if farming economy (where children
+            can help more with simple chores)
+        *   We can be pretty vague about initial estimates. Maybe
+            for the youth-population group, 1/3 requires lots of
+            care, 1/3 some. The babies nominally need someone with
+            them all the time, but they can be doubled up, and
+            some types of work can be done concurrently. This
+            comes out similar to our initial 1/3 ratio.
+        *   Let's say up to 10-30% modifiers for alloparenting,
+            mobility, and farming economy. This will then balance
+            with a 2x from early weaning
+    *   Changes to make
+        *   Add child care time allocation model
+        *   Include leisure in that model
+
 x   For the current primary food security benefit, count only defined
     relationships: kin and friends
 x   Refactor marriage to be a standard relationship
@@ -240,6 +273,7 @@ x   Refactor marriage to be a standard relationship
 *   Show relationships in a standard order in alignment view
 x   Show relationship counts in main panel
 *   Have clans absorb relationships when they merge
+*   Unified relationships graph
 *   Add friends relationship. With hunter-gatherers that can be quite
     fluid; for farming it will usually be with co-villagers
     x   Initially seed some random local relationships
