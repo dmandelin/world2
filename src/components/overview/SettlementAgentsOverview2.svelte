@@ -16,6 +16,7 @@
     import { safeDiv } from "../../model/lib/basics";
     import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
     import EntityLink from "../state/EntityLink.svelte";
+    import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
 
 	let { 
         settlement, 
@@ -469,6 +470,13 @@
                         </Tooltip>
                     </td>
                     {@render deltaCell(cs, c => c.happiness.socialAppeal, signed)}
+                {/each}
+            </tr>
+            <tr><td style="height: 0.5em"></td></tr>
+            <tr>
+                <td>Activities</td>
+                {#each csnaps as cs}
+                    <td colspan="2"><ClanEffortMiniBar clan={cs.e} /></td>
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>

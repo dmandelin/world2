@@ -25,6 +25,7 @@ import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
+import type { EffortAllocation } from "../decisions/effort";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -144,6 +145,7 @@ export class ClanDTO {
     
     consumption: Consumption;
     isDitching: boolean;
+    effortAllocation: EffortAllocation;
     laborAllocation: LaborAllocation;
     productivityCalcs: Map<SkillDef, ProductivityCalc>;
     productivity: number;
@@ -193,6 +195,7 @@ export class ClanDTO {
 
         this.consumption = clan.consumption.clone();
         this.isDitching = clan.isDitching;
+        this.effortAllocation = clan.effortAllocation.clone();
         this.laborAllocation = clan.laborAllocation.clone();
         this.productivityCalcs = clan.productivityCalcs;
         this.productivity = clan.agriculturalProductivity;

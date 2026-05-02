@@ -224,6 +224,10 @@ export class Settlement {
         // that can be built in much less than a turn.
         for (const clan of this.clans) clan.residenceLevel.update();
         for (const clan of this.clans) clan.updateProductivity(false);
+        // apply() creates the detailed allocation, and it should see overall
+        // productivity, because long turns give clans plenty of time to work
+        // more if needed - and they choose to.
+        for (const clan of this.clans) clan.effortAllocation.apply();
         this.resetEconomicNodes();
         this.maintain();
         this.produce();

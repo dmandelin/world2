@@ -261,8 +261,13 @@ Norms:
             mobility, and farming economy. This will then balance
             with a 2x from early weaning
     *   Changes to make
-        *   Add child care time allocation model
-        *   Include leisure in that model
+        x   Add child care + leisure time allocation model
+        *   Happiness bonus for leisure
+        *   Other bonuses for leisure
+        *   Effect of too little child care
+        *   Bonuses for extra child care
+        *   Have effort allocation impact production
+        *   Dial up production as needed to get enough
 
 x   For the current primary food security benefit, count only defined
     relationships: kin and friends

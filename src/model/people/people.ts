@@ -24,6 +24,7 @@ import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { Consumption } from "./consumption";
+import { EffortAllocation } from "../decisions/effort";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -116,6 +117,7 @@ export class Clan implements TradePartner {
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
+    effortAllocation = new EffortAllocation(this);
     laborAllocation = new LaborAllocation(this);
     readonly tradeRelationships = new Set<TradeRelationship>();
     consumption = new Consumption(this);
@@ -184,6 +186,18 @@ export class Clan implements TradePartner {
 
     get selfAndNeighbors(): Clan[] {
         return this.settlement!.clans;
+    }
+
+    get children(): number {
+        return this.slices[0][0] + this.slices[0][1];
+    }
+
+    get adults(): number {
+        return this.population - this.children;
+    }
+
+    get effort(): number {
+        return this.adults;
     }
 
     get workers(): number {
