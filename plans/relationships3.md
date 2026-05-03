@@ -262,6 +262,10 @@ Norms:
             with a 2x from early weaning
     *   Changes to make
         x   Add child care + leisure time allocation model
+        *   Debug effort allocation, we don't seem to produce enough food
+        *   Wire new production to consumption
+        *   Clean up old production code
+        *   Tooltips for new economic table
         *   Plug in new activities/production to actual models
             *   Show production output data for new nodes
             *   Plug in to consumption

@@ -3,6 +3,7 @@ import { Settlement } from '../people/settlement';
 import { TradeGood } from '../trade';
 import { SkillDefs, type SkillDef } from '../people/skills';
 import { fractionOf, sum, sumFun, weightedHarmonicMean } from '../lib/basics';
+import type { ProductionNodeReport, ProductionReport } from './productionreport';
 
 // A ProductionNode is an entity where labor, land, tools, and materials
 // can be combined to produce goods. Examples include farms, fisheries, 
@@ -66,8 +67,8 @@ export class CommonsProductionNode extends LandProductionNode {
         return this.skillDef.color;
     }
 
-    // Output for a given clan. Pure.
-    output(labor: Map<Clan, number>, clan: Clan): number {
+    // Production report for a given clan. Pure.
+    report(labor: Map<Clan, number>, clan: Clan): ProductionNodeReport {
         // - Assume output is linear in workers and land at this scale, 
         //   with both required.
         // - Assume users get equal shares of effective land.
@@ -79,13 +80,30 @@ export class CommonsProductionNode extends LandProductionNode {
         const lpMod = clan.productivity(this.skillDef);
         const lp = lpBase * lpMod;
 
-        return inputAmount * lp;
+        return {
+            land: effectiveLand,
+            labor: effectiveWorkers,
+            laborProductivityFactor: lpMod,
+            node: this,
+            amount: inputAmount * lp,
+        };
+    }
+
+    // Output for a given clan. Pure.
+    output(labor: Map<Clan, number>, clan: Clan): number {
+        return this.report(labor, clan).amount;
     }
 
     commit(labor: Map<Clan, number>): void {
         for (const clan of labor.keys()) {
-            const output = this.output(labor, clan);
-            clan.production.accept(this, output);
+            const report = this.report(labor, clan);
+            clan.production.accept(
+                this, 
+                report.land, 
+                report.labor, 
+                report.laborProductivityFactor, 
+                report.amount,
+            );
         }
     }
 }

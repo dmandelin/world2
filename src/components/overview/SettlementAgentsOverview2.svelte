@@ -572,20 +572,53 @@
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             {#each relevantProductionNodes as node}
-            <tr class="actual">
-                <td>{node.name}</td>
-            </tr>
-            <tr class="actual">
-                <td>&nbsp;Production</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        {cs.e.production2.outputForNode(node).toFixed(0)}
-                        <Tooltip>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.production2.outputForNode(node), v => v.toFixed(0))}
-                {/each}
-            </tr>
+                <tr class="actual">
+                    <td>{node.name}</td>
+                </tr>
+                <tr class="actual">
+                    <td>&nbsp;Production</td>
+                    {#each csnaps as cs}
+                        <td class="rap">
+                            {cs.e.production2.outputForNode(node).toFixed(0)}
+                            <Tooltip>
+                            </Tooltip>
+                        </td>
+                        {@render deltaCell(cs, c => c.production2.outputForNode(node), v => v.toFixed(0))}
+                    {/each}
+                </tr>
+                <tr class="actual">
+                    <td>&nbsp;Land</td>
+                    {#each csnaps as cs}
+                        <td class="rap">
+                            {cs.e.production2.forNode(node)?.land.toFixed(0) ?? 0}
+                            <Tooltip>
+                            </Tooltip>
+                        </td>
+                        {@render deltaCell(cs, c => c.production2.forNode(node)?.land ?? 0, v => v.toFixed(0))}
+                    {/each}
+                </tr>
+                <tr class="actual">
+                    <td>&nbsp;Labor</td>
+                    {#each csnaps as cs}
+                        <td class="rap">
+                            {cs.e.production2.forNode(node)?.labor.toFixed(0) ?? 0}
+                            <Tooltip>
+                            </Tooltip>
+                        </td>
+                        {@render deltaCell(cs, c => c.production2.forNode(node)?.labor ?? 0, v => v.toFixed(0))}
+                    {/each}
+                </tr>
+                <tr class="actual">
+                    <td>&nbsp;Productivity</td>
+                    {#each csnaps as cs}
+                        <td class="rap">
+                            {spct(cs.e.production2.forNode(node)?.laborProductivityFactor ?? 0)}
+                            <Tooltip>
+                            </Tooltip>
+                        </td>
+                        {@render deltaCell(cs, c => c.production2.forNode(node)?.laborProductivityFactor ?? 0, v => v.toFixed(2))}
+                    {/each}
+                </tr>
             {/each}
             <tr><td style="height: 0.5em"></td></tr>
             {#each settlement.localTradeGoods as tradeGood}

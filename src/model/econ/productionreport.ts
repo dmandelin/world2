@@ -10,13 +10,30 @@ export class ProductionReport {
         return this.nodesMap_.keys();
     }
 
-    accept(node: CommonsProductionNode, amount: number): void {
+    accept(
+        node: CommonsProductionNode, 
+        land: number, 
+        labor: number, 
+        laborProductivityFactor: number,
+        amount: number,
+    ): void {
         const existing = this.nodesMap_.get(node);
         if (existing) {
             existing.amount += amount;
         } else {
-            this.nodesMap_.set(node, { node, amount });
+            const nodeReport = {
+                land,
+                labor,
+                laborProductivityFactor,
+                node,
+                amount,
+            }
+            this.nodesMap_.set(node, nodeReport);
         }
+    }
+
+    forNode(node: ProductionNode): ProductionNodeReport|undefined {
+        return this.nodesMap_.get(node);
     }
 
     outputForNode(node: ProductionNode): number {
@@ -25,6 +42,9 @@ export class ProductionReport {
 }
 
 export type ProductionNodeReport = {
+    land: number;
+    labor: number;
+    laborProductivityFactor: number;
     node: ProductionNode;
     amount: number;
 };
