@@ -13,7 +13,7 @@ import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { marry } from "./people/marriage";
-import { log, loggingEnabled, setExemplarSettlementUUID } from "./lib/debug";
+import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
 import { Friends, Neighbors, Relationship } from "./people/relationships";
 
@@ -92,9 +92,8 @@ export class World implements NoteTaker {
     }
 
     initialize() {
-        console.log('YYY');
-        console.log(this.clusters[0].settlements);
         setExemplarSettlementUUID(this.clusters[0].settlements[0].uuid);
+        setExemplarClanUID(this.clusters[0].settlements[0].clans[0].uuid);
 
         log('World >>> Initialize')
 

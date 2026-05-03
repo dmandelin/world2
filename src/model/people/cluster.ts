@@ -9,6 +9,7 @@ import { weightedAverage } from "../lib/modelbasics";
 import { CommonsProductionNode, ProductionNode } from "../econ/productionnode";
 import { SkillDefs } from "./skills";
 import { ProductionReport } from "../econ/productionreport";
+import { isExemplarClan } from "../lib/debug";
 
 export const MILES_PER_UNIT = 0.16666667;
 
@@ -73,16 +74,6 @@ export class SettlementCluster {
         // and distribution.
         this.applyEffortAllocations();
 
-        // Dump output from new nodes so we can get an idea of how it's working
-        console.log(`New output dump for ${this.name}`);
-        for (const node of [this.fishery, this.naturalFields]) {
-            const laborMap = this.buildLaborMap(node);
-            console.log(`  ${node.name}:`, laborMap);
-            for (const clan of this.clans) {
-                console.log(`    ${clan.name}: ${node.output(laborMap, clan)}`);
-            }
-        }
-
         // Produce for the new production nodes.
         for (const clan of this.clans) clan.production = new ProductionReport(clan);
         for (const node of [this.fishery, this.naturalFields]) {
@@ -116,31 +107,23 @@ export class SettlementCluster {
         return nodeLabor;
     }
 
-    // General plan for continuing this:
-    // - Move labor allocation into overall effort allocation so that we
-    //   can step up each piece as we need it
-    // - Make new production nodes able to easily do what-if scenarios
-    // - Step up algorithm to allocate labor
-    // - Show labor type split in the UI
-    //   - Break out tooltip/zoom-in version to show more detail if needed
-    // - Show results of these production nodes in the UI
-    // - Connect output of these production nodes to consumption
-    // - Remove old production nodes
-
     // Compute actual effort allocations based on choices.
     private applyEffortAllocations(): void {
         // Each clan should get a chance to use commons, so we change
         // incrementally, but there is also a tendency for persistence,
         // so we can start from the status quo.
 
-        for (const clan of this.clans) clan.effortAllocation.applyStart();
+        for (const clan of this.clans) {
+            clan.effortAllocation.applyStart();
+        }
 
-        let allowedUpdatesRemaining = 10;
+        let allowedUpdatesRemaining = 20;
         while (allowedUpdatesRemaining--) {
             let updated = false;
             // TODO - Some sensible ordering.
             for (const clan of this.clans) {
-                if (clan.effortAllocation.applyStep(this.buildLaborMaps())) {
+                const clanUpdated = clan.effortAllocation.applyStep(this.buildLaborMaps());
+                if (clanUpdated) {
                     updated = true;
                 }
             }

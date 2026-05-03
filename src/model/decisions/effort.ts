@@ -1,5 +1,6 @@
 import type { ProductionNode } from "../econ/productionnode";
 import { between, chooseFrom, sumFun } from "../lib/basics";
+import { isExemplarClan } from "../lib/debug";
 import type { Clan } from "../people/people";
 
 // How a clan allocates its "effort", which subsumes time taken
@@ -18,6 +19,10 @@ export class EffortAllocation {
             [Activities.Leisure, 0.7],
             [Activities.Care, 0.3],
         ];
+    }
+
+    debugString(): string {
+        return this.f_.map(([activity, fraction]) => `${activity.name}: ${fraction.toFixed(2)}`).join(', ');
     }
 
     [Symbol.iterator](): Iterator<[Activity, number]> {
@@ -66,6 +71,11 @@ export class EffortAllocation {
             [Activities.Leisure, 1 - fCare],
             [Activities.Care, fCare],
         ];
+        if (isExemplarClan(this.clan)) {
+            console.log(
+                `Start effort allocation for ${this.clan.name}:`, 
+                this.clan.effortAllocation.debugString());
+        }
     }
 
     // Try to make one step change to the allocation. Return true if 
@@ -74,6 +84,10 @@ export class EffortAllocation {
         const expectedProduction = sumFun(
             this.clan.productionNodes, 
             node => node.output(labor.get(node) ?? new Map(), this.clan));
+        if (isExemplarClan(this.clan)) {
+            console.log(
+                `Expected production for ${this.clan.name}: ${expectedProduction.toFixed(2)} (population: ${this.clan.population})`);
+        }
         if (expectedProduction < 0.95 * this.clan.population) {
             // Not enough: work more at the expense of leisure. Note that clans
             // don't necessarily know exactly what has the most marginal production.
@@ -87,6 +101,12 @@ export class EffortAllocation {
             leisureEntry[1] -= delta;
             this.getOrCreateEntry(Activities.Production(node))[1] += delta;
 
+            if (isExemplarClan(this.clan)) {
+                console.log(
+                    `Updated effort allocation for ${this.clan.name}:`, 
+                    this.clan.effortAllocation.debugString());
+            }
+
             return true;
         }
         
@@ -99,6 +119,12 @@ export class EffortAllocation {
 
             this.getOrCreateEntry(Activities.Production(node))[1] -= delta;
             this.getOrCreateEntry(Activities.Leisure)[1] += delta;
+
+            if (isExemplarClan(this.clan)) {
+                console.log(
+                    `Updated effort allocation for ${this.clan.name}:`, 
+                    this.clan.effortAllocation.debugString());
+            }
 
             return true;
         }
