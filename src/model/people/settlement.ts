@@ -1,4 +1,4 @@
-import { logExperiment1 } from "../lib/debug";
+import { isExemplarClan, logExperiment1 } from "../lib/debug";
 
 import { chooseFrom, shuffled, sumFun } from "../lib/basics";
 import { DitchMaintenanceCalc } from "../infrastructure";
@@ -213,7 +213,7 @@ export class Settlement {
     advancePostPhase() {
         this.resetEconomicNodes();
         this.maintain();
-        this.produce();
+        //this.produce();
         this.distribute();
         this.exchange();
         for (const clan of this.clans) clan.consumption.foodInsecurity.update();
@@ -260,6 +260,18 @@ export class Settlement {
 
     distribute() {
         for (const clan of this.clans) {
+            // Consume own production.
+            if (isExemplarClan(clan)) {
+                console.log(`Distribution for ${clan.name} (population: ${clan.population}):`);
+            }
+            for (const pnr of clan.production.reports()) {
+                clan.accept(pnr.node.name, pnr.good, pnr.amount);
+                if (isExemplarClan(clan)) {
+                    console.log(pnr);
+                    console.log(`  ${pnr.good.name}: ${pnr.amount}`);
+                }
+            }
+            // Route surplus food somewhere.
             clan.consumption.handleSurplusFood();
         }
     }

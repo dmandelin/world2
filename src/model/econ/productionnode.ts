@@ -85,6 +85,7 @@ export class CommonsProductionNode extends LandProductionNode {
             labor: effectiveWorkers,
             laborProductivityFactor: lpMod,
             node: this,
+            good: this.skillDef.outputGood!,
             amount: inputAmount * lp,
         };
     }
@@ -101,7 +102,8 @@ export class CommonsProductionNode extends LandProductionNode {
                 this, 
                 report.land, 
                 report.labor, 
-                report.laborProductivityFactor, 
+                report.laborProductivityFactor,
+                this.skillDef.outputGood!,
                 report.amount,
             );
         }

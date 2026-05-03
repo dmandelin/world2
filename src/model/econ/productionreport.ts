@@ -1,4 +1,5 @@
 import type { Clan } from "../people/people";
+import type { TradeGood } from "../trade";
 import type { CommonsProductionNode, ProductionNode } from "./productionnode";
 
 export class ProductionReport {
@@ -10,11 +11,16 @@ export class ProductionReport {
         return this.nodesMap_.keys();
     }
 
+    reports(): Iterable<ProductionNodeReport> {
+        return this.nodesMap_.values();
+    }
+
     accept(
         node: CommonsProductionNode, 
         land: number, 
         labor: number, 
         laborProductivityFactor: number,
+        good: TradeGood,
         amount: number,
     ): void {
         const existing = this.nodesMap_.get(node);
@@ -25,6 +31,7 @@ export class ProductionReport {
                 land,
                 labor,
                 laborProductivityFactor,
+                good,
                 node,
                 amount,
             }
@@ -46,5 +53,6 @@ export type ProductionNodeReport = {
     labor: number;
     laborProductivityFactor: number;
     node: ProductionNode;
+    good: TradeGood;
     amount: number;
 };

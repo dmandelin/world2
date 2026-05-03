@@ -266,7 +266,7 @@ Norms:
         x   Increase base productivity so we have some leisure to start
         x   Start with a somewhat stable state with only a little agricultural
             activity so far
-        *   Wire new production to consumption
+        x   Wire new production to consumption
         *   Clean up old production code
         *   Tooltips for new economic table
         *   Plug in new activities/production to actual models
