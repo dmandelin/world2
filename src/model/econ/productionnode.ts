@@ -12,15 +12,9 @@ import { fractionOf, sum, sumFun, weightedHarmonicMean } from '../lib/basics';
 // and empirical calculation of marginal quantities. Design for that may
 // be somewhat of a work in progress.
 export abstract class ProductionNode {
-    labor_ = new Map<Clan, number>();
-
     constructor(
         readonly name: string,
     ) {}
-
-    get workers(): number {
-        return sum(this.labor_.values());
-    }
 
     get sortKey(): number {
         return 0;
@@ -35,7 +29,7 @@ export abstract class ProductionNode {
     }
 
     // Total quantity of goods produced by this clan.
-    abstract output(clan: Clan): number;
+    abstract output(labor: Map<Clan, number>, clan: Clan): number;
 }
 
 export abstract class LandProductionNode extends ProductionNode {
@@ -69,16 +63,13 @@ export class CommonsProductionNode extends LandProductionNode {
         return this.skillDef.color;
     }
 
-    get landPerWorker(): number {
-        return this.workers ? this.land / this.workers : 1.0;
-    }
-
-    output(clan: Clan): number {
+    output(labor: Map<Clan, number>, clan: Clan): number {
         // - Assume output is linear in workers and land at this scale, 
         //   with both required.
         // - Assume users get equal shares of effective land.
-        const effectiveLand = fractionOf(clan, this.labor_) * this.land;
-        const inputAmount = Math.min(effectiveLand, this.workers);
+        const effectiveLand = fractionOf(clan, labor) * this.land;
+        const effectiveWorkers = labor.get(clan) ?? 0;
+        const inputAmount = Math.min(effectiveLand, effectiveWorkers);
 
         const lpBase = this.skillDef.outputPerWorker;
         const lpMod = clan.productivity(this.skillDef);

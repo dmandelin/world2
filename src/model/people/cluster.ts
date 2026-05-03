@@ -6,7 +6,7 @@ import { Settlement } from "./settlement";
 import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { weightedAverage } from "../lib/modelbasics";
-import { CommonsProductionNode } from "../econ/productionnode";
+import { CommonsProductionNode, ProductionNode } from "../econ/productionnode";
 import { SkillDefs } from "./skills";
 
 export const MILES_PER_UNIT = 0.16666667;
@@ -72,12 +72,34 @@ export class SettlementCluster {
         // and distribution.
         this.applyEffortAllocations();
 
+        // Dump output from new nodes so we can get an idea of how it's working
+        console.log(`New output dump for ${this.name}`);
+        for (const node of [this.fishery, this.naturalFields]) {
+            const laborMap = this.buildLaborMap(node);
+            console.log(`  ${node.name}:`, laborMap);
+            for (const clan of this.clans) {
+                console.log(`    ${clan.name}: ${node.output(laborMap, clan)}`);
+            }
+        }
+
+
         for (const settlement of this.settlements) {
             settlement.advancePostPhase();
         }
 
         // Prune empty settlements.
         removeAll(this.settlements, s => s.population === 0);
+    }
+
+    private buildLaborMap(node: ProductionNode): Map<Clan, number> {
+        const nodeLabor = new Map<Clan, number>();
+        for (const clan of this.clans) {
+            const clanLaborFraction = clan.effortAllocation.getForNode(node);
+            if (clanLaborFraction > 0) {
+                nodeLabor.set(clan, clanLaborFraction * clan.workers);
+            }
+        }
+        return nodeLabor;
     }
 
     // General plan for continuing this:
@@ -93,6 +115,12 @@ export class SettlementCluster {
 
     // Compute actual effort allocations based on choices.
     private applyEffortAllocations(): void {
+        // Build a map of all the labor allocations.
+        const labor = new Map<ProductionNode, Map<Clan, number>>();
+        for (const node of [this.fishery, this.naturalFields]) {
+            labor.set(node, this.buildLaborMap(node));
+        }
+        
         // Each clan should get a chance to use commons, so we change
         // incrementally, but there is also a tendency for persistence,
         // so we can start from the status quo.
@@ -104,7 +132,9 @@ export class SettlementCluster {
             let updated = false;
             // TODO - Some sensible ordering.
             for (const clan of this.clans) {
-                if (clan.effortAllocation.applyStep()) {
+                // TODO - Update the labor map between different clans in the
+                //        same iteration.
+                if (clan.effortAllocation.applyStep(labor)) {
                     updated = true;
                 }
             }

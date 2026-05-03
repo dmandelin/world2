@@ -46,6 +46,10 @@ export class EffortAllocation {
         return entry ? entry[1] : 0;
     }
 
+    getForNode(node: ProductionNode): number {
+        return this.getEntry(Activities.Production(node))?.[1] ?? 0;
+    }
+
     clone(): EffortAllocation {
         return new EffortAllocation(this.clan, this.f_);
     }
@@ -66,8 +70,10 @@ export class EffortAllocation {
 
     // Try to make one step change to the allocation. Return true if 
     // a change was made.
-    applyStep(): boolean {
-        const expectedProduction = sumFun(this.clan.productionNodes, node => node.output(this.clan));
+    applyStep(labor: Map<ProductionNode, Map<Clan, number>>): boolean {
+        const expectedProduction = sumFun(
+            this.clan.productionNodes, 
+            node => node.output(labor.get(node) ?? new Map(), this.clan));
         if (expectedProduction < 0.95 * this.clan.population) {
             // Not enough: work more at the expense of leisure. Note that clans
             // don't necessarily know exactly what has the most marginal production.
