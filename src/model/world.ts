@@ -24,22 +24,22 @@ class SettlementsBuilder {
     constructor(readonly world: World) {}
 
     createCluster(name: string, x: number, y: number, clanCount: number) {
-        const clans = [];
+        const cluster = new SettlementCluster(name, x, y);
+        const settlement = new Settlement(this.world, name, x, y, cluster);
+
         for (let i = 0; i < clanCount; i++) {
             const clan = new Clan(
                 this.world,
+                settlement,
                 this.world.annals,
                 randomClanName(this.clanNames), 
                 randomClanColor(this.clanColors),
                 Math.floor(Math.random() * 37) + 15);
-            clans.push(clan);
 
             this.clanNames.add(clan.name);
             this.clanColors.add(clan.color);
         }
 
-        const settlement = new Settlement(this.world, name, x, y, undefined, new Clans(this.world, ...clans));
-        const cluster = new SettlementCluster(this.world, settlement);
         return cluster;
     }
 
@@ -92,7 +92,9 @@ export class World implements NoteTaker {
     }
 
     initialize() {
-        setExemplarSettlementUUID(this.clusters[0].mother.uuid);
+        console.log('YYY');
+        console.log(this.clusters[0].settlements);
+        setExemplarSettlementUUID(this.clusters[0].settlements[0].uuid);
 
         log('World >>> Initialize')
 
@@ -119,8 +121,8 @@ export class World implements NoteTaker {
                 for (let j = i + 1; j < this.clusters.length; j++) {
                     const c1 = this.clusters[i];
                     const c2 = this.clusters[j];
-                    const distance = Math.sqrt((c1.mother.x - c2.mother.x) ** 2 + (c1.mother.y - c2.mother.y) ** 2);
-                    log(`Distance between ${c1.mother.name} and ${c2.mother.name}: ${(MILES_PER_UNIT * distance).toFixed(2)} miles`);
+                    const distance = Math.sqrt((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2);
+                    log(`Distance between ${c1.name} and ${c2.name}: ${(MILES_PER_UNIT * distance).toFixed(2)} miles`);
                 }
             }
         }
@@ -134,11 +136,11 @@ export class World implements NoteTaker {
             'Northern artisans', [TradeGoods.ClayFigurines]);
 
         this.initializeTrade(
-            this.motherSettlements.find(s => s.name === 'Eridu')!,
+            this.allSettlements.find(s => s.name === 'Eridu')!,
             [TradeGoods.Cereals, TradeGoods.Fish],
             clayFigurineSource);
         this.initializeTrade(
-            this.motherSettlements.find(s => s.name === 'Ur')!,
+            this.allSettlements.find(s => s.name === 'Ur')!,
             [TradeGoods.Cereals, TradeGoods.ReedProducts],
             clayFigurineSource);
     }
@@ -409,10 +411,6 @@ export class World implements NoteTaker {
 
     get totalPopulation() {
         return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);
-    }
-
-    get motherSettlements() {
-        return this.clusters.map(c => c.mother);
     }
 
     get allSettlements() {

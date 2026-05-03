@@ -5,32 +5,30 @@ import { DitchMaintenanceCalc } from "../infrastructure";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
 import { poisson } from "../lib/distributions";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
-import { ProductionNode } from "../econ/productionnode";
+import { ProductionNode1 } from "../econ/productionnode";
 import { SettlementEndOfTurnSnapshot, SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
 import { SkillDef, SkillDefs } from "./skills";
-import type { Clans } from "./clans";
 import type { FloodLevel } from "../environment/flood";
 import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { Year } from "../records/year";
+import type { Clan } from "./people";
 
 const maxEndOfTurnSnapshots = 5;
 
 export class Settlement {
     readonly uuid = crypto.randomUUID();
 
-    private cluster_: SettlementCluster|undefined;
+    readonly clans: Clan[] = [];
+    readonly daughters: Settlement[] = [];
 
     private tellHeightInMeters_: number = 0;
 
-    readonly productionNodes: ProductionNode[] = [];
+    readonly productionNodes: ProductionNode1[] = [];
 
     readonly localTradeGoods = new Set<TradeGood>();
-
-    readonly daughters: Settlement[] = [];
-    readonly daughterPlacer = new DaughterSettlementPlacer(this);
 
     // Infrastructure.
     ditchingLevel = 0;
@@ -53,31 +51,20 @@ export class Settlement {
         readonly name: string, 
         readonly x: number,
         readonly y: number,
-        readonly parent: Settlement|undefined,
-        readonly clans: Clans) {
+        readonly cluster: SettlementCluster,
+        readonly parent?: Settlement) {
         
+        cluster.settlements.push(this);
         if (this.parent) {
             this.parent.daughters.push(this);
         }
 
-        for (const clan of clans) {
-            clan.setSettlement(this);
-        }
-
         this.productionNodes.push(
-            new ProductionNode('Farms', this, 40, SkillDefs.Agriculture),
-            new ProductionNode('Fisheries', this, 40, SkillDefs.Fishing),
+            new ProductionNode1('Farms', this, 40, SkillDefs.Agriculture),
+            new ProductionNode1('Fisheries', this, 40, SkillDefs.Fishing),
         );
 
         this.lastShiftYear_ = this.world.year;
-    }
-
-    get cluster(): SettlementCluster {
-        return this.cluster_!;
-    }
-
-    setCluster(cluster: SettlementCluster) {
-        this.cluster_ = cluster;
     }
 
     milesTo(other: Settlement): number {
@@ -86,7 +73,7 @@ export class Settlement {
     }
 
     get lastSizeChange(): number {
-        return sumFun(this.clans, c => c.lastPopulationChange.change);
+        return sumFun(this.clans, (c: Clan) => c.lastPopulationChange.change);
     }
 
     get yearsInPlace(): number {
@@ -113,13 +100,8 @@ export class Settlement {
         return this.effectiveResidentPopulation / this.population;
     }
 
-    productionNode(skillDef: SkillDef): ProductionNode {
+    productionNode(skillDef: SkillDef): ProductionNode1 {
         return this.productionNodes.find(pn => pn.skillDef === skillDef)!;
-    }
-
-
-    get rites(): Rites[] {
-        return [this.clans.rites, ...this.clans.map(clan => clan.rites)];
     }
 
     get averageAppeal() {
@@ -212,22 +194,23 @@ export class Settlement {
         }
     }
 
-    advance() {
+    advancePrePhase() {
         // Split and merge at the start of the turn so that normal update
         // logic correctly updates the new clans.
-        this.clans.split();
-        this.clans.merge();
-        this.clans.prune();
+        
+        // TODO - Bring back
+        //this.clans.split();
+        //this.clans.merge();
+        //this.clans.prune();
 
         // Economic production.
         // Maintenance goes before production, because it represents capital
         // that can be built in much less than a turn.
         for (const clan of this.clans) clan.residenceLevel.update();
         for (const clan of this.clans) clan.updateProductivity(false);
-        // apply() creates the detailed allocation, and it should see overall
-        // productivity, because long turns give clans plenty of time to work
-        // more if needed - and they choose to.
-        for (const clan of this.clans) clan.effortAllocation.apply();
+    }
+
+    advancePostPhase() {
         this.resetEconomicNodes();
         this.maintain();
         this.produce();
@@ -235,9 +218,6 @@ export class Settlement {
         this.exchange();
         for (const clan of this.clans) clan.consumption.foodInsecurity.update();
         this.redistribute();
-
-        // Ritual production.
-        this.advanceRites();
 
         // Consume production.
         for (const clan of this.clans) clan.consume();
@@ -332,16 +312,6 @@ export class Settlement {
         }
     }
 
-    advanceRites(updateOptions: boolean = true) {
-        if (this.abandoned) return;
-
-        // Planning for clan rites isn't important yet and introduces a lot of notification noise.
-        this.clans.rites.plan(updateOptions);
-        for (const rites of this.rites) {
-            rites.perform();
-        }
-    }
-
     consume() {
         for (const clan of this.clans) {
             clan.consume();
@@ -367,6 +337,33 @@ export class Settlement {
 
         // 2cm per turn (1m/millennium) if full-time resident.
         this.tellHeightInMeters_ += 0.001 * this.world.yearsPerTurn * this.residenceFraction;
+    }
+
+    updateSeniority() {
+        const newClans = [];
+        let maxExistingSeniority = -1;
+        for (const clan of this.clans) {
+            if (clan.seniority == -1) {
+                newClans.push(clan);
+            } else {
+                maxExistingSeniority = Math.max(maxExistingSeniority, clan.seniority);
+            }
+        }
+        for (const clan of newClans) {
+            clan.seniority = maxExistingSeniority + 1;
+        }
+    }
+
+    updatePrestigeViews() {
+        this.clans.forEach(clan => clan.startUpdatingPrestige());
+        this.clans.forEach(clan => clan.finishUpdatingPrestige());
+
+        const totalExpPrestige = this.clans.reduce((acc, clan) =>
+             acc + Math.pow(1.05, clan.averagePrestige - 50), 0);
+        for (const clan of this.clans) {
+            const expPrestige = Math.pow(1.05, clan.averagePrestige - 50);
+            clan.influence = expPrestige / totalExpPrestige;
+        }
     }
 
     addTimePoint() {
@@ -395,35 +392,5 @@ export class Settlement {
     get turnSnapshots() {
         logExperiment1(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot);
         return new SettlementTurnSnapshots(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot!);
-    }
-}
-
-
-class DaughterSettlementPlacer {
-    readonly places = 12;
-    private radius = Math.random() * 10 + 15;
-    private originAngle = Math.random() * 2 * Math.PI;
-    readonly openPlaces = Array.from({ length: this.places }, (_, i) => i);
-    private jitter = 3;
-
-    constructor(readonly settlement: Settlement) {}
-
-    placeFor(parent: Settlement): [number, number] {
-        if (!this.openPlaces.length) {
-            this.radius *= 1.5;
-            this.jitter *= 1.5;
-            this.originAngle = Math.random() * 2 * Math.PI / this.places;
-            this.openPlaces.push(...Array.from({ length: this.places }, (_, i) => i));
-        }
-        const place = chooseFrom(this.openPlaces, true);
-
-        const angle = this.originAngle + place * (2 * Math.PI / this.places);
-        const x = this.settlement.x + this.radius * Math.cos(angle) + this.generateJitter();
-        const y = this.settlement.y + this.radius * Math.sin(angle) + this.generateJitter();
-        return [Math.round(x), Math.round(y)];
-    }
-
-    private generateJitter() {
-        return (Math.random() * 2 - 1) * this.jitter;
     }
 }

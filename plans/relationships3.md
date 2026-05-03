@@ -262,6 +262,10 @@ Norms:
             with a 2x from early weaning
     *   Changes to make
         x   Add child care + leisure time allocation model
+        *   Plug in new activities/production to actual models
+            *   Show production output data for new nodes
+            *   Plug in to consumption
+            *   Remove old production nodes
         *   Happiness bonus for leisure
         *   Other bonuses for leisure
         *   Effect of too little child care
@@ -272,6 +276,9 @@ Norms:
         *   Child care reduced cost for farming
         *   Child care reduced cost (or additional effort) from alloparenting
         *   Weaning time decision
+        *   Should probably separate out workers from effort a bit
+            so that they get some actual leisure
+        *   Show unemployment
 
 x   For the current primary food security benefit, count only defined
     relationships: kin and friends

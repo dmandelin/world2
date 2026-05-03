@@ -355,7 +355,8 @@ class RitualHappinessItem extends NumericHappinessItem {
     }
 
     updateState(clan: Clan): void {
-        this.state_ = clan.settlement.clans.rites.appeal;
+       // this.state_ = clan.settlement.clans.rites.appeal;
+       this.state_ = 10; // TODO - Placeholder
     }
 
     clone(): RitualHappinessItem {

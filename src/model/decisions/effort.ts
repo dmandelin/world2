@@ -1,3 +1,5 @@
+import type { ProductionNode } from "../econ/productionnode";
+import { between, chooseFrom, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 
 // How a clan allocates its "effort", which subsumes time taken
@@ -9,55 +11,114 @@ import type { Clan } from "../people/people";
 export class EffortAllocation {
     // f for fractions.
     // These should be whole percentages, and must sum to 1.0.
-    readonly f = new Map<Activity, number>();
+    private f_: [Activity, number][];
 
-    constructor(readonly clan: Clan) {
-        this.f.set(ProductionActivity, 0.5);
-        this.f.set(CareActivity, 0.3);
-        this.f.set(LesiureActivity, 0.2);
+    constructor(readonly clan: Clan, f?: [Activity, number][]) {
+        this.f_ = f ? [...f] : [
+            [Activities.Leisure, 0.7],
+            [Activities.Care, 0.3],
+        ];
     }
 
-    entries(): IterableIterator<[Activity, number]> {
-        return this.f.entries();
+    [Symbol.iterator](): Iterator<[Activity, number]> {
+        return this.f_[Symbol.iterator]();
+    }
+
+    private getEntries(activityName: string): [Activity, number][] {
+        return this.f_.filter(([a, _]) => a.name === activityName);
+    }
+
+    private getEntry(activity: Activity): [Activity, number]|undefined {
+        return this.f_.find(([a, _]) => a.name === activity.name && a.node === activity.node);
+    }
+
+    private getOrCreateEntry(activity: Activity): [Activity, number] {
+        let entry = this.getEntry(activity);
+        if (!entry) {
+            entry = [activity, 0];
+            this.f_.push(entry);
+        }
+        return entry;
     }
 
     get(activity: Activity): number {
-        return this.f.get(activity) ?? 0;
+        const entry = this.getEntry(activity);
+        return entry ? entry[1] : 0;
     }
 
     clone(): EffortAllocation {
-        const clone = new EffortAllocation(this.clan);
-        for (const [activity, fraction] of this.f.entries()) {
-            clone.f.set(activity, fraction);
-        }
-        return clone;
+        return new EffortAllocation(this.clan, this.f_);
     }
 
-    apply() {
-        // Effort fraction needed for child care.
+    // "Applying" the allocation refers to the process of converting
+    // the high-level choices to specific effort allocations.
+
+    // Initialize the application process.
+    applyStart() {
+        // Reserve effort needed for child care and initially leave
+        // the rest for leisure.
         const fCare = Math.min(1, 0.25 * this.clan.children / this.clan.effort);
+        this.f_ = [
+            [Activities.Leisure, 1 - fCare],
+            [Activities.Care, fCare],
+        ];
+    }
 
-        // Effort fraction needed to produce enough food.
-        // TODO - Base this on actual productivity.
-        const fProduction = Math.max(0, 0.9 - fCare);
+    // Try to make one step change to the allocation. Return true if 
+    // a change was made.
+    applyStep(): boolean {
+        const expectedProduction = sumFun(this.clan.productionNodes, node => node.output(this.clan));
+        if (expectedProduction < 0.95 * this.clan.population) {
+            // Not enough: work more at the expense of leisure. Note that clans
+            // don't necessarily know exactly what has the most marginal production.
+            // For now we'll be very simple about that and make it random.
+            const leisureEntry = this.getEntry(Activities.Leisure);
+            if (!leisureEntry || leisureEntry[1] <= 0) return false;
 
-        // Effort fraction left for leisure.
-        const fLeisure = Math.max(0, 1 - fCare - fProduction);
+            const delta = Math.min(0.05, leisureEntry[1]);
+            const node = chooseFrom(this.clan.productionNodes);
 
-        this.f.set(ProductionActivity, fProduction);
-        this.f.set(CareActivity, fCare);
-        this.f.set(LesiureActivity, fLeisure);
+            leisureEntry[1] -= delta;
+            this.getOrCreateEntry(Activities.Production(node))[1] += delta;
+
+            return true;
+        }
+        
+        if (expectedProduction > 1.05 * this.clan.population) {
+            // More than enough: work less and enjoy more leisure.
+            const workedNodes = this.clan.productionNodes.filter(node => this.get(Activities.Production(node)) > 0);
+            const node = chooseFrom(workedNodes);
+
+            const delta = Math.min(0.05, this.get(Activities.Production(node)));
+
+            this.getOrCreateEntry(Activities.Production(node))[1] -= delta;
+            this.getOrCreateEntry(Activities.Leisure)[1] += delta;
+
+            return true;
+        }
+
+        return false;
     }
 }
 
 export type Activity = {
     name: string;
+    sortKey: number;
     shortName?: string;
+    color?: string;
+    node?: ProductionNode;
 }
 
-export const LesiureActivity: Activity = { name: 'Leisure', shortName: 'L' };
-export const CareActivity: Activity = { name: 'Care', shortName: 'C' };
-export const ProductionActivity: Activity = { name: 'Production', shortName: 'P' };
+class Activities {
+    static readonly Leisure: Activity = { name: 'Leisure', sortKey: 999, shortName: 'L', color: '#3b82f6' };
+    static readonly Care: Activity = { name: 'Care', sortKey: 998, shortName: 'C', color: '#ef4444' };
+
+    static Production(node: ProductionNode): Activity {
+        // TODO - It would be nice to cache these, but a naive approach
+        //        leaks memory.
+        return { name: `Production (${node.name})`, sortKey: node.sortKey, shortName: node.shortName, color: node.color, node };
+    }
+}
 
 // TODO - add domestic labor and maintenance
 // TODO - add ritual and social time

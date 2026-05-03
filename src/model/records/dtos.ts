@@ -283,9 +283,6 @@ export class StandaloneSettlementDTO {
     readonly preventedForcedMigrations: number;
     readonly movingAverageForcedMigrations: number;
 
-    readonly condorcet: CondorcetCalc;
-
-    readonly rites: Rites;
     readonly timeline: Timeline<SettlementTimePoint>;
     readonly turnSnapshots: SettlementTurnSnapshots;
     readonly recentEndOfTurnSnapshots: SettlementEndOfTurnSnapshot[];
@@ -317,11 +314,9 @@ export class StandaloneSettlementDTO {
         this.preventedForcedMigrations = settlement.preventedForcedMigrations;
         this.movingAverageForcedMigrations = settlement.movingAverageForcedMigrations;
 
-        this.rites = settlement.clans.rites.clone();
         this.timeline = settlement.timeline;
         this.turnSnapshots = settlement.turnSnapshots;
         this.recentEndOfTurnSnapshots = [...settlement.recentEndOfTurnSnapshots];
-        this.condorcet = settlement.clans.condorcetLeader;
     }
 
     get farmingRatio(): number {

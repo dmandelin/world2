@@ -4,8 +4,24 @@ export function assert(condition: boolean, message?: string): asserts condition 
     }
 }
 
+export function between(min: number, value: number, max: number): boolean {
+    return min <= value && value <= max;
+}
+
 export function safeDiv(numerator: number, denominator: number, defaultValue: number = 0): number {
     return denominator === 0 ? defaultValue : numerator / denominator;
+}
+
+export function fractionOf<K>(a: K, b: Iterable<[K, number]>): number {
+    let matching = 0;
+    let total = 0;
+    for (const [item, weight] of b) {
+        total += weight;
+        if (item === a) {
+            matching += weight;
+        }
+    }
+    return total === 0 ? 0 : matching / total;
 }
 
 export function randInt(a: number, b?: number): number {

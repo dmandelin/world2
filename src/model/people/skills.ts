@@ -13,9 +13,12 @@ export enum SkillUseLocation {
 
 export class SkillDef {
     constructor(
+        readonly sortKey: number,
         readonly name: string,
         readonly icon: string,
+        readonly color: string,
         readonly outputGood: TradeGood|undefined,
+        readonly outputPerWorker: number,
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
         readonly useLocation: SkillUseLocation = SkillUseLocation.Either,
         readonly diseaseLoadFactor: number = 0,
@@ -23,19 +26,19 @@ export class SkillDef {
 }
 
 export const SkillDefs = {
-    Fishing: new SkillDef('Fishing', 'skill-fishing-256.png', TradeGoods.Fish,
+    Fishing: new SkillDef(1, 'Fishing', 'skill-fishing-256.png', '#14b8a6', TradeGoods.Fish, 2.4,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
         SkillUseLocation.AwayOnly, 1),
-    Agriculture: new SkillDef('Agriculture', 'skill-farming-256.png', TradeGoods.Cereals,
+    Agriculture: new SkillDef(2, 'Agriculture', 'skill-farming-256.png', '#f59e0b', TradeGoods.Cereals, 2.4,
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
         SkillUseLocation.HomeOnly, 2),
-    Irrigation: new SkillDef('Irrigation', 'skill-irrigation-256.png', undefined,
+    Irrigation: new SkillDef(3, 'Irrigation', 'skill-irrigation-256.png', '#3b82f6', undefined, 1,
         new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]]),
         SkillUseLocation.HomeOnly, 3),
-    Construction: new SkillDef('Construction', 'skill-construction-256.png', undefined,
+    Construction: new SkillDef(4, 'Construction', 'skill-construction-256.png', '#8b5cf6', undefined, 1,
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
         SkillUseLocation.HomeOnly, 1),
-    Ritual: new SkillDef('Ritual', 'skill-ritual-256.png', undefined,
+    Ritual: new SkillDef(5, 'Ritual', 'skill-ritual-256.png', '#ec4899', undefined, 1,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
         SkillUseLocation.Either, 1),
 };

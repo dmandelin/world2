@@ -1,4 +1,4 @@
-import { averageFun, removeAll, sumFun } from "../lib/basics";
+import { averageFun, chooseFrom, removeAll, sumFun } from "../lib/basics";
 import type { Clan } from "./people";
 import type { NoteTaker } from "../records/notifications";
 import { Clans } from "./clans";
@@ -6,33 +6,27 @@ import { Settlement } from "./settlement";
 import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { weightedAverage } from "../lib/modelbasics";
+import { CommonsProductionNode } from "../econ/productionnode";
+import { SkillDefs } from "./skills";
 
 export const MILES_PER_UNIT = 0.16666667;
 
 export class SettlementCluster {
-    readonly settlements: Settlement[];
+    private placer_ = new SettlementPlacer(this);
+    readonly settlements: Settlement[] = [];
+
     private floodLevel_: FloodLevel = FloodLevels.Normal;
-    diseaseLoad: DiseaseLoadCalc;
+    diseaseLoad: DiseaseLoadCalc = new DiseaseLoadCalc(this);
 
-    constructor(readonly noteTaker: NoteTaker, readonly mother: Settlement) {
-        this.settlements = [mother];
-        mother.setCluster(this);
-        
-        this.diseaseLoad = new DiseaseLoadCalc(this);
-    }
+    fishery = new CommonsProductionNode('Regional Fisheries', 100, SkillDefs.Fishing);
+    naturalFields = new CommonsProductionNode('Natural Alluvial Fields', 100, SkillDefs.Agriculture);
 
-    get name(): string {
-        return `${this.mother.name} area`;
-    }
-
-    get daughters(): Settlement[] {
-        return this.mother.daughters;
+    constructor(readonly name: string, readonly x: number, readonly y: number) {
+        this.settlements = [];
     }
 
     milesTo(other: SettlementCluster): number {
-        const c1 = this.mother;
-        const c2 = other.mother;
-        const distance = Math.sqrt((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2);
+        const distance = Math.sqrt((this.x - other.x) ** 2 + (this.y - other.y) ** 2);
         return MILES_PER_UNIT * distance;
     }
 
@@ -41,7 +35,7 @@ export class SettlementCluster {
     }
 
     get population(): number {
-        return sumFun(this.settlements, s => s.clans.population);
+        return sumFun(this.settlements, s => s.population);
     }
 
     get lastPopulationChange(): number {
@@ -71,18 +65,57 @@ export class SettlementCluster {
 
     advance(): void {
         for (const settlement of this.settlements) {
-            settlement.advance();
+            settlement.advancePrePhase();
         }
 
-        // Prune empty daughter settlements.
-        removeAll(this.settlements, s => s.population === 0 && s !== this.mother);
-        removeAll(this.mother.daughters, s => s.population === 0);
+        // This has to happen before actual economic production
+        // and distribution.
+        this.applyEffortAllocations();
+
+        for (const settlement of this.settlements) {
+            settlement.advancePostPhase();
+        }
+
+        // Prune empty settlements.
+        removeAll(this.settlements, s => s.population === 0);
+    }
+
+    // General plan for continuing this:
+    // - Move labor allocation into overall effort allocation so that we
+    //   can step up each piece as we need it
+    // - Make new production nodes able to easily do what-if scenarios
+    // - Step up algorithm to allocate labor
+    // - Show labor type split in the UI
+    //   - Break out tooltip/zoom-in version to show more detail if needed
+    // - Show results of these production nodes in the UI
+    // - Connect output of these production nodes to consumption
+    // - Remove old production nodes
+
+    // Compute actual effort allocations based on choices.
+    private applyEffortAllocations(): void {
+        // Each clan should get a chance to use commons, so we change
+        // incrementally, but there is also a tendency for persistence,
+        // so we can start from the status quo.
+
+        for (const clan of this.clans) clan.effortAllocation.applyStart();
+
+        let allowedUpdatesRemaining = 10;
+        while (allowedUpdatesRemaining--) {
+            let updated = false;
+            // TODO - Some sensible ordering.
+            for (const clan of this.clans) {
+                if (clan.effortAllocation.applyStep()) {
+                    updated = true;
+                }
+            }
+            if (!updated) break;
+        }
     }
 
     updatePerceptions(): void {
         for (const s of this.settlements) {
-            s.clans.updateSeniority();
-            s.clans.updatePrestigeViews();
+            s.updateSeniority();
+            s.updatePrestigeViews();
 
             for (const clan of s.clans) {
                 clan.updateRespect();
@@ -91,13 +124,42 @@ export class SettlementCluster {
     }
 
     foundSettlement(name: string, source: Settlement): Settlement {
-        const [x, y] = this.mother.daughterPlacer.placeFor(this.mother);
-        const settlement = new Settlement(this.mother.world, name, x, y, this.mother, new Clans(this.noteTaker));
+        const [x, y] = this.placer_.placeFor();
+        return new Settlement(source.world, name, x, y, this, source);
+    }
+}
 
-        settlement.setCluster(this);
-        this.settlements.push(settlement);
-        this.noteTaker.addNote('🏠', 
-            `Founded new village ${settlement.name} from ${source.name} near ${this.mother.name}.`);
-        return settlement;
+class SettlementPlacer {
+    readonly places = 12;
+    private first = true;
+    private radius = Math.random() * 10 + 15;
+    private originAngle = Math.random() * 2 * Math.PI;
+    readonly openPlaces = Array.from({ length: this.places }, (_, i) => i);
+    private jitter = 3;
+
+    constructor(readonly cluster: SettlementCluster) {}
+
+    placeFor(): [number, number] {
+        if (this.first) {
+            this.first = false;
+            return [this.cluster.x, this.cluster.y];
+        }
+
+        if (!this.openPlaces.length) {
+            this.radius *= 1.5;
+            this.jitter *= 1.5;
+            this.originAngle = Math.random() * 2 * Math.PI / this.places;
+            this.openPlaces.push(...Array.from({ length: this.places }, (_, i) => i));
+        }
+        const place = chooseFrom(this.openPlaces, true);
+
+        const angle = this.originAngle + place * (2 * Math.PI / this.places);
+        const x = this.cluster.x + this.radius * Math.cos(angle) + this.generateJitter();
+        const y = this.cluster.y + this.radius * Math.sin(angle) + this.generateJitter();
+        return [Math.round(x), Math.round(y)];
+    }
+
+    private generateJitter() {
+        return (Math.random() * 2 - 1) * this.jitter;
     }
 }

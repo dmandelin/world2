@@ -2,9 +2,93 @@ import { Clan } from '../people/people';
 import { Settlement } from '../people/settlement';
 import { TradeGood } from '../trade';
 import { SkillDefs, type SkillDef } from '../people/skills';
-import { sum, sumFun, weightedHarmonicMean } from '../lib/basics';
+import { fractionOf, sum, sumFun, weightedHarmonicMean } from '../lib/basics';
 
-export class ProductionNode {
+// A ProductionNode is an entity where labor, land, tools, and materials
+// can be combined to produce goods. Examples include farms, fisheries, 
+// and workshops. Models of ownership, access, and control may vary.
+//
+// Being able to play out what-if scenarios is crucial to optimization
+// and empirical calculation of marginal quantities. Design for that may
+// be somewhat of a work in progress.
+export abstract class ProductionNode {
+    labor_ = new Map<Clan, number>();
+
+    constructor(
+        readonly name: string,
+    ) {}
+
+    get workers(): number {
+        return sum(this.labor_.values());
+    }
+
+    get sortKey(): number {
+        return 0;
+    }
+
+    get shortName(): string {
+        return 'P'
+    }
+
+    get color(): string {
+        return 'black';
+    }
+
+    // Total quantity of goods produced by this clan.
+    abstract output(clan: Clan): number;
+}
+
+export abstract class LandProductionNode extends ProductionNode {
+    constructor(
+        name: string,
+        readonly land: number,
+        readonly skillDef: SkillDef,
+    ) {
+        super(name);
+    }
+}
+
+export class CommonsProductionNode extends LandProductionNode {
+    constructor(
+        readonly name: string,
+        readonly land: number,
+        readonly skillDef: SkillDef,
+    ) {
+        super(name, land, skillDef);
+    }
+
+    get sortKey(): number {
+        return this.skillDef.sortKey;
+    }
+
+    get shortName(): string {
+        return this.skillDef.name[0];
+    }
+
+    get color(): string {
+        return this.skillDef.color;
+    }
+
+    get landPerWorker(): number {
+        return this.workers ? this.land / this.workers : 1.0;
+    }
+
+    output(clan: Clan): number {
+        // - Assume output is linear in workers and land at this scale, 
+        //   with both required.
+        // - Assume users get equal shares of effective land.
+        const effectiveLand = fractionOf(clan, this.labor_) * this.land;
+        const inputAmount = Math.min(effectiveLand, this.workers);
+
+        const lpBase = this.skillDef.outputPerWorker;
+        const lpMod = clan.productivity(this.skillDef);
+        const lp = lpBase * lpMod;
+
+        return inputAmount * lp;
+    }
+}
+
+export class ProductionNode1 {
     workers_ = new Map<Clan, number>();
     workerFractions_ = new Map<Clan, number>();
     laborProductivity_ = new Map<Clan, number>();
@@ -77,7 +161,7 @@ export class ProductionNode {
             const workers = this.workers(clan);
             return workers === 0
                 ? clan.productivity(this.skillDef)
-                : ProductionNode.tfpOf(output, workers);
+                : ProductionNode1.tfpOf(output, workers);
         }
 
         const output = this.totalOutput_.get(this.skillDef.outputGood!) ?? 0;
@@ -85,14 +169,14 @@ export class ProductionNode {
         return workers === 0
             ? weightedHarmonicMean(
                 [...this.workers_.entries()], ([c, w]) => c.productivity(this.skillDef), ([c, w]) => w)
-            : ProductionNode.tfpOf(output, workers);
+            : ProductionNode1.tfpOf(output, workers);
     }
 
     static tfpOf(output: number, workers: number): number {
         if (workers === 0) {
             return 1;
         }
-        return output / workers / ProductionNode.outputPerWorker;
+        return output / workers / ProductionNode1.outputPerWorker;
     }
 
     reset(): void {
@@ -134,7 +218,7 @@ export class ProductionNode {
             const lp = clan.productivity(this.skillDef);
             this.laborProductivity_.set(clan, lp);
             reciprocalLaborProductivity += workers / lp;
-            let output = ProductionNode.outputPerWorker * inputs * lp;
+            let output = ProductionNode1.outputPerWorker * inputs * lp;
 
             if (output > 0) {
                 this.totalOutput_.set(this.skillDef.outputGood!, 

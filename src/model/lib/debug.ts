@@ -21,7 +21,7 @@ export function setExemplarSettlementUUID(uuid: string) {
     exemplarSettlementUUID = uuid;
 }
 
-// Logs exemplar settlement snapshots.
+// Log exemplar settlement snapshots.
 export function logExperiment1(
     beginningOfTurnSnapshot?: StandaloneSettlementDTO, 
     endOfTurnSnapshot?: StandaloneSettlementDTO) {

@@ -107,8 +107,7 @@
     }
 
     function drawCluster(cluster: SettlementCluster) {
-        drawSettlement(cluster.mother);
-        for (const settlement of cluster.daughters) {
+        for (const settlement of cluster.settlements) {
             drawSettlement(settlement);
         }
     }

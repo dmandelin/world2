@@ -121,31 +121,4 @@ export class Clans extends Array<Clan> {
     prune() {
         this.splice(0, this.length, ...this.filter(clan => clan.population > 0));
     }
-
-    updateSeniority() {
-        const newClans = [];
-        let maxExistingSeniority = -1;
-        for (const clan of this) {
-            if (clan.seniority == -1) {
-                newClans.push(clan);
-            } else {
-                maxExistingSeniority = Math.max(maxExistingSeniority, clan.seniority);
-            }
-        }
-        for (const clan of newClans) {
-            clan.seniority = maxExistingSeniority + 1;
-        }
-    }
-
-    updatePrestigeViews() {
-        this.forEach(clan => clan.startUpdatingPrestige());
-        this.forEach(clan => clan.finishUpdatingPrestige());
-
-        const totalExpPrestige = this.reduce((acc, clan) =>
-             acc + Math.pow(1.05, clan.averagePrestige - 50), 0);
-        for (const clan of this) {
-            const expPrestige = Math.pow(1.05, clan.averagePrestige - 50);
-            clan.influence = expPrestige / totalExpPrestige;
-        }
-    }
 }

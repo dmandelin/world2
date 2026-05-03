@@ -19,7 +19,7 @@
     '#8b5cf6', // violet-500
     '#06b6d4', // cyan-500
     '#ec4899', // pink-500
-    '#f97316'  // orange-500
+    '#f97316', // orange-500
   ];
 
   let totalValue = $derived(data.reduce((sum, item) => sum + Math.max(0, item.value), 0));

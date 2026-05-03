@@ -24,7 +24,8 @@ import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { Consumption } from "./consumption";
-import { EffortAllocation, ProductionActivity } from "../decisions/effort";
+import { EffortAllocation } from "../decisions/effort";
+import { type ProductionNode } from "../econ/productionnode";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -79,7 +80,8 @@ export class Clan implements TradePartner {
     static minDesiredSize = 10;
     static maxDesiredSize = 75;
 
-    private settlement_: Settlement|undefined;
+    private settlement_: Settlement;
+
     private residenceLevel_ = new ResidenceLevel(this);
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
@@ -116,9 +118,10 @@ export class Clan implements TradePartner {
     isDitching = false;
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
-    productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     effortAllocation = new EffortAllocation(this);
     laborAllocation = new LaborAllocation(this);
+    productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
+    productionNodes: ProductionNode[];
     readonly tradeRelationships = new Set<TradeRelationship>();
     consumption = new Consumption(this);
 
@@ -126,6 +129,7 @@ export class Clan implements TradePartner {
 
     constructor(
         readonly world: World,
+        settlement: Settlement,
         readonly annals: Annals,
         public name: string,
         public color: string,
@@ -134,6 +138,9 @@ export class Clan implements TradePartner {
         public intelligence: number = randomStat(),
     ) {
         this.world.timeline.register(this.uuid, this.name);
+
+        this.settlement_ = settlement;
+        this.settlement_.clans.push(this);
 
         for (let i = 0; i < 4; ++i) {
             this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * population);
@@ -156,6 +163,11 @@ export class Clan implements TradePartner {
             ++error;
         }
 
+        this.productionNodes = [
+            this.settlement.cluster.fishery,
+            this.settlement.cluster.naturalFields,
+        ];
+
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.
@@ -165,27 +177,23 @@ export class Clan implements TradePartner {
     }
 
     get moniker(): string {
-        return this.settlement!.name;
+        return this.settlement.name;
     }
 
     get settlement(): Settlement {
-        return this.settlement_!;
-    }
-
-    setSettlement(settlement: Settlement) {
-        this.settlement_ = settlement;
+        return this.settlement_;
     }
 
     get cluster(): SettlementCluster {
-        return this.settlement!.cluster;
+        return this.settlement.cluster;
     }
 
     get neighbors(): Clan[] {
-        return [...this.settlement!.clans].filter(clan => clan !== this);
+        return [...this.settlement.clans].filter(clan => clan !== this);
     }
 
     get selfAndNeighbors(): Clan[] {
-        return this.settlement!.clans;
+        return this.settlement.clans;
     }
 
     get children(): number {
@@ -201,7 +209,8 @@ export class Clan implements TradePartner {
     }
 
     get workers(): number {
-        return this.effort * this.effortAllocation.get(ProductionActivity);
+        // TODO - Figure out what this should really be
+        return this.effort;
     }
 
     get skill() {
@@ -266,7 +275,8 @@ export class Clan implements TradePartner {
     }
 
     get averagePrestige(): number {
-        return this.settlement!.clans.averagePrestige(this);
+        // TODO - Remove or make it mean something again
+        return 0.5;
     }
 
     prestigeViewOf(other: Clan): PrestigeCalc {
@@ -327,7 +337,7 @@ export class Clan implements TradePartner {
     }
 
     startUpdatingPrestige() {
-        for (const clan of this.settlement!.clans) {
+        for (const clan of this.settlement.clans) {
             if (!this.prestigeViews_.has(clan)) {
                 this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
             }
@@ -342,7 +352,7 @@ export class Clan implements TradePartner {
     }
 
     finishUpdatingPrestige() {
-        for (const clan of this.settlement!.clans) {
+        for (const clan of this.settlement.clans) {
             this.prestigeViews_.get(clan)!.commitUpdate();
         }
     }
@@ -513,10 +523,11 @@ export class Clan implements TradePartner {
 
     moveTo(settlement: Settlement) {
         if (this.settlement) {
-            this.settlement.clans.remove(this);
+            remove(this.settlement.clans, this);
         }
-        settlement.clans.push(this);
+
         this.settlement_ = settlement;
+        settlement.clans.push(this);
 
         this.seniority = 0;
     }
@@ -558,11 +569,10 @@ export class Clan implements TradePartner {
 
         const name = randomClanName(clans.map(clan => clan.name));
         const color = randomClanColor(clans.map(clan => clan.color));
-        const newClan = new Clan(this.world, this.annals, name, color, newSize);
+        const newClan = new Clan(this.world, this.settlement, this.annals, name, color, newSize);
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;
         newClan.skills = this.skills.cloneFor(newClan);
-        newClan.settlement_ = this.settlement;
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
         for (let i = 0; i < this.slices.length; ++i) {
