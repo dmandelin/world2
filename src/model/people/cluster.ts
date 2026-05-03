@@ -8,6 +8,7 @@ import { DiseaseLoadCalc } from "../environment/pathogens";
 import { weightedAverage } from "../lib/modelbasics";
 import { CommonsProductionNode, ProductionNode } from "../econ/productionnode";
 import { SkillDefs } from "./skills";
+import { ProductionReport } from "../econ/productionreport";
 
 export const MILES_PER_UNIT = 0.16666667;
 
@@ -82,6 +83,11 @@ export class SettlementCluster {
             }
         }
 
+        // Produce for the new production nodes.
+        for (const clan of this.clans) clan.production = new ProductionReport(clan);
+        for (const node of [this.fishery, this.naturalFields]) {
+            node.commit(this.buildLaborMap(node));
+        }
 
         for (const settlement of this.settlements) {
             settlement.advancePostPhase();
@@ -89,6 +95,14 @@ export class SettlementCluster {
 
         // Prune empty settlements.
         removeAll(this.settlements, s => s.population === 0);
+    }
+
+    private buildLaborMaps(): Map<ProductionNode, Map<Clan, number>> {
+        const labor = new Map<ProductionNode, Map<Clan, number>>();
+        for (const node of [this.fishery, this.naturalFields]) {
+            labor.set(node, this.buildLaborMap(node));
+        }
+        return labor;
     }
 
     private buildLaborMap(node: ProductionNode): Map<Clan, number> {
@@ -115,12 +129,6 @@ export class SettlementCluster {
 
     // Compute actual effort allocations based on choices.
     private applyEffortAllocations(): void {
-        // Build a map of all the labor allocations.
-        const labor = new Map<ProductionNode, Map<Clan, number>>();
-        for (const node of [this.fishery, this.naturalFields]) {
-            labor.set(node, this.buildLaborMap(node));
-        }
-        
         // Each clan should get a chance to use commons, so we change
         // incrementally, but there is also a tendency for persistence,
         // so we can start from the status quo.
@@ -132,9 +140,7 @@ export class SettlementCluster {
             let updated = false;
             // TODO - Some sensible ordering.
             for (const clan of this.clans) {
-                // TODO - Update the labor map between different clans in the
-                //        same iteration.
-                if (clan.effortAllocation.applyStep(labor)) {
+                if (clan.effortAllocation.applyStep(this.buildLaborMaps())) {
                     updated = true;
                 }
             }

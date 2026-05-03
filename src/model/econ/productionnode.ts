@@ -28,8 +28,11 @@ export abstract class ProductionNode {
         return 'black';
     }
 
-    // Total quantity of goods produced by this clan.
+    // Total quantity of goods produced by this clan. Pure.
     abstract output(labor: Map<Clan, number>, clan: Clan): number;
+
+    // Commit production to the producers' ProductionReports.
+    abstract commit(labor: Map<Clan, number>): void;
 }
 
 export abstract class LandProductionNode extends ProductionNode {
@@ -63,6 +66,7 @@ export class CommonsProductionNode extends LandProductionNode {
         return this.skillDef.color;
     }
 
+    // Output for a given clan. Pure.
     output(labor: Map<Clan, number>, clan: Clan): number {
         // - Assume output is linear in workers and land at this scale, 
         //   with both required.
@@ -76,6 +80,13 @@ export class CommonsProductionNode extends LandProductionNode {
         const lp = lpBase * lpMod;
 
         return inputAmount * lp;
+    }
+
+    commit(labor: Map<Clan, number>): void {
+        for (const clan of labor.keys()) {
+            const output = this.output(labor, clan);
+            clan.production.accept(this, output);
+        }
     }
 }
 

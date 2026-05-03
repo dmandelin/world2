@@ -13,7 +13,7 @@
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
     import { TradeGoods, type TradeGood } from "../../model/trade";
-    import { safeDiv } from "../../model/lib/basics";
+    import { safeDiv, sortedByKey } from "../../model/lib/basics";
     import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
     import EntityLink from "../state/EntityLink.svelte";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
@@ -30,6 +30,11 @@
 
     let csnaps = $derived([...getClanLastTurnSnapshots(settlement).entries()]
         .map(([_, snapshots]) => ({ p: snapshots.p, e: snapshots.e!})));
+
+    let relevantProductionNodes = $derived.by(() =>
+        sortedByKey(
+            new Set(csnaps.flatMap(cs => [...cs.e.production2.nodes()])),
+            node => node.sortKey));
 
     function productionCooperationFactor(clan: ClanDTO, good: TradeGood): number {
         const item = clan.production.goods.find(g => g.good === good);
@@ -565,6 +570,24 @@
                     {@render deltaCell(cs, c => safeDiv(c.population, c.workers), v => v.toFixed(1))}
                 {/each}
             </tr>
+            <tr><td style="height: 0.5em"></td></tr>
+            {#each relevantProductionNodes as node}
+            <tr class="actual">
+                <td>{node.name}</td>
+            </tr>
+            <tr class="actual">
+                <td>&nbsp;Production</td>
+                {#each csnaps as cs}
+                    <td class="rap">
+                        {cs.e.production2.outputForNode(node).toFixed(0)}
+                        <Tooltip>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.production2.outputForNode(node), v => v.toFixed(0))}
+                {/each}
+            </tr>
+            {/each}
+            <tr><td style="height: 0.5em"></td></tr>
             {#each settlement.localTradeGoods as tradeGood}
             <tr class="actual">
                 <td>{tradeGood.name}: workers</td>

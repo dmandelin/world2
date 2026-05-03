@@ -26,6 +26,7 @@ import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeli
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
 import type { EffortAllocation } from "../decisions/effort";
+import type { ProductionReport } from "../econ/productionreport";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -151,6 +152,7 @@ export class ClanDTO {
     productivity: number;
     productivityTooltip: string[][];
     production: ClanProductionDTO;
+    production2: ProductionReport;
     workers: number;
     effort: number;
     ritualEffectiveness: number;
@@ -202,6 +204,7 @@ export class ClanDTO {
         this.productivity = clan.agriculturalProductivity;
         this.productivityTooltip = clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [];
         this.production = new ClanProductionDTO(clan);
+        this.production2 = clan.production;
         this.ritualEffectiveness = clan.ritualEffectiveness;
         this.ritualEffectivenessTooltip = clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [];
         this.seniority = clan.seniority;

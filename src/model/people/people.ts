@@ -26,6 +26,7 @@ import type { World } from "../world";
 import { Consumption } from "./consumption";
 import { EffortAllocation } from "../decisions/effort";
 import { type ProductionNode } from "../econ/productionnode";
+import { ProductionReport } from "../econ/productionreport";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -123,6 +124,7 @@ export class Clan implements TradePartner {
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     productionNodes: ProductionNode[];
     readonly tradeRelationships = new Set<TradeRelationship>();
+    production = new ProductionReport(this);
     consumption = new Consumption(this);
 
     private readonly happinessCalc_: HappinessCalc;
