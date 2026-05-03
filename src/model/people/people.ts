@@ -24,7 +24,7 @@ import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { Consumption } from "./consumption";
-import { EffortAllocation } from "../decisions/effort";
+import { EffortAllocation, ProductionActivity } from "../decisions/effort";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -201,9 +201,7 @@ export class Clan implements TradePartner {
     }
 
     get workers(): number {
-        const workingAgeWomen = this.slices[1][0] + this.slices[1][0];
-        const workingAgeMen = this.slices[1][1] + this.slices[1][1];
-        return Math.max(1, Math.round(workingAgeMen * 0.9 + workingAgeWomen * 0.6));
+        return this.effort * this.effortAllocation.get(ProductionActivity);
     }
 
     get skill() {

@@ -275,8 +275,7 @@
                             <div slot="tooltip">
                                 <PopulationPyramid clan={cs.e} />
                                 <hr>
-                                <div>Workers: {cs.e.workers}</div>
-                                <div>Carers and Dependents: {cs.e.population - cs.e.workers}</div>
+                                <div>Workers: {unsigned(cs.e.workers)}</div>
                                 <div>Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}</div>
                             </div>
                         </Tooltip>

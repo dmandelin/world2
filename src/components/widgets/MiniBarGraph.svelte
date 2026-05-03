@@ -1,8 +1,12 @@
 <script lang="ts">
+    import { pct } from "../../model/lib/format";
+    import Tooltip from "../Tooltip.svelte";
+
   export interface MiniBarData {
     value: number;
     color?: string;
     label?: string;
+    tooltip?: string;
   }
 
   let { data = [] }: { data: MiniBarData[] } = $props();
@@ -19,21 +23,45 @@
   ];
 
   let totalValue = $derived(data.reduce((sum, item) => sum + Math.max(0, item.value), 0));
+
+        function handleMouseEnter(event: MouseEvent, i: number) {
+        const bar = event.currentTarget as HTMLElement;
+        const tooltip = bar.querySelector('.tooltip') as HTMLElement;
+        if (tooltip) {
+            tooltip.style.display = 'block';
+        }
+    }
+
+    function handleMouseLeave(event: MouseEvent, i: number) {
+        const bar = event.currentTarget as HTMLElement;
+        const tooltip = bar.querySelector('.tooltip') as HTMLElement;
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
+    }
+
+    function itemTooltip(item: MiniBarData): string {
+        if (item.tooltip) {
+            return item.tooltip;
+        }
+        return `${item.label ? `${item.label}: ` : ''}${pct(item.value / totalValue)}`;
+    }
 </script>
 
 <div class="mini-bar-graph">
   {#if totalValue > 0}
     {#each data as item, i}
       {#if item.value > 0}
-        <div
-          class="bar"
-          style="width: {(item.value / totalValue) * 100}%; background-color: {item.color || defaultColors[i % defaultColors.length]};"
-          title={item.label}
-        >
-          {#if item.label}
-            <span class="label">{item.label}</span>
-          {/if}
-        </div>
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+                class="bar"
+                style="width: {(item.value / totalValue) * 100}%; background-color: {item.color || defaultColors[i % defaultColors.length]};"
+                title={itemTooltip(item)}
+            >
+                {#if item.label}
+                    <span class="label">{item.label}</span>
+                {/if}
+            </div>
       {/if}
     {/each}
   {/if}

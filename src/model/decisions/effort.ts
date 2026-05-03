@@ -17,6 +17,14 @@ export class EffortAllocation {
         this.f.set(LesiureActivity, 0.2);
     }
 
+    entries(): IterableIterator<[Activity, number]> {
+        return this.f.entries();
+    }
+
+    get(activity: Activity): number {
+        return this.f.get(activity) ?? 0;
+    }
+
     clone(): EffortAllocation {
         const clone = new EffortAllocation(this.clan);
         for (const [activity, fraction] of this.f.entries()) {

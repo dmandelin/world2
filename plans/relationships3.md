@@ -266,8 +266,12 @@ Norms:
         *   Other bonuses for leisure
         *   Effect of too little child care
         *   Bonuses for extra child care
-        *   Have effort allocation impact production
+        x   Have effort allocation impact production
         *   Dial up production as needed to get enough
+        *   Child care extra cost for mobility
+        *   Child care reduced cost for farming
+        *   Child care reduced cost (or additional effort) from alloparenting
+        *   Weaning time decision
 
 x   For the current primary food security benefit, count only defined
     relationships: kin and friends

@@ -152,6 +152,7 @@ export class ClanDTO {
     productivityTooltip: string[][];
     production: ClanProductionDTO;
     workers: number;
+    effort: number;
     ritualEffectiveness: number;
     ritualEffectivenessTooltip: string[][];
     seniority: number;
@@ -206,6 +207,7 @@ export class ClanDTO {
         this.seniority = clan.seniority;
         this.population = clan.population;
         this.workers = clan.workers;
+        this.effort = clan.effort;
         this.effectiveResidentPopulation = clan.effectiveResidentPopulation;
         this.residenceFraction = clan.residenceFraction;
         this.lastPopulationChange = clan.lastPopulationChange;
