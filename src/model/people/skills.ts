@@ -26,10 +26,10 @@ export class SkillDef {
 }
 
 export const SkillDefs = {
-    Fishing: new SkillDef(1, 'Fishing', 'skill-fishing-256.png', '#14b8a6', TradeGoods.Fish, 2.4,
+    Fishing: new SkillDef(1, 'Fishing', 'skill-fishing-256.png', '#14b8a6', TradeGoods.Fish, 2.7,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
         SkillUseLocation.AwayOnly, 1),
-    Agriculture: new SkillDef(2, 'Agriculture', 'skill-farming-256.png', '#f59e0b', TradeGoods.Cereals, 2.4,
+    Agriculture: new SkillDef(2, 'Agriculture', 'skill-farming-256.png', '#f59e0b', TradeGoods.Cereals, 2.7,
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
         SkillUseLocation.HomeOnly, 2),
     Irrigation: new SkillDef(3, 'Irrigation', 'skill-irrigation-256.png', '#3b82f6', undefined, 1,
