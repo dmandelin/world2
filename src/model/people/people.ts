@@ -119,7 +119,7 @@ export class Clan implements TradePartner {
     isDitching = false;
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
-    effortAllocation = new EffortAllocation(this);
+    effortAllocation: EffortAllocation;
     laborAllocation = new LaborAllocation(this);
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     productionNodes: ProductionNode[];
@@ -169,6 +169,9 @@ export class Clan implements TradePartner {
             this.settlement.cluster.fishery,
             this.settlement.cluster.naturalFields,
         ];
+
+        // Must go after initializing production nodes since it builds effort for them.
+        this.effortAllocation = new EffortAllocation(this);
 
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,

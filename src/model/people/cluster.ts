@@ -20,8 +20,8 @@ export class SettlementCluster {
     private floodLevel_: FloodLevel = FloodLevels.Normal;
     diseaseLoad: DiseaseLoadCalc = new DiseaseLoadCalc(this);
 
-    fishery = new CommonsProductionNode('Regional Fisheries', 100, SkillDefs.Fishing);
-    naturalFields = new CommonsProductionNode('Natural Alluvial Fields', 100, SkillDefs.Agriculture);
+    fishery = new CommonsProductionNode('Regional Fisheries', 50, SkillDefs.Fishing);
+    naturalFields = new CommonsProductionNode('Natural Alluvial Fields', 50, SkillDefs.Agriculture);
 
     constructor(readonly name: string, readonly x: number, readonly y: number) {
         this.settlements = [];

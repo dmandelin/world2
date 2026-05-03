@@ -15,10 +15,23 @@ export class EffortAllocation {
     private f_: [Activity, number][];
 
     constructor(readonly clan: Clan, f?: [Activity, number][]) {
+        // Fixed allocations for basic activities.
         this.f_ = f ? [...f] : [
-            [Activities.Leisure, 0.7],
-            [Activities.Care, 0.3],
+            [Activities.Leisure, 0.2],
+            [Activities.Care, 0.2],
         ];
+        const remaining = 1 - sumFun(this.f_, ([_, fraction]) => fraction);
+
+        // Start with production 80% fishing and 20% farming.
+        const fFishing = 0.8 * remaining;
+        const fAgriculture = remaining - fFishing;
+        for (const node of this.clan.productionNodes) {
+            if (node === this.clan.settlement.cluster.fishery) {
+                this.f_.push([Activities.Production(node), fFishing]);
+            } else if (node === this.clan.settlement.cluster.naturalFields) {
+                this.f_.push([Activities.Production(node), fAgriculture]);
+            }
+        }
     }
 
     debugString(): string {
@@ -67,10 +80,16 @@ export class EffortAllocation {
         // Reserve effort needed for child care and initially leave
         // the rest for leisure.
         const fCare = Math.min(1, 0.25 * this.clan.children / this.clan.effort);
-        this.f_ = [
-            [Activities.Leisure, 1 - fCare],
-            [Activities.Care, fCare],
-        ];
+
+        // If we need more or less care than we have now, adjust everything
+        // else proportionally.
+        const careDelta = fCare - this.get(Activities.Care);
+        const leisureEntry = this.getEntry(Activities.Leisure);
+        if (leisureEntry) {
+            leisureEntry[1] -= careDelta;
+        }
+        this.getOrCreateEntry(Activities.Care)[1] += careDelta;
+
         if (isExemplarClan(this.clan)) {
             console.log(
                 `Start effort allocation for ${this.clan.name}:`, 
