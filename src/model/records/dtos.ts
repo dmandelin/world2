@@ -10,7 +10,6 @@ import type { FloodLevel } from "../environment/flood";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
-import type { LaborAllocation } from "../decisions/labor";
 import type { MigrationCalc } from "../people/migration";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
@@ -26,7 +25,7 @@ import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeli
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
 import type { EffortAllocation } from "../decisions/effort";
-import type { ProductionReport } from "../econ/productionreport";
+import type { ClanProductionReport } from "../econ/productionreport";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -91,33 +90,6 @@ export class ClanProductivitySnapshotItem {
     ) {}
 }
 
-class ClanProductionDTO {
-    readonly goods: ClanProductionItemDTO[] = [];
-
-    constructor(clan: Clan) {
-        for (const pn of clan.settlement.productionNodes) {
-            for (const [good, amount] of pn.output(clan).entries()) {
-                const item = new ClanProductionItemDTO(
-                    good, pn.land(clan), pn.workerFraction(clan), 
-                    pn.workers(clan), new ClanProductivitySnapshot(clan, pn.skillDef), pn.tfp(clan), amount);
-                this.goods.push(item);
-            }
-        }
-
-        const housingWf = clan.laborAllocation.allocs.get(SkillDefs.Construction) ?? 0;
-        this.goods.push(new ClanProductionItemDTO(
-            TradeGoods.Housing, Infinity, housingWf, housingWf * clan.population, 
-            new ClanProductivitySnapshot(clan, SkillDefs.Construction), new ClanProductivitySnapshot(clan, SkillDefs.Construction).fp, 
-            undefined));
-
-        const ditchingWf = clan.laborAllocation.allocs.get(SkillDefs.Irrigation) ?? 0;
-        this.goods.push(new ClanProductionItemDTO(
-            TradeGoods.Ditching, Infinity, ditchingWf, ditchingWf * clan.population, 
-            new ClanProductivitySnapshot(clan, SkillDefs.Irrigation), new ClanProductivitySnapshot(clan, SkillDefs.Irrigation).fp, 
-            undefined));
-    }
-}
-
 export class ClanDTO {
     year: string;
     ref: Clan;
@@ -147,12 +119,10 @@ export class ClanDTO {
     consumption: Consumption;
     isDitching: boolean;
     effortAllocation: EffortAllocation;
-    laborAllocation: LaborAllocation;
     productivityCalcs: Map<SkillDef, ProductivityCalc>;
     productivity: number;
     productivityTooltip: string[][];
-    production: ClanProductionDTO;
-    production2: ProductionReport;
+    production: ClanProductionReport;
     workers: number;
     effort: number;
     ritualEffectiveness: number;
@@ -199,12 +169,10 @@ export class ClanDTO {
         this.consumption = clan.consumption.clone();
         this.isDitching = clan.isDitching;
         this.effortAllocation = clan.effortAllocation.clone();
-        this.laborAllocation = clan.laborAllocation.clone();
         this.productivityCalcs = clan.productivityCalcs;
         this.productivity = clan.agriculturalProductivity;
         this.productivityTooltip = clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [];
-        this.production = new ClanProductionDTO(clan);
-        this.production2 = clan.production;
+        this.production = clan.production;
         this.ritualEffectiveness = clan.ritualEffectiveness;
         this.ritualEffectivenessTooltip = clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [];
         this.seniority = clan.seniority;
@@ -225,42 +193,6 @@ export class ClanDTO {
     }
 }
 
-class SettlementProductionDTO {
-    readonly goods: Map<TradeGood, SettlementProductionItemDTO> = new Map();
-
-    constructor(settlement: Settlement) {
-        for (const pn of settlement.productionNodes) {
-            for (const [good, amount] of pn.output().entries()) {
-                const item = new SettlementProductionItemDTO(
-                    good, pn.land(), pn.workerFraction(), pn.workers(), 
-                    pn.laborProductivity(), pn.tfp(), amount);
-                const existingItem = this.goods.get(good);
-                if (existingItem) {
-                    const newAmount = existingItem.amount !== undefined && item.amount !== undefined
-                        ? existingItem.amount + item.amount
-                        : undefined;
-                    this.goods.set(good, new SettlementProductionItemDTO(
-                        good, 
-                        existingItem.land + item.land, 
-                        existingItem.workerFraction + item.workerFraction,
-                        existingItem.workers + item.workers, 
-                        -1,
-                        -1,
-                        newAmount));
-                } else {
-                    this.goods.set(good, item);
-                }
-            }
-        }
-
-        // Add items for construction, because the table code keys off of this.
-        this.goods.set(TradeGoods.Housing, new SettlementProductionItemDTO(
-            TradeGoods.Housing, Infinity, 0, 0, 0, 0, undefined));
-        this.goods.set(TradeGoods.Ditching, new SettlementProductionItemDTO(
-            TradeGoods.Ditching, Infinity, 0, 0, 0, 0, undefined));
-    }
-}
-
 export class StandaloneSettlementDTO {
     readonly uuid: string;
     readonly ref: Settlement;
@@ -275,7 +207,6 @@ export class StandaloneSettlementDTO {
     readonly lastSizeChange: number;
 
     readonly clans: ClanDTO[];
-    readonly production: SettlementProductionDTO;
     readonly localTradeGoods: TradeGood[];
 
     readonly ditchingLevel: number;
@@ -306,7 +237,6 @@ export class StandaloneSettlementDTO {
         this.averageHappiness = settlement.averageHappiness;
         this.lastSizeChange = settlement.lastSizeChange;
 
-        this.production = new SettlementProductionDTO(settlement);
         this.localTradeGoods = [...settlement.localTradeGoods];
 
         this.ditchingLevel = settlement.ditchingLevel;
@@ -325,7 +255,7 @@ export class StandaloneSettlementDTO {
     get farmingRatio(): number {
         return populationAverage(
             this.clans, 
-            clan => clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture));
+            clan => clan.effortAllocation.farmingRatio());
     }
 
     // TODO - Have a more general registry of snapshot history. Right now

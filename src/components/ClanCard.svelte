@@ -8,7 +8,7 @@
     import Tooltip from "./Tooltip.svelte";
     import { clanTimelineGraphData } from "../model/records/timeline";
     import HousingDecision from "./decisions/HousingDecision.svelte";
-    import { appealTable, happinessTable, laborAllocationPlanTable, skillImitationTable } from "./tables";
+    import { appealTable, happinessTable, skillImitationTable } from "./tables";
     import { SkillDefs } from "../model/people/skills";
     import DataTable2 from "./DataTable2.svelte";
     import { clanSedentismDescription } from "../model/people/residence";
@@ -147,25 +147,6 @@
                 <td colspan="3" class="full-row">
                     {clan.workers} workers ({pct(clan.workers / clan.population)}, 
                     DR {((clan.population - clan.workers) / clan.workers).toFixed(1)})
-                </td>
-            </tr>
-            <tr>
-                <td colspan="3" class="full-row">
-                    <Tooltip>
-                    {pct(clan.laborAllocation.plannedRatioFor(SkillDefs.Agriculture))} farming
-                    {clan.laborAllocation.allocationPlan.experimenting ? ' (E)' : ''}
-                    <div slot="tooltip" class="ttt">
-                        H {clan.laborAllocation.allocationPlan.happiness.toFixed()} |
-                        {pct(clan.laborAllocation.allocationPlan.experimentProbability)}
-                        ({(clan.laborAllocation.allocationPlan.experimentingRoll * 100).toFixed()})
-                        {#if clan.laborAllocation.allocationPlan.experimenting}
-                            - experimenting
-                        {:else}
-                            - maintaining traditions
-                        {/if}
-                        <DataTable2 table={laborAllocationPlanTable(clan)} />
-                    </div>
-                    </Tooltip>
                 </td>
             </tr>
             <tr>

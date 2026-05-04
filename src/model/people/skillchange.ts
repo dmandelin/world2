@@ -53,7 +53,7 @@ export class ClanSkillChange {
             // because we don't want to penalize for having less than 100% labor allocation.
             this.intensity = clan.isDitching ? 1 : 0;
         } else {
-            const workerFraction = clan.laborAllocation.allocs.get(skillDef);
+            const workerFraction = clan.effortAllocation.getForSkill(skillDef);
             // Clans can internally specialize a little, so learning isn't scaled
             // down fully by worker fraction.
             this.intensity = workerFraction !== undefined

@@ -6,6 +6,7 @@ import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
 import { SkillDefs } from "./skills";
+import { CommonsProductionNode } from "../econ/productionnode";
 
 class NewSettlementMigrationTarget {
     get name(): string { return 'New settlement'; }
@@ -69,15 +70,18 @@ export class MigrationCalc {
             return;
         }
 
-        this.clan.settlement.productionNode(SkillDefs.Agriculture).landPerWorker(this.clan)
         if (this.clan.happiness.getAppealNonNull('Food Quantity') < 0) {
             // Hungry, but this creates a desire to move only if there's
             // some reason to think moving will help. At present the main
             // thing that changes is farmland availability.
             // TODO - consider opportunities to learn productive skills
             // TODO - consider local infrastructure
-            if ((this.clan.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0 > 0) &&
-                this.clan.settlement.productionNode(SkillDefs.Agriculture).landPerWorker(this.clan) < 1) {
+            const farmingRatio = this.clan.effortAllocation.farmingRatio();
+            const agNode = this.clan.productionNodes
+                .find(n => n instanceof CommonsProductionNode && n.skillDef === SkillDefs.Agriculture);
+
+            if (farmingRatio > 0 &&
+                (agNode?.report?.landPerWorker() ?? 0) < 1) {
                 this.wantToMove = true;
                 this.wantToMoveReason = 'Land';
                 return;
@@ -242,12 +246,23 @@ export class CandidateMigrationCalc {
         //
         // But to the extent a clan depends on farmland, if they can plant
         // more than they have locally, that's a reason.
-        const farmingFraction = this.clan.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0;
-        const landRatio = this.clan.settlement.productionNode(SkillDefs.Agriculture)
-            .landPerWorker(this.clan);
-        const targetLandRatio = this.target instanceof NewSettlementMigrationTarget 
-            ? 1.0
-            : this.target.productionNode(SkillDefs.Agriculture).landPerWorker();
+        const farmingFraction = this.clan.effortAllocation.farmingRatio();
+        if (farmingFraction === 0) {
+            return { name: 'Land', reason: 'Not farming', value: 0 };
+        }
+
+        const agNode = this.clan.productionNodes
+            .find(n => n instanceof CommonsProductionNode && n.skillDef === SkillDefs.Agriculture);
+        if (!agNode) {
+            return { name: 'Land', reason: 'No agriculture', value: 0 };
+        }
+        const landRatio = agNode.report.landPerWorker();
+
+        let targetLandRatio = 1;
+        if (!(this.target instanceof NewSettlementMigrationTarget)) {
+            const targetAgNode = this.target.cluster.naturalFields;
+            targetLandRatio = targetAgNode.report.landPerWorker();
+        }
 
         return {
             name: 'Land',

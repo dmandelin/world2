@@ -1,11 +1,9 @@
 <script>
     import SettlementDemographics from "./SettlementDemographics.svelte";
-    import SettlementEconomy from "./SettlementEconomy.svelte";
     import SettlementHappiness from "./SettlementHappiness.svelte";
     import SettlementHealth from "./SettlementHealth.svelte";
     import SettlementOverview from "./overview/SettlementOverview.svelte";
     import SettlementPeople from "./SettlementPeople.svelte";
-    import SettlementRites from "./SettlementRites.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
     import TabbedView from "./TabbedView.svelte";
     import SettlementOpinions from "./SettlementOpinions.svelte";
@@ -25,8 +23,6 @@
         { label: "Respect", snippet: respectTab },
         { label: "Health", snippet: healthTab },
         { label: "Opinions", snippet: opinionsTab },
-        { label: "Rites", snippet: ritesTab },
-        { label: "Production", snippet: economyTab },
         { label: "Trade", snippet: tradeTab },
     ];
 </script>
@@ -49,14 +45,6 @@
 
 {#snippet healthTab()}
     <SettlementHealth settlement={settlement} />
-{/snippet}
-
-{#snippet economyTab()}
-    <SettlementEconomy settlement={settlement} />
-{/snippet}
-
-{#snippet ritesTab()}
-    <SettlementRites settlement={settlement} />
 {/snippet}
 
 {#snippet tradeTab()}

@@ -260,7 +260,6 @@ export class World implements NoteTaker {
             if (!priming) clan.considerMigration();
             clan.planMaintenance();
             clan.planHousing();
-            clan.laborAllocation.plan(priming);
         }
         for (const settlement of this.allSettlements) {
             settlement.planMigrations();
@@ -283,7 +282,6 @@ export class World implements NoteTaker {
         const floodLevel = randomFloodLevel();
         for (const cluster of this.clusters) {
             cluster.updateFloodLevel(floodLevel);
-            cluster.updateDisease();
         }
 
         // TODO - See if we actually need these

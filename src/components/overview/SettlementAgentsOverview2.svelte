@@ -8,7 +8,6 @@
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
-    import { laborAllocationPlanTable } from "../tables";
     import { IterableTable, RecordTable, SingleRecordTable, ValueMapTable } from "../tables/tables2";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
@@ -33,26 +32,12 @@
 
     let relevantProductionNodes = $derived.by(() =>
         sortedByKey(
-            new Set(csnaps.flatMap(cs => [...cs.e.production2.nodes()])),
+            new Set(csnaps.flatMap(cs => [...cs.e.production.nodes()])),
             node => node.sortKey));
 
     function productionCooperationFactor(clan: ClanDTO, good: TradeGood): number {
-        const item = clan.production.goods.find(g => g.good === good);
-        if (!item) return 1;
-        return item.productivity.items.find(i => i.label === 'Relationships')?.fp ?? 1;
-    }
-
-    function productionWorkers(clan: ClanDTO, good: TradeGood): number {
-        return clan.production.goods.find(g => g.good === good)?.workers ?? 0;
-    }
-
-    function productionLand(clan: ClanDTO, good: TradeGood): number {
-        return clan.production.goods.find(g => g.good === good)?.land ?? 0;
-    }
-
-    function productionLandPerWorker(clan: ClanDTO, good: TradeGood): number {
-        const prod = clan.production.goods.find(g => g.good === good);
-        return prod && prod.workers ? prod.land / prod.workers : 0;
+        // TODO - Delete or make useful
+        return 1;
     }
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
@@ -527,28 +512,6 @@
                     {@render deltaCell(cs, c => c.residenceLevel.fractionInSettlement, pct)}
                 {/each}
             </tr>
-            <tr>
-                <td>Farming</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {pct(cs.e.laborAllocation.plannedRatioFor(SkillDefs.Agriculture) ?? 0)}
-                            <div slot="tooltip" class="ttt">
-                                H {cs.e.laborAllocation.allocationPlan.happiness.toFixed()} |
-                                {pct(cs.e.laborAllocation.allocationPlan.experimentProbability)}
-                                ({(cs.e.laborAllocation.allocationPlan.experimentingRoll * 100).toFixed()})
-                                {#if cs.e.laborAllocation.allocationPlan.experimenting}
-                                    - experimenting
-                                {:else}
-                                    - maintaining traditions
-                                {/if}
-                                <DataTable2 table={laborAllocationPlanTable(cs.e)} />
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.laborAllocation.plannedRatioFor(SkillDefs.Agriculture) ?? 0, pct)}
-                {/each}
-            </tr>
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
                 <td>Support Ratio</td>
@@ -579,82 +542,46 @@
                     <td>&nbsp;Production</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {cs.e.production2.outputForNode(node).toFixed(0)}
+                            {cs.e.production.outputForNode(node).toFixed(0)}
                             <Tooltip>
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production2.outputForNode(node), v => v.toFixed(0))}
+                        {@render deltaCell(cs, c => c.production.outputForNode(node), v => v.toFixed(0))}
                     {/each}
                 </tr>
                 <tr class="actual">
                     <td>&nbsp;Land</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {cs.e.production2.forNode(node)?.land.toFixed(0) ?? 0}
+                            {cs.e.production.forNode(node)?.land.toFixed(0) ?? 0}
                             <Tooltip>
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production2.forNode(node)?.land ?? 0, v => v.toFixed(0))}
+                        {@render deltaCell(cs, c => c.production.forNode(node)?.land ?? 0, v => v.toFixed(0))}
                     {/each}
                 </tr>
                 <tr class="actual">
                     <td>&nbsp;Labor</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {cs.e.production2.forNode(node)?.labor.toFixed(0) ?? 0}
+                            {cs.e.production.forNode(node)?.labor.toFixed(0) ?? 0}
                             <Tooltip>
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production2.forNode(node)?.labor ?? 0, v => v.toFixed(0))}
+                        {@render deltaCell(cs, c => c.production.forNode(node)?.labor ?? 0, v => v.toFixed(0))}
                     {/each}
                 </tr>
                 <tr class="actual">
                     <td>&nbsp;Productivity</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {spct(cs.e.production2.forNode(node)?.laborProductivityFactor ?? 0)}
+                            {spct(cs.e.production.forNode(node)?.laborProductivityFactor ?? 0)}
                             <Tooltip>
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production2.forNode(node)?.laborProductivityFactor ?? 0, v => v.toFixed(2))}
+                        {@render deltaCell(cs, c => c.production.forNode(node)?.laborProductivityFactor ?? 0, v => v.toFixed(2))}
                     {/each}
                 </tr>
-            {/each}
-            <tr><td style="height: 0.5em"></td></tr>
-            {#each settlement.localTradeGoods as tradeGood}
-            <tr class="actual">
-                <td>{tradeGood.name}: workers</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        {productionWorkers(cs.e, tradeGood).toFixed(0)}
-                        <Tooltip>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => productionWorkers(c, tradeGood), v => v.toFixed(0))}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>{tradeGood.name}: land</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        {productionLand(cs.e, tradeGood).toFixed(0)}
-                        <Tooltip>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => productionLand(c, tradeGood), v => v.toFixed(0))}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>{tradeGood.name}: land/worker</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        {productionLandPerWorker(cs.e, tradeGood).toFixed(2)}
-                        <Tooltip>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => productionLandPerWorker(c, tradeGood), v => v.toFixed(2))}
-                {/each}
-            </tr>
             {/each}
         </tbody>
     </table>

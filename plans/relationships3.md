@@ -268,6 +268,7 @@ Norms:
             activity so far
         x   Wire new production to consumption
         *   Clean up old production code
+        *   Fix residence
         *   Tooltips for new economic table
         *   Plug in new activities/production to actual models
             *   Show production output data for new nodes

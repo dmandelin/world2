@@ -1,9 +1,8 @@
 import { Clan } from '../people/people';
-import { Settlement } from '../people/settlement';
-import { TradeGood } from '../trade';
-import { SkillDefs, type SkillDef } from '../people/skills';
-import { fractionOf, sum, sumFun, weightedHarmonicMean } from '../lib/basics';
-import type { ProductionNodeReport, ProductionReport } from './productionreport';
+import { type SkillDef } from '../people/skills';
+import { fractionOf, sumFun } from '../lib/basics';
+import { type ClanProductionNodeReportItem } from './productionreport'
+import { ProductionNodeReport } from './productionreport';
 
 // A ProductionNode is an entity where labor, land, tools, and materials
 // can be combined to produce goods. Examples include farms, fisheries, 
@@ -13,6 +12,8 @@ import type { ProductionNodeReport, ProductionReport } from './productionreport'
 // and empirical calculation of marginal quantities. Design for that may
 // be somewhat of a work in progress.
 export abstract class ProductionNode {
+    report: ProductionNodeReport = new ProductionNodeReport(this);
+
     constructor(
         readonly name: string,
     ) {}
@@ -66,9 +67,13 @@ export class CommonsProductionNode extends LandProductionNode {
     get color(): string {
         return this.skillDef.color;
     }
+    
+    landPerWorker(labor: Map<Clan, number>, clan: Clan): number {
+        return this.land / (labor.get(clan) ?? 1);
+    }
 
     // Production report for a given clan. Pure.
-    report(labor: Map<Clan, number>, clan: Clan): ProductionNodeReport {
+    computeClanReport(labor: Map<Clan, number>, clan: Clan): ClanProductionNodeReportItem {
         // - Assume output is linear in workers and land at this scale, 
         //   with both required.
         // - Assume users get equal shares of effective land.
@@ -92,197 +97,29 @@ export class CommonsProductionNode extends LandProductionNode {
 
     // Output for a given clan. Pure.
     output(labor: Map<Clan, number>, clan: Clan): number {
-        return this.report(labor, clan).amount;
+        return this.computeClanReport(labor, clan).amount;
     }
 
     commit(labor: Map<Clan, number>): void {
+        this.report = new ProductionNodeReport(this);
+
         for (const clan of labor.keys()) {
-            const report = this.report(labor, clan);
+            const clanReport = this.computeClanReport(labor, clan);
             clan.production.accept(
                 this, 
-                report.land, 
-                report.labor, 
-                report.laborProductivityFactor,
+                clanReport.land, 
+                clanReport.labor, 
+                clanReport.laborProductivityFactor,
                 this.skillDef.outputGood!,
-                report.amount,
+                clanReport.amount,
             );
-        }
-    }
-}
 
-export class ProductionNode1 {
-    workers_ = new Map<Clan, number>();
-    workerFractions_ = new Map<Clan, number>();
-    laborProductivity_ = new Map<Clan, number>();
-    output_ = new Map<TradeGood, Map<Clan, number>>();
-
-    land_ = new Map<Clan, number>();
-
-    static readonly outputPerWorker = 2.4;
-
-    totalWorkers_: number = 0;
-    totalLaborProductivity_: number = 0;
-    totalOutput_ = new Map<TradeGood, number>();
-
-    constructor(
-        readonly name: string,
-        readonly settlement: Settlement,
-        readonly originalTotalLand: number,
-        readonly skillDef: SkillDef,
-    ) {}
-
-    workers(clan?: Clan): number {
-        return clan ? this.workers_.get(clan) ?? 0 : this.totalWorkers_;
-    }
-
-    workerFraction(clan?: Clan): number {
-        return clan 
-             ? this.workerFractions_.get(clan)!
-             : sumFun([...this.workerFractions_.entries()], ([c, f]) =>
-                f * c.population / this.settlement.population);
-    }
-
-    land(clan?: Clan): number {
-        return clan ? this.land_.get(clan)! : sum(this.land_.values());
-    }
-
-    landPerWorker(clan?: Clan): number {
-        const w = this.workers(clan);
-        if (w === 0) {
-            return 1.0;
-        }
-        const lpw = this.land(clan) / this.workers(clan);
-        return Math.min(lpw, 1.0);
-    }
-
-    output(clan?: Clan): Map<TradeGood, number> {
-        if (clan) {
-            const m = new Map<TradeGood, number>();
-            for (const [good, clansAndAmounts] of this.output_.entries()) {
-                for (const [c, amount] of clansAndAmounts.entries()) {
-                    if (c === clan) {
-                        m.set(good, (m.get(good) ?? 0) + amount);
-                    }
-                }
-            }
-            return m;
-        } else {
-            return this.totalOutput_;
-        }
-    }
-
-    laborProductivity(clan?: Clan): number {
-        return clan 
-          ? this.laborProductivity_.get(clan)!
-          : this.totalLaborProductivity_;
-    }
-
-    tfp(clan?: Clan): number {
-        if (clan) {
-            const output = this.output(clan).get(this.skillDef.outputGood!) ?? 0;
-            const workers = this.workers(clan);
-            return workers === 0
-                ? clan.productivity(this.skillDef)
-                : ProductionNode1.tfpOf(output, workers);
-        }
-
-        const output = this.totalOutput_.get(this.skillDef.outputGood!) ?? 0;
-        const workers = this.totalWorkers_;
-        return workers === 0
-            ? weightedHarmonicMean(
-                [...this.workers_.entries()], ([c, w]) => c.productivity(this.skillDef), ([c, w]) => w)
-            : ProductionNode1.tfpOf(output, workers);
-    }
-
-    static tfpOf(output: number, workers: number): number {
-        if (workers === 0) {
-            return 1;
-        }
-        return output / workers / ProductionNode1.outputPerWorker;
-    }
-
-    reset(): void {
-        this.workerFractions_.clear();
-        this.workers_.clear();
-        this.land_.clear();
-        this.laborProductivity_.clear();
-        this.output_.clear();
-        this.totalWorkers_ = 0;
-        this.totalOutput_.clear();
-    }
-
-    acceptFrom(settlement: Settlement): void {
-        for (const clan of settlement.clans) {
-            const laborFraction = clan.laborAllocation.allocs.get(this.skillDef) ?? 0;
-            const workers = laborFraction * clan.workers;
-            this.accept(clan, laborFraction, workers);
-        }
-    }
-
-    accept(clan: Clan, laborFraction: number, workers: number): void {
-        if (workers <= 0) {
-            return;
-        }
-        this.workers_.set(clan, (this.workers_.get(clan) ?? 0) + workers);
-        this.workerFractions_.set(clan, (this.workerFractions_.get(clan) ?? 0) + laborFraction);
-        this.totalWorkers_ += workers;
-    }
-
-    produce(): void {
-        // Assume output is linear in workers and land at this scale, with both
-        // required.
-        let reciprocalLaborProductivity = 0;
-        for (const [clan, workers] of this.workers_.entries()) {
-            const land = this.landFor(clan);
-            this.land_.set(clan, land);
-
-            const inputs = Math.min(land, workers);
-            const lp = clan.productivity(this.skillDef);
-            this.laborProductivity_.set(clan, lp);
-            reciprocalLaborProductivity += workers / lp;
-            let output = ProductionNode1.outputPerWorker * inputs * lp;
-
-            if (output > 0) {
-                this.totalOutput_.set(this.skillDef.outputGood!, 
-                    (this.totalOutput_.get(this.skillDef.outputGood!) ?? 0) + output);
-                
-                    const goods = this.output_.get(this.skillDef.outputGood!) ?? new Map();
-                goods.set(clan, (goods.get(clan) ?? 0) + output);
-                this.output_.set(this.skillDef.outputGood!, goods);
-            }
-        }
-        this.totalLaborProductivity_ = this.totalWorkers_ / reciprocalLaborProductivity;
-    }
-
-    private landFor(clan: Clan) {
-        // Fishing "land" is shared across the cluster.
-        if (this.skillDef === SkillDefs.Fishing) {
-            let ourFishers = 0;
-            let totalFishers = 0;
-            for (const settlement of clan.settlement.cluster.settlements) {
-                for (const pn of settlement.productionNodes) {
-                    if (pn.skillDef === SkillDefs.Fishing) {
-                        for (const fishingClan of settlement.clans) {
-                            const fishers = pn.workers(fishingClan);
-                            if (fishingClan === clan) {
-                                ourFishers += fishers;
-                            }
-                            totalFishers += fishers;
-                        }
-                    }
-                }
-            }
-            return this.originalTotalLand * ourFishers / totalFishers;
-        }
-
-        return this.originalTotalLand * this.workers(clan) / this.totalWorkers_;
-    }
-
-    commitToProducers(): void {
-        for (const [good, clanProduce] of this.output_.entries()) {
-            for (const [clan, amount] of clanProduce.entries()) {
-                clan.accept(this.name, good, amount);
-            }
+            this.report.accept(
+                clanReport.land,
+                clanReport.labor,
+                this.skillDef.outputGood!,
+                clanReport.amount,
+            );
         }
     }
 }

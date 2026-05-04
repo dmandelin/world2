@@ -5,7 +5,6 @@ import { DitchMaintenanceCalc } from "../infrastructure";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
 import { poisson } from "../lib/distributions";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
-import { ProductionNode1 } from "../econ/productionnode";
 import { SettlementEndOfTurnSnapshot, SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
 import { SkillDef, SkillDefs } from "./skills";
@@ -25,8 +24,6 @@ export class Settlement {
     readonly daughters: Settlement[] = [];
 
     private tellHeightInMeters_: number = 0;
-
-    readonly productionNodes: ProductionNode1[] = [];
 
     readonly localTradeGoods = new Set<TradeGood>();
 
@@ -58,11 +55,6 @@ export class Settlement {
         if (this.parent) {
             this.parent.daughters.push(this);
         }
-
-        this.productionNodes.push(
-            new ProductionNode1('Farms', this, 40, SkillDefs.Agriculture),
-            new ProductionNode1('Fisheries', this, 40, SkillDefs.Fishing),
-        );
 
         this.lastShiftYear_ = this.world.year;
     }
@@ -98,10 +90,6 @@ export class Settlement {
 
     get residenceFraction() {
         return this.effectiveResidentPopulation / this.population;
-    }
-
-    productionNode(skillDef: SkillDef): ProductionNode1 {
-        return this.productionNodes.find(pn => pn.skillDef === skillDef)!;
     }
 
     get averageAppeal() {
@@ -211,9 +199,11 @@ export class Settlement {
     }
 
     advancePostPhase() {
-        this.resetEconomicNodes();
+        for (const clan of this.clans) {
+            clan.consumption.reset();
+        }
+
         this.maintain();
-        //this.produce();
         this.distribute();
         this.exchange();
         for (const clan of this.clans) clan.consumption.foodInsecurity.update();
@@ -234,28 +224,10 @@ export class Settlement {
         this.growTell(sizeBefore);
     }
 
-    resetEconomicNodes() {
-        for (const clan of this.clans) {
-            clan.consumption.reset();
-        }
-
-        for (const pn of this.productionNodes) {
-                pn.reset();
-        }
-    }
-
     maintain() {
         this.maintenanceCalc = new DitchMaintenanceCalc(this);
         this.ditchingLevel = this.maintenanceCalc.items.length ? 1 : 0;
         this.ditchQuality = this.maintenanceCalc.quality;
-    }
-
-    produce() {
-        for (const pn of this.productionNodes) {
-            pn.acceptFrom(this);
-            pn.produce();
-            pn.commitToProducers();
-        }
     }
 
     distribute() {

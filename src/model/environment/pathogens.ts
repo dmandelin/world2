@@ -1,5 +1,7 @@
-import { sumFun } from "../lib/basics";
+import type { ProductionNode } from "../econ/productionnode";
+import { sum, sumFun } from "../lib/basics";
 import type { SettlementCluster } from "../people/cluster";
+import type { Clan } from "../people/people";
 import { SkillDef } from "../people/skills";
 
 export class WorkerDiseaseLoadItem {
@@ -18,25 +20,28 @@ export class DiseaseLoadCalc {
 
     readonly value: number;
 
-    constructor(readonly cluster: SettlementCluster) {
+    constructor(
+        readonly cluster: SettlementCluster, 
+        readonly laborMap: Map<ProductionNode, Map<Clan, number>>) {
         // For now, we'll assume things are rapidly transmitted across the
         // cluster, so we can calculate a uniform load.
 
-        for (const settlement of cluster.settlements) {
-                for (const pn of settlement.productionNodes) {
-                    const diseaseLoadFactor = pn.skillDef.diseaseLoadFactor;
-                    if (diseaseLoadFactor) {
-                        const workers = pn.workers();
-                        let item = this.workerDiseaseLoads.get(pn.skillDef);
-                        if (!item) {
-                            item = new WorkerDiseaseLoadItem(
-                                pn.skillDef, workers * diseaseLoadFactor);
-                            this.workerDiseaseLoads.set(pn.skillDef, item);
-                        } else {
-                            item.workers += workers;
-                        }
-                    }
+        for (const pn of [cluster.fishery, cluster.naturalFields]) {
+            const diseaseLoadFactor = pn.skillDef.diseaseLoadFactor;
+            if (diseaseLoadFactor) {
+                const nodeLaborMap = laborMap.get(pn);
+                if (!nodeLaborMap) continue;
+
+                const workers = sum(nodeLaborMap.values());
+                let item = this.workerDiseaseLoads.get(pn.skillDef);
+                if (!item) {
+                    item = new WorkerDiseaseLoadItem(
+                        pn.skillDef, workers * diseaseLoadFactor);
+                    this.workerDiseaseLoads.set(pn.skillDef, item);
+                } else {
+                    item.workers += workers;
                 }
+            }
         }
         
         for (const item of this.workerDiseaseLoads.values()) {

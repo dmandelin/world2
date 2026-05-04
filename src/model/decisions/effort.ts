@@ -1,7 +1,8 @@
-import type { ProductionNode } from "../econ/productionnode";
+import { CommonsProductionNode, type ProductionNode } from "../econ/productionnode";
 import { between, chooseFrom, sumFun } from "../lib/basics";
 import { isExemplarClan } from "../lib/debug";
 import type { Clan } from "../people/people";
+import type { SkillDef } from "../people/skills";
 
 // How a clan allocates its "effort", which subsumes time taken
 // (including preparation and recovery) and other factors not
@@ -66,6 +67,17 @@ export class EffortAllocation {
 
     getForNode(node: ProductionNode): number {
         return this.getEntry(Activities.Production(node))?.[1] ?? 0;
+    }
+
+    getForSkill(skillDef: SkillDef): number {
+        const node = this.clan.productionNodes.find(node => node instanceof CommonsProductionNode && node.skillDef === skillDef);
+        return node ? this.getForNode(node) : 0;
+    }
+
+    farmingRatio(): number {
+        const farmingEffort = this.getForNode(this.clan.settlement.cluster.naturalFields);
+        const fishingEffort = this.getForNode(this.clan.settlement.cluster.fishery);
+        return farmingEffort / (farmingEffort + fishingEffort);
     }
 
     clone(): EffortAllocation {

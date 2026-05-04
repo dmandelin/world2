@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { SettlementDTO } from "../../model/records/dtos";
     import SettlementAgentsOverview2 from "./SettlementAgentsOverview2.svelte";
-    import SettlementEconomyOverview from "./SettlementEconomyOverview.svelte";
     import SettlementEventsOverview from "./SettlementEventsOverview.svelte";
     import SettlementIssuesOverview from "./SettlementIssuesOverview.svelte";
     import SettlementPopulationOverview from "./SettlementPopulationOverview.svelte";
@@ -21,5 +20,4 @@
     <SettlementIssuesOverview settlement={settlement} />
     <SettlementEventsOverview settlement={settlement} />
     <SettlementPopulationOverview settlement={settlement} />
-    <SettlementEconomyOverview settlement={settlement} />
 </div>

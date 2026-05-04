@@ -67,7 +67,7 @@ class FarmingTrend extends BasicTrend<number> {
     getValue(): number {
         return weightedAverage(
             this.world.allClans,
-            c => c.laborAllocation.allocs.get(SkillDefs.Agriculture) ?? 0,
+            c => c.effortAllocation.getForSkill(SkillDefs.Agriculture) ?? 0,
             c => c.population,
         );
     }

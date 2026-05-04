@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ClanDTO } from '../../model/records/dtos';
     import TabbedView from '../TabbedView.svelte';
-    import ClanLaborDetails from './ClanLaborDetails.svelte';
     import ClanMigrationDetails from './ClanMigrationDetails.svelte';
     import ClanOverviewDetails from './ClanOverviewDetails.svelte';
 
@@ -10,7 +9,6 @@
     const tabs = [
         { label: "Overview", snippet: overviewTab },
         { label: "Migration", snippet: migrationTab },
-        { label: "Labor", snippet: laborTab },
     ];
 </script>
 
@@ -20,10 +18,6 @@
 
 {#snippet migrationTab()}
     <ClanMigrationDetails clan={clan} />
-{/snippet}
-
-{#snippet laborTab()}
-    <ClanLaborDetails clan={clan} />
 {/snippet}
 
 <style>

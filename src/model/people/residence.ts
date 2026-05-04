@@ -55,6 +55,7 @@
 //   a simplification, because there may not actually be farm work to do
 //   100% of the time, but we'll assume they're doing other related activities
 
+import type { CommonsProductionNode } from "../econ/productionnode";
 import { sumFun } from "../lib/basics";
 import type { Clan } from "./people";
 import { SkillUseLocation } from "./skills";
@@ -82,7 +83,13 @@ export class ResidenceLevel {
         const eitherItems: {skill: string, fraction: number}[] = [];
         let [totalWeight, awayWeight]: [number, number] = [0, 0];
 
-        for (const [skill, laborFraction] of this.clan.laborAllocation.allocs) {
+        for (const [activity, laborFraction] of this.clan.effortAllocation) {
+            if (activity.name !== 'Production') continue;
+            const node = activity.node as CommonsProductionNode;
+            if (!node) continue;
+            const skill = node.skillDef;
+            if (!skill) continue;
+
             if (skill.useLocation === SkillUseLocation.HomeOnly) {
                 this.laborItems_.push({
                     skill: skill.name,

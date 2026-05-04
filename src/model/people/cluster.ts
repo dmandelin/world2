@@ -8,7 +8,7 @@ import { DiseaseLoadCalc } from "../environment/pathogens";
 import { weightedAverage } from "../lib/modelbasics";
 import { CommonsProductionNode, ProductionNode } from "../econ/productionnode";
 import { SkillDefs } from "./skills";
-import { ProductionReport } from "../econ/productionreport";
+import { ClanProductionReport } from "../econ/productionreport";
 import { isExemplarClan } from "../lib/debug";
 
 export const MILES_PER_UNIT = 0.16666667;
@@ -18,10 +18,11 @@ export class SettlementCluster {
     readonly settlements: Settlement[] = [];
 
     private floodLevel_: FloodLevel = FloodLevels.Normal;
-    diseaseLoad: DiseaseLoadCalc = new DiseaseLoadCalc(this);
 
     fishery = new CommonsProductionNode('Regional Fisheries', 50, SkillDefs.Fishing);
     naturalFields = new CommonsProductionNode('Natural Alluvial Fields', 50, SkillDefs.Agriculture);
+
+    diseaseLoad: DiseaseLoadCalc = new DiseaseLoadCalc(this, this.buildLaborMaps());
 
     constructor(readonly name: string, readonly x: number, readonly y: number) {
         this.settlements = [];
@@ -62,7 +63,7 @@ export class SettlementCluster {
     }
 
     updateDisease(): void {
-        this.diseaseLoad = new DiseaseLoadCalc(this);
+        this.diseaseLoad = new DiseaseLoadCalc(this, this.buildLaborMaps());
     }
 
     advance(): void {
@@ -74,8 +75,15 @@ export class SettlementCluster {
         // and distribution.
         this.applyEffortAllocations();
 
+        // Update disease load:
+        // - After labor allocations, since those influence disease load, and we
+        //   want current-turn load to reflect current-turn activity.
+        // - Before production, because at some point disease will probably
+        //   influence productivity.
+        this.updateDisease();
+
         // Produce for the new production nodes.
-        for (const clan of this.clans) clan.production = new ProductionReport(clan);
+        for (const clan of this.clans) clan.production = new ClanProductionReport(clan);
         for (const node of [this.fishery, this.naturalFields]) {
             node.commit(this.buildLaborMap(node));
         }

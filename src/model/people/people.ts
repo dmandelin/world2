@@ -5,7 +5,6 @@ import { HappinessCalc } from "./happiness";
 import { HousingDecision } from "../decisions/housingdecision";
 import { HousingTypes } from "../econ/housing";
 import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } from "./population";
-import { LaborAllocation } from "../decisions/labor";
 import { MigrationCalc, type NewSettlementSupplier} from "./migration";
 import { normal } from "../lib/distributions";
 import { PrestigeCalc } from "./prestige";
@@ -26,7 +25,7 @@ import type { World } from "../world";
 import { Consumption } from "./consumption";
 import { EffortAllocation } from "../decisions/effort";
 import { type ProductionNode } from "../econ/productionnode";
-import { ProductionReport } from "../econ/productionreport";
+import { ClanProductionReport } from "../econ/productionreport";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -120,11 +119,10 @@ export class Clan implements TradePartner {
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
     effortAllocation: EffortAllocation;
-    laborAllocation = new LaborAllocation(this);
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     productionNodes: ProductionNode[];
     readonly tradeRelationships = new Set<TradeRelationship>();
-    production = new ProductionReport(this);
+    production = new ClanProductionReport(this);
     consumption = new Consumption(this);
 
     private readonly happinessCalc_: HappinessCalc;
@@ -601,8 +599,6 @@ export class Clan implements TradePartner {
         // Plan for the new clan, since it didn't get a chance to during the main
         // planning phase. We don't need to update productivity because that happens
         // at the start of production during the advance phase.
-        newClan.laborAllocation = this.laborAllocation.clone();
-        newClan.laborAllocation.plan(false);
         newClan.planMaintenance();
         newClan.planHousing();
         newClan.considerMigration();
