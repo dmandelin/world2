@@ -267,13 +267,14 @@ Norms:
         x   Start with a somewhat stable state with only a little agricultural
             activity so far
         x   Wire new production to consumption
-        *   Clean up old production code
-        *   Fix residence
+        x   Clean up old production code
+        x   Fix residence
+        *   Target per capita food
         *   Tooltips for new economic table
-        *   Plug in new activities/production to actual models
-            *   Show production output data for new nodes
-            *   Plug in to consumption
-            *   Remove old production nodes
+        x   Plug in new activities/production to actual models
+            x   Show production output data for new nodes
+            x   Plug in to consumption
+            x   Remove old production nodes
         *   Happiness bonus for leisure
         *   Other bonuses for leisure
         *   Effect of too little child care
@@ -287,6 +288,9 @@ Norms:
         *   Should probably separate out workers from effort a bit
             so that they get some actual leisure
         *   Show unemployment
+        *   Use target food storage or food security instead of target production
+        *   Have clans learn food targets from each other
+        *   Happiness effect for meeting food target or not
 
 x   For the current primary food security benefit, count only defined
     relationships: kin and friends

@@ -367,6 +367,20 @@
                 {/each}
             </tr>
             <tr class="actual">
+                <td>&nbsp;Target</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {pct(cs.e.targetPerCapitaFood)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.targetPerCapitaFood, pct)}
+                {/each}
+            </tr>
+            <tr class="actual">
                 <td>Food Storage</td>
                 {#each csnaps as cs}
                     <td class="ra">

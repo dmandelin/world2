@@ -1,5 +1,5 @@
 import { Annals } from "../annals";
-import { clamp, remove } from "../lib/basics";
+import { clamp, randInt, remove } from "../lib/basics";
 import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
 import { HappinessCalc } from "./happiness";
 import { HousingDecision } from "../decisions/housingdecision";
@@ -118,7 +118,9 @@ export class Clan implements TradePartner {
     isDitching = false;
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
+    targetPerCapitaFood: number;
     effortAllocation: EffortAllocation;
+
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     productionNodes: ProductionNode[];
     readonly tradeRelationships = new Set<TradeRelationship>();
@@ -167,6 +169,8 @@ export class Clan implements TradePartner {
             this.settlement.cluster.fishery,
             this.settlement.cluster.naturalFields,
         ];
+
+        this.targetPerCapitaFood = 0.9 + (randInt(3) + randInt(3)) * 0.1;
 
         // Must go after initializing production nodes since it builds effort for them.
         this.effortAllocation = new EffortAllocation(this);

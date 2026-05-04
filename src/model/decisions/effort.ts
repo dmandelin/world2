@@ -119,7 +119,7 @@ export class EffortAllocation {
             console.log(
                 `Expected production for ${this.clan.name}: ${expectedProduction.toFixed(2)} (population: ${this.clan.population})`);
         }
-        if (expectedProduction < 0.95 * this.clan.population) {
+        if (expectedProduction < (this.clan.targetPerCapitaFood - 0.05) * this.clan.population) {
             // Not enough: work more at the expense of leisure. Note that clans
             // don't necessarily know exactly what has the most marginal production.
             // For now we'll be very simple about that and make it random.
@@ -141,7 +141,7 @@ export class EffortAllocation {
             return true;
         }
         
-        if (expectedProduction > 1.05 * this.clan.population) {
+        if (expectedProduction > (this.clan.targetPerCapitaFood + 0.05) * this.clan.population) {
             // More than enough: work less and enjoy more leisure.
             const workedNodes = this.clan.productionNodes.filter(node => this.get(Activities.Production(node)) > 0);
             const node = chooseFrom(workedNodes);

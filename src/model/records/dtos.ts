@@ -118,6 +118,7 @@ export class ClanDTO {
     
     consumption: Consumption;
     isDitching: boolean;
+    targetPerCapitaFood: number;
     effortAllocation: EffortAllocation;
     productivityCalcs: Map<SkillDef, ProductivityCalc>;
     productivity: number;
@@ -168,6 +169,7 @@ export class ClanDTO {
 
         this.consumption = clan.consumption.clone();
         this.isDitching = clan.isDitching;
+        this.targetPerCapitaFood = clan.targetPerCapitaFood;
         this.effortAllocation = clan.effortAllocation.clone();
         this.productivityCalcs = clan.productivityCalcs;
         this.productivity = clan.agriculturalProductivity;
