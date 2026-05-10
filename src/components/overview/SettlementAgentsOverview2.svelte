@@ -16,6 +16,8 @@
     import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
     import EntityLink from "../state/EntityLink.svelte";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
+    import DataTable from "../DataTable.svelte";
+    import { CommonsProductionNode, type ProductionNode } from "../../model/econ/productionnode";
 
 	let { 
         settlement, 
@@ -191,6 +193,17 @@
                 label: 'Kind',
                 valueFn: rv => rv.interactionChains.map(ic => ic.name).join(', '),
             }]);
+    }
+
+    function productivityModifierTooltip(clan: ClanDTO, node: ProductionNode): string[][] {
+        if (node instanceof CommonsProductionNode) {
+            const calc = clan.productivityCalcs.get(node.skillDef);
+            if (!calc) {
+                return [];
+            }
+            return calc.tooltip;
+        }
+        return [];
     }
 </script>
 
@@ -578,8 +591,11 @@
                     <td>&nbsp;Labor</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {cs.e.production.forNode(node)?.labor.toFixed(0) ?? 0}
                             <Tooltip>
+                                {cs.e.production.forNode(node)?.labor.toFixed(0) ?? 0}
+                                <div slot="tooltip">
+                                    {pct()}
+                                </div>
                             </Tooltip>
                         </td>
                         {@render deltaCell(cs, c => c.production.forNode(node)?.labor ?? 0, v => v.toFixed(0))}
@@ -589,8 +605,11 @@
                     <td>&nbsp;Productivity</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {spct(cs.e.production.forNode(node)?.laborProductivityFactor ?? 0)}
                             <Tooltip>
+                                {spct(cs.e.production.forNode(node)?.laborProductivityFactor ?? 0)}
+                                <div slot="tooltip">
+                                    <DataTable rows={productivityModifierTooltip(cs.e, node)} />
+                                </div>
                             </Tooltip>
                         </td>
                         {@render deltaCell(cs, c => c.production.forNode(node)?.laborProductivityFactor ?? 0, v => v.toFixed(2))}
