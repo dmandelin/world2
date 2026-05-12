@@ -262,7 +262,7 @@ Norms:
             with a 2x from early weaning
     *   Changes to make
         x   Happiness bonus for leisure
-        *   Happiness bonus for food security
+        x   Happiness bonus for food security
         
         *   Child care extra cost for mobility
         *   Child care reduced cost for farming
@@ -284,26 +284,20 @@ Norms:
         *   Use target food storage or food security instead of target production
         *   More tooltips for new economic table
 
-x   For the current primary food security benefit, count only defined
-    relationships: kin and friends
-x   Refactor marriage to be a standard relationship
 *   Food security benefits for marriage relationships
 *   Refactor kin to be a standard relationship
 *   Food security benefits for kin relationships
 *   Show relationships in a standard order in alignment view
-x   Show relationship counts in main panel
 *   Have clans absorb relationships when they merge
 *   Unified relationships graph
 *   Add friends relationship. With hunter-gatherers that can be quite
     fluid; for farming it will usually be with co-villagers
-    x   Initially seed some random local relationships
-    *   Show allies count in the summary UI
     *   Friends relationships requires gifts and visits
     *   Extend kin relationships to also take effect when distant with
         gifts and visits
     *   Extend friends relationships to take effect when distant
     *   Some sort of distance cost, but maybe low for mobile people
-    x   Limit on the number of gifts-and-visits relationships that can
+    *   Limit on the number of gifts-and-visits relationships that can
         be maintained, partially from time taken, partially from ability
         to correctly track and agree on whether they're keeping up their
         end
