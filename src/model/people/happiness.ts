@@ -388,6 +388,29 @@ class StatusHappinessItem extends NumericHappinessItem {
     }
 }
 
+class LeisureHappinessItem extends NumericHappinessItem {
+    get label(): string {
+        return 'Leisure';
+    }
+
+    get stateDisplay(): string {
+        return pct(this.state_);
+    }
+
+    appealOf(leisureShare: number): number {
+        // People like leisure, but with diminishing returns.
+        return 100 * (leisureShare ** 0.5);
+    }
+
+    updateState(clan: Clan): void {
+        this.state_ = clan.effortAllocation.get(Activities.Leisure);
+    }
+
+    clone(): LeisureHappinessItem {
+        return new LeisureHappinessItem(this.expectedAppeal, this.state_);
+    }
+}
+
 export class HappinessCalc {
     readonly items: Map<string, HappinessItem<any>> = new Map();
 
@@ -404,6 +427,7 @@ export class HappinessCalc {
             new StatusHappinessItem(),
             new SocietyHappinessItem(),
             new ConflictHappinessItem(),
+            new LeisureHappinessItem(),
         );
     }
 

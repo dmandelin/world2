@@ -261,28 +261,12 @@ Norms:
             mobility, and farming economy. This will then balance
             with a 2x from early weaning
     *   Changes to make
-        x   Add child care + leisure time allocation model
-        x   Debug effort allocation, we don't seem to produce enough food
-        x   Increase base productivity so we have some leisure to start
-        x   Start with a somewhat stable state with only a little agricultural
-            activity so far
-        x   Wire new production to consumption
-        x   Clean up old production code
-        x   Fix residence
-        x   Target per capita food
-        x   Productivity tooltip in new economic table
-        x   Plug in new activities/production to actual models
-            x   Show production output data for new nodes
-            x   Plug in to consumption
-            x   Remove old production nodes
-        *   Net productivity line in economic table
         *   Happiness bonus for leisure
         *   Other bonuses for leisure
         *   Effect of too little child care
         *   Bonuses for extra child care
         *   Bring back splitting and merging of clans but maybe also
             tweak clan sizes and other aspects with that
-        x   Have effort allocation impact production
         *   Dial up production as needed to get enough
         *   Child care extra cost for mobility
         *   Child care reduced cost for farming

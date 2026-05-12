@@ -205,6 +205,17 @@
         }
         return [];
     }
+
+    function netLaborProductivity(clan: ClanDTO, node: ProductionNode): number {
+        if (node instanceof CommonsProductionNode) {
+            const calc = clan.production.forNode(node);
+            if (!calc) {
+                return 1;
+            }
+            return calc.laborProductivityFactor * Math.min(calc.labor, calc.land) / calc.labor;
+        }
+        return 1;
+    }
 </script>
 
 <style>
@@ -569,8 +580,8 @@
                     <td>&nbsp;Production</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {cs.e.production.outputForNode(node).toFixed(0)}
                             <Tooltip>
+                                {cs.e.production.outputForNode(node).toFixed(0)}
                             </Tooltip>
                         </td>
                         {@render deltaCell(cs, c => c.production.outputForNode(node), v => v.toFixed(0))}
@@ -580,8 +591,8 @@
                     <td>&nbsp;Land</td>
                     {#each csnaps as cs}
                         <td class="rap">
-                            {cs.e.production.forNode(node)?.land.toFixed(0) ?? 0}
                             <Tooltip>
+                                {cs.e.production.forNode(node)?.land.toFixed(0) ?? 0}
                             </Tooltip>
                         </td>
                         {@render deltaCell(cs, c => c.production.forNode(node)?.land ?? 0, v => v.toFixed(0))}
@@ -594,7 +605,6 @@
                             <Tooltip>
                                 {cs.e.production.forNode(node)?.labor.toFixed(0) ?? 0}
                                 <div slot="tooltip">
-                                    {pct()}
                                 </div>
                             </Tooltip>
                         </td>
@@ -613,6 +623,19 @@
                             </Tooltip>
                         </td>
                         {@render deltaCell(cs, c => c.production.forNode(node)?.laborProductivityFactor ?? 0, v => v.toFixed(2))}
+                    {/each}
+                </tr>
+                <tr class="actual">
+                    <td>&nbsp;Net Labor Prod</td>
+                    {#each csnaps as cs}
+                        <td class="rap">
+                            <Tooltip>
+                                {spct(netLaborProductivity(cs.e, node))}
+                                <div slot="tooltip">
+                                </div>
+                            </Tooltip>
+                        </td>
+                        {@render deltaCell(cs, c => netLaborProductivity(c, node), v => v.toFixed(2))}
                     {/each}
                 </tr>
             {/each}
