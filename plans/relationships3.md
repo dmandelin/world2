@@ -261,23 +261,27 @@ Norms:
             mobility, and farming economy. This will then balance
             with a 2x from early weaning
     *   Changes to make
-        *   Happiness bonus for leisure
-        *   Other bonuses for leisure
-        *   Effect of too little child care
-        *   Bonuses for extra child care
-        *   Bring back splitting and merging of clans but maybe also
-            tweak clan sizes and other aspects with that
-        *   Dial up production as needed to get enough
+        x   Happiness bonus for leisure
+        *   Happiness bonus for food security
+        
         *   Child care extra cost for mobility
         *   Child care reduced cost for farming
         *   Child care reduced cost (or additional effort) from alloparenting
-        *   Weaning time decision
-        *   Should probably separate out workers from effort a bit
-            so that they get some actual leisure
         *   Show unemployment
-        *   Use target food storage or food security instead of target production
         *   Have clans learn food targets from each other
         *   Happiness effect for meeting food target or not
+        *   Weaning time decision
+        *   Bring back splitting and merging of clans but maybe also
+            tweak clan sizes and other aspects with that
+
+        *   Other bonuses for leisure
+            *   Relatedness
+            *   Small research bonus
+        *   Effect of too little child care
+        *   Bonuses for extra child care
+        *   Should probably separate out workers from effort a bit
+            so that they get some actual leisure
+        *   Use target food storage or food security instead of target production
         *   More tooltips for new economic table
 
 x   For the current primary food security benefit, count only defined

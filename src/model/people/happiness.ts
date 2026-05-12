@@ -1,6 +1,7 @@
+import { Activities } from "../decisions/effort";
 import { clamp, sumFun } from "../lib/basics";
-import { pct } from "../lib/format";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
+import { pct } from "../lib/format";
 import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
 
@@ -21,6 +22,9 @@ export abstract class HappinessItem<T> {
 
     // Display text for current state.
     abstract get stateDisplay(): string;
+
+    // Label for the state type for this item.
+    abstract get stateLabel(): string;
 
     get isSubsistence(): boolean {
         return false;
@@ -93,6 +97,8 @@ export class FoodQuantityHappinessItem extends NumericHappinessItem {
         return pct(this.state_);
     }
 
+    stateLabel = 'Food Quantity';
+
     get isSubsistence(): boolean {
         return true;
     }
@@ -134,6 +140,7 @@ export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, f
         return `${pct(this.state_.fishRatio)} fish / ${pct(FoodQualityHappinessItem.careOf(this.state_.quantity))} care`;
     }
 
+    stateLabel = 'Food Quality';
 
     get isSubsistence(): boolean {
         return true;
@@ -195,6 +202,8 @@ class ShelterHappinessItem extends NumericHappinessItem {
         return this.state_.toFixed(0);
     }
 
+    stateLabel = 'Level';
+
     appealOf(shelterAppeal: number): number {
         return shelterAppeal;
     }
@@ -217,6 +226,8 @@ class MigrationHappinessItem extends NumericHappinessItem {
         return this.state_.toFixed(0);
     }
 
+    stateLabel = 'Migrations';
+
     appealOf(forcedMigrations: number): number {
         return -forcedMigrations;
     }
@@ -238,6 +249,8 @@ class FloodHappinessItem extends NumericHappinessItem {
     get stateDisplay(): string {
         return pct(this.state);
     }
+
+    stateLabel = 'Damage';
 
     appealOf(damageFactor: number): number {
         return -damageFactor * 20;
@@ -272,6 +285,8 @@ class SocietyHappinessItem extends NumericHappinessItem {
     get stateDisplay(): string {
         return `interaction value ${this.state_.toFixed(2)}`;
     }
+
+    stateLabel = 'Value';
 
     appealOf(interactionValue: number): number {
         return 0.1 * interactionValue;
@@ -324,6 +339,8 @@ class ConflictHappinessItem extends NumericHappinessItem {
         return this.state_.toFixed(1);
     }
 
+    stateLabel = 'Level';
+
     appealOf(conflictLevel: number): number {
         return conflictAppeal(conflictLevel);
     }
@@ -350,6 +367,8 @@ class RitualHappinessItem extends NumericHappinessItem {
         return this.state_.toFixed(1);
     }
 
+    stateLabel = 'Value';
+
     appealOf(ritualAppeal: number): number {
         return ritualAppeal;
     }
@@ -375,6 +394,8 @@ class StatusHappinessItem extends NumericHappinessItem {
         return this.state_.toFixed(1);
     }
 
+    stateLabel = 'Status';
+
     appealOf(averagePrestige: number): number {
         return averagePrestige;
     }
@@ -389,6 +410,10 @@ class StatusHappinessItem extends NumericHappinessItem {
 }
 
 class LeisureHappinessItem extends NumericHappinessItem {
+    get isSocial(): boolean {
+        return true;
+    }
+
     get label(): string {
         return 'Leisure';
     }
@@ -397,9 +422,12 @@ class LeisureHappinessItem extends NumericHappinessItem {
         return pct(this.state_);
     }
 
+    stateLabel = 'Amount';
+
     appealOf(leisureShare: number): number {
-        // People like leisure, but with diminishing returns.
-        return 100 * (leisureShare ** 0.5);
+        leisureShare = Math.max(0.001, leisureShare); // Avoid -Infinity
+        // Appeal 0 at 10% leisure share
+        return clamp(5 * Math.log2(leisureShare / 0.1), -20, 20);
     }
 
     updateState(clan: Clan): void {

@@ -8,7 +8,7 @@
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
-    import { IterableTable, RecordTable, SingleRecordTable, ValueMapTable } from "../tables/tables2";
+    import { FilteredIterableTable, IterableTable, SingleMapTable } from "../tables/tables2";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
     import { TradeGoods, type TradeGood } from "../../model/trade";
@@ -43,7 +43,7 @@
     }
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
-        return new IterableTable(
+        return new FilteredIterableTable(
             clan.consumption.ledger.values(),
             cg => cg.good.name,
             cg => cg.good.isSubsistence,
@@ -66,7 +66,7 @@
     }
 
     function clanFoodStockTooltipTable(clan: ClanDTO) {
-        return new IterableTable(
+        return new FilteredIterableTable(
             clan.consumption.ledger.values(),
             cg => cg.good.name,
             cg => cg.good.isSubsistence,
@@ -79,7 +79,7 @@
     }
 
     function clanFoodSecurityTooltipTable(clan: ClanDTO) {
-        return new IterableTable(
+        return new FilteredIterableTable(
             clan.consumption.foodInsecurity.productionInsecurityItems,
             item => item.source,
             _ => true,
@@ -102,19 +102,38 @@
     }
 
     function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
-        return new ValueMapTable(
-            clan.happiness.items,
-            (item: HappinessItem<any>) => item.appeal,
-            (item: HappinessItem<any>) => item.isSubsistence,
-            (v: number) => signed(v, 0));
+        return new FilteredIterableTable(
+            clan.happiness.items.values(),
+             item => item.label,
+             item => item.isSubsistence,
+             [{
+                data: 'State',
+                label: 'State',
+                valueFn: item => item.stateDisplay,
+            }, {
+                data: 'Appeal',
+                label: 'Appeal',
+                valueFn: item => item.appeal,
+                formatFn: (v: number) => signed(v, 0),
+            }]);
     }
 
     function clanSocialHappinessTooltipTable(clan: ClanDTO) {
-        return new ValueMapTable(
-            clan.happiness.items,
-            (item: HappinessItem<any>) => item.appeal,
-            (item: HappinessItem<any>) => item.isSocial,
-            (v: number) => signed(v, 0));
+        console.log(clan.happiness.items);
+        return new FilteredIterableTable(
+            clan.happiness.items.values(),
+             item => item.label,
+             item => item.isSocial,
+             [{
+                data: 'State',
+                label: 'State',
+                valueFn: item => item.stateDisplay,
+            }, {
+                data: 'Appeal',
+                label: 'Appeal',
+                valueFn: item => item.appeal,
+                formatFn: (v: number) => signed(v, 3),
+            }]);
     }
 
     function clanSocietyHappinessDetailTooltipTable(clan: ClanDTO) {
@@ -129,7 +148,7 @@
                 rows: [],
             };
         }
-        return new RecordTable(
+        return new IterableTable(
             societyItem.subitems,
             subitem => subitem.otherName,
             [{
@@ -152,7 +171,7 @@
     }
 
     function clanStrongTiesTooltipTable(clan: ClanDTO) {
-        return new IterableTable(
+        return new FilteredIterableTable(
             clan.relationships.strongTies(),
             rv => rv.object.name,
              _ => true,
@@ -174,7 +193,7 @@
     }
 
     function clanWeakTiesTooltipTable(clan: ClanDTO) {
-        return new IterableTable(
+        return new FilteredIterableTable(
             clan.relationships.weakTies(),
             rv => rv.object.name,
              _ => true,
@@ -327,7 +346,7 @@
                         <Tooltip>
                             {spct(cs.e.lastPopulationChange.brModifier)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={new RecordTable(
+                                <TableView2 table={new IterableTable(
                                     cs.e.lastPopulationChange.brModifiers,
                                     item => item.source,
                                     [{
@@ -355,7 +374,7 @@
                         <Tooltip>
                             {spct(cs.e.lastPopulationChange.drModifier)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={new RecordTable(
+                                <TableView2 table={new IterableTable(
                                     cs.e.lastPopulationChange.drModifiers,
                                     item => item.source,
                                     [{

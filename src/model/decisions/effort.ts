@@ -172,7 +172,7 @@ export type Activity = {
     node?: ProductionNode;
 }
 
-class Activities {
+export class Activities {
     static readonly Leisure: Activity = { name: 'Leisure', sortKey: 999, shortName: 'L', color: '#3b82f6' };
     static readonly Care: Activity = { name: 'Care', sortKey: 998, shortName: 'C', color: '#ef4444' };
 

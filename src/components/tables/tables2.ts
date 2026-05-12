@@ -103,25 +103,10 @@ export class SingleRecordTable implements Table<string, string, [number]> {
     }
 }
 
-export class IterableTable<RowData, ColumnCellDataTypes extends any[]> implements Table<RowData, string, ColumnCellDataTypes> {
-    rows: TableRow<RowData, string>[];
-
-    constructor(
-        data: Iterable<RowData>,
-        rowLabelFn: (row: RowData) => string,
-        filterFn: (row: RowData) => boolean = () => true,
-        readonly columns: { [K in keyof ColumnCellDataTypes]: TableColumn<RowData, string, ColumnCellDataTypes[K]> }) {
-        
-        this.rows = [...data]
-            .filter(filterFn)
-            .map((value, index) => ({
-                data: value,
-                label: rowLabelFn(value),
-            }));
-    }
-}
-
-export class ValueMapTable<RowData> implements Table<RowData, string, [number]> {
+// Table from a single map with:
+// - Row per key in the map
+// - Single column with value from the map
+export class SingleMapTable<RowData> implements Table<RowData, string, [number]> {
     columns: [TableColumn<RowData, string, number>];
     rows: TableRow<RowData, string>[];
 
@@ -146,10 +131,32 @@ export class ValueMapTable<RowData> implements Table<RowData, string, [number]> 
             }));
     }
 }
+
+// Table of an iterable of RowData with:
+// - Row per item in the iterable
+// - Columns as set in the constructor
+export class FilteredIterableTable<RowData, ColumnCellDataTypes extends any[]> implements Table<RowData, string, ColumnCellDataTypes> {
+    rows: TableRow<RowData, string>[];
+
+    constructor(
+        data: Iterable<RowData>,
+        rowLabelFn: (row: RowData) => string,
+        filterFn: (row: RowData) => boolean = () => true,
+        readonly columns: { [K in keyof ColumnCellDataTypes]: TableColumn<RowData, string, ColumnCellDataTypes[K]> }) {
+        
+        this.rows = [...data]
+            .filter(filterFn)
+            .map((value, index) => ({
+                data: value,
+                label: rowLabelFn(value),
+            }));
+    }
+}
+
 // Table from an iterable of record with:
 // - Row per record
 // - Columns as set in the constructor
-export class RecordTable<RowData, ColumnCellDataTypes extends any[]> implements Table<RowData, string, ColumnCellDataTypes> {
+export class IterableTable<RowData, ColumnCellDataTypes extends any[]> implements Table<RowData, string, ColumnCellDataTypes> {
     rows: TableRow<RowData, string>[];
 
     constructor(       
