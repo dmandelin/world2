@@ -242,30 +242,6 @@ class ShelterHappinessItem extends NumericHappinessItem {
     }
 }
 
-class MigrationHappinessItem extends NumericHappinessItem {
-    get label(): string {
-        return 'Migration';
-    }
-
-    get stateDisplay(): string {
-        return this.state_.toFixed(0);
-    }
-
-    stateLabel = 'Migrations';
-
-    appealOf(forcedMigrations: number): number {
-        return -forcedMigrations;
-    }
-
-    updateState(clan: Clan): void {
-        this.state_ = clan.settlement.forcedMigrations;
-    }
-
-    clone(): MigrationHappinessItem {
-        return new MigrationHappinessItem(this.expectedAppeal, this.state_);
-    }
-}
-
 class FloodHappinessItem extends NumericHappinessItem {
     get label(): string {
         return 'Flood';
@@ -475,7 +451,6 @@ export class HappinessCalc {
             new FoodQualityHappinessItem(),
             new FoodSecurityHappinessItem(),
             new ShelterHappinessItem(),
-            new MigrationHappinessItem(),
             new FloodHappinessItem(),
             new RitualHappinessItem(),
             new StatusHappinessItem(),

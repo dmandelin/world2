@@ -21,18 +21,17 @@ export class Housing {
             * clan.world.yearsPerTurn
             / 100;
 
-        // Houses must be rebuilt as the settlement shifts.
-        const forcedMigrationCost = clan.settlement.forcedMigrations
-            * this.constructionCost
-            / clan.world.yearsPerTurn
-            // Forced moves might be more expensive.
-            * 2;
+        // This is going to be very expensive if moving frequently.
+        const mobilityFactor = 
+            clan.residenceFraction > 0.5
+          ? 1
+          : 1 + 10 * (0.5 - clan.residenceFraction);
 
         // Direct damage to houses from flooding.
         const damageCost = this.constructionCost * clan.settlement.floodLevel.damageFactor;
 
-        return initialConstructionCost
-             + forcedMigrationCost + this.maintenanceCost + damageCost;
+        return initialConstructionCost * mobilityFactor
+             + this.maintenanceCost + damageCost;
     }
 }   
 

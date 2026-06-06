@@ -42,6 +42,5 @@
 {/if}
 
 <div style="margin-top: 0.5em">
-Cost: {(clan.laborAllocation.allocs.get(SkillDefs.Construction) ?? 0).toFixed(2)}
-(moves: {clan.settlement.forcedMigrations})
+Cost: {(clan.effortAllocation.get(SkillDefs.Construction) ?? 0).toFixed(2)}
 </div>

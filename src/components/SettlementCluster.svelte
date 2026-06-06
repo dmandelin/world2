@@ -42,7 +42,6 @@
                 <Tooltip>
                     {#if settlement.ditchingLevel}
                         Ditch: {pct(settlement.ditchQuality)}
-                        (holding {settlement.preventedForcedMigrations}x)
                     {:else}
                         No ditch
                     {/if}
@@ -77,15 +76,17 @@
             <div>
                 {groupSedentismDescription(settlement.residenceFraction)} 
                 ({pct(settlement.residenceFraction)} resident) &centerdot;
-                {#if settlement.yearsInPlace >= 100}
-                    Settled &ndash; {formatTellHeight(settlement.tellHeightInMeters)}
-                    <span style="color:grey">(founded {settlement.yearsInPlace} years ago)</span>
-                {:else if settlement.yearsInPlace >= 50}
-                    {settlement.yearsInPlace} years in place
-                {:else if settlement.movingAverageForcedMigrations}
-                    Shifting about every 
-                    {(20/settlement.movingAverageForcedMigrations).toFixed()} years
-                    ({settlement.movingAverageForcedMigrations.toFixed(1)}/20y)
+                {#if settlement.residenceFraction > 0.5}
+                    {#if settlement.yearsInPlace >= 100}
+                        Settled &ndash; {formatTellHeight(settlement.tellHeightInMeters)}
+                        <span style="color:grey">(founded {settlement.yearsInPlace} years ago)</span>
+                    {:else if settlement.yearsInPlace >= 20}
+                        {settlement.yearsInPlace} years in place
+                    {:else}
+                        New settlement 
+                    {/if}
+                {:else}
+                    Mobile communities
                 {/if}
             </div>
             <div>

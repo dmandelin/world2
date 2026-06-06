@@ -59,7 +59,6 @@ export class SettlementCluster {
 
     updateFloodLevel(level: FloodLevel): void {
         this.floodLevel_ = level;
-        for (const s of this.settlements) s.updateForFloodLevel(level);
     }
 
     updateDisease(): void {

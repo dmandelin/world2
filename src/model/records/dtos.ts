@@ -215,9 +215,6 @@ export class StandaloneSettlementDTO {
     readonly ditchQuality: number;
     readonly ditchTooltip: string[][];
     readonly floodLevel: FloodLevel;
-    readonly forcedMigrations: number;
-    readonly preventedForcedMigrations: number;
-    readonly movingAverageForcedMigrations: number;
 
     readonly timeline: Timeline<SettlementTimePoint>;
     readonly turnSnapshots: SettlementTurnSnapshots;
@@ -245,9 +242,6 @@ export class StandaloneSettlementDTO {
         this.ditchQuality = settlement.ditchQuality;
         this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
         this.floodLevel = settlement.floodLevel;
-        this.forcedMigrations = settlement.forcedMigrations;
-        this.preventedForcedMigrations = settlement.preventedForcedMigrations;
-        this.movingAverageForcedMigrations = settlement.movingAverageForcedMigrations;
 
         this.timeline = settlement.timeline;
         this.turnSnapshots = settlement.turnSnapshots;

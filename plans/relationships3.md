@@ -317,6 +317,9 @@ Norms:
         *   (P2) Differential site and land quality
         *   (P3) More detail on cultural shifts around birth spacing
         
+        *   Bug: Looks like a clan ended up in two settlements
+        *   Clans aren't increasing farming as much as would help them
+
         *   Child care extra cost for mobility
         *   Child care reduced cost for farming
         *   Child care reduced cost (or additional effort) from alloparenting

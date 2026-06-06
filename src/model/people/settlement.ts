@@ -23,6 +23,7 @@ export class Settlement {
     readonly clans: Clan[] = [];
     readonly daughters: Settlement[] = [];
 
+    private foundationYear_: Year;
     private tellHeightInMeters_: number = 0;
 
     readonly localTradeGoods = new Set<TradeGood>();
@@ -32,11 +33,6 @@ export class Settlement {
     ditchQuality = 0.3;
     maintenanceCalc: DitchMaintenanceCalc|undefined;
 
-    private forcedMigrations_ = 0;
-    private preventedForcedMigrations_ = 0;
-    private movingAverageForcedMigrations_: number[] = [];
-
-    private lastShiftYear_: Year;
     readonly timeline = new Timeline<SettlementTimePoint>();
 
     beginningOfTurnSnapshot_: StandaloneSettlementDTO|undefined;
@@ -51,12 +47,12 @@ export class Settlement {
         readonly cluster: SettlementCluster,
         readonly parent?: Settlement) {
         
+        this.foundationYear_ = world.year.clone();
+
         cluster.settlements.push(this);
         if (this.parent) {
             this.parent.daughters.push(this);
         }
-
-        this.lastShiftYear_ = this.world.year;
     }
 
     milesTo(other: Settlement): number {
@@ -69,7 +65,7 @@ export class Settlement {
     }
 
     get yearsInPlace(): number {
-        return this.world.year.sub(this.lastShiftYear_);
+        return this.world.year.sub(this.foundationYear_);
     }
 
     get tellHeightInMeters() {
@@ -108,58 +104,6 @@ export class Settlement {
 
     get floodLevel() {
         return this.cluster.floodLevel;
-    }
-
-    get forcedMigrations(): number {
-        return this.forcedMigrations_;
-    }
-
-    get preventedForcedMigrations(): number {
-        return this.preventedForcedMigrations_;
-    }
-
-    get movingAverageForcedMigrations(): number {
-        let average = 0;
-        for (const [i, m] of this.movingAverageForcedMigrations_.entries()) {
-            if (i === 0) {
-                average = m;
-            } else if (i === this.movingAverageForcedMigrations_.length - 1) {
-                // The last one represents the turn to come.
-                break;
-            } else {
-                average = (average + m) / 2;
-            }
-        }
-        return average;
-    }
-
-    updateForFloodLevel(level: FloodLevel): void {
-        // River shifts that force farm fields to move.
-        this.forcedMigrations_ = 0;
-        this.preventedForcedMigrations_ = 0;
-
-        const potentialMigrations = poisson(level.expectedRiverShifts);
-        for (let i = 0; i < potentialMigrations; ++i) {
-            if (Math.random() >= this.ditchQuality) {
-                ++this.forcedMigrations_;
-            } else {
-                ++this.preventedForcedMigrations_;
-            }
-        }
-
-        // Damage is calculated during the maintenance and
-        // labor allocation phases.
-
-        this.movingAverageForcedMigrations_.push(this.forcedMigrations_);
-        if (this.movingAverageForcedMigrations_.length > 5) {
-            this.movingAverageForcedMigrations_.shift();
-        }
-
-        if (this.forcedMigrations_ > 0) {
-            // The shift could be late in the turn, so we'll count it as
-            // at the end of the turn.
-            this.lastShiftYear_ = this.world.year.add(this.world.yearsPerTurn);
-        }
     }
 
     planMigrations(): void {
@@ -303,15 +247,6 @@ export class Settlement {
     }
 
     growTell(previousEffectiveResidentPopulation: number) {
-        // If the settlement shifts, there would be no tell at the new
-        // location, but substantial tells would still be there on the
-        // land and probably resettled at some point. As a simplification,
-        // substantial tells will persist.
-        if (this.forcedMigrations > 0 && this.tellHeightInMeters < 0.5) {
-            this.tellHeightInMeters_ = 0;
-            return;
-        }
-
         // If population grew, scale down.
         if (this.effectiveResidentPopulation > previousEffectiveResidentPopulation) {
             this.tellHeightInMeters_ = this.tellHeightInMeters_
