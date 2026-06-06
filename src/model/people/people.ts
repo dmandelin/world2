@@ -569,13 +569,23 @@ export class Clan implements TradePartner {
         this.annals.log(`Clan ${other.name} (${other.population}) joined into clan ${this.name} (${this.population})`, this.settlement);
     }
 
-    splitOff(clans: Clans): Clan {
-        const originalPopulation = this.population;
+    splitIfNeeded() {
+        if (this.population > Clan.maxDesiredSize) {
+            this.split();
+        }
+    }
+
+    split() {
+        const cadetClan = this.splitOff();
+        this.settlement.clans.push(cadetClan);
+    }
+
+    splitOff(): Clan {
         const fraction = 0.3 + 0.15 * (Math.random() + Math.random());
         const newSize = Math.round(this.population * fraction);
 
-        const name = randomClanName(clans.map(clan => clan.name));
-        const color = randomClanColor(clans.map(clan => clan.color));
+        const name = randomClanName(this.world.allClans.map(clan => clan.name));
+        const color = randomClanColor(this.world.allClans.map(clan => clan.color));
         const newClan = new Clan(this.world, this.settlement, this.annals, name, color, newSize);
         newClan.strength = this.strength;
         newClan.intelligence = this.intelligence;

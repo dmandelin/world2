@@ -97,17 +97,6 @@ export class Clans extends Array<Clan> {
         }
     }
 
-    split() {
-        const newClans = [];
-        for (const clan of this) {
-            newClans.push(clan);
-            if (clan.population > Clan.maxDesiredSize) {
-                newClans.push(clan.splitOff(this));
-            }
-        }
-        this.splice(0, this.length, ...newClans);
-    }
-
     merge() {
         while (true) {
             if (this.length < 2) return;
