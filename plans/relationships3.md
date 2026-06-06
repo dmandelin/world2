@@ -301,15 +301,138 @@ Norms:
                 process that people can plan for, or it could be sudden
             *   If sudden, people might need to fall back on hunting and
                 gathering or mutual aid networks for a while
+        *   More on moving costs
+            *   For hunter-gatherers, moving doesn't cost anything: it's priced
+                into all their processes. So moving doesn't have to cost much at
+                all that the beginning: people can literally follow river shifts
+                as an effective strategy.
+            *   Right now, people aren't increasing their farming or sedentism
+                levels that much, so we'll need to look at that soon.
+            *   Some thoughts on how we can model a transition here:
+                *   Hunter-gatherers can harvest naturally occuring barley. For
+                    now, we're not modeling this part, but in a more complex
+                    model we could allow them to find carbohydrates early on, but
+                    as farming takes off, there would be few such stands available.
+                *   Scattered, small farming villages could rely on naturally
+                    occurring alluvium. There would presumably be only so many
+                    such village sites available, and each would have only so
+                    much alluvium. But as long as this was plentiful, they could
+                    shift as needed.
+                *   People would naturally be interested in flood control systems
+                    to protect and irrigate their fields generally, so they would
+                    naturally improve their skills in irrigation, which might
+                    yield some mild reduction in forced moves. (This might be a
+                    bit of a detail).
+                *   Perhaps more to the point, when the rivers are going to shift,
+                    perhaps sometimes people can see this beginning to happen, and
+                    could choose to take measures to deal with it. This might fail,
+                    and then they're forced to move anyway, or it might succeed,
+                    in which case they could increase their irrigation skill and
+                    avoid the move.
+                    *   For coordination, we can assume that in small villages
+                        there's some way to coordinate such an effort, and peel
+                        deeper on that later if needed.
+                *   Similarly, if people are low on natural alluvium, they could
+                    try to create new irrigated fields. If their skill level is
+                    low (early on), they might fail, but again, if they succeed
+                    they should probably level up.
+                *   Farming allocations
+                    *   Apparently right now clans reallocate some time from leisure
+                        if hungry, and randomly choose which activity to do more
+                        of. Clearly this is not enough.
+                    *   If leisure is low, clans should consider shifting activities,
+                        or increasing leisure.
+                        *   Shifting might actually mostly fix the problem, because
+                            if they shift correctly they won't shift back but otherwise
+                            they will
+                    *   Although clans don't have a clear way of measuring the
+                        marginal output of different activities, they probably have
+                        ways of learning about this.
+                        *   Imitate allocations of clans they know that have higher
+                            consumption or more prestige
+                *   Thinking more carefully about farming allocations
+                    *   It might play out like this: 
+                        *   A clan has some set of practices that they apply (do this 
+                            in that season, etc) that amount to a certain labor allocation.
+                        *   For hunter-gatherers, that might imply, work until you
+                            have enough food or the work isn't worth it, then take
+                            leisure. This is a real-time calculation.
+                        *   Farmers don't know how much they're producing in real time.
+                            Rather, it seems they'd have to have some set of practices
+                            that determine how much work they put in. They probably
+                            have some ability to foresee if yields are bad, or to plant
+                            additional crops after a bad harvest, to make some real-time
+                            adjustments, but not as effectively as hunter-gatherers.
+                        *   Clans that do both might do that in different ways. One
+                            possibility is that some families do farming, others hunting
+                            and gathering. In that case, they'd probably be able to 
+                            notice one set giving more than the other and make a decision
+                            to switch.
+                        *   Another possibility is that clan members take turns doing
+                            different kinds of work. Then it's probably less obvious
+                            who's more productive.
+                        *   Empirically, it seems that people are pretty good at optimizing
+                            these things, so whatever we do, it probably makes sense for
+                            clans to be able to optimize in 1-3 turns
+                        *   It can still always happen that a clan is coming up short and
+                            decides to try to change. They'll probably try to make some
+                            good guess about what to do. They can also try again if that
+                            didn't help. In this model, they're choosing an allocation
+                            each year and then observing production.
+                        *   To model these iterations in a pre-planning structure, we
+                            can simply limit how much change can be made in one turn.
+                    *   Key things to do
+                        *   Let clans make fairly accurate adjustments for how much
+                            labor vs leisure in real time.
+                            *   Make farming time harder to adjust, especially in the
+                                downward direction.
+                        *   Give clans a probability of noticing (correctly or not) a
+                            difference in marginal productivities and adjusting.
+                            *   Make the clan actually have to do both activities in
+                                order to have any internal data
+                        *   If needed, let clans notice each other's differential
+                            productivity and decide to switch
+                        *   Let hungry clans switch activities even if they can't be sure
+                            about a marginal productivity difference.
+                        *   Limit the change per turn. 20 years is pretty many rounds,
+                            so we can probably be pretty loose about this, let them change
+                            quite a bit but maybe a little stickiness.
     *   Changes to make
         x   Happiness bonus for leisure
         x   Happiness bonus for food security
 
+        *   Rework effort allocation
+            *   Let clans freely exchange hunting/gathering and leisure in real
+                time
+            *   Take leisure into account in the decisions
+            *   Let clans exchange up to half their leisure for farming in real
+                time
+            *   Give clans a chance to notice differential productivity when they
+                do two different activities and change the amounts
+            *   Give clans a chance to notice other clans' productivity and imitate
+            *   Give hungry clans without other options or information the ability 
+                to switch. 
+        *   Re-implement clan merging
+        *   (P2) Let clans shift to have more leisure when they have enough food
+
+        *   Have initial villages have enough alluvium for a small farming village
+            (50-100) but not a large one
+        *   Have diminishing expected returns for the amount of natural alluvium
+            based on the number of extant villages
+        *   Give the ability to build new irrigated farmland locally via irrigation.
+            This should have a significant capital cost.
+        *   Make sure we have an ability to build flood control systems that increase
+            agricultural productivity
+        *   Create a river shift prevention ability. It can be applied on demand,
+            but more permanent systems should be more effective.
+        *   Update decision models for all the above factors
+
         x   Make birth rate a simple partial function of residence as outlined
             above
         *   River shifts
-            *   Make river shifts happen with probability 1% per year
-            *   Make river shifts force a move, at cost
+            x   Make river shifts happen with probability 1% per year
+            x   Make river shifts force a move
+            *   Make forced moves cost something
             *   Apply that same cost model to other moves
             *   Update ditching skill to mitigate these shifts
                 *   Probably also need some kind of actual coordination model
