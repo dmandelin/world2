@@ -154,27 +154,22 @@ export class PopulationChangeBuilder {
         this.brModifiers.push(new PopulationChangeModifier(
             'Shelter', this.clan.housing.name, shelterModifier));
 
-        // Migration has a significant effect on birth rates. Let's say
-        // that a clan that moves all the time has a TFR of K0 (e.g., 4-5),
-        // while a fully settled clan has a TFR of K2 (e.g., 7-8). Some
-        // of that difference might relate to food storage, so the difference
-        // between min and max migration might be about 1.5x. In our start
-        // state, we are in between with 4-5 moves per turn, so maybe each
-        // move is worth about a 5% difference. That would be too high with
-        // 10 moves, but for our actual numbers it's close enough.
-        // Exactly how much effect mobility has on birth rates
-        const migrationBrModifier = clamp(1 - 0.05 * this.clan.settlement.forcedMigrations, 0.5, 1);
+        // Movement has a significant effect on birth rates. The key idea is
+        // that in the most mobile lifestyles (e.g., hunting and gathering
+        // with daily travel to collection sites), mothers must carry their
+        // children under 4, so they space births that far apart. In settled
+        // lifestyles, birth frequency is 1.3-2x higher. That actually
+        // represents a choice to wean earlier that presumably has a transition
+        // process, but for now the model will simply assume mothers do that.
+        // In our setting, rich marsh resources probably didn't require mothers
+        // to be hugely mobile, so we use a lower value for birth rate impact.
+        // However, our people might end up extra-settled near rich farming
+        // resources, which should be kept in mind.
+        const mobilityBrModifier = clamp(1 + 0.5 * this.clan.residenceFraction, 1, 1.5);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Migration', this.clan.settlement.forcedMigrations, migrationBrModifier));
-
-        // Migration has a smaller effect on death rates. A fairly substantial
-        // migration might involve a 1% total death rate, which is about 25%
-        // of the typical base rate. That seems like a reasonable hazard ratio,
-        // but here we have so far only local moves, so it might be like 5%.
-        // But intuitively it's not as a big a deal here, so use a lower number.
-        const migrationDrModifier = clamp(1 + 0.025 * this.clan.settlement.forcedMigrations, 1, 1.5);
-        this.drModifiers.push(new PopulationChangeModifier(
-            'Migration', this.clan.settlement.forcedMigrations, migrationDrModifier));
+            'Settlement', this.clan.residenceFraction, mobilityBrModifier));
+        // It's not clear that hunting and gathering is more or less hazardous
+        // than farming, so no death rate modifier.
 
         this.brModifier = productFun(this.brModifiers, m => m.value);
         if (isNaN(this.brModifier)) debugger;

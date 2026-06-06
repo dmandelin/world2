@@ -260,9 +260,62 @@ Norms:
         *   Let's say up to 10-30% modifiers for alloparenting,
             mobility, and farming economy. This will then balance
             with a 2x from early weaning
+    *   Discussion 2: Updates
+        *   Key ideas
+            *   Hunter-gatherers will have to frequently migrate
+                locally as nearby resources are exhausted. In general
+                they move around a lot, so they have to space births
+                4+ years. However, this could in theory vary, if, for
+                example, due to rich fish resources mothers didn't
+                have to move that far.
+            *   A benchmark birth rate ratio between mobile and
+                settled is 1.375.
+            *   Shifting rivers didn't necessarily force people to
+                move that often (it's every few years at the beginning
+                of the current model), maybe more like 20-180 years.
+            *   Founding a new village is costly in labor and stored
+                food.
+            *   Joining an existing village requires negotiation, and
+                newcomers may start with smaller houses as hunters or
+                employees tending animals until they get more established
+                and integrated.
+            *   "Land quality", or, more properly, site quality, variations
+                might be important. Apparently people leapfrog over potential
+                village founding sites to even better ones when founding a
+                new village.
+        *   Comments
+            *   To model a transition from hunting and gathering to
+                farming, it would make sense to have a local mobility
+                score. Our residence value is basically this, inverted.
+            *   In a simple model, birth rate could be a partial function
+                of mobility score.
+            *   But if we want the behavioral shift, then the next simplest
+                might be to have a minimum birth spacing based on mobility,
+                and then a choice for birth spacing. There might need to be
+                a cost model in this version.
+            *   We probably need to introduce differential land quality soon
+                to make sense out of what's happening.
+            *   River shifts: instead of multiple per turn, they can be a
+                poisson process with ~1% chance per year.
+            *   When the river shifts, sometimes it could be a gradual 
+                process that people can plan for, or it could be sudden
+            *   If sudden, people might need to fall back on hunting and
+                gathering or mutual aid networks for a while
     *   Changes to make
         x   Happiness bonus for leisure
         x   Happiness bonus for food security
+
+        x   Make birth rate a simple partial function of residence as outlined
+            above
+        *   River shifts
+            *   Make river shifts happen with probability 1% per year
+            *   Make river shifts force a move, at cost
+            *   Apply that same cost model to other moves
+            *   Update ditching skill to mitigate these shifts
+                *   Probably also need some kind of actual coordination model
+                    if it's village-wide protection
+        *   (P2) Differential site and land quality
+        *   (P3) More detail on cultural shifts around birth spacing
         
         *   Child care extra cost for mobility
         *   Child care reduced cost for farming
