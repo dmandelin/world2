@@ -127,6 +127,9 @@ export class Settlement {
     }
 
     advancePrePhase() {
+        // Refound settlement if it has to move.
+        
+
         // Split and merge at the start of the turn so that normal update
         // logic correctly updates the new clans.
         

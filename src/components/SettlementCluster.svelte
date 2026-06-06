@@ -37,7 +37,14 @@
     <div style="display: flex; gap: 1rem; margin-top: 0.25rem">
         <div>
             <img style="display: block" src="{groupSedentismImage(settlement.residenceFraction)}" alt="Residents" width="150" height="100" />
-            <div class="sm">Last flood level: {settlement.floodLevel.name}</div>
+            <div class="sm">Last flood level: 
+                <Tooltip>
+                    {settlement.floodLevel.name}
+                    <div slot="tooltip">
+                        River shift probability: {pct(settlement.floodLevel.riverShiftProbability())}
+                    </div>
+                </Tooltip>
+            </div>
             <div class="sm">
                 <Tooltip>
                     {#if settlement.ditchingLevel}

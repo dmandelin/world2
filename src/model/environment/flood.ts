@@ -45,6 +45,10 @@ import type { Settlement } from "../people/settlement";
 //   flooding
 // - Get some population growth going again
 
+// TODO - Deal with this better. The main issue is that fixing it
+// statically seems too inflexible, although it would be easiest.
+const yearsPerTurn = 20;
+
 export class FloodLevel {
     constructor(
         readonly index: number,
@@ -61,6 +65,10 @@ export class FloodLevel {
     static max(a: FloodLevel, b: FloodLevel): FloodLevel {
         return a.index > b.index ? a : b;
     }
+
+    riverShiftProbability(): number {
+        return 1 - (1 - this.expectedRiverShifts) ** yearsPerTurn;
+    }
 }
 
 export const FloodLevels = {
@@ -70,7 +78,7 @@ export const FloodLevels = {
         'Floods have been relatively low in recent years',
         0.8,
         1.1,
-        3,
+        0.005,
         0.02,
         2,
     ),
@@ -80,7 +88,7 @@ export const FloodLevels = {
         'Floods have been normal in recent years',
         1.0,
         1.2,
-        5,
+        0.01,
         0.03,
         0,
     ),
@@ -90,7 +98,7 @@ export const FloodLevels = {
         'Floods have been relatively high in recent years',
         0.65,
         1.0,
-        7,
+        0.015,
         0.04,
         -2,
     ),
@@ -100,7 +108,7 @@ export const FloodLevels = {
         'There was a major flood event in recent years!',
         0.6,
         1.2,
-        6,
+        0.02,
         0.2,
         -10,
     ),
@@ -110,7 +118,7 @@ export const FloodLevels = {
         'There was an extreme flood event in recent years!',
         0.5,
         1.3,
-        4,
+        0.05,
         1,
         -20,
     ),
