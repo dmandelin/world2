@@ -215,6 +215,7 @@ export class StandaloneSettlementDTO {
     readonly ditchQuality: number;
     readonly ditchTooltip: string[][];
     readonly floodLevel: FloodLevel;
+    readonly refoundedAfterRiverShift: boolean;
 
     readonly timeline: Timeline<SettlementTimePoint>;
     readonly turnSnapshots: SettlementTurnSnapshots;
@@ -242,6 +243,7 @@ export class StandaloneSettlementDTO {
         this.ditchQuality = settlement.ditchQuality;
         this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
         this.floodLevel = settlement.floodLevel;
+        this.refoundedAfterRiverShift = settlement.refoundedAfterRiverShift;
 
         this.timeline = settlement.timeline;
         this.turnSnapshots = settlement.turnSnapshots;

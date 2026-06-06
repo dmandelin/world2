@@ -1,15 +1,11 @@
 import { isExemplarClan, logExperiment1 } from "../lib/debug";
 
-import { chooseFrom, shuffled, sumFun } from "../lib/basics";
+import { shuffled, sumFun } from "../lib/basics";
 import { DitchMaintenanceCalc } from "../infrastructure";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
-import { poisson } from "../lib/distributions";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementEndOfTurnSnapshot, SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
-import { SkillDef, SkillDefs } from "./skills";
-import type { FloodLevel } from "../environment/flood";
-import type { Rites } from "../rites";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { Year } from "../records/year";
@@ -25,6 +21,7 @@ export class Settlement {
 
     private foundationYear_: Year;
     private tellHeightInMeters_: number = 0;
+    private refoundedAfterRiverShift_ = false;
 
     readonly localTradeGoods = new Set<TradeGood>();
 
@@ -106,6 +103,10 @@ export class Settlement {
         return this.cluster.floodLevel;
     }
 
+    get refoundedAfterRiverShift() {
+        return this.refoundedAfterRiverShift_;
+    }
+
     planMigrations(): void {
         // Precondition: Clans have individually considered whether they
         // want to move.
@@ -128,7 +129,11 @@ export class Settlement {
 
     advancePrePhase() {
         // Refound settlement if it has to move.
-        
+        this.refoundedAfterRiverShift_ = false;
+        if (Math.random() <= this.floodLevel.riverShiftProbability()) {
+            this.refoundedAfterRiverShift_ = true;
+            this.foundationYear_ = this.world.year.clone();
+        }
 
         // Split and merge at the start of the turn so that normal update
         // logic correctly updates the new clans.

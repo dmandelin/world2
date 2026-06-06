@@ -83,7 +83,9 @@
             <div>
                 {groupSedentismDescription(settlement.residenceFraction)} 
                 ({pct(settlement.residenceFraction)} resident) &centerdot;
-                {#if settlement.residenceFraction > 0.5}
+                {#if settlement.refoundedAfterRiverShift}
+                    <b>Refounded after river shift!</b>
+                {:else if settlement.residenceFraction > 0.5}
                     {#if settlement.yearsInPlace >= 100}
                         Settled &ndash; {formatTellHeight(settlement.tellHeightInMeters)}
                         <span style="color:grey">(founded {settlement.yearsInPlace} years ago)</span>
