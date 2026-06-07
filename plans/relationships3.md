@@ -397,14 +397,68 @@ Norms:
                         *   Limit the change per turn. 20 years is pretty many rounds,
                             so we can probably be pretty loose about this, let them change
                             quite a bit but maybe a little stickiness.
+                    *   Once more, to bring out a few points about allocation
+                        *   Hunter-gatherers are notionally trying to get enough
+                            food to eat, and they stop working when full, but keep
+                            working if hungry. This corresponds to an assumption
+                            that they don't have any luxury foods or food storage --
+                            whatever things motivate them more are currently classified
+                            under our leisure category, though things such as ritual,
+                            art, and exploration could come up eventually.
+                        *   Full-on but early farmers apparently also want full
+                            storehouses to improve their food security. So far
+                            this also corresponds to an assumption that they don't
+                            have luxury foods, but do care about food security.
+                        *   People in the transition phase presumably may or may not
+                            care about food security.
+                        *   It does seem quite possible that there was a luxury food
+                            available, beer. That's currently subsumed into food
+                            quality, but we could consider breaking out in different
+                            ways.
+                        *   The positive/negative motivation distinction seems to be
+                            coming up here. There's some baseline level of sustenance
+                            that people are motivated to get, and which tends to
+                            override other motivations if not met. But otherwise,
+                            they can be more tempted by different luxuries that
+                            they trade off among.
+                        *   Implications for planning:
+                            *   Can have a first step to deal with low quantity of
+                                food if that is an issue.
+                            *   Once food quantity is set, people trade off food security
+                                vs leisure. This is a tricky one because leisure is
+                                immediate return by food security is delayed return.
+                                Depending on expectations and motivational profile,
+                                people might either treat X amount of food storage as
+                                a necessity that they target, or as a luxury they value.
+                            *   People could also notice that in some seasons they go
+                                hungry, and specifically want to solve that by storing
+                                food. Hunter-gatherers probably had smaller-scale food
+                                storage practices, which would be additional knowledge
+                                to draw on.
+                            *   Going back to the anthropology, one typical claim is
+                                that people did little experiments with farming early
+                                on but didn't stick to it; but when under greater stress
+                                they move to it. Clearly, if they're just not getting
+                                enough foraging, that would be motivation. But, perhaps
+                                we can imagine that how effective farming is and how
+                                much basic food insecurity there is vary.
+                            *   Overall, it seems reasonable for people to have some
+                                notion how much food insecurity they face and what
+                                kinds of stores they need to get through it. This
+                                could be implemented in various ways.
     *   Changes to make
         x   Happiness bonus for leisure
         x   Happiness bonus for food security
 
         *   Rework effort allocation
-            *   Let clans freely exchange hunting/gathering and leisure in real
-                time
-            *   Take leisure into account in the decisions
+            *   Get the ability to do a full what-if covering food quantity,
+                quality, security, and leisure
+            *   Let clans increase work when food quantity is too low
+            *   Let clans shift work when food quantity is too low
+            *   Let clans make changes according to the full tradeoff:
+                *   Increase work
+                *   Decrease work
+                *   Shift work
             *   Let clans exchange up to half their leisure for farming in real
                 time
             *   Give clans a chance to notice differential productivity when they
