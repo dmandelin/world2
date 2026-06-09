@@ -163,7 +163,7 @@ export class Settlement {
 
         // Advance economy.
         for (const clan of this.clans) {
-            const r = economicResult(clan);
+            const r = economicResult(clan, clan.effortAllocation);
             clan.production = r.production;
             clan.consumption = r.consumption;
             clan.qol = r.qol;

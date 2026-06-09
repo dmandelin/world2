@@ -533,6 +533,12 @@
                     <td colspan="2"><ClanEffortMiniBar clan={cs.e} /></td>
                 {/each}
             </tr>
+            <tr>
+                <td>(Previous)</td>
+                {#each csnaps as cs}
+                    <td colspan="2">{#if cs.p}<ClanEffortMiniBar clan={cs.p} />{/if}</td>
+                {/each}
+            </tr>
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
                 <td>Agri Coop</td>

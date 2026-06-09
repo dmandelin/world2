@@ -1,3 +1,4 @@
+import { economicResult } from "../econ/economy";
 import type { Operation } from "../econ/operation";
 import { Process, Processes } from "../econ/process";
 import { between, chooseFrom, sumFun } from "../lib/basics";
@@ -24,14 +25,16 @@ export class EffortAllocation {
         ];
         const remaining = 1 - sumFun(this.f_, ([_, fraction]) => fraction);
 
-        // Start with production 80% fishing and 20% farming.
-        const fFishing = 0.8 * remaining;
-        const fAgriculture = remaining - fFishing;
-        for (const operation of this.clan.operations) {
-            if (operation.process === Processes.Fishing) {
-                this.f_.push([Activities.Production(operation), fFishing]);
-            } else if (operation.process === Processes.Agriculture) {
-                this.f_.push([Activities.Production(operation), fAgriculture]);
+        if (!f) {
+            // Start with production 80% fishing and 20% farming.
+            const fFishing = 0.8 * remaining;
+            const fAgriculture = remaining - fFishing;
+            for (const operation of this.clan.operations) {
+                if (operation.process === Processes.Fishing) {
+                    this.f_.push([Activities.Production(operation), fFishing]);
+                } else if (operation.process === Processes.Agriculture) {
+                    this.f_.push([Activities.Production(operation), fAgriculture]);
+                }
             }
         }
     }
@@ -87,6 +90,21 @@ export class EffortAllocation {
         return new EffortAllocation(this.clan, this.f_);
     }
 
+    shifted(from: Process, to: Process, delta: number): EffortAllocation {
+        const actualDelta = Math.min(this.getForProcess(from), delta);
+
+        const f = this.f_.map(([activity, fraction]): [Activity, number] => {
+            if (activity.operation?.process === from) {
+                return [activity, fraction - actualDelta];
+            } else if (activity.operation?.process === to) {
+                return [activity, fraction + actualDelta];
+            } else {
+                return [activity, fraction];
+            }
+        });
+        return new EffortAllocation(this.clan, f);
+    }
+
     // "Applying" the allocation refers to the process of converting
     // the high-level choices to specific effort allocations.
 
@@ -114,57 +132,39 @@ export class EffortAllocation {
 
     // Try to make one step change to the allocation. Return true if 
     // a change was made.
-    applyStep(labor: Map<Operation, Map<Clan, number>>): boolean {
-        // TODO - Bring back in new structure
-        /*
-        const expectedProduction = sumFun(
-            this.clan.operations, 
-            node => node.output(labor.get(node) ?? new Map(), this.clan));
-        if (isExemplarClan(this.clan)) {
-            console.log(
-                `Expected production for ${this.clan.name}: ${expectedProduction.toFixed(2)} (population: ${this.clan.population})`);
-        }
-        if (expectedProduction < (this.clan.targetPerCapitaFood - 0.05) * this.clan.population) {
-            // Not enough: work more at the expense of leisure. Note that clans
-            // don't necessarily know exactly what has the most marginal production.
-            // For now we'll be very simple about that and make it random.
-            const leisureEntry = this.getEntry(Activities.Leisure);
-            if (!leisureEntry || leisureEntry[1] <= 0) return false;
-
-            const delta = Math.min(0.05, leisureEntry[1]);
-            const node = chooseFrom(this.clan.productionNodes);
-
-            leisureEntry[1] -= delta;
-            this.getOrCreateEntry(Activities.Production(node))[1] += delta;
-
-            if (isExemplarClan(this.clan)) {
-                console.log(
-                    `Updated effort allocation for ${this.clan.name}:`, 
-                    this.clan.effortAllocation.debugString());
+    applyStep(labor: Map<Process, Map<Clan, number>>): boolean {
+        const er = economicResult(this.clan, this.clan.effortAllocation);
+        if (er.qol.valueFrom("food") < 0) {
+            if (true || isExemplarClan(this.clan)) {
+                console.log(`[Effort] ${this.clan.name} has food stress, value is ${er.qol.valueFrom("food").toFixed(2)}`);
+                console.log(this.clan.effortAllocation.debugString());
+                console.log(er.qol.debugString);
             }
 
-            return true;
-        }
-        
-        if (expectedProduction > (this.clan.targetPerCapitaFood + 0.05) * this.clan.population) {
-            // More than enough: work less and enjoy more leisure.
-            const workedNodes = this.clan.productionNodes.filter(node => this.get(Activities.Production(node)) > 0);
-            const node = chooseFrom(workedNodes);
-
-            const delta = Math.min(0.05, this.get(Activities.Production(node)));
-
-            this.getOrCreateEntry(Activities.Production(node))[1] -= delta;
-            this.getOrCreateEntry(Activities.Leisure)[1] += delta;
-
-            if (isExemplarClan(this.clan)) {
-                console.log(
-                    `Updated effort allocation for ${this.clan.name}:`, 
-                    this.clan.effortAllocation.debugString());
+            // Try shifting activities. Here, we assume that under stress,
+            // clans try something different for a while, so they can find
+            // out how good the results are.
+            const options = [
+                this.shifted(Processes.Fishing, Processes.Agriculture, 0.05),
+                this.shifted(Processes.Agriculture, Processes.Fishing, 0.05),
+            ];
+            let bestOption: EffortAllocation = this;
+            let bestOptionValue = er.qol.valueFrom("food");
+            for (const option of options) {
+                const optionResult = economicResult(this.clan, option);
+                const optionValue = optionResult.qol.valueFrom("food");
+                if (optionValue > bestOptionValue) {
+                    bestOptionValue = optionValue;
+                    bestOption = option;
+                }
             }
-
+            if (bestOption !== this) {
+                console.log(`Shifting effort for ${this.clan.name} from ${this.debugString()} to ${bestOption.debugString()} with expected food QoL change from ${er.qol.valueFrom("food").toFixed(2)} to ${bestOptionValue.toFixed(2)}`);
+            }
+            this.f_ = bestOption.f_;
             return true;
         }
-*/
+
         return false;
     }
 }

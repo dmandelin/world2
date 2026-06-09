@@ -451,18 +451,21 @@ Norms:
         x   Happiness bonus for food security
 
         *   Rework effort allocation
-            *   Get the ability to do a full what-if covering food quantity,
+            x   Get the ability to do a full what-if covering food quantity,
                 quality, security, and leisure
                 x   Refactor so that the key steps are functional-ish
                 x   Debug issue with clans seeming to have the wrong amount
                     of land
                 x   Rework fishing to draw on a regional supply
+            *   Give clans incomplete visibility into how things are going to
+                change when they reallocate effort, or otherwise make things
+                a bit more realistic there.
             *   Let clans increase work when food quantity is too low
-            *   Let clans shift work when food quantity is too low
+            x   Let clans shift work when food quantity is too low
             *   Let clans make changes according to the full tradeoff:
                 *   Increase work
                 *   Decrease work
-                *   Shift work
+                x   Shift work
             *   Let clans exchange up to half their leisure for farming in real
                 time
             *   Give clans a chance to notice differential productivity when they
@@ -470,6 +473,14 @@ Norms:
             *   Give clans a chance to notice other clans' productivity and imitate
             *   Give hungry clans without other options or information the ability 
                 to switch. 
+            *   Bring back differences in required care time by age structure
+            *   Rework EffortAllocation to use maps and be functional
+            *   See if we can get Activity and Process or Operation to have a 
+                common supertype.
+            *   Get cluster-level clan labor decisions affecting each other in
+                effort allocation. This might not be a huge deal: technically
+                we should have it, but it might not affect the results enough to
+                matter just yet.
         *   Re-implement food sharing relationships to increase food security
         *   Re-implement clan merging
         *   Rework splitting and merging to happen before any key production and

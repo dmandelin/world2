@@ -118,8 +118,7 @@ export class SettlementCluster {
         }
 
         // TODO - Bring back in some form
-        /*
-        let allowedUpdatesRemaining = 20;
+        let allowedUpdatesRemaining = 1;
         while (allowedUpdatesRemaining--) {
             let updated = false;
             // TODO - Some sensible ordering.
@@ -131,7 +130,6 @@ export class SettlementCluster {
             }
             if (!updated) break;
         }
-        */
     }
 
     updatePerceptions(): void {

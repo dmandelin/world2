@@ -378,7 +378,6 @@ export class World implements NoteTaker {
                 if (choices.length === 0) break;
                 const c2 = chooseFrom(choices);
                 c1.relationships.ensureInteractionChainWith(c2, Friends);
-                console.log(`Forming friendship between ${c1.name} and ${c2.name} in ${settlement.name}`);
                 needs.set(c1, needs.get(c1)! - 1);
                 if (needs.get(c1)! <= 0) {
                     needs.delete(c1);
