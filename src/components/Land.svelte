@@ -18,7 +18,6 @@
 <script lang="ts">
     import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/lib/basics";
     import { pctFormat, signedFormat } from "../model/lib/format";
-    import { Consumption } from "../model/people/consumption";
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
     import TableView from "./TableView.svelte";
@@ -67,8 +66,8 @@
         const specs: [string, OptByWithValue<ClanDTO>, (clan: ClanDTO) => number, (n: number) => string][] = [
             ['Biggest', maxbyWithValue, clan => clan.population, n => n.toFixed()],
             ['Smallest', minbyWithValue,  clan => clan.population, n => n.toFixed()],
-            ['Best fed', maxbyWithValue, clan => clan.consumption.perCapitaSubsistence(), pctFormat(0, false)],
-            ['Worst fed', minbyWithValue, clan => clan.consumption.perCapitaSubsistence(), pctFormat(0, false)],
+            ['Best fed', maxbyWithValue, clan => clan.consumption.perCapitaFood, pctFormat(0, false)],
+            ['Worst fed', minbyWithValue, clan => clan.consumption.perCapitaFood, pctFormat(0, false)],
             ['Best SoL', maxbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Worst SoL', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Happiest', maxbyWithValue, clan => clan.happiness.appeal, signedFormat()],

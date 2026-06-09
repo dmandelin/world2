@@ -1,15 +1,10 @@
-import { averageFun, chooseFrom, removeAll, sumFun } from "../lib/basics";
+import { chooseFrom, removeAll, sumFun } from "../lib/basics";
 import type { Clan } from "./people";
-import type { NoteTaker } from "../records/notifications";
-import { Clans } from "./clans";
 import { Settlement } from "./settlement";
 import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { weightedAverage } from "../lib/modelbasics";
-import { CommonsProductionNode, ProductionNode } from "../econ/productionnode";
-import { SkillDefs } from "./skills";
-import { ClanProductionReport } from "../econ/productionreport";
-import { isExemplarClan } from "../lib/debug";
+import type { Process } from "../econ/process";
 
 export const MILES_PER_UNIT = 0.16666667;
 
@@ -18,9 +13,6 @@ export class SettlementCluster {
     readonly settlements: Settlement[] = [];
 
     private floodLevel_: FloodLevel = FloodLevels.Normal;
-
-    fishery = new CommonsProductionNode('Regional Fisheries', 50, SkillDefs.Fishing);
-    naturalFields = new CommonsProductionNode('Natural Alluvial Fields', 50, SkillDefs.Agriculture);
 
     diseaseLoad: DiseaseLoadCalc = new DiseaseLoadCalc(this, this.buildLaborMaps());
 
@@ -81,12 +73,6 @@ export class SettlementCluster {
         //   influence productivity.
         this.updateDisease();
 
-        // Produce for the new production nodes.
-        for (const clan of this.clans) clan.production = new ClanProductionReport(clan);
-        for (const node of [this.fishery, this.naturalFields]) {
-            node.commit(this.buildLaborMap(node));
-        }
-
         for (const settlement of this.settlements) {
             settlement.advancePostPhase();
         }
@@ -95,18 +81,25 @@ export class SettlementCluster {
         removeAll(this.settlements, s => s.population === 0);
     }
 
-    private buildLaborMaps(): Map<ProductionNode, Map<Clan, number>> {
-        const labor = new Map<ProductionNode, Map<Clan, number>>();
-        for (const node of [this.fishery, this.naturalFields]) {
-            labor.set(node, this.buildLaborMap(node));
+    private buildLaborMaps(): Map<Process, Map<Clan, number>> {
+        const labor = new Map<Process, Map<Clan, number>>();
+        for (const settlement of this.settlements) {
+            for (const clan of settlement.clans) {
+                for (const op of clan.operations) {
+                    const process = op.process;
+                    if (!labor.has(process)) {
+                        labor.set(process, this.buildLaborMap(process));
+                    }
+                }
+            }
         }
         return labor;
     }
 
-    private buildLaborMap(node: ProductionNode): Map<Clan, number> {
+    private buildLaborMap(process: Process): Map<Clan, number> {
         const nodeLabor = new Map<Clan, number>();
         for (const clan of this.clans) {
-            const clanLaborFraction = clan.effortAllocation.getForNode(node);
+            const clanLaborFraction = clan.effortAllocation.getForProcess(process);
             if (clanLaborFraction > 0) {
                 nodeLabor.set(clan, clanLaborFraction * clan.workers);
             }
@@ -124,6 +117,8 @@ export class SettlementCluster {
             clan.effortAllocation.applyStart();
         }
 
+        // TODO - Bring back in some form
+        /*
         let allowedUpdatesRemaining = 20;
         while (allowedUpdatesRemaining--) {
             let updated = false;
@@ -136,6 +131,7 @@ export class SettlementCluster {
             }
             if (!updated) break;
         }
+        */
     }
 
     updatePerceptions(): void {

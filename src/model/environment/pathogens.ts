@@ -1,4 +1,4 @@
-import type { ProductionNode } from "../econ/productionnode";
+import { Process, Processes } from "../econ/process";
 import { sum, sumFun } from "../lib/basics";
 import type { SettlementCluster } from "../people/cluster";
 import type { Clan } from "../people/people";
@@ -22,22 +22,22 @@ export class DiseaseLoadCalc {
 
     constructor(
         readonly cluster: SettlementCluster, 
-        readonly laborMap: Map<ProductionNode, Map<Clan, number>>) {
+        readonly laborMap: Map<Process, Map<Clan, number>>) {
         // For now, we'll assume things are rapidly transmitted across the
         // cluster, so we can calculate a uniform load.
 
-        for (const pn of [cluster.fishery, cluster.naturalFields]) {
-            const diseaseLoadFactor = pn.skillDef.diseaseLoadFactor;
+        for (const process of [Processes.Fishing, Processes.Agriculture]) {
+            const diseaseLoadFactor = process.skillDef.diseaseLoadFactor;
             if (diseaseLoadFactor) {
-                const nodeLaborMap = laborMap.get(pn);
+                const nodeLaborMap = laborMap.get(process);
                 if (!nodeLaborMap) continue;
 
                 const workers = sum(nodeLaborMap.values());
-                let item = this.workerDiseaseLoads.get(pn.skillDef);
+                let item = this.workerDiseaseLoads.get(process.skillDef);
                 if (!item) {
                     item = new WorkerDiseaseLoadItem(
-                        pn.skillDef, workers * diseaseLoadFactor);
-                    this.workerDiseaseLoads.set(pn.skillDef, item);
+                        process.skillDef, workers * diseaseLoadFactor);
+                    this.workerDiseaseLoads.set(process.skillDef, item);
                 } else {
                     item.workers += workers;
                 }

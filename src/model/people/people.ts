@@ -18,14 +18,13 @@ import { Traits } from "./traits";
 import { type FloodLevel, FloodLevels } from "../environment/flood";
 import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
 import { weightedAverage } from "../lib/modelbasics";
-import type { Clans } from "./clans";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { Consumption } from "./consumption";
 import { EffortAllocation } from "../decisions/effort";
-import { type ProductionNode } from "../econ/productionnode";
-import { ClanProductionReport } from "../econ/productionreport";
+import { Operation, ProductionReport } from "../econ/operation";
+import { Processes } from "../econ/process";
+import { Consumption } from "../econ/consumption";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -118,14 +117,15 @@ export class Clan implements TradePartner {
     isDitching = false;
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
-    targetPerCapitaFood: number;
     effortAllocation: EffortAllocation;
+    operations: Operation[] = [];
 
+    targetPerCapitaFood: number;
     productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
-    productionNodes: ProductionNode[];
     readonly tradeRelationships = new Set<TradeRelationship>();
-    production = new ClanProductionReport(this);
-    consumption = new Consumption(this);
+    
+    production: ProductionReport = new ProductionReport([]);
+    consumption: Consumption;
 
     private readonly happinessCalc_: HappinessCalc;
 
@@ -165,16 +165,16 @@ export class Clan implements TradePartner {
             ++error;
         }
 
-        this.productionNodes = [
-            this.settlement.cluster.fishery,
-            this.settlement.cluster.naturalFields,
-        ];
+        this.operations = [
+            new Operation(this, Processes.Fishing),
+            new Operation(this, Processes.Agriculture),
+        ]
 
         this.targetPerCapitaFood = 0.9 + (randInt(3) + randInt(3)) * 0.1;
 
         // Must go after initializing production nodes since it builds effort for them.
         this.effortAllocation = new EffortAllocation(this);
-
+        this.consumption = new Consumption(0, this.effortAllocation, new Map());
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.
@@ -240,7 +240,7 @@ export class Clan implements TradePartner {
         return this.population * this.residenceFraction;
     }
 
-    consume() {
+    updateHappiness() {
         this.happinessCalc_.update();
     }
 
@@ -408,14 +408,15 @@ export class Clan implements TradePartner {
             // consumption resources for this.
 
             const sustenanceAvailable = 
-                  this.consumption.amount(TradeGoods.Cereals)
-                + this.consumption.amount(TradeGoods.Fish);
+                  this.consumption.perCapita(TradeGoods.Cereals)
+                + this.consumption.perCapita(TradeGoods.Fish);
             //const cost = sustenanceAvailable * 0.05;
             const cost = 0; // TODO - add back cost when we add a real benefit
-            if (this.consumption.remove(`To ${relationship.partner.name}`, TradeGoods.Cereals, cost)) {
-                this.consumption.accept(`From ${relationship.partner.name}`, TradeGoods.ClayFigurines, 1);
-            }
-        }
+            // TODO - rework in functional way when ready
+            //if (this.consumption.remove(`To ${relationship.partner.name}`, TradeGoods.Cereals, cost)) {
+            //    this.consumption.accept(`From ${relationship.partner.name}`, TradeGoods.ClayFigurines, 1);
+            //}
+        }2
     }
 
     updateProductivity(forPlanning: boolean) {
@@ -452,10 +453,6 @@ export class Clan implements TradePartner {
 
     get share() {
         return this.population / (this.settlement?.population ?? this.population);
-    }
-
-    accept(source: string, good: TradeGood, amount: number) {
-        this.consumption.accept(source, good, amount);
     }
 
     readonly slices: number[][] = [

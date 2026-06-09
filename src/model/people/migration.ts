@@ -6,7 +6,6 @@ import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
 import { SkillDefs } from "./skills";
-import { CommonsProductionNode } from "../econ/productionnode";
 
 class NewSettlementMigrationTarget {
     get name(): string { return 'New settlement'; }
@@ -77,6 +76,8 @@ export class MigrationCalc {
             // TODO - consider opportunities to learn productive skills
             // TODO - consider local infrastructure
             const farmingRatio = this.clan.effortAllocation.farmingRatio();
+            // TODO - Bring back
+            /*
             const agNode = this.clan.productionNodes
                 .find(n => n instanceof CommonsProductionNode && n.skillDef === SkillDefs.Agriculture);
 
@@ -85,7 +86,7 @@ export class MigrationCalc {
                 this.wantToMove = true;
                 this.wantToMoveReason = 'Land';
                 return;
-            }
+            }*/
         }
 
         // 99% chance of staying put at 0 conflict happiness, but 90% chance
@@ -251,6 +252,8 @@ export class CandidateMigrationCalc {
             return { name: 'Land', reason: 'Not farming', value: 0 };
         }
 
+        // TODO - Bring back
+        /*
         const agNode = this.clan.productionNodes
             .find(n => n instanceof CommonsProductionNode && n.skillDef === SkillDefs.Agriculture);
         if (!agNode) {
@@ -263,6 +266,9 @@ export class CandidateMigrationCalc {
             const targetAgNode = this.target.cluster.naturalFields;
             targetLandRatio = targetAgNode.report.landPerWorker();
         }
+            */
+        const targetLandRatio = 1; // TODO - remove when bringing back
+        const landRatio = 1; // TODO - remove when bringing back
 
         return {
             name: 'Land',

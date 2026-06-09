@@ -1,4 +1,5 @@
-import { CommonsProductionNode, type ProductionNode } from "../econ/productionnode";
+import type { Operation } from "../econ/operation";
+import { Process, Processes } from "../econ/process";
 import { between, chooseFrom, sumFun } from "../lib/basics";
 import { isExemplarClan } from "../lib/debug";
 import type { Clan } from "../people/people";
@@ -26,11 +27,11 @@ export class EffortAllocation {
         // Start with production 80% fishing and 20% farming.
         const fFishing = 0.8 * remaining;
         const fAgriculture = remaining - fFishing;
-        for (const node of this.clan.productionNodes) {
-            if (node === this.clan.settlement.cluster.fishery) {
-                this.f_.push([Activities.Production(node), fFishing]);
-            } else if (node === this.clan.settlement.cluster.naturalFields) {
-                this.f_.push([Activities.Production(node), fAgriculture]);
+        for (const operation of this.clan.operations) {
+            if (operation.process === Processes.Fishing) {
+                this.f_.push([Activities.Production(operation), fFishing]);
+            } else if (operation.process === Processes.Agriculture) {
+                this.f_.push([Activities.Production(operation), fAgriculture]);
             }
         }
     }
@@ -48,7 +49,8 @@ export class EffortAllocation {
     }
 
     private getEntry(activity: Activity): [Activity, number]|undefined {
-        return this.f_.find(([a, _]) => a.name === activity.name && a.node === activity.node);
+        return this.f_.find(([a, _]) => a.name === activity.name
+             && a.operation === activity.operation);
     }
 
     private getOrCreateEntry(activity: Activity): [Activity, number] {
@@ -65,18 +67,19 @@ export class EffortAllocation {
         return entry ? entry[1] : 0;
     }
 
-    getForNode(node: ProductionNode): number {
-        return this.getEntry(Activities.Production(node))?.[1] ?? 0;
+    getForProcess(process: Process): number {
+        const operation = this.clan.operations.find(op => op.process === process);
+        return operation ? this.get(Activities.Production(operation)) : 0;
     }
 
     getForSkill(skillDef: SkillDef): number {
-        const node = this.clan.productionNodes.find(node => node instanceof CommonsProductionNode && node.skillDef === skillDef);
-        return node ? this.getForNode(node) : 0;
+        const operation = this.clan.operations.find(op => op.process.skillDef === skillDef);
+        return operation ? this.get(Activities.Production(operation)) : 0;
     }
 
     farmingRatio(): number {
-        const farmingEffort = this.getForNode(this.clan.settlement.cluster.naturalFields);
-        const fishingEffort = this.getForNode(this.clan.settlement.cluster.fishery);
+        const farmingEffort = this.getForProcess(Processes.Agriculture);
+        const fishingEffort = this.getForProcess(Processes.Fishing);
         return farmingEffort / (farmingEffort + fishingEffort);
     }
 
@@ -111,9 +114,11 @@ export class EffortAllocation {
 
     // Try to make one step change to the allocation. Return true if 
     // a change was made.
-    applyStep(labor: Map<ProductionNode, Map<Clan, number>>): boolean {
+    applyStep(labor: Map<Operation, Map<Clan, number>>): boolean {
+        // TODO - Bring back in new structure
+        /*
         const expectedProduction = sumFun(
-            this.clan.productionNodes, 
+            this.clan.operations, 
             node => node.output(labor.get(node) ?? new Map(), this.clan));
         if (isExemplarClan(this.clan)) {
             console.log(
@@ -159,7 +164,7 @@ export class EffortAllocation {
 
             return true;
         }
-
+*/
         return false;
     }
 }
@@ -169,17 +174,31 @@ export type Activity = {
     sortKey: number;
     shortName?: string;
     color?: string;
-    node?: ProductionNode;
+    operation?: Operation;
 }
 
 export class Activities {
-    static readonly Leisure: Activity = { name: 'Leisure', sortKey: 999, shortName: 'L', color: '#3b82f6' };
-    static readonly Care: Activity = { name: 'Care', sortKey: 998, shortName: 'C', color: '#ef4444' };
+    static readonly Leisure: Activity = { 
+        name: 'Leisure', 
+        sortKey: -1, 
+        shortName: 'L', 
+        color: '#ffd700',
+     };
+    static readonly Care: Activity = { 
+        name: 'Care', 
+        sortKey: -2, 
+        shortName: 'C', 
+        color: '#ef4444' };
 
-    static Production(node: ProductionNode): Activity {
+    static Production(operation: Operation): Activity {
         // TODO - It would be nice to cache these, but a naive approach
         //        leaks memory.
-        return { name: `Production (${node.name})`, sortKey: node.sortKey, shortName: node.shortName, color: node.color, node };
+        return { 
+            name: `Production (${operation.process.name})`, 
+            sortKey: operation.process.sortKey, 
+            shortName: operation.process.shortName, 
+            color: operation.process.color, 
+            operation };
     }
 }
 

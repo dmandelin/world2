@@ -48,14 +48,11 @@
 // and perhaps rate the "kind of community" as area, village, town, etc.
 
 // More on putting this together
-//
-// - We have a standard assumption that 2/3 of adults are workers, 1/3
-//   are mothers
 // - Where workers spend their time is determined by labor choice. This is
 //   a simplification, because there may not actually be farm work to do
 //   100% of the time, but we'll assume they're doing other related activities
 
-import { CommonsProductionNode } from "../econ/productionnode";
+import { Operation } from "../econ/operation";
 import { sumFun } from "../lib/basics";
 import type { Clan } from "./people";
 import { SkillUseLocation } from "./skills";
@@ -84,9 +81,8 @@ export class ResidenceLevel {
         let [totalWeight, awayWeight]: [number, number] = [0, 0];
 
         for (const [activity, laborFraction] of this.clan.effortAllocation) {
-            if (!(activity.node instanceof CommonsProductionNode)) continue;
-            const node = activity.node;
-            const skill = node.skillDef;
+            if (!(activity.operation instanceof Operation)) continue;
+            const skill = activity.operation.process.skillDef;
             if (!skill) continue;
 
             if (skill.useLocation === SkillUseLocation.HomeOnly) {

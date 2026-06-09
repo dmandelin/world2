@@ -17,7 +17,7 @@
     import EntityLink from "../state/EntityLink.svelte";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
     import DataTable from "../DataTable.svelte";
-    import { CommonsProductionNode, type ProductionNode } from "../../model/econ/productionnode";
+    import type { Process } from "../../model/econ/process";
 
 	let { 
         settlement, 
@@ -32,72 +32,55 @@
     let csnaps = $derived([...getClanLastTurnSnapshots(settlement).entries()]
         .map(([_, snapshots]) => ({ p: snapshots.p, e: snapshots.e!})));
 
-    let relevantProductionNodes = $derived.by(() =>
+    let relevantProcesses = $derived.by(() =>
         sortedByKey(
-            new Set(csnaps.flatMap(cs => [...cs.e.production.nodes()])),
-            node => node.sortKey));
+            new Set(csnaps.flatMap(cs => cs.e.production.rs.map(opr => opr.operation.process))),
+            process => process.sortKey));
 
     function productionCooperationFactor(clan: ClanDTO, good: TradeGood): number {
         // TODO - Delete or make useful
         return 1;
     }
 
-    function clanSustenanceTooltipTable(clan: ClanDTO) {
+    function clanSustenanceTooltipTable2(clan: ClanDTO) {
         return new FilteredIterableTable(
-            clan.consumption.ledger.values(),
+            clan.consumption.m.values(),
             cg => cg.good.name,
             cg => cg.good.isSubsistence,
             [{
                 data: 'Consumed',
                 label: 'Consumed',
-                valueFn: cg => cg.consumed / clan.consumption.population,
+                valueFn: cg => cg.consumed,
                 formatFn: unsignedFormat(2),
             }, {
                 data: 'Stored',
                 label: 'Stored',
-                valueFn: cg => cg.stock / clan.consumption.population,
+                valueFn: cg => cg.stock,
+
+                formatFn: unsignedFormat(2),
+            }, {
+                data: 'Storage loss',
+                label: 'Storage loss',
+                valueFn: cg => cg.stockLoss,
                 formatFn: unsignedFormat(2),
             }, {
                 data: 'Wasted',
                 label: 'Wasted',
-                valueFn: cg => cg.wasted / clan.consumption.population,
+                valueFn: cg => cg.wasted,
                 formatFn: unsignedFormat(2),
             }]);
     }
 
-    function clanFoodStockTooltipTable(clan: ClanDTO) {
+    function clanFoodStockTooltipTable2(clan: ClanDTO) {
         return new FilteredIterableTable(
-            clan.consumption.ledger.values(),
+            clan.consumption.m.values(),
             cg => cg.good.name,
             cg => cg.good.isSubsistence,
             [{
                 data: 'Stock',
                 label: 'Stock',
-                valueFn: cg => cg.stock / clan.consumption.population,
+                valueFn: cg => cg.stock,
                 formatFn: unsignedFormat(2),
-            }]);
-    }
-
-    function clanFoodSecurityTooltipTable(clan: ClanDTO) {
-        return new FilteredIterableTable(
-            clan.consumption.foodInsecurity.productionInsecurityItems,
-            item => item.source,
-            _ => true,
-            [{
-                data: 'Base Risk',
-                label: 'Base Risk',
-                valueFn: item => item.insecurity,
-                formatFn: pctFormat(2),
-            }, {
-                data: 'Reliance',
-                label: 'Reliance',
-                valueFn: item => item.consumptionRatio,
-                formatFn: pctFormat(2),
-            }, {
-                data: 'Risk',
-                label: 'Risk',
-                valueFn: item => item.scaledInsecurity,
-                formatFn: pctFormat(2),
             }]);
     }
 
@@ -214,26 +197,20 @@
             }]);
     }
 
-    function productivityModifierTooltip(clan: ClanDTO, node: ProductionNode): string[][] {
-        if (node instanceof CommonsProductionNode) {
-            const calc = clan.productivityCalcs.get(node.skillDef);
-            if (!calc) {
-                return [];
-            }
-            return calc.tooltip;
+    function productivityModifierTooltip(clan: ClanDTO, process: Process): string[][] {
+        const calc = clan.productivityCalcs.get(process.skillDef);
+        if (!calc) {
+            return [];
         }
-        return [];
+        return calc.tooltip;
     }
 
-    function netLaborProductivity(clan: ClanDTO, node: ProductionNode): number {
-        if (node instanceof CommonsProductionNode) {
-            const calc = clan.production.forNode(node);
-            if (!calc) {
-                return 1;
-            }
-            return calc.laborProductivityFactor * Math.min(calc.labor, calc.land) / calc.labor;
+    function netLaborProductivity(clan: ClanDTO, process: Process): number {
+        const calc = clan.production.forProcess(process);
+        if (!calc) {
+            return 1;
         }
-        return 1;
+        return calc.laborProductivityFactor * Math.min(calc.labor, calc.land) / calc.labor;
     }
 </script>
 
@@ -400,13 +377,13 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {pct(cs.e.consumption.perCapitaSubsistence())}
+                            {pct(cs.e.consumption.perCapitaFood)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
+                                <TableView2 table={clanSustenanceTooltipTable2(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.consumption.perCapitaSubsistence(), pct)}
+                    {@render deltaCell(cs, c => c.consumption.perCapitaFood, pct)}
                 {/each}
             </tr>
             <tr class="actual">
@@ -416,7 +393,7 @@
                         <Tooltip>
                             {pct(cs.e.targetPerCapitaFood)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
+                                <TableView2 table={clanSustenanceTooltipTable2(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
@@ -428,13 +405,13 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {pct(cs.e.consumption.perCapitaFoodStock())}
+                            {pct(cs.e.consumption.perCapitaFoodStock)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanFoodStockTooltipTable(cs.e)}></TableView2>
+                                <TableView2 table={clanFoodStockTooltipTable2(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.consumption.perCapitaFoodStock(), pct)}
+                    {@render deltaCell(cs, c => c.consumption.perCapitaFoodStock, pct)}
                 {/each}
             </tr>
             <tr class="actual">
@@ -445,12 +422,11 @@
                             {pct(1 - cs.e.consumption.foodInsecurity.value)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <h3>Production Risks</h3>
-                                <TableView2 table={clanFoodSecurityTooltipTable(cs.e)}></TableView2>
-
-                                <p>Base risk: {pct(cs.e.consumption.foodInsecurity.productionInsecurity)}</p>
-                                <p>Buffering: {pct(cs.e.consumption.foodInsecurity.storageBuffering)}
-                                    from {(cs.e.consumption.foodInsecurity.storage*365).toFixed()} days stored
+                                <p>Base risk: {pct(cs.e.consumption.foodInsecurity.base)}</p>
+                                <p>Buffering: {pct(cs.e.consumption.foodInsecurity.buffering)}
+                                    from {(cs.e.consumption.perCapitaFoodStock*365).toFixed()} days stored
                                 </p>
+                                <p>Storage failure risk: {pct(cs.e.consumption.foodInsecurity.storageRisk)}</p>
                                 <p>Risk: {pct(cs.e.consumption.foodInsecurity.value)}</p>
                             </div>
                         </Tooltip>
@@ -591,19 +567,19 @@
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
-            {#each relevantProductionNodes as node}
+            {#each relevantProcesses as process}
                 <tr class="actual">
-                    <td>{node.name}</td>
+                    <td>{process.name}</td>
                 </tr>
                 <tr class="actual">
                     <td>&nbsp;Production</td>
                     {#each csnaps as cs}
                         <td class="rap">
                             <Tooltip>
-                                {cs.e.production.outputForNode(node).toFixed(0)}
+                                {cs.e.production.getForProcess(process, "amount")?.toFixed(0) ?? 0}
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production.outputForNode(node), v => v.toFixed(0))}
+                        {@render deltaCell(cs, c => c.production.getForProcess(process, "amount") ?? 0, v => v.toFixed(0))}
                     {/each}
                 </tr>
                 <tr class="actual">
@@ -611,10 +587,10 @@
                     {#each csnaps as cs}
                         <td class="rap">
                             <Tooltip>
-                                {cs.e.production.forNode(node)?.land.toFixed(0) ?? 0}
+                                {cs.e.production.getForProcess(process, "land")?.toFixed(0) ?? 0}
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production.forNode(node)?.land ?? 0, v => v.toFixed(0))}
+                        {@render deltaCell(cs, c => c.production.getForProcess(process, "land") ?? 0, v => v.toFixed(0))}
                     {/each}
                 </tr>
                 <tr class="actual">
@@ -622,12 +598,12 @@
                     {#each csnaps as cs}
                         <td class="rap">
                             <Tooltip>
-                                {cs.e.production.forNode(node)?.labor.toFixed(0) ?? 0}
+                                {cs.e.production.getForProcess(process, "labor")?.toFixed(0) ?? 0}
                                 <div slot="tooltip">
                                 </div>
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production.forNode(node)?.labor ?? 0, v => v.toFixed(0))}
+                        {@render deltaCell(cs, c => c.production.getForProcess(process, "labor") ?? 0, v => v.toFixed(0))}
                     {/each}
                 </tr>
                 <tr class="actual">
@@ -635,13 +611,13 @@
                     {#each csnaps as cs}
                         <td class="rap">
                             <Tooltip>
-                                {spct(cs.e.production.forNode(node)?.laborProductivityFactor ?? 0)}
+                                {spct(cs.e.production.getForProcess(process, "laborProductivityFactor") ?? 0)}
                                 <div slot="tooltip">
-                                    <DataTable rows={productivityModifierTooltip(cs.e, node)} />
+                                    <DataTable rows={productivityModifierTooltip(cs.e, process)} />
                                 </div>
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => c.production.forNode(node)?.laborProductivityFactor ?? 0, v => v.toFixed(2))}
+                        {@render deltaCell(cs, c => c.production.getForProcess(process, "laborProductivityFactor") ?? 0, v => v.toFixed(2))}
                     {/each}
                 </tr>
                 <tr class="actual">
@@ -649,12 +625,12 @@
                     {#each csnaps as cs}
                         <td class="rap">
                             <Tooltip>
-                                {spct(netLaborProductivity(cs.e, node))}
+                                {spct(netLaborProductivity(cs.e, process))}
                                 <div slot="tooltip">
                                 </div>
                             </Tooltip>
                         </td>
-                        {@render deltaCell(cs, c => netLaborProductivity(c, node), v => v.toFixed(2))}
+                        {@render deltaCell(cs, c => netLaborProductivity(c, process), v => v.toFixed(2))}
                     {/each}
                 </tr>
             {/each}

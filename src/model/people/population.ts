@@ -124,21 +124,21 @@ export class PopulationChangeBuilder {
     maleDiseaseDeaths = 0;
 
     constructor(readonly clan: Clan) {
-        const subsistence = this.clan.consumption.perCapitaSubsistence();
+        const subsistence = this.clan.consumption.perCapitaFood;
         const foodQuantityBrModifier = clamp(subsistence, 0, 2);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', this.clan.consumption.perCapitaSubsistence(), foodQuantityBrModifier));
+            'Food Quantity', this.clan.consumption.perCapitaFood, foodQuantityBrModifier));
         const subsistenceDrModifier = subsistence >= 1
             ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
             : 1 + clamp((1 - subsistence) / 2, 0, 0.5);
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', this.clan.consumption.perCapitaSubsistence(), subsistenceDrModifier));
+            'Food Quantity', this.clan.consumption.perCapitaFood, subsistenceDrModifier));
 
-        const foodQualityModifier = foodVarietyHealthFactor(fishRatio(clan));
+        const foodQualityModifier = foodVarietyHealthFactor(this.clan.consumption.fishRatio);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quality', fishRatio(clan), foodQualityModifier));
+            'Food Quality', this.clan.consumption.fishRatio, foodQualityModifier));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quality', fishRatio(clan), 1 / foodQualityModifier));
+            'Food Quality', this.clan.consumption.fishRatio, 1 / foodQualityModifier));
 
         // The effect of food insecurity on death rates is modeled directly
         // as famine. For birth rates, the direct effect isn't huge, because 

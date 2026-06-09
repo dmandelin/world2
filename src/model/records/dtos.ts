@@ -3,8 +3,6 @@ import { populationAverage } from "../lib/modelbasics";
 import { TradeGood, TradeGoods } from "../trade";
 import { type ClanSkills, type SkillDef, SkillDefs } from "../people/skills";
 import type { Clan } from "../people/people";
-import type { CondorcetCalc } from "../people/clans";
-import type { Consumption } from "../people/consumption";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
 import type { FloodLevel } from "../environment/flood";
 import type { HappinessCalc } from "../people/happiness";
@@ -25,7 +23,8 @@ import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeli
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
 import type { EffortAllocation } from "../decisions/effort";
-import type { ClanProductionReport } from "../econ/productionreport";
+import type { Consumption } from "../econ/consumption";
+import type { ProductionReport } from "../econ/operation";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -116,16 +115,17 @@ export class ClanDTO {
     averagePrestige: number;
     influence: number;
     
+    effort: number;
+    production: ProductionReport;
     consumption: Consumption;
+
     isDitching: boolean;
     targetPerCapitaFood: number;
     effortAllocation: EffortAllocation;
     productivityCalcs: Map<SkillDef, ProductivityCalc>;
     productivity: number;
     productivityTooltip: string[][];
-    production: ClanProductionReport;
     workers: number;
-    effort: number;
     ritualEffectiveness: number;
     ritualEffectivenessTooltip: string[][];
     seniority: number;
@@ -167,20 +167,21 @@ export class ClanDTO {
         this.migrationPlan = clan.migrationPlan;
         this.slices = clan.slices;
 
-        this.consumption = clan.consumption.clone();
+        this.effort = clan.effort;
+        this.production = clan.production;
+        this.consumption = clan.consumption;
+
         this.isDitching = clan.isDitching;
         this.targetPerCapitaFood = clan.targetPerCapitaFood;
         this.effortAllocation = clan.effortAllocation.clone();
         this.productivityCalcs = clan.productivityCalcs;
         this.productivity = clan.agriculturalProductivity;
         this.productivityTooltip = clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [];
-        this.production = clan.production;
         this.ritualEffectiveness = clan.ritualEffectiveness;
         this.ritualEffectivenessTooltip = clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [];
         this.seniority = clan.seniority;
         this.population = clan.population;
         this.workers = clan.workers;
-        this.effort = clan.effort;
         this.effectiveResidentPopulation = clan.effectiveResidentPopulation;
         this.residenceFraction = clan.residenceFraction;
         this.lastPopulationChange = clan.lastPopulationChange;

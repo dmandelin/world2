@@ -116,7 +116,7 @@ export class FoodQuantityHappinessItem extends NumericHappinessItem {
     }
 
     updateState(clan: Clan): void {
-        this.state_ = clan.consumption.perCapitaSubsistence();
+        this.state_ = clan.consumption.perCapitaFood;
     }
 
     clone(): FoodQuantityHappinessItem {
@@ -160,7 +160,7 @@ export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, f
     }
 
     updateState(clan: Clan): void {
-        this.state_ = { quantity: clan.consumption.perCapitaSubsistence(), fishRatio: fishRatio(clan) };
+        this.state_ = { quantity: clan.consumption.perCapitaFood, fishRatio: fishRatio(clan) };
     }
 
     clone(): FoodQualityHappinessItem {
@@ -410,7 +410,7 @@ class StatusHappinessItem extends NumericHappinessItem {
     }
 }
 
-class LeisureHappinessItem extends NumericHappinessItem {
+export class LeisureHappinessItem extends NumericHappinessItem {
     get isSocial(): boolean {
         return true;
     }

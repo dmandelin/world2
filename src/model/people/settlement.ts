@@ -1,5 +1,4 @@
 import { isExemplarClan, logExperiment1 } from "../lib/debug";
-
 import { shuffled, sumFun } from "../lib/basics";
 import { DitchMaintenanceCalc } from "../infrastructure";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
@@ -10,6 +9,10 @@ import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { Year } from "../records/year";
 import type { Clan } from "./people";
+import { LaborAllocation } from "../econ/labor";
+import { produce } from "../econ/operation";
+import { Consumption } from "../econ/consumption";
+import { LandAllocation } from "../econ/land";
 
 const maxEndOfTurnSnapshots = 5;
 
@@ -151,18 +154,32 @@ export class Settlement {
     }
 
     advancePostPhase() {
+        // TODO - Bring back some aspect of these
+        // this.maintain();
+        // this.distribute();
+        // this.exchange();
+        // this.redistribute();
+
+        // Advance economy.
         for (const clan of this.clans) {
-            clan.consumption.reset();
+            const labor = LaborAllocation.from(clan, clan.effortAllocation);
+            const land = LandAllocation.from(clan);
+            clan.production = produce(clan.operations, labor.m, land.m);
+            clan.consumption = Consumption.from(
+                clan.population,
+                clan.effortAllocation,
+                clan.production);
+            if (isExemplarClan(clan)) {
+                console.log(`Production for ${clan.name}:`);
+                console.log(clan.effortAllocation);
+                console.log(labor);
+                console.log(clan.production);
+                console.log(clan.consumption);
+            }
         }
 
-        this.maintain();
-        this.distribute();
-        this.exchange();
-        for (const clan of this.clans) clan.consumption.foodInsecurity.update();
-        this.redistribute();
-
-        // Consume production.
-        for (const clan of this.clans) clan.consume();
+        // Update happiness based on consumption and leisure.
+        for (const clan of this.clans) clan.updateHappiness();
 
         // Advance traits and seniority.
         for (const clan of this.clans) clan.prepareTraitChanges();
@@ -180,30 +197,6 @@ export class Settlement {
         this.maintenanceCalc = new DitchMaintenanceCalc(this);
         this.ditchingLevel = this.maintenanceCalc.items.length ? 1 : 0;
         this.ditchQuality = this.maintenanceCalc.quality;
-    }
-
-    distribute() {
-        for (const clan of this.clans) {
-            // Consume own production.
-            if (isExemplarClan(clan)) {
-                console.log(`Distribution for ${clan.name} (population: ${clan.population}):`);
-            }
-            for (const pnr of clan.production.reports()) {
-                clan.accept(pnr.node.name, pnr.good, pnr.amount);
-                if (isExemplarClan(clan)) {
-                    console.log(pnr);
-                    console.log(`  ${pnr.good.name}: ${pnr.amount}`);
-                }
-            }
-            // Route surplus food somewhere.
-            clan.consumption.handleSurplusFood();
-        }
-    }
-
-    exchange() {
-        for (const clan of this.clans) {
-            clan.exchange();
-        }
     }
 
     // Redistribute food to try to reduce food insecurity. Currently
@@ -239,18 +232,13 @@ export class Settlement {
                 const populationFactor = recipientClan.population / helperClan.population;
                 const amountToReduce = amountToReducePerHelper * Math.sqrt(populationFactor);
                 const costToHelper = amountToReduce * costFactor / Math.sqrt(populationFactor);
-                recipientClan.consumption.foodInsecurity.addProductionInsecurity(
-                    `Help from ${helperClan.name}`, -amountToReduce);
-                helperClan.consumption.foodInsecurity.addProductionInsecurity(
-                    `Helping ${recipientClan.name}`, costToHelper);
+                // TODO - rework in functional way when ready
+                //recipientClan.consumption.foodInsecurity.addProductionInsecurity(
+                //    `Help from ${helperClan.name}`, -amountToReduce);
+                //helperClan.consumption.foodInsecurity.addProductionInsecurity(
+                //    `Helping ${recipientClan.name}`, costToHelper);
             }
 
-        }
-    }
-
-    consume() {
-        for (const clan of this.clans) {
-            clan.consume();
         }
     }
 

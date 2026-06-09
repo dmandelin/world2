@@ -20,9 +20,9 @@ export class RespectCalc {
 
         this.add('Memory', previousValue / 2);
         this.add('Events', randInt(10 * interactionFactor) - randInt(10 * interactionFactor));
-        if (this.clan.consumption.perCapitaSubsistence() > 0) {
+        if (this.clan.consumption.perCapitaFood > 0) {
             this.add('Prosperity', 
-                Math.sqrt(this.informationLevel) * 20 * Math.log2(this.clan.consumption.perCapitaSubsistence()));
+                Math.sqrt(this.informationLevel) * 20 * Math.log2(this.clan.consumption.perCapitaFood));
         }
     }
 

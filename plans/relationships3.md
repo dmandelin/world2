@@ -453,6 +453,7 @@ Norms:
         *   Rework effort allocation
             *   Get the ability to do a full what-if covering food quantity,
                 quality, security, and leisure
+                x   Refactor so that the key steps are functional-ish
             *   Let clans increase work when food quantity is too low
             *   Let clans shift work when food quantity is too low
             *   Let clans make changes according to the full tradeoff:
@@ -466,7 +467,10 @@ Norms:
             *   Give clans a chance to notice other clans' productivity and imitate
             *   Give hungry clans without other options or information the ability 
                 to switch. 
+        *   Re-implement food sharing relationships to increase food security
         *   Re-implement clan merging
+        *   Rework splitting and merging to happen before any key production and
+            consumption steps, so we don't have to worry about splitting those.
         *   (P2) Let clans shift to have more leisure when they have enough food
 
         *   Have initial villages have enough alluvium for a small farming village
