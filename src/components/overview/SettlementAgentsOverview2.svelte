@@ -42,7 +42,7 @@
         return 1;
     }
 
-    function clanSustenanceTooltipTable2(clan: ClanDTO) {
+    function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
             clan.consumption.m.values(),
             cg => cg.good.name,
@@ -71,7 +71,7 @@
             }]);
     }
 
-    function clanFoodStockTooltipTable2(clan: ClanDTO) {
+    function clanFoodStockTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
             clan.consumption.m.values(),
             cg => cg.good.name,
@@ -82,6 +82,23 @@
                 valueFn: cg => cg.stock,
                 formatFn: unsignedFormat(2),
             }]);
+    }
+
+    function clanQolTooltipTable(clan: ClanDTO) {
+        return new FilteredIterableTable(
+            clan.qol.m.values(),
+            item => item.name,
+            _ => true,
+            [{
+                data: 'Value',
+                label: 'Value',
+                valueFn: item => item.value,
+                formatFn: signedFormat(),
+            }, {
+                data: 'Explanation',
+                label: 'Explanation',
+                valueFn:  item => item.explanation,
+             }]);
     }
 
     function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
@@ -373,13 +390,28 @@
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
+                <td>QoL</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {signed(cs.e.qol.value)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanQolTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.qol.value, signed)}
+                {/each}
+            </tr>
+            <tr><td style="height: 0.5em"></td></tr>
+            <tr class="actual">
                 <td>Food</td>
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
                             {pct(cs.e.consumption.perCapitaFood)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceTooltipTable2(cs.e)}></TableView2>
+                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
@@ -393,7 +425,7 @@
                         <Tooltip>
                             {pct(cs.e.targetPerCapitaFood)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceTooltipTable2(cs.e)}></TableView2>
+                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
@@ -407,7 +439,7 @@
                         <Tooltip>
                             {pct(cs.e.consumption.perCapitaFoodStock)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanFoodStockTooltipTable2(cs.e)}></TableView2>
+                                <TableView2 table={clanFoodStockTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>

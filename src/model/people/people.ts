@@ -25,6 +25,7 @@ import { EffortAllocation } from "../decisions/effort";
 import { Operation, ProductionReport } from "../econ/operation";
 import { Processes } from "../econ/process";
 import { Consumption } from "../econ/consumption";
+import { QualityOfLife } from "../econ/qol";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -126,6 +127,7 @@ export class Clan implements TradePartner {
     
     production: ProductionReport = new ProductionReport([]);
     consumption: Consumption;
+    qol: QualityOfLife = new QualityOfLife(new Map());
 
     private readonly happinessCalc_: HappinessCalc;
 

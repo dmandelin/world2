@@ -166,11 +166,13 @@ export class Settlement {
             const r = economicResult(clan);
             clan.production = r.production;
             clan.consumption = r.consumption;
+            clan.qol = r.qol;
             if (isExemplarClan(clan)) {
                 console.log(`Production for ${clan.name}:`);
                 console.log(clan.effortAllocation);
                 console.log(clan.production);
                 console.log(clan.consumption);
+                console.log(clan.qol);
             }
         }
 

@@ -25,6 +25,7 @@ import type { World } from "../world";
 import type { EffortAllocation } from "../decisions/effort";
 import type { Consumption } from "../econ/consumption";
 import type { ProductionReport } from "../econ/operation";
+import type { QualityOfLife } from "../econ/qol";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -118,6 +119,7 @@ export class ClanDTO {
     effort: number;
     production: ProductionReport;
     consumption: Consumption;
+    qol: QualityOfLife;
 
     isDitching: boolean;
     targetPerCapitaFood: number;
@@ -170,7 +172,8 @@ export class ClanDTO {
         this.effort = clan.effort;
         this.production = clan.production;
         this.consumption = clan.consumption;
-
+        this.qol = clan.qol;
+        
         this.isDitching = clan.isDitching;
         this.targetPerCapitaFood = clan.targetPerCapitaFood;
         this.effortAllocation = clan.effortAllocation.clone();
