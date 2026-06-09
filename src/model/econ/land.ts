@@ -1,8 +1,5 @@
-import type { EffortAllocation } from "../decisions/effort";
 import type { Clan } from "../people/people";
-import type { LaborAllocation } from "./labor";
 import type { Operation } from "./operation";
-import { Processes } from "./process";
 
 export class LandAllocation {
     constructor(readonly m: ReadonlyMap<Operation, number>) {}

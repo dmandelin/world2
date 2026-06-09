@@ -129,6 +129,7 @@ export class Clan implements TradePartner {
 
     private readonly happinessCalc_: HappinessCalc;
 
+    // Adds the clan to the settlement.
     constructor(
         readonly world: World,
         settlement: Settlement,
@@ -527,7 +528,11 @@ export class Clan implements TradePartner {
 
     moveTo(settlement: Settlement) {
         if (this.settlement) {
+            const originalLength = this.settlement.clans.length;
             remove(this.settlement.clans, this);
+            if (this.settlement.clans.length !== originalLength - 1) {
+                debugger;
+            }
         }
 
         this.settlement_ = settlement;
@@ -572,12 +577,7 @@ export class Clan implements TradePartner {
         }
     }
 
-    split() {
-        const cadetClan = this.splitOff();
-        this.settlement.clans.push(cadetClan);
-    }
-
-    splitOff(): Clan {
+    split(): Clan {
         const fraction = 0.3 + 0.15 * (Math.random() + Math.random());
         const newSize = Math.round(this.population * fraction);
 

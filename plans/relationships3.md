@@ -454,6 +454,11 @@ Norms:
             *   Get the ability to do a full what-if covering food quantity,
                 quality, security, and leisure
                 x   Refactor so that the key steps are functional-ish
+                x   Debug issue with clans seeming to have the wrong amount
+                    of land
+                *   Rework fishing to draw on a regional supply
+                    *   Probably requires pulling labor allocations into the
+                        new framework
             *   Let clans increase work when food quantity is too low
             *   Let clans shift work when food quantity is too low
             *   Let clans make changes according to the full tradeoff:
