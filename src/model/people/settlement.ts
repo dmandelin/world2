@@ -13,6 +13,7 @@ import { LaborAllocation } from "../econ/labor";
 import { produce } from "../econ/operation";
 import { Consumption } from "../econ/consumption";
 import { LandAllocation } from "../econ/land";
+import { economicResult } from "../econ/economy";
 
 const maxEndOfTurnSnapshots = 5;
 
@@ -162,17 +163,12 @@ export class Settlement {
 
         // Advance economy.
         for (const clan of this.clans) {
-            const labor = LaborAllocation.from(clan, clan.effortAllocation);
-            const land = LandAllocation.from(clan);
-            clan.production = produce(clan.operations, labor.m, land.m);
-            clan.consumption = Consumption.from(
-                clan.population,
-                clan.effortAllocation,
-                clan.production);
+            const r = economicResult(clan);
+            clan.production = r.production;
+            clan.consumption = r.consumption;
             if (isExemplarClan(clan)) {
                 console.log(`Production for ${clan.name}:`);
                 console.log(clan.effortAllocation);
-                console.log(labor);
                 console.log(clan.production);
                 console.log(clan.consumption);
             }
