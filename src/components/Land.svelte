@@ -19,12 +19,12 @@
     import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/lib/basics";
     import { pctFormat, signedFormat } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
+    import DataTable2 from "./tables/TableView2.svelte";
     import LineGraph from "./LineGraph.svelte";
-    import TableView from "./TableView.svelte";
+    import { IterableTable } from "./tables/tables2";
     import type { ClanDTO, WorldDTO } from "../model/records/dtos";
     import { PopulationScaler, ZeroCenteredScaler } from "./linegraph";
     import { selectClan, selectSettlement } from "./state/uistate.svelte";
-    import { TableBuilder } from "./tablebuilder";
 
     let { world }: { world: WorldDTO } = $props();
 
@@ -77,35 +77,40 @@
         ];
 
         const clans = [...world.clans()];
-        const items: [string, {clan: ClanDTO, displayValue: string}][] =
+        const items =
             specs.map(([name, optBy, clanValueFn, fmt]) => {
                 const [clan, value] = optBy(clans, clanValueFn);
-                return [name, {clan, displayValue: fmt(value)}];
+                return { name, clan, displayValue: fmt(value) };
             });
 
 
-        return TableBuilder.fromItems(items, [
-            {
-                label: 'Value',
-                valueFn: i => i.displayValue,
-            },
-            { 
-                label: 'Clan',
-                valueFn: i => i.clan.name,
-                onClickCell: (item, _) => selectClan(item.clan),
-            },
-            {
-                label: 'of',
-                valueFn: i => 'of',
-            },
-            {
-                label: 'Settlement',
-                valueFn: i => i.clan.ref.settlement.name,
-                onClickCell: (item, _) => selectSettlement(item.clan.ref.settlement),
-            },
-        ])
-        .hideColumnHeaders()
-        .table;
+        return {
+            ...new IterableTable(items, i => i.name, [
+                {
+                    data: 'Value',
+                    label: 'Value',
+                    valueFn: i => i.displayValue,
+                },
+                { 
+                    data: 'Clan',
+                    label: 'Clan',
+                    valueFn: i => i.clan.name,
+                    onClickCell: (data, row) => selectClan(row.clan),
+                },
+                {
+                    data: 'of',
+                    label: 'of',
+                    valueFn: i => 'of',
+                },
+                {
+                    data: 'Settlement',
+                    label: 'Settlement',
+                    valueFn: i => i.clan.ref.settlement.name,
+                    onClickCell: (data, row) => selectSettlement(row.clan.ref.settlement),
+                },
+            ]),
+            hideHeader: true
+        };
     });
 
 </script>
@@ -120,7 +125,7 @@
             <DataTable rows={world.stats} />
 
             <h4>Notable Clans</h4>
-            <TableView table={notableClansTable} />
+            <DataTable2 table={notableClansTable} />
         </div>
 
         <div>
