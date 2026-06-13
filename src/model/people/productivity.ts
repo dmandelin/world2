@@ -40,7 +40,7 @@ export class ProductivityCalc {
         // TODO - Rework per latest plans. Biggest factors in how all this plays out
         //        should be:
         // x Clan dependency ratio
-        // - Community -- but figure out what this really means
+        // x Community -- but figure out what this really means
         // - Land quality
 
         this.skill = clan.skills.v(skillDef);
@@ -94,5 +94,11 @@ export class ProductivityCalc {
             spct(item.fp),
         ]);
         return [header, ...data];
+    }
+
+    withItem(item: ProductivityCalcItem): ProductivityCalc {
+        const newCalc = new ProductivityCalc(this.clan, this.skillDef, false);
+        newCalc.items.splice(0, newCalc.items.length, ...this.items, item);
+        return newCalc;
     }
 }

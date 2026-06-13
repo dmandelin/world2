@@ -164,7 +164,7 @@ change.
             *   Available help affects output as above, except also
                 for larger harvests, some amount of help is probably
                 required to bring it in
-        *   Implementation steps:
+        x   Implementation steps:
             x   Review relationships code and existing relationship
                 types
             x   Add planning step near effort allocation for clans to
@@ -175,15 +175,22 @@ change.
                 any good
             x   Make sure help labor gets charged
             x   Generate help resource before main economic production
-            *   Add help to production process.
+            x   Add help to production process.
             
     *   Make help value depend on relationship status. No relationship
         => no help.
+    *   Make help affect goodwill
+    *   Make goodwill affect help
     *   Make relationship status depend on positive interactions with
         each other. However, this should probably be pretty cheap,
         with the cost maybe 10-20% of the benefit.
     *   The bigger limiter should probably be how many relationships
         can be maintained, and then bidding for those relationships.
+    *   Let clans self-help, so that if they're only farming a tiny
+        bit, they don't need (or benefit) from help from other clans,
+        but if they're farming a lot they need more. Also have them
+        not send each other that much help when they don't really
+        need it.
 *   (Bug) Look into food security, seems to make foraging depend too
     much on storage
 *   Add a local knowledge skill that builds internally and resets on

@@ -1,7 +1,8 @@
+import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { ProductivityCalc } from "../people/productivity";
 import type { TradeGood } from "../trade";
-import type { Process } from "./process";
+import { Processes, type Process } from "./process";
 
 // An ongoing economic operation. Stateful.
 export class Operation {
@@ -15,7 +16,22 @@ export class Operation {
         // with both required.
         const inputAmount = Math.min(land, labor);
 
-        const productivityCalc = this.clan.productivityCalcs.get(this.process.skillDef)!;
+        let productivityCalc = this.clan.productivityCalcs.get(this.process.skillDef)!;
+
+        if (this.process === Processes.Agriculture) {
+            // Clan-scale cultivators need help to be fully productive,
+            // especially at harvest time, when a lot of labor is needed
+            // at once.
+            const relativeHelp = help / (0.2 * inputAmount);
+            const helpFactor = relativeHelp < 1
+                ? 0.5 * (1 - relativeHelp)
+                : Math.min(1.5, Math.pow(relativeHelp, 0.25));
+            productivityCalc = productivityCalc.withItem({
+                label: 'Help',
+                value: pct(relativeHelp),
+                fp: helpFactor,
+            });
+        }
 
         const lpBase = this.process.outputPerWorker;
         const lpMod = productivityCalc.tfp ?? 1;
