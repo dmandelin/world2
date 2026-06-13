@@ -1,3 +1,4 @@
+import { sum } from "../lib/basics";
 import type { Clan } from "../people/people";
 
 export class HelpAllocation {
@@ -22,5 +23,9 @@ export class HelpAllocation {
         } else {
             this.m.set(clan, fraction);
         }
+    }
+
+    get total(): number {
+        return sum(this.m.values());
     }
 }

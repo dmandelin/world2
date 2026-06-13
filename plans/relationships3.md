@@ -481,6 +481,8 @@ Norms:
                 effort allocation. This might not be a huge deal: technically
                 we should have it, but it might not affect the results enough to
                 matter just yet.
+            *   Add a help-with-care concept. Maybe even help-with-leisure.
+            *   Make differential care count.
         *   Re-implement food sharing relationships to increase food security
         *   Re-implement clan merging
         *   Rework splitting and merging to happen before any key production and

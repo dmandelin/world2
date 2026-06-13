@@ -10,13 +10,13 @@ export class LaborAllocation {
     static from(clan: Clan, effort: EffortAllocation): LaborAllocation {
         const m = new Map<Operation, number>();
         // Populate labor allocation based on effort allocation.
-        for (const [activity, value] of effort) {
-            switch (activity.operation?.process) {
+        for (const [process, fraction] of effort.forProduction()) {
+            switch (process) {
                 case Processes.Fishing:
-                    m.set(clan.operations.find(op => op.process === Processes.Fishing)!, value * clan.workers);
+                    m.set(clan.operations.find(op => op.process === Processes.Fishing)!, fraction * clan.workers);
                     break;
                 case Processes.Agriculture:
-                    m.set(clan.operations.find(op => op.process === Processes.Agriculture)!, value * clan.workers);
+                    m.set(clan.operations.find(op => op.process === Processes.Agriculture)!, fraction * clan.workers);
                     break;
             }
         }

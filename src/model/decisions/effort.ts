@@ -3,6 +3,7 @@ import type { Operation } from "../econ/operation";
 import { Process, Processes } from "../econ/process";
 import { between, chooseFrom, sumFun } from "../lib/basics";
 import { isExemplarClan } from "../lib/debug";
+import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { SkillDef } from "../people/skills";
 
@@ -13,71 +14,76 @@ import type { SkillDef } from "../people/skills";
 // Effort is measured in units, where 1 "average adult" produces
 // 1 unit of effort per turn. Effort is allocated in fractions.
 export class EffortAllocation {
-    // f for fractions.
-    // These should be whole percentages, and must sum to 1.0.
-    private f_: [Activity, number][];
+    // Overall map of high-level activities to fractions of
+    // overall effort. Must sum to 1.
+    private m_: Map<Activity, number> = new Map();
 
-    constructor(readonly clan: Clan, f?: [Activity, number][]) {
-        // Fixed allocations for basic activities.
-        this.f_ = f ? [...f] : [
-            [Activities.Leisure, 0.2],
-            [Activities.Care, 0.2],
-        ];
-        const remaining = 1 - sumFun(this.f_, ([_, fraction]) => fraction);
+    // Map of production processes to fractions of Production
+    // effort. Must sum to 1.
+    private pm_: Map<Process, number> = new Map();
 
-        if (!f) {
+    constructor(
+        readonly clan: Clan,
+        m?: ReadonlyMap<Activity, number>,
+        pm?: ReadonlyMap<Process, number>) {
+
+        if (m) {
+            this.m_ = new Map(m);
+        } else {
+            // Initial cultural allocation.
+            this.m_.set(Activities.Leisure, 0.3);
+            // Default values. Will generally be replaced in planning.
+            this.m_.set(Activities.Care, 0.2);
+            this.m_.set(Activities.Production, 0.4);
+            this.m_.set(Activities.Help, 0.1);
+        }
+
+        if (pm) {
+            this.pm_ = new Map(pm);
+        } else {
             // Start with production 80% fishing and 20% farming.
-            const fFishing = 0.8 * remaining;
-            const fAgriculture = remaining - fFishing;
-            for (const operation of this.clan.operations) {
-                if (operation.process === Processes.Fishing) {
-                    this.f_.push([Activities.Production(operation), fFishing]);
-                } else if (operation.process === Processes.Agriculture) {
-                    this.f_.push([Activities.Production(operation), fAgriculture]);
-                }
-            }
+            this.pm_.set(Processes.Fishing, 0.8);
+            this.pm_.set(Processes.Agriculture, 0.2);
         }
     }
 
     debugString(): string {
-        return this.f_.map(([activity, fraction]) => `${activity.name}: ${fraction.toFixed(2)}`).join(', ');
+        return [...this.m_].map(([activity, fraction]) => `${activity.name}: ${pct(fraction)}%`).join(', ')
     }
 
     [Symbol.iterator](): Iterator<[Activity, number]> {
-        return this.f_[Symbol.iterator]();
+        return this.m_.entries();
     }
 
-    private getEntries(activityName: string): [Activity, number][] {
-        return this.f_.filter(([a, _]) => a.name === activityName);
+    get m(): ReadonlyMap<Activity, number> {
+        return this.m_;
     }
 
-    private getEntry(activity: Activity): [Activity, number]|undefined {
-        return this.f_.find(([a, _]) => a.name === activity.name
-             && a.operation === activity.operation);
+    get pm(): ReadonlyMap<Process, number> {
+        return this.pm_;
     }
 
-    private getOrCreateEntry(activity: Activity): [Activity, number] {
-        let entry = this.getEntry(activity);
-        if (!entry) {
-            entry = [activity, 0];
-            this.f_.push(entry);
+    *forProduction(): Iterable<[Process, number]> {
+        const fp = this.get(Activities.Production);
+        for (const [process, fraction] of this.pm_) {
+            yield [process, fraction * fp];
         }
-        return entry;
     }
 
     get(activity: Activity): number {
-        const entry = this.getEntry(activity);
-        return entry ? entry[1] : 0;
+        return this.m_.get(activity) ?? 0;
     }
 
     getForProcess(process: Process): number {
         const operation = this.clan.operations.find(op => op.process === process);
-        return operation ? this.get(Activities.Production(operation)) : 0;
+        const pf = operation ? this.get(Activities.Production) : 0;
+        return pf * (this.pm_.get(process) ?? 0);
     }
 
     getForSkill(skillDef: SkillDef): number {
         const operation = this.clan.operations.find(op => op.process.skillDef === skillDef);
-        return operation ? this.get(Activities.Production(operation)) : 0;
+        if (!operation) return 0;
+        return this.get(Activities.Production) * (this.pm_.get(operation.process) ?? 0);
     }
 
     farmingRatio(): number {
@@ -87,22 +93,22 @@ export class EffortAllocation {
     }
 
     clone(): EffortAllocation {
-        return new EffortAllocation(this.clan, this.f_);
+        return new EffortAllocation(this.clan, this.m_, this.pm_);
     }
 
     shifted(from: Process, to: Process, delta: number): EffortAllocation {
         const actualDelta = Math.min(this.getForProcess(from), delta);
 
-        const f = this.f_.map(([activity, fraction]): [Activity, number] => {
-            if (activity.operation?.process === from) {
-                return [activity, fraction - actualDelta];
-            } else if (activity.operation?.process === to) {
-                return [activity, fraction + actualDelta];
+        const pm = [...this.pm_].map(([process, fraction]): [Process, number] => {
+            if (process === from) {
+                return [process, fraction - actualDelta];
+            } else if (process === to) {
+                return [process, fraction + actualDelta];
             } else {
-                return [activity, fraction];
+                return [process, fraction];
             }
         });
-        return new EffortAllocation(this.clan, f);
+        return new EffortAllocation(this.clan, this.m_, new Map(pm));
     }
 
     // "Applying" the allocation refers to the process of converting
@@ -110,18 +116,18 @@ export class EffortAllocation {
 
     // Initialize the application process.
     applyStart() {
-        // Reserve effort needed for child care and initially leave
-        // the rest for leisure.
+        // Reserve effort needed for non-production activities, then
+        // have the rest be production.
         const fCare = Math.min(1, 0.25 * this.clan.children / this.clan.effort);
+        const fHelp = this.clan.helpAllocation.total;
+        const fLeisure = this.get(Activities.Leisure);
+        const reserved = fCare + fHelp + fLeisure;
+        const fProduction = Math.max(0, 1 - reserved);
 
-        // If we need more or less care than we have now, adjust everything
-        // else proportionally.
-        const careDelta = fCare - this.get(Activities.Care);
-        const leisureEntry = this.getEntry(Activities.Leisure);
-        if (leisureEntry) {
-            leisureEntry[1] -= careDelta;
-        }
-        this.getOrCreateEntry(Activities.Care)[1] += careDelta;
+        this.m_.set(Activities.Care, fCare);
+        this.m_.set(Activities.Help, fHelp);
+        this.m_.set(Activities.Leisure, fLeisure);
+        this.m_.set(Activities.Production, fProduction);
 
         if (isExemplarClan(this.clan)) {
             console.log(
@@ -161,7 +167,7 @@ export class EffortAllocation {
             if (bestOption !== this) {
                 console.log(`Shifting effort for ${this.clan.name} from ${this.debugString()} to ${bestOption.debugString()} with expected food QoL change from ${er.qol.valueFrom("food").toFixed(2)} to ${bestOptionValue.toFixed(2)}`);
             }
-            this.f_ = bestOption.f_;
+            this.pm_ = bestOption.pm_;
             return true;
         }
 
@@ -172,34 +178,35 @@ export class EffortAllocation {
 export type Activity = {
     name: string;
     sortKey: number;
-    shortName?: string;
-    color?: string;
-    operation?: Operation;
+    shortName: string;
+    color: string;
 }
 
 export class Activities {
     static readonly Leisure: Activity = { 
         name: 'Leisure', 
-        sortKey: -1, 
+        sortKey: 4, 
         shortName: 'L', 
         color: '#ffd700',
      };
     static readonly Care: Activity = { 
         name: 'Care', 
-        sortKey: -2, 
+        sortKey: 3, 
         shortName: 'C', 
-        color: '#ef4444' };
-
-    static Production(operation: Operation): Activity {
-        // TODO - It would be nice to cache these, but a naive approach
-        //        leaks memory.
-        return { 
-            name: `Production (${operation.process.name})`, 
-            sortKey: operation.process.sortKey, 
-            shortName: operation.process.shortName, 
-            color: operation.process.color, 
-            operation };
-    }
+        color: '#ef4444',
+    };
+    static readonly Help: Activity = {
+        name: 'Help', 
+        sortKey: 2, 
+        shortName: 'H', 
+        color: '#34d399',
+    };
+    static readonly Production: Activity = {
+        name: 'Production', 
+        sortKey: 1, 
+        shortName: 'P',
+        color: '#3b82f6',
+    };
 }
 
 // TODO - add domestic labor and maintenance

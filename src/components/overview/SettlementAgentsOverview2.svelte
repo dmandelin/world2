@@ -530,13 +530,25 @@
             <tr>
                 <td>Activities</td>
                 {#each csnaps as cs}
-                    <td colspan="2"><ClanEffortMiniBar clan={cs.e} /></td>
+                    <td colspan="2"><ClanEffortMiniBar clan={cs.e} m={cs.e.effortAllocation.m} /></td>
                 {/each}
             </tr>
             <tr>
                 <td>(Previous)</td>
                 {#each csnaps as cs}
-                    <td colspan="2">{#if cs.p}<ClanEffortMiniBar clan={cs.p} />{/if}</td>
+                    <td colspan="2">{#if cs.p}<ClanEffortMiniBar clan={cs.p} m={cs.p.effortAllocation.m} />{/if}</td>
+                {/each}
+            </tr>
+            <tr>
+                <td>Processes</td>
+                {#each csnaps as cs}
+                    <td colspan="2"><ClanEffortMiniBar clan={cs.e} m={cs.e.effortAllocation.pm} /></td>
+                {/each}
+            </tr>
+            <tr>
+                <td>(Previous)</td>
+                {#each csnaps as cs}
+                    <td colspan="2">{#if cs.p}<ClanEffortMiniBar clan={cs.p} m={cs.p.effortAllocation.pm} />{/if}</td>
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>

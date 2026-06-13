@@ -1,7 +1,6 @@
 import { normal } from "../lib/distributions";
-import { clamp, product, productFun, sumFun, sumValues, weightedGeometricMean } from "../lib/basics";
+import { sumValues } from "../lib/basics";
 import type { Clan } from "./people";
-import { SkillDefs, type SkillDef } from "./skills";
 
 const REFERENCE_COMMUNITY_SIZE = 150;
 

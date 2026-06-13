@@ -173,7 +173,7 @@ change.
                 help each other in simple ways for now -- be sure to
                 respect constraints, but strategy doesn't have to be
                 any good
-            *   Make sure help labor gets charged
+            x   Make sure help labor gets charged
             *   Generate help resource before main economic production
             *   Add help to production process.
             
@@ -184,6 +184,8 @@ change.
         with the cost maybe 10-20% of the benefit.
     *   The bigger limiter should probably be how many relationships
         can be maintained, and then bidding for those relationships.
+*   (Bug) Look into food security, seems to make foraging depend too
+    much on storage
 *   Add a local knowledge skill that builds internally and resets on
     a move
 *   Make general skill vary a bunch
