@@ -194,7 +194,7 @@ change.
 *   Add a local knowledge skill that builds internally and resets on
     a move
     x   Add skills section to main overview
-    *   Add local ecology skill
+    x   Add local ecology skill
     *   Add updater for local ecology skill
     *   Add productivity modifier for ecology skill
 *   Make general skill vary a bunch

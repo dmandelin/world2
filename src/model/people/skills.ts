@@ -25,6 +25,16 @@ export class SkillDef {
 }
 
 export const SkillDefs = {
+    LocalEcology: new SkillDef(
+        0,
+        'Local Ecology',
+        'skill-local-ecology-256.png',
+        '#22c55e',
+        undefined,
+        new Map([]), // TODO - make this a property of process
+        SkillUseLocation.Either, // TODO - make this a property of process
+        0, // TODO - make this a property of process
+    ),
     Fishing: new SkillDef(1, 'Fishing', 'skill-fishing-256.png', '#14b8a6', TradeGoods.Fish,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
         SkillUseLocation.AwayOnly, 1),
