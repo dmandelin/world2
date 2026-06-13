@@ -129,12 +129,21 @@ export class ConsumptionGood {
 }
 
 export class FoodInsecurity {
+    // Base risk from production processes.
+    readonly base: number;
+
+    // Base buffering from stored food.
+    readonly baseBuffering: number;
+
     // Even with plenty of storage, there's still some risk if the
     // storage system fails. For now we assume simple pits and reed
     // baskets.
     readonly storageRisk = 0.2;
 
-    readonly base: number;
+    // Buffering from stored food after accounting for storage risk.
+    readonly buffering: number;
+
+    // Total food insecurity value.
     readonly value: number;
 
     constructor(consumption: Consumption) {
@@ -142,11 +151,9 @@ export class FoodInsecurity {
         // food insecurity is lower, but enough stored food can make
         // farmers more secure.
         this.base = 0.1 * consumption.fishRatio + 0.2 * (1 - consumption.fishRatio);
-        this.value = Math.max(this.storageRisk, this.base - 0.5 * consumption.perCapitaFoodStock);
-    }
-
-    get buffering(): number {
-        return this.base - this.value;
+        this.baseBuffering = 0.5 * consumption.perCapitaFoodStock;
+        this.buffering = this.baseBuffering * (1 - this.storageRisk);
+        this.value = Math.max(0, this.base - this.buffering);
     }
 }
 

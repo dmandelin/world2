@@ -483,6 +483,9 @@ Norms:
                 matter just yet.
             *   Add a help-with-care concept. Maybe even help-with-leisure.
             *   Make differential care count.
+            *   Don't let food insecurity go all the way down to 0. We need
+                to assume there are longer famine events that will require
+                longer storage (maybe use log of storage)
         *   Re-implement food sharing relationships to increase food security
         *   Re-implement clan merging
         *   Rework splitting and merging to happen before any key production and

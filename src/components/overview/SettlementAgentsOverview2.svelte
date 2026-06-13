@@ -454,12 +454,13 @@
                             {pct(1 - cs.e.consumption.foodInsecurity.value)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <h3>Production Risks</h3>
-                                <p>Base risk: {pct(cs.e.consumption.foodInsecurity.base)}</p>
-                                <p>Buffering: {pct(cs.e.consumption.foodInsecurity.buffering)}
+                                <p>Base from production: {pct(cs.e.consumption.foodInsecurity.base)}</p>
+                                <p>Base buffering: {pct(cs.e.consumption.foodInsecurity.baseBuffering)}
                                     from {(cs.e.consumption.perCapitaFoodStock*365).toFixed()} days stored
                                 </p>
                                 <p>Storage failure risk: {pct(cs.e.consumption.foodInsecurity.storageRisk)}</p>
-                                <p>Risk: {pct(cs.e.consumption.foodInsecurity.value)}</p>
+                                <p>Risk-adjusted buffering: {pct(cs.e.consumption.foodInsecurity.buffering)}</p>
+                                <p>Total risk: {pct(cs.e.consumption.foodInsecurity.value)}</p>
                             </div>
                         </Tooltip>
                     </td>
