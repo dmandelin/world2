@@ -215,19 +215,19 @@
     }
 
     function productivityModifierTooltip(clan: ClanDTO, process: Process): string[][] {
-        const calc = clan.productivityCalcs.get(process.skillDef);
-        if (!calc) {
+        const r = clan.production.forProcess(process);
+        if (!r || !r.productivityCalc) {
             return [];
         }
-        return calc.tooltip;
+        return r.productivityCalc.tooltip;
     }
 
     function netLaborProductivity(clan: ClanDTO, process: Process): number {
-        const calc = clan.production.forProcess(process);
-        if (!calc) {
+        const r = clan.production.forProcess(process);
+        if (!r) {
             return 1;
         }
-        return calc.laborProductivityFactor * Math.min(calc.labor, calc.land) / calc.labor;
+        return r.laborProductivityFactor * Math.min(r.labor, r.land) / r.labor;
     }
 </script>
 

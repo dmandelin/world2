@@ -1,4 +1,5 @@
 import type { Clan } from "../people/people";
+import type { ProductivityCalc } from "../people/productivity";
 import type { TradeGood } from "../trade";
 import type { Process } from "./process";
 
@@ -14,8 +15,10 @@ export class Operation {
         // with both required.
         const inputAmount = Math.min(land, labor);
 
+        const productivityCalc = this.clan.productivityCalcs.get(this.process.skillDef)!;
+
         const lpBase = this.process.outputPerWorker;
-        const lpMod = this.clan.productivity(this.process.skillDef);
+        const lpMod = productivityCalc.tfp ?? 1;
         const lp = lpBase * lpMod;
 
         return {
@@ -23,6 +26,7 @@ export class Operation {
             land,
             labor,
             help,
+            productivityCalc,
             laborProductivityFactor: lpMod,
             good: this.process.outputGood!,
             amount: inputAmount * lp,
@@ -74,6 +78,7 @@ export type OperationProductionReport = {
     land: number;
     labor: number;
     help: number;
+    productivityCalc: ProductivityCalc;
     laborProductivityFactor: number;
     good: TradeGood;
     amount: number;

@@ -427,7 +427,7 @@ export class Clan implements TradePartner {
             //if (this.consumption.remove(`To ${relationship.partner.name}`, TradeGoods.Cereals, cost)) {
             //    this.consumption.accept(`From ${relationship.partner.name}`, TradeGoods.ClayFigurines, 1);
             //}
-        }2
+        }
     }
 
     updateProductivity(forPlanning: boolean) {
