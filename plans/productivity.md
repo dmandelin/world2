@@ -174,7 +174,7 @@ change.
                 respect constraints, but strategy doesn't have to be
                 any good
             x   Make sure help labor gets charged
-            *   Generate help resource before main economic production
+            x   Generate help resource before main economic production
             *   Add help to production process.
             
     *   Make help value depend on relationship status. No relationship

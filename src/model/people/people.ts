@@ -1,5 +1,5 @@
 import { Annals } from "../annals";
-import { clamp, randInt, remove } from "../lib/basics";
+import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
 import { HappinessCalc } from "./happiness";
 import { HousingDecision } from "../decisions/housingdecision";
@@ -26,7 +26,7 @@ import { Operation, ProductionReport } from "../econ/operation";
 import { Processes } from "../econ/process";
 import { Consumption } from "../econ/consumption";
 import { QualityOfLife } from "../econ/qol";
-import { HelpAllocation } from "../decisions/help";
+import { HelpAllocation } from "../decisions/helpalloc";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -388,6 +388,12 @@ export class Clan implements TradePartner {
         if (this.seniority < 4) {
             ++this.seniority;
         }
+    }
+
+    get helpReceived(): number {
+        return sumFun(
+            this.relationships,
+            ([other, _]) => other.helpAllocation.get(this) * other.effort);
     }
 
     get tradeGoods(): TradeGood[] {

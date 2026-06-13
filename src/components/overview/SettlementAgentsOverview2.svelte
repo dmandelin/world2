@@ -657,6 +657,19 @@
                     {/each}
                 </tr>
                 <tr class="actual">
+                    <td>&nbsp;Help</td>
+                    {#each csnaps as cs}
+                        <td class="rap">
+                            <Tooltip>
+                                {cs.e.production.getForProcess(process, "help")?.toFixed(0) ?? 0}
+                                <div slot="tooltip">
+                                </div>
+                            </Tooltip>
+                        </td>
+                        {@render deltaCell(cs, c => c.production.getForProcess(process, "help") ?? 0, v => v.toFixed(0))}
+                    {/each}
+                </tr>
+                <tr class="actual">
                     <td>&nbsp;Productivity</td>
                     {#each csnaps as cs}
                         <td class="rap">

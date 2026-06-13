@@ -9,7 +9,7 @@ export class Operation {
         readonly process: Process,
     ) {}
 
-    produce(labor: number, land: number): OperationProductionReport {
+    produce(labor: number, land: number, help: number): OperationProductionReport {
         // Assume output is linear in workers and land at this scale, 
         // with both required.
         const inputAmount = Math.min(land, labor);
@@ -22,6 +22,7 @@ export class Operation {
             operation: this,
             land,
             labor,
+            help,
             laborProductivityFactor: lpMod,
             good: this.process.outputGood!,
             amount: inputAmount * lp,
@@ -32,12 +33,14 @@ export class Operation {
 export function produce(
     operations: Operation[], 
     labor: ReadonlyMap<Operation, number>, 
-    land: ReadonlyMap<Operation, number>): ProductionReport {
+    land: ReadonlyMap<Operation, number>,
+    help: ReadonlyMap<Operation, number>): ProductionReport {
     const reports: OperationProductionReport[] = [];
     for (const op of operations) {
         const laborAmount = labor.get(op) ?? 0;
         const landAmount = land.get(op) ?? 0;
-        const report = op.produce(laborAmount, landAmount);
+        const helpAmount = help.get(op) ?? 0;
+        const report = op.produce(laborAmount, landAmount, helpAmount);
         reports.push(report);
     }
     return new ProductionReport(reports);
@@ -70,6 +73,7 @@ export type OperationProductionReport = {
     operation: Operation;
     land: number;
     labor: number;
+    help: number;
     laborProductivityFactor: number;
     good: TradeGood;
     amount: number;
