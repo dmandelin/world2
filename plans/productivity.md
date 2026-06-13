@@ -149,6 +149,34 @@ change.
         output is maybe 75% of baseline. With help from 2x additional
         workers, output is baseline. With help from 4x additional 
         workers, output is 1.25x.
+        *   Implementation details:
+            *   To help each other, clans must have a relationship.
+            *   Both have to decide to send help to the other.
+            *   For now have them send equal amounts (equal matching)
+            *   Because everyone tends to need more help around the
+                same time, there's a limit (maybe 10-20%) on how much
+                help a clan can send.
+            *   Help costs labor from the sender, and generates "help"
+                for the recipient
+            *   Help looks like an input to the production process
+                but isn't in proportion to output -- it's a more
+                complicated relationship.
+            *   Available help affects output as above, except also
+                for larger harvests, some amount of help is probably
+                required to bring it in
+        *   Implementation steps:
+            x   Review relationships code and existing relationship
+                types
+            x   Add planning step near effort allocation for clans to
+                decide where to send help
+            x   Deal with any issues around not everyone being able to
+                help each other in simple ways for now -- be sure to
+                respect constraints, but strategy doesn't have to be
+                any good
+            *   Make sure help labor gets charged
+            *   Generate help resource before main economic production
+            *   Add help to production process.
+            
     *   Make help value depend on relationship status. No relationship
         => no help.
     *   Make relationship status depend on positive interactions with

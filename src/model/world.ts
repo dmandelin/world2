@@ -251,6 +251,8 @@ export class World implements NoteTaker {
         this.updateRelationships();
         this.updatePerceptions();
 
+        this.planMutualHelp();
+
         // Make decisions.
         for (const clan of this.allClans) {
             // Update productivity values so that planning can see them.
@@ -403,7 +405,43 @@ export class World implements NoteTaker {
         for (const cl of this.clusters) {
             cl.updatePerceptions();
         }
-    }        
+    }
+
+    planMutualHelp() {
+        // For now, it's all within-settlement, but this may change, so the
+        // code will leave here for now.
+
+        const helpLimit = 0.1;
+        for (const settlement of this.allSettlements) {
+            this.planMutualHelpForSettlement(settlement, helpLimit);
+        }
+    }
+
+    planMutualHelpForSettlement(settlement: Settlement, helpLimit: number) {
+        // Simplest algorithm: everyone offers equal amounts of help up to the
+        // limit to everyone have a relationship with in the same settlement.
+        // Each pair then sends each other the min of their offers.
+        for (const c1 of settlement.clans) {
+            c1.helpAllocation.clear();
+            const recipients = [...c1.relationships]
+                .filter(([c2, _]) => c1.settlement === c2.settlement);
+            if (recipients.length === 0) continue;
+            const offer = helpLimit / recipients.length;
+            for (const [c2, _] of recipients) {
+                c1.helpAllocation.set(c2, offer);
+            }
+        }
+
+        for (const c1 of settlement.clans) {
+            for (const [c2, c1OfferToC2] of c1.helpAllocation) {
+                if (c1.uuid >= c2.uuid) continue; // Process each pair only once.
+                const c2OfferToC1 = c2.helpAllocation.get(c1) ?? 0;
+                const matchedAmount = Math.min(c1.population * c1OfferToC2, c2.population * c2OfferToC1);
+                c1.helpAllocation.set(c2, c1.population > 0 ? matchedAmount / c1.population : 0);
+                c2.helpAllocation.set(c1, c2.population > 0 ? matchedAmount / c2.population : 0);
+            }
+        }
+    }
 
     get totalPopulation() {
         return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);

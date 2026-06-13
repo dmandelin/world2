@@ -26,6 +26,7 @@ import { Operation, ProductionReport } from "../econ/operation";
 import { Processes } from "../econ/process";
 import { Consumption } from "../econ/consumption";
 import { QualityOfLife } from "../econ/qol";
+import { HelpAllocation } from "../decisions/help";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -119,6 +120,7 @@ export class Clan implements TradePartner {
     biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
     effortAllocation: EffortAllocation;
+    helpAllocation: HelpAllocation = new HelpAllocation();
     operations: Operation[] = [];
 
     targetPerCapitaFood: number;

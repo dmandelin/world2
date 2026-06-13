@@ -98,6 +98,14 @@
             }
         }
     }
+
+    class MutualHelpDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
+            for (const [other, help] of clan.helpAllocation) {
+                yield [other, '-', help * 10, DEFAULT_RELATIONSHIP_COLOR];
+            }
+        }
+    }
     
     let display: Display = $state({
         clans: [] as ClanDisplay[],
@@ -306,6 +314,7 @@
         { label: "K", tooltip: "Kinship relationships", data: new KinshipRelationshipDisplayOption() },
         { label: "F", tooltip: "Friendship relationships", data: new FriendshipRelationshipDisplayOption() },
         { label: "A", tooltip: "Alignment", data: new AlignmentDisplayOption() },
+        { label: "H", tooltip: "Mutual help", data: new MutualHelpDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>
 <!-- svelte-ignore a11y_click_events_have_key_events -->
