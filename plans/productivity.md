@@ -191,10 +191,12 @@ change.
         but if they're farming a lot they need more. Also have them
         not send each other that much help when they don't really
         need it.
-*   (Bug) Look into food security, seems to make foraging depend too
-    much on storage
 *   Add a local knowledge skill that builds internally and resets on
     a move
+    *   Add skills section to main overview
+    *   Add local ecology skill
+    *   Add updater for local ecology skill
+    *   Add productivity modifier for ecology skill
 *   Make general skill vary a bunch
 *   Make skill change a combination of vertical transmission, horizontal
     transmission, error, and learning by observation
