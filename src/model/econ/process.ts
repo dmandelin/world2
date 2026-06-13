@@ -25,10 +25,10 @@ export enum ProcessLocation {
 }
 
 export const Processes = {
-    Fishing: new Process('Fishing', 1, 'F', '#3b82f6', TradeGoods.Fish, 2.7, SkillDefs.Fishing,
+    Fishing: new Process('Fishing', 1, 'F', '#3b82f6', TradeGoods.Fish, 3, SkillDefs.Fishing,
         new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
         ProcessLocation.AwayOnly, 1),
-    Agriculture: new Process('Agriculture', 2, 'A', '#10b981', TradeGoods.Cereals, 2.7, SkillDefs.Agriculture,
+    Agriculture: new Process('Agriculture', 2, 'A', '#10b981', TradeGoods.Cereals, 3, SkillDefs.Agriculture,
         new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
         ProcessLocation.HomeOnly, 2),
 };
