@@ -18,6 +18,7 @@
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
     import DataTable from "../DataTable.svelte";
     import type { Process } from "../../model/econ/process";
+    import SkillDelta from "../SkillDelta.svelte";
 
 	let { 
         settlement, 
@@ -695,6 +696,21 @@
                             </Tooltip>
                         </td>
                         {@render deltaCell(cs, c => netLaborProductivity(c, process), v => v.toFixed(2))}
+                    {/each}
+                </tr>
+            {/each}
+            <tr><td style="height: 0.5em"></td></tr>
+            {#each Object.values(SkillDefs) as skill}
+                <tr class="actual">
+                    <td>{skill.name}</td>
+                    {#each csnaps as cs}
+                        <td class="rap">
+                            <Tooltip>
+                                {unsigned(cs.e.skills.v(skill))}
+                                <div slot="tooltip"></div>
+                            </Tooltip>
+                        </td>
+                        <td><SkillDelta skill={skill} clan={cs.e}></SkillDelta></td>
                     {/each}
                 </tr>
             {/each}

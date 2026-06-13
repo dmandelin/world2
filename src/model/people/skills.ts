@@ -112,6 +112,10 @@ export class ClanSkills {
         return this.v(skill).toFixed();
     }
 
+    get(skillDef: SkillDef): ClanSkill | undefined {
+        return this.m_.get(skillDef);
+    }
+
     lastChange(skillDef: SkillDef): ClanSkillChange|undefined {
         return this.m_.get(skillDef)?.lastChange;
     }

@@ -1,4 +1,6 @@
 <script>
+  import SkillDelta from './SkillDelta.svelte';
+
     import { npl, pct, signed, spct, wg } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
@@ -283,19 +285,7 @@
                 <td>Δ</td>
                 {#each clan.skills as [_, skill]}
                 <td class="rp">
-                    <Tooltip>
-                        {signed(skill.lastChange?.delta || 0)}
-                        <div slot="tooltip" class="ttt">
-                            {#if skill.lastChange}
-                                <h4>Imitation Sources</h4>
-                                <DataTable rows={skillImitationTable(skill.lastChange)} />
-                                <h4>Imitation factor = {pct(skill.lastChange.generalImitationFactor)}</h4>
-                                <h4>Learning factor = {pct(skill.lastChange.generalLearningFactor)} (Int = {clan.intelligence.toFixed()})</h4>
-                                <h4>Skill Changes</h4>
-                                <DataTable rows={skill.lastChange.changeSourcesTooltip} />
-                            {/if}
-                        </div>
-                    </Tooltip>
+                    <SkillDelta skill={skill} clan={clan}></SkillDelta>
                 </td>
                 {/each}
             </tr>
