@@ -1,7 +1,7 @@
 <script>
   import SkillDelta from './SkillDelta.svelte';
 
-    import { npl, pct, signed, spct, wg } from "../model/lib/format";
+    import { pct, signed, spct } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
     import MigrationPlan from "./MigrationPlan.svelte";
@@ -11,9 +11,6 @@
     import { clanTimelineGraphData } from "../model/records/timeline";
     import HousingDecision from "./decisions/HousingDecision.svelte";
     import { appealTable, happinessTable, skillImitationTable } from "./tables";
-    import { SkillDefs } from "../model/people/skills";
-    import DataTable2 from "./DataTable2.svelte";
-    import { clanSedentismDescription } from "../model/people/residence";
     import ClanResidence from "./items/ClanResidence.svelte";
     import EntityLink from "./state/EntityLink.svelte";
 

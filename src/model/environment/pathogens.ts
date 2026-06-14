@@ -1,4 +1,5 @@
-import { Process, Processes } from "../econ/process";
+import { Processes } from "../econ/econdefs";
+import { Process } from "../econ/process";
 import { sum, sumFun } from "../lib/basics";
 import type { SettlementCluster } from "../people/cluster";
 import type { Clan } from "../people/people";

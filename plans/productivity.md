@@ -195,11 +195,14 @@ change.
     a move
     x   Add skills section to main overview
     x   Add local ecology skill
-    *   Add updater for local ecology skill
+    x   Add updater for local ecology skill
     *   Add productivity modifier for ecology skill
-*   Make general skill vary a bunch
-*   Make skill change a combination of vertical transmission, horizontal
+x   Make general skill vary a bunch
+x   Make skill change a combination of vertical transmission, horizontal
     transmission, error, and learning by observation
+*   Refactor to get public skilldefs and processdefs in a clean place,
+    then fix up dependencies
+*   Scale down learning harder if relative effort is very low
 *   Make sure relationships matter for horizontal skill transmission
 *   Add a foraging vs farming trait that affects each productivity
     and possibly other things

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ClanDTO } from "../../model/records/dtos";
     import { pct, spct, unsigned } from "../../model/lib/format";
-    import { SkillDef, SkillDefs } from "../../model/people/skills";
+    import { SkillDef } from "../../model/people/skills";
     import EntityLink from "../state/EntityLink.svelte";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     

@@ -1,7 +1,7 @@
 import type { Clan } from "./people/people";
 import type { NoteTaker } from "./records/notifications";
 import { mapNormalized, sumFun, weightedHarmonicMean } from "./lib/basics";
-import { SkillDefs } from "./people/skills";
+import { SkillDefs } from "./econ/econdefs";
 
 export const RitualGoodsUsage = {
     Private: 'Private',

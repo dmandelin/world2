@@ -1,9 +1,6 @@
 <script lang="ts">
-    import { pct, pctFormat, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat } from "../../model/lib/format";
-    import type { HappinessItem } from "../../model/people/happiness";
-    import { SkillDefs } from "../../model/people/skills";
+    import { pct, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat } from "../../model/lib/format";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
-    import DataTable2 from "../DataTable2.svelte";
     import type { ClanDTO, StandaloneSettlementDTO } from "../../model/records/dtos";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import PopulationChange from "../PopulationChange.svelte";
@@ -19,6 +16,7 @@
     import DataTable from "../DataTable.svelte";
     import type { Process } from "../../model/econ/process";
     import SkillDelta from "../SkillDelta.svelte";
+    import { SkillDefs } from "../../model/econ/econdefs";
 
 	let { 
         settlement, 
@@ -700,7 +698,7 @@
                 </tr>
             {/each}
             <tr><td style="height: 0.5em"></td></tr>
-            {#each Object.values(SkillDefs) as skill}
+            {#each csnaps[0].e.skills.keys() as skill}
                 <tr class="actual">
                     <td>{skill.name}</td>
                     {#each csnaps as cs}

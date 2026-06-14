@@ -1,8 +1,10 @@
+import { sumFun } from "../lib/basics";
 import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { ProductivityCalc } from "../people/productivity";
 import type { TradeGood } from "../trade";
-import { Processes, type Process } from "./process";
+import { Processes } from "./econdefs";
+import type { Process } from "./process";
 
 // An ongoing economic operation. Stateful.
 export class Operation {
@@ -77,6 +79,12 @@ export class ProductionReport {
     OperationProductionReport[K]|undefined {
         const r = this.rs.filter(r => r.operation.process === process)[0];
         return r ? r[propName] : undefined;
+    }
+
+    effortForProcesses(...processes: Process[]): number {
+        return sumFun(this.rs
+                .filter(r => processes.includes(r.operation.process)), 
+            r => r.labor);
     }
 
     totals(): Map<TradeGood, number> {

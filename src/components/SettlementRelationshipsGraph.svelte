@@ -1,11 +1,8 @@
 <script lang="ts">
-    import { linear } from 'svelte/easing';
-    import { randomClanColor, type Clan } from '../model/people/people';
+    import { type Clan } from '../model/people/people';
     import ButtonPanel from './ButtonPanel.svelte';
-    import type { ClanDTO, SettlementDTO } from '../model/records/dtos';
+    import type { SettlementDTO } from '../model/records/dtos';
     import { colorInterpolator } from '../model/lib/basics';
-    import { SkillDef, SkillDefs } from '../model/people/skills';
-    import { Clans } from '../model/people/clans';
     import { Friends, MarriagePartners } from '../model/people/relationships';
 
     let { settlement }: { settlement: SettlementDTO } = $props();

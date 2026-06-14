@@ -1,8 +1,9 @@
 import { Clan } from '../people/people';
-import { SkillDef, SkillDefs } from './skills';
+import { SkillDef } from './skills';
 import { pct, spct } from '../lib/format';
 import { product } from '../lib/basics';
 import { FloodLevels } from '../environment/flood';
+import { SkillDefs } from '../econ/econdefs';
 
 interface ProductivityCalcItem {
     label: string;

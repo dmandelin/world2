@@ -1,142 +1,121 @@
 import { type Clan } from './people';
-import { type ClanSkill, type SkillDef, SkillDefs } from './skills';
-import { moveToward, traitFactor } from '../lib/modelbasics';
-import { chooseWeighted, clamp, sumFun } from '../lib/basics';
+import { type ClanSkill, type SkillDef } from './skills';
+import { moveToward } from '../lib/modelbasics';
+import { chooseWeighted, sumFun } from '../lib/basics';
 
-export class ImitationTargetItem {
-    weight: number;
-
-    constructor(
-        readonly label: string,
-        readonly trait: number,
-        readonly prestige: number,
-    ) {
-        this.weight = (4 ** trait) * (1.3 ** prestige);
-    }
-}
-
-export class ClanSkillChangeItem {
-    constructor(
-        readonly label: string,
-        readonly delta: number,
-    ) {}
-}
+// About skill changes
+//
+// Sources of skill change, or more properly, causes of why the
+// next turn's value is what it is:
+//
+// - Tradition: Previous practice is continued and handed down,
+//       with error. This depends on the skill being practiced
+//       enough.
+// - Environmental change: Changes in the environment may reset
+//       the skill value. For example, local ecology knowledge
+//       resets on a move.
+// - Learning by imitation: If the clan practiced the skill with
+//       another clan, they may pick up some things from them
+//       and become more similar. They'll tend to copy mostly
+//       things they expect to help them, but it's possible to
+//       copy worse practice.
+// - Learning by observation: If the clan practiced the skill,
+//       they will tend to learn what works better over time.
+//       In some cases, clans may mistakenly learn something
+//       that makes them worse.
+//
+// Loss factors are generally scaled by initial skill value, but
+// gain factors are unscaled. At least one should be scaled so
+// that skill moves toward an equilibrium value rather than increasing
+// without limit. Tuning is easier when we scale only one. It also
+// seems to be theoretically justified, as some sources disagree
+// whether learning and innovation move toward as asymptote, or if
+// the more skilled advance as fast or faster. Conversely, the more
+// skill you have, the more resources on some level it must take to
+// maintain.
+//
+// People who are working together tend to learn and notice the
+// same kinds of things, so N times as many people on task doesn't
+// mean N times the skill learning. However, there is some increase
+// for having more.
+//
+// For now, clans with higher intelligence *don't* learn faster,
+// because there is no tradeoff. It doesn't make sense to have
+// a trait that's pure advantage unless we want it continuously
+// increasing during the simulation.
 
 export class ClanSkillChange {
-    // Amount the skill was used.
-    readonly intensity: number;
+    // Effort (in person-turns) during which skill learning occurred.
+    readonly effort: number;
+    // Effort relative to baseline for skill learning.
+    readonly relativeEffort: number;
+    // Amount of learning relative to baseline due to effort.
+    readonly effortFactor: number;
 
-    readonly originalValue: number;
-    readonly imitationTargetItems: readonly ImitationTargetItem[];
+    // Value before the change.
+    readonly initialValue: number;
 
-    readonly generalImitationFactor: number;
-    readonly generalLearningFactor: number;
+    // Value if traditions are passed on without error.
+    readonly baseFromTradition: number;
 
     readonly items: ClanSkillChangeItem[] = [];
+    readonly imitationTargetItems: readonly ImitationTargetItem[];
 
     constructor(
         readonly clan: Clan,
         readonly skillDef: SkillDef,
         readonly skill: ClanSkill,
-) {
-        if (skillDef === SkillDefs.Ritual) {
-            // TODO - bring back at some point.
-            //const ritualWeight = clan.settlement!.clans.rites.weights.get(clan) ?? 0;
-            //experienceRatio = Math.min(2.0, clan.settlement!.clans.length * ritualWeight);
-            this.intensity = 1;
-        } else if (skillDef === SkillDefs.Construction) {
-            // For now assume roughly fixed amount of experience. Thus no adjustment,
-            // because we don't want to penalize for having less than 100% labor allocation.
-            this.intensity = 1;
-        } else if (skillDef === SkillDefs.Irrigation) {
-            // For now assume roughly fixed amount of experience. Thus no adjustment,
-            // because we don't want to penalize for having less than 100% labor allocation.
-            this.intensity = clan.isDitching ? 1 : 0;
-        } else {
-            const workerFraction = clan.effortAllocation.getForSkill(skillDef);
-            // Clans can internally specialize a little, so learning isn't scaled
-            // down fully by worker fraction.
-            this.intensity = workerFraction !== undefined
-                ? Math.sqrt(workerFraction)
-                : 1;
-        }
+    ) {
+        this.effort = skillDef.getEffort(clan);
+        this.relativeEffort = this.effort / skillDef.referenceEffort;
+        this.effortFactor = Math.pow(this.relativeEffort, 0.15);
 
-        this.generalImitationFactor = this.intensity
-            * this.clan.settlement.residenceFraction
-            * clamp(traitFactor(clan.intelligence, 1.01), 0.5, 2);
+        this.initialValue = skill.value;
+        
+        // Maintain tradition with some error.
+        this.baseFromTradition = this.initialValue;
+        const relativeDeltaFromError = -0.1 + 0.15 * (Math.random() - Math.random());
+        const deltaFromError = this.baseFromTradition * relativeDeltaFromError;
+        this.items.push(new ClanSkillChangeItem('Error', deltaFromError));
 
-        const t = skill.value;
-        this.originalValue = t;
-        this.generalLearningFactor = clamp(traitFactor(clan.intelligence, 1.02), 0.25, 4);
-
-        if (clan.isMigrating) {
-            // Skills typically won't work exactly as well at the new location,
-            // but for now we have local moves so the effect can be minor.
-            const migrationRoll = Math.random();
-            if (migrationRoll < 0.15) {
-                this.items.push(new ClanSkillChangeItem('Migration', -2));
-            } else if (migrationRoll > 0.5) {
-                this.items.push(new ClanSkillChangeItem('Migration', -1));
-            } else if (migrationRoll >= 0.9) {
-                this.items.push(new ClanSkillChangeItem('Migration', 1));
-            }
-            this.imitationTargetItems = [];
-        } else {
-            // Imitate a local clan (including self). Assume that if the skill level
-            // is the same, there's no change, but otherwise, they're busy adopting
-            // from another clan and won't make other changes.
-            const maxImitationDelta = 3;
-            this.imitationTargetItems = [...clan.settlement!.clans].map(
-                c => new ImitationTargetItem(
-                    c.name,
-                    c.skills.v(skillDef),
-                    clan.prestigeViewOf(c)?.value || 0,
-                ));
-            const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
-            for (const item of this.imitationTargetItems) {
-                item.weight /= totalWeight;
-            }
-            const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
-
-            if (t !== imitationTarget.trait) {
-                this.items.push(new ClanSkillChangeItem(
-                    imitationTarget.label, 
-                    (moveToward(t, imitationTarget.trait, maxImitationDelta) - t) * this.generalImitationFactor,
-                ));
-            } else {
-                this.items.push(new ClanSkillChangeItem('Tradition', 0));
-            }
-
-            const lossFactor = 0.01 * t;
-            const gainFactor = 0.01 * (100 - t);
-
-            // Imitation error (including imitating own traditions). Usually hurts but
-            // can help.
-            const imitationErrorRoll = Math.random();
-            if (imitationErrorRoll < 0.2 * lossFactor / this.generalLearningFactor) {
-                this.items.push(new ClanSkillChangeItem('Imitation error', -1));
-            } else if (imitationErrorRoll > 1 - 0.02 * gainFactor * this.generalLearningFactor) {
-                this.items.push(new ClanSkillChangeItem('Imitation error', 1));
-            }
-
-            if (t === imitationTarget.trait) {
-                // Learning by observation. Faster for farming because of domestication.
-                // For now also arbitrarily make ditching faster to learn.
-                // Usually helps but can hurt.
-                const effectiveIntensity = 
-                      skillDef === SkillDefs.Agriculture
-                    ? 2 * this.intensity
-                    : skillDef === SkillDefs.Irrigation
-                    ? 4 * this.intensity
-                    : this.intensity;
-                const learningRoll = Math.random();
-                if (learningRoll < effectiveIntensity * 0.2 * gainFactor * this.generalLearningFactor) {
-                    this.items.push(new ClanSkillChangeItem('Learning', 1));
-                } else if (learningRoll > 1 - effectiveIntensity * 0.02 * lossFactor / this.generalLearningFactor) {
-                    this.items.push(new ClanSkillChangeItem('Learning', -1));
-                }
+        // Lose local knowledge on a move.
+        // TODO - Have this work somewhat differently for hunting and gathering
+        // vs farming knowledge, as one is more locally bound than the other.
+        if (clan.settlement !== clan.previousSettlement) {
+            // TODO - Have a smaller reset for some other skills
+            if (skillDef.resetsOnMove) {
+                const relativeDeltaFromMove = -0.5 + 0.3 * (Math.random() - Math.random());
+                const deltaFromMove = this.baseFromTradition * relativeDeltaFromMove;
+                this.items.push(new ClanSkillChangeItem('Move', deltaFromMove));
             }
         }
+
+        // Learn by imitation. Imitation target might be self, meaning
+        // the clan prefers its own traditions.
+        const maxImitationDelta = 5 * this.effortFactor;
+        this.imitationTargetItems = [...clan.settlement!.clans].map(
+            c => new ImitationTargetItem(
+                c.name,
+                c.skills.v(skillDef),
+                clan.prestigeViewOf(c)?.value || 0,
+            ));
+        const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
+        for (const item of this.imitationTargetItems) {
+            item.weight /= totalWeight;
+        }
+        const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
+        if (this.initialValue !== imitationTarget.trait) {
+            this.items.push(new ClanSkillChangeItem(
+                imitationTarget.label, 
+                (moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta)
+                 - this.initialValue)
+            ));
+        }
+
+        // Learn by observation. This should roughly balance error at skill 50.
+        const deltaFromObservation = this.effortFactor * 
+            (5 + 10 * (Math.random() - Math.random()));
+        this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation));
     }
 
     get delta(): number {
@@ -154,5 +133,24 @@ export class ClanSkillChange {
             sumFun(this.items, o => o.delta).toFixed(),
         ]
         return [header, ...data, footer];
+    }
+}
+
+export class ClanSkillChangeItem {
+    constructor(
+        readonly label: string,
+        readonly delta: number,
+    ) {}
+}
+
+export class ImitationTargetItem {
+    weight: number;
+
+    constructor(
+        readonly label: string,
+        readonly trait: number,
+        readonly prestige: number,
+    ) {
+        this.weight = (4 ** trait) * (1.3 ** prestige);
     }
 }

@@ -1,8 +1,22 @@
 import type { Clan } from './people';
 import { ClanSkillChange } from './skillchange';
-import { ProductivityCalc } from './productivity';
-import { Traits } from './traits';
-import { normal } from '../lib/distributions';
+
+// Skills and skill values
+//
+// Skill is used to model teachable differences in how well 
+// clans do the same activity or process. This can be from 
+// clan traditions, recent learning while doing, or random
+// error.
+//
+// Skills may be primarily used for a specific process, such
+// as SkillDefs.Agriculture for Processes.Agriculture, but
+// they don't have to be.
+//
+// The skill value ranges from 0 to 100. 100 means the clan
+// does that skill about as well as any human could. 50 is
+// the median value for regular practioners and can be taken
+// as the baseline for modifiers. 0 means the clan has not
+// practiced the skill.
 
 export enum SkillUseLocation {
     HomeOnly,
@@ -19,35 +33,13 @@ export class SkillDef {
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
         readonly useLocation: SkillUseLocation = SkillUseLocation.Either,
         readonly diseaseLoadFactor: number = 0,
+        readonly referenceEffort: number = 10,
+        readonly getEffort: (clan: Clan) => number = () => 0,
+        readonly resetsOnMove: boolean = false,
     ) {}
 }
 
-export const SkillDefs = {
-    LocalEcology: new SkillDef(
-        0,
-        'Local Ecology',
-        'skill-local-ecology-256.png',
-        '#22c55e',
-        new Map([]), // TODO - make this a property of process
-        SkillUseLocation.Either, // TODO - make this a property of process
-        0, // TODO - make this a property of process
-    ),
-    Fishing: new SkillDef(1, 'Fishing', 'skill-fishing-256.png', '#14b8a6',
-        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
-        SkillUseLocation.AwayOnly, 1),
-    Agriculture: new SkillDef(2, 'Agriculture', 'skill-farming-256.png', '#f59e0b',
-        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
-        SkillUseLocation.HomeOnly, 2),
-    Irrigation: new SkillDef(3, 'Irrigation', 'skill-irrigation-256.png', '#3b82f6',
-        new Map([['Skill', 2], [Traits.Intelligence, 2], [Traits.Strength, 1]]),
-        SkillUseLocation.HomeOnly, 3),
-    Construction: new SkillDef(4, 'Construction', 'skill-construction-256.png', '#8b5cf6',
-        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
-        SkillUseLocation.HomeOnly, 1),
-    Ritual: new SkillDef(5, 'Ritual', 'skill-ritual-256.png', '#ec4899',
-        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
-        SkillUseLocation.Either, 1),
-};
+
 
 export class ClanSkill {
     value_: number;
@@ -84,77 +76,5 @@ export class ClanSkill {
         const clone = new ClanSkill(this.value_);
         clone.lastChange_ = this.lastChange_;
         return clone;
-    }
-}
-
-export class ClanSkills {
-    readonly m_: Map<SkillDef, ClanSkill> = new Map<SkillDef, ClanSkill>();
-
-    constructor(readonly clan: Clan) {
-        // Make them build up some skill ditching at the beginning before
-        // they get good at it. This is different from how they do it in the
-        // north, so they have less of a model to imitate. They've already
-        // been fishing, though.
-        const gen = (skillDef: SkillDef) => 
-              skillDef === SkillDefs.Irrigation || skillDef === SkillDefs.Construction
-            ? normal(10, 4)
-            : skillDef === SkillDefs.Fishing
-            ? normal(70, 5)
-            : normal(50, 10);
-        for (const skillDef of Object.values(SkillDefs)) {
-            this.m_.set(skillDef, new ClanSkill(gen(skillDef)));
-        }
-    }
-
-    [Symbol.iterator](): IterableIterator<[SkillDef, ClanSkill]> {
-        return this.m_.entries();
-    }
-
-    v(skill: SkillDef): number {
-        const clanSkill = this.m_.get(skill);
-        return clanSkill ? clanSkill.value : 0;
-    }
-
-    s(skill: SkillDef): string {
-        return this.v(skill).toFixed();
-    }
-
-    get(skillDef: SkillDef): ClanSkill | undefined {
-        return this.m_.get(skillDef);
-    }
-
-    lastChange(skillDef: SkillDef): ClanSkillChange|undefined {
-        return this.m_.get(skillDef)?.lastChange;
-    }
-
-    cloneFor(clan: Clan): ClanSkills {
-        const clone = new ClanSkills(clan);
-        for (const [skillDef, clanSkill] of this.m_.entries()) {
-            clone.m_.set(skillDef, clanSkill.clone());
-        }
-        return clone;
-    }
-
-    createProductivityCalcs(forPlanning: boolean): Map<SkillDef, ProductivityCalc> {
-        const calcs = new Map<SkillDef, ProductivityCalc>();
-        for (const skillDef of this.m_.keys()) {
-            calcs.set(skillDef, new ProductivityCalc(this.clan, skillDef, forPlanning));
-        }
-        return calcs;
-    }
-        
-
-    // We have to split skill updates into prepare/commit phases because
-    // the skill change depends on the skill value of other clans.
-    prepareAdvance() {
-        for (const [skillDef, clanSkill] of this.m_.entries()) {
-            clanSkill.prepareAdvance(this.clan, skillDef);
-        }
-    }
-
-    commitAdvance() {
-        for (const clanSkill of this.m_.values()) {
-            clanSkill.commitAdvance();
-        }
     }
 }

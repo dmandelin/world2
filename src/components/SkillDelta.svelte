@@ -24,8 +24,8 @@
         {#if clanSkill.lastChange}
             <h4>Imitation Sources</h4>
             <DataTable rows={skillImitationTable(clanSkill.lastChange)} />
-            <h4>Imitation factor = {pct(clanSkill.lastChange.generalImitationFactor)}</h4>
-            <h4>Learning factor = {pct(clanSkill.lastChange.generalLearningFactor)} (Int = {clan.intelligence.toFixed()})</h4>
+            <h4>Effort = {pct(clanSkill.lastChange.relativeEffort)}</h4>
+            <h4>Learning factor = {pct(clanSkill.lastChange.effortFactor)} (Int = {clan.intelligence.toFixed()})</h4>
             <h4>Skill Changes</h4>
             <DataTable rows={clanSkill.lastChange.changeSourcesTooltip} />
         {/if}

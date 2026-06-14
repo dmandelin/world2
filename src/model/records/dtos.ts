@@ -1,7 +1,7 @@
 import { product, sortedByKey, sumFun } from "../lib/basics";
 import { populationAverage } from "../lib/modelbasics";
 import { TradeGood, TradeGoods } from "../trade";
-import { type ClanSkills, type SkillDef, SkillDefs } from "../people/skills";
+import { type SkillDef } from "../people/skills";
 import type { Clan } from "../people/people";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
 import type { FloodLevel } from "../environment/flood";
@@ -26,6 +26,8 @@ import type { EffortAllocation } from "../decisions/effort";
 import type { Consumption } from "../econ/consumption";
 import type { ProductionReport } from "../econ/operation";
 import type { QualityOfLife } from "../econ/qol";
+import { SkillDefs } from "../econ/econdefs";
+import type { ClanSkills } from "../people/clanskills";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);

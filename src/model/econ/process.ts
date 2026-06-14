@@ -1,6 +1,5 @@
-import { SkillDef, SkillDefs } from "../people/skills";
-import { Traits } from '../people/traits';
-import { type TradeGood, TradeGoods } from "../trade";
+import { SkillDef } from "../people/skills";
+import { type TradeGood } from "../trade";
 
 // Description of an economic production process. Stateless.
 export class Process {
@@ -23,12 +22,3 @@ export enum ProcessLocation {
     AwayOnly,
     Either,
 }
-
-export const Processes = {
-    Fishing: new Process('Fishing', 1, 'F', '#3b82f6', TradeGoods.Fish, 3, SkillDefs.Fishing,
-        new Map([['Skill', 3], [Traits.Intelligence, 1], [Traits.Strength, 1]]),
-        ProcessLocation.AwayOnly, 1),
-    Agriculture: new Process('Agriculture', 2, 'A', '#10b981', TradeGoods.Cereals, 3, SkillDefs.Agriculture,
-        new Map([['Skill', 2], [Traits.Intelligence, 1], [Traits.Strength, 2]]),
-        ProcessLocation.HomeOnly, 2),
-};

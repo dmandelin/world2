@@ -1,6 +1,6 @@
 import type { Clan } from "../people/people";
+import { Processes } from "./econdefs";
 import type { Operation } from "./operation";
-import { Processes } from "./process";
 
 export class LandAllocation {
     constructor(readonly m: ReadonlyMap<Operation, number>) {}

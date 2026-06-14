@@ -1,6 +1,6 @@
 import type { Clan } from "../people/people";
 import type { Operation } from "./operation";
-import { Processes } from "./process";
+import { Processes } from "./econdefs";
 
 export class OperationHelp {
 

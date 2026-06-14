@@ -1,8 +1,8 @@
 import type { Settlement } from './people/settlement';
 import { weightedGeometricMean, weightedHarmonicMean } from './lib/basics';
 import { eloSuccessProbability } from './lib/modelbasics';
-import { SkillDefs } from './people/skills';
 import { pct, spct } from './lib/format';
+import { SkillDefs } from './econ/econdefs';
 
 export class MaintenanceCalcItem {
     constructor(

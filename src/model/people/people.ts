@@ -1,6 +1,6 @@
 import { Annals } from "../annals";
 import { clamp, randInt, remove, sumFun } from "../lib/basics";
-import { ClanSkills, type SkillDef, SkillDefs } from "./skills";
+import { type SkillDef } from "./skills";
 import { HappinessCalc } from "./happiness";
 import { HousingDecision } from "../decisions/housingdecision";
 import { HousingTypes } from "../econ/housing";
@@ -23,10 +23,11 @@ import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { EffortAllocation } from "../decisions/effort";
 import { Operation, ProductionReport } from "../econ/operation";
-import { Processes } from "../econ/process";
 import { Consumption } from "../econ/consumption";
 import { QualityOfLife } from "../econ/qol";
 import { HelpAllocation } from "../decisions/helpalloc";
+import { Processes, SkillDefs } from "../econ/econdefs";
+import { ClanSkills } from "./clanskills";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -102,6 +103,7 @@ export class Clan implements TradePartner {
     cadets: Clan[] = [];
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
+    previousSettlement_: Settlement;
 
     private respectMap_ = new Map<Clan, RespectCalc>();
 
@@ -148,6 +150,7 @@ export class Clan implements TradePartner {
 
         this.settlement_ = settlement;
         this.settlement_.clans.push(this);
+        this.previousSettlement_ = settlement;
 
         for (let i = 0; i < 4; ++i) {
             this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * population);
@@ -190,6 +193,10 @@ export class Clan implements TradePartner {
 
     get moniker(): string {
         return this.settlement.name;
+    }
+
+    get previousSettlement(): Settlement {
+        return this.previousSettlement_;
     }
 
     get settlement(): Settlement {
@@ -275,6 +282,7 @@ export class Clan implements TradePartner {
     }
 
     advanceMigration(newSettlementSupplier: NewSettlementSupplier): boolean {
+        this.previousSettlement_ = this.settlement_;
         if (this.migrationPlan === undefined) return false;
         return this.migrationPlan.advance(newSettlementSupplier);
     }

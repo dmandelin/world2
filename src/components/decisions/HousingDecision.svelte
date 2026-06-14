@@ -3,7 +3,7 @@
     import type { Clan } from "../../model/people/people";
     import { HousingDecision } from "../../model/decisions/housingdecision";
     import { pct } from "../../model/lib/format";
-    import { SkillDefs } from "../../model/people/skills";
+    import { SkillDefs } from "../../model/econ/econdefs";
     
     let {clan, decision }: { clan: Clan, decision: HousingDecision } = $props();
 
@@ -42,5 +42,5 @@
 {/if}
 
 <div style="margin-top: 0.5em">
-Cost: {(clan.effortAllocation.get(SkillDefs.Construction) ?? 0).toFixed(2)}
+Cost: {(clan.effortAllocation.getForSkill(SkillDefs.Construction) ?? 0).toFixed(2)}
 </div>

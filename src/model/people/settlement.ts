@@ -182,6 +182,8 @@ export class Settlement {
         // Advance traits and seniority.
         for (const clan of this.clans) clan.prepareTraitChanges();
         for (const clan of this.clans) clan.commitTraitChanges();
+        // Skill changes depend on knowing if we just moved, so seniority
+        // is updated after that.
         for (const clan of this.clans) clan.advanceSeniority();
 
         const sizeBefore = this.effectiveResidentPopulation;

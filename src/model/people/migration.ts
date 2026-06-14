@@ -5,7 +5,6 @@ import { eloSuccessProbability, selectBySoftmaxVerbose, type SoftmaxSelection } 
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
-import { SkillDefs } from "./skills";
 
 class NewSettlementMigrationTarget {
     get name(): string { return 'New settlement'; }

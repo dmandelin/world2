@@ -1,11 +1,10 @@
 import { economicResult } from "../econ/economy";
-import type { Operation } from "../econ/operation";
-import { Process, Processes } from "../econ/process";
-import { between, chooseFrom, sumFun } from "../lib/basics";
+import { Processes } from "../econ/econdefs";
 import { isExemplarClan } from "../lib/debug";
 import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { SkillDef } from "../people/skills";
+import type { Process } from "../econ/process";
 
 // How a clan allocates its "effort", which subsumes time taken
 // (including preparation and recovery) and other factors not
