@@ -52,14 +52,15 @@
 //   a simplification, because there may not actually be farm work to do
 //   100% of the time, but we'll assume they're doing other related activities
 
+import { Activities } from "../decisions/effort";
+import { Processes } from "../econ/econdefs";
 import { Operation } from "../econ/operation";
 import { sumFun } from "../lib/basics";
 import type { Clan } from "./people";
-import { SkillUseLocation } from "./skills";
 
 export class ResidenceLevel {
     // Additive items of residence based on labor.
-    laborItems_: {skill: string, fraction: number}[] = [];
+    items_: {label: string, fraction: number}[] = [];
 
     // Fraction of the time that mothers are specifically in the settlement.
     // The rest of the time they are with workers, wherever they are.
@@ -69,67 +70,73 @@ export class ResidenceLevel {
 
     clone() {
         const clone = new ResidenceLevel(this.clan);
-        clone.laborItems_ = this.laborItems_.map(item => ({...item}));
+        clone.items_ = this.items_.map(item => ({...item}));
         clone.mothersNestingFraction_ = this.mothersNestingFraction_;
         return clone;
     }
 
     update() {
-        this.laborItems_ = [];
+        this.items_ = [];
 
-        const eitherItems: {skill: string, fraction: number}[] = [];
-        let [totalWeight, awayWeight]: [number, number] = [0, 0];
+        const careItem: {label: string, fraction: number} = {
+            label: Activities.Care.name, 
+            fraction: this.clan.effortAllocation.get(Activities.Care),
+        };
+        this.items_.push(careItem);
+        const eitherItems: {label: string, fraction: number}[] = [];
 
-        for (const [activity, laborFraction] of this.clan.effortAllocation) {
-            if (!(activity.operation instanceof Operation)) continue;
-            const skill = activity.operation.process.skillDef;
-            if (!skill) continue;
-
-            if (skill.useLocation === SkillUseLocation.HomeOnly) {
-                this.laborItems_.push({
-                    skill: skill.name,
-                    fraction: laborFraction,
-                });
-                totalWeight += laborFraction * laborFraction;
-            } else if (skill.useLocation === SkillUseLocation.AwayOnly) {
-                awayWeight += laborFraction * laborFraction;
-            } else if (skill.useLocation === SkillUseLocation.Either) {
-                eitherItems.push({
-                    skill: skill.name,
-                    fraction: laborFraction,
-                });
+        // Build up items that can only take place in one location, and
+        // save the rest for later.
+        let [totalWeight, homeWeight]: [number, number] = [0, 0];
+        for (const [aop, fraction] of this.clan.effortAllocation.flattened()) {
+            switch (aop) {
+                // Handled above.
+                case Activities.Care:
+                    break;
+                // In settlement.
+                case Activities.Help:
+                case Processes.Agriculture:
+                    totalWeight += fraction * fraction;
+                    homeWeight += fraction * fraction;
+                    this.items_.push({ label: aop.name, fraction });
+                    break;
+                // Away from settlement.
+                case Processes.Fishing:
+                    totalWeight += fraction * fraction;
+                    this.items_.push({ label: aop.name, fraction: 0 });
+                    break;
+                // Either location.
+                case Activities.Leisure:
+                default:
+                    const item = { label: aop.name, fraction };
+                    this.items_.push(item);
+                    eitherItems.push(item);
+                    break;
             }
         }
 
-        // Assign location for Either skills based on weights, but cut off near 0.
-        const baseHomeFraction = totalWeight / (totalWeight + awayWeight);
-        const homeFraction = baseHomeFraction < 0.05 ? 0 : baseHomeFraction > 0.95 ? 1 : baseHomeFraction;
+        // Assign location for Either skills based on weights.
+        const baseHomeFraction = homeWeight / totalWeight;
         for (const item of eitherItems) {
-            this.laborItems_.push({
-                skill: item.skill,
-                fraction: item.fraction * homeFraction,
-            });
+            item.fraction *= baseHomeFraction;
         }
+
+        // Assign location for care.
+        careItem.fraction *=
+            this.mothersNestingFraction_ +
+            (1 - this.mothersNestingFraction_) * baseHomeFraction;
     }
 
-    get laborItems(): {skill: string, fraction: number}[] {
-        return this.laborItems_;
+    get items(): {label: string, fraction: number}[] {
+        return this.items_;
     }
 
     get mothersNestingFraction(): number {
         return this.mothersNestingFraction_;
     }
 
-    get workersFractionInSettlement(): number {
-        return sumFun(this.laborItems_, item => item.fraction);
-    }
-
-    get mothersFractionInSettlement(): number {
-        return this.mothersNestingFraction_ + (1 - this.mothersNestingFraction_) * this.workersFractionInSettlement;
-    }
-
     get fractionInSettlement(): number {
-            return 2/3 * this.workersFractionInSettlement + 1/3 * this.mothersFractionInSettlement;
+        return sumFun(this.items_, item => item.fraction);
     }
 }
 

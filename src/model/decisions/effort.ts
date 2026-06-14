@@ -5,6 +5,7 @@ import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { SkillDef } from "../people/skills";
 import type { Process } from "../econ/process";
+import type { Tagged } from "../econ/tagged";
 
 // How a clan allocates its "effort", which subsumes time taken
 // (including preparation and recovery) and other factors not
@@ -66,6 +67,18 @@ export class EffortAllocation {
         const fp = this.get(Activities.Production);
         for (const [process, fraction] of this.pm_) {
             yield [process, fraction * fp];
+        }
+    }
+
+    *flattened(): Iterable<[Activity | Process, number]> {
+        for (const [activity, fraction] of this.m_) {
+            if (activity === Activities.Production) {
+                for (const [process, processFraction] of this.pm_) {
+                    yield [process, fraction * processFraction];
+                }
+            } else {
+                yield [activity, fraction];
+            }
         }
     }
 
@@ -174,12 +187,7 @@ export class EffortAllocation {
     }
 }
 
-export type Activity = {
-    name: string;
-    sortKey: number;
-    shortName: string;
-    color: string;
-}
+export type Activity = Tagged;
 
 export class Activities {
     static readonly Leisure: Activity = { 

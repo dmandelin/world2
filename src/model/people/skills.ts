@@ -1,3 +1,4 @@
+import type { Tagged } from '../econ/tagged';
 import type { Clan } from './people';
 import { ClanSkillChange } from './skillchange';
 
@@ -18,28 +19,19 @@ import { ClanSkillChange } from './skillchange';
 // as the baseline for modifiers. 0 means the clan has not
 // practiced the skill.
 
-export enum SkillUseLocation {
-    HomeOnly,
-    AwayOnly,
-    Either,
-}
-
-export class SkillDef {
+export class SkillDef implements Tagged{
     constructor(
         readonly sortKey: number,
         readonly name: string,
         readonly icon: string,
         readonly color: string,
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
-        readonly useLocation: SkillUseLocation = SkillUseLocation.Either,
         readonly diseaseLoadFactor: number = 0,
         readonly referenceEffort: number = 10,
         readonly getEffort: (clan: Clan) => number = () => 0,
         readonly resetsOnMove: boolean = false,
     ) {}
 }
-
-
 
 export class ClanSkill {
     value_: number;

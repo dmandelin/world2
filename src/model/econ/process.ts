@@ -1,8 +1,9 @@
 import { SkillDef } from "../people/skills";
 import { type TradeGood } from "../trade";
+import type { Tagged } from "./tagged";
 
 // Description of an economic production process. Stateless.
-export class Process {
+export class Process implements Tagged {
     constructor(
         readonly name: string,
         readonly sortKey: number,
