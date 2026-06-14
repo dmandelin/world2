@@ -212,8 +212,12 @@ export function sumValues<T>(
     return sum;
 }
 
-export function product(aa: number[]): number {
-    return aa.reduce((acc, cur) => acc * cur, 1);
+export function product(aa: Iterable<number>): number {
+    let result = 1;
+    for (const item of aa) {
+        result *= item;
+    }
+    return result;
 }
 
 export function productFun<T>(

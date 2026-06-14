@@ -147,11 +147,7 @@ export class Settlement {
         //this.clans.merge();
         //this.clans.prune();
 
-        // Economic production.
-        // Maintenance goes before production, because it represents capital
-        // that can be built in much less than a turn.
         for (const clan of this.clans) clan.residenceLevel.update();
-        for (const clan of this.clans) clan.updateProductivity(false);
     }
 
     advancePostPhase() {

@@ -28,7 +28,7 @@ export class DitchMaintenanceCalc {
                     c.name,
                     c.population,
                     skill,
-                    c.productivity(SkillDefs.Irrigation),
+                    1, // TODO - replace if needed
                     // Quality of about 50/90/99 at skill levels 10/20/30.
                     eloSuccessProbability(skill, 10, 10),
                 );

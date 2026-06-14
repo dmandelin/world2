@@ -1,9 +1,11 @@
-import { product, sortedByKey, sumFun } from "../lib/basics";
 import { populationAverage } from "../lib/modelbasics";
-import { TradeGood, TradeGoods } from "../trade";
-import { type SkillDef } from "../people/skills";
+import { sortedByKey, sumFun } from "../lib/basics";
+import { TradeGood } from "../trade";
 import type { Clan } from "../people/people";
+import type { ClanSkills } from "../people/clanskills";
+import type { Consumption } from "../econ/consumption";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
+import type { EffortAllocation } from "../decisions/effort";
 import type { FloodLevel } from "../environment/flood";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
@@ -12,7 +14,8 @@ import type { MigrationCalc } from "../people/migration";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { PrestigeCalc } from "../people/prestige";
-import type { ProductivityCalc } from "../people/productivity";
+import type { ProductionReport } from "../econ/operation";
+import type { QualityOfLife } from "../econ/qol";
 import type { Relationships } from "../people/relationships";
 import type { ResidenceLevel } from "../people/residence";
 import type { RespectCalc } from "../people/respect";
@@ -22,12 +25,6 @@ import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
-import type { EffortAllocation } from "../decisions/effort";
-import type { Consumption } from "../econ/consumption";
-import type { ProductionReport } from "../econ/operation";
-import type { QualityOfLife } from "../econ/qol";
-import { SkillDefs } from "../econ/econdefs";
-import type { ClanSkills } from "../people/clanskills";
 
 function prestigeDTO(clan: Clan) {
     return new Map(clan.prestigeViews);
@@ -65,30 +62,8 @@ export class ClanProductionItemDTO {
         readonly land: number,
         readonly workerFraction: number,
         readonly workers: number,
-        readonly productivity: ClanProductivitySnapshot,
         readonly tfp: number,
         readonly amount: number|undefined,
-    ) {}
-}
-
-export class ClanProductivitySnapshot {
-    readonly items: ClanProductivitySnapshotItem[];
-
-    constructor(clan: Clan, skillDef: SkillDef) {
-        this.items = clan.productivityCalcs.get(skillDef)?.items.map(i => 
-            new ClanProductivitySnapshotItem(i.label, i.value, i.fp)) ?? [];
-    }
-
-    get fp(): number {
-        return product(this.items.map(i => i.fp));
-    }
-}
-
-export class ClanProductivitySnapshotItem {
-    constructor(
-        readonly label: string,
-        readonly value: string|number,
-        readonly fp: number,
     ) {}
 }
 
@@ -126,12 +101,7 @@ export class ClanDTO {
     isDitching: boolean;
     targetPerCapitaFood: number;
     effortAllocation: EffortAllocation;
-    productivityCalcs: Map<SkillDef, ProductivityCalc>;
-    productivity: number;
-    productivityTooltip: string[][];
     workers: number;
-    ritualEffectiveness: number;
-    ritualEffectivenessTooltip: string[][];
     seniority: number;
     migrationPlan: MigrationCalc|undefined;
     lastPopulationChange: PopulationChange;
@@ -179,11 +149,6 @@ export class ClanDTO {
         this.isDitching = clan.isDitching;
         this.targetPerCapitaFood = clan.targetPerCapitaFood;
         this.effortAllocation = clan.effortAllocation.clone();
-        this.productivityCalcs = clan.productivityCalcs;
-        this.productivity = clan.agriculturalProductivity;
-        this.productivityTooltip = clan.productivityCalcs.get(SkillDefs.Agriculture)?.tooltip ?? [];
-        this.ritualEffectiveness = clan.ritualEffectiveness;
-        this.ritualEffectivenessTooltip = clan.productivityCalcs.get(SkillDefs.Ritual)?.tooltip ?? [];
         this.seniority = clan.seniority;
         this.population = clan.population;
         this.workers = clan.workers;

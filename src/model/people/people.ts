@@ -1,14 +1,19 @@
 import { Annals } from "../annals";
 import { clamp, randInt, remove, sumFun } from "../lib/basics";
-import { type SkillDef } from "./skills";
+import { ClanSkills } from "./clanskills";
+import { Consumption } from "../econ/consumption";
+import { EffortAllocation } from "../decisions/effort";
 import { HappinessCalc } from "./happiness";
+import { HelpAllocation } from "../decisions/helpalloc";
 import { HousingDecision } from "../decisions/housingdecision";
 import { HousingTypes } from "../econ/housing";
 import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } from "./population";
 import { MigrationCalc, type NewSettlementSupplier} from "./migration";
 import { normal } from "../lib/distributions";
+import { Operation, ProductionReport } from "../econ/operation";
 import { PrestigeCalc } from "./prestige";
-import { ProductivityCalc } from "./productivity";
+import { Processes, SkillDefs } from "../econ/econdefs";
+import { QualityOfLife } from "../econ/qol";
 import { Relationships } from "./relationships";
 import { ResidenceLevel } from "./residence";
 import { RespectCalc } from "./respect";
@@ -21,13 +26,6 @@ import { weightedAverage } from "../lib/modelbasics";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { EffortAllocation } from "../decisions/effort";
-import { Operation, ProductionReport } from "../econ/operation";
-import { Consumption } from "../econ/consumption";
-import { QualityOfLife } from "../econ/qol";
-import { HelpAllocation } from "../decisions/helpalloc";
-import { Processes, SkillDefs } from "../econ/econdefs";
-import { ClanSkills } from "./clanskills";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -126,7 +124,6 @@ export class Clan implements TradePartner {
     operations: Operation[] = [];
 
     targetPerCapitaFood: number;
-    productivityCalcs: Map<SkillDef, ProductivityCalc> = new Map<SkillDef, ProductivityCalc>();
     readonly tradeRelationships = new Set<TradeRelationship>();
     
     production: ProductionReport = new ProductionReport([]);
@@ -436,22 +433,6 @@ export class Clan implements TradePartner {
             //    this.consumption.accept(`From ${relationship.partner.name}`, TradeGoods.ClayFigurines, 1);
             //}
         }
-    }
-
-    updateProductivity(forPlanning: boolean) {
-        this.productivityCalcs = this.skills.createProductivityCalcs(forPlanning);
-    }
-
-    productivity(skillDef: SkillDef): number {
-        return this.productivityCalcs.get(skillDef)?.tfp ?? 0;
-    }
-
-    get agriculturalProductivity(): number {
-        return this.productivityCalcs.get(SkillDefs.Agriculture)?.tfp ?? 0;
-    }
-
-    get ritualEffectiveness(): number {
-        return this.productivityCalcs.get(SkillDefs.Ritual)?.tfp ?? 0;
     }
 
     planMaintenance() {

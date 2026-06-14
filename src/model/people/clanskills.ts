@@ -1,10 +1,9 @@
-import { SkillDefs } from "../econ/econdefs";
 import { clamp } from "../lib/basics";
-import { normal } from "../lib/distributions";
-import type { Clan } from "./people";
-import { ProductivityCalc } from "./productivity";
-import type { ClanSkillChange } from "./skillchange";
 import { ClanSkill, type SkillDef } from "./skills";
+import { normal } from "../lib/distributions";
+import { SkillDefs } from "../econ/econdefs";
+import type { Clan } from "./people";
+import type { ClanSkillChange } from "./skillchange";
 
 export class ClanSkills {
     readonly m_: Map<SkillDef, ClanSkill> = new Map<SkillDef, ClanSkill>();
@@ -57,15 +56,6 @@ export class ClanSkills {
         }
         return clone;
     }
-
-    createProductivityCalcs(forPlanning: boolean): Map<SkillDef, ProductivityCalc> {
-        const calcs = new Map<SkillDef, ProductivityCalc>();
-        for (const skillDef of this.m_.keys()) {
-            calcs.set(skillDef, new ProductivityCalc(this.clan, skillDef, forPlanning));
-        }
-        return calcs;
-    }
-        
 
     // We have to split skill updates into prepare/commit phases because
     // the skill change depends on the skill value of other clans.

@@ -196,11 +196,11 @@ change.
     x   Add skills section to main overview
     x   Add local ecology skill
     x   Add updater for local ecology skill
-    *   Add productivity modifier for ecology skill
+    x   Add productivity modifier for ecology skill
 x   Make general skill vary a bunch
 x   Make skill change a combination of vertical transmission, horizontal
     transmission, error, and learning by observation
-*   Refactor to get public skilldefs and processdefs in a clean place,
+x   Refactor to get public skilldefs and processdefs in a clean place,
     then fix up dependencies
 *   Scale down learning harder if relative effort is very low
 *   Make sure relationships matter for horizontal skill transmission

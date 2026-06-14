@@ -255,9 +255,6 @@ export class World implements NoteTaker {
 
         // Make decisions.
         for (const clan of this.allClans) {
-            // Update productivity values so that planning can see them.
-            clan.updateProductivity(true);
-
             // Don't move immediately.
             if (!priming) clan.considerMigration();
             clan.planMaintenance();

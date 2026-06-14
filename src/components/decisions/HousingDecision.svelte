@@ -42,5 +42,5 @@
 {/if}
 
 <div style="margin-top: 0.5em">
-Cost: {(clan.effortAllocation.getForSkill(SkillDefs.Construction) ?? 0).toFixed(2)}
+Cost: ??
 </div>

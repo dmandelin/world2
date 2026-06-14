@@ -475,7 +475,7 @@ Norms:
                 to switch. 
             *   Bring back differences in required care time by age structure
             *   Rework EffortAllocation to use maps and be functional
-            *   See if we can get Activity and Process or Operation to have a 
+            x   See if we can get Activity and Process or Operation to have a 
                 common supertype.
             *   Get cluster-level clan labor decisions affecting each other in
                 effort allocation. This might not be a huge deal: technically

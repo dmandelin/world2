@@ -3,7 +3,6 @@ import { Process } from "../econ/process";
 import { sum, sumFun } from "../lib/basics";
 import type { SettlementCluster } from "../people/cluster";
 import type { Clan } from "../people/people";
-import { SkillDef } from "../people/skills";
 
 function getDiseaseLoadFactor(process: Process): number {
     switch (process) {
@@ -35,7 +34,7 @@ export class DiseaseLoadCalc {
                 let item = this.items.get(process.name);
                 if (!item) {
                     item = new DiseaseLoadItem(
-                        process.skillDef.name, effort * diseaseLoadFactor, diseaseLoadFactor);
+                        process.name, effort * diseaseLoadFactor, diseaseLoadFactor);
                     this.items.set(process.name, item);
                 } else {
                     item.effort += effort * diseaseLoadFactor;

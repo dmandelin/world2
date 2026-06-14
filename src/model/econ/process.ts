@@ -11,8 +11,6 @@ export class Process implements Tagged {
         readonly color: string,
         readonly outputGood: TradeGood|undefined,
         readonly outputPerWorker: number,
-        readonly skillDef: SkillDef,
-        readonly traitFactors: Map<string, number> = new Map<string, number>(),
         readonly useLocation: ProcessLocation = ProcessLocation.Either,
     ) {}
 }

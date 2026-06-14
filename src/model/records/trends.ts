@@ -4,7 +4,7 @@ import { weightedAverage } from "../lib/modelbasics";
 import { HousingTypes } from "../econ/housing";
 import type { World } from "../world";
 import { Year } from "./year";
-import { SkillDefs } from "../econ/econdefs";
+import { Processes, SkillDefs } from "../econ/econdefs";
 
 export class TrendDTO {
     constructor(readonly current: string) {}
@@ -67,7 +67,7 @@ class FarmingTrend extends BasicTrend<number> {
     getValue(): number {
         return weightedAverage(
             this.world.allClans,
-            c => c.effortAllocation.getForSkill(SkillDefs.Agriculture) ?? 0,
+            c => c.effortAllocation.getForProcess(Processes.Agriculture) ?? 0,
             c => c.population,
         );
     }

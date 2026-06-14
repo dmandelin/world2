@@ -13,7 +13,6 @@
     import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
     import EntityLink from "../state/EntityLink.svelte";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
-    import DataTable from "../DataTable.svelte";
     import type { Process } from "../../model/econ/process";
     import SkillDelta from "../SkillDelta.svelte";
     import { SkillDefs } from "../../model/econ/econdefs";
@@ -95,7 +94,7 @@
                 formatFn: signedFormat(),
             }, {
                 data: 'Explanation',
-                label: 'Explanation',
+                label: '',
                 valueFn:  item => item.explanation,
              }]);
     }
@@ -213,12 +212,20 @@
             }]);
     }
 
-    function productivityModifierTooltip(clan: ClanDTO, process: Process): string[][] {
-        const r = clan.production.forProcess(process);
-        if (!r || !r.productivityCalc) {
-            return [];
-        }
-        return r.productivityCalc.tooltip;
+    function productivityModifierTooltipTable(clan: ClanDTO, process: Process) {
+        return new IterableTable(
+            clan.production.forProcess(process)?.productivity.items ?? [],
+            item => item.label,
+            [{
+                data: 'Value',
+                label: 'Value',
+                valueFn: item => item.value,
+                formatFn: (v: number) => spct(v, 0),
+            }, {
+                data: 'Explanation',
+                label: 'Explanation',
+                valueFn: item => item.explanation,
+            }]);
     }
 
     function netLaborProductivity(clan: ClanDTO, process: Process): number {
@@ -676,7 +683,7 @@
                             <Tooltip>
                                 {spct(cs.e.production.getForProcess(process, "laborProductivityFactor") ?? 0)}
                                 <div slot="tooltip">
-                                    <DataTable rows={productivityModifierTooltip(cs.e, process)} />
+                                    <TableView2 table={productivityModifierTooltipTable(cs.e, process)} />
                                 </div>
                             </Tooltip>
                         </td>

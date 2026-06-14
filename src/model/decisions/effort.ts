@@ -92,12 +92,6 @@ export class EffortAllocation {
         return pf * (this.pm_.get(process) ?? 0);
     }
 
-    getForSkill(skillDef: SkillDef): number {
-        const operation = this.clan.operations.find(op => op.process.skillDef === skillDef);
-        if (!operation) return 0;
-        return this.get(Activities.Production) * (this.pm_.get(operation.process) ?? 0);
-    }
-
     farmingRatio(): number {
         const farmingEffort = this.getForProcess(Processes.Agriculture);
         const fishingEffort = this.getForProcess(Processes.Fishing);
