@@ -14,7 +14,6 @@ export class Process implements Tagged {
         readonly skillDef: SkillDef,
         readonly traitFactors: Map<string, number> = new Map<string, number>(),
         readonly useLocation: ProcessLocation = ProcessLocation.Either,
-        readonly diseaseLoadFactor: number = 0,
     ) {}
 }
 

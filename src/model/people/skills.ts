@@ -25,7 +25,6 @@ export class SkillDef implements Tagged{
         readonly name: string,
         readonly icon: string,
         readonly color: string,
-        readonly diseaseLoadFactor: number = 0,
         readonly referenceEffort: number = 10,
         readonly getEffort: (clan: Clan) => number = () => 0,
         readonly resetsOnMove: boolean = false,

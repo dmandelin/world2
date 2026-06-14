@@ -5,19 +5,17 @@ import type { SettlementCluster } from "../people/cluster";
 import type { Clan } from "../people/people";
 import { SkillDef } from "../people/skills";
 
-export class WorkerDiseaseLoadItem {
-    load: number = 0;
-
-    constructor(readonly skillDef: SkillDef, public workers: number) {}
-
-    finish(): void {
-        if (this.workers == 0) return;
-        this.load = 0.05 * Math.log10(this.workers) * this.skillDef.diseaseLoadFactor;
+function getDiseaseLoadFactor(process: Process): number {
+    switch (process) {
+        case Processes.Agriculture:
+            return 2;
+        default:
+            return 1;
     }
 }
 
 export class DiseaseLoadCalc {
-    readonly workerDiseaseLoads = new Map<SkillDef, WorkerDiseaseLoadItem>();
+    readonly items = new Map<string, DiseaseLoadItem>();
 
     readonly value: number;
 
@@ -28,29 +26,40 @@ export class DiseaseLoadCalc {
         // cluster, so we can calculate a uniform load.
 
         for (const process of [Processes.Fishing, Processes.Agriculture]) {
-            const diseaseLoadFactor = process.skillDef.diseaseLoadFactor;
+            const diseaseLoadFactor = getDiseaseLoadFactor(process);
             if (diseaseLoadFactor) {
-                const nodeLaborMap = laborMap.get(process);
-                if (!nodeLaborMap) continue;
+                const processLaborMap = laborMap.get(process);
+                if (!processLaborMap) continue;
 
-                const workers = sum(nodeLaborMap.values());
-                let item = this.workerDiseaseLoads.get(process.skillDef);
+                const effort = sum(processLaborMap.values());
+                let item = this.items.get(process.name);
                 if (!item) {
-                    item = new WorkerDiseaseLoadItem(
-                        process.skillDef, workers * diseaseLoadFactor);
-                    this.workerDiseaseLoads.set(process.skillDef, item);
+                    item = new DiseaseLoadItem(
+                        process.skillDef.name, effort * diseaseLoadFactor, diseaseLoadFactor);
+                    this.items.set(process.name, item);
                 } else {
-                    item.workers += workers;
+                    item.effort += effort * diseaseLoadFactor;
                 }
             }
         }
         
-        for (const item of this.workerDiseaseLoads.values()) {
+        for (const item of this.items.values()) {
             item.finish();
         }
         
         // Not enough traffic for cross-cluster effects at the start.
 
-        this.value = sumFun([...this.workerDiseaseLoads.values()], item => item.load);
+        this.value = sumFun([...this.items.values()], item => item.load);
+    }
+}
+
+export class DiseaseLoadItem {
+    load: number = 0;
+
+    constructor(readonly label: string, public effort: number, public diseaseLoadFactor: number) {}
+
+    finish(): void {
+        if (this.effort == 0) return;
+        this.load = 0.05 * Math.log10(this.effort) * this.diseaseLoadFactor;
     }
 }
