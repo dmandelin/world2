@@ -42,7 +42,7 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         return result;
     }
 
-    ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T, attention?: number): RelationshipView {
+    ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T, attention1?: number, attention2?: number): RelationshipView {
         // Make sure a relationship exists.
         let rv = this.m.get(object);
         if (!rv) {
@@ -55,8 +55,13 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
                 new RelationshipView(object, this.subject, r));
         }
 
-        if (attention !== undefined) {
-            rv.relationship.attention = attention;
+        // Set attention if given.
+        if (attention1 !== undefined) {
+            rv.attention = attention1;
+        }
+        if (attention2 !== undefined) {
+            const rv2 = object.relationships.get(this.subject)!;
+            rv2.attention = attention2;
         }
 
         // Make sure the interaction chain exists.
@@ -127,6 +132,8 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
 // - The Relationship object carries undirected shared information about the
 //   relationship.
 export class RelationshipView {
+    attention = 0;
+
     alignment: Alignment;
     stance: Stance = Stance.Generous;
 
@@ -168,7 +175,6 @@ export enum Stance {
 
 export class Relationship {
     interactionChains: InteractionChain[] = [];
-    attention = 0;
     private coresidenceFraction_ = 0;
 
     constructor(readonly clan1: Clan, readonly clan2: Clan) {
@@ -297,9 +303,10 @@ export function updateRelationships(world: World): void {
     // TODO - more texture on relationship appeal
 
     // Build offers map.
-    const budgetPerClan = 150;
     const offers = new Map<Clan, Map<Clan, number>>();
     for (const c1 of world.allClans) {
+        const budget = 150 - c1.population;
+
         const appealMap = new Map<Clan, number>();
         let totalAppeal = 0;
         for (const c2 of c1.settlement.clans) {
@@ -310,8 +317,39 @@ export function updateRelationships(world: World): void {
         }
 
         const offerMap = new Map<Clan, number>();
-        for (const [c2, appeal] of appealMap) {
-            offerMap.set(c2, (appeal / totalAppeal) * budgetPerClan);
+        let unallocatedBudget = budget;
+        const remainingClans = new Set(appealMap.keys());
+        
+        while (unallocatedBudget > 0.001 && remainingClans.size > 0) {
+            let currentTotalAppeal = 0;
+            for (const c2 of remainingClans) {
+                currentTotalAppeal += appealMap.get(c2)!;
+            }
+            if (currentTotalAppeal === 0) break;
+
+            const budgetToDistribute = unallocatedBudget;
+            let budgetUsedThisRound = 0;
+            let cappedAny = false;
+
+            for (const c2 of remainingClans) {
+                const appeal = appealMap.get(c2)!;
+                const share = (appeal / currentTotalAppeal) * budgetToDistribute;
+                const currentOffer = offerMap.get(c2) ?? 0;
+                let newOffer = currentOffer + share;
+
+                if (newOffer >= c2.population) {
+                    newOffer = c2.population;
+                    remainingClans.delete(c2);
+                    cappedAny = true;
+                }
+                
+                budgetUsedThisRound += (newOffer - currentOffer);
+                offerMap.set(c2, newOffer);
+            }
+            unallocatedBudget -= budgetUsedThisRound;
+            if (!cappedAny) {
+                break;
+            }
         }
         offers.set(c1, offerMap);
     }
@@ -322,9 +360,17 @@ export function updateRelationships(world: World): void {
         for (const [c2, offer1to2] of offerMap) {
             if (c1.uuid > c2.uuid) continue; // Avoid duplicate processing
             const offer2to1 = offers.get(c2)?.get(c1) || 0;
-            const matchedOffer = Math.min(offer1to2, offer2to1);
-            if (matchedOffer == 0) continue;
-            c1.relationships.ensureInteractionChainWith(c2, Neighbors, matchedOffer);
+            if (offer2to1 === 0) continue;
+
+            // Offers match on the amount of relative attention, so that a
+            // clan of size N that offers 2N to a clan of size 2N that offers
+            // back N is an exact full match on both sides.
+            const relativeOffer1to2 = offer1to2 / c2.population;
+            const relativeOffer2to1 = offer2to1 / c1.population;
+            const matchedRelativeOffer = Math.min(relativeOffer1to2, relativeOffer2to1);
+            const matchedOffer1to2 = matchedRelativeOffer * c2.population;
+            const matchedOffer2to1 = matchedRelativeOffer * c1.population;
+            c1.relationships.ensureInteractionChainWith(c2, Neighbors, matchedOffer1to2, matchedOffer2to1);
 
             if (!acceptedOffers.has(c1)) {
                 acceptedOffers.set(c1, new Set());

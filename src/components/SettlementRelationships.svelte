@@ -29,11 +29,11 @@
     }
 
     function interactionLevelCellValue(rowClan: Clan, colClan: Clan): number {
-        const r = rowClan.relationships.get(colClan);
-        if (!r) {
+        const rv = rowClan.relationships.get(colClan);
+        if (!rv) {
             return 0;
         }
-        return r.relationship.attention;
+        return rv.attention / rv.object.population;
     }
 
     function alignmentCellValue(rowClan: Clan, colClan: Clan): number {
