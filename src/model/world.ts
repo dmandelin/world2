@@ -15,7 +15,7 @@ import { Year } from "./records/year";
 import { marry } from "./people/marriage";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
-import { Friends, Neighbors, Relationship } from "./people/relationships";
+import { Friends, Neighbors, Relationship, updateRelationships } from "./people/relationships";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -244,10 +244,7 @@ export class World implements NoteTaker {
     private behave(priming: boolean = false) {
         log('World >>> Behave');
 
-        // Update perceptions to base decisions on.
-        // TODO - See if we need this or if this all would have happened
-        //        during advance.
-        this.updateRelationships();
+        updateRelationships(this);
         this.updatePerceptions();
 
         this.planMutualHelp();
@@ -329,6 +326,7 @@ export class World implements NoteTaker {
         }
     }
 
+    // TODO - Delete after moving any code we need.
     updateRelationships() {
         // Update neighbor relationships:
         // - Clans in the same settlement are automatically neighbors up 

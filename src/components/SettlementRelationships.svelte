@@ -1,13 +1,13 @@
 <script lang="ts">
     import { Clan } from "../model/people/people";
+    import { MarriagePartners, RelationshipView, Stance } from "../model/people/relationships";
     import { pct, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
+    import { type Table, CrossTab, SingleRecordTable } from "./tables/tables2";
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
-    import { MarriagePartners, RelationshipView, Stance, type Relationship } from "../model/people/relationships";
     import type { SettlementDTO } from "../model/records/dtos";
     import type { Snippet } from "svelte";
-    import { type Table, type TableColumn, CrossTab, SingleRecordTable } from "./tables/tables2";
     
     let { settlement }: { settlement: SettlementDTO }= $props();
     let clans = $derived(settlement.clans);
@@ -33,8 +33,7 @@
         if (!r) {
             return 0;
         }
-        // TODO - Remove
-        return 1;
+        return r.relationship.attention;
     }
 
     function alignmentCellValue(rowClan: Clan, colClan: Clan): number {
@@ -66,18 +65,7 @@
                 ]
             }
         }
-        if (field === 'alignment') {
-            return buildAlignmentCellTooltip(r);
-        } else {
-            return buildInteractionVolumeCellTooltip(r);
-        }
-    }
-
-    // TODO - Remove
-    function buildInteractionVolumeCellTooltip(r: RelationshipView): Table<string, string, [number]> {
-        return new SingleRecordTable({
-            'Interaction Volume': 1
-        });
+        return buildAlignmentCellTooltip(r);
     }
 
     function buildAlignmentCellTooltip(r: RelationshipView): Table<string, string, [number]> {
@@ -104,7 +92,6 @@ n/a
 <div style="display: flex; flex-direction: row; gap: 2rem;">
     <div>
         <div>
-            <!-- TODO - Update to something more sensible -->
             <h3>Interaction Level</h3>
             <TableView2 table={buildRelationshipsTable(interactionLevelCellValue, unsignedFormat(2), interactionVolumeCellTooltip)}></TableView2>
         </div>

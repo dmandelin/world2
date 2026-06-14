@@ -126,6 +126,9 @@ still has per-clan texture but is more gradual and less sudden.
 # Model changes
 
 *   Bring back attention limit with relationship updates
+*   Handle the relative size issue - first cut doesn't seem right
+    since clans may need to expend different resources to have
+    full relationship
 *   Ensure clans use attention and have connections for marriage
     ties
 *   Update alignment based on attention, kinship, and other

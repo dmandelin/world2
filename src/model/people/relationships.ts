@@ -1,6 +1,7 @@
 import { normal } from "../lib/distributions";
 import { sumValues } from "../lib/basics";
 import type { Clan } from "./people";
+import type { World } from "../world";
 
 const REFERENCE_COMMUNITY_SIZE = 150;
 
@@ -41,7 +42,7 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         return result;
     }
 
-    ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T): RelationshipView {
+    ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T, attention?: number): RelationshipView {
         // Make sure a relationship exists.
         let rv = this.m.get(object);
         if (!rv) {
@@ -52,6 +53,10 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
             object.relationships.m.set(
                 this.subject, 
                 new RelationshipView(object, this.subject, r));
+        }
+
+        if (attention !== undefined) {
+            rv.relationship.attention = attention;
         }
 
         // Make sure the interaction chain exists.
@@ -163,6 +168,7 @@ export enum Stance {
 
 export class Relationship {
     interactionChains: InteractionChain[] = [];
+    attention = 0;
     private coresidenceFraction_ = 0;
 
     constructor(readonly clan1: Clan, readonly clan2: Clan) {
@@ -274,5 +280,66 @@ export class Alignment extends CalcBase {
             this.items['Random'] = normal(0, 0.1);
         }
         this.value = sumValues(this.items, v => v);
+    }
+}
+
+export function updateRelationships(world: World): void {
+    // This is a matching process: to have a relationship, two clans must
+    // spend A attention on each other. Algorithm:
+    // - For each clan, calculate the relationship appeal of each clan
+    //   it's in contact with.
+    // - Offer attention proportionally to some function of appeal.
+    // - Match offers.
+    // - Optionally go again to use up remaining attention.
+
+    // TODO - friends
+    // TODO - marriage partners
+    // TODO - more texture on relationship appeal
+
+    // Build offers map.
+    const budgetPerClan = 150;
+    const offers = new Map<Clan, Map<Clan, number>>();
+    for (const c1 of world.allClans) {
+        const appealMap = new Map<Clan, number>();
+        let totalAppeal = 0;
+        for (const c2 of c1.settlement.clans) {
+            if (c1 === c2) continue;
+            const appeal = 1;
+            totalAppeal += appeal;
+            appealMap.set(c2, appeal);
+        }
+
+        const offerMap = new Map<Clan, number>();
+        for (const [c2, appeal] of appealMap) {
+            offerMap.set(c2, (appeal / totalAppeal) * budgetPerClan);
+        }
+        offers.set(c1, offerMap);
+    }
+
+    // Match offers and ensure relationships exist.
+    const acceptedOffers = new Map<Clan, Set<Clan>>();
+    for (const [c1, offerMap] of offers) {
+        for (const [c2, offer1to2] of offerMap) {
+            if (c1.uuid > c2.uuid) continue; // Avoid duplicate processing
+            const offer2to1 = offers.get(c2)?.get(c1) || 0;
+            const matchedOffer = Math.min(offer1to2, offer2to1);
+            if (matchedOffer == 0) continue;
+            c1.relationships.ensureInteractionChainWith(c2, Neighbors, matchedOffer);
+
+            if (!acceptedOffers.has(c1)) {
+                acceptedOffers.set(c1, new Set());
+            }
+            acceptedOffers.get(c1)!.add(c2);
+        }
+    }
+
+    // Prune relationships that weren't given attention.
+    for (const c1 of world.allClans) {
+        for (const [c2, rv] of [...c1.relationships]) {
+            if (c1.uuid > c2.uuid) continue; // Avoid duplicate processing
+            if (!acceptedOffers.get(c1)?.has(c2)) {
+                c1.relationships.removeInteractionChainWith(c2, Neighbors);
+            }
+        }
     }
 }
