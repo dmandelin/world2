@@ -32,6 +32,14 @@ export function randInt(a: number, b?: number): number {
     return Math.floor(Math.random() * (b - a)) + a;
 }
 
+export function dice(s: number, sides: number, mod: number): number {
+    let total = mod;
+    for (let i = 0; i < s; ++i) {
+        total += randInt(1, sides + 1);
+    }
+    return total;
+}
+
 export function matchingCount<T>(aa: Iterable<T>, predicate: (t: T) => boolean): number {
     let count = 0;
     for (const item of aa) {

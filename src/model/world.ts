@@ -1,5 +1,5 @@
 import { Annals } from "./annals";
-import { chooseFrom, sumFun, shuffled } from "./lib/basics";
+import { chooseFrom, sumFun, shuffled, dice } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { Clans } from "./people/clans";
 import { createTrends } from "./records/trends";
@@ -34,8 +34,7 @@ class SettlementsBuilder {
                 this.world.annals,
                 randomClanName(this.clanNames), 
                 randomClanColor(this.clanColors),
-                Math.floor(Math.random() * 37) + 15);
-
+                dice(3, 6, 15));
             this.clanNames.add(clan.name);
             this.clanColors.add(clan.color);
         }
@@ -72,9 +71,9 @@ export class World implements NoteTaker {
     readonly notes: Note[] = [];
 
     readonly clusters = new SettlementsBuilder(this).createClusters([
-        ['Eridu', 382, 378, 3],
-        ['Ur', 425, 325, 3],
-        ['Uruk', 200, 287, 3],
+        ['Eridu', 382, 378, 5],
+        ['Ur', 425, 325, 5],
+        ['Uruk', 200, 287, 5],
     ]);
 
     readonly watchers = new Set<(world: World) => void>();

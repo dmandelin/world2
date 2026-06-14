@@ -78,7 +78,7 @@ export class Clan implements TradePartner {
     readonly uuid = crypto.randomUUID();
 
     static minDesiredSize = 10;
-    static maxDesiredSize = 75;
+    static maxDesiredSize = 60;
 
     private settlement_: Settlement;
 
