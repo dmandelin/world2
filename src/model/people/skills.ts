@@ -25,7 +25,6 @@ export class SkillDef implements Tagged{
         readonly name: string,
         readonly icon: string,
         readonly color: string,
-        readonly traitFactors: Map<string, number> = new Map<string, number>(),
         readonly diseaseLoadFactor: number = 0,
         readonly referenceEffort: number = 10,
         readonly getEffort: (clan: Clan) => number = () => 0,

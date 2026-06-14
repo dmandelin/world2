@@ -3,7 +3,8 @@ import { SkillDef } from './skills';
 import { pct, spct } from '../lib/format';
 import { product } from '../lib/basics';
 import { FloodLevels } from '../environment/flood';
-import { SkillDefs } from '../econ/econdefs';
+import { Processes, SkillDefs } from '../econ/econdefs';
+import type { Process } from '../econ/process';
 
 interface ProductivityCalcItem {
     label: string;
@@ -33,10 +34,9 @@ export class StatBasedProductivityCalcItem implements ProductivityCalcItem {
 }
 
 export class ProductivityCalc {
-    readonly skill: number;
     readonly items: ProductivityCalcItem[];
 
-    constructor(readonly clan: Clan, readonly skillDef: SkillDef, forPlanning: boolean) {
+    constructor(readonly clan: Clan, readonly process: Process, forPlanning: boolean) {
         this.items = [];
         // TODO - Rework per latest plans. Biggest factors in how all this plays out
         //        should be:
@@ -44,6 +44,7 @@ export class ProductivityCalc {
         // x Community -- but figure out what this really means
         // - Land quality
 
+        /* TODO - Bring back in some form
         this.skill = clan.skills.v(skillDef);
         this.items.push(...[...skillDef.traitFactors.entries()].map(tf => {
             const [statName, statFactor] = tf;
@@ -52,8 +53,9 @@ export class ProductivityCalc {
                 : clan.getTrait(statName);
             return new StatBasedProductivityCalcItem(statName, statValue, statFactor);
         }));
+        */
 
-        if (skillDef === SkillDefs.Agriculture) {
+        if (process === Processes.Agriculture) {
             const floodLevel = forPlanning
                 ? FloodLevels.Normal
                 : clan.settlement.floodLevel;
@@ -98,7 +100,7 @@ export class ProductivityCalc {
     }
 
     withItem(item: ProductivityCalcItem): ProductivityCalc {
-        const newCalc = new ProductivityCalc(this.clan, this.skillDef, false);
+        const newCalc = new ProductivityCalc(this.clan, this.process, false);
         newCalc.items.splice(0, newCalc.items.length, ...this.items, item);
         return newCalc;
     }

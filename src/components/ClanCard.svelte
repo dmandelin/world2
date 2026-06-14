@@ -282,21 +282,9 @@
                 <td>Δ</td>
                 {#each clan.skills as [_, skill]}
                 <td class="rp">
+                <!--
                     <SkillDelta skill={skill} clan={clan}></SkillDelta>
-                </td>
-                {/each}
-            </tr>
-            <tr>
-                <td>ℙ</td>
-                {#each clan.skills as [def, _]}
-                <td>
-                    <Tooltip>
-                        {spct(clan.productivityCalcs.get(def)?.tfp ?? 0)}
-                        <div slot="tooltip" class="ttt">
-                            <h4>Predicted Productivity</h4>
-                            <DataTable rows={clan.productivityCalcs.get(def)?.tooltip ?? []} />
-                        </div>
-                    </Tooltip>
+                -->
                 </td>
                 {/each}
             </tr>
