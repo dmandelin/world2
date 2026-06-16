@@ -1,21 +1,21 @@
 <script lang="ts">
+    import { FilteredIterableTable, IterableTable, SingleMapTable } from "../tables/tables2";
+    import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
     import { pct, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat } from "../../model/lib/format";
+    import { safeDiv, sortedByKey } from "../../model/lib/basics";
+    import { SkillDefs } from "../../model/econ/econdefs";
+    import { TradeGoods, type TradeGood } from "../../model/trade";
+    import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
-    import type { ClanDTO, StandaloneSettlementDTO } from "../../model/records/dtos";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
+    import EntityLink from "../state/EntityLink.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
-    import { FilteredIterableTable, IterableTable, SingleMapTable } from "../tables/tables2";
+    import SkillDelta from "../SkillDelta.svelte";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
-    import { TradeGoods, type TradeGood } from "../../model/trade";
-    import { safeDiv, sortedByKey } from "../../model/lib/basics";
-    import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
-    import EntityLink from "../state/EntityLink.svelte";
-    import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
+    import type { ClanDTO, StandaloneSettlementDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
-    import SkillDelta from "../SkillDelta.svelte";
-    import { SkillDefs } from "../../model/econ/econdefs";
 
 	let { 
         settlement, 

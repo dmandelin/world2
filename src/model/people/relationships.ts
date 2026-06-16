@@ -1,5 +1,5 @@
 import { normal } from "../lib/distributions";
-import { sumValues } from "../lib/basics";
+import { clamp, maxbyWithValue, sumValues } from "../lib/basics";
 import type { Clan } from "./people";
 import type { World } from "../world";
 
@@ -208,7 +208,7 @@ export class Relationship {
 export abstract class InteractionChain {
     abstract readonly name: string;
     abstract readonly isWeakTie: boolean;
-    abstract alignmentEffect(rv: RelationshipView): number;
+    abstract alignmentModifier(rv: RelationshipView): number;
     abstract clone(): InteractionChain;
 }
 
@@ -220,8 +220,8 @@ export class MarriagePartners extends InteractionChain {
         return new MarriagePartners();
     }
 
-    alignmentEffect(rv: RelationshipView): number {
-        return rv.relatedness;
+    alignmentModifier(rv: RelationshipView): number {
+        return clamp(1 + 2 * rv.relatedness, 1, 1.5);
     }
 }
 
@@ -238,8 +238,8 @@ export class Friends extends InteractionChain {
         return new Friends();
     }
 
-    alignmentEffect(rv: RelationshipView): number {
-        return 0.1;
+    alignmentModifier(rv: RelationshipView): number {
+        return 1.25;
     }
 }
 
@@ -251,16 +251,19 @@ export class Neighbors extends InteractionChain {
         return new Neighbors();
     }
 
-    alignmentEffect(rv: RelationshipView): number {
-        // There is a small alignment effect for regular neighbors who
-        // live near each other. If they don't live together, we'll still
-        // give them a tiny bump, but not much.
-        return Math.max(0.01, 0.05 * rv.coresidenceFraction);
+    alignmentModifier(rv: RelationshipView): number {
+        return 1;
     }
 }
 
 export class Alignment extends CalcBase {
-    items: Record<string, number> = {};
+    interactionType: string = '';
+    interactionTypeModifier: number = 1;
+
+    attention: number = 0;
+    objectPopulation: number = 1;
+    base: number = 0;
+    value: number = 0;
 
     constructor(
         readonly subject: Clan,
@@ -271,25 +274,36 @@ export class Alignment extends CalcBase {
 
     clone(): Alignment {
         const a = new Alignment(this.subject, this.object);
-        a.items = { ...this.items };
+        a.interactionType = this.interactionType;
+        a.interactionTypeModifier = this.interactionTypeModifier;
+        a.attention = this.attention;
+        a.objectPopulation = this.objectPopulation;
+        a.base = this.base;
         a.value = this.value;
         return a;
     }
 
     update(rv: RelationshipView) {
-        this.items['Kinship'] = this.subject.kinshipTo(this.object);
-        for (const interactionChain of rv.relationship.interactionChains) {
-            this.items[interactionChain.name] = 
-                interactionChain.alignmentEffect(rv);
-        }
-        if (this.subject !== this.object) {
-            this.items['Random'] = normal(0, 0.1);
-        }
-        this.value = sumValues(this.items, v => v);
+        const [ic, mod] = maxbyWithValue(
+            rv.interactionChains,
+            interactionChain => interactionChain.alignmentModifier(rv)
+        );
+        this.interactionType = ic ? ic.name : '';
+        this.interactionTypeModifier = mod ?? 1;
+
+        this.attention = rv.attention;
+        this.objectPopulation = rv.object.population;
+        this.base = this.attention / this.objectPopulation;
+        this.value = this.base * this.interactionTypeModifier;
     }
 }
 
 export function updateRelationships(world: World): void {
+    updateRelationshipsGraph(world);
+    updateAlignment(world);
+}
+
+export function updateRelationshipsGraph(world: World): void {
     // This is a matching process: to have a relationship, two clans must
     // spend A attention on each other. Algorithm:
     // - For each clan, calculate the relationship appeal of each clan
@@ -387,5 +401,13 @@ export function updateRelationships(world: World): void {
                 c1.relationships.removeInteractionChainWith(c2, Neighbors);
             }
         }
+    }
+}
+
+function updateAlignment(world: World): void {
+    for (const clan of world.allClans) {
+        // TODO - Clean this up a bit. Right now this call pretty much just
+        // updates alignment but it's not an exact match.
+        clan.relationships.update();
     }
 }

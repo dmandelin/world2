@@ -126,10 +126,17 @@ still has per-clan texture but is more gradual and less sudden.
 # Model changes
 
 x   Bring back attention limit with relationship updates
-*   Ensure clans use attention and have connections for marriage
+x   Ensure clans use attention and have connections for marriage
     ties
-*   Update alignment based on attention, kinship, and other
-    interactions
+x   Update alignment based on attention and interactions
+*   Include random extra negative or positive interactions
+    *   These should probably have some material effect too
+        and not be just pure alignment effects
+*   Fix up how clan kinship works -- at this level should
+    probably be more like other relationships
+*   Limit or make attention more expensive across distance,
+    including when not coresident
+*   Have clans transmit alignment information to each other
 *   Create amenity for positive relationships
 *   Create disamenity for interactions outside of positive
     relationships/interactions

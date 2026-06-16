@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Clan } from "../model/people/people";
     import { MarriagePartners, RelationshipView, Stance } from "../model/people/relationships";
-    import { pct, unsignedFormat } from "../model/lib/format";
+    import { pct, spct, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import { type Table, CrossTab, SingleRecordTable } from "./tables/tables2";
     import EntityLink from "./state/EntityLink.svelte";
@@ -51,38 +51,23 @@
         }
         return r.stance;
     }
-
-    function buildCellTooltip(
-        subject: Clan, object: Clan, field: 'interactionVolume' | 'alignment'): Table<string, string, [number]> {
-        
-        const r = subject.relationships.get(object);
-        if (!r) {
-            return {
-                columns: [
-                    { data: 'Value', label: 'Value', valueFn: row => 0 },
-                ],
-                rows: [
-                ]
-            }
-        }
-        return buildAlignmentCellTooltip(r);
-    }
-
-    function buildAlignmentCellTooltip(r: RelationshipView): Table<string, string, [number]> {
-        const d = r.alignment;
-        return new SingleRecordTable(d.items);
-    }
 </script>
 
 <style>
 </style>
 
 {#snippet interactionVolumeCellTooltip(value: number, subject: Clan, object: Clan)}
-  <TableView2 table={buildCellTooltip(subject, object, 'interactionVolume')}></TableView2>
+n/a
 {/snippet}
 
 {#snippet alignmentCellTooltip(value: number, subject: Clan, object: Clan)}
-  <TableView2 table={buildCellTooltip(subject, object, 'alignment')}></TableView2>
+  {@const rv = subject.relationships.get(object)}
+  {@const a = rv ? rv.alignment : undefined}
+  {#if a}
+    Base {pct(a.base)} from {a.attention} attention / {a.objectPopulation} population
+    <br>
+    {spct(a.interactionTypeModifier)} from {a.interactionType}
+  {/if}
 {/snippet}
 
 {#snippet stanceCellTooltip(value: Stance, subject: Clan, object: Clan)}
