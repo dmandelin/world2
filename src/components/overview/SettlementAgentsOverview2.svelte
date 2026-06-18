@@ -3,8 +3,6 @@
     import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
     import { pct, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat } from "../../model/lib/format";
     import { safeDiv, sortedByKey } from "../../model/lib/basics";
-    import { SkillDefs } from "../../model/econ/econdefs";
-    import { TradeGoods, type TradeGood } from "../../model/trade";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
     import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
@@ -34,11 +32,6 @@
         sortedByKey(
             new Set(csnaps.flatMap(cs => cs.e.production.rs.map(opr => opr.operation.process))),
             process => process.sortKey));
-
-    function productionCooperationFactor(clan: ClanDTO, good: TradeGood): number {
-        // TODO - Delete or make useful
-        return 1;
-    }
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
@@ -556,35 +549,6 @@
                 <td>(Previous)</td>
                 {#each csnaps as cs}
                     <td colspan="2">{#if cs.p}<ClanEffortMiniBar clan={cs.p} m={cs.p.effortAllocation.pm} />{/if}</td>
-                {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr class="actual">
-                <td>Agri Coop</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {spct(productionCooperationFactor(cs.e, TradeGoods.Cereals))}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <ClanRelationshipsDetails clan={cs.e} skill={SkillDefs.Agriculture} />
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => productionCooperationFactor(c, TradeGoods.Cereals), pct)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Fish Coop</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {spct(productionCooperationFactor(cs.e, TradeGoods.Fish))}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <ClanRelationshipsDetails clan={cs.e} skill={SkillDefs.Fishing} />
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => productionCooperationFactor(c, TradeGoods.Fish), pct)}
                 {/each}
             </tr>
             <tr><td style="height: 0.5em"></td></tr>

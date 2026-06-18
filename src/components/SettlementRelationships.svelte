@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Clan } from "../model/people/people";
     import { MarriagePartners, RelationshipView, Stance } from "../model/people/relationships";
-    import { pct, spct, unsignedFormat } from "../model/lib/format";
+    import { pct, spct, unsigned, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import { type Table, CrossTab, SingleRecordTable } from "./tables/tables2";
     import EntityLink from "./state/EntityLink.svelte";
@@ -64,9 +64,11 @@ n/a
   {@const rv = subject.relationships.get(object)}
   {@const a = rv ? rv.alignment : undefined}
   {#if a}
-    Base {pct(a.base)} from {a.attention} attention / {a.objectPopulation} population
+    Base {pct(a.base)} from {unsigned(a.attention)} attention / {a.objectPopulation} population
     <br>
-    {spct(a.interactionTypeModifier)} from {a.interactionType}
+    {#if a.interactionTypeModifier != 1}
+        {spct(a.interactionTypeModifier)} from {a.interactionType}
+    {/if}
   {/if}
 {/snippet}
 
