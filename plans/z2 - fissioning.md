@@ -134,6 +134,44 @@ x   Update alignment based on attention and interactions
         and not be just pure alignment effects
 *   Fix up how clan kinship works -- at this level should
     probably be more like other relationships
+    *   Thoughts on this:
+        *   This is about senior-cadet clan relationships,
+            though this can include invented ones
+        *   The relationship should be sustained through some
+            sort of activity. The code can still track the facts
+            about these relationships, which later could
+            correspond to written records
+        *   If the clans get together and enact the relationship,
+            they will have some view on what the relationship is.
+        *   Eventually this could get complicated with different
+            levels of nesting and who knows about whom (apparently
+            people often are hazy about distant relatives and
+            related groups), but we don't need this at first
+        *   Eventually there should be an action for a junior
+            clan to try to declare itself the senior
+        *   But before that, we should have some benefit from
+            being the senior clan, which for now would be
+            prestige (!)
+            *   Prestige should also have some sort of benefit.
+                This could get complicated, but for now we can
+                have it affect happiness and demographics
+                (maybe under some name like "stress")
+    *   Items to do
+        *   Audit existing code, make sure it actually works
+            wrt splits, clans dying out, etc.
+        *   Revise prestige model
+            *   Include senior-cadet relationships
+        *   Add basic stress demographic and happiness effect
+            for prestige
+        *   Figure out benefits for prestige
+            *   Marriage
+            *   Attention
+            *   Access to land?
+            *   Gifts of labor or goods? (but what's the motivation?)
+            *   "Stress" demographic effect? "Aid" counterpart?
+        *   Add Kin relationship to relationships model with
+            alignment bonus
+*   Get friends working again
 *   Limit or make attention more expensive across distance,
     including when not coresident
 *   Have clans transmit alignment information to each other
