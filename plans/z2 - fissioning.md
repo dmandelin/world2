@@ -157,23 +157,36 @@ x   Update alignment based on attention and interactions
                 have it affect happiness and demographics
                 (maybe under some name like "stress")
     *   Items to do
-        *   Audit existing code, make sure it actually works
-            wrt splits, clans dying out, etc.
         *   Revise prestige model
             *   Include senior-cadet relationships
-        *   Add basic stress demographic and happiness effect
-            for prestige
-        *   Figure out benefits for prestige
+            x   Introduce new model
+            x   From relationships
+            *   Other prestige factors
+            *   More dependence on relationship factors
+        x   Add basic effects for prestige
+            x   stress/aid demographic effect
+            x   happiness effect
+        *   Figure out other benefits for prestige
+            *   Make the demographic effect of prestige based on
+                relative prestige
             *   Marriage
             *   Attention
             *   Access to land?
             *   Gifts of labor or goods? (but what's the motivation?)
-            *   "Stress" demographic effect? "Aid" counterpart?
         *   Add Kin relationship to relationships model with
             alignment bonus
+*   Let clans have knowledge of clans they don't directly interact
+    with
+    *   Be sure to let clan A learn transitively through people it
+        knows about respect-related information
 *   Get friends working again
+*   Make low-related marriage relationships not strong ties
 *   Limit or make attention more expensive across distance,
     including when not coresident
+*   Introduce some sort of "charisma" differential or skill
+*   Make attention requirements scale sublinearly, because there
+    are economies of scale knowing N people in the same clan, and
+    that will give larger clans an advantage in getting attention
 *   Have clans transmit alignment information to each other
 *   Create amenity for positive relationships
 *   Create disamenity for interactions outside of positive

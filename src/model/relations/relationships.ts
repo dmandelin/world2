@@ -1,11 +1,8 @@
-import { normal } from "../lib/distributions";
-import { average, clamp, maxbyWithValue, sumValues } from "../lib/basics";
+import { average, clamp, sum } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { World } from "../world";
 import { Alignment, updateAlignment } from "./alignment";
 import { Respect } from "./respect";
-
-const REFERENCE_COMMUNITY_SIZE = 150;
 
 export class Relationships implements Iterable<[Clan, RelationshipView]> {
     private m: Map<Clan, RelationshipView> = new Map();
@@ -52,6 +49,16 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         )
     }
 
+    get prestigeItems() {
+        const totalWeight = sum([...this.inverted()].map(([other, rv]) => other.population));
+        return [...this.inverted()].map(([other, rv]) => ({
+            label: other.name,
+            respect: rv.respect.value,
+            weight: other.population / totalWeight,
+            weightedValue: rv.respect.value * other.population / totalWeight,
+        }));
+    }
+
     ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T, attention1?: number, attention2?: number): RelationshipView {
         // Make sure a relationship exists.
         let rv = this.m.get(object);
@@ -67,9 +74,11 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
 
         // Set attention if given.
         if (attention1 !== undefined) {
+            if (isNaN(attention1)) debugger;
             rv.attention = attention1;
         }
         if (attention2 !== undefined) {
+            if (isNaN(attention2)) debugger;
             const rv2 = object.relationships.get(this.subject)!;
             rv2.attention = attention2;
         }
@@ -178,6 +187,24 @@ export class RelationshipView {
 
     get interactionChains(): InteractionChain[] {
         return this.relationship.interactionChains;
+    }
+
+    // The amount of attention the subject gives to the object,
+    // relative to the amount needed for full gossip-network
+    // connection. 0-1.
+    get relativeAttention(): number {
+        return this.object.population > 0
+            ? this.attention / this.object.population
+            : 0;
+    }
+
+    // The amount of information the subject has about the object
+    // based only attention (not including information from other 
+    // sources). 0-1.
+    get informationFromAttention(): number {
+        // Information flows relatively easily; it doesn't take a
+        // ton of attention to know basic facts.
+        return Math.pow(this.relativeAttention, 1/3);
     }
 }
 
@@ -289,7 +316,7 @@ export function updateRelationshipsGraph(world: World): void {
 
     // Build offers map.
     const offers = new Map<Clan, Map<Clan, number>>();
-    for (const c1 of world.allClans) {
+    for (const c1 of world.allClans.filter(c => c.population > 0)) {
         const budget = 150 - c1.population;
 
         const appealMap = new Map<Clan, number>();
@@ -355,6 +382,7 @@ export function updateRelationshipsGraph(world: World): void {
             const matchedRelativeOffer = Math.min(relativeOffer1to2, relativeOffer2to1);
             const matchedOffer1to2 = matchedRelativeOffer * c2.population;
             const matchedOffer2to1 = matchedRelativeOffer * c1.population;
+            if (isNaN(matchedOffer1to2) || isNaN(matchedOffer2to1)) debugger;
             c1.relationships.ensureInteractionChainWith(c2, Neighbors, matchedOffer1to2, matchedOffer2to1);
 
             if (!acceptedOffers.has(c1)) {

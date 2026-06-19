@@ -1,3 +1,4 @@
+import { sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { RelationshipView } from "./relationships";
 
@@ -14,7 +15,7 @@ import type { RelationshipView } from "./relationships";
 //     *   Relationships, especially with more prestigious clans
 //     *   Seniority (parent/cadet clan relationships)
 //     *   Tenure in the area
-//     *   Beauty/health: For now, based on nutrition
+//     *   "Face": For now, based on nutrition
 //         *   Also base on care and leisure
 //         *   Fairly salient, needs some interaction but not
 //             a lot
@@ -31,7 +32,7 @@ import type { RelationshipView } from "./relationships";
 //     *   Gifts
 
 export class Respect {
-    value: number = 0.5;
+    items_: RespectItem[] = [];
 
     constructor(
         readonly subject: Clan,
@@ -39,12 +40,51 @@ export class Respect {
     ) {
     }
 
+    get items(): readonly RespectItem[] { return this.items_; }
+    get value(): number { return sumFun(this.items_, i => i.value); }
+
     clone(): Respect {
         const a = new Respect(this.subject, this.object);
-        a.value = this.value;
+        a.items_ = [...this.items_];
         return a;
     }
 
     update(rv: RelationshipView) {
+        this.items_ = [
+            RespectItem.forRelationships(rv),
+            //RespectItem.forSeniority(rv),
+            //RespectItem.forTenure(rv),
+            //RespectItem.forFace(rv),
+            //RespectItem.forVisibleWealth(rv),
+            //RespectItem.forSkill(rv),
+            //RespectItem.forPopulation(rv),
+        ];
     }    
+}
+
+export class RespectItem {
+    constructor(
+        readonly label: string,
+        readonly baseValue: number,
+        readonly informationModifier: number,
+        readonly explanation: string,
+    ) {}
+
+    get value(): number {
+        return this.baseValue * this.informationModifier;
+    }
+
+    static forRelationships(rv: RelationshipView): RespectItem {
+        // TODO - Have respect influence how much respect relationships
+        //        generate
+        // TODO - Have the strength of the relationship influence how
+        //        much respect it generates
+        const base = sumFun(rv.object.relationships, ([other, otherRv]) => 0.1);
+        return new RespectItem(
+            'Relationships',
+            base,
+            rv.informationFromAttention,
+            `${[...rv.object.relationships].length} clans`
+        );
+    }
 }

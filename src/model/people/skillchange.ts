@@ -149,8 +149,9 @@ export class ImitationTargetItem {
     constructor(
         readonly label: string,
         readonly trait: number,
-        readonly prestige: number,
+        readonly respect: number,
     ) {
-        this.weight = (4 ** trait) * (1.3 ** prestige);
+        if (isNaN(respect)) debugger;
+        this.weight = (4 ** trait) * (1.3 ** respect);
     }
 }

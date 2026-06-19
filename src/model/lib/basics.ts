@@ -128,20 +128,19 @@ export function chooseFrom<T>(iterable: Iterable<T>, remove: boolean = false): T
 }
 
 export function chooseWeighted<T>(arr: readonly T[], weightFn: (t: T) => number): T {
-    const totalWeight = arr.reduce((acc, cur) => acc + weightFn(cur), 0);
-    if (totalWeight === 0) {
-        throw new Error("Total weight is zero, cannot choose a weighted element.");
-    }
+    const ws = arr.map(weightFn);
+    const totalWeight = sum(ws);
     
-    let randomValue = Math.random() * totalWeight;
-    for (const item of arr) {
-        randomValue -= weightFn(item);
+    let randomValue = Math.random();
+    for (let i = 0; i < arr.length; ++i) {
+        randomValue -= ws[i] / totalWeight;
         if (randomValue <= 0) {
-            return item;
+            return arr[i];
         }
     }
     
-    throw new Error("Failed to choose a weighted element, this should not happen.");
+    debugger;
+    throw new Error("Failed to choose a weighted element, may indicate bad input.");
 }
 
 export function shuffled<T>(arr: T[]): T[] {

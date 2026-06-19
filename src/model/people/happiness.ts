@@ -385,8 +385,10 @@ class RitualHappinessItem extends NumericHappinessItem {
 }
 
 class StatusHappinessItem extends NumericHappinessItem {
-    // TODO - Rework and classify as social. Omitted for now
-    // as it's probably not tuned.
+    get isSocial(): boolean {
+        return true;
+    }
+    
     get label(): string {
         return 'Status';
     }
@@ -402,7 +404,7 @@ class StatusHappinessItem extends NumericHappinessItem {
     }
 
     updateState(clan: Clan): void {
-        this.state_ = clan.averagePrestige;
+        this.state_ = clan.prestige;
     }
 
     clone(): StatusHappinessItem {

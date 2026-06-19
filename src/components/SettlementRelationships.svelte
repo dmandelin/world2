@@ -3,7 +3,7 @@
     import { MarriagePartners, RelationshipView, Stance } from "../model/relations/relationships";
     import { pct, spct, unsigned, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
-    import { type Table, CrossTab, SingleRecordTable } from "./tables/tables2";
+    import { type Table, CrossTab, IterableTable, SingleRecordTable } from "./tables/tables2";
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
     import type { SettlementDTO } from "../model/records/dtos";
@@ -80,7 +80,35 @@
 {/snippet}
 
 {#snippet respectCellTooltip(value: number, subject: Clan, object: Clan)}
-n/a
+    {@const rv = subject.relationships.get(object)}
+    {#if rv}
+        <TableView2 table={
+            new IterableTable(
+                rv.respect.items,
+                i => i.label,
+                [{
+                    data: 'Value',
+                    label: 'Value',
+                    valueFn: i => i.value,
+                    formatFn: (i: number) => unsigned(i, 2),
+                }, {
+                    data: 'Inf Mod',
+                    label: 'Inf Mod',
+                    valueFn: i => i.informationModifier,
+                    formatFn: (i: number) => unsigned(i, 2),
+                }, {
+                    data: 'Base',
+                    label: 'Base',
+                    valueFn: i => i.baseValue,
+                    formatFn: (i: number) => unsigned(i, 2),
+                }, {
+                    data: 'Explanation',
+                    label: 'Explanation',
+                    valueFn: i => i.explanation,
+                }],
+            )
+        }></TableView2>
+    {/if}
 {/snippet}
 
 {#snippet stanceCellTooltip(value: Stance, subject: Clan, object: Clan)}

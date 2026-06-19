@@ -92,6 +92,28 @@
              }]);
     }
 
+    function clanPrestigeTooltipTable(clan: ClanDTO) {
+        return new IterableTable(
+            clan.relationships.prestigeItems,
+            item => item.label,
+            [{
+                data: 'Respect',
+                label: 'Respect',
+                valueFn: item => item.respect,
+                formatFn: (v: number) => signed(v * 100),
+            }, {
+                data: 'Weight',
+                label: 'Weight',
+                valueFn: item => item.weight,
+                formatFn: (v: number) => pct(v, 0),
+            }, {
+                data: 'Weighted Respect',
+                label: 'Weighted Respect',
+                valueFn: item => item.weightedValue,
+                formatFn: (v: number) => signed(v * 100),
+            }]);
+    }
+
     function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
             clan.happiness.items.values(),
@@ -402,7 +424,20 @@
                     {@render deltaCell(cs, c => c.qol.value, signed)}
                 {/each}
             </tr>
-            <tr><td style="height: 0.5em"></td></tr>
+            <tr class="actual">
+                <td>Local Prestige</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {signed(cs.e.relationships.prestige)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanPrestigeTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.relationships.prestige, signed)}
+                {/each}
+            </tr>            <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
                 <td>Food</td>
                 {#each csnaps as cs}
