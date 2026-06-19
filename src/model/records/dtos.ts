@@ -13,22 +13,16 @@ import type { HousingDecision } from "../decisions/housingdecision";
 import type { MigrationCalc } from "../people/migration";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
-import type { PrestigeCalc } from "../people/prestige";
 import type { ProductionReport } from "../econ/operation";
 import type { QualityOfLife } from "../econ/qol";
-import type { Relationships } from "../people/relationships";
+import type { Relationships } from "../relations/relationships";
 import type { ResidenceLevel } from "../people/residence";
-import type { RespectCalc } from "../people/respect";
 import type { Rites } from "../rites";
 import type { Settlement } from "../people/settlement";
 import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
-
-function prestigeDTO(clan: Clan) {
-    return new Map(clan.prestigeViews);
-}
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -87,12 +81,6 @@ export class ClanDTO {
     rites: Rites;
     slices: number[][];
 
-    respect: Map<Clan, RespectCalc>;
-    prestige: Map<Clan, PrestigeCalc>;
-    averageRespect: number;
-    averagePrestige: number;
-    influence: number;
-    
     effort: number;
     production: ProductionReport;
     consumption: Consumption;
@@ -124,11 +112,6 @@ export class ClanDTO {
         this.color = clan.color;
 
         this.relationships = clan.relationships;
-        this.respect = clan.respectMap;
-        this.prestige = prestigeDTO(clan);
-        this.averageRespect = clan.averageRespect;
-        this.averagePrestige = clan.averagePrestige;
-        this.influence = clan.influence;
 
         this.housing = clan.housing;
         this.housingDecision = clan.housingDecision;

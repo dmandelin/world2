@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Clan } from "../model/people/people";
-    import { MarriagePartners, RelationshipView, Stance } from "../model/people/relationships";
+    import { MarriagePartners, RelationshipView, Stance } from "../model/relations/relationships";
     import { pct, spct, unsigned, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import { type Table, CrossTab, SingleRecordTable } from "./tables/tables2";
@@ -17,7 +17,7 @@
         formatFn: (value: CellValue) => string,
         cellTooltip: Snippet<[CellValue, Clan, Clan]>): CrossTab<Clan, CellValue> {
 
-        const clans = sortedByKey(settlement.clans.map(c => c.ref), c => -c.averageRespect);
+        const clans = sortedByKey(settlement.clans.map(c => c.ref), c => c.name);
             
         return new CrossTab<Clan, CellValue>(
             clans,
@@ -44,6 +44,10 @@
         return r.alignment.value;
     }
 
+    function respectCellValue(rowClan: Clan, colClan: Clan): number {
+        return rowClan.respectFor(colClan);
+    }
+
     function stanceCellValue(rowClan: Clan, colClan: Clan): Stance {
         const r = rowClan.relationships.get(colClan);
         if (!r) {
@@ -57,7 +61,10 @@
 </style>
 
 {#snippet interactionVolumeCellTooltip(value: number, subject: Clan, object: Clan)}
-n/a
+    {@const rv = subject.relationships.get(object)}
+    {#if rv}
+        {unsigned(rv.attention)} attention / {rv.object.population} population
+    {/if}
 {/snippet}
 
 {#snippet alignmentCellTooltip(value: number, subject: Clan, object: Clan)}
@@ -70,6 +77,10 @@ n/a
         {spct(a.interactionTypeModifier)} from {a.interactionType}
     {/if}
   {/if}
+{/snippet}
+
+{#snippet respectCellTooltip(value: number, subject: Clan, object: Clan)}
+n/a
 {/snippet}
 
 {#snippet stanceCellTooltip(value: Stance, subject: Clan, object: Clan)}
@@ -85,6 +96,10 @@ n/a
         <div>
             <h3>Alignment</h3>
             <TableView2 table={buildRelationshipsTable(alignmentCellValue, unsignedFormat(2), alignmentCellTooltip)}></TableView2>
+        </div>
+        <div>
+            <h3>Respect</h3>
+            <TableView2 table={buildRelationshipsTable(respectCellValue, unsignedFormat(2), respectCellTooltip)}></TableView2>
         </div>
         <div>
             <h3>Stance</h3>

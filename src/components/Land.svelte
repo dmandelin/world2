@@ -17,7 +17,7 @@
 
 <script lang="ts">
     import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/lib/basics";
-    import { pctFormat, signedFormat } from "../model/lib/format";
+    import { pctFormat, signedFormat, unsigned } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
     import DataTable2 from "./tables/TableView2.svelte";
     import LineGraph from "./LineGraph.svelte";
@@ -72,8 +72,8 @@
             ['Worst SoL', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Happiest', maxbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Least happy', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
-            ['Most influential', maxbyWithValue, clan => clan.influence, pctFormat()],
-            ['Least influential', minbyWithValue, clan => clan.influence, pctFormat()],
+            ['Most prestigious', maxbyWithValue, clan => clan.relationships.prestige, unsigned],
+            ['Least prestigious', minbyWithValue, clan => clan.relationships.prestige, unsigned],
         ];
 
         const clans = [...world.clans()];

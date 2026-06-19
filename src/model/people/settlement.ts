@@ -265,18 +265,6 @@ export class Settlement {
         }
     }
 
-    updatePrestigeViews() {
-        this.clans.forEach(clan => clan.startUpdatingPrestige());
-        this.clans.forEach(clan => clan.finishUpdatingPrestige());
-
-        const totalExpPrestige = this.clans.reduce((acc, clan) =>
-             acc + Math.pow(1.05, clan.averagePrestige - 50), 0);
-        for (const clan of this.clans) {
-            const expPrestige = Math.pow(1.05, clan.averagePrestige - 50);
-            clan.influence = expPrestige / totalExpPrestige;
-        }
-    }
-
     addTimePoint() {
         this.timeline.add(this.world.year, new SettlementTimePoint(this));
     }

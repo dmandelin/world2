@@ -1,7 +1,6 @@
 import { Annals } from "./annals";
 import { chooseFrom, sumFun, shuffled, dice } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
-import { Clans } from "./people/clans";
 import { createTrends } from "./records/trends";
 import { NewSettlementSupplier } from "./people/migration";
 import { Note, type NoteTaker } from "./records/notifications";
@@ -12,10 +11,10 @@ import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
-import { marry } from "./people/marriage";
+import { marry } from "./relations/marriage";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
-import { Friends, Neighbors, Relationship, updateRelationships } from "./people/relationships";
+import { Friends, Neighbors, Relationship, updateRelationships } from "./relations/relationships";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import type { Table, TableColumn, TableRow } from "./tables2";
+    import type { CrossTable, Table, TableColumn, TableRow } from "./tables2";
     import Tooltip from "../Tooltip.svelte";
 
-    let { table } : { table: Table<any, any, any>} = $props<{ table: Table<any, any, any>}>();
+    let { table } : { table: Table<any, any, any>|CrossTable<any, any>} = 
+        $props<{ table: Table<any, any, any>|CrossTable<any, any>}>();
 
     function cellValue(row: TableRow<any, any>, column: TableColumn<any, any, any>) {
         return column.valueFn(row.data);
@@ -60,7 +61,7 @@
         </thead>
     {/if}
     <tbody>
-        {#each table.rows as row}
+        {#each table.rows as row, rowIndex}
             <tr>
                 <td 
                     class:bold={true} 
@@ -68,12 +69,14 @@
                     onclick={() => table.onClickRowHeader?.(row.data)}>
                     {row.label}
                 </td>
-                {#each table.columns as column}
+                {#each table.columns as column, colIndex}
                     <td 
                         class:bold={row.bold} 
                         class:clickable={!!column.onClickCell}
                         onclick={() => column.onClickCell?.(cellValue(row, column), row.data, column.data)}>
-                        {#if column.tooltip}
+                        {#if table.isCrossTable && rowIndex === colIndex}
+                            &nbsp;
+                        {:else if column.tooltip}
                             <Tooltip>
                                 {@render cellHTML(row, column)}
                                  <div slot="tooltip">

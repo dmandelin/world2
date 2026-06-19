@@ -1,13 +1,11 @@
 import { normal } from "../lib/distributions";
-import { clamp, maxbyWithValue, sumValues } from "../lib/basics";
-import type { Clan } from "./people";
+import { average, clamp, maxbyWithValue, sumValues } from "../lib/basics";
+import type { Clan } from "../people/people";
 import type { World } from "../world";
+import { Alignment, updateAlignment } from "./alignment";
+import { Respect } from "./respect";
 
 const REFERENCE_COMMUNITY_SIZE = 150;
-
-export class CalcBase {
-    value: number = 0;
-}
 
 export class Relationships implements Iterable<[Clan, RelationshipView]> {
     private m: Map<Clan, RelationshipView> = new Map();
@@ -16,6 +14,12 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
 
     [Symbol.iterator](): Iterator<[Clan, RelationshipView]> {
         return this.m.entries();
+    }
+
+    *inverted(): Iterable<[Clan, RelationshipView]> {
+        for (const [other, rv] of this) {
+            yield [other, other.relationships.get(this.subject)!];
+        }
     }
 
     get(object: Clan): RelationshipView | undefined {
@@ -40,6 +44,12 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
             }
         }
         return result;
+    }
+
+    get prestige(): number {
+        return average(
+            [...this.inverted()].map(([other, rv]) => rv.respect.value * other.population),
+        )
     }
 
     ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T, attention1?: number, attention2?: number): RelationshipView {
@@ -135,6 +145,7 @@ export class RelationshipView {
     attention = 0;
 
     alignment: Alignment;
+    respect: Respect;
     stance: Stance = Stance.Generous;
 
     // Relatedness by marriage, 0-1.
@@ -142,6 +153,7 @@ export class RelationshipView {
 
     constructor(readonly subject: Clan, readonly object: Clan, readonly relationship: Relationship) {
         this.alignment = new Alignment(subject, object);
+        this.respect = new Respect(subject, object);
     }
 
     update() {
@@ -152,6 +164,7 @@ export class RelationshipView {
         }
         
         this.alignment.update(this);
+        this.respect.update(this);
     }
 
     get coresidenceFraction(): number {
@@ -253,48 +266,6 @@ export class Neighbors extends InteractionChain {
 
     alignmentModifier(rv: RelationshipView): number {
         return 1;
-    }
-}
-
-export class Alignment extends CalcBase {
-    interactionType: string = '';
-    interactionTypeModifier: number = 1;
-
-    attention: number = 0;
-    objectPopulation: number = 1;
-    base: number = 0;
-    value: number = 0;
-
-    constructor(
-        readonly subject: Clan,
-        readonly object: Clan
-    ) {
-        super();
-    }
-
-    clone(): Alignment {
-        const a = new Alignment(this.subject, this.object);
-        a.interactionType = this.interactionType;
-        a.interactionTypeModifier = this.interactionTypeModifier;
-        a.attention = this.attention;
-        a.objectPopulation = this.objectPopulation;
-        a.base = this.base;
-        a.value = this.value;
-        return a;
-    }
-
-    update(rv: RelationshipView) {
-        const [ic, mod] = maxbyWithValue(
-            rv.interactionChains,
-            interactionChain => interactionChain.alignmentModifier(rv)
-        );
-        this.interactionType = ic ? ic.name : '';
-        this.interactionTypeModifier = mod ?? 1;
-
-        this.attention = rv.attention;
-        this.objectPopulation = rv.object.population;
-        this.base = this.attention / this.objectPopulation;
-        this.value = this.base * this.interactionTypeModifier;
     }
 }
 
@@ -401,13 +372,5 @@ export function updateRelationshipsGraph(world: World): void {
                 c1.relationships.removeInteractionChainWith(c2, Neighbors);
             }
         }
-    }
-}
-
-function updateAlignment(world: World): void {
-    for (const clan of world.allClans) {
-        // TODO - Clean this up a bit. Right now this call pretty much just
-        // updates alignment but it's not an exact match.
-        clan.relationships.update();
     }
 }

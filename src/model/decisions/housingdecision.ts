@@ -51,11 +51,11 @@ export class HousingDecision {
 
         this.imitationItems = mapNormalized(
             clan.selfAndNeighbors,
-            other => traitFactor(clan.prestigeViewOf(other)?.value || 0),
+            other => traitFactor(100 * clan.respectFor(other) || 0),
             (other, weight) => new HousingImitationItem(
                 other.name,
                 other.housing,
-                clan.prestigeViewOf(other)?.value || 0,
+                100 * clan.respectFor(other),
                 weight));
         this.model = chooseWeighted(
             this.imitationItems,

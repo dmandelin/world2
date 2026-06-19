@@ -1,5 +1,5 @@
 import { Annals } from "../annals";
-import { clamp, randInt, remove, sumFun } from "../lib/basics";
+import { average, clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
 import { Consumption } from "../econ/consumption";
 import { EffortAllocation } from "../decisions/effort";
@@ -11,12 +11,10 @@ import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } 
 import { MigrationCalc, type NewSettlementSupplier} from "./migration";
 import { normal } from "../lib/distributions";
 import { Operation, ProductionReport } from "../econ/operation";
-import { PrestigeCalc } from "./prestige";
 import { Processes, SkillDefs } from "../econ/econdefs";
 import { QualityOfLife } from "../econ/qol";
-import { Relationships } from "./relationships";
+import { Relationships } from "../relations/relationships";
 import { ResidenceLevel } from "./residence";
-import { RespectCalc } from "./respect";
 import { Rites } from "../rites";
 import { TradeGoods } from "../trade";
 import { Traits } from "./traits";
@@ -102,13 +100,6 @@ export class Clan implements TradePartner {
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
     previousSettlement_: Settlement;
-
-    private respectMap_ = new Map<Clan, RespectCalc>();
-
-    // This clan's views of itself and others.
-    private prestigeViews_ = new Map<Clan, PrestigeCalc>();
-    // Local prestige-generated share of influence.
-    influence = 0;
 
     readonly rites: Rites; // TODO - remove if not used
     ritualGoodsUsage: 'Private'|'Communal' = 'Private';
@@ -284,96 +275,6 @@ export class Clan implements TradePartner {
         return this.migrationPlan.advance(newSettlementSupplier);
     }
 
-    get averageRespect(): number {
-        return weightedAverage(
-            this.settlement.clans, 
-            clan => clan.respectFor(this)?.value ?? 0, 
-            clan => clan.population);
-    }
-
-    get averagePrestige(): number {
-        // TODO - Remove or make it mean something again
-        return 0.5;
-    }
-
-    prestigeViewOf(other: Clan): PrestigeCalc {
-        return this.prestigeViews_.get(other) ?? new PrestigeCalc(this, other);
-    }
-
-    get prestigeViews(): Map<Clan, PrestigeCalc> {
-        return this.prestigeViews_;
-    }
-
-    get respectMap(): Map<Clan, RespectCalc> {
-        return this.respectMap_;
-    }
-
-    respectFor(other: Clan): RespectCalc | undefined {
-        return this.respectMap_.get(other);
-    }
-
-    updateRespect() {
-        // We can observe ourselves.
-        const known = new Set<Clan>();
-        this.createOrUpdateRespectFor(this, known, 0);
-
-        // We have good visibility on neighbors.
-        for (const other of this.settlement.clans) {
-            // Maximum interaction factor is living in the same settlement
-            // full-time without too big total population, but there is
-            // some interaction even if in the local area.
-            const scaleFactor = Math.min(1, 150 / (1 + this.settlement.population));
-            const residenceFactor = 0.25 + 0.75 * Math.min(this.residenceFraction, other.residenceFraction);
-            const interactionFactor = scaleFactor * residenceFactor;
-            this.createOrUpdateRespectFor(other, known, interactionFactor);
-        }
-
-        // TODO - Replace and delete
-        // We have a view on relatives by marriage who are not neighbors,
-        // but don't interact as much.
-        // for (const [other, relatedness] of this.marriagePartners.entries()) {
-        //     this.createOrUpdateRespectFor(other, known, relatedness / 2);
-        // }
-
-        // Remove respect calcs for clans we no longer know about.
-        for (const other of this.respectMap_.keys()) {
-            if (!known.has(other)) {
-                this.respectMap_.delete(other);
-            }
-        }
-    }
-
-    private createOrUpdateRespectFor(other: Clan, known: Set<Clan>, interactionFactor: number) {
-        if (known.has(other)) return;
-        known.add(other);
-
-        if (!this.respectMap_.has(other)) {
-            this.respectMap_.set(other, new RespectCalc(this, other));
-        }
-        this.respectMap_.get(other)!.update(interactionFactor);
-    }
-
-    startUpdatingPrestige() {
-        for (const clan of this.settlement.clans) {
-            if (!this.prestigeViews_.has(clan)) {
-                this.prestigeViews_.set(clan, new PrestigeCalc(this, clan));
-            }
-            this.prestigeViews_.get(clan)!.startUpdate();
-        }
-
-        for (const clan of this.prestigeViews_.keys()) {
-            if (!this.settlement?.clans.includes(clan)) {
-                this.prestigeViews_.delete(clan);
-            }
-        }
-    }
-
-    finishUpdatingPrestige() {
-        for (const clan of this.settlement.clans) {
-            this.prestigeViews_.get(clan)!.commitUpdate();
-        }
-    }
-
     kinshipTo(other: Clan): number {
         const rStep = 0.25;
         if (this === other) return 1;
@@ -394,6 +295,14 @@ export class Clan implements TradePartner {
             ++this.seniority;
         }
     }
+
+    respectFor(other: Clan): number {
+        const rv = this.relationships.get(other);
+        if (!rv) return 0;
+        return rv.respect.value;
+    }
+
+    get prestige(): number { return this.relationships.prestige; }
 
     get helpReceived(): number {
         return sumFun(

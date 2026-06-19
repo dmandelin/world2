@@ -1,7 +1,7 @@
 <script>
   import SkillDelta from './SkillDelta.svelte';
 
-    import { pct, signed, spct } from "../model/lib/format";
+    import { pct, signed, spct, unsigned } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
     import MigrationPlan from "./MigrationPlan.svelte";
@@ -209,7 +209,7 @@
             <tr>
                 <td>
                     <Tooltip>
-                        {clan.averagePrestige.toFixed()}
+                        {unsigned(100 * clan.prestige)}
                         <div slot="tooltip"  class="timeline-tooltip">
                             <div>Influence {pct(clan.influence)}</div>
                             <div>

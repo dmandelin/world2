@@ -132,14 +132,10 @@ export class SettlementCluster {
         }
     }
 
+    // TODO - Update and remove
     updatePerceptions(): void {
         for (const s of this.settlements) {
             s.updateSeniority();
-            s.updatePrestigeViews();
-
-            for (const clan of s.clans) {
-                clan.updateRespect();
-            }
         }
     }
 

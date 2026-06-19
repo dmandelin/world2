@@ -15,6 +15,8 @@ export interface Table<RowData, ColData, ColumnCellDataTypes extends any[]> {
 
     // If set, clicking on a row header will call this function with the row data.
     onClickRowHeader?: (row: RowData) => void;
+
+    isCrossTable?: false;
 }
 
 // View-data model for a table column. Includes a value function (how to get`
@@ -75,6 +77,8 @@ export interface CrossTable<RowColData, CellData> {
 
     // If set, clicking on a row header will call this function with the row data.
     onClickRowHeader?: (row: RowColData) => void;
+
+    isCrossTable: true;
 }
 
 // Table from a single record with
@@ -174,6 +178,7 @@ export class IterableTable<RowData, ColumnCellDataTypes extends any[]> implement
 export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, CellData> {
     columns: TableColumn<RowColData, RowColData, CellData>[];
     rows: TableRow<RowColData, RowColData>[];
+    readonly isCrossTable = true;
 
     constructor(       
         data: Iterable<RowColData>,

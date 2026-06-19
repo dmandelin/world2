@@ -1,7 +1,7 @@
-import { remove } from "../lib/basics";
+import { remove, shuffled, sortedByKey } from "../lib/basics";
 import { weightedRandInt } from "../lib/distributions";
 import type { World } from "../world";
-import type { Clan } from "./people";
+import type { Clan } from "../people/people";
 import { MarriagePartners } from "./relationships";
 
 // Marry people in the 20-40 age range in the given region.
@@ -22,23 +22,23 @@ import { MarriagePartners } from "./relationships";
 //
 // For pairings, the model is that potential husbands and their
 // clans "offer" and potential wives and their clans "choose".
-// We won't go so detailed to give different appeal for individuals,
-// but there could be some variable factors about clans.
 export function marry(world: World): void {
     const clans = world.allClans;
     const pairingCounts = new PairingCounts();
 
     const potentialHusbands = clans.map(clan => {
         const count = clan.slices[1][0];
-        return new PotentialPartnerSet(clan, clan.averagePrestige, count);
+        return new PotentialPartnerSet(clan, count);
     });
 
-    // Gather potential wives and set them up to act in order of appeal.
-    const potentialWives = clans.map(clan => {
+    const unsortedPotentialWives = clans.map(clan => {
         const count = clan.slices[1][0];
-        return new PotentialPartnerSet(clan, clan.averagePrestige, count);
+        return new PotentialPartnerSet(clan, count);
     });
-    potentialWives.sort((a, b) => b.appeal - a.appeal);
+    const potentialWives = sortedByKey(
+        unsortedPotentialWives,
+        ps => -ps.clan.prestige,
+    );
 
     // Let each potential wife choose from available offers. Here we only
     // record the wedding, but don't update populations yet.
@@ -57,7 +57,7 @@ export function marry(world: World): void {
 
         for (let i = 0; i < wifeSet.count; ++i) {
             if (offers.length === 0) break;
-            const choiceIndex = weightedRandInt(offers, o => Math.pow(10, o.appeal / 100));
+            const choiceIndex = weightedRandInt(offers, o => Math.pow(10, -o.clan.prestige));
             const chosenHusbandSet = offers[choiceIndex];
             if (chosenHusbandSet.clan === wifeSet.clan) {
                 continue;
@@ -116,7 +116,7 @@ class PotentialPartnerSet {
     marriedTo: Map<Clan, number> = new Map();
     taken = 0;
 
-    constructor(readonly clan: Clan, readonly appeal: number, readonly count: number) {
+    constructor(readonly clan: Clan, readonly count: number) {
     }
 
     addMarriage(clan: Clan, count: number = 1) {

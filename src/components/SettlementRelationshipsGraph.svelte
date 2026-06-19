@@ -3,7 +3,7 @@
     import ButtonPanel from './ButtonPanel.svelte';
     import type { SettlementDTO } from '../model/records/dtos';
     import { colorInterpolator } from '../model/lib/basics';
-    import { Friends, MarriagePartners } from '../model/people/relationships';
+    import { Friends, MarriagePartners } from '../model/relations/relationships';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
@@ -96,6 +96,14 @@
         }
     }
 
+    class RespectDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
+            for (const [other, r] of clan.relationships) {
+                yield [other, '-', r.respect.value / 2, alignmentColorInterpolator(r.respect.value)];
+            }
+        }
+    }
+    
     class MutualHelpDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
             for (const [other, help] of clan.helpAllocation) {
@@ -311,6 +319,7 @@
         { label: "K", tooltip: "Kinship relationships", data: new KinshipRelationshipDisplayOption() },
         { label: "F", tooltip: "Friendship relationships", data: new FriendshipRelationshipDisplayOption() },
         { label: "A", tooltip: "Alignment", data: new AlignmentDisplayOption() },
+        { label: "R", tooltip: "Respect", data: new RespectDisplayOption() },
         { label: "H", tooltip: "Mutual help", data: new MutualHelpDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>
