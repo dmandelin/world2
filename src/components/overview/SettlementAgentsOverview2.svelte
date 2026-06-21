@@ -94,7 +94,7 @@
 
     function clanPrestigeTooltipTable(clan: ClanDTO) {
         return new IterableTable(
-            clan.relationships.prestigeItems,
+            clan.relationships.localRespectItems,
             item => item.label,
             [{
                 data: 'Respect',
@@ -425,17 +425,17 @@
                 {/each}
             </tr>
             <tr class="actual">
-                <td>Local Prestige</td>
+                <td>Local Respect</td>
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {signed(cs.e.relationships.prestige)}
+                            {signed(cs.e.relationships.localRespect)}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <TableView2 table={clanPrestigeTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.relationships.prestige, signed)}
+                    {@render deltaCell(cs, c => c.relationships.localRespect, signed)}
                 {/each}
             </tr>            <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">

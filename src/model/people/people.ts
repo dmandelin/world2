@@ -302,7 +302,8 @@ export class Clan implements TradePartner {
         return rv.respect.value;
     }
 
-    get prestige(): number { return this.relationships.prestige; }
+    // Respect within settlement.
+    get localRespect(): number { return this.relationships.localRespect; }
 
     get helpReceived(): number {
         return sumFun(

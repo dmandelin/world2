@@ -176,12 +176,12 @@ export class PopulationChangeBuilder {
         // marriage matching, so we make it pretty big to account for whatever
         // else would be going on such as stress or better access to certain
         // resources.
-        const respectBrModifier = 1 + 0.003 * this.clan.prestige;
+        const respectBrModifier = 1 + 0.003 * this.clan.localRespect;
         this.brModifiers.push(new PopulationChangeModifier(
-            'Respect', this.clan.prestige, respectBrModifier));
-        const respectDrModifier = 1 - 0.002 * this.clan.prestige;
+            'Respect', this.clan.localRespect, respectBrModifier));
+        const respectDrModifier = 1 - 0.002 * this.clan.localRespect;
         this.drModifiers.push(new PopulationChangeModifier(
-            'Respect', this.clan.prestige, respectDrModifier));
+            'Respect', this.clan.localRespect, respectDrModifier));
 
         this.brModifier = productFun(this.brModifiers, m => m.value);
         if (isNaN(this.brModifier)) debugger;

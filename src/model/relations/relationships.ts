@@ -1,4 +1,4 @@
-import { average, clamp, sum } from "../lib/basics";
+import { average, clamp, sortedByKey, sum, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { World } from "../world";
 import { Alignment, updateAlignment } from "./alignment";
@@ -43,19 +43,19 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         return result;
     }
 
-    get prestige(): number {
-        return average(
-            [...this.inverted()].map(([other, rv]) => rv.respect.value * other.population),
-        )
+    // Weighted average respect within settlement.
+    get localRespect(): number {
+        return 100 * sumFun(this.localRespectItems, item => item.weightedValue);
     }
 
-    get prestigeItems() {
-        const totalWeight = sum([...this.inverted()].map(([other, rv]) => other.population));
-        return [...this.inverted()].map(([other, rv]) => ({
-            label: other.name,
-            respect: rv.respect.value,
-            weight: other.population / totalWeight,
-            weightedValue: rv.respect.value * other.population / totalWeight,
+    get localRespectItems() {
+        const clans = sortedByKey(this.subject.settlement.clans, clan => clan.name);
+        const totalWeight = sum(clans.map((neighbor) => neighbor.population));
+        return clans.map(neighbor => ({
+            label: neighbor.name,
+            respect: neighbor.respectFor(this.subject),
+            weight: neighbor.population / totalWeight,
+            weightedValue: neighbor.respectFor(this.subject) * neighbor.population / totalWeight,
         }));
     }
 

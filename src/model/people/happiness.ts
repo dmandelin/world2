@@ -388,7 +388,7 @@ class StatusHappinessItem extends NumericHappinessItem {
     get isSocial(): boolean {
         return true;
     }
-    
+
     get label(): string {
         return 'Status';
     }
@@ -404,7 +404,7 @@ class StatusHappinessItem extends NumericHappinessItem {
     }
 
     updateState(clan: Clan): void {
-        this.state_ = clan.prestige;
+        this.state_ = clan.localRespect;
     }
 
     clone(): StatusHappinessItem {

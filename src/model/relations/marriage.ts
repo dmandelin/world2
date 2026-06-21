@@ -37,7 +37,7 @@ export function marry(world: World): void {
     });
     const potentialWives = sortedByKey(
         unsortedPotentialWives,
-        ps => -ps.clan.prestige,
+        ps => -ps.clan.localRespect,
     );
 
     // Let each potential wife choose from available offers. Here we only
@@ -57,7 +57,7 @@ export function marry(world: World): void {
 
         for (let i = 0; i < wifeSet.count; ++i) {
             if (offers.length === 0) break;
-            const choiceIndex = weightedRandInt(offers, o => Math.pow(10, -o.clan.prestige));
+            const choiceIndex = weightedRandInt(offers, o => Math.pow(10, -o.clan.localRespect));
             const chosenHusbandSet = offers[choiceIndex];
             if (chosenHusbandSet.clan === wifeSet.clan) {
                 continue;

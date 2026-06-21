@@ -72,8 +72,8 @@
             ['Worst SoL', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Happiest', maxbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Least happy', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
-            ['Most prestigious', maxbyWithValue, clan => clan.relationships.prestige, unsigned],
-            ['Least prestigious', minbyWithValue, clan => clan.relationships.prestige, unsigned],
+            ['Most prestigious', maxbyWithValue, clan => clan.relationships.localRespect, unsigned],
+            ['Least prestigious', minbyWithValue, clan => clan.relationships.localRespect, unsigned],
         ];
 
         const clans = [...world.clans()];

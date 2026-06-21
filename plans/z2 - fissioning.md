@@ -161,8 +161,13 @@ x   Update alignment based on attention and interactions
             *   Include senior-cadet relationships
             x   Introduce new model
             x   From relationships
+            x   Fix up prestige aggregate - not working right
             *   Other prestige factors
             *   More dependence on relationship factors
+            *   Add self-respect: clans should have information
+                about themselves, can also have self bias
+            *   Come up with some way to visualize prestige differences
+            *   Show sources of respect in a tooltip
         x   Add basic effects for prestige
             x   stress/aid demographic effect
             x   happiness effect
