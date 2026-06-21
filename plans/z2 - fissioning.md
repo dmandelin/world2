@@ -157,6 +157,39 @@ x   Update alignment based on attention and interactions
                 have it affect happiness and demographics
                 (maybe under some name like "stress")
     *   Items to do
+        *   Review architecture of new prestige model
+            *   Immediate problem is that we can't show deltas because
+                we have a big object that we mutate
+            *   Looming problem is that we want clans to be able to
+                have information about clans they don't have a
+                relationship with
+            *   Thoughts
+                *   Might be useful to look at clan-clan relationships
+                    as similar to Operations (ongoing activities that
+                    can be invested in and/or worked on)
+                *   What happens when there are multiple relationships:
+                    kin and neighbors, or marriage and neighbors? 
+                    *   Let's separate the relationship from the interaction
+                        Relationship = when two people/groups believe they
+                        have a certain relation to each other; interactions =
+                        interactions that take place
+                    *   Neighbors *is* then quite significant, but we 
+                        should clarify what kind they are, or get coresidence
+                        mattering more, because neighbors in a small farming
+                        village could be a closer, more familiar relationship
+                        than some
+                *   New data structures needed
+                    *   Family relationships - kin & marriages
+                    *   Clan-clan information
+                    *   Clan -> which clans they can interact with and their
+                        cost
+                    *   Let clans allocate attention there as an allocation
+                    *   Require attention or other costs to maintain relationships
+                        not based on proximity
+                    *   Create an interaction object or the like when they
+                        have attention to each other or a relationship where
+                        they could interact
+                    *   Create ways to add new relationships
         *   Revise prestige model
             *   Include senior-cadet relationships
             x   Introduce new model
