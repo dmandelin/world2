@@ -1,4 +1,4 @@
-import { average, clamp, sortedByKey, sum, sumFun } from "../lib/basics";
+import { average, averageFun, clamp, sortedByKey, sum, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { World } from "../world";
 import { Alignment, updateAlignment } from "./alignment";
@@ -57,6 +57,15 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
             weight: neighbor.population / totalWeight,
             weightedValue: neighbor.respectFor(this.subject) * neighbor.population / totalWeight,
         }));
+    }
+
+    // Local respect relative to weighted average local respect
+    get localPrestige(): number {
+        const averageRespect = averageFun(
+            this.subject.settlement.clans,
+            clan => clan.localRespect
+        );
+        return this.localRespect - averageRespect;
     }
 
     ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T, attention1?: number, attention2?: number): RelationshipView {

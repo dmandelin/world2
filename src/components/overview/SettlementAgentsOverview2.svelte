@@ -92,7 +92,7 @@
              }]);
     }
 
-    function clanPrestigeTooltipTable(clan: ClanDTO) {
+    function clanRespectTooltipTable(clan: ClanDTO) {
         return new IterableTable(
             clan.relationships.localRespectItems,
             item => item.label,
@@ -411,6 +411,32 @@
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
+                <td>Local Prestige</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {signed(cs.e.relationships.localPrestige)}
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.relationships.localPrestige, signed)}
+                {/each}
+            </tr>    
+            <tr class="actual">
+                <td>Local Respect</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {signed(cs.e.relationships.localRespect)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanRespectTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.relationships.localRespect, signed)}
+                {/each}
+            </tr>            
+            <tr><td style="height: 0.5em"></td></tr>
+            <tr class="actual">
                 <td>QoL</td>
                 {#each csnaps as cs}
                     <td class="ra">
@@ -424,20 +450,7 @@
                     {@render deltaCell(cs, c => c.qol.value, signed)}
                 {/each}
             </tr>
-            <tr class="actual">
-                <td>Local Respect</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {signed(cs.e.relationships.localRespect)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanPrestigeTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.relationships.localRespect, signed)}
-                {/each}
-            </tr>            <tr><td style="height: 0.5em"></td></tr>
+            <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
                 <td>Food</td>
                 {#each csnaps as cs}

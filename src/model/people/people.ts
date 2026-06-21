@@ -305,6 +305,9 @@ export class Clan implements TradePartner {
     // Respect within settlement.
     get localRespect(): number { return this.relationships.localRespect; }
 
+    // Respect within settlement relative to weighted average respect.
+    get localPrestige(): number { return this.relationships.localPrestige; }
+    
     get helpReceived(): number {
         return sumFun(
             this.relationships,

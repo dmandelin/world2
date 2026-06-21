@@ -171,17 +171,17 @@ export class PopulationChangeBuilder {
         // It's not clear that hunting and gathering is more or less hazardous
         // than farming, so no death rate modifier.
 
-        // This factor stands in for all the effects of respect on population
+        // This factor stands in for all the effects of prestige on population
         // that are not modeled elsewhere. For now, it only has an effect on
         // marriage matching, so we make it pretty big to account for whatever
         // else would be going on such as stress or better access to certain
         // resources.
-        const respectBrModifier = 1 + 0.003 * this.clan.localRespect;
+        const prestigeBrModifier = 1 + 0.003 * this.clan.localPrestige;
         this.brModifiers.push(new PopulationChangeModifier(
-            'Respect', this.clan.localRespect, respectBrModifier));
-        const respectDrModifier = 1 - 0.002 * this.clan.localRespect;
+            'Prestige', this.clan.localPrestige, prestigeBrModifier));
+        const prestigeDrModifier = 1 - 0.002 * this.clan.localPrestige;
         this.drModifiers.push(new PopulationChangeModifier(
-            'Respect', this.clan.localRespect, respectDrModifier));
+            'Prestige', this.clan.localPrestige, prestigeDrModifier));
 
         this.brModifier = productFun(this.brModifiers, m => m.value);
         if (isNaN(this.brModifier)) debugger;

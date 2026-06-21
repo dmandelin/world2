@@ -166,13 +166,20 @@ x   Update alignment based on attention and interactions
             *   More dependence on relationship factors
             *   Add self-respect: clans should have information
                 about themselves, can also have self bias
+            *   Show cluster-level prestige ratings
             *   Come up with some way to visualize prestige differences
             *   Show sources of respect in a tooltip
+            *   Fix bug where we don't get deltas because we're not
+                cloning (kind of annoying because data structure is
+                complicated)
+            *   Decide exactly which prestige rating affects demographics -
+                right now it's unclear
+            *   Show some kind of text/visual summary of prestige
         x   Add basic effects for prestige
             x   stress/aid demographic effect
             x   happiness effect
         *   Figure out other benefits for prestige
-            *   Make the demographic effect of prestige based on
+            x   Make the demographic effect of prestige based on
                 relative prestige
             *   Marriage
             *   Attention
