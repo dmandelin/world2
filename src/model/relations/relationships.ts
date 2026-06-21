@@ -43,13 +43,21 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         return result;
     }
 
-    // Weighted average respect within settlement.
-    get localRespect(): number {
-        return 100 * sumFun(this.localRespectItems, item => item.weightedValue);
+    // Respect relative to average within a given scope.
+    scopedPrestige(others: readonly Clan[]): number {
+        const averageRespect = averageFun(
+            others, clan => clan.relationships.scopedRespect(others)
+        );
+        return this.scopedRespect(others) - averageRespect;
     }
 
-    get localRespectItems() {
-        const clans = sortedByKey(this.subject.settlement.clans, clan => clan.name);
+    // Weighted average respect in a given scope.
+    scopedRespect(others: readonly Clan[]): number {
+        return 100 * sumFun(this.scopedRespectItems(others), item => item.weightedValue);        
+    }
+
+    scopedRespectItems(others: readonly Clan[]){
+        const clans = sortedByKey(others, clan => clan.name);
         const totalWeight = sum(clans.map((neighbor) => neighbor.population));
         return clans.map(neighbor => ({
             label: neighbor.name,
@@ -59,14 +67,11 @@ export class Relationships implements Iterable<[Clan, RelationshipView]> {
         }));
     }
 
-    // Local respect relative to weighted average local respect
-    get localPrestige(): number {
-        const averageRespect = averageFun(
-            this.subject.settlement.clans,
-            clan => clan.localRespect
-        );
-        return this.localRespect - averageRespect;
-    }
+    get localPrestige(): number { return this.scopedPrestige(this.subject.settlement.clans); }
+    get localRespect(): number { return this.scopedRespect(this.subject.settlement.clans); }
+    get localRespectItems() { return this.scopedRespectItems(this.subject.settlement.clans); }
+
+    get clusterPrestige(): number { return this.scopedPrestige(this.subject.cluster.clans); }
 
     ensureInteractionChainWith<T extends InteractionChain>(object: Clan, ctor: new (clan1: Clan, clan2: Clan) => T, attention1?: number, attention2?: number): RelationshipView {
         // Make sure a relationship exists.

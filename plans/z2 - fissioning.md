@@ -166,7 +166,7 @@ x   Update alignment based on attention and interactions
             *   More dependence on relationship factors
             *   Add self-respect: clans should have information
                 about themselves, can also have self bias
-            *   Show cluster-level prestige ratings
+            x   Show cluster-level prestige ratings
             *   Come up with some way to visualize prestige differences
             *   Show sources of respect in a tooltip
             *   Fix bug where we don't get deltas because we're not

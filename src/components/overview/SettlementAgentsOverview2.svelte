@@ -411,6 +411,17 @@
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
+                <td>Area Prestige</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {signed(cs.e.relationships.clusterPrestige)}
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.relationships.clusterPrestige, signed)}
+                {/each}
+            </tr>    
+            <tr class="actual">
                 <td>Local Prestige</td>
                 {#each csnaps as cs}
                     <td class="ra">
