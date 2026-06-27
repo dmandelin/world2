@@ -12,8 +12,9 @@
     import SkillDelta from "../SkillDelta.svelte";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
-    import type { ClanDTO, StandaloneSettlementDTO } from "../../model/records/dtos";
+    import type { ClanDTO, StandaloneSettlementDTO, WorldDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
+    import { world } from "../../model/world";
 
 	let { 
         settlement, 
@@ -21,6 +22,7 @@
         predictMode,
     }: { 
         settlement: StandaloneSettlementDTO, 
+        world: WorldDTO,
         title: string, 
         predictMode?: boolean,
     } = $props();
@@ -183,31 +185,10 @@
             }]);
     }
 
-    function clanStrongTiesTooltipTable(clan: ClanDTO) {
+    // TODO - Update to use new interactions.
+    function clanConnectionsTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
             clan.relationships.strongTies(),
-            rv => rv.object.name,
-             _ => true,
-             [{
-                data: 'r',
-                label: 'r',
-                valueFn: rv => rv.relatedness,
-                formatFn: (v: number) => pct(v, 0),
-            },{
-                data: 'Res',
-                label: 'Res',
-                valueFn: rv => rv.coresidenceFraction,
-                formatFn: (v: number) => pct(v, 0),
-            },{
-                data: 'Kind',
-                label: 'Kind',
-                valueFn: rv => rv.interactionChains.map(ic => ic.name).join(', '),
-            }]);
-    }
-
-    function clanWeakTiesTooltipTable(clan: ClanDTO) {
-        return new FilteredIterableTable(
-            clan.relationships.weakTies(),
             rv => rv.object.name,
              _ => true,
              [{
@@ -541,31 +522,17 @@
             </tr>
             <tr><td style="height: 0.5em"></td></tr>
             <tr class="actual">
-                <td>Strong ties</td>
+                <td>Connections</td>
                 {#each csnaps as cs}
                     <td class="rap">
                         <Tooltip>
-                            {cs.e.relationships.strongTies().length}
+                            {[...world.connections.entriesForHasUUID(cs.e)].length}
                             <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanStrongTiesTooltipTable(cs.e)}></TableView2>
+                                <TableView2 table={clanConnectionsTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => cs.e.relationships.strongTies().length, signed)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Weak ties</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {cs.e.relationships.weakTies().length}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanWeakTiesTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => cs.e.relationships.weakTies().length, signed)}
+                    {@render deltaCell(cs, c => [...world.connections.entriesForHasUUID(c)].length, signed)}
                 {/each}
             </tr>
             <tr class="actual">

@@ -86,6 +86,7 @@ function clanRefsOfPairID(pairID: PairID, world: World): [Clan, Clan] {
 
 export class ConnectionGraph {
     readonly m_: Map<PairID, Connection[]> = new Map();
+    readonly a_: Map<string, Set<PairID>> = new Map();
 
     entries(): Iterable<[PairID, Connection[]]> {
         return this.m_.entries();
@@ -98,6 +99,12 @@ export class ConnectionGraph {
         return connections.find(c => c instanceof type) as T | undefined;
     }
 
+    entriesForHasUUID(c: HasUUID) : Iterable<[PairID, Connection[]]> {
+        const pairIDs = this.a_.get(c.uuid);
+        if (!pairIDs) return [];
+        return [...pairIDs].map(pairID => [pairID, this.m_.get(pairID)!] as [PairID, Connection[]]);
+    }
+
     getOrCreate<T extends Connection>(
         c1: HasUUID, 
         c2: HasUUID, 
@@ -108,6 +115,14 @@ export class ConnectionGraph {
         if (!connections) {
             connections = [];
             this.m_.set(pairID, connections);
+            if (!this.a_.has(c1.uuid)) {
+                const s = new Set<PairID>([pairID]);
+                this.a_.set(c1.uuid, s);
+            }
+            if (!this.a_.has(c2.uuid)) {
+                const s = new Set<PairID>([pairID]);
+                this.a_.set(c2.uuid, s);
+            }
         }
         let connection = connections.find(c => c instanceof type) as T | undefined;
         if (type && !connection) {
@@ -145,15 +160,27 @@ export class ConnectionGraph {
             connections.splice(index, 1);
             if (connections.length === 0) {
                 this.m_.delete(pairID);
+
+                const [uuid1, uuid2] = pairID.split('|');
+                const set1 = this.a_.get(uuid1);
+                const set2 = this.a_.get(uuid2);
+                if (set1) {
+                    set1.delete(pairID);
+                }
+                if (set2) {
+                    set2.delete(pairID);
+                }
             }
         }
     }
 
-    // Clones the map but not the Connection instances.
     clone(): ConnectionGraph {
         const g = new ConnectionGraph();
         for (const [pairID, connections] of this.m_) {
             g.m_.set(pairID, connections.map(c => c.clone()));
+        }
+        for (const [uuid, set] of this.a_) {
+            g.a_.set(uuid, new Set(set));
         }
         return g;
     }

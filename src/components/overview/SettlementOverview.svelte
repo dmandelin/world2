@@ -13,6 +13,7 @@
     <div>
         <SettlementAgentsOverview2 
             settlement={settlement} 
+            world={settlement.world}
             title={`As of ${settlement.world.year}`}/>
     </div>
 </div>
