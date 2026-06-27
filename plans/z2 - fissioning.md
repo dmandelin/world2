@@ -125,6 +125,8 @@ still has per-clan texture but is more gradual and less sudden.
 
 # Model changes
 
+*   Firm up exactly what snapshots we're showing, maybe should
+    be simply UI snapshot comparisons
 *   Fix up relationship model
     x   Basic new relationship structure
     x   Display something reasonable in debug panel

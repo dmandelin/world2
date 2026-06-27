@@ -1,5 +1,5 @@
 import { Annals } from "../annals";
-import { average, clamp, randInt, remove, sumFun } from "../lib/basics";
+import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
 import { Consumption } from "../econ/consumption";
 import { EffortAllocation } from "../decisions/effort";
@@ -123,6 +123,8 @@ export class Clan implements TradePartner {
     qol: QualityOfLife = new QualityOfLife(new Map());
 
     private readonly happinessCalc_: HappinessCalc;
+
+    notifications: ClanNotification[] = [];
 
     // Adds the clan to the settlement.
     constructor(
@@ -538,8 +540,18 @@ export class Clan implements TradePartner {
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
 
-        // We can't update relationships properly until the clan is added to the
-        // settlement, so that's done elsewhere.
+        this.notifications.push(new ClanNotification('s', `Split off clan ${newClan.name} (${newClan.population})`));
+        newClan.notifications.push(new ClanNotification('n', `Split off from clan ${this.name} (${this.population})`));
+        console.log('notifs now', this.notifications, newClan.notifications);
+
         return newClan;
     }
+
+    clearNotifications() {
+        this.notifications = [];
+    }
+}
+
+export class ClanNotification {
+    constructor(readonly tag: string, readonly message: string) {}
 }

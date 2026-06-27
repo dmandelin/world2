@@ -1,7 +1,7 @@
 import { populationAverage } from "../lib/modelbasics";
 import { sortedByKey, sumFun } from "../lib/basics";
 import { TradeGood } from "../trade";
-import type { Clan } from "../people/people";
+import type { Clan, ClanNotification } from "../people/people";
 import type { ClanSkills } from "../people/clanskills";
 import type { Consumption } from "../econ/consumption";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
@@ -105,6 +105,8 @@ export class ClanDTO {
     strength: number;
     traits: string[];
 
+    notifications: ClanNotification[];
+
     constructor(clan: Clan) {
         this.year = clan.world.year.toString();
         this.uuid = clan.uuid;
@@ -148,6 +150,8 @@ export class ClanDTO {
         this.intelligence = clan.intelligence;
         this.strength = clan.strength;
         this.traits = [...clan.traits].map(t => t.name);
+
+        this.notifications = [...clan.notifications];
     }
 }
 
@@ -342,31 +346,42 @@ export class WorldDTO {
 }
 
 export type ClanLastTurnSnapshots = {
+    // Beginning of turn snapshot.
     b?: ClanDTO;
+    // End of turn snapshot. If the clan didn't exist at the end of the turn,
+    // this will be the current snapshot.
     e: ClanDTO;
+    // End of previous turn snapshot.
     p?: ClanDTO;
-    worldB?: WorldDTO;
+    // Current snapshot.
+    c: ClanDTO;
+    worldB: WorldDTO;
     worldE: WorldDTO;
     worldP?: WorldDTO;
+    worldC: WorldDTO;
 }
 
 export function getClanLastTurnSnapshots(settlement: StandaloneSettlementDTO, world: WorldDTO): ClanLastTurnSnapshots[] {
     const worldB = world.beginningOfTurnSnapshot;
     const worldE = world.endOfTurnSnapshot;
     const worldP = world.previousEndOfTurnSnapshot;
+    const worldC = world;
 
     const settlementB = worldB?.settlements.find(s => s.uuid === settlement.uuid);
     const settlementE = worldE?.settlements.find(s => s.uuid === settlement.uuid);
     const settlementP = worldP?.settlements.find(s => s.uuid === settlement.uuid);
+    const settlementC = worldC?.settlements.find(s => s.uuid === settlement.uuid);
 
-    return settlementE?.clans.map(clanE => {
+    return settlementC?.clans.map(clanC => {
         return {
-            b: settlementB?.clans.find(c => c.uuid === clanE.uuid),
-            e: clanE,
-            p: settlementP?.clans.find(c => c.uuid === clanE.uuid),
+            b: settlementB?.clans.find(c => c.uuid === clanC.uuid),
+            e: settlementE?.clans.find(c => c.uuid === clanC.uuid) ?? clanC,
+            p: settlementP?.clans.find(c => c.uuid === clanC.uuid),
+            c: clanC,
             worldB: worldB,
             worldE: worldE,
             worldP: worldP,
+            worldC: worldC,
         };
     }) ?? [];
 }

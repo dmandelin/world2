@@ -1,10 +1,13 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import { selectEntity, type Uuidable } from "./uistate.svelte";
 
     let {
-        entity
+        entity,
+        extra,
     }: {
         entity: Uuidable & { name: string };
+        extra?: Snippet<[any]>;
     } = $props();
 
 </script>
@@ -23,5 +26,8 @@
 <button 
     type="button"
     onclick={() => selectEntity(entity)}>
-    {entity.name}
+    {entity.name} 
+    {#if extra}
+        <span style="font-size: 0.8em; color: gray;">{@render extra(entity)}</span>
+    {/if}
 </button>

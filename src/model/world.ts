@@ -246,6 +246,8 @@ export class World implements NoteTaker {
 
     advanceFromUserPlanningView() {
         log('World >>> Advance from user planning view');
+        for (const clan of this.allClans) clan.clearNotifications();
+        console.log('Cleared notifications for all clans');
         this.advance();
         this.behave();
         log('World <<< Advance from user planning view');
@@ -262,6 +264,7 @@ export class World implements NoteTaker {
         // Split and merge at the start so that new clans plan.
         if (!priming) {
             for (const clan of [...this.allClans]) clan.splitIfNeeded();
+            console.log("Did splits")
         }
         // TODO - Bring back
         //this.clans.merge();

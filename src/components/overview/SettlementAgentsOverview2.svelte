@@ -12,7 +12,8 @@
     import Tooltip from "../Tooltip.svelte";
     import { getClanLastTurnSnapshots, type ClanDTO, type StandaloneSettlementDTO, type WorldDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
-
+    import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
+    
 	let { 
         settlement, 
         world,
@@ -279,6 +280,12 @@
     </td>
 {/snippet}
 
+{#snippet clanNotifications(clan: ClanDTO)}
+    {#each clan.notifications as n}
+        <SimpleTooltip tip={n.message}>{n.tag}</SimpleTooltip>
+    {/each}
+{/snippet}
+
 <div id="top" class={predictMode ? 'predict' : ''}>
     <h3 style="margin-block-end: 0.5em;">{title}</h3>
 
@@ -287,7 +294,11 @@
             <tr>
                 <td></td>
                 {#each csnaps as cs}
-                    <td class="clan-header" colspan="2"><EntityLink entity={cs.e} /></td>
+                    <td class="clan-header" colspan="2">
+                        <EntityLink 
+                            entity={cs.c}
+                            extra={clanNotifications} />
+                    </td>
                 {/each}
             </tr>
         </thead>
