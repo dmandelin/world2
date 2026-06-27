@@ -23,6 +23,7 @@ import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
+import type { ConnectionGraph } from "../relations/connection";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -296,6 +297,7 @@ export class ClusterDTO {
 export class WorldDTO {
     readonly year: string;
     readonly clusters: ClusterDTO[] = [];
+    readonly connections: ConnectionGraph;
     readonly timeline: Timeline<TimePoint>;
     readonly trends: TrendDTO[];
     readonly notes: Note[];
@@ -303,6 +305,7 @@ export class WorldDTO {
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
+        this.connections = world.connections.shallowClone();
 
         this.timeline = world.timeline;
         this.trends = world.trends.map(t => t.asDTO);

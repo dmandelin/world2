@@ -3,6 +3,7 @@ import { weightedRandInt } from "../lib/distributions";
 import type { World } from "../world";
 import type { Clan } from "../people/people";
 import { MarriagePartners } from "./relationships";
+import { MarriageConnection } from "./connection";
 
 // Marry people in the 20-40 age range in the given region.
 //
@@ -96,6 +97,29 @@ export function marry(world: World): void {
             }
             if (rv.relatedness < 0.03) {
                 c1.relationships.removeInteractionChainWith(rv.object, MarriagePartners);
+            }
+        }
+    }
+
+    // New data structure code for the above.
+    for (const [pairID, connections] of world.connections.entries()) {
+        for (const connection of connections) {
+            if (connection instanceof MarriageConnection) {
+                connection.relatedness *= 0.5;
+                if (connection.relatedness < 0.03) {
+                    world.connections.remove(pairID, connection);
+                }
+            }
+        }
+    }
+    for (const [c1, m] of pairingCounts.counts) {
+        for (const [c2, count] of m) {
+            const relatednessIncrement = count / c1.population;
+            if (relatednessIncrement < 0.03) continue;
+            const connection = world.connections.getOrCreateForType(c1, c2, MarriageConnection);
+            connection.relatedness += relatednessIncrement;
+            if (connection.relatedness > 1) {
+                connection.relatedness = 1;
             }
         }
     }

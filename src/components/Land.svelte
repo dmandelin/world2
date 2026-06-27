@@ -138,4 +138,16 @@
             </div>
         </div>
     </div>
+
+    <div>
+        <h4>Connections</h4>
+        {#each world.connections.entries() as [pairID, connections]}
+            <div><b>{pairID}</b></div>
+            {#each connections as connection}
+                <div>
+                    {connection.debugString()}
+                </div>
+            {/each}
+        {/each}
+    </div>
 </div>
