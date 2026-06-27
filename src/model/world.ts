@@ -15,7 +15,7 @@ import { marry } from "./relations/marriage";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
 import { Friends, Neighbors, Relationship, updateRelationships } from "./relations/relationships";
-import { ConnectionGraph } from "./relations/connection";
+import { ConnectionGraph, NeighborConnection } from "./relations/connection";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -245,6 +245,7 @@ export class World implements NoteTaker {
     private behave(priming: boolean = false) {
         log('World >>> Behave');
 
+        this.planConnections();
         updateRelationships(this);
         this.updatePerceptions();
 
@@ -327,71 +328,19 @@ export class World implements NoteTaker {
         }
     }
 
-    // TODO - Delete after moving any code we need.
-    updateRelationships() {
-        // Update neighbor relationships:
-        // - Clans in the same settlement are automatically neighbors up 
-        //   to a certain size.
-        // - Clans not in the sames settlement are not neighbors.
-        for (const settlement of this.allSettlements) {
-            for (const c1 of settlement.clans) {
-                for (const [c2, relationship] of c1.relationships) {
-                    if (c1 === c2) continue;
-                    if (c1.settlement !== c2.settlement) {
-                        c1.relationships.removeInteractionChainWith(c2, Neighbors);
-                    }
-                }
-            }
-        }
+    planConnections() {
+        // Make everyone a neighbor of everyone else in the same settlement.
+        this.connections.keepOnlyForType(
+            (c1, c2, connection) => c1.settlement === c2.settlement,
+            NeighborConnection,
+            this,
+        );
         for (const settlement of this.allSettlements) {
             for (const c1 of settlement.clans) {
                 for (const c2 of settlement.clans) {
-                    if (c1 === c2) continue;
-                    if (c1.settlement === c2.settlement) {
-                        c1.relationships.ensureInteractionChainWith(c2, Neighbors);
-                    }
+                    if (c1.uuid >= c2.uuid) continue;
+                    this.connections.getOrCreateForType(c1, c2, NeighborConnection);
                 }
-            }
-        }
-
-        // Update friendship relations. At first we'll assume this is pretty
-        // fluid and have each clan find up to 2 non-kin friends in their
-        // local area, which can be different each turn.
-        for (const settlement of this.allSettlements) {
-            for (const c1 of settlement.clans) {
-                c1.relationships.removeAllInteractionChainsOfType(Friends);
-            }
-
-            const needs = new Map<Clan, number>();
-            let totalNeeds = 0;
-            for (const c1 of settlement.clans) {
-                needs.set(c1, 2);
-                totalNeeds += 2;
-            }
-
-            while (totalNeeds > 0) {
-                const c1 = chooseFrom(needs.keys());
-                const choices = Array.from(needs.keys()).filter(c => c !== c1);
-                if (choices.length === 0) break;
-                const c2 = chooseFrom(choices);
-                c1.relationships.ensureInteractionChainWith(c2, Friends);
-                needs.set(c1, needs.get(c1)! - 1);
-                if (needs.get(c1)! <= 0) {
-                    needs.delete(c1);
-                }
-                needs.set(c2, needs.get(c2)! - 1);
-                if (needs.get(c2)! <= 0) {
-                    needs.delete(c2);
-                }
-                totalNeeds -= 2;
-            }
-        }
-
-        // Update the individual relationships.
-        const seen = new Set<Relationship>();
-        for (const settlement of this.allSettlements) {
-            for (const c1 of settlement.clans) {
-                c1.relationships.update();
             }
         }
     }

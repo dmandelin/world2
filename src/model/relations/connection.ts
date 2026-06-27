@@ -44,7 +44,7 @@ export class FriendshipConnection extends Connection {
 
 export class NeighborConnection extends Connection {
     debugString(): string {
-        return "NeighborConnection";
+        return "neighbors";
     }
 
     clone(): NeighborConnection {
@@ -62,6 +62,13 @@ export function pairIDOf(c1: HasUUID, c2: HasUUID): PairID {
 }
 
 export function clansOfPairID(pairID: PairID, world: WorldDTO): [ClanDTO, ClanDTO] {
+    const [uuid1, uuid2] = pairID.split('|');
+    const c1 = world.allClans.find(c => c.uuid === uuid1);
+    const c2 = world.allClans.find(c => c.uuid === uuid2);
+    return [c1!, c2!];
+}
+
+function clanRefsOfPairID(pairID: PairID, world: World): [Clan, Clan] {
     const [uuid1, uuid2] = pairID.split('|');
     const c1 = world.allClans.find(c => c.uuid === uuid1);
     const c2 = world.allClans.find(c => c.uuid === uuid2);
@@ -95,6 +102,22 @@ export class ConnectionGraph {
             connections.push(connection);
         }
         return connection;
+    }
+    
+    keepOnlyForType<T extends Connection>(
+        keepFn: (c1: Clan, c2: Clan, connection: Connection) => boolean, 
+        type: new () => T,
+        world: World) {
+        for (const [pairID, connections] of this.m_) {
+            const [c1, c2] = clanRefsOfPairID(pairID, world);
+            for (const connection of connections) {
+                if (connection instanceof type) {
+                    if (!keepFn(c1, c2, connection)) {
+                        this.remove(pairID, connection);
+                    }
+                }
+            }
+        }
     }
 
     remove(pairID: PairID, connection: Connection) {

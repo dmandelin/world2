@@ -312,6 +312,8 @@ export class Neighbors extends InteractionChain {
 
 export function updateRelationships(world: World): void {
     updateRelationshipsGraph(world);
+
+    // TODO - Should be part of perceptions.
     updateAlignment(world);
 }
 

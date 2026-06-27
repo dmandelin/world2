@@ -130,7 +130,7 @@ still has per-clan texture but is more gradual and less sudden.
     x   Display something reasonable in debug panel
     *   Kin working in new structure
     x   Marriage working in new structure
-    *   Neighbors working in new structure
+    x   Neighbors working in new structure
     *   Friends working in new structure
     *   New "relationship operation" concept
     *   Basic information exchange operation
