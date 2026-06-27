@@ -23,7 +23,7 @@ import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
-import type { ConnectionGraph } from "../relations/connection";
+import { clansOfPairID, Connection, type ConnectionGraph } from "../relations/connection";
 import type { InteractionGraph } from "../relations/interaction";
 
 export type TradeRelationshipsDTO = {
@@ -107,8 +107,8 @@ export class ClanDTO {
 
     notifications: ClanNotification[];
 
-    constructor(clan: Clan) {
-        this.year = clan.world.year.toString();
+    constructor(clan: Clan, readonly world: WorldDTO) {
+        this.year = world.year.toString();
         this.uuid = clan.uuid;
 
         this.ref = clan;
@@ -155,7 +155,7 @@ export class ClanDTO {
     }
 }
 
-export class StandaloneSettlementDTO {
+export class SettlementDTO {
     readonly uuid: string;
     readonly ref: Settlement;
     readonly name: string;
@@ -179,10 +179,10 @@ export class StandaloneSettlementDTO {
 
     readonly timeline: Timeline<SettlementTimePoint>;
 
-    constructor(settlement: Settlement) {
+    constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
         this.ref = settlement;
         this.clans = sortedByKey([...settlement.clans].map(clan => 
-            new ClanDTO(clan)), clan => clan.name);
+            new ClanDTO(clan, world)), clan => clan.name);
 
         this.uuid = settlement.uuid;
         this.name = settlement.name;
@@ -210,52 +210,6 @@ export class StandaloneSettlementDTO {
         return populationAverage(
             this.clans, 
             clan => clan.effortAllocation.farmingRatio());
-    }
-}
-
-// The state of a settlement at the end of a turn. Defined as its own
-// type because even if it has the same data values as another kind of
-// snapshot, the logical meaning is different: values from these can
-// be maningfully compared in ways that values from arbitrary snapshots can't.
-//
-// Use with caution: Probably not hermetic.
-export class SettlementEndOfTurnSnapshot extends StandaloneSettlementDTO {
-    // Logical year that the snapshot gives the state of. Example: if the 
-    // turn for 5500-5480 BC has just completed, this would be 5480 BC.
-    readonly year: string;
-
-    constructor(settlement: Settlement) {
-        super(settlement);
-
-        this.year = settlement.world.year.toString();
-    }
-}
-
-// TODO - Try to avoid having the higher structures.
-export class SettlementDTO extends StandaloneSettlementDTO {
-    constructor(
-        settlement: Settlement, 
-        readonly cluster: ClusterDTO, 
-        readonly world: WorldDTO) {
-            
-        super(settlement);
-    }
-}
-
-// Snapshots for a completed turn.
-export class SettlementTurnSnapshots {
-    // Clan snapshots conveniently grouped together.
-    readonly byClan = new Map<ClanDTO, {bot?: ClanDTO, eot: ClanDTO}>();
-
-    constructor(
-        readonly bot?: StandaloneSettlementDTO, 
-        readonly eot?: StandaloneSettlementDTO) {
-        for (const clan of eot?.clans ?? []) {
-            this.byClan.set(clan, {
-                bot: bot?.clans.find(c => c.name === clan.name),
-                eot: clan,
-            });
-        }
     }
 }
 
@@ -340,6 +294,14 @@ export class WorldDTO {
         return [...this.clans()];
     }
 
+    *connectionsFor(clan: ClanDTO) {
+        for (const [pairID, connections] of this.connections.entriesForHasUUID(clan)) {
+            const [c1, c2] = clansOfPairID(pairID, this);
+            const other = c1 === clan ? c2 : c1;
+            yield [other, connections] as [ClanDTO, Connection[]];
+        }
+    }
+
     advanceFromPlanningView() {
         this.world.advanceFromUserPlanningView();
     }
@@ -361,7 +323,9 @@ export type ClanLastTurnSnapshots = {
     worldC: WorldDTO;
 }
 
-export function getClanLastTurnSnapshots(settlement: StandaloneSettlementDTO, world: WorldDTO): ClanLastTurnSnapshots[] {
+export function getClanLastTurnSnapshots(settlement: SettlementDTO): ClanLastTurnSnapshots[] {
+    const world = settlement.world;
+
     const worldB = world.beginningOfTurnSnapshot;
     const worldE = world.endOfTurnSnapshot;
     const worldP = world.previousEndOfTurnSnapshot;

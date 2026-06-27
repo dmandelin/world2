@@ -115,14 +115,19 @@ export class ConnectionGraph {
         if (!connections) {
             connections = [];
             this.m_.set(pairID, connections);
-            if (!this.a_.has(c1.uuid)) {
-                const s = new Set<PairID>([pairID]);
-                this.a_.set(c1.uuid, s);
+
+            let s1 = this.a_.get(c1.uuid);
+            if (!s1) {
+                s1 = new Set<PairID>();
+                this.a_.set(c1.uuid, s1);
             }
-            if (!this.a_.has(c2.uuid)) {
-                const s = new Set<PairID>([pairID]);
-                this.a_.set(c2.uuid, s);
+            s1.add(pairID);
+            let s2 = this.a_.get(c2.uuid);
+            if (!s2) {
+                s2 = new Set<PairID>();
+                this.a_.set(c2.uuid, s2);
             }
+            s2.add(pairID);
         }
         let connection = connections.find(c => c instanceof type) as T | undefined;
         if (type && !connection) {

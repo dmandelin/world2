@@ -10,23 +10,21 @@
     import SkillDelta from "../SkillDelta.svelte";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
-    import { getClanLastTurnSnapshots, type ClanDTO, type StandaloneSettlementDTO, type WorldDTO } from "../../model/records/dtos";
+    import { getClanLastTurnSnapshots, SettlementDTO, type ClanDTO, type WorldDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     
 	let { 
         settlement, 
-        world,
         title,
         predictMode,
     }: { 
-        settlement: StandaloneSettlementDTO, 
-        world: WorldDTO,
+        settlement: SettlementDTO, 
         title: string, 
         predictMode?: boolean,
     } = $props();
 
-    let csnaps = $derived(getClanLastTurnSnapshots(settlement, world));
+    let csnaps = $derived(getClanLastTurnSnapshots(settlement));
 
     let relevantProcesses = $derived.by(() =>
         sortedByKey(
@@ -183,26 +181,15 @@
             }]);
     }
 
-    // TODO - Update to use new interactions.
     function clanConnectionsTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
-            clan.relationships.strongTies(),
-            rv => rv.object.name,
+            clan.world.connectionsFor(clan),
+             ([other, connections]) => other.name,
              _ => true,
              [{
-                data: 'r',
-                label: 'r',
-                valueFn: rv => rv.relatedness,
-                formatFn: (v: number) => pct(v, 0),
-            },{
-                data: 'Res',
-                label: 'Res',
-                valueFn: rv => rv.coresidenceFraction,
-                formatFn: (v: number) => pct(v, 0),
-            },{
                 data: 'Kind',
                 label: 'Kind',
-                valueFn: rv => rv.interactionChains.map(ic => ic.name).join(', '),
+                valueFn: ([other, connections]) => connections.map(c => c.debugString()).join(', '),
             }]);
     }
 
@@ -534,13 +521,13 @@
                 {#each csnaps as cs}
                     <td class="rap">
                         <Tooltip>
-                            {[...world.connections.entriesForHasUUID(cs.e)].length}
+                            {[...cs.worldE.connectionsFor(cs.e)].length}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <TableView2 table={clanConnectionsTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => [...world.connections.entriesForHasUUID(c)].length, signed)}
+                    {@render deltaCell(cs, c => [...cs.worldE.connectionsFor(c)].length, signed)}
                 {/each}
             </tr>
             <tr class="actual">
