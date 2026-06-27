@@ -24,7 +24,7 @@ import { weightedAverage } from "../lib/modelbasics";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { KinConnection } from "../relations/connection";
+import { KinConnection, NeighborConnection } from "../relations/connection";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -527,7 +527,7 @@ export class Clan implements TradePartner {
         // only one side.
         newClan.relationships.initializeFrom(this.relationships);
         // New structure version.
-        // TODO - Add if we actually need anything.
+        // TODO - Add if we need anything.
 
         // Plan for the new clan, since it didn't get a chance to during the main
         // planning phase. We don't need to update productivity because that happens

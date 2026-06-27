@@ -139,13 +139,6 @@ export class Settlement {
             this.foundationYear_ = this.world.year.clone();
         }
 
-        // Split and merge at the start of the turn so that normal update
-        // logic correctly updates the new clans.
-        
-        for (const clan of [...this.clans]) clan.splitIfNeeded();
-        // TODO - Bring back
-        //this.clans.merge();
-        //this.clans.prune();
 
         for (const clan of this.clans) clan.residenceLevel.update();
     }

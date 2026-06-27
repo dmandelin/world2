@@ -217,6 +217,15 @@ export class World implements NoteTaker {
     // The sequential phases making up a turn are:
     //
     // 1.   Behave: Agents make decisions based on simulated motivations.
+    //      *    Special case: Clans split and merge at the start of the
+    //           behave phase, so that they can otherwise participate in
+    //           the turn completely as normal. In theory this could be
+    //           an action during the advance phase, but then it gets very
+    //           hard to clearly report clan results. Another option is to
+    //           have a separate split/merge phase, but that's too much
+    //           clicking just for splits and merges. This special case is
+    //           equivalent to squashing a post-advance split phase into
+    //           the following behave phase.
     // 2.   User Plan: Show planning view to the human user.
     //      *    There might be tools where the user can invoke some 
     //           automated planning while staying in this view.
@@ -244,6 +253,14 @@ export class World implements NoteTaker {
     // Have (automatic) agents make their plans.
     private behave(priming: boolean = false) {
         log('World >>> Behave');
+
+        // Split and merge at the start so that new clans plan.
+        if (!priming) {
+            for (const clan of [...this.allClans]) clan.splitIfNeeded();
+        }
+        // TODO - Bring back
+        //this.clans.merge();
+        //this.clans.prune();
 
         this.planConnections();
         updateRelationships(this);

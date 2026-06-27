@@ -133,10 +133,16 @@ still has per-clan texture but is more gradual and less sudden.
     x   Neighbors working in new structure
     *   Friends working in new structure
     *   New "relationship operation" concept
-    *   Basic information exchange operation
-    *   Mutual help operation
+        *   General socializing operation
+            *   Transmits information
+            *   Increases alignment
+        *   Mutual help activity
+            *   Condition on connection?
+            *   Condition on alignment?
+    x   Make sure split clans have neighbors at next point
     *   Get an actual map for clan IDs
     *   Make sure deltas can show in main panel
+    *   Point visualizations at new relationship structures
 
 x   Bring back attention limit with relationship updates
 x   Ensure clans use attention and have connections for marriage
