@@ -13,8 +13,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { marry } from "./relations/marriage";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
-import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
-import { Friends, Neighbors, Relationship, updateRelationships } from "./relations/relationships";
+import { updateRelationships } from "./relations/relationships";
 import { ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { InteractionGraph } from "./relations/interaction";
 
@@ -80,6 +79,10 @@ export class World implements NoteTaker {
     ]);
 
     readonly watchers = new Set<(world: World) => void>();
+
+    beginningOfTurnSnapshot_: WorldDTO|undefined;
+    endOfTurnSnapshot_: WorldDTO|undefined;
+    previousEndOfTurnSnapshot_: WorldDTO|undefined;
 
     dto: WorldDTO|undefined;
 
@@ -287,6 +290,7 @@ export class World implements NoteTaker {
     // Advance phase.
     private advance() {
         this.advanceState();
+        // TODO - Try to remove
         this.recordEndOfTurnState();
     }
 
@@ -294,15 +298,12 @@ export class World implements NoteTaker {
     private advanceState() {
         log('World >>> Advance');
 
+        this.beginningOfTurnSnapshot_ = new WorldDTO(this);
+
         // Nature decides.
         const floodLevel = randomFloodLevel();
         for (const cluster of this.clusters) {
             cluster.updateFloodLevel(floodLevel);
-        }
-
-        // TODO - See if we actually need these
-        for (const settlement of this.allSettlements) {
-            settlement.recordBeginningOfTurnSnapshot();
         }
 
         // Advance for cross-cluster events.
@@ -315,6 +316,9 @@ export class World implements NoteTaker {
         }
         // Advance the year.
         this.year.advance(this.yearsPerTurn);
+
+        this.previousEndOfTurnSnapshot_ = this.endOfTurnSnapshot_;
+        this.endOfTurnSnapshot_ = new WorldDTO(this);
 
         log('World <<< Advance');
     }
@@ -333,10 +337,6 @@ export class World implements NoteTaker {
         for (const settlement of this.allSettlements) {
             // TODO - Combine this with newer logging.
             settlement.addTimePoint();
-            settlement.recordEndOfTurnSnapshot();
-            for (const clan of settlement.endOfTurnSnapshot!.clans) {
-                registerClanEndOfTurnSnapshot(clan);
-            }
         }
     }
 
@@ -416,6 +416,18 @@ export class World implements NoteTaker {
 
     get allClans() {
         return this.clusters.flatMap(s => s.clans);
+    }
+
+    get beginningOfTurnSnapshot() {
+        return this.beginningOfTurnSnapshot_;
+    }
+
+    get endOfTurnSnapshot() {
+        return this.endOfTurnSnapshot_;
+    }
+
+    get previousEndOfTurnSnapshot() {
+        return this.previousEndOfTurnSnapshot_;
     }
 
     watch(watcher: (world: World) => void) {

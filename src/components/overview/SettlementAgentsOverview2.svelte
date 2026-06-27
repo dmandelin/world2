@@ -1,10 +1,8 @@
 <script lang="ts">
     import { FilteredIterableTable, IterableTable, SingleMapTable } from "../tables/tables2";
-    import { getClanLastTurnSnapshots } from "../../model/records/snapreg";
     import { pct, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat } from "../../model/lib/format";
     import { safeDiv, sortedByKey } from "../../model/lib/basics";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
-    import ClanRelationshipsDetails from "../clan/ClanRelationshipsDetails.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import EntityLink from "../state/EntityLink.svelte";
     import PopulationChange from "../PopulationChange.svelte";
@@ -12,12 +10,12 @@
     import SkillDelta from "../SkillDelta.svelte";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
-    import type { ClanDTO, StandaloneSettlementDTO, WorldDTO } from "../../model/records/dtos";
+    import { getClanLastTurnSnapshots, type ClanDTO, type StandaloneSettlementDTO, type WorldDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
-    import { world } from "../../model/world";
 
 	let { 
         settlement, 
+        world,
         title,
         predictMode,
     }: { 
@@ -27,8 +25,7 @@
         predictMode?: boolean,
     } = $props();
 
-    let csnaps = $derived([...getClanLastTurnSnapshots(settlement).entries()]
-        .map(([_, snapshots]) => ({ p: snapshots.p, e: snapshots.e!})));
+    let csnaps = $derived(getClanLastTurnSnapshots(settlement, world));
 
     let relevantProcesses = $derived.by(() =>
         sortedByKey(

@@ -1,21 +1,14 @@
-import { isExemplarClan, logExperiment1 } from "../lib/debug";
+import { isExemplarClan } from "../lib/debug";
 import { shuffled, sumFun } from "../lib/basics";
 import { DitchMaintenanceCalc } from "../infrastructure";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
-import { SettlementEndOfTurnSnapshot, SettlementTurnSnapshots, StandaloneSettlementDTO } from "../records/dtos";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
 import type { TradeGood } from "../trade";
 import type { World } from "../world";
 import type { Year } from "../records/year";
 import type { Clan } from "./people";
-import { LaborAllocation } from "../econ/labor";
-import { produce } from "../econ/operation";
-import { Consumption } from "../econ/consumption";
-import { LandAllocation } from "../econ/land";
 import { economicResult } from "../econ/economy";
-
-const maxEndOfTurnSnapshots = 5;
 
 export class Settlement {
     readonly uuid = crypto.randomUUID();
@@ -36,10 +29,6 @@ export class Settlement {
 
     readonly timeline = new Timeline<SettlementTimePoint>();
 
-    beginningOfTurnSnapshot_: StandaloneSettlementDTO|undefined;
-
-    recentEndOfTurnSnapshots: SettlementEndOfTurnSnapshot[] = [];
-    
     constructor(
         readonly world: World,
         readonly name: string, 
@@ -260,29 +249,5 @@ export class Settlement {
 
     addTimePoint() {
         this.timeline.add(this.world.year, new SettlementTimePoint(this));
-    }
-
-    recordBeginningOfTurnSnapshot() {
-        this.beginningOfTurnSnapshot_ = new StandaloneSettlementDTO(this);
-    }
-
-    get beginningOfTurnSnapshot() {
-        return this.beginningOfTurnSnapshot_!;
-    }
-
-    recordEndOfTurnSnapshot() {
-        this.recentEndOfTurnSnapshots.push(new SettlementEndOfTurnSnapshot(this));
-        if (this.recentEndOfTurnSnapshots.length > maxEndOfTurnSnapshots) {
-            this.recentEndOfTurnSnapshots.shift();
-        }
-    }
-
-    get endOfTurnSnapshot(): SettlementEndOfTurnSnapshot|undefined {
-        return this.recentEndOfTurnSnapshots[this.recentEndOfTurnSnapshots.length - 1];
-    }
-
-    get turnSnapshots() {
-        logExperiment1(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot);
-        return new SettlementTurnSnapshots(this.beginningOfTurnSnapshot, this.endOfTurnSnapshot!);
     }
 }

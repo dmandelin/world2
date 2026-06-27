@@ -174,8 +174,6 @@ export class StandaloneSettlementDTO {
     readonly refoundedAfterRiverShift: boolean;
 
     readonly timeline: Timeline<SettlementTimePoint>;
-    readonly turnSnapshots: SettlementTurnSnapshots;
-    readonly recentEndOfTurnSnapshots: SettlementEndOfTurnSnapshot[];
 
     constructor(settlement: Settlement) {
         this.ref = settlement;
@@ -202,28 +200,12 @@ export class StandaloneSettlementDTO {
         this.refoundedAfterRiverShift = settlement.refoundedAfterRiverShift;
 
         this.timeline = settlement.timeline;
-        this.turnSnapshots = settlement.turnSnapshots;
-        this.recentEndOfTurnSnapshots = [...settlement.recentEndOfTurnSnapshots];
     }
 
     get farmingRatio(): number {
         return populationAverage(
             this.clans, 
             clan => clan.effortAllocation.farmingRatio());
-    }
-
-    // TODO - Have a more general registry of snapshot history. Right now
-    // each item in the snapshot history has its own history, which is redundant.
-
-    // Latest end-of-turn snapshot when this DTO was created. During user planning,
-    // that should be the snapshot for the end of the previous turn.
-    get e(): SettlementEndOfTurnSnapshot|undefined {
-        return this.recentEndOfTurnSnapshots[this.recentEndOfTurnSnapshots.length - 1];
-    }
-
-    // Previous end-of-turn snapshot before this.e.
-    get p(): SettlementEndOfTurnSnapshot|undefined {
-        return this.recentEndOfTurnSnapshots[this.recentEndOfTurnSnapshots.length - 2];
     }
 }
 
@@ -304,6 +286,10 @@ export class WorldDTO {
     readonly trends: TrendDTO[];
     readonly notes: Note[];
 
+    readonly beginningOfTurnSnapshot: WorldDTO;
+    readonly endOfTurnSnapshot: WorldDTO;
+    readonly previousEndOfTurnSnapshot: WorldDTO|undefined;
+
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
@@ -313,6 +299,10 @@ export class WorldDTO {
         this.timeline = world.timeline;
         this.trends = world.trends.map(t => t.asDTO);
         this.notes = [...world.notes];
+
+        this.beginningOfTurnSnapshot = world.beginningOfTurnSnapshot!;
+        this.endOfTurnSnapshot = world.endOfTurnSnapshot!;
+        this.previousEndOfTurnSnapshot = world.previousEndOfTurnSnapshot;
     }
 
     get settlements() {
@@ -349,4 +339,34 @@ export class WorldDTO {
     advanceFromPlanningView() {
         this.world.advanceFromUserPlanningView();
     }
+}
+
+export type ClanLastTurnSnapshots = {
+    b?: ClanDTO;
+    e: ClanDTO;
+    p?: ClanDTO;
+    worldB?: WorldDTO;
+    worldE: WorldDTO;
+    worldP?: WorldDTO;
+}
+
+export function getClanLastTurnSnapshots(settlement: StandaloneSettlementDTO, world: WorldDTO): ClanLastTurnSnapshots[] {
+    const worldB = world.beginningOfTurnSnapshot;
+    const worldE = world.endOfTurnSnapshot;
+    const worldP = world.previousEndOfTurnSnapshot;
+
+    const settlementB = worldB?.settlements.find(s => s.uuid === settlement.uuid);
+    const settlementE = worldE?.settlements.find(s => s.uuid === settlement.uuid);
+    const settlementP = worldP?.settlements.find(s => s.uuid === settlement.uuid);
+
+    return settlementE?.clans.map(clanE => {
+        return {
+            b: settlementB?.clans.find(c => c.uuid === clanE.uuid),
+            e: clanE,
+            p: settlementP?.clans.find(c => c.uuid === clanE.uuid),
+            worldB: worldB,
+            worldE: worldE,
+            worldP: worldP,
+        };
+    }) ?? [];
 }
