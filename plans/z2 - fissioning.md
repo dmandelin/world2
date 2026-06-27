@@ -125,6 +125,19 @@ still has per-clan texture but is more gradual and less sudden.
 
 # Model changes
 
+*   Fix up relationship model
+    x   Basic new relationship structure
+    x   Display something reasonable in debug panel
+    *   Kin working in new structure
+    x   Marriage working in new structure
+    *   Neighbors working in new structure
+    *   Friends working in new structure
+    *   New "relationship operation" concept
+    *   Basic information exchange operation
+    *   Mutual help operation
+    *   Get an actual map for clan IDs
+    *   Make sure deltas can show in main panel
+
 x   Bring back attention limit with relationship updates
 x   Ensure clans use attention and have connections for marriage
     ties

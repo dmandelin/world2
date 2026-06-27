@@ -1,12 +1,24 @@
+import { pct } from "../lib/format";
+import type { Clan } from "../people/people";
+import type { ClanDTO, WorldDTO } from "../records/dtos";
+import type { World } from "../world";
+
 export abstract class Connection {
     abstract debugString(): string;
+    abstract clone(): Connection;
 }
 
 export class MarriageConnection extends Connection {
     relatedness: number = 0.0;
 
     debugString(): string {
-        return "MarriageConnection";
+        return `marriages: ${pct(this.relatedness)}`;
+    }
+
+    clone(): MarriageConnection {
+        const c = new MarriageConnection();
+        c.relatedness = this.relatedness;
+        return c;
     }
 }
 
@@ -14,17 +26,29 @@ export class KinConnection extends Connection {
     debugString(): string {
         return "KinConnection";
     }
+
+    clone(): KinConnection {
+        return new KinConnection();
+    }
 }
 
 export class FriendshipConnection extends Connection {
     debugString(): string {
         return "FriendshipConnection";
     }
+
+    clone(): FriendshipConnection {
+        return new FriendshipConnection();
+    }
 }
 
 export class NeighborConnection extends Connection {
     debugString(): string {
         return "NeighborConnection";
+    }
+
+    clone(): NeighborConnection {
+        return new NeighborConnection();
     }
 }
 
@@ -35,6 +59,13 @@ export type HasUUID = { uuid: string };
 export function pairIDOf(c1: HasUUID, c2: HasUUID): PairID {
     const [uuid1, uuid2] = [c1.uuid, c2.uuid].sort();
     return `${uuid1}|${uuid2}`;
+}
+
+export function clansOfPairID(pairID: PairID, world: WorldDTO): [ClanDTO, ClanDTO] {
+    const [uuid1, uuid2] = pairID.split('|');
+    const c1 = world.allClans.find(c => c.uuid === uuid1);
+    const c2 = world.allClans.find(c => c.uuid === uuid2);
+    return [c1!, c2!];
 }
 
 export class ConnectionGraph {
@@ -79,10 +110,10 @@ export class ConnectionGraph {
     }
 
     // Clones the map but not the Connection instances.
-    shallowClone(): ConnectionGraph {
+    clone(): ConnectionGraph {
         const g = new ConnectionGraph();
         for (const [pairID, connections] of this.m_) {
-            g.m_.set(pairID, [...connections]);
+            g.m_.set(pairID, connections.map(c => c.clone()));
         }
         return g;
     }

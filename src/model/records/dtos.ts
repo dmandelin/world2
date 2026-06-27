@@ -305,7 +305,7 @@ export class WorldDTO {
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
-        this.connections = world.connections.shallowClone();
+        this.connections = world.connections.clone();
 
         this.timeline = world.timeline;
         this.trends = world.trends.map(t => t.asDTO);
@@ -337,6 +337,10 @@ export class WorldDTO {
                 }
             }
         }
+    }
+
+    get allClans() {
+        return [...this.clans()];
     }
 
     advanceFromPlanningView() {

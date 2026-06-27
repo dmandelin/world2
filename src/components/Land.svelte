@@ -25,6 +25,7 @@
     import type { ClanDTO, WorldDTO } from "../model/records/dtos";
     import { PopulationScaler, ZeroCenteredScaler } from "./linegraph";
     import { selectClan, selectSettlement } from "./state/uistate.svelte";
+    import { clansOfPairID } from "../model/relations/connection";
 
     let { world }: { world: WorldDTO } = $props();
 
@@ -142,7 +143,8 @@
     <div>
         <h4>Connections</h4>
         {#each world.connections.entries() as [pairID, connections]}
-            <div><b>{pairID}</b></div>
+        {@const [c1, c2] = clansOfPairID(pairID, world)}
+            <div><b>{c1.name} - {c2.name}</b></div>
             {#each connections as connection}
                 <div>
                     {connection.debugString()}
