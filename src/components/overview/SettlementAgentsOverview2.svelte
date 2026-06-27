@@ -187,6 +187,11 @@
              ([other, connections]) => other.name,
              _ => true,
              [{
+                data: 'Att',
+                label: 'Att',
+                valueFn: ([other, connections]) => clan.world.attentionTo(clan, other),
+                formatFn: (v: number) => v.toFixed(0),
+              }, {
                 data: 'Kind',
                 label: 'Kind',
                 valueFn: ([other, connections]) => connections.map(c => c.debugString()).join(', '),

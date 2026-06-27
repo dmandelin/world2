@@ -24,7 +24,7 @@ import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeli
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
 import { clansOfPairID, Connection, type ConnectionGraph } from "../relations/connection";
-import type { InteractionGraph } from "../relations/interaction";
+import { BasicInteraction, type InteractionGraph } from "../relations/interaction";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -300,6 +300,19 @@ export class WorldDTO {
             const other = c1 === clan ? c2 : c1;
             yield [other, connections] as [ClanDTO, Connection[]];
         }
+    }
+
+    interactionsWith(clan: ClanDTO, other: ClanDTO) {
+        return this.interactions.get(clan.ref, other.ref);
+    }
+
+    attentionTo(clan: ClanDTO, other: ClanDTO) {
+        for (const i of this.interactionsWith(clan, other)) {
+            if (i instanceof BasicInteraction) {
+                return i.c1 == clan.uuid ? i.amount1to2 : i.amount2to1;
+            }
+        }
+        return 0;
     }
 
     advanceFromPlanningView() {

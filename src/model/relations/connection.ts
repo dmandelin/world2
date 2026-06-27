@@ -61,6 +61,7 @@ export class NeighborConnection extends Connection {
     }
 }
 
+export type UUID = string;
 export type PairID = string;
 
 export type HasUUID = { uuid: string };
