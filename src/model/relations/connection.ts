@@ -23,18 +23,27 @@ export class MarriageConnection extends Connection {
 }
 
 export class KinConnection extends Connection {
+    readonly senior: string;
+    readonly cadet: string;
+
+    constructor(senior: string, cadet: string) {
+        super();
+        this.senior = senior;
+        this.cadet = cadet;
+    }
+    
     debugString(): string {
-        return "KinConnection";
+        return `kin: ${this.senior} -> ${this.cadet}`;
     }
 
     clone(): KinConnection {
-        return new KinConnection();
+        return new KinConnection(this.senior, this.cadet);
     }
 }
 
 export class FriendshipConnection extends Connection {
     debugString(): string {
-        return "FriendshipConnection";
+        return "friendship";
     }
 
     clone(): FriendshipConnection {
@@ -89,7 +98,11 @@ export class ConnectionGraph {
         return connections.find(c => c instanceof type) as T | undefined;
     }
 
-    getOrCreateForType<T extends Connection>(c1: HasUUID, c2: HasUUID, type: new () => T): T {
+    getOrCreate<T extends Connection>(
+        c1: HasUUID, 
+        c2: HasUUID, 
+        type: new (...args: any[]) => T,
+        provider?: () => T): T {
         const pairID = pairIDOf(c1, c2);
         let connections = this.m_.get(pairID);
         if (!connections) {
@@ -97,8 +110,12 @@ export class ConnectionGraph {
             this.m_.set(pairID, connections);
         }
         let connection = connections.find(c => c instanceof type) as T | undefined;
+        if (type && !connection) {
+            connection = connections.find(c => c instanceof type) as T | undefined;
+        }
+
         if (!connection) {
-            connection = new type();
+            connection = provider ? provider() : new type();
             connections.push(connection);
         }
         return connection;

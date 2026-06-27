@@ -339,7 +339,7 @@ export class World implements NoteTaker {
             for (const c1 of settlement.clans) {
                 for (const c2 of settlement.clans) {
                     if (c1.uuid >= c2.uuid) continue;
-                    this.connections.getOrCreateForType(c1, c2, NeighborConnection);
+                    this.connections.getOrCreate(c1, c2, NeighborConnection);
                 }
             }
         }

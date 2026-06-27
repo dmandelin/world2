@@ -128,7 +128,7 @@ still has per-clan texture but is more gradual and less sudden.
 *   Fix up relationship model
     x   Basic new relationship structure
     x   Display something reasonable in debug panel
-    *   Kin working in new structure
+    x   Kin working in new structure
     x   Marriage working in new structure
     x   Neighbors working in new structure
     *   Friends working in new structure

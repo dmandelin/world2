@@ -116,7 +116,7 @@ export function marry(world: World): void {
         for (const [c2, count] of m) {
             const relatednessIncrement = count / c1.population;
             if (relatednessIncrement < 0.03) continue;
-            const connection = world.connections.getOrCreateForType(c1, c2, MarriageConnection);
+            const connection = world.connections.getOrCreate(c1, c2, MarriageConnection);
             connection.relatedness += relatednessIncrement;
             if (connection.relatedness > 1) {
                 connection.relatedness = 1;
