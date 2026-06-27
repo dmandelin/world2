@@ -16,6 +16,7 @@ import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } fr
 import { registerClanEndOfTurnSnapshot } from "./records/snapreg";
 import { Friends, Neighbors, Relationship, updateRelationships } from "./relations/relationships";
 import { ConnectionGraph, NeighborConnection } from "./relations/connection";
+import { InteractionGraph } from "./relations/interaction";
 
 class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
@@ -71,6 +72,7 @@ export class World implements NoteTaker {
     readonly notes: Note[] = [];
 
     readonly connections = new ConnectionGraph();
+    readonly interactions = new InteractionGraph();
     readonly clusters = new SettlementsBuilder(this).createClusters([
         ['Eridu', 382, 378, 5],
         ['Ur', 425, 325, 5],

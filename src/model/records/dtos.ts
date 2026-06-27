@@ -24,6 +24,7 @@ import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeli
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
 import type { ConnectionGraph } from "../relations/connection";
+import type { InteractionGraph } from "../relations/interaction";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -298,6 +299,7 @@ export class WorldDTO {
     readonly year: string;
     readonly clusters: ClusterDTO[] = [];
     readonly connections: ConnectionGraph;
+    readonly interactions: InteractionGraph;
     readonly timeline: Timeline<TimePoint>;
     readonly trends: TrendDTO[];
     readonly notes: Note[];
@@ -306,6 +308,7 @@ export class WorldDTO {
         this.year = this.world.year.toString();
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
         this.connections = world.connections.clone();
+        this.interactions = world.interactions.clone();
 
         this.timeline = world.timeline;
         this.trends = world.trends.map(t => t.asDTO);

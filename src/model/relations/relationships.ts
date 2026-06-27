@@ -382,6 +382,9 @@ export function updateRelationshipsGraph(world: World): void {
         offers.set(c1, offerMap);
     }
 
+    // Clear previous interactions.
+    world.interactions.clear();
+
     // Match offers and ensure relationships exist.
     const acceptedOffers = new Map<Clan, Set<Clan>>();
     for (const [c1, offerMap] of offers) {
@@ -400,6 +403,7 @@ export function updateRelationshipsGraph(world: World): void {
             const matchedOffer2to1 = matchedRelativeOffer * c1.population;
             if (isNaN(matchedOffer1to2) || isNaN(matchedOffer2to1)) debugger;
             c1.relationships.ensureInteractionChainWith(c2, Neighbors, matchedOffer1to2, matchedOffer2to1);
+            world.interactions.addBasic(c1, c2, matchedOffer1to2, matchedOffer2to1);
 
             if (!acceptedOffers.has(c1)) {
                 acceptedOffers.set(c1, new Set());
