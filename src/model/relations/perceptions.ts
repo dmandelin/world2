@@ -1,15 +1,16 @@
-import { Alignment2 } from "./alignment";
+import { Alignment } from "./alignment";
 import { ClanInformation } from "./information";
-import { clanRefsOfPairID, Connection, ConnectionGraph, type PairID, type UUID } from "./connection";
+import { Connection, ConnectionGraph } from "./connection";
 import { Respect } from "./respect";
 import type { Clan } from "../people/people";
 import type { Interaction } from "./interaction";
 import type { World } from "../world";
+import type { UUID } from "../records/basicdata";
 
 // A clan's perceptions of another.
 export class Perceptions {
     readonly information = new ClanInformation();
-    readonly alignment = new Alignment2();
+    readonly alignment = new Alignment();
     readonly respect = new Respect();
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
@@ -30,6 +31,12 @@ export class PerceptionsGraph {
         const subjectMap = this.m_.get(subject);
         if (!subjectMap) return [];
         return subjectMap.entries();
+    }
+
+    getRegarding(object: UUID): Iterable<[UUID, Perceptions]> {
+        const objectMap = this.r_.get(object);
+        if (!objectMap) return [];
+        return objectMap.entries();
     }
 
     get(subject: UUID, object: UUID): Perceptions | undefined {
@@ -92,7 +99,7 @@ export function updatePerceptions(world: World): void {
     world.perceptions.keepOnlyIn(world.connections);
 
     for (const [pairID, connections] of world.connections.entries()) {
-        const [c1, c2] = clanRefsOfPairID(pairID, world);
+        const [c1, c2] = world.clansFromPairID(pairID);
         const interactions = world.interactions.get(c1, c2);
         const perceptions = world.perceptions.getOrCreate(c1.uuid, c2.uuid);
         perceptions.updateFor(c1, c2, connections, interactions);

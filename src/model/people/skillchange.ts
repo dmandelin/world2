@@ -2,6 +2,7 @@ import { type Clan } from './people';
 import { type ClanSkill, type SkillDef } from './skills';
 import { moveToward } from '../lib/modelbasics';
 import { chooseWeighted, sumFun } from '../lib/basics';
+import { getRespect } from '../relations/respect';
 
 // About skill changes
 //
@@ -97,7 +98,7 @@ export class ClanSkillChange {
             c => new ImitationTargetItem(
                 c.name,
                 c.skills.v(skillDef),
-                100 * clan.respectFor(c)
+                100 * getRespect(clan, c)
             ));
         const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
         for (const item of this.imitationTargetItems) {

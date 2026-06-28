@@ -4,6 +4,10 @@ import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { pct } from "../lib/format";
 import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
+import { connectionsOf } from "../relations/connection";
+import { getRelativeAttention } from "../relations/interaction";
+import { getAlignment } from "../relations/alignment";
+import { getLocalRespect } from "../relations/respect";
 
 export abstract class HappinessItem<T> {
     private expectedAppeal_: number;
@@ -266,13 +270,14 @@ class FloodHappinessItem extends NumericHappinessItem {
     }
 }
 
-// TODO - Overhaul
 class SocietyHappinessItem extends NumericHappinessItem {
     subitems: {
         otherName: string;
-        interactionVolume: number;
-        cooperationLevel: number;
-        interactionValue: number;
+        alignment: number;
+        relativeAttention: number;
+        value: number;
+        // TODO - Add some magnifier for powerful or prestigious others
+        // TODO - Add some magnifier for larger others
     }[] = [];
 
     get isSocial(): boolean {
@@ -284,23 +289,28 @@ class SocietyHappinessItem extends NumericHappinessItem {
     }
 
     get stateDisplay(): string {
-        return `interaction value ${this.state_.toFixed(2)}`;
+        return `${this.subitems.length} connections`;
     }
 
     stateLabel = 'Value';
 
-    appealOf(interactionValue: number): number {
-        return 0.1 * interactionValue;
+    appealOf(value: number): number {
+        return value;
     }
     
     updateState(clan: Clan): void {
-        this.subitems = [...clan.relationships].map(([_, r]) => ({
-            otherName: r.object.name,
-            interactionVolume: 1,
-            cooperationLevel: r.cooperationLevel,
-            interactionValue: 1,
-        }));
-        this.state_ = sumFun(this.subitems, i => i.interactionValue);
+        this.subitems.length = 0;
+        for (const [other, connections] of connectionsOf(clan)) {
+            const attention = getRelativeAttention(clan, other);
+            const alignment = getAlignment(clan, other);
+            this.subitems.push({
+                otherName: other.name,
+                alignment,
+                relativeAttention: attention,
+                value: 10 * attention * alignment,
+            });
+        }
+        this.state_ = sumFun(this.subitems, i => i.value);
     }
 
     clone(): SocietyHappinessItem {
@@ -404,7 +414,7 @@ class StatusHappinessItem extends NumericHappinessItem {
     }
 
     updateState(clan: Clan): void {
-        this.state_ = clan.localRespect;
+        this.state_ = getLocalRespect(clan);
     }
 
     clone(): StatusHappinessItem {

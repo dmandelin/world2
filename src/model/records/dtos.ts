@@ -15,19 +15,19 @@ import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
 import type { QualityOfLife } from "../econ/qol";
-import type { Relationships } from "../relations/relationships";
 import type { ResidenceLevel } from "../people/residence";
 import type { Rites } from "../rites";
 import type { Settlement } from "../people/settlement";
 import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
-import type { World } from "../world";
-import { clansOfPairID, Connection, type ConnectionGraph, type UUID } from "../relations/connection";
+import { type World } from "../world";
 import { BasicInteraction, Interaction, type InteractionGraph } from "../relations/interaction";
 import type { PerceptionsGraph } from "../relations/perceptions";
-import type { Alignment, Alignment2 } from "../relations/alignment";
+import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
+import { splitPairID, type UUID } from "./basicdata";
+import type { ConnectionGraph } from "../relations/connection";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -79,9 +79,6 @@ export class ClanDTO {
     residenceFraction: number;
     settlement: Settlement;
 
-    cadets: Clan[];
-    parent: Clan|undefined;
-    relationships: Relationships;
     tradeRelationships: TradeRelationshipsDTO[];
     rites: Rites;
     slices: number[][];
@@ -118,15 +115,11 @@ export class ClanDTO {
         this.name = clan.name;
         this.color = clan.color;
 
-        this.relationships = clan.relationships;
-
         this.housing = clan.housing;
         this.housingDecision = clan.housingDecision;
         this.residenceLevel = clan.residenceLevel.clone();
         this.settlement = clan.settlement;
 
-        this.cadets = clan.cadets;
-        this.parent = clan.parent;
         this.rites = clan.rites.clone();
         this.migrationPlan = clan.migrationPlan;
         this.slices = clan.slices;
@@ -272,6 +265,10 @@ export class WorldDTO {
         this.previousEndOfTurnSnapshot = world.previousEndOfTurnSnapshot;
     }
 
+    clansFromPairID(pairID: string): [ClanDTO, ClanDTO] {
+        return splitPairID(pairID).map(uuid => this.clanMap.get(uuid)!) as [ClanDTO, ClanDTO];
+    }
+
     get settlements() {
         return this.clusters.flatMap(c => c.settlements);
     }
@@ -287,24 +284,6 @@ export class WorldDTO {
             ['Subsistence satisfaction', tp.averageSubsistenceSat.toFixed(1)],
             ['Happiness', tp.averageHappiness.toFixed(1)],
         ];
-    }
-
-    *connectionsFor(clan: ClanDTO) {
-        for (const [pairID, connections] of this.connections.entriesForHasUUID(clan)) {
-            const [c1, c2] = clansOfPairID(pairID, this);
-            const other = c1 === clan ? c2 : c1;
-            yield [other, connections] as [ClanDTO, Connection[]];
-        }
-    }
-
-    *connectionsForType<T extends Connection>(clan: ClanDTO, type: new (...args: any[]) => T) {
-        for (const [other, connections] of this.connectionsFor(clan)) {
-            for (const c of connections) {
-                if (c instanceof type) {
-                    yield [other, c] as [ClanDTO, T];
-                }
-            }
-        }
     }
 
     *interactionsFor(clan: ClanDTO) {
@@ -336,7 +315,7 @@ export class WorldDTO {
         return 0;
     }
 
-    alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment2|undefined {
+    alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment|undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.alignment;
     }
 

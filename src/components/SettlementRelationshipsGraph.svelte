@@ -2,8 +2,7 @@
     import ButtonPanel from './ButtonPanel.svelte';
     import type { ClanDTO, SettlementDTO } from '../model/records/dtos';
     import { colorInterpolator } from '../model/lib/basics';
-    import { Friends, MarriagePartners } from '../model/relations/relationships';
-    import { FriendshipConnection, KinConnection, MarriageConnection } from '../model/relations/connection';
+    import { connectionsOfType, FriendshipConnection, KinConnection, MarriageConnection } from '../model/relations/connection';
     import { BasicInteraction } from '../model/relations/interaction';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
@@ -58,7 +57,7 @@
 
     class MarriageRelationshipDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
-            for (const [other, connection] of world.connectionsForType(clan, MarriageConnection)) {
+            for (const [other, connection] of connectionsOfType(clan, MarriageConnection)) {
                 yield [other, '-', connection.relatedness, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
@@ -66,7 +65,7 @@
 
     class KinshipRelationshipDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
-            for (const [other, connection] of world.connectionsForType(clan, KinConnection)) {
+            for (const [other, connection] of connectionsOfType(clan, KinConnection)) {
                 if (clan.uuid === connection.senior) {
                     yield [other, '>', 0.25, DEFAULT_RELATIONSHIP_COLOR];
                 } else {
@@ -79,7 +78,7 @@
 
     class FriendshipRelationshipDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
-            for (const [other, connection] of world.connectionsForType(clan, FriendshipConnection)) {
+            for (const [other, connection] of connectionsOfType(clan, FriendshipConnection)) {
                 yield [other, '-', 0.25, DEFAULT_RELATIONSHIP_COLOR];
             }
         }

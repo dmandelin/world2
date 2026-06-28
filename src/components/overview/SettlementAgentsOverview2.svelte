@@ -13,6 +13,9 @@
     import { getClanLastTurnSnapshots, SettlementDTO, type ClanDTO, type WorldDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
+    import { getAreaPrestige, getLocalPrestige, getLocalRespect, getRespectInScopeDetail } from "../../model/relations/respect";
+    import { get } from "svelte/store";
+    import { connectionsOf } from "../../model/relations/connection";
     
 	let { 
         settlement, 
@@ -92,7 +95,7 @@
 
     function clanRespectTooltipTable(clan: ClanDTO) {
         return new IterableTable(
-            clan.relationships.localRespectItems,
+            getRespectInScopeDetail(clan, clan.settlement.clans),
             item => item.label,
             [{
                 data: 'Respect',
@@ -130,7 +133,6 @@
     }
 
     function clanSocialHappinessTooltipTable(clan: ClanDTO) {
-        console.log(clan.happiness.items);
         return new FilteredIterableTable(
             clan.happiness.items.values(),
              item => item.label,
@@ -163,27 +165,26 @@
             societyItem.subitems,
             subitem => subitem.otherName,
             [{
-                data: 'Vol',
-                label: 'Vol',
-                valueFn: subitem => subitem.interactionVolume,
-                formatFn: (v: number) => v.toFixed(0),
-            }, {
                 data: 'Rel',
                 label: 'Rel',
-                valueFn: subitem => subitem.cooperationLevel,
+                valueFn: subitem => subitem.relativeAttention,
+                formatFn: (v: number) => pct(v, 0),
+            }, {
+                data: 'Aln',
+                label: 'Aln',
+                valueFn: subitem => subitem.alignment,
                 formatFn: (v: number) => pct(v, 0),
             }, {
                 data: 'Appeal',
                 label: 'Appeal',
-                // TODO - Avoid having to hack in this 0.1 here.
-                valueFn: subitem => 0.1 * subitem.interactionValue,
-                formatFn: (v: number) => signed(v, 0),
+                valueFn: subitem => subitem.value,
+                formatFn: (v: number) => signed(v, 2),
             }]);
     }
 
     function clanConnectionsTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
-            clan.world.connectionsFor(clan),
+            connectionsOf(clan),
              ([other, connections]) => other.name,
              _ => true,
              [{
@@ -402,10 +403,10 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {signed(cs.e.relationships.clusterPrestige)}
+                            {signed(100 * getAreaPrestige(cs.e))}
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.relationships.clusterPrestige, signed)}
+                    {@render deltaCell(cs, c => 100 * getAreaPrestige(c), signed)}
                 {/each}
             </tr>    
             <tr class="actual">
@@ -413,10 +414,10 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {signed(cs.e.relationships.localPrestige)}
+                            {signed(100 * getLocalPrestige(cs.e))}
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.relationships.localPrestige, signed)}
+                    {@render deltaCell(cs, c => 100 * getLocalPrestige(c), signed)}
                 {/each}
             </tr>    
             <tr class="actual">
@@ -424,13 +425,13 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {signed(cs.e.relationships.localRespect)}
+                            {signed(100 * getLocalRespect(cs.e))}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <TableView2 table={clanRespectTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => c.relationships.localRespect, signed)}
+                    {@render deltaCell(cs, c => 100 * getLocalRespect(c), signed)}
                 {/each}
             </tr>            
             <tr><td style="height: 0.5em"></td></tr>
@@ -532,13 +533,13 @@
                 {#each csnaps as cs}
                     <td class="rap">
                         <Tooltip>
-                            {[...cs.worldE.connectionsFor(cs.e)].length}
+                            {[...connectionsOf(cs.e)].length}
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <TableView2 table={clanConnectionsTooltipTable(cs.e)}></TableView2>
                             </div>
                         </Tooltip>
                     </td>
-                    {@render deltaCell(cs, c => [...cs.worldE.connectionsFor(c)].length, signed)}
+                    {@render deltaCell(cs, c => [...connectionsOf(c)].length, signed)}
                 {/each}
             </tr>
             <tr class="actual">

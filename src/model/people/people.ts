@@ -13,18 +13,16 @@ import { normal } from "../lib/distributions";
 import { Operation, ProductionReport } from "../econ/operation";
 import { Processes, SkillDefs } from "../econ/econdefs";
 import { QualityOfLife } from "../econ/qol";
-import { Relationships } from "../relations/relationships";
 import { ResidenceLevel } from "./residence";
 import { Rites } from "../rites";
 import { TradeGoods } from "../trade";
 import { Traits } from "./traits";
 import { type FloodLevel, FloodLevels } from "../environment/flood";
 import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
-import { weightedAverage } from "../lib/modelbasics";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
-import { KinConnection, NeighborConnection } from "../relations/connection";
+import { connectedClans, KinConnection } from "../relations/connection";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -92,12 +90,6 @@ export class Clan implements TradePartner {
 
     // The initial population had been temporary residents.
     readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
-
-    // Relationships
-    readonly relationships = new Relationships(this);
-
-    parent: Clan|undefined;
-    cadets: Clan[] = [];
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
     previousSettlement_: Settlement;
@@ -279,20 +271,6 @@ export class Clan implements TradePartner {
         return this.migrationPlan.advance(newSettlementSupplier);
     }
 
-    kinshipTo(other: Clan): number {
-        const rStep = 0.25;
-        if (this === other) return 1;
-
-        if (this.parent === other) return rStep;
-        if (other.parent === this) return rStep;
-
-        if (this.parent?.parent === other) return rStep * rStep;
-        if (other.parent?.parent === this) return rStep * rStep;
-        if (this.parent === other.parent && this.parent !== undefined) return rStep * rStep;
-
-        return 0.01;
-    }
-
     advanceSeniority() {
         // People can remember back only so far.
         if (this.seniority < 4) {
@@ -300,22 +278,10 @@ export class Clan implements TradePartner {
         }
     }
 
-    respectFor(other: Clan): number {
-        const rv = this.relationships.get(other);
-        if (!rv) return 0;
-        return rv.respect.value;
-    }
-
-    // Respect within settlement.
-    get localRespect(): number { return this.relationships.localRespect; }
-
-    // Respect within settlement relative to weighted average respect.
-    get localPrestige(): number { return this.relationships.localPrestige; }
-    
     get helpReceived(): number {
         return sumFun(
-            this.relationships,
-            ([other, _]) => other.helpAllocation.get(this) * other.effort);
+            connectedClans(this),
+            other => other.helpAllocation.get(this) * other.effort);
     }
 
     get tradeGoods(): TradeGood[] {
@@ -474,15 +440,7 @@ export class Clan implements TradePartner {
             (this.intelligence * origSize + other.intelligence * other.population) / 
             (origSize + other.population));
 
-        // Cadets of the absorbed clan become cadets of the absorbing clan.
-        for (const cadet of other.cadets) {
-            cadet.parent = this;
-            this.cadets.push(cadet);
-        }
-        // Remove any previous parent of the old clan.
-        if (other.parent) {
-            remove(other.parent.cadets, other);
-        }
+        // TODO - Handle relationships
 
         this.annals.log(`Clan ${other.name} (${other.population}) joined into clan ${this.name} (${this.population})`, this.settlement);
     }
@@ -513,24 +471,13 @@ export class Clan implements TradePartner {
             this.population -= newClan.slices[i][0] + newClan.slices[i][1];
         }
 
-        // New clan 
-        // starts as a cadet.
-        newClan.parent = this;
-        this.cadets.push(newClan);
-        // New structure version.
         this.world.connections.getOrCreate(
             this,
             newClan,
             KinConnection,
             () => new KinConnection(this.uuid, newClan.uuid)
         )
-
-        // Inherit relationships from the parent clan.
-        // TODO - We should probably allow some relationships to go with
-        // only one side.
-        newClan.relationships.initializeFrom(this.relationships);
-        // New structure version.
-        // TODO - Add if we need anything.
+        // TODO - Inherit relationships from the parent clan if applicable.
 
         // Plan for the new clan, since it didn't get a chance to during the main
         // planning phase. We don't need to update productivity because that happens

@@ -5,6 +5,7 @@ import { eloSuccessProbability, selectBySoftmaxVerbose, type SoftmaxSelection } 
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
+import { getAlignment } from "../relations/alignment";
 
 class NewSettlementMigrationTarget {
     get name(): string { return 'New settlement'; }
@@ -154,7 +155,7 @@ export class CandidateMigrationCalc {
     constructor(readonly clan: Clan, readonly target: MigrationTarget) {
         if (target !== clan.settlement 
             && target !== NewSettlement &&
-            !(target as Settlement).clans.some(c => c.kinshipTo(clan) > 0.1)) {
+            !(target as Settlement).clans.some(c => getAlignment(c, clan) > 0.1)) {
             this.isEligible = false;
             this.isIneligibleReason = `No place for newcomers in ${target.name}`;
         }

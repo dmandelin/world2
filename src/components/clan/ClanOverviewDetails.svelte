@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { ClanDTO } from "../../model/records/dtos";
-    import ClanRelationshipsDetails from "./ClanRelationshipsDetails.svelte";
 
     let {clan} : { clan: ClanDTO } = $props();
 </script>
@@ -11,6 +10,4 @@
 <div>
     <h3>Overview</h3>
     <p>Clan Size: {clan.population}</p>
-
-    <ClanRelationshipsDetails clan={clan} />
 </div>

@@ -1,6 +1,7 @@
 import { sumFun } from "../lib/basics";
+import { weightedAverage } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
-import type { RelationshipView } from "./relationships";
+import type { ClanDTO } from "../records/dtos";
 
 // Notes on how the calculations will work:
 //
@@ -85,4 +86,62 @@ export class RespectItem {
             `${objectConnections.length} clans`
         );
     }
+}
+
+export function getRespect(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+    return subject.world.perceptions.get(subject.uuid, object.uuid)?.respect.value ?? 0;
+}
+
+// Average respect weighted by population.
+export function getRespectInScope(object: Clan|ClanDTO, scope: (Clan|ClanDTO)[]): number {
+    return weightedAverage(
+        scope, 
+        subject => getRespect(subject, object), 
+        subject => subject.population);
+}
+
+export function getRespectInScopeDetail(object: Clan|ClanDTO, scope: (Clan|ClanDTO)[]) {
+    const items = [];
+    const totalPopulation = sumFun(scope, subject => subject.population) || 1;
+    for (const subject of scope) {
+        const respect = getRespect(subject, object);
+        items.push({
+            label: subject.name,
+            respect,
+            weight: subject.population / totalPopulation,
+            weightedValue: respect * (subject.population / totalPopulation),
+        });
+    }
+    return items;
+}
+
+export function averageRespectInScope(scope: (Clan|ClanDTO)[]): number {
+    return weightedAverage(
+        scope,
+        object => getRespectInScope(object, scope),
+        object => object.population
+    );
+}
+
+// Respect within settlement relative to weighted average respect.
+export function getPrestigeInScope(clan: Clan|ClanDTO, scope: (Clan|ClanDTO)[]): number {
+    return getRespectInScope(clan, scope) - averageRespectInScope(scope);
+}
+
+export function getLocalRespect(clan: Clan|ClanDTO): number {
+    const settlement = clan.settlement;
+    if (!settlement) return 0;
+    return getRespectInScope(clan, settlement.clans);
+}
+
+export function getLocalPrestige(clan: Clan|ClanDTO): number {
+    const settlement = clan.settlement;
+    if (!settlement) return 0;
+    return getPrestigeInScope(clan, settlement.clans);
+}
+
+export function getAreaPrestige(clan: Clan|ClanDTO): number {
+    const cluster = clan.settlement.cluster;
+    if (!cluster) return 0;
+    return getPrestigeInScope(clan, cluster.clans);
 }

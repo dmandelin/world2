@@ -3,6 +3,7 @@ import { DiseaseLoadCalc } from "../environment/pathogens";
 import { clamp, productFun, sum } from "../lib/basics";
 import { spct } from "../lib/format";
 import { fishRatio, foodVarietyHealthFactor } from "./happiness";
+import { getLocalPrestige } from "../relations/respect";
 
 export const INITIAL_POPULATION_RATIOS = [
     [0.2157, 0.2337],
@@ -176,12 +177,12 @@ export class PopulationChangeBuilder {
         // marriage matching, so we make it pretty big to account for whatever
         // else would be going on such as stress or better access to certain
         // resources.
-        const prestigeBrModifier = 1 + 0.003 * this.clan.localPrestige;
+        const prestigeBrModifier = 1 + 0.003 * getLocalPrestige(this.clan);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Prestige', this.clan.localPrestige, prestigeBrModifier));
-        const prestigeDrModifier = 1 - 0.002 * this.clan.localPrestige;
+            'Prestige', getLocalPrestige(this.clan), prestigeBrModifier));
+        const prestigeDrModifier = 1 - 0.002 * getLocalPrestige(this.clan);
         this.drModifiers.push(new PopulationChangeModifier(
-            'Prestige', this.clan.localPrestige, prestigeDrModifier));
+            'Prestige', getLocalPrestige(this.clan), prestigeDrModifier));
 
         this.brModifier = productFun(this.brModifiers, m => m.value);
         if (isNaN(this.brModifier)) debugger;

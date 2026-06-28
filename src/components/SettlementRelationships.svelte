@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { Clan } from "../model/people/people";
-    import { MarriagePartners } from "../model/relations/relationships";
-    import { pct, spct, unsigned, unsignedFormat } from "../model/lib/format";
-    import { sortedByKey } from "../model/lib/basics";
+    import { connectionsOfType, MarriageConnection } from "../model/relations/connection";
     import { CrossTab, IterableTable } from "./tables/tables2";
+    import { pct, unsigned, unsignedFormat } from "../model/lib/format";
+    import { sortedByKey } from "../model/lib/basics";
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
@@ -129,16 +128,16 @@
     <div>
         <h3>Marriage Partners</h3>
 
-        {#each clans as c}
+        {#each clans as clan}
         <div>
-            <h4 style="color: {c.color}">{c.name}</h4>
-            {#each sortedByKey(c.relationships.withInteractionChain(MarriagePartners), ([rv, ic]) => -rv.relatedness) as [rv, ic]}
+            <h4 style="color: {clan.color}">{clan.name}</h4>
+            {#each sortedByKey(connectionsOfType(clan, MarriageConnection), ([other, c]) => -c.relatedness) as [other, c]}
                 <div>
-                    {pct(rv.relatedness)}: 
-                    <EntityLink entity={rv.object} />
+                    {pct(c.relatedness)}: 
+                    <EntityLink entity={other} />
                     of
-                    <EntityLink entity={rv.object.settlement} />
-                    {#if rv.object.settlement.parent}(<EntityLink entity={rv.object.settlement.parent} />){/if}
+                    <EntityLink entity={other.settlement} />
+                    {#if other.settlement.parent}(<EntityLink entity={other.settlement.parent} />){/if}
                 </div>
             {/each}
         </div>

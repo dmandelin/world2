@@ -9,6 +9,7 @@ import type { World } from "../world";
 import type { Year } from "../records/year";
 import type { Clan } from "./people";
 import { economicResult } from "../econ/economy";
+import { getAlignment } from "../relations/alignment";
 
 export class Settlement {
     readonly uuid = crypto.randomUUID();
@@ -201,7 +202,8 @@ export class Settlement {
             //   proportionally around the mean.
             const costFactor = 0.5; // Cost to decrease food security by 1
 
-            const helperClans = this.clans.filter(c => c !== recipientClan && c.kinshipTo(recipientClan) > 0.05);
+            const helperClans = this.clans.filter(c => 
+                c !== recipientClan && getAlignment(c, recipientClan) > 0.05);
             const reductionFactor = 0.8 ** helperClans.length;
             const amountToReduceTotal = recipientClan.consumption.foodInsecurity.value * (1 - reductionFactor);
             const amountToReducePerHelper = amountToReduceTotal / helperClans.length;

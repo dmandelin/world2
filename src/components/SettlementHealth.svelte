@@ -1,6 +1,6 @@
 <script lang="ts">
     import DataTable from "./DataTable.svelte";
-    import type { WorkerDiseaseLoadItem } from "../model/environment/pathogens";
+    import type { DiseaseLoadItem } from "../model/environment/pathogens";
 
     let { settlement } = $props();
     let dl = $derived(settlement.cluster.diseaseLoad);
@@ -14,5 +14,5 @@
 
 <div>Total: {dl.value.toFixed(2)}</div>
 
-<DataTable rows={dl.workerDiseaseLoads.values().map((item: WorkerDiseaseLoadItem) => 
-    [item.skillDef.name, item.workers.toFixed(), item.load.toFixed(2)])} />
+<DataTable rows={dl.workerDiseaseLoads.values().map((item: DiseaseLoadItem) => 
+    [item.label, item.effort.toFixed(), item.diseaseLoadFactor.toFixed(2)])} />

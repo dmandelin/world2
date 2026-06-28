@@ -12,11 +12,11 @@ export type AverageAttitudeTable = {
 }
 
 export function skillImitationTable(sc: ClanSkillChange) {
-    const header = ['Source', '𝕊', 'ℙ', '𝕎'];
+    const header = ['Source', '𝕊', 'R', '𝕎'];
     const rows = sortedByKey(sc.imitationTargetItems, i => -i.weight).map(item => [
         item.label, 
         item.trait.toFixed(),
-        item.prestige.toFixed(),
+        item.respect.toFixed(),
         item.weight.toFixed(2),
     ]);
     return [header, ...rows];
@@ -42,7 +42,8 @@ export class HappinessTable {
                 let [ae, aa, av] = [0, 0, 0];  // Averages
                 for (const clan of s.clans) {
                     const w = clan.population / s.population;
-                    const i = clan.happiness.items.get(label)!;
+                    const i = clan.happiness.items.get(label);
+                    if (!i) continue;
 
                     const e = i.expectedAppeal;
                     const a = i.appeal;

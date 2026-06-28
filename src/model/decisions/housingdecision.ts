@@ -2,6 +2,7 @@ import { sumFun, chooseWeighted, mapNormalized, maxby, clamp } from '../lib/basi
 import { traitFactor } from '../lib/modelbasics';
 import { Clan } from '../people/people';
 import { Housing, HousingTypes } from '../people/../econ/housing';
+import { getRespect } from '../relations/respect';
 
 export class HousingImitationItem {
     constructor(
@@ -51,11 +52,11 @@ export class HousingDecision {
 
         this.imitationItems = mapNormalized(
             clan.selfAndNeighbors,
-            other => traitFactor(100 * clan.respectFor(other) || 0),
+            other => traitFactor(100 * getRespect(clan, other) || 0),
             (other, weight) => new HousingImitationItem(
                 other.name,
                 other.housing,
-                100 * clan.respectFor(other),
+                100 * getRespect(clan, other),
                 weight));
         this.model = chooseWeighted(
             this.imitationItems,

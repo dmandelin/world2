@@ -1,9 +1,9 @@
 import { Annals } from "./annals";
 import { chooseFrom, sumFun, shuffled, dice } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
-import { ConnectionGraph, NeighborConnection, type UUID } from "./relations/connection";
+import { connectedClans, ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { createTrends } from "./records/trends";
-import { InteractionGraph } from "./relations/interaction";
+import { InteractionGraph, updateBasicInteractions } from "./relations/interaction";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { marry } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
@@ -13,10 +13,10 @@ import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
 import { Settlement } from "./people/settlement";
 import { Timeline, TimePoint } from "./records/timeline";
-import { updateRelationships } from "./relations/relationships";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
-import { Perceptions, PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
+import { splitPairID, type UUID } from "./records/basicdata";
+import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 
 export class World implements NoteTaker {
     readonly year = new Year();
@@ -51,6 +51,10 @@ export class World implements NoteTaker {
 
     addNote(shortLabel: string, message: string) {
         this.notes.push(new Note(this.year.toString(), shortLabel, message));
+    }
+
+    clansFromPairID(pairID: string): [Clan, Clan] {
+        return splitPairID(pairID).map(uuid => this.clanMap.get(uuid)!) as [Clan, Clan];
     }
 
     initialize() {
@@ -228,7 +232,7 @@ export class World implements NoteTaker {
         //this.clans.prune();
 
         this.planConnections();
-        updateRelationships(this); // TODO - Remove
+        updateBasicInteractions(this);
         updatePerceptions(this);
 
         this.planMutualHelp();
@@ -340,11 +344,11 @@ export class World implements NoteTaker {
         // Each pair then sends each other the min of their offers.
         for (const c1 of settlement.clans) {
             c1.helpAllocation.clear();
-            const recipients = [...c1.relationships]
-                .filter(([c2, _]) => c1.settlement === c2.settlement);
+            const recipients = [...connectedClans(c1)]
+                .filter(c2 => c1.settlement === c2.settlement);
             if (recipients.length === 0) continue;
             const offer = helpLimit / recipients.length;
-            for (const [c2, _] of recipients) {
+            for (const c2 of recipients) {
                 c1.helpAllocation.set(c2, offer);
             }
         }

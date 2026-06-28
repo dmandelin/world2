@@ -2,8 +2,8 @@ import { remove, shuffled, sortedByKey } from "../lib/basics";
 import { weightedRandInt } from "../lib/distributions";
 import type { World } from "../world";
 import type { Clan } from "../people/people";
-import { MarriagePartners } from "./relationships";
 import { MarriageConnection } from "./connection";
+import { getLocalRespect } from "./respect";
 
 // Marry people in the 20-40 age range in the given region.
 //
@@ -38,7 +38,7 @@ export function marry(world: World): void {
     });
     const potentialWives = sortedByKey(
         unsortedPotentialWives,
-        ps => -ps.clan.localRespect,
+        ps => -getLocalRespect(ps.clan),
     );
 
     // Let each potential wife choose from available offers. Here we only
@@ -58,7 +58,7 @@ export function marry(world: World): void {
 
         for (let i = 0; i < wifeSet.count; ++i) {
             if (offers.length === 0) break;
-            const choiceIndex = weightedRandInt(offers, o => Math.pow(10, -o.clan.localRespect));
+            const choiceIndex = weightedRandInt(offers, o => Math.pow(10, -getLocalRespect(o.clan)));
             const chosenHusbandSet = offers[choiceIndex];
             if (chosenHusbandSet.clan === wifeSet.clan) {
                 continue;
@@ -80,28 +80,6 @@ export function marry(world: World): void {
     //   married to that clan.
     // - Existing marriage relationships decay. They should cease to have
     //   any effect within 3-6 generations if there are no new marriages.
-    for (const c1 of clans) {
-        for (const [rv, ic] of c1.relationships.withInteractionChain(MarriagePartners)) {
-            rv.relatedness *= 0.5;
-            if (rv.relatedness < 0.03) {
-                c1.relationships.removeInteractionChainWith(rv.object, MarriagePartners);
-            }
-        }
-    }
-    for (const [c1, m] of pairingCounts.counts) {
-        for (const [c2, count] of m) {
-            const rv = c1.relationships.ensureInteractionChainWith(c2, MarriagePartners);
-            rv.relatedness += count / c1.population;
-            if (rv.relatedness > 1) {
-                rv.relatedness = 1;
-            }
-            if (rv.relatedness < 0.03) {
-                c1.relationships.removeInteractionChainWith(rv.object, MarriagePartners);
-            }
-        }
-    }
-
-    // New data structure code for the above.
     for (const [pairID, connections] of world.connections.entries()) {
         for (const connection of connections) {
             if (connection instanceof MarriageConnection) {

@@ -25,7 +25,7 @@
     import type { ClanDTO, WorldDTO } from "../model/records/dtos";
     import { PopulationScaler, ZeroCenteredScaler } from "./linegraph";
     import { selectClan, selectSettlement } from "./state/uistate.svelte";
-    import { clansOfPairID } from "../model/relations/connection";
+    import { getLocalPrestige } from "../model/relations/respect";
 
     let { world }: { world: WorldDTO } = $props();
 
@@ -73,8 +73,8 @@
             ['Worst SoL', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Happiest', maxbyWithValue, clan => clan.happiness.appeal, signedFormat()],
             ['Least happy', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
-            ['Most prestigious', maxbyWithValue, clan => clan.relationships.localRespect, unsigned],
-            ['Least prestigious', minbyWithValue, clan => clan.relationships.localRespect, unsigned],
+            ['Most prestigious', maxbyWithValue, clan => getLocalPrestige(clan), unsigned],
+            ['Least prestigious', minbyWithValue, clan => getLocalPrestige(clan), unsigned],
         ];
 
         const clans = [...world.clanMap.values()];
@@ -143,7 +143,7 @@
     <div>
         <h4>Connections</h4>
         {#each world.connections.entries() as [pairID, connections]}
-        {@const [c1, c2] = clansOfPairID(pairID, world)}
+        {@const [c1, c2] = world.clansFromPairID(pairID)}
             <div><b>{c1.name} - {c2.name}</b></div>
             {#each connections as connection}
                 <div>
