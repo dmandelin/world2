@@ -23,7 +23,7 @@ import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
-import { clansOfPairID, Connection, type ConnectionGraph } from "../relations/connection";
+import { clansOfPairID, Connection, type ConnectionGraph, type UUID } from "../relations/connection";
 import { BasicInteraction, type InteractionGraph } from "../relations/interaction";
 
 export type TradeRelationshipsDTO = {
@@ -237,7 +237,8 @@ export class ClusterDTO {
 
 export class WorldDTO {
     readonly year: string;
-    readonly clusters: ClusterDTO[] = [];
+    readonly clanMap: ReadonlyMap<UUID, ClanDTO>;
+    readonly clusters: ClusterDTO[];
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
     readonly timeline: Timeline<TimePoint>;
@@ -251,6 +252,7 @@ export class WorldDTO {
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
+        this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.connections = world.connections.clone();
         this.interactions = world.interactions.clone();
 
@@ -278,20 +280,6 @@ export class WorldDTO {
             ['Subsistence satisfaction', tp.averageSubsistenceSat.toFixed(1)],
             ['Happiness', tp.averageHappiness.toFixed(1)],
         ];
-    }
-
-    *clans() {
-        for (const cl of this.clusters) {
-            for (const s of cl.settlements) {
-                for (const clan of s.clans) {
-                    yield clan;
-                }
-            }
-        }
-    }
-
-    get allClans() {
-        return [...this.clans()];
     }
 
     *connectionsFor(clan: ClanDTO) {

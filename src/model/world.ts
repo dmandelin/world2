@@ -1,21 +1,21 @@
 import { Annals } from "./annals";
 import { chooseFrom, sumFun, shuffled, dice } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
+import { ConnectionGraph, NeighborConnection, type UUID } from "./relations/connection";
 import { createTrends } from "./records/trends";
+import { InteractionGraph } from "./relations/interaction";
+import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
+import { marry } from "./relations/marriage";
+import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { NewSettlementSupplier } from "./people/migration";
 import { Note, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
 import { Settlement } from "./people/settlement";
-import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { Timeline, TimePoint } from "./records/timeline";
+import { updateRelationships } from "./relations/relationships";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
-import { marry } from "./relations/marriage";
-import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
-import { updateRelationships } from "./relations/relationships";
-import { ConnectionGraph, NeighborConnection } from "./relations/connection";
-import { InteractionGraph } from "./relations/interaction";
 
 export class World implements NoteTaker {
     readonly year = new Year();
@@ -27,6 +27,7 @@ export class World implements NoteTaker {
     readonly annals = new Annals(this);
     readonly notes: Note[] = [];
 
+    readonly clanMap = new Map<UUID, Clan>();
     readonly connections = new ConnectionGraph();
     readonly interactions = new InteractionGraph();
     readonly clusters = new SettlementsBuilder(this).createClusters([

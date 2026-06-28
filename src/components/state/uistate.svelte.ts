@@ -22,7 +22,7 @@ export const uiPrimaryState = $state({
 // Exported readonly UI state.
 const _uiState = $derived(({
     selectedSettlement: _worldState.settlements.find(s => s.uuid === uiPrimaryState.selectedSettlementUUID),
-    selectedClan: [..._worldState.clans()].find(c => c.uuid === uiPrimaryState.selectedClanUUID),
+    selectedClan: [..._worldState.clanMap.values()].find(c => c.uuid === uiPrimaryState.selectedClanUUID),
 }));
 export function uiState() {
     return _uiState;
@@ -31,7 +31,7 @@ export function uiState() {
 // Select any entity in the UI.
 export function selectEntity(uuidable: Uuidable): void {
     const uuid = uuidOf(uuidable);
-    const clan = _world.allClans.find(c => c.uuid === uuid);
+    const clan = [..._world.clanMap.values()].find(c => c.uuid === uuid);
     if (clan) {
         selectSettlement(clan.settlement);
         selectClan(clan);

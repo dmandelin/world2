@@ -142,7 +142,7 @@ still has per-clan texture but is more gradual and less sudden.
             *   Condition on connection?
             *   Condition on alignment?
     x   Make sure split clans have neighbors at next point
-    *   Get an actual map for clan IDs
+    x   Get an actual map for clan IDs
     *   Make sure deltas can show in main panel
     *   Point visualizations at new relationship structures
 

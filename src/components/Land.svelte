@@ -77,7 +77,7 @@
             ['Least prestigious', minbyWithValue, clan => clan.relationships.localRespect, unsigned],
         ];
 
-        const clans = [...world.clans()];
+        const clans = [...world.clanMap.values()];
         const items =
             specs.map(([name, optBy, clanValueFn, fmt]) => {
                 const [clan, value] = optBy(clans, clanValueFn);

@@ -73,15 +73,15 @@ export function pairIDOf(c1: HasUUID, c2: HasUUID): PairID {
 
 export function clansOfPairID(pairID: PairID, world: WorldDTO): [ClanDTO, ClanDTO] {
     const [uuid1, uuid2] = pairID.split('|');
-    const c1 = world.allClans.find(c => c.uuid === uuid1);
-    const c2 = world.allClans.find(c => c.uuid === uuid2);
+    const c1 = world.clanMap.get(uuid1);
+    const c2 = world.clanMap.get(uuid2);
     return [c1!, c2!];
 }
 
 function clanRefsOfPairID(pairID: PairID, world: World): [Clan, Clan] {
     const [uuid1, uuid2] = pairID.split('|');
-    const c1 = world.allClans.find(c => c.uuid === uuid1);
-    const c2 = world.allClans.find(c => c.uuid === uuid2);
+    const c1 = world.clanMap.get(uuid1);
+    const c2 = world.clanMap.get(uuid2);
     return [c1!, c2!];
 }
 

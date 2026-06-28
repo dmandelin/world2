@@ -137,6 +137,7 @@ export class Clan implements TradePartner {
         public strength: number = randomStat(),
         public intelligence: number = randomStat(),
     ) {
+        this.world.clanMap.set(this.uuid, this);
         this.world.timeline.register(this.uuid, this.name);
 
         this.settlement_ = settlement;
