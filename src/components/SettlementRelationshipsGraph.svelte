@@ -103,11 +103,9 @@
 
     class RespectDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
-            /*
-            for (const [other, r] of clan.relationships) {
-                yield [world.clanMap.get(other)!, '-', r.respect.value / 2, alignmentColorInterpolator(r.respect.value)];
+            for (const [other, p] of world.perceptions.getFor(clan.uuid)) {
+                yield [world.clanMap.get(other)!, '-', p.respect.value / 2, alignmentColorInterpolator(p.respect.value)];
             }
-            */
         }
     }
 

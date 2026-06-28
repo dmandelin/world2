@@ -41,8 +41,9 @@
     }
 
     function respectCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
-        //return rowClan.respectFor(colClan);
-        return 0.67;
+        const r = world.respectToward(rowClan, colClan);
+        if (!r) return 0;
+        return r.value;
     }
 </script>
 
@@ -79,12 +80,11 @@
 {/snippet}
 
 {#snippet respectCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
-    <!--
-    {@const rv = subject.relationships.get(object)}
-    {#if rv}
+  {@const r = world.respectToward(subject, object)}
+    {#if r}
         <TableView2 table={
             new IterableTable(
-                rv.respect.items,
+                r.items,
                 i => i.label,
                 [{
                     data: 'Value',
@@ -109,7 +109,6 @@
             )
         }></TableView2>
     {/if}
-    -->
 {/snippet}
 
 <div style="display: flex; flex-direction: row; gap: 2rem;">

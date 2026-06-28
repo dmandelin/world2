@@ -11,6 +11,7 @@ export abstract class Interaction {
     ) {}
 
     abstract alignmentItem(subject: Clan, object: Clan): GenericItem;
+    abstract information(subject: Clan, object: Clan): number;
 }
 
 
@@ -35,6 +36,10 @@ export class BasicInteraction extends Interaction {
         const subjectToObjectRelativeAttention = subjectAmount / object.population;
         const objectToSubjectRelativeAttention = objectAmount / subject.population;
         return Math.min(subjectToObjectRelativeAttention, objectToSubjectRelativeAttention);
+    }
+
+    information(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+        return this.relativeAttention(subject, object);
     }
 
     alignmentItem(subject: Clan|ClanDTO, object: Clan|ClanDTO): GenericItem {

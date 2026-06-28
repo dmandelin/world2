@@ -32,26 +32,14 @@ import type { RelationshipView } from "./relationships";
 //     *   Gifts
 
 export class Respect {
-    items_: RespectItem[] = [];
-
-    constructor(
-        readonly subject: Clan,
-        readonly object: Clan
-    ) {
-    }
+    private items_: RespectItem[] = [];
 
     get items(): readonly RespectItem[] { return this.items_; }
     get value(): number { return sumFun(this.items_, i => i.value); }
 
-    clone(): Respect {
-        const a = new Respect(this.subject, this.object);
-        a.items_ = [...this.items_];
-        return a;
-    }
-
-    update(rv: RelationshipView) {
+    updateFor(subject: Clan, object: Clan): void {
         this.items_ = [
-            RespectItem.forRelationships(rv),
+            RespectItem.forRelationships(subject, object),
             //RespectItem.forSeniority(rv),
             //RespectItem.forTenure(rv),
             //RespectItem.forFace(rv),
@@ -60,6 +48,12 @@ export class Respect {
             //RespectItem.forPopulation(rv),
         ];
     }    
+
+    clone(): Respect {
+        const a = new Respect();
+        a.items_ = [...this.items_];
+        return a;
+    }
 }
 
 export class RespectItem {
@@ -74,17 +68,21 @@ export class RespectItem {
         return this.baseValue * this.informationModifier;
     }
 
-    static forRelationships(rv: RelationshipView): RespectItem {
+    static forRelationships(subject: Clan, object: Clan): RespectItem {
         // TODO - Have respect influence how much respect relationships
         //        generate
         // TODO - Have the strength of the relationship influence how
         //        much respect it generates
-        const base = sumFun(rv.object.relationships, ([other, otherRv]) => 0.1);
+        const world = subject.world;
+        const objectConnections = [...world.connections.entriesForHasUUID(object)];
+        const base = sumFun(
+            objectConnections, 
+            ([other, connections]) => 0.1);
         return new RespectItem(
             'Relationships',
             base,
-            rv.informationFromAttention,
-            `${[...rv.object.relationships].length} clans`
+            world.perceptions.get(subject.uuid, object.uuid)?.information.value ?? 0,
+            `${objectConnections.length} clans`
         );
     }
 }

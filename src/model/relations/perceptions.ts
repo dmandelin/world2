@@ -1,15 +1,21 @@
-import type { Clan } from "../people/people";
-import type { World } from "../world";
 import { Alignment2 } from "./alignment";
+import { ClanInformation } from "./information";
 import { clanRefsOfPairID, Connection, ConnectionGraph, type PairID, type UUID } from "./connection";
+import { Respect } from "./respect";
+import type { Clan } from "../people/people";
 import type { Interaction } from "./interaction";
+import type { World } from "../world";
 
 // A clan's perceptions of another.
 export class Perceptions {
+    readonly information = new ClanInformation();
     readonly alignment = new Alignment2();
+    readonly respect = new Respect();
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
+        this.information.updateFor(subject, object, connections, interactions);
         this.alignment.updateFor(subject, object, connections, interactions);
+        this.respect.updateFor(subject, object);
     }
 }
 

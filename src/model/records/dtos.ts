@@ -27,6 +27,7 @@ import { clansOfPairID, Connection, type ConnectionGraph, type UUID } from "../r
 import { BasicInteraction, Interaction, type InteractionGraph } from "../relations/interaction";
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment, Alignment2 } from "../relations/alignment";
+import type { Respect } from "../relations/respect";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -337,6 +338,10 @@ export class WorldDTO {
 
     alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment2|undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.alignment;
+    }
+
+    respectToward(clan: ClanDTO, other: ClanDTO): Respect|undefined {
+        return this.perceptions.get(clan.uuid, other.uuid)?.respect;
     }
 
     advanceFromPlanningView() {

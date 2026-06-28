@@ -175,7 +175,7 @@ export class RelationshipView {
 
     constructor(readonly subject: Clan, readonly object: Clan, readonly relationship: Relationship) {
         this.alignment = new Alignment(subject, object);
-        this.respect = new Respect(subject, object);
+        this.respect = new Respect();
     }
 
     update() {
@@ -186,7 +186,7 @@ export class RelationshipView {
         }
         
         this.alignment.update(this);
-        this.respect.update(this);
+        this.respect.updateFor(this.subject, this.object);
     }
 
     get coresidenceFraction(): number {
