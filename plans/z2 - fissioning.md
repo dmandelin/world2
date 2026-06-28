@@ -128,36 +128,10 @@ still has per-clan texture but is more gradual and less sudden.
 *   Firm up exactly what snapshots we're showing, maybe should
     be simply UI snapshot comparisons
 *   Fix up relationship model
-    x   Basic new relationship structure
-    x   Display something reasonable in debug panel
-    x   Kin working in new structure
-    x   Marriage working in new structure
-    x   Neighbors working in new structure
     *   Friends working in new structure
-    *   New "relationship operation" concept
-        *   General socializing operation
-            *   Transmits information
-                x   Introduce information concept
-                x   Have information influence respect
-                *   Have clans exchange information
-            x   Increases alignment
-        *   Mutual help activity
-            *   Condition on connection?
-            *   Condition on alignment?
-    x   Make sure split clans have neighbors at next point
-    x   Get an actual map for clan IDs
-    x   Bring respect into new relationships model
-        x   Show respect in crosstabs
-        x   Show respect in graphical view
+    *   Have clans exchange information on each other
     *   Make sure deltas can show in main panel
-    x   Pull prestige into new structures
-    x   Point visualizations at new relationship structures
-    x   Use new structures for society happiness
 
-x   Bring back attention limit with relationship updates
-x   Ensure clans use attention and have connections for marriage
-    ties
-x   Update alignment based on attention and interactions
 *   Include random extra negative or positive interactions
     *   These should probably have some material effect too
         and not be just pure alignment effects
@@ -191,15 +165,11 @@ x   Fix up how clan kinship works -- at this level should
                 we have a big object that we mutate
    
         *   Revise prestige model
-            *   Include senior-cadet relationships
-            x   Introduce new model
-            x   From relationships
-            x   Fix up prestige aggregate - not working right
+            x   Include senior-cadet relationships
             *   Other prestige factors
             *   More dependence on relationship factors
             *   Add self-respect: clans should have information
                 about themselves, can also have self bias
-            x   Show cluster-level prestige ratings
             *   Come up with some way to visualize prestige differences
             *   Show sources of respect in a tooltip
             *   Fix bug where we don't get deltas because we're not
@@ -208,24 +178,15 @@ x   Fix up how clan kinship works -- at this level should
             *   Decide exactly which prestige rating affects demographics -
                 right now it's unclear
             *   Show some kind of text/visual summary of prestige
-        x   Add basic effects for prestige
-            x   stress/aid demographic effect
-            x   happiness effect
         *   Figure out other benefits for prestige
-            x   Make the demographic effect of prestige based on
-                relative prestige
-            x   Marriage
             *   Attention
             *   Access to land?
             *   Gifts of labor or goods? (but what's the motivation?)
-        x   Add Kin relationship to relationships model with
-            alignment bonus
 *   Let clans have knowledge of clans they don't directly interact
     with
     *   Be sure to let clan A learn transitively through people it
         knows about respect-related information
 *   Get friends working again
-x   Make low-related marriage relationships not strong ties
 *   Limit or make attention more expensive across distance,
     including when not coresident
 *   Introduce some sort of "charisma" differential or skill
@@ -233,8 +194,6 @@ x   Make low-related marriage relationships not strong ties
     are economies of scale knowing N people in the same clan, and
     that will give larger clans an advantage in getting attention
 *   Have clans transmit alignment information to each other
-x   Create amenity for positive relationships
-x   Create disamenity for interactions outside of positive
     relationships/interactions
 *   Verify that scale causes stress per metrics above
 *   Trigger village splits from stress or conflict

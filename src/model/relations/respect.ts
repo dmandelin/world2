@@ -2,6 +2,7 @@ import { sumFun } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
+import { KinConnection } from "./connection";
 
 // Notes on how the calculations will work:
 //
@@ -41,7 +42,7 @@ export class Respect {
     updateFor(subject: Clan, object: Clan): void {
         this.items_ = [
             RespectItem.forRelationships(subject, object),
-            //RespectItem.forSeniority(rv),
+            ...RespectItem.forSeniority(subject, object),
             //RespectItem.forTenure(rv),
             //RespectItem.forFace(rv),
             //RespectItem.forVisibleWealth(rv),
@@ -85,6 +86,21 @@ export class RespectItem {
             world.perceptions.get(subject.uuid, object.uuid)?.information.value ?? 0,
             `${objectConnections.length} clans`
         );
+    }
+
+    static forSeniority(subject: Clan, object: Clan): RespectItem[] {
+        const world = subject.world;
+        const connection = world.connections.getForType(subject, object, KinConnection);
+        if (!connection) return [];
+        const value = subject.uuid === connection.senior ? -0.05 : 0.05;
+        return [
+            new RespectItem(
+                'Seniority',
+                value,
+                1, // TODO - Make them need at least a little information.
+                `senior-cadet relationship`
+            )
+        ];
     }
 }
 

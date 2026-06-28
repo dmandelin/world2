@@ -109,7 +109,7 @@ export class ConnectionGraph {
         return this.m_.entries();
     }
 
-    getForType<T extends Connection>(c1: HasOrIsUUID, c2: HasOrIsUUID, type: new () => T): T | undefined {
+    getForType<T extends Connection>(c1: HasOrIsUUID, c2: HasOrIsUUID, type: new (...args: any[]) => T): T | undefined {
         const pairID = pairIDOf(c1, c2);
         const connections = this.m_.get(pairID);
         if (!connections) return undefined;
