@@ -20,6 +20,12 @@ export class PerceptionsGraph {
     // object -> subject -> perceptions
     private readonly r_ = new Map<UUID, Map<UUID, Perceptions>>();
 
+    getFor(subject: UUID): Iterable<[UUID, Perceptions]> {
+        const subjectMap = this.m_.get(subject);
+        if (!subjectMap) return [];
+        return subjectMap.entries();
+    }
+
     get(subject: UUID, object: UUID): Perceptions | undefined {
         let subjectMap = this.m_.get(subject);
         if (!subjectMap) return undefined;

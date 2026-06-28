@@ -143,6 +143,9 @@ still has per-clan texture but is more gradual and less sudden.
             *   Condition on alignment?
     x   Make sure split clans have neighbors at next point
     x   Get an actual map for clan IDs
+    *   Bring respect into new relationships model
+        *   Show respect in crosstabs
+        *   Show rspect in graphical view
     *   Make sure deltas can show in main panel
     *   Point visualizations at new relationship structures
 

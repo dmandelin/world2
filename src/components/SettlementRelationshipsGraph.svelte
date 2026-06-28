@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { type Clan } from '../model/people/people';
     import ButtonPanel from './ButtonPanel.svelte';
-    import type { SettlementDTO } from '../model/records/dtos';
+    import type { ClanDTO, SettlementDTO } from '../model/records/dtos';
     import { colorInterpolator } from '../model/lib/basics';
     import { Friends, MarriagePartners } from '../model/relations/relationships';
+    import { FriendshipConnection, KinConnection, MarriageConnection } from '../model/relations/connection';
+    import { BasicInteraction } from '../model/relations/interaction';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
+    let world = $derived(settlement.world);
 
     const width = 400;
     const height = 400;
@@ -29,7 +31,7 @@
     }
 
     interface ClanDisplay {
-        clan: Clan;
+        clan: ClanDTO;
         x: number;
         y: number;
         angle: number;
@@ -51,64 +53,79 @@
     type RelationshipDirection = '>' | '<' | '-';
 
     abstract class RelationshipDisplayOption {
-        abstract relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]>;
+        abstract relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]>;
     }
 
     class MarriageRelationshipDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            for (const [rv, _] of clan.relationships.withInteractionChain(MarriagePartners)) {
-                yield [rv.object, '-', rv.relatedness, DEFAULT_RELATIONSHIP_COLOR];
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            for (const [other, connection] of world.connectionsForType(clan, MarriageConnection)) {
+                yield [other, '-', connection.relatedness, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
 
     class KinshipRelationshipDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            if (clan.parent) {
-                yield [clan.parent, '>', clan.kinshipTo(clan.parent), DEFAULT_RELATIONSHIP_COLOR];
-            }
-            for (const cadet of clan.cadets) {
-                yield [cadet, '<', clan.kinshipTo(cadet), DEFAULT_RELATIONSHIP_COLOR];
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            for (const [other, connection] of world.connectionsForType(clan, KinConnection)) {
+                if (clan.uuid === connection.senior) {
+                    yield [other, '>', 0.25, DEFAULT_RELATIONSHIP_COLOR];
+                } else {
+                    yield [other, '<', 0.25, DEFAULT_RELATIONSHIP_COLOR];
+                }
+                yield [other, '-', 0.25, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
 
     class FriendshipRelationshipDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            for (const [rv, _] of clan.relationships.withInteractionChain(Friends)) {
-                yield [rv.object, '-', rv.cooperationLevel, DEFAULT_RELATIONSHIP_COLOR];
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            for (const [other, connection] of world.connectionsForType(clan, FriendshipConnection)) {
+                yield [other, '-', 0.25, DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
 
     const alignmentColorInterpolator = colorInterpolator(
-        [200, 50, 50],
-        [50, 50, 200],
-        -1,
-        1,
+        [-1, 0, 0.25, 1],
+        [[200, 50, 50],
+         [200, 200, 200],
+         [50, 50, 200],
+         [50, 200, 50]],
     );
 
     class AlignmentDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
-            for (const [other, r] of clan.relationships) {
-                yield [other, '-', 1, alignmentColorInterpolator(r.alignment.value)];
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            for (const [other, p] of world.perceptions.getFor(clan.uuid)) {
+                yield [world.clanMap.get(other)!, '-', 0.33, alignmentColorInterpolator(p.alignment.value)];
             }
         }
     }
 
     class RespectDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            /*
             for (const [other, r] of clan.relationships) {
-                yield [other, '-', r.respect.value / 2, alignmentColorInterpolator(r.respect.value)];
+                yield [world.clanMap.get(other)!, '-', r.respect.value / 2, alignmentColorInterpolator(r.respect.value)];
+            }
+            */
+        }
+    }
+
+    class BasicInteractionDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            for (const [other, interaction] of world.interactionsForType(clan, BasicInteraction)) {
+                yield [other, '-', 0.5 * interaction.relativeAttention(clan, other), DEFAULT_RELATIONSHIP_COLOR];
             }
         }
     }
     
     class MutualHelpDisplayOption extends RelationshipDisplayOption {
-        *relationships(clan: Clan): Iterable<[Clan, RelationshipDirection, number, string]> {
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            /*
             for (const [other, help] of clan.helpAllocation) {
                 yield [other, '-', help * 10, DEFAULT_RELATIONSHIP_COLOR];
             }
+            */
         }
     }
     
@@ -117,7 +134,7 @@
         relationships: [] as RelationshipDisplay[],
     });
 
-    let rdo = $state(new MarriageRelationshipDisplayOption());
+    let rdo = $state(new AlignmentDisplayOption());
 
     $effect(() => {
         const newDisplay = buildDisplay(settlement);
@@ -145,7 +162,7 @@
         const localClans = clans.map((clan, i) => {
             const angle = i * angleStep;
             return {
-                clan: clan.ref,
+                clan,
                 x: cx + innerRadius * Math.cos(angle),
                 y: cy + innerRadius * Math.sin(angle),
                 angle: angle,
@@ -315,12 +332,13 @@
 
 <div>
     <ButtonPanel config={{buttons: [
-        { label: "M", tooltip: "Marriage relationships", data: new MarriageRelationshipDisplayOption() },
-        { label: "K", tooltip: "Kinship relationships", data: new KinshipRelationshipDisplayOption() },
-        { label: "F", tooltip: "Friendship relationships", data: new FriendshipRelationshipDisplayOption() },
         { label: "A", tooltip: "Alignment", data: new AlignmentDisplayOption() },
         { label: "R", tooltip: "Respect", data: new RespectDisplayOption() },
-        { label: "H", tooltip: "Mutual help", data: new MutualHelpDisplayOption() },
+        { label: "I-S", tooltip: "Social interaction", data: new BasicInteractionDisplayOption() },
+        { label: "I-H", tooltip: "Mutual help", data: new MutualHelpDisplayOption() },
+        { label: "C-M", tooltip: "Marriage relationships", data: new MarriageRelationshipDisplayOption() },
+        { label: "C-K", tooltip: "Kinship relationships", data: new KinshipRelationshipDisplayOption() },
+        { label: "C-F", tooltip: "Friendship relationships", data: new FriendshipRelationshipDisplayOption() },
      ]}} onSelected={(label, data) => rdo = data} />
 </div>
 <!-- svelte-ignore a11y_click_events_have_key_events -->

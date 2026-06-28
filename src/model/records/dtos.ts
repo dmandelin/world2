@@ -24,7 +24,7 @@ import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeli
 import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
 import { clansOfPairID, Connection, type ConnectionGraph, type UUID } from "../relations/connection";
-import { BasicInteraction, type InteractionGraph } from "../relations/interaction";
+import { BasicInteraction, Interaction, type InteractionGraph } from "../relations/interaction";
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment, Alignment2 } from "../relations/alignment";
 
@@ -293,6 +293,32 @@ export class WorldDTO {
             const [c1, c2] = clansOfPairID(pairID, this);
             const other = c1 === clan ? c2 : c1;
             yield [other, connections] as [ClanDTO, Connection[]];
+        }
+    }
+
+    *connectionsForType<T extends Connection>(clan: ClanDTO, type: new (...args: any[]) => T) {
+        for (const [other, connections] of this.connectionsFor(clan)) {
+            for (const c of connections) {
+                if (c instanceof type) {
+                    yield [other, c] as [ClanDTO, T];
+                }
+            }
+        }
+    }
+
+    *interactionsFor(clan: ClanDTO) {
+        for (const [other, interactions] of this.interactions.getFor(clan)) {
+            yield [this.clanMap.get(other)!, interactions] as [ClanDTO, Interaction[]];
+        }
+    }
+
+    *interactionsForType<T extends Interaction>(clan: ClanDTO, type: new (...args: any[]) => T) {
+        for (const [other, interactions] of this.interactionsFor(clan)) {
+            for (const i of interactions) {
+                if (i instanceof type) {
+                    yield [other, i] as [ClanDTO, T];
+                }
+            }
         }
     }
 

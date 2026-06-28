@@ -338,13 +338,32 @@ export function znan(value: number): number {
 
 type RGB = [number, number, number];
 
-export function colorInterpolator(color1: RGB, color2: RGB, lo: number = 0, hi: number = 1): (t: number) => string {
+// `points` and `colors` should have the same length
+// `points` should be sorted in ascending order
+export function colorInterpolator(
+    points: number[],
+    colors: RGB[],
+) {
+    if (points.length !== colors.length) {
+        throw new Error("points and colors must have the same length");
+    }
     return (t: number) => {
-        const u = clamp((t - lo) / (hi - lo), 0, 1);
-        const r = Math.round(color1[0] + (color2[0] - color1[0]) * u);
-        const g = Math.round(color1[1] + (color2[1] - color1[1]) * u);
-        const b = Math.round(color1[2] + (color2[2] - color1[2]) * u);
-        return `rgb(${r}, ${g}, ${b})`;
+        if (t <= points[0]) {
+            return `rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]})`;
+        }
+        if (t >= points[points.length - 1]) {
+            return `rgb(${colors[colors.length - 1][0]}, ${colors[colors.length - 1][1]}, ${colors[colors.length - 1][2]})`;
+        }
+        for (let i = 0; i < points.length - 1; ++i) {
+            if (t >= points[i] && t <= points[i + 1]) {
+                const u = (t - points[i]) / (points[i + 1] - points[i]);
+                const r = Math.round(colors[i][0] + (colors[i + 1][0] - colors[i][0]) * u);
+                const g = Math.round(colors[i][1] + (colors[i + 1][1] - colors[i][1]) * u);
+                const b = Math.round(colors[i][2] + (colors[i + 1][2] - colors[i][2]) * u);
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+        }
+        throw new Error("unreachable");
     }
 }
 

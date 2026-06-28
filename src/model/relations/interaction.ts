@@ -1,6 +1,7 @@
 import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import { GenericItem } from "../records/basicdata";
+import type { ClanDTO } from "../records/dtos";
 import { pairIDOf, type HasUUID, type PairID, type UUID } from "./connection";
 
 export abstract class Interaction {
@@ -12,6 +13,7 @@ export abstract class Interaction {
     abstract alignmentItem(subject: Clan, object: Clan): GenericItem;
 }
 
+
 export class BasicInteraction extends Interaction {
     amount1to2: number = 0;
     amount2to1: number = 0;
@@ -20,7 +22,7 @@ export class BasicInteraction extends Interaction {
         super(c1, c2);
     }
 
-    alignmentItem(subject: Clan, object: Clan): GenericItem {
+    relativeAttention(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
         let subjectAmount, objectAmount;
         if (subject.uuid === this.c1) {
             subjectAmount = this.amount1to2;
@@ -32,7 +34,11 @@ export class BasicInteraction extends Interaction {
 
         const subjectToObjectRelativeAttention = subjectAmount / object.population;
         const objectToSubjectRelativeAttention = objectAmount / subject.population;
-        const relativeAttention = Math.min(subjectToObjectRelativeAttention, objectToSubjectRelativeAttention);
+        return Math.min(subjectToObjectRelativeAttention, objectToSubjectRelativeAttention);
+    }
+
+    alignmentItem(subject: Clan|ClanDTO, object: Clan|ClanDTO): GenericItem {
+        const relativeAttention = this.relativeAttention(subject, object);
         return new GenericItem(
             'Interaction',
             0.2 * relativeAttention,
