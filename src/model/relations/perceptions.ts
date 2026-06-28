@@ -13,10 +13,23 @@ export class Perceptions {
     readonly alignment = new Alignment();
     readonly respect = new Respect();
 
+    constructor(information: ClanInformation = new ClanInformation(), alignment: Alignment = new Alignment(), respect: Respect = new Respect()) {
+        this.information = information;
+        this.alignment = alignment;
+        this.respect = respect;
+    }
+
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
         this.information.updateFor(subject, object, connections, interactions);
         this.alignment.updateFor(subject, object, connections, interactions);
         this.respect.updateFor(subject, object);
+    }
+
+    clone(): Perceptions {
+        return new Perceptions(
+            this.information.clone(), 
+            this.alignment.clone(), 
+            this.respect.clone());
     }
 }
 
@@ -88,7 +101,7 @@ export class PerceptionsGraph {
         const g = new PerceptionsGraph();
         for (const [subject, subjectMap] of this.m_) {
             for (const [object, perceptions] of subjectMap) {
-                g.add(subject, object, perceptions);
+                g.add(subject, object, perceptions.clone());
             }
         }
         return g;

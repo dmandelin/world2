@@ -233,6 +233,7 @@ export class World implements NoteTaker {
 
         this.planConnections();
         updateBasicInteractions(this);
+        // Update perceptions here so they can influence the rest of planning.
         updatePerceptions(this);
 
         this.planMutualHelp();
@@ -280,6 +281,9 @@ export class World implements NoteTaker {
         }
         // Advance the year.
         this.year.advance(this.yearsPerTurn);
+
+        // Update perceptions based on the end-of-turn state.
+        updatePerceptions(this);
 
         this.previousEndOfTurnSnapshot_ = this.endOfTurnSnapshot_;
         this.endOfTurnSnapshot_ = new WorldDTO(this);

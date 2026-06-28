@@ -125,12 +125,19 @@ still has per-clan texture but is more gradual and less sudden.
 
 # Model changes
 
-*   Firm up exactly what snapshots we're showing, maybe should
-    be simply UI snapshot comparisons
+*   Show pending moves in the main panel
+*   Fold the Conflict happiness item into Society
+*   Change from individual clan migration to village fissioning
+    When enough clans to make a viable village are interested in
+    leaving, split
+*   Then also allow individual clans to make certain moves to
+    established villages
+*   Charge costs for founding a new village
+*   Charge costs for moving
+
 *   Fix up relationship model
     *   Friends working in new structure
     *   Have clans exchange information on each other
-    *   Make sure deltas can show in main panel
 
 *   Include random extra negative or positive interactions
     *   These should probably have some material effect too
@@ -171,12 +178,6 @@ x   Fix up how clan kinship works -- at this level should
             *   Add self-respect: clans should have information
                 about themselves, can also have self bias
             *   Come up with some way to visualize prestige differences
-            *   Show sources of respect in a tooltip
-            *   Fix bug where we don't get deltas because we're not
-                cloning (kind of annoying because data structure is
-                complicated)
-            *   Decide exactly which prestige rating affects demographics -
-                right now it's unclear
             *   Show some kind of text/visual summary of prestige
         *   Figure out other benefits for prestige
             *   Attention

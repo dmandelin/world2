@@ -10,4 +10,10 @@ export class ClanInformation {
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
         this.value = sumFun(interactions, interaction => interaction.information(subject, object));
     }
+
+    clone(): ClanInformation {
+        const ci = new ClanInformation();
+        ci.value = this.value;
+        return ci;
+    }
 }

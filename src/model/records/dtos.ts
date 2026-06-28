@@ -77,7 +77,6 @@ export class ClanDTO {
     housingDecision: HousingDecision|undefined;
     residenceLevel: ResidenceLevel;
     residenceFraction: number;
-    settlement: Settlement;
 
     tradeRelationships: TradeRelationshipsDTO[];
     rites: Rites;
@@ -107,8 +106,8 @@ export class ClanDTO {
 
     notifications: ClanNotification[];
 
-    constructor(clan: Clan, readonly world: WorldDTO) {
-        this.year = world.year.toString();
+    constructor(clan: Clan, readonly settlement: SettlementDTO) {
+        this.year = settlement.world.year.toString();
         this.uuid = clan.uuid;
 
         this.ref = clan;
@@ -118,7 +117,6 @@ export class ClanDTO {
         this.housing = clan.housing;
         this.housingDecision = clan.housingDecision;
         this.residenceLevel = clan.residenceLevel.clone();
-        this.settlement = clan.settlement;
 
         this.rites = clan.rites.clone();
         this.migrationPlan = clan.migrationPlan;
@@ -149,6 +147,10 @@ export class ClanDTO {
 
         this.notifications = [...clan.notifications];
     }
+
+    get world(): WorldDTO {
+        return this.settlement.world;
+    }
 }
 
 export class SettlementDTO {
@@ -178,7 +180,7 @@ export class SettlementDTO {
     constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
         this.ref = settlement;
         this.clans = sortedByKey([...settlement.clans].map(clan => 
-            new ClanDTO(clan, world)), clan => clan.name);
+            new ClanDTO(clan, this)), clan => clan.name);
 
         this.uuid = settlement.uuid;
         this.name = settlement.name;
@@ -228,6 +230,10 @@ export class ClusterDTO {
 
     get lastPopulationChange() {
         return sumFun(this.settlements, s => s.lastSizeChange);
+    }
+
+    get clans() {
+        return this.settlements.flatMap(s => s.clans);
     }
 }
 

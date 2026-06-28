@@ -13,7 +13,7 @@
     import { getClanLastTurnSnapshots, SettlementDTO, type ClanDTO, type WorldDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
-    import { getAreaPrestige, getLocalPrestige, getLocalRespect, getRespectInScopeDetail } from "../../model/relations/respect";
+    import { getAreaPrestige, getLocalPrestige, getLocalRespect, getRespect, getRespectInScopeDetail } from "../../model/relations/respect";
     import { get } from "svelte/store";
     import { connectionsOf } from "../../model/relations/connection";
     

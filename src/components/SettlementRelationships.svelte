@@ -135,9 +135,6 @@
                 <div>
                     {pct(c.relatedness)}: 
                     <EntityLink entity={other} />
-                    of
-                    <EntityLink entity={other.settlement} />
-                    {#if other.settlement.parent}(<EntityLink entity={other.settlement.parent} />){/if}
                 </div>
             {/each}
         </div>

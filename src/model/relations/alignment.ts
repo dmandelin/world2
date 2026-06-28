@@ -21,6 +21,12 @@ export class Alignment {
         ];
     }
 
+    clone(): Alignment {
+        const a = new Alignment();
+        a.items = [...this.items];
+        return a;
+    }
+
     get value(): number { return sumFun(this.items, item => item.value); }
 }
 
