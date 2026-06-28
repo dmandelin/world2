@@ -150,8 +150,9 @@ still has per-clan texture but is more gradual and less sudden.
         x   Show respect in crosstabs
         x   Show respect in graphical view
     *   Make sure deltas can show in main panel
-    *   Pull prestige into new structures
+    x   Pull prestige into new structures
     x   Point visualizations at new relationship structures
+    x   Use new structures for society happiness
 
 x   Bring back attention limit with relationship updates
 x   Ensure clans use attention and have connections for marriage
@@ -160,7 +161,7 @@ x   Update alignment based on attention and interactions
 *   Include random extra negative or positive interactions
     *   These should probably have some material effect too
         and not be just pure alignment effects
-*   Fix up how clan kinship works -- at this level should
+x   Fix up how clan kinship works -- at this level should
     probably be more like other relationships
     *   Thoughts on this:
         *   This is about senior-cadet clan relationships,
@@ -188,36 +189,7 @@ x   Update alignment based on attention and interactions
         *   Review architecture of new prestige model
             *   Immediate problem is that we can't show deltas because
                 we have a big object that we mutate
-            *   Looming problem is that we want clans to be able to
-                have information about clans they don't have a
-                relationship with
-            *   Thoughts
-                *   Might be useful to look at clan-clan relationships
-                    as similar to Operations (ongoing activities that
-                    can be invested in and/or worked on)
-                *   What happens when there are multiple relationships:
-                    kin and neighbors, or marriage and neighbors? 
-                    *   Let's separate the relationship from the interaction
-                        Relationship = when two people/groups believe they
-                        have a certain relation to each other; interactions =
-                        interactions that take place
-                    *   Neighbors *is* then quite significant, but we 
-                        should clarify what kind they are, or get coresidence
-                        mattering more, because neighbors in a small farming
-                        village could be a closer, more familiar relationship
-                        than some
-                *   New data structures needed
-                    *   Family relationships - kin & marriages
-                    *   Clan-clan information
-                    *   Clan -> which clans they can interact with and their
-                        cost
-                    *   Let clans allocate attention there as an allocation
-                    *   Require attention or other costs to maintain relationships
-                        not based on proximity
-                    *   Create an interaction object or the like when they
-                        have attention to each other or a relationship where
-                        they could interact
-                    *   Create ways to add new relationships
+   
         *   Revise prestige model
             *   Include senior-cadet relationships
             x   Introduce new model
@@ -242,18 +214,18 @@ x   Update alignment based on attention and interactions
         *   Figure out other benefits for prestige
             x   Make the demographic effect of prestige based on
                 relative prestige
-            *   Marriage
+            x   Marriage
             *   Attention
             *   Access to land?
             *   Gifts of labor or goods? (but what's the motivation?)
-        *   Add Kin relationship to relationships model with
+        x   Add Kin relationship to relationships model with
             alignment bonus
 *   Let clans have knowledge of clans they don't directly interact
     with
     *   Be sure to let clan A learn transitively through people it
         knows about respect-related information
 *   Get friends working again
-*   Make low-related marriage relationships not strong ties
+x   Make low-related marriage relationships not strong ties
 *   Limit or make attention more expensive across distance,
     including when not coresident
 *   Introduce some sort of "charisma" differential or skill
@@ -261,8 +233,8 @@ x   Update alignment based on attention and interactions
     are economies of scale knowing N people in the same clan, and
     that will give larger clans an advantage in getting attention
 *   Have clans transmit alignment information to each other
-*   Create amenity for positive relationships
-*   Create disamenity for interactions outside of positive
+x   Create amenity for positive relationships
+x   Create disamenity for interactions outside of positive
     relationships/interactions
 *   Verify that scale causes stress per metrics above
 *   Trigger village splits from stress or conflict
