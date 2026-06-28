@@ -16,6 +16,7 @@ import { Timeline, TimePoint } from "./records/timeline";
 import { updateRelationships } from "./relations/relationships";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
+import { Perceptions, PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 
 export class World implements NoteTaker {
     readonly year = new Year();
@@ -30,6 +31,7 @@ export class World implements NoteTaker {
     readonly clanMap = new Map<UUID, Clan>();
     readonly connections = new ConnectionGraph();
     readonly interactions = new InteractionGraph();
+    readonly perceptions = new PerceptionsGraph();
     readonly clusters = new SettlementsBuilder(this).createClusters([
         ['Eridu', 382, 378, 5],
         ['Ur', 425, 325, 5],
@@ -226,8 +228,8 @@ export class World implements NoteTaker {
         //this.clans.prune();
 
         this.planConnections();
-        updateRelationships(this);
-        this.updatePerceptions();
+        updateRelationships(this); // TODO - Remove
+        updatePerceptions(this);
 
         this.planMutualHelp();
 
@@ -319,12 +321,6 @@ export class World implements NoteTaker {
                     this.connections.getOrCreate(c1, c2, NeighborConnection);
                 }
             }
-        }
-    }
-
-    updatePerceptions() {
-        for (const cl of this.clusters) {
-            cl.updatePerceptions();
         }
     }
 

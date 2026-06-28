@@ -25,6 +25,8 @@ import type { TrendDTO } from "../records/trends";
 import type { World } from "../world";
 import { clansOfPairID, Connection, type ConnectionGraph, type UUID } from "../relations/connection";
 import { BasicInteraction, type InteractionGraph } from "../relations/interaction";
+import type { PerceptionsGraph } from "../relations/perceptions";
+import type { Alignment, Alignment2 } from "../relations/alignment";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -239,8 +241,11 @@ export class WorldDTO {
     readonly year: string;
     readonly clanMap: ReadonlyMap<UUID, ClanDTO>;
     readonly clusters: ClusterDTO[];
+
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
+    readonly perceptions: PerceptionsGraph;
+
     readonly timeline: Timeline<TimePoint>;
     readonly trends: TrendDTO[];
     readonly notes: Note[];
@@ -255,6 +260,7 @@ export class WorldDTO {
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.connections = world.connections.clone();
         this.interactions = world.interactions.clone();
+        this.perceptions = world.perceptions.clone();
 
         this.timeline = world.timeline;
         this.trends = world.trends.map(t => t.asDTO);
@@ -301,6 +307,10 @@ export class WorldDTO {
             }
         }
         return 0;
+    }
+
+    alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment2|undefined {
+        return this.perceptions.get(clan.uuid, other.uuid)?.alignment;
     }
 
     advanceFromPlanningView() {

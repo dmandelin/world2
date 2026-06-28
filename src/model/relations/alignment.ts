@@ -1,7 +1,28 @@
-import { maxbyWithValue } from "../lib/basics";
+import { maxbyWithValue, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
+import type { GenericItem } from "../records/basicdata";
 import type { World } from "../world";
+import type { Connection } from "./connection";
+import type { Interaction } from "./interaction";
 import { type RelationshipView } from "./relationships";
+
+export class Alignment2 {
+    items: GenericItem[] = [];
+
+    updateFor(
+        subject: Clan, 
+        object: Clan, 
+        connections: Connection[], 
+        interactions: Interaction[]): void {
+
+        this.items = [
+            ...connections.map(connection => connection.alignmentItem(subject, object)),
+            ...interactions.map(interaction => interaction.alignmentItem(subject, object))
+        ];
+    }
+
+    get value(): number { return sumFun(this.items, item => item.value); }
+}
 
 export class Alignment {
     interactionType: string = '';

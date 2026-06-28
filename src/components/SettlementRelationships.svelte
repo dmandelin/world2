@@ -1,85 +1,85 @@
 <script lang="ts">
     import { Clan } from "../model/people/people";
-    import { MarriagePartners, RelationshipView, Stance } from "../model/relations/relationships";
+    import { MarriagePartners } from "../model/relations/relationships";
     import { pct, spct, unsigned, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
-    import { type Table, CrossTab, IterableTable, SingleRecordTable } from "./tables/tables2";
+    import { CrossTab, IterableTable } from "./tables/tables2";
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
-    import type { SettlementDTO } from "../model/records/dtos";
+    import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import type { Snippet } from "svelte";
     
     let { settlement }: { settlement: SettlementDTO }= $props();
+    let world = $derived(settlement.world);
     let clans = $derived(settlement.clans);
 
     function buildRelationshipsTable<CellValue>(
-        valueFn: (rowClan: Clan, colClan: Clan) => CellValue,
+        valueFn: (rowClan: ClanDTO, colClan: ClanDTO) => CellValue,
         formatFn: (value: CellValue) => string,
-        cellTooltip: Snippet<[CellValue, Clan, Clan]>): CrossTab<Clan, CellValue> {
+        cellTooltip: Snippet<[CellValue, ClanDTO, ClanDTO]>): CrossTab<ClanDTO, CellValue> {
 
-        const clans = sortedByKey(settlement.clans.map(c => c.ref), c => c.name);
+        const clans: ClanDTO[] = sortedByKey(settlement.clans, c => c.name);
             
-        return new CrossTab<Clan, CellValue>(
+        return new CrossTab<ClanDTO, CellValue>(
             clans,
-            (clan: Clan) => clan.name,
+            (clan: ClanDTO) => clan.name,
             valueFn,
             formatFn,
             cellTooltip,
         )
     }
 
-    function interactionLevelCellValue(rowClan: Clan, colClan: Clan): number {
-        const rv = rowClan.relationships.get(colClan);
-        if (!rv) {
-            return 0;
-        }
-        return rv.attention / rv.object.population;
+    function interactionLevelCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
+        const att = world.attentionTo(rowClan, colClan);
+        return att / colClan.population;
     }
 
-    function alignmentCellValue(rowClan: Clan, colClan: Clan): number {
-        const r = rowClan.relationships.get(colClan);
-        if (!r) {
-            return 0;
-        }
-        return r.alignment.value;
+    function alignmentCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
+        const a = world.alignmentToward(rowClan, colClan);
+        if (!a) return 0;
+        return a.value;
     }
 
-    function respectCellValue(rowClan: Clan, colClan: Clan): number {
-        return rowClan.respectFor(colClan);
-    }
-
-    function stanceCellValue(rowClan: Clan, colClan: Clan): Stance {
-        const r = rowClan.relationships.get(colClan);
-        if (!r) {
-            return Stance.Generous;
-        }
-        return r.stance;
+    function respectCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
+        //return rowClan.respectFor(colClan);
+        return 0.67;
     }
 </script>
 
 <style>
 </style>
 
-{#snippet interactionVolumeCellTooltip(value: number, subject: Clan, object: Clan)}
-    {@const rv = subject.relationships.get(object)}
-    {#if rv}
-        {unsigned(rv.attention)} attention / {rv.object.population} population
+{#snippet interactionVolumeCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+    {@const att = world.attentionTo(subject, object)}
+    {#if att}
+        {unsigned(att)} attention / {object.population} population
     {/if}
 {/snippet}
 
-{#snippet alignmentCellTooltip(value: number, subject: Clan, object: Clan)}
-  {@const rv = subject.relationships.get(object)}
-  {@const a = rv ? rv.alignment : undefined}
+{#snippet alignmentCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+  {@const a = world.alignmentToward(subject, object)}
   {#if a}
-    Base {pct(a.base)} from {unsigned(a.attention)} attention / {a.objectPopulation} population
-    <br>
-    {#if a.interactionTypeModifier != 1}
-        {spct(a.interactionTypeModifier)} from {a.interactionType}
-    {/if}
+        <TableView2 table={
+            new IterableTable(
+                a.items,
+                i => i.label,
+                [{
+                    data: 'Value',
+                    label: 'Value',
+                    valueFn: i => i.value,
+                    formatFn: (i: number) => unsigned(i, 2),
+                }, {
+                    data: 'Explanation',
+                    label: 'Explanation',
+                    valueFn: i => i.explanation,
+                }],
+            )
+        }></TableView2>
   {/if}
 {/snippet}
 
-{#snippet respectCellTooltip(value: number, subject: Clan, object: Clan)}
+{#snippet respectCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+    <!--
     {@const rv = subject.relationships.get(object)}
     {#if rv}
         <TableView2 table={
@@ -109,10 +109,7 @@
             )
         }></TableView2>
     {/if}
-{/snippet}
-
-{#snippet stanceCellTooltip(value: Stance, subject: Clan, object: Clan)}
-n/a
+    -->
 {/snippet}
 
 <div style="display: flex; flex-direction: row; gap: 2rem;">
@@ -128,10 +125,6 @@ n/a
         <div>
             <h3>Respect</h3>
             <TableView2 table={buildRelationshipsTable(respectCellValue, unsignedFormat(2), respectCellTooltip)}></TableView2>
-        </div>
-        <div>
-            <h3>Stance</h3>
-            <TableView2 table={buildRelationshipsTable(stanceCellValue, s => s.toString(), stanceCellTooltip)}></TableView2>
         </div>
     </div>
     <div>

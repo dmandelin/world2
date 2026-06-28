@@ -1,11 +1,14 @@
 import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
+import { GenericItem } from "../records/basicdata";
 import type { ClanDTO, WorldDTO } from "../records/dtos";
 import type { World } from "../world";
 
 export abstract class Connection {
     abstract debugString(): string;
     abstract clone(): Connection;
+
+    abstract alignmentItem(subject: Clan, object: Clan): GenericItem;
 }
 
 export class MarriageConnection extends Connection {
@@ -19,6 +22,14 @@ export class MarriageConnection extends Connection {
         const c = new MarriageConnection();
         c.relatedness = this.relatedness;
         return c;
+    }
+
+    alignmentItem(subject: Clan, object: Clan): GenericItem {
+        return new GenericItem(
+            'Marriages',
+            this.relatedness,
+            `${pct(this.relatedness)}`
+        );
     }
 }
 
@@ -39,6 +50,14 @@ export class KinConnection extends Connection {
     clone(): KinConnection {
         return new KinConnection(this.senior, this.cadet);
     }
+
+    alignmentItem(subject: Clan, object: Clan): GenericItem {
+        return new GenericItem(
+            'Kin',
+            0.125,
+            'Kinship'
+        );
+    }
 }
 
 export class FriendshipConnection extends Connection {
@@ -49,6 +68,14 @@ export class FriendshipConnection extends Connection {
     clone(): FriendshipConnection {
         return new FriendshipConnection();
     }
+
+    alignmentItem(subject: Clan, object: Clan): GenericItem {
+        return new GenericItem(
+            'Friendship',
+            0.25,
+            'Friendship'
+        );
+    }
 }
 
 export class NeighborConnection extends Connection {
@@ -58,6 +85,14 @@ export class NeighborConnection extends Connection {
 
     clone(): NeighborConnection {
         return new NeighborConnection();
+    }
+
+    alignmentItem(subject: Clan, object: Clan): GenericItem {
+        return new GenericItem(
+            'Neighbors',
+            -.1,
+            'Inevitable annoyances'
+        );
     }
 }
 
@@ -78,7 +113,7 @@ export function clansOfPairID(pairID: PairID, world: WorldDTO): [ClanDTO, ClanDT
     return [c1!, c2!];
 }
 
-function clanRefsOfPairID(pairID: PairID, world: World): [Clan, Clan] {
+export function clanRefsOfPairID(pairID: PairID, world: World): [Clan, Clan] {
     const [uuid1, uuid2] = pairID.split('|');
     const c1 = world.clanMap.get(uuid1);
     const c2 = world.clanMap.get(uuid2);
@@ -88,6 +123,11 @@ function clanRefsOfPairID(pairID: PairID, world: World): [Clan, Clan] {
 export class ConnectionGraph {
     readonly m_: Map<PairID, Connection[]> = new Map();
     readonly a_: Map<string, Set<PairID>> = new Map();
+
+    areConnected(c1: UUID, c2: UUID): boolean {
+        const pairID = pairIDOf({ uuid: c1 }, { uuid: c2 });
+        return this.m_.has(pairID);
+    }
 
     entries(): Iterable<[PairID, Connection[]]> {
         return this.m_.entries();

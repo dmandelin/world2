@@ -132,13 +132,6 @@ export class SettlementCluster {
         }
     }
 
-    // TODO - Update and remove
-    updatePerceptions(): void {
-        for (const s of this.settlements) {
-            s.updateSeniority();
-        }
-    }
-
     foundSettlement(name: string, source: Settlement): Settlement {
         const [x, y] = this.placer_.placeFor();
         return new Settlement(source.world, name, x, y, this, source);

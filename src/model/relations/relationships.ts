@@ -169,7 +169,6 @@ export class RelationshipView {
 
     alignment: Alignment;
     respect: Respect;
-    stance: Stance = Stance.Generous;
 
     // Relatedness by marriage, 0-1.
     relatedness = 0;
@@ -221,11 +220,6 @@ export class RelationshipView {
         return Math.pow(this.relativeAttention, 1/3);
     }
 }
-
-export enum Stance {
-    Generous = 'Generous',
-    Stingy = 'Stingy',
-};
 
 export class Relationship {
     interactionChains: InteractionChain[] = [];

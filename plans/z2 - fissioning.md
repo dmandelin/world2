@@ -137,7 +137,7 @@ still has per-clan texture but is more gradual and less sudden.
     *   New "relationship operation" concept
         *   General socializing operation
             *   Transmits information
-            *   Increases alignment
+            x   Increases alignment
         *   Mutual help activity
             *   Condition on connection?
             *   Condition on alignment?
