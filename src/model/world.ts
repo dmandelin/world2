@@ -17,50 +17,7 @@ import { updateRelationships } from "./relations/relationships";
 import { ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { InteractionGraph } from "./relations/interaction";
 
-class SettlementsBuilder {
-    private clanNames: Set<string> = new Set();
-    private clanColors: Set<string> = new Set();
-
-    constructor(readonly world: World) {}
-
-    createCluster(name: string, x: number, y: number, clanCount: number) {
-        const cluster = new SettlementCluster(name, x, y);
-        const settlement = new Settlement(this.world, name, x, y, cluster);
-
-        for (let i = 0; i < clanCount; i++) {
-            const clan = new Clan(
-                this.world,
-                settlement,
-                this.world.annals,
-                randomClanName(this.clanNames), 
-                randomClanColor(this.clanColors),
-                dice(3, 6, 15));
-            this.clanNames.add(clan.name);
-            this.clanColors.add(clan.color);
-        }
-
-        return cluster;
-    }
-
-    createClusters(params: readonly [string, number, number, number][]) {
-        return params.map(([name, x, y, clanCount]) => 
-            this.createCluster(name, x, y, clanCount));
-    }
-}
-
-// State in the turn substep state machine. A state is a stable point
-// where we can show data in the UI.
-enum TurnState {
-    // See plans and predictions made by the entities, possibly alter 
-    // them.
-    Planning,
-    // See results of executing the previous turn.
-    Reviewing,
-}
-
 export class World implements NoteTaker {
-    private turnState = TurnState.Planning;
-
     readonly year = new Year();
     readonly yearsPerTurn = 20;
 
@@ -88,9 +45,6 @@ export class World implements NoteTaker {
 
     constructor() {
     }
-
-    get nowPlanning() { return this.turnState === TurnState.Planning; }
-    get nowReviewing() { return this.turnState === TurnState.Reviewing; }
 
     addNote(shortLabel: string, message: string) {
         this.notes.push(new Note(this.year.toString(), shortLabel, message));
@@ -446,6 +400,37 @@ export class World implements NoteTaker {
 
         for (const watcher of this.watchers) 
             watcher(this);
+    }
+}
+
+class SettlementsBuilder {
+    private clanNames: Set<string> = new Set();
+    private clanColors: Set<string> = new Set();
+
+    constructor(readonly world: World) {}
+
+    createCluster(name: string, x: number, y: number, clanCount: number) {
+        const cluster = new SettlementCluster(name, x, y);
+        const settlement = new Settlement(this.world, name, x, y, cluster);
+
+        for (let i = 0; i < clanCount; i++) {
+            const clan = new Clan(
+                this.world,
+                settlement,
+                this.world.annals,
+                randomClanName(this.clanNames), 
+                randomClanColor(this.clanColors),
+                dice(3, 6, 15));
+            this.clanNames.add(clan.name);
+            this.clanColors.add(clan.color);
+        }
+
+        return cluster;
+    }
+
+    createClusters(params: readonly [string, number, number, number][]) {
+        return params.map(([name, x, y, clanCount]) => 
+            this.createCluster(name, x, y, clanCount));
     }
 }
 
