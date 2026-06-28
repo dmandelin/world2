@@ -192,6 +192,12 @@
                 valueFn: ([other, connections]) => clan.world.attentionTo(clan, other),
                 formatFn: (v: number) => v.toFixed(0),
               }, {
+                data: 'Rel',
+                label: 'Rel',
+                valueFn: ([other, connections]) => 
+                    clan.world.attentionTo(clan, other) / (other.population || 1),
+                formatFn: pct,
+              }, {
                 data: 'Kind',
                 label: 'Kind',
                 valueFn: ([other, connections]) => connections.map(c => c.debugString()).join(', '),
