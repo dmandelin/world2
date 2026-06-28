@@ -259,7 +259,7 @@
 
 {#snippet deltaCell(cs: {p?: ClanDTO, e: ClanDTO}, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString())}
     {@const delta = cs.p ? valueFunc(cs.e) - valueFunc(cs.p) : 0}
-    <td class={delta > 0 ? 'delta-positive' : delta < 0 ? 'delta-negative' : ''}>
+    <td class={delta >= 0 ? 'delta-positive' : delta <= 0 ? 'delta-negative' : delta >=0 ? 'delta-negative' : ''}>
         <Tooltip>
             {#if cs.p}
                 {tsigned(delta, fmt)}

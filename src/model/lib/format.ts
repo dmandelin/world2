@@ -34,9 +34,14 @@ export function signed(x: number, places: number = 0): string {
 
 export function tsigned(x: number, format: (n: number) => string = unsigned): string {
   if (x === 0) return '-';
-  if (x > 0) return `▲${format(x)}`;
-  return `▼${format(-x)}`;
+  if (x > 0) return `▲${stripLeadingSign(format(x))}`;
+  return `▼${stripLeadingSign(format(-x))}`;
 }
+
+function stripLeadingSign(s: string): string {
+  return s.startsWith('-') || s.startsWith('+') ? s.substring(1) : s;
+}
+
 
 export function signedFormat(places: number = 0): (n: number) => string {
     return (n: number) => signed(n, places);
