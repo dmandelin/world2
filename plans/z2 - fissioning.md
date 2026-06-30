@@ -159,6 +159,51 @@ x   Show pending moves in the main panel
         *   We want conflict to scale something like n^k, where
             k is between 1/6 and 1/2. If we calculate conflict
             linearly, we'll have to downscale accordingly.
+    *   Some further thoughts:
+        *   One issue with scale is that being less "supervised",
+            people will cause more small problems, e.g., damaging
+            someone's property and then not replacing it. We can
+            model this by having each clan generate a certain
+            amount of "anonymous tort" disamenities (possibly 
+            lightly scaling up) which are mitigated if they have 
+            enough goodwill toward others or have a lot of attention
+            on them.
+        *   That could be significant, but presumably open conflict
+            matters too. How does that change? At the small scale,
+            the main issue is probably that it gets hard to actually
+            adjudicate all the small things. There could be an
+            amount of small conflicts generated, and then a resolution
+            capacity depending on conflict resolution mechanisms.
+            Unresolved conflicts and torts can have material effects,
+            which might be risky.
+        *   Larger conflicts: It's confusing to think about without
+            giving them something to fight about.
+            *   Possibility 1: Shift in ritual practice adopted by
+                some clans
+                *   This would seem to be a spread-of-ideas effect
+                *   Network shape would influence this a lot
+                *   In general, it's too easy to create super-wide
+                    networks, we should probably give clans reasons
+                    to want to connect with specific clans more
+                *   Related, right now we have everyone helping everyone,
+                    but we should make some sort of limits to tracking
+                    and ability to free-ride.
+            *   Possibility 2: Major marriage disagreement that clans
+                start recruiting other clans to help with
+                *   This is about clans pulling in allies and polarizing
+                    the village, more about alignment than spread of
+                    information
+                *   We could have events where two clans have a major
+                    disagreement, and then other clans have to decide
+                    whom to help
+                *   If it results in too much disalignment, split
+        *   We should have prestige, and probably alignment too,
+            influence dispute results.
+        *   Dispute results should influence alignment and possibly
+            prestige.
+        *   For all the above, clans could have personalities, for
+            how much anonymous torts they commit or how hard they
+            fight.
     *   Next steps:
         *   Think harder about this generally: what do we really
             envision happening first with scale? What's the simplest
