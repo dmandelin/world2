@@ -125,7 +125,7 @@ still has per-clan texture but is more gradual and less sudden.
 
 # Model changes
 
-*   Show pending moves in the main panel
+x   Show pending moves in the main panel
 *   Fold the Conflict happiness item into Society
 *   Change from individual clan migration to village fissioning
     When enough clans to make a viable village are interested in
@@ -134,6 +134,8 @@ still has per-clan texture but is more gradual and less sudden.
     established villages
 *   Charge costs for founding a new village
 *   Charge costs for moving
+*   Tune so that a clan can't easily get a ton of help when they
+    have just one neighbor
 
 *   Fix up relationship model
     *   Friends working in new structure

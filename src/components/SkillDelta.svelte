@@ -1,10 +1,10 @@
 <script lang="ts">
     import { pct, signed } from "../model/lib/format";
-    import type { SkillDef } from "../model/people/skills";
-    import type { ClanDTO } from "../model/records/dtos";
+    import { skillImitationTable } from "./tables";
     import DataTable from "./DataTable.svelte";
     import Tooltip from "./Tooltip.svelte";
-    import { skillImitationTable } from "./tables";
+    import type { ClanDTO } from "../model/records/dtos";
+    import type { SkillDef } from "../model/people/skills";
 
     let { clan, skill }: { clan: ClanDTO, skill: SkillDef } = $props();
     let clanSkill = $derived(clan.skills.get(skill)!);

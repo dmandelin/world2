@@ -16,6 +16,7 @@
     import { getAreaPrestige, getLocalPrestige, getLocalRespect, getRespect, getRespectInScopeDetail } from "../../model/relations/respect";
     import { get } from "svelte/store";
     import { connectionsOf } from "../../model/relations/connection";
+    import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     
 	let { 
         settlement, 
@@ -294,9 +295,12 @@
                 <td></td>
                 {#each csnaps as cs}
                     <td class="clan-header" colspan="2">
-                        <EntityLink 
-                            entity={cs.c}
-                            extra={clanNotifications} />
+                        <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 0.2em;">
+                            <EntityLink 
+                                entity={cs.c}
+                                extra={clanNotifications} />
+                            <ClanMigrationIcon clan={cs.c} />
+                        </div>
                     </td>
                 {/each}
             </tr>

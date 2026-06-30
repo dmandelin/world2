@@ -1,10 +1,8 @@
 <script>
-  import SkillDelta from './SkillDelta.svelte';
-
-    import { pct, signed, spct, unsigned } from "../model/lib/format";
+  import ClanMigrationIcon from './ClanMigrationIcon.svelte';
+    import { pct, signed, unsigned } from "../model/lib/format";
     import DataTable from "./DataTable.svelte";
     import LineGraph from "./LineGraph.svelte";
-    import MigrationPlan from "./MigrationPlan.svelte";
     import PopulationChange from "./PopulationChange.svelte";
     import PopulationPyramid from "./PopulationPyramid.svelte";
     import Tooltip from "./Tooltip.svelte";
@@ -15,20 +13,6 @@
     import EntityLink from "./state/EntityLink.svelte";
 
     let { clan } = $props();
-
-    let clanUpperRightIcon = $derived.by(() => {
-        return clan.migrationPlan?.willMigrate
-            ? 'migrate-yes-256.png'
-            : clan.migrationPlan?.wantToMove
-            ? 'migrate-want-256.png'
-            : 'migrate-no-256.png';
-    });
-
-    let clanUpperRightAlt = $derived.by(() => {
-        return clan.migrationPlan?.willMigrate
-            ? 'This clan will migrate'
-            : 'This clan will not migrate';
-    });
 </script>
 
 <style>
@@ -60,15 +44,6 @@
 
     #top {
         position: relative; /* Needed for absolute positioning of the image */
-    }
-
-    #clan-upper-right-icon {
-        position: absolute;
-        top: 0px;
-        right: -3px;
-        width: 24px;
-        height: 24px;
-        object-fit: contain;
     }
 
     .full-row {
@@ -107,18 +82,7 @@
 </style>
 
 <div id="top">
-    <div id="clan-upper-right-icon">
-        <Tooltip>
-            <img width="24" height="24" src={clanUpperRightIcon} alt={clanUpperRightAlt} />    
-            <div slot="tooltip" class="ttt">
-                Clan traits:
-                {#each clan.traits as trait}
-                    <span>{trait}</span>
-                {/each}
-                <MigrationPlan plan={clan.migrationPlan} />
-            </div>
-        </Tooltip>
-    </div>
+    <ClanMigrationIcon clan={clan} />
 
     <table>
         <tbody>
