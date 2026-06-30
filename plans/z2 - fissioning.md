@@ -127,6 +127,15 @@ still has per-clan texture but is more gradual and less sudden.
 
 x   Show pending moves in the main panel
 *   Fold the Conflict happiness item into Society
+    x   Disable conflict happiness and see what happens
+        Villages grow somewhat larger, up to 600 or so
+        Society happiness only goes down slightly
+        A key reason seems to be that the disamenity scales
+        by attention, but it's really from unintentional
+        crossings. Probably shouldn't scale linearly but
+        independent of attention
+    *   Make society disamenity not depend on attention and
+        see what happens
 *   Change from individual clan migration to village fissioning
     When enough clans to make a viable village are interested in
     leaving, split
@@ -134,6 +143,8 @@ x   Show pending moves in the main panel
     established villages
 *   Charge costs for founding a new village
 *   Charge costs for moving
+*   Teach clans to switch to farming better or expand farmland
+*   Show sources of respect by trait -- hard to understand otherwise
 *   Tune so that a clan can't easily get a ton of help when they
     have just one neighbor
 

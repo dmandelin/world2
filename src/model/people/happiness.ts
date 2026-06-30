@@ -353,7 +353,8 @@ class ConflictHappinessItem extends NumericHappinessItem {
     stateLabel = 'Level';
 
     appealOf(conflictLevel: number): number {
-        return conflictAppeal(conflictLevel);
+        return 0; // TODO - Remove this item
+        //return conflictAppeal(conflictLevel);
     }
 
     updateState(clan: Clan): void {
