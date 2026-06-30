@@ -134,8 +134,40 @@ x   Show pending moves in the main panel
         by attention, but it's really from unintentional
         crossings. Probably shouldn't scale linearly but
         independent of attention
-    *   Make society disamenity not depend on attention and
-        see what happens
+    *   Thinking a little more carefully about this:
+        *   We need to look after at least two components:
+            *   Alignment effects: Should be harder to keep
+                aligned to lots of clans
+            *   Happiness effects: Should somehow make clans
+                less happy so they want to move when there are
+                too many people in the village
+        *   But those are missing the idea that anything beyond
+            perceptions is affected by this, but realistically
+            people have to be experiencing some effect to care
+            enough to have a perception
+        *   Aside from the specific issues idea, we can otherwise
+            posit similarly to before that there's some level
+            of "unintentional interaction" generating conflict
+        *   We can also retain the idea of having a certain
+            capacity to "resolve" or mitigate conflicts
+        *   But it's probably good to fold this into the Society
+            happiness item anyway so we can have a sum total
+            happiness effect from each relationship
+        *   I can probably delay having a material effect, as
+            we can assume some small amount of losses are part
+            of baseline production
+        *   We want conflict to scale something like n^k, where
+            k is between 1/6 and 1/2. If we calculate conflict
+            linearly, we'll have to downscale accordingly.
+    *   Next steps:
+        *   Think harder about this generally: what do we really
+            envision happening first with scale? What's the simplest
+            way to start modeling that?
+        *   Fold conflict calculations into society
+        *   Improve society happiness visualizations as needed
+        *   Tune conflict disamenity 
+        *   Make sure clans can't get help if they're not aligned
+            
 *   Change from individual clan migration to village fissioning
     When enough clans to make a viable village are interested in
     leaving, split

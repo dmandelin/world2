@@ -90,8 +90,8 @@ export class NeighborConnection extends Connection {
     alignmentItem(subject: Clan, object: Clan): GenericItem {
         return new GenericItem(
             'Neighbors',
-            -.1,
-            'Inevitable annoyances'
+            -.5,
+            'Conflicts'
         );
     }
 }
