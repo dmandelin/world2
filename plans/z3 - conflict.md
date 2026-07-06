@@ -259,7 +259,37 @@ start failing to synchronize at some point.
 #   Likely key immediate steps
 
 *   General irritation model with stress, consumables, and alignment
+    *   Basic interaction: -stress, +alignment
+    *   Friction interactions:
+        *   Anonymous: +stress, -default alignment
+            *   -stress or +consumables for other party
+        *   Known: +stress, -consumables, -alignment
+            *   -stress, +consumables, maybe even +alignment
+                for other party
+        *   Consider hawk-dove game and strategies: at the very least,
+            choose a default strategy and analyze in those terms
 *   Land allocation models with differential quality, encroachment,
     disuse, political allocation process, property tax
+    *   By default persist land allocation
+    *   Add community "property tax"
+        *   If not paid, -alignment
+    *   Remove disused land, but maybe political option to retain
+    *   Assign unused land to those who need it via political
+        process
+    *   Add option to encroach
+    *   Add differential land quality
+*   Political resolution processes
+    *   TODO - Consider assembly/elders dynamics
+    *   By default, we could imagine everyone has a certain amount
+        of influence
+    *   Determine who or which choice clans want to support
+    *   For example, for allocating unused land, we can imagine that
+        need has influence with aligned clans, otherwise go by status-
+        based influence
+        *   Possibly status should rise or fall based on some of these
+            choices and results
 *   Status contests
+    *   TODO - Figure out in better detail _exactly_ what benefits
+        status has in these different contexts
 *   Debt and credit
+    *   TODO - Models for this
