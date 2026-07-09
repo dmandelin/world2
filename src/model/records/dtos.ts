@@ -28,6 +28,7 @@ import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
+import type { Conflict, ConflictGraph } from "../relations/conflict";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -244,6 +245,7 @@ export class WorldDTO {
 
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
+    readonly conflicts: ConflictGraph;
     readonly perceptions: PerceptionsGraph;
 
     readonly timeline: Timeline<TimePoint>;
@@ -260,6 +262,7 @@ export class WorldDTO {
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.connections = world.connections.clone();
         this.interactions = world.interactions.clone();
+        this.conflicts = world.conflicts.clone();
         this.perceptions = world.perceptions.clone();
 
         this.timeline = world.timeline;
@@ -319,6 +322,10 @@ export class WorldDTO {
             }
         }
         return 0;
+    }
+
+    conflictBetween(clan: ClanDTO, other: ClanDTO): Conflict|undefined {
+        return this.conflicts.get(clan.uuid, other.uuid);
     }
 
     alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment|undefined {

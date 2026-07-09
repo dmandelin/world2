@@ -39,6 +39,12 @@
         return a.value;
     }
 
+    function conflictCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
+        const c = world.conflictBetween(rowClan, colClan);
+        if (!c) return 0;
+        return c.value;
+    }
+
     function respectCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
         const r = world.respectToward(rowClan, colClan);
         if (!r) return 0;
@@ -54,6 +60,10 @@
     {#if att}
         {unsigned(att)} attention / {object.population} population
     {/if}
+{/snippet}
+
+{#snippet conflictCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+-
 {/snippet}
 
 {#snippet alignmentCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
@@ -115,6 +125,10 @@
         <div>
             <h3>Interaction Level</h3>
             <TableView2 table={buildRelationshipsTable(interactionLevelCellValue, unsignedFormat(2), interactionVolumeCellTooltip)}></TableView2>
+        </div>
+        <div>
+            <h3>Conflict</h3>
+            <TableView2 table={buildRelationshipsTable(conflictCellValue, unsignedFormat(), conflictCellTooltip)}></TableView2>
         </div>
         <div>
             <h3>Alignment</h3>

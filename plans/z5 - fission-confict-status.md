@@ -288,6 +288,7 @@ stakes of each conflict are maybe 10-20% of all produce.
 # Changes to make for the simple model
 
 *   Add basic conflict model with:
+    x   Basic data structures for conflict graph
     *   Iterated hawk-dove game
     *   Stress stakes
         *   Add stress to happiness model if not there

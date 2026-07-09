@@ -17,6 +17,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
+import { ConflictGraph, updateConflicts } from "./relations/conflict";
 
 export class World implements NoteTaker {
     readonly year = new Year();
@@ -31,6 +32,7 @@ export class World implements NoteTaker {
     readonly clanMap = new Map<UUID, Clan>();
     readonly connections = new ConnectionGraph();
     readonly interactions = new InteractionGraph();
+    readonly conflicts = new ConflictGraph();
     readonly perceptions = new PerceptionsGraph();
     readonly clusters = new SettlementsBuilder(this).createClusters([
         ['Eridu', 382, 378, 5],
@@ -272,8 +274,9 @@ export class World implements NoteTaker {
         }
 
         // Advance for cross-cluster events.
-        this.migrate();
+        updateConflicts(this);
         marry(this);
+        this.migrate();
 
         // Advance within clusters.
         for (const cl of this.clusters) {
