@@ -288,15 +288,18 @@ stakes of each conflict are maybe 10-20% of all produce.
 # Changes to make for the simple model
 
 *   Add basic conflict model with:
+    *   Iterated hawk-dove game
     *   Stress stakes
         *   Add stress to happiness model if not there
         *   Add stress to demographic model if not there
         *   Add stress to productivity model
     *   Food stakes
-    *   Clans have a level of hawkishness 0-1
     *   Outcome of conflict model is equivalent to running
         N rounds with 1/N stakes in each round, and clans
         playing to strategy
+    *   Initial strategy can be hawk with some fixed low
+        probability
+        *   Could be variable per clan
     *   Report results as fought over/ceded/resolved
     *   Split village when some group of clans thinks they'll
         be better off elsewhere
@@ -304,15 +307,55 @@ stakes of each conflict are maybe 10-20% of all produce.
     *   Stakes are proportional to interaction level:
         *   Larger factor * attention
         *   Smaller factor * 1 (incidental interactions)
-    *   All stakes are inversely related with goodwill
     *   Stress stakes rise with scale (social bottlenecks)
+    *   Goodwill
+        *   Reduce stress stakes
+        *   Play hawk less often
+    *   Relative power
+        *   Based on size and relationships
+        *   Size can be an easy factor; could be quadratic on
+            offense/defense logic, but also sublinear due to
+            coordination costs, so could be linear for now
+            *   At some point we should probably have various
+                clan size modifiers
+                *   Also use those to drive clan splits and
+                    merges
+        *   Relationships
+            *   Easy version: count parnter power and willingness,
+                use as strength values
+                *   Given that we're representing a whole iterated
+                    turn, might be better to do it this way
+                *   But it should cost something to provide conflict
+                    aid
+            *   For larger issues, we could have clans lobby different
+                clans and seek some sort of consensus
+    *   Reputation
+        *   Two possibilities:
+            *   Strong reciprocity - this may apply to norm
+                violations, including certain "attack" actions
+                (that we don't have yet), but it seems less
+                relevant here: the assumption would be that
+                clans might pursue a conflict very hard in a
+                way that *doesn't* get them generally ostracized
+                *   Looking ahead: dispute resolution systems
+                    help in part by limiting the maximum effort!
+            *   Knowledge of behavior - clans could adjust their
+                own strategies based on knowledge of others'
+                *   They would tend to get some of this from
+                    direct interaction, so this could be more
+                    about making strategy selection a bit more
+                    accurate
+                *   Might be more relevant once there's enough
+                    scale that clans don't all know each other
     *   Choice and conflict over relationships (marriage,
         cooperative)
     *   Mistakes:
         *   Random changes to goodwill?
         *   Increased mistakes with reduced attention?
+        *   Strategic missteps
     *   Gifts: actions to gain goodwill
-    *   Differential power
+    *   Later: "attacks" and "crime" as prisoner's dilemma
+    *   Later: dispute resolution mechanisms
 
 # A bit more discussion on goodwill and bottlenecks
 
