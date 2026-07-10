@@ -289,14 +289,15 @@ stakes of each conflict are maybe 10-20% of all produce.
 
 *   Add basic conflict model with:
     x   Basic data structures for conflict graph
-    *   Iterated hawk-dove game
+    x   Iterated hawk-dove game
         x   Basic game
-        *   Visualize detailed results
+        x   Visualize detailed results
     *   Stress stakes
         *   Add stress to happiness model if not there
         *   Add stress to demographic model if not there
         *   Add stress to productivity model
     *   Food stakes
+    *   Alignment impact
     *   Variable per-clan hawk probability
     *   Report results as fought over/ceded/resolved
     *   Split village when some group of clans thinks they'll

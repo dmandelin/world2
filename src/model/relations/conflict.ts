@@ -7,7 +7,7 @@ import type { World } from "../world";
 const ITERATIONS_PER_TURN = 5;
 
 // Probability of playing hawk in one iteration.
-const HAWK_PROBABILITY = 0.1;
+const HAWK_PROBABILITY = 0.2;
 
 // Wrapper around ConflictGraph adding higher-level behaviors.
 export class Conflicts {
@@ -155,8 +155,8 @@ const P = -5;
 
 
 export class Conflict {
-    private uuid1: string;
-    private uuid2: string;
+    readonly uuid1: string;
+    readonly uuid2: string;
 
     // Indexed by clan1 strategy, clan2 strategy.
     results = [

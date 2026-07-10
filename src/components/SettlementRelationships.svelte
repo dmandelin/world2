@@ -7,6 +7,7 @@
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import type { Snippet } from "svelte";
+    import ConflictDetailsTable from "./tables/ConflictDetailsTable.svelte";
     
     let { settlement }: { settlement: SettlementDTO }= $props();
     let world = $derived(settlement.world);
@@ -63,7 +64,8 @@
 {/snippet}
 
 {#snippet conflictCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
--
+    {@const c = world.conflictBetween(subject, object)}
+    <ConflictDetailsTable conflict={c} c1={subject} c2={object}/>
 {/snippet}
 
 {#snippet alignmentCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
