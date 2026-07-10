@@ -1,7 +1,55 @@
 import type { Clan } from "../people/people";
-import type { UUID } from "../records/basicdata";
+import { uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
 import type { World } from "../world";
 
+// Wrapper around ConflictGraph adding higher-level behaviors.
+export class Conflicts {
+    private readonly g;
+
+    constructor(private readonly world: World, g?: ConflictGraph) {
+        this.g = g ?? new ConflictGraph();
+    }
+
+    clone(): Conflicts {
+        return new Conflicts(this.world, this.g.clone());
+    }
+
+    get(c1: HasOrIsUUID, c2: HasOrIsUUID) {
+        return this.g.get(uuidOf(c1), uuidOf(c2));
+    }
+
+    advance(): void {
+        // For now we assume that only local conflicts are significant.
+        this.prune((c1, c2, conflict) => c1.settlement !== c2.settlement);
+
+        for (const settlement of this.world.allSettlements) {
+            for (const c1 of settlement.clans) {
+                for (const c2 of settlement.clans) {
+                    if (c1 === c2) continue;
+                    if (c1 > c2) continue;
+                    const conflict = this.g.getOrCreate(c1.uuid, c2.uuid);
+                    conflict.update();
+                }
+            }
+        }
+    }
+
+    // Remove everything where `fn` returns true.
+    prune(fn: (c1: Clan, c2: Clan, conflict: Conflict) => boolean): void {
+        for (const [c1, c2, conflict] of this.g.entries()) {
+            const clan1 = this.world.clanMap.get(c1);
+            if (!clan1) continue;
+            const clan2 = this.world.clanMap.get(c2);
+            if (!clan2) continue;
+
+            if (fn(clan1, clan2, conflict)) {
+                this.g.remove(c1, c2);
+            }
+        }
+    }
+}
+
+// Graph of conflicts that deals in UUIDs only.
 export class ConflictGraph {
     // clan1 -> clan2 -> conflict (where clan1.uuid < clan2.uuid)
     private readonly m_ = new Map<UUID, Map<UUID, Conflict>>();
@@ -12,27 +60,6 @@ export class ConflictGraph {
         for (const [c1, c1Map] of this.m_) {
             for (const [c2, conflict] of c1Map) {
                 yield [c1, c2, conflict] as [UUID, UUID, Conflict];
-            }
-        }
-    }
-
-    // Remove everything where `fn` returns true.
-    prune(world: World, fn: (c1: Clan, c2: Clan, conflict: Conflict) => boolean): void {
-        for (const [c1, c1Map] of this.m_) {
-            const clan1 = world.clanMap.get(c1);
-            if (!clan1) continue;
-            for (const [c2, conflict] of c1Map) {
-                const clan2 = world.clanMap.get(c2);
-                if (!clan2) continue;
-                if (fn(clan1, clan2, conflict)) {
-                    c1Map.delete(c2);
-                    if (c1Map.size === 0) this.m_.delete(c1);
-                    const c2Map = this.r_.get(c2);
-                    if (c2Map) {
-                        c2Map.delete(c1);
-                        if (c2Map.size === 0) this.r_.delete(c2);
-                    }
-                }
             }
         }
     }
@@ -65,6 +92,20 @@ export class ConflictGraph {
         c2Map.set(c1, conflict);
     }
 
+    remove(c1: UUID, c2: UUID): void {
+        if (c1 > c2) [c1, c2] = [c2, c1];
+
+        const c1Map = this.m_.get(c1);
+        if (!c1Map) return;
+        c1Map.delete(c2);
+        if (c1Map.size === 0) this.m_.delete(c1);
+
+        const c2Map = this.r_.get(c2);
+        if (!c2Map) return;
+        c2Map.delete(c1);
+        if (c2Map.size === 0) this.r_.delete(c2);
+    }
+
     getOrCreate(c1: UUID, c2: UUID): Conflict {
         let conflict = this.get(c1, c2);
         if (!conflict) {
@@ -87,20 +128,4 @@ export class Conflict {
     value = 1;
 
     update() {}
-}
-
-export function updateConflicts(world: World): void {
-    // For now we assume that only local conflicts are significant.
-    world.conflicts.prune(world, (c1, c2, conflict) => c1.settlement !== c2.settlement);
-
-    for (const settlement of world.allSettlements) {
-        for (const c1 of settlement.clans) {
-            for (const c2 of settlement.clans) {
-                if (c1 === c2) continue;
-                if (c1 > c2) continue;
-                const conflict = world.conflicts.getOrCreate(c1.uuid, c2.uuid);
-                conflict.update();
-            }
-        }
-    }
 }
