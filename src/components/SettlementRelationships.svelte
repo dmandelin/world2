@@ -42,7 +42,7 @@
     function conflictCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
         const c = world.conflictBetween(rowClan, colClan);
         if (!c) return 0;
-        return c.value;
+        return c.value(rowClan);
     }
 
     function respectCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {

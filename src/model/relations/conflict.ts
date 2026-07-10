@@ -2,6 +2,13 @@ import type { Clan } from "../people/people";
 import { uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
 import type { World } from "../world";
 
+// How many iterations of the simple conflict game to apply per
+// turn for any pair of clans.
+const ITERATIONS_PER_TURN = 5;
+
+// Probability of playing hawk in one iteration.
+const HAWK_PROBABILITY = 0.1;
+
 // Wrapper around ConflictGraph adding higher-level behaviors.
 export class Conflicts {
     private readonly g;
@@ -28,7 +35,7 @@ export class Conflicts {
                     if (c1 === c2) continue;
                     if (c1 > c2) continue;
                     const conflict = this.g.getOrCreate(c1.uuid, c2.uuid);
-                    conflict.update();
+                    conflict.advance();
                 }
             }
         }
@@ -109,7 +116,7 @@ export class ConflictGraph {
     getOrCreate(c1: UUID, c2: UUID): Conflict {
         let conflict = this.get(c1, c2);
         if (!conflict) {
-            conflict = new Conflict();
+            conflict = new Conflict(c1, c2);
             this.add(c1, c2, conflict);
         }
         return conflict;
@@ -124,8 +131,110 @@ export class ConflictGraph {
     }
 }
 
-export class Conflict {
-    value = 1;
+const DOVE = 0;
+const HAWK = 1;
 
-    update() {}
+// The payoff structure assumes that for a conflict
+// iteration, there is some loss (damaging event that
+// triggered the conflict and/or costs of peaceful
+// resolution) and the conflict is over how to distribute
+// it.
+
+// TODO - Consider having conflicts over gains too.
+
+// Reward for both playing dove: a relatively low cost of
+// damages and resolution.
+const R = -1;
+// Temptation to play hawk against dove: dove has to take
+// the loss.
+const T = 0;
+// Sucker's payoff for playing dove against hawk.
+const S = -2;
+// Punishment for both playing hawk: high cost of resolution.
+const P = -5;
+
+
+export class Conflict {
+    private uuid1: string;
+    private uuid2: string;
+
+    // Indexed by clan1 strategy, clan2 strategy.
+    results = [
+        [new ConflictResults(), new ConflictResults()],
+        [new ConflictResults(), new ConflictResults()],
+    ];
+
+    constructor(c1: HasOrIsUUID, c2: HasOrIsUUID) {
+        this.uuid1 = uuidOf(c1);
+        this.uuid2 = uuidOf(c2);
+    }
+
+    value(c: HasOrIsUUID) {
+        return this.uuid1 === uuidOf(c)
+             ? this.totalOf(r => r.c1Payoff)
+             : this.totalOf(r => r.c2Payoff);
+    }
+
+    private totalOf(fn: (r: ConflictResults) => number): number {
+        let total = 0;
+        for (const rr of this.results) {
+            for (const r of rr) {
+                total += fn(r);
+            }
+        }
+        return total;
+    }
+
+    advance() {
+        // Model conflicts between the two clans for a turn as
+        // an iterated hawk-dove game.
+        // For now, strategies are simple: fixed probability
+        // of hawk.
+
+        for (const rr of this.results) {
+            for (const r of rr) {
+                r.clear();
+            }
+        }
+
+        for (let i = 0; i < ITERATIONS_PER_TURN; ++i) {
+            this.iterate()
+        }
+    }
+
+    private iterate() {
+        const c1Strategy = Math.random() < HAWK_PROBABILITY ? HAWK : DOVE;
+        const c2Strategy = Math.random() < HAWK_PROBABILITY ? HAWK : DOVE;
+        const r = this.results[c1Strategy][c2Strategy];
+        if (c1Strategy == DOVE && c2Strategy == DOVE) {
+            r.apply(R, R);
+        } else if (c1Strategy == DOVE && c2Strategy == HAWK) {
+            r.apply(R, T);
+        } else if (c1Strategy == HAWK && c2Strategy == DOVE) {
+            r.apply(T, R);
+        } else if (c1Strategy == HAWK && c2Strategy == HAWK) {
+            r.apply(P, P);
+        }
+    }
+}
+
+export class ConflictResults {
+    // Number of iterations represented in these results
+    count = 0
+
+    // Abstract payoffs to contestants. c1.uuid < c2.uuid as usual.
+    c1Payoff = 0
+    c2Payoff = 0
+
+    clear(): void {
+        this.count = 0;
+        this.c1Payoff = 0;
+        this.c2Payoff = 0;
+    }
+
+    apply(c1Payoff: number, c2Payoff: number) {
+        ++this.count;
+        this.c1Payoff += c1Payoff;
+        this.c2Payoff += c2Payoff;
+    }
 }
