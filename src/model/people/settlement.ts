@@ -155,6 +155,9 @@ export class Settlement {
             }
         }
 
+        // Update stress based on conflict.
+        for (const clan of this.clans) clan.updateStress();
+
         // Update happiness based on consumption and leisure.
         for (const clan of this.clans) clan.updateHappiness();
 

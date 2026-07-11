@@ -239,6 +239,10 @@ export class Clan implements TradePartner {
         return this.population * this.residenceFraction;
     }
 
+    updateStress() {
+        this.stress.update(this);
+    }
+
     updateHappiness() {
         this.happinessCalc_.update();
     }

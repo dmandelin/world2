@@ -79,19 +79,15 @@
 
     function clanStressTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
-            clan.qol.m.values(),
-            item => item.name,
+            clan.stress.items,
+            item => item.label,
             _ => true,
             [{
                 data: 'Value',
                 label: 'Value',
                 valueFn: item => item.value,
                 formatFn: signedFormat(),
-            }, {
-                data: 'Explanation',
-                label: '',
-                valueFn:  item => item.explanation,
-             }]);
+            }]);
     }
 
     function clanQolTooltipTable(clan: ClanDTO) {

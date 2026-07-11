@@ -25,6 +25,14 @@ export class Conflicts {
         return this.g.get(uuidOf(c1), uuidOf(c2));
     }
 
+    *entriesForClan(c1: HasOrIsUUID) {
+        for (const [uuid2, conflict] of this.g.entriesForHasUUID(c1)) {
+            const c2 = this.world.clanMap.get(uuid2);
+            if (!c2) continue;
+            yield [c2, conflict] as [Clan, Conflict];
+        }
+    }
+
     advance(): void {
         // For now we assume that only local conflicts are significant.
         this.prune((c1, c2, conflict) => c1.settlement !== c2.settlement);
@@ -68,6 +76,15 @@ export class ConflictGraph {
             for (const [c2, conflict] of c1Map) {
                 yield [c1, c2, conflict] as [UUID, UUID, Conflict];
             }
+        }
+    }
+
+    *entriesForHasUUID(c: HasOrIsUUID): Iterable<[UUID, Conflict]>{
+        const uuid = uuidOf(c);
+        const c1Map = this.m_.get(uuid);
+        if (!c1Map) return;
+        for (const [c2, conflict] of c1Map) {
+            yield [c2, conflict] as [UUID, Conflict];
         }
     }
 
