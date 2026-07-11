@@ -18,19 +18,15 @@ export class Stress {
     }
 
     update(clan: Clan): void {
-        const fromConflicts = sumFun(
-            clan.world.conflicts.entriesForClan(clan),
-            ([_, conflict]) => conflict.value(clan));
-
         this.items = [
             new GenericItem(
                 'Life',
                 -10,
-                'Life events',
+                'Life stress',
             ),
             new GenericItem(
                 'Conflicts',
-                fromConflicts,
+                clan.conflictPayoff(),
                 'Conflicts',
             )
         ];

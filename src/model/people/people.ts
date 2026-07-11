@@ -239,6 +239,12 @@ export class Clan implements TradePartner {
         return this.population * this.residenceFraction;
     }
 
+    conflictPayoff() {
+        return sumFun(
+            this.world.conflicts.entriesForClan(this),
+            ([_, conflict]) => conflict.value(this));        
+    }
+
     updateStress() {
         this.stress.update(this);
     }
