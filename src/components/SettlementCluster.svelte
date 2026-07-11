@@ -1,14 +1,59 @@
 <script lang="ts">
-    import { formatTellHeight, signed } from "../model/lib/format";
+    import { formatTellHeight, signed, signedFormat } from "../model/lib/format";
     import { pct } from "../model/lib/format";
-    import { SettlementDTO } from "../model/records/dtos";
+    import { SettlementDTO, type ClanDTO } from "../model/records/dtos";
     import { groupSedentismDescription, groupSedentismImage } from "../model/people/residence";
+    import { populationAverage } from "../model/lib/modelbasics";
+    import { IterableTable } from "./tables/tables2";
+    import TableView2 from "./tables/TableView2.svelte";
     import ButtonPanel from "./ButtonPanel.svelte";
     import DataTable from "./DataTable.svelte";
     import Settlement from "./Settlement.svelte";
     import Tooltip from "./Tooltip.svelte";
 
-    let { settlement, onSelect } = $props();
+    let { settlement, onSelect }: { settlement: SettlementDTO, onSelect: (uuid: string) => void } = $props();
+
+    interface StressItem {
+        label: string;
+        value: number;
+    }
+
+    function getStressTooltipTable(clans: ClanDTO[]): IterableTable<StressItem, [number]> {
+        const labelsSet = new Set<string>();
+        for (const clan of clans) {
+            for (const item of clan.stress.items) {
+                labelsSet.add(item.label);
+            }
+        }
+        const labels = Array.from(labelsSet);
+        
+        const items: StressItem[] = [];
+        for (const label of labels) {
+            const relevantClans = clans.filter(c => c.stress.items.some(item => item.label === label));
+            const avgVal = populationAverage(
+                relevantClans,
+                c => c.stress.items.find(item => item.label === label)?.value ?? 0
+            );
+            items.push({ label, value: avgVal });
+        }
+
+        return new IterableTable(
+            items,
+            item => item.label,
+            [{
+                data: 'Value',
+                label: 'Value',
+                valueFn: item => item.value,
+                formatFn: signedFormat(1),
+            }]
+        );
+    }
+
+    let settlementStress = $derived(populationAverage<ClanDTO>(settlement.clans, clan => clan.stress.value));
+    let clusterStress = $derived(populationAverage<ClanDTO>(settlement.cluster.clans, clan => clan.stress.value));
+
+    let settlementStressTooltipTable = $derived(getStressTooltipTable(settlement.clans));
+    let clusterStressTooltipTable = $derived(getStressTooltipTable(settlement.cluster.clans));
 </script>
 
 <style>
@@ -63,9 +108,18 @@
                 <img src="stat-population-256.png" alt="Population" width="20" height="20"
                      style="padding-bottom: 2px;"
                 />{settlement.cluster.population}&nbsp;
-                <img src="stat-welfare-256.png" alt="Welfare" width="20" height="20"
-                     style="padding-bottom: 4px;"
-                />{signed(settlement.cluster.averageAppeal, 0)}
+                <Tooltip>
+                    <img src="stat-welfare-256.png" alt="Stress" width="20" height="20"
+                         style="padding-bottom: 4px;"
+                    />
+                    <div slot="tooltip">Stress</div>
+                </Tooltip>
+                <Tooltip>
+                    {signed(clusterStress, 0)}
+                    <div slot="tooltip" style="text-align: left; color: initial;">
+                        <TableView2 table={clusterStressTooltipTable} />
+                    </div>
+                </Tooltip>&nbsp;
                 <img src="stat-happiness-256.png" alt="Happiness" width="20" height="20"
                      style="padding-bottom: 4px;"
                 />{signed(settlement.cluster.averageHappiness, 0)}</h4>
@@ -73,9 +127,18 @@
                 <img src="stat-population-256.png" alt="Population" width="40" height="40"
                      style="padding-bottom: 4px;"
                 />{settlement.population}&nbsp;
-                <img src="stat-welfare-256.png" alt="Welfare" width="40" height="40"
-                     style="padding-bottom: 8px;"
-                />{signed(settlement.averageAppeal, 0)}
+                <Tooltip>
+                    <img src="stat-welfare-256.png" alt="Stress" width="40" height="40"
+                         style="padding-bottom: 8px;"
+                    />
+                    <div slot="tooltip">Stress</div>
+                </Tooltip>
+                <Tooltip>
+                    {signed(settlementStress, 0)}
+                    <div slot="tooltip" style="text-align: left; color: initial;">
+                        <TableView2 table={settlementStressTooltipTable} />
+                    </div>
+                </Tooltip>&nbsp;
                 <img src="stat-happiness-256.png" alt="Happiness" width="40" height="40"
                      style="padding-bottom: 8px;"
                 />{signed(settlement.averageHappiness, 0)}

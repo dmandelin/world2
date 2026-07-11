@@ -300,6 +300,9 @@ x   Add basic conflict model with:
 *   Add refinements
     *   Displays
         *   Settlement averages: aid, conflict, stress
+            x   Average stress
+            *   Show tooltip below instead of above when necessary
+            *   Shrink tooltip font (and make that easier to do)
         *   Dramatizations (graphics/words) of social temperature
             and events
         *   Trend indicators for social temperature
