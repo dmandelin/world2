@@ -293,9 +293,12 @@ stakes of each conflict are maybe 10-20% of all produce.
         x   Basic game
         x   Visualize detailed results
     *   Stress stakes
+        x   Introduce stress concept with fixed value
+        *   Vary stress with conflict
         *   Add stress to happiness model if not there
         *   Add stress to demographic model if not there
         *   Add stress to productivity model
+        *   Vary stress with other factors of interest
     *   Food stakes
     *   Alignment impact
     *   Variable per-clan hawk probability

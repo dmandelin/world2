@@ -77,6 +77,23 @@
             }]);
     }
 
+    function clanStressTooltipTable(clan: ClanDTO) {
+        return new FilteredIterableTable(
+            clan.qol.m.values(),
+            item => item.name,
+            _ => true,
+            [{
+                data: 'Value',
+                label: 'Value',
+                valueFn: item => item.value,
+                formatFn: signedFormat(),
+            }, {
+                data: 'Explanation',
+                label: '',
+                valueFn:  item => item.explanation,
+             }]);
+    }
+
     function clanQolTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
             clan.qol.m.values(),
@@ -439,6 +456,20 @@
                 {/each}
             </tr>            
             <tr><td style="height: 0.5em"></td></tr>
+            <tr class="actual">
+                <td>Stress</td>
+                {#each csnaps as cs}
+                    <td class="ra">
+                        <Tooltip>
+                            {signed(cs.e.stress.value)}
+                            <div slot="tooltip" style="text-align: left; color: initial;">
+                                <TableView2 table={clanStressTooltipTable(cs.e)}></TableView2>
+                            </div>
+                        </Tooltip>
+                    </td>
+                    {@render deltaCell(cs, c => c.stress.value, signed)}
+                {/each}
+            </tr>
             <tr class="actual">
                 <td>QoL</td>
                 {#each csnaps as cs}

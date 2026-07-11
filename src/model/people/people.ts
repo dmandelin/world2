@@ -23,6 +23,7 @@ import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { connectedClans, KinConnection } from "../relations/connection";
+import { Stress } from "./stress";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -110,6 +111,8 @@ export class Clan implements TradePartner {
     targetPerCapitaFood: number;
     readonly tradeRelationships = new Set<TradeRelationship>();
     
+    stress = new Stress();
+
     production: ProductionReport = new ProductionReport([]);
     consumption: Consumption;
     qol: QualityOfLife = new QualityOfLife(new Map());

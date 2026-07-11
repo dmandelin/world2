@@ -29,6 +29,7 @@ import type { Respect } from "../relations/respect";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
+import type { Stress } from "../people/stress";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -86,6 +87,7 @@ export class ClanDTO {
     effort: number;
     production: ProductionReport;
     consumption: Consumption;
+    stress: Stress;
     qol: QualityOfLife;
 
     isDitching: boolean;
@@ -126,6 +128,7 @@ export class ClanDTO {
         this.effort = clan.effort;
         this.production = clan.production;
         this.consumption = clan.consumption;
+        this.stress = clan.stress.clone();
         this.qol = clan.qol;
         
         this.isDitching = clan.isDitching;
