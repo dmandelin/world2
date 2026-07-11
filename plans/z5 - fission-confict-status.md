@@ -287,26 +287,36 @@ stakes of each conflict are maybe 10-20% of all produce.
 
 # Changes to make for the simple model
 
-*   Add basic conflict model with:
+x   Add basic conflict model with:
     x   Basic data structures for conflict graph
     x   Iterated hawk-dove game
     x   Stress stakes
-    *   Food stakes
-    *   Alignment impact
-    *   Variable per-clan hawk probability
-    *   Split village when some group of clans thinks they'll
-        be better off elsewhere
-    *   Other items
-        *   (P2) Add stress to productivity model
-        *   (P2) Vary stress with other factors of interest
+*   Updated village splits
+    *   Clans with stress worse than the baseline "life" value
+        may be motivated to move
+    *   Usually, more than one clan should move at once -
+        check decision-making and tuning so that moving into
+        isolation is unappealing
 *   Add refinements
+    *   Displays
+        *   Settlement averages: aid, conflict, stress
+        *   Dramatizations (graphics/words) of social temperature
+            and events
+        *   Trend indicators for social temperature
+        *   Clan recent fortunes: average population change and others
     *   Stakes are proportional to interaction level:
         *   Larger factor * attention
         *   Smaller factor * 1 (incidental interactions)
-    *   Stress stakes rise with scale (social bottlenecks)
     *   Goodwill
+        *   Impact of conflict on alignment
         *   Reduce stress stakes
         *   Play hawk less often
+    *   Other items
+        *   Clan personalities - variable basic hawk probability
+        *   Stress stakes rise with scale (social bottlenecks)
+        *   Food stakes
+        *   (P2) Add stress to productivity model
+        *   (P2) Vary stress with other factors of interest
     *   Relative power
         *   Based on size and relationships
         *   Size can be an easy factor; could be quadratic on
