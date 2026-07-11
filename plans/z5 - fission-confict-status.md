@@ -297,6 +297,22 @@ x   Add basic conflict model with:
     *   Usually, more than one clan should move at once -
         check decision-making and tuning so that moving into
         isolation is unappealing
+    *   Detailed items
+        x   Base move triggering on stress only so we can
+            focus on that as cause of splits
+        *   Group decision procedure - move if enough want to
+            move that could create a decent community at the
+            new location
+            *   Might need to be able to simulate choices, but
+                maybe can use simpler decider.
+        *   Cost of moving
+        *   Founder attribute and other settlement foundation
+            attributes
+        *   Increased willingness to move if just split off?
+            *   However, there are probably concrete reasons
+                for this (any animosity, reduced access to
+                land) that should be the actual cause
+    *   Make sure relationships work sensibly in cluster
 *   Add refinements
     *   Displays
         x   Settlement average stress

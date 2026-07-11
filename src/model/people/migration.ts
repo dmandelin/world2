@@ -63,39 +63,12 @@ export class MigrationCalc {
 
     private trigger() {
         // TODO - make clans that just split want to move more often.
-        if (Math.random() < 0.05) {
+        // TODO - trigger on local capital/resource scarcity
+        const scale = 10 / Math.log10(9);
+        const pMove = eloSuccessProbability(-20, this.clan.stress.value, scale);
+        if (Math.random() < pMove) {
             this.wantToMove = true;
-            this.wantToMoveReason = 'Clan events';
-            return;
-        }
-
-        if (this.clan.happiness.getAppealNonNull('Food Quantity') < 0) {
-            // Hungry, but this creates a desire to move only if there's
-            // some reason to think moving will help. At present the main
-            // thing that changes is farmland availability.
-            // TODO - consider opportunities to learn productive skills
-            // TODO - consider local infrastructure
-            const farmingRatio = this.clan.effortAllocation.farmingRatio();
-            // TODO - Bring back
-            /*
-            const agNode = this.clan.productionNodes
-                .find(n => n instanceof CommonsProductionNode && n.skillDef === SkillDefs.Agriculture);
-
-            if (farmingRatio > 0 &&
-                (agNode?.report?.landPerWorker() ?? 0) < 1) {
-                this.wantToMove = true;
-                this.wantToMoveReason = 'Land';
-                return;
-            }*/
-        }
-
-        // 99% chance of staying put at 0 conflict happiness, but 90% chance
-        // of considering move if -12 or lower.
-        const conflictAppeal = this.clan.happiness.getValue('Conflict');
-        if (conflictAppeal < 0 && Math.random() < eloSuccessProbability(-8, conflictAppeal, 4)) {
-            this.wantToMove = true;
-            this.wantToMoveReason = 'Conflict';
-            return;
+            this.wantToMoveReason = 'Stress';
         }
     }
 
