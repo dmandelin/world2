@@ -42,6 +42,16 @@
     z-index: 10;
     border: 2px solid #62531d;
     border-radius: 2px;
+    
+    /* Reset key text styles to prevent inheritance from parent header elements */
+    font-size: 0.875rem;
+    font-weight: normal;
+    line-height: 1.4;
+    color: #2c1e05;
+    text-shadow: none;
+    text-transform: none;
+    font-style: normal;
+    text-align: left;
   }
   .tooltip-content.below {
     bottom: auto;

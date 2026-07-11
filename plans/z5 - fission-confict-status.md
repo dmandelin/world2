@@ -299,10 +299,7 @@ x   Add basic conflict model with:
         isolation is unappealing
 *   Add refinements
     *   Displays
-        *   Settlement averages: aid, conflict, stress
-            x   Average stress
-            *   Show tooltip below instead of above when necessary
-            *   Shrink tooltip font (and make that easier to do)
+        x   Settlement average stress
         *   Dramatizations (graphics/words) of social temperature
             and events
         *   Trend indicators for social temperature
