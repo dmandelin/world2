@@ -302,6 +302,7 @@ x   Add basic conflict model with:
         x   Settlement average stress
         *   Dramatizations (graphics/words) of social temperature
             and events
+            x   Color-coded stress displays
         *   Trend indicators for social temperature
         *   Clan recent fortunes: average population change and others
     *   Stakes are proportional to interaction level:

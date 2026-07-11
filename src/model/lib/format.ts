@@ -84,3 +84,21 @@ export function formatTellHeight(meters: number) {
     return `${inches.toFixed()} in tell`;
   } else return `${(inches / 12).toFixed()} ft tell`;
 }
+
+export function stressColor(value: number): string {
+    if (value >= -5 && value <= 5) {
+        return 'black';
+    } else if (value < -5 && value >= -15) {
+        return '#8a6d0f'; // Darkened yellow / brown
+    } else if (value < -15 && value >= -25) {
+        return '#cc5200'; // Darkened orange
+    } else if (value < -25) {
+        return '#b30000'; // Red
+    } else if (value > 5 && value <= 15) {
+        return '#006600'; // Green
+    } else if (value > 15 && value <= 25) {
+        return '#1b4d8c'; // Lapis blue
+    } else {
+        return '#5a189a'; // Dark violet
+    }
+}

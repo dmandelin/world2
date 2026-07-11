@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { formatTellHeight, signed, signedFormat } from "../model/lib/format";
+    import { formatTellHeight, signed, signedFormat, stressColor } from "../model/lib/format";
     import { pct } from "../model/lib/format";
     import { SettlementDTO, type ClanDTO } from "../model/records/dtos";
     import { groupSedentismDescription, groupSedentismImage } from "../model/people/residence";
@@ -115,7 +115,7 @@
                     <div slot="tooltip">Stress</div>
                 </Tooltip>
                 <Tooltip>
-                    {signed(clusterStress, 0)}
+                    <span style="color: {stressColor(clusterStress)}">{signed(clusterStress, 0)}</span>
                     <div slot="tooltip" style="text-align: left; color: initial;">
                         <TableView2 table={clusterStressTooltipTable} />
                     </div>
@@ -134,7 +134,7 @@
                     <div slot="tooltip">Stress</div>
                 </Tooltip>
                 <Tooltip>
-                    {signed(settlementStress, 0)}
+                    <span style="color: {stressColor(settlementStress)}">{signed(settlementStress, 0)}</span>
                     <div slot="tooltip" style="text-align: left; color: initial;">
                         <TableView2 table={settlementStressTooltipTable} />
                     </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { FilteredIterableTable, IterableTable, SingleMapTable } from "../tables/tables2";
-    import { pct, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat } from "../../model/lib/format";
+    import { pct, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat, stressColor } from "../../model/lib/format";
     import { safeDiv, sortedByKey } from "../../model/lib/basics";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
@@ -457,7 +457,7 @@
                 {#each csnaps as cs}
                     <td class="ra">
                         <Tooltip>
-                            {signed(cs.e.stress.value)}
+                            <span style="color: {stressColor(cs.e.stress.value)}">{signed(cs.e.stress.value)}</span>
                             <div slot="tooltip" style="text-align: left; color: initial;">
                                 <TableView2 table={clanStressTooltipTable(cs.e)}></TableView2>
                             </div>
