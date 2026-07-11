@@ -24,6 +24,7 @@ import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { Stress } from "./stress";
+import { BasicInteraction } from "../relations/interaction";
 
 const CLAN_NAMES: string[] = [
     "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
@@ -237,6 +238,23 @@ export class Clan implements TradePartner {
 
     get effectiveResidentPopulation(): number {
         return this.population * this.residenceFraction;
+    }
+
+    mutualAidPayoff(): number {
+        let value = 0;
+        for (const [_, interactions] of this.world.interactions.getFor(this)) {
+            for (const interaction of interactions) {
+                if (interaction instanceof BasicInteraction) {
+                    const amount = Math.min(interaction.amount1to2, interaction.amount2to1);
+                    if (amount > 0) {
+                        const relativeAmount = amount / this.population;
+                        value += relativeAmount;
+                    }
+                }
+            }
+
+        }
+        return 5 * value;
     }
 
     conflictPayoff() {

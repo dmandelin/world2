@@ -28,6 +28,11 @@ export class Stress {
                 'Conflicts',
                 clan.conflictPayoff(),
                 'Conflicts',
+            ),
+            new GenericItem(
+                'Mutual aid',
+                clan.mutualAidPayoff(),
+                'Mutual aid',
             )
         ];
     }

@@ -40,7 +40,7 @@ between the plans:
         generally
     *   Benefit types
         *   Food security
-        *   Stress
+        x   Stress
         *   Productivity
         *   (Influence/Conflict)
         *   (Alignment)
