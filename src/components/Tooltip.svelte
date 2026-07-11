@@ -1,12 +1,24 @@
-<script>
+<script lang="ts">
+    import { tick } from 'svelte';
     let show = false;
+    let tooltipContent: HTMLDivElement | undefined;
+    let placeBelow = false;
   
-    function handleMouseEnter() {
+    async function handleMouseEnter() {
       show = true;
+      placeBelow = false;
+      await tick();
+      if (tooltipContent) {
+        const rect = tooltipContent.getBoundingClientRect();
+        if (rect.top < 0) {
+          placeBelow = true;
+        }
+      }
     }
   
     function handleMouseLeave() {
       show = false;
+      placeBelow = false;
     }
   </script>
   
@@ -31,6 +43,10 @@
     border: 2px solid #62531d;
     border-radius: 2px;
   }
+  .tooltip-content.below {
+    bottom: auto;
+    top: 125%;
+  }
   .tooltip-inner {
     all: revert;
   }
@@ -44,7 +60,7 @@
     <slot />
   
     {#if show}
-      <div class="tooltip-content">
+      <div class="tooltip-content" class:below={placeBelow} bind:this={tooltipContent}>
         <div class="tooltip-inner">
           <slot name="tooltip" />
         </div>
