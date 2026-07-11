@@ -296,7 +296,7 @@ stakes of each conflict are maybe 10-20% of all produce.
         x   Introduce stress concept with fixed value
         x   Vary stress with conflict
         x   Add conflict to happiness model if not there
-        *   Add stress to demographic model if not there
+        x   Add stress to demographic model if not there
         *   Add stress to productivity model
         *   Vary stress with other factors of interest
     *   Food stakes

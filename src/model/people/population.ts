@@ -184,6 +184,18 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Prestige', getLocalPrestige(this.clan), prestigeDrModifier));
 
+        // Stress affects general health and has a significant impact on
+        // both birth and death rates.
+        // For now, stress levels are high because we haven't added de-stressors,
+        // so we'll use -25 as the baseline.
+        const adjustedStress = this.clan.stress.value + 25;
+        const stressBrModifier = 1 + 0.005 * adjustedStress;
+        this.brModifiers.push(new PopulationChangeModifier(
+            'Stress', adjustedStress, stressBrModifier));
+        const stressDrModifier = 1 - 0.005 * adjustedStress;
+        this.drModifiers.push(new PopulationChangeModifier(
+            'Stress', adjustedStress, stressDrModifier))
+
         this.brModifier = productFun(this.brModifiers, m => m.value);
         if (isNaN(this.brModifier)) debugger;
         this.drModifier = productFun(this.drModifiers, m => m.value);
