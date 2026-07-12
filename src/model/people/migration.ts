@@ -287,9 +287,15 @@ function migrateClan(
     }
 }
 
+export function advanceMigration(clan: Clan, newSettlementSupplier: NewSettlementSupplier): boolean {
+    clan.previousSettlement_ = clan.settlement;
+    if (clan.migrationPlan === undefined) return false;
+    return clan.migrationPlan.advance(newSettlementSupplier);
+}
+
 export function migrate(world: World) {
     const nss = new NewSettlementSupplier();
     for (const clan of shuffled(world.allClans)) {
-        clan.advanceMigration(nss);
+        advanceMigration(clan, nss);
     }
 }

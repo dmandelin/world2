@@ -292,14 +292,8 @@ export class Clan implements TradePartner {
             && this.migrationPlan_.willMigrate;
     }
 
-    considerMigration() {
+    planMigration() {
         this.migrationPlan_ = new MigrationCalc(this);
-    }
-
-    advanceMigration(newSettlementSupplier: NewSettlementSupplier): boolean {
-        this.previousSettlement_ = this.settlement_;
-        if (this.migrationPlan === undefined) return false;
-        return this.migrationPlan.advance(newSettlementSupplier);
     }
 
     advanceSeniority() {
@@ -515,7 +509,7 @@ export class Clan implements TradePartner {
         // at the start of production during the advance phase.
         newClan.planMaintenance();
         newClan.planHousing();
-        newClan.considerMigration();
+        newClan.planMigration();
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
 

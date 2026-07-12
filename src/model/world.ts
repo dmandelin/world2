@@ -243,7 +243,7 @@ export class World implements NoteTaker {
         // Make decisions.
         for (const clan of this.allClans) {
             // Don't move immediately.
-            if (!priming) clan.considerMigration();
+            if (!priming) clan.planMigration();
             clan.planMaintenance();
             clan.planHousing();
         }
