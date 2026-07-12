@@ -115,35 +115,52 @@
     function drawSettlement(settlement: Settlement) {
         const x = settlement.x;
         const y = settlement.y;
-        const s = 3;
 
         context!.font = "14px sans-serif";
 
         // Symbol
         context!.fillStyle = settlement.abandoned ? "#777" : "#333";
-        if (!settlement.parent) {
-            if (!settlement.abandoned) {
-                context!.fillRect(x - s, y - s, s * 2, s * 2);
-            } else {
-                fillTextCentered("x", x, y);
-            }
+        if (settlement.abandoned) {
+            fillTextCentered("x", x, y);
         } else {
-            context!.fillRect(x - 2, y - 2, 4, 4);
+            const pop = settlement.population;
+            if (pop < 50) {
+                // Tiny upward-pointing triangle (width 4, height 4)
+                context!.beginPath();
+                context!.moveTo(x, y - 2);
+                context!.lineTo(x - 2, y + 2);
+                context!.lineTo(x + 2, y + 2);
+                context!.closePath();
+                context!.fill();
+            } else if (pop < 150) {
+                // Black dot, radius 1.8 (approx same size/slightly smaller than tiny 4x4 square)
+                context!.beginPath();
+                context!.arc(x, y, 1.8, 0, 2 * Math.PI);
+                context!.fill();
+            } else if (pop < 500) {
+                // Black dot, radius 2.8 (approx same size/slightly smaller than large 6x6 square)
+                context!.beginPath();
+                context!.arc(x, y, 2.8, 0, 2 * Math.PI);
+                context!.fill();
+            } else {
+                // Circle a little larger (radius 4.5)
+                context!.beginPath();
+                context!.arc(x, y, 4.5, 0, 2 * Math.PI);
+                context!.fill();
+            }
         }
 
         // Name
         if (!settlement.parent && !settlement.abandoned) {
-            fillTextCentered(settlement.name, x + 18, y + s + 14);
+            fillTextCentered(settlement.name, x + 18, y + 17);
         }
-
-        if (settlement.parent) return;
 
         // TODO - Clean this up. For now, it's just too much,
         // especially when sites are near each other or water.
         return;
 
         // Lens label (e.g., population)
-        drawLensLabel(settlement, x, y, s + 32);
+        drawLensLabel(settlement, x, y, 3 + 32);
 
         // Basic stats
         const subsistence = weightedAverage(
@@ -166,7 +183,7 @@
 
         let yo = 49;
         //context!.font = '12px sans-serif';
-        fillTextCentered(stats, x, y + s + yo);
+        fillTextCentered(stats, x, y + 3 + yo);
     }
 
     function drawLensLabel(settlement: any, x: number, y: number, yo: number) {
