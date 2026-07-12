@@ -1,5 +1,5 @@
 import { Annals } from "./annals";
-import { chooseFrom, sumFun, shuffled, dice } from "./lib/basics";
+import { chooseFrom, sumFun, dice } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { connectedClans, ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { createTrends } from "./records/trends";
@@ -7,7 +7,7 @@ import { InteractionGraph, updateBasicInteractions } from "./relations/interacti
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { marry } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
-import { NewSettlementSupplier } from "./people/migration";
+import { NewSettlementSupplier, migrate } from "./people/migration";
 import { Note, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
@@ -276,7 +276,7 @@ export class World implements NoteTaker {
         // Advance for cross-cluster events.
         this.conflicts.advance();
         marry(this);
-        this.migrate();
+        migrate(this);
 
         // Advance within clusters.
         for (const cl of this.clusters) {
@@ -311,12 +311,6 @@ export class World implements NoteTaker {
         }
     }
 
-    migrate() {
-        const nss = new NewSettlementSupplier();
-        for (const clan of shuffled(this.allClans)) {
-            clan.advanceMigration(nss);
-        }
-    }
 
     planConnections() {
         // Make everyone a neighbor of everyone else in the same settlement.

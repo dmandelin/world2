@@ -1,4 +1,4 @@
-import { sumFun } from "../lib/basics";
+import { sumFun, shuffled } from "../lib/basics";
 import { Clan, PersonalityTraits } from "./people";
 import { randomHamletName } from "./names";
 import { eloSuccessProbability, selectBySoftmaxVerbose, type SoftmaxSelection } from "../lib/modelbasics";
@@ -6,6 +6,7 @@ import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import type { NoteTaker } from "../records/notifications";
 import { getAlignment } from "../relations/alignment";
+import type { World } from "../world";
 
 class NewSettlementMigrationTarget {
     get name(): string { return 'New settlement'; }
@@ -283,5 +284,12 @@ function migrateClan(
             '↔',
             `Clan ${clan.name} moved from ${source.name} to ${actualTarget.name}`,
         );
+    }
+}
+
+export function migrate(world: World) {
+    const nss = new NewSettlementSupplier();
+    for (const clan of shuffled(world.allClans)) {
+        clan.advanceMigration(nss);
     }
 }
