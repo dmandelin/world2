@@ -13,7 +13,6 @@
     import { getClanLastTurnSnapshots, SettlementDTO, type ClanDTO, type WorldDTO } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
-    import { getAreaPrestige, getLocalPrestige, getLocalRespect, getRespect, getRespectInScopeDetail } from "../../model/relations/respect";
     import { get } from "svelte/store";
     import { connectionsOf } from "../../model/relations/connection";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
@@ -105,28 +104,6 @@
                 label: '',
                 valueFn:  item => item.explanation,
              }]);
-    }
-
-    function clanRespectTooltipTable(clan: ClanDTO) {
-        return new IterableTable(
-            getRespectInScopeDetail(clan, clan.settlement.clans),
-            item => item.label,
-            [{
-                data: 'Respect',
-                label: 'Respect',
-                valueFn: item => item.respect,
-                formatFn: (v: number) => signed(v * 100),
-            }, {
-                data: 'Weight',
-                label: 'Weight',
-                valueFn: item => item.weight,
-                formatFn: (v: number) => pct(v, 0),
-            }, {
-                data: 'Weighted Respect',
-                label: 'Weighted Respect',
-                valueFn: item => item.weightedValue,
-                formatFn: (v: number) => signed(v * 100),
-            }]);
     }
 
     function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
@@ -412,43 +389,6 @@
                         </Tooltip>
                     </td>
                     {@render deltaCell(cs, c => c.lastPopulationChange.drModifier, pct)}
-                {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr class="actual">
-                <td>Area Prestige</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {signed(100 * getAreaPrestige(cs.e))}
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => 100 * getAreaPrestige(c), signed)}
-                {/each}
-            </tr>    
-            <tr class="actual">
-                <td>Local Prestige</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {signed(100 * getLocalPrestige(cs.e))}
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => 100 * getLocalPrestige(c), signed)}
-                {/each}
-            </tr>    
-            <tr class="actual">
-                <td>Local Respect</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {signed(100 * getLocalRespect(cs.e))}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanRespectTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => 100 * getLocalRespect(c), signed)}
                 {/each}
             </tr>            
             <tr><td style="height: 0.5em"></td></tr>
