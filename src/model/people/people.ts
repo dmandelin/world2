@@ -27,12 +27,23 @@ import { Stress } from "./stress";
 import { BasicInteraction } from "../relations/interaction";
 
 const CLAN_NAMES: string[] = [
-    "Akkul", "Balag", "Baqal", "Dukug", "Dumuz", "Ezen", "Ezina", "Gibil", "Gudea",
-    "Huzir", "Ibgal", "Idnin", "Imdug", "Imiru", "Ishmu", "Kigdu", "Kudul", "Lilum",
-    "Lugal", "Namzu", "Nammu", "Nigir", "Nidaba", "Pabil", "Puzur", "Saba", "Shagir",
-    "Shaku", "Shara", "Shuba", "Shudu", "Sulgi", "Tabra", "Tarzu", "Teshk", "Tirum",
-    "Tugul", "Tukki", "Ubara", "Unug", "Urdu", "Urnin", "Ursag", "Ursim", "Zalki",
-    "Zamug", "Zudil", "Zudu", "Zuzu"
+    "Abzu", "Adab", "Akkad", "Akkul", "Akkur", "Alulim", "Amurru", "Anzu", "Apin", "Aratta", "Asarlu",
+    "Baba", "Babil", "Badtib", "Balag", "Baqal", "Bilga", "Birdu", "Borum",
+    "Dagan", "Dagul", "Dilmun", "Dirig", "Dudum", "Dukug", "Dumuz", "Dumuzi", "Dunnum",
+    "Eana", "Ebih", "Ekiq", "Elam", "Emar", "Enki", "Enlil", "Enmer", "Entem", "Eridu", "Eshnun", "Ezen", "Ezina",
+    "Gala", "Garama", "Gatum", "Geshtin", "Gibil", "Gigir", "Gilgam", "Gipar", "Girsu", "Gubba", "Gudea", "Gulla",
+    "Halab", "Hanam", "Hanish", "Haran", "Hashur", "Hattu", "Hurum", "Huzir",
+    "Ibgal", "Idnin", "Igigi", "Igimil", "Ikunum", "Ilum", "Imdug", "Imgur", "Imiru", "Inanna", "Irigal", "Ishkur", "Ishmu", "Ishtar", "Isin",
+    "Kadi", "Kakka", "Kalar", "Kanesh", "Karum", "Kesh", "Kigdu", "Kish", "Kubaba", "Kudul", "Kulaba", "Kurum",
+    "Lagash", "Lahar", "Larsa", "Libal", "Lilum", "Limmul", "Lugal", "Lulal", "Lullu",
+    "Mada", "Mami", "Marduk", "Mari", "Martu", "Mashash", "Meluhha", "Mushus",
+    "Nabu", "Nadin", "Nammu", "Namtar", "Namzu", "Nanna", "Nanib", "Nanshe", "Naram", "Naza", "Nedu", "Nidaba", "Nigir", "Nungal",
+    "Pabil", "Pukku", "Purum", "Pushu", "Puzur",
+    "Raba", "Ridan", "Rimush", "Rusa",
+    "Saba", "Sabum", "Sagan", "Samug", "Sangar", "Sarpan", "Shagir", "Shakan", "Shaku", "Shalim", "Shamash", "Shara", "Shuba", "Shudu", "Shurupp", "Subar", "Sulgi", "Sumer",
+    "Tabra", "Tarzu", "Teshk", "Tiamat", "Tidnu", "Tigris", "Tilla", "Tirum", "Tugul", "Tukki", "Tummal", "Tura",
+    "Ubara", "Umma", "Umu", "Unug", "Urdu", "Urnin", "Ursag", "Urshu", "Ursim", "Utu", "Uzu",
+    "Zabala", "Zabum", "Zagros", "Zalki", "Zame", "Zamug", "Zarku", "Ziusud", "Zudil", "Zudu", "Zulum", "Zuzu"
 ];
 
 const CLAN_COLORS: string[] = [
