@@ -1,5 +1,5 @@
 <script lang="ts">
-    import MigrationPlan from "./MigrationPlan.svelte";
+    import ClanMigrationDetails from "./clan/ClanMigrationDetails.svelte";
     import Tooltip from "./Tooltip.svelte";
     import type { ClanDTO } from "../model/records/dtos";
 
@@ -25,6 +25,8 @@
         text-align: left;
         font-size: small;
         margin: 0;
+        white-space: normal;
+        min-width: 480px;
     }
 </style>
 
@@ -32,11 +34,7 @@
         <Tooltip>
             <img width="24" height="24" src={icon} alt={alt} />    
             <div slot="tooltip" class="ttt">
-                Clan traits:
-                {#each clan.traits as trait}
-                    <span>{trait}</span>
-                {/each}
-                <MigrationPlan plan={clan.migrationPlan} />
+                <ClanMigrationDetails {clan} compact={true} />
             </div>
         </Tooltip>
     </div>
