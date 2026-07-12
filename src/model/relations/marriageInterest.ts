@@ -4,11 +4,18 @@ import { SkillDefs } from "../econ/econdefs";
 
 export class MarriageInterest {
     private items_: MarriageInterestItem[] = [];
+    private informationValue_: number = 0;
 
     get items(): readonly MarriageInterestItem[] { return this.items_; }
-    get value(): number { return sumFun(this.items_, i => i.value); }
+    get informationValue(): number { return this.informationValue_; }
 
-    updateFor(subject: Clan, object: Clan): void {
+    get value(): number {
+        const infoMultiplier = Math.max(0, Math.min(1, this.informationValue_));
+        return sumFun(this.items_, i => i.value) * infoMultiplier;
+    }
+
+    updateFor(subject: Clan, object: Clan, informationValue: number): void {
+        this.informationValue_ = informationValue;
         this.items_ = [
             MarriageInterestItem.forStress(subject, object),
             MarriageInterestItem.forStandardOfLiving(subject, object),
@@ -20,6 +27,7 @@ export class MarriageInterest {
     clone(): MarriageInterest {
         const a = new MarriageInterest();
         a.items_ = [...this.items_];
+        a.informationValue_ = this.informationValue_;
         return a;
     }
 }

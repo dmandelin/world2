@@ -286,27 +286,45 @@
 )}
     {@const mi = world.marriageInterestToward(subject, object)}
     {#if mi}
-        <TableView2
-            table={new IterableTable(mi.items, (i) => i.label, [
-                {
-                    data: "Value",
-                    label: "Value",
-                    valueFn: (i) => i.value,
-                    formatFn: (i: number) => signed(i, 1),
-                },
-                {
-                    data: "Base",
-                    label: "Base",
-                    valueFn: (i) => i.baseValue,
-                    formatFn: (i: number) => signed(i, 1),
-                },
-                {
-                    data: "Explanation",
-                    label: "Explanation",
-                    valueFn: (i) => i.explanation,
-                },
-            ])}
-        ></TableView2>
+        {@const rawTotal = mi.items.reduce((sum, item) => sum + item.value, 0)}
+        {@const infoMultiplier = Math.max(0, Math.min(1, mi.informationValue))}
+        <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+            <TableView2
+                table={new IterableTable(mi.items, (i) => i.label, [
+                    {
+                        data: "Value",
+                        label: "Value",
+                        valueFn: (i) => i.value,
+                        formatFn: (i: number) => signed(i, 1),
+                    },
+                    {
+                        data: "Base",
+                        label: "Base",
+                        valueFn: (i) => i.baseValue,
+                        formatFn: (i: number) => signed(i, 1),
+                    },
+                    {
+                        data: "Explanation",
+                        label: "Explanation",
+                        valueFn: (i) => i.explanation,
+                    },
+                ])}
+            ></TableView2>
+            <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Raw Total:</span>
+                    <strong>{signed(rawTotal, 1)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Information Multiplier:</span>
+                    <strong>{infoMultiplier.toFixed(2)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
+                    <span>Final Value:</span>
+                    <strong>{signed(mi.value, 1)}</strong>
+                </div>
+            </div>
+        </div>
     {/if}
 {/snippet}
 

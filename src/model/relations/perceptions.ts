@@ -31,7 +31,7 @@ export class Perceptions {
         this.information.updateFor(subject, object, connections, interactions);
         this.alignment.updateFor(subject, object, connections, interactions);
         this.respect.updateFor(subject, object);
-        this.marriageInterest.updateFor(subject, object);
+        this.marriageInterest.updateFor(subject, object, this.information.value);
     }
 
     clone(): Perceptions {

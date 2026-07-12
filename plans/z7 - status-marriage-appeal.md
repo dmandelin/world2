@@ -66,7 +66,7 @@ x   Visualize marriage appeal
     x   Relationships
     x   Standard of living
     *   Gifts
-*   Limited information effects
+x   Limited information effects
 *   Have clans communicate and sync their marriage appeal
     judgments
     *   Visualize results
