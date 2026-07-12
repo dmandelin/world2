@@ -18,7 +18,7 @@
     ) {
         const val = cellValue(row, column);
         if (column.formatFn) {
-            return column.formatFn(val);
+            return column.formatFn(val, row.data, column.data);
         }
         return val !== undefined && val !== null ? val.toString() : "";
     }
@@ -34,6 +34,8 @@
                 height="16"
             />
         {/if}
+    {:else if column.html}
+        {@html cellText(row, column)}
     {:else}
         {cellText(row, column)}
     {/if}

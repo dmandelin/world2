@@ -59,12 +59,12 @@ we have:
 
 Item list:
 
-*   Visualize marriage appeal
+x   Visualize marriage appeal
 *   Verify marriage appeal based on:
     *   (When avail) land
-    *   Skill
-    *   Relationships
-    *   Standard of living
+    x   Skill
+    x   Relationships
+    x   Standard of living
     *   Gifts
 *   Have clans communicate and sync their marriage appeal
     judgments

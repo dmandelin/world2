@@ -34,11 +34,14 @@ export interface TableColumn<RowData, ColData, CellData> {
     valueFn: (row: RowData) => CellData;
 
     // Formatter for values in this column.
-    formatFn?: (value: CellData) => string;
+    formatFn?: (value: CellData, row?: any, col?: any) => string;
 
     // If set, the cell data will be used as the src of an img element instead 
     // of being displayed as text.
     imgsrc?: boolean;
+
+    // If set, the cell data will render as HTML.
+    html?: boolean;
 
     // If set, the cell will have a tooltip with this snippet.
     tooltip?: Snippet<[CellData, RowData, ColData]>;

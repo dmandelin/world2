@@ -5,6 +5,10 @@ import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
 import { getLocalRespect } from "./respect";
 
+function updateMarriageAppeal(world: World) {
+
+}
+
 // Marry people in the 20-40 age range in the given region.
 //
 // This is intended to be run just before advancing the population,
@@ -24,6 +28,8 @@ import { getLocalRespect } from "./respect";
 // For pairings, the model is that potential husbands and their
 // clans "offer" and potential wives and their clans "choose".
 export function marry(world: World): void {
+    updateMarriageAppeal(world);
+
     const clans = world.allClans;
     const pairingCounts = new PairingCounts();
 
@@ -50,8 +56,8 @@ export function marry(world: World): void {
         const offers: PotentialPartnerSet[] = [];
         for (const husbandSet of potentialHusbands) {
             if (husbandSet.clan.settlement === wifeSet.clan.settlement ||
-                (Math.random() < 0.25 && 
-                 husbandSet.clan.settlement.milesTo(wifeSet.clan.settlement) < 12)) {
+                (Math.random() < 0.25 &&
+                    husbandSet.clan.settlement.milesTo(wifeSet.clan.settlement) < 12)) {
                 offers.push(husbandSet);
             }
         }

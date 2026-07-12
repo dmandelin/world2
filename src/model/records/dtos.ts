@@ -26,6 +26,7 @@ import { BasicInteraction, Interaction, type InteractionGraph } from "../relatio
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
+import type { MarriageInterest } from "../relations/marriageInterest";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
@@ -359,6 +360,10 @@ export class WorldDTO {
 
     respectToward(clan: ClanDTO, other: ClanDTO): Respect|undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.respect;
+    }
+
+    marriageInterestToward(clan: ClanDTO, other: ClanDTO): MarriageInterest|undefined {
+        return this.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
     }
 
     advanceFromPlanningView() {
