@@ -66,6 +66,7 @@ x   Visualize marriage appeal
     x   Relationships
     x   Standard of living
     *   Gifts
+*   Limited information effects
 *   Have clans communicate and sync their marriage appeal
     judgments
     *   Visualize results
@@ -79,6 +80,7 @@ x   Visualize marriage appeal
     *   Visualize clan family trees
     *   Make it possible to view clan groups as clans
     *   Graphs of clan population, appeal, success over time
+    *   Graphs on clan rankings over time
 *   Make sure skill blends with marriage
 *   Consider giving transitive relationship benefits
 *   Differential land availability/quality

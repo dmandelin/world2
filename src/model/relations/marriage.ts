@@ -5,10 +5,6 @@ import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
 import { getLocalRespect } from "./respect";
 
-function updateMarriageAppeal(world: World) {
-
-}
-
 // Marry people in the 20-40 age range in the given region.
 //
 // This is intended to be run just before advancing the population,
@@ -28,8 +24,6 @@ function updateMarriageAppeal(world: World) {
 // For pairings, the model is that potential husbands and their
 // clans "offer" and potential wives and their clans "choose".
 export function marry(world: World): void {
-    updateMarriageAppeal(world);
-
     const clans = world.allClans;
     const pairingCounts = new PairingCounts();
 

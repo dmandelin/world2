@@ -110,7 +110,10 @@
 
     function marriageInterestFormat(value: number, rowClan?: ClanDTO, colClan?: ClanDTO): string {
         const formattedNum = signed(value, 0);
-        if (!rowClan || !colClan || rowClan.uuid === colClan.uuid) {
+        if (!rowClan || !colClan) {
+            return formattedNum;
+        }
+        if (rowClan.uuid === colClan.uuid) {
             return formattedNum;
         }
 
@@ -127,13 +130,13 @@
         const rankIdx = values.findIndex((v) => v.clan.uuid === colClan.uuid);
 
         if (rankIdx === 0) {
-            return `<span style="color: #ffd700; margin-right: 4px; font-weight: bold;">★</span>${formattedNum}`;
+            return `${formattedNum}<span style="color: #ffd700; margin-left: 4px; font-weight: bold;">★</span>`;
         } else if (rankIdx === 1) {
-            return `<span style="color: #a0a0a0; margin-right: 4px; font-weight: bold;">★</span>${formattedNum}`;
+            return `${formattedNum}<span style="color: #a0a0a0; margin-left: 4px; font-weight: bold;">★</span>`;
         } else if (rankIdx === 2) {
-            return `<span style="color: #cd7f32; margin-right: 4px; font-weight: bold;">★</span>${formattedNum}`;
+            return `${formattedNum}<span style="color: #cd7f32; margin-left: 4px; font-weight: bold;">★</span>`;
         }
-        return formattedNum;
+        return `${formattedNum}<span style="color: transparent; margin-left: 4px; font-weight: bold;">★</span>`;
     }
 </script>
 

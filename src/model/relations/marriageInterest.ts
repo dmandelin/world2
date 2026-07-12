@@ -10,9 +10,6 @@ export class MarriageInterest {
 
     updateFor(subject: Clan, object: Clan): void {
         this.items_ = [
-            // Main purpose of the base value is so that appeal tends
-            // to come out positive.
-            new MarriageInterestItem('Base', 20, 1, 'Base'),
             MarriageInterestItem.forStress(subject, object),
             MarriageInterestItem.forStandardOfLiving(subject, object),
             MarriageInterestItem.forSkills(subject, object),
@@ -42,30 +39,32 @@ export class MarriageInterestItem {
     static forStress(subject: Clan, object: Clan): MarriageInterestItem {
         return new MarriageInterestItem(
             'Stress',
-            object.stress.value,
+            object.stress.value - subject.stress.value,
             1,
-            `target stress`
+            `Stress`
         );
     }
 
     static forStandardOfLiving(subject: Clan, object: Clan): MarriageInterestItem {
         return new MarriageInterestItem(
             'Standard of Living',
-            object.qol.value,
+            object.qol.value - subject.qol.value,
             1,
-            `target QoL`
+            `Standard of Living`
         );
     }
 
     static forSkills(subject: Clan, object: Clan): MarriageInterestItem {
         const skillDefs = Object.values(SkillDefs);
-        const totalSkill = sumFun(skillDefs, s => object.skills.v(s));
-        const avgSkill = totalSkill / (skillDefs.length || 1);
+        const totalObjectSkill = sumFun(skillDefs, s => object.skills.v(s));
+        const avgObjectSkill = totalObjectSkill / (skillDefs.length || 1);
+        const totalSubjectSkill = sumFun(skillDefs, s => subject.skills.v(s));
+        const avgSubjectSkill = totalSubjectSkill / (skillDefs.length || 1);
         return new MarriageInterestItem(
             'Skills',
-            avgSkill / 10,
+            (avgObjectSkill - avgSubjectSkill) / 10,
             1,
-            `avg target skills`
+            `Skills`
         );
     }
 
