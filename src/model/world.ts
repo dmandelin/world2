@@ -7,7 +7,7 @@ import { InteractionGraph, updateBasicInteractions } from "./relations/interacti
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { marry } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
-import { migrate, planMigration } from "./people/migration";
+import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
@@ -22,6 +22,7 @@ import { Conflicts } from "./relations/conflict";
 export class World implements NoteTaker {
     readonly year = new Year();
     readonly yearsPerTurn = 20;
+    plannedSettlements: PlannedSettlement[] = [];
 
     readonly timeline = new Timeline<TimePoint>();
     readonly trends = createTrends(this);

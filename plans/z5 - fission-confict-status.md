@@ -305,8 +305,9 @@ x   Add basic conflict model with:
             new location
         *   Figure out why clans sometimes end up really small
             and/or re-add merging.
-        *   Better display of settlement size on map
-        *   Hover settlement details on map
+        x   Better display of settlement size on map
+        x   Hover settlement details on map
+        x   Show planned settlements on the map
         *   Option to move back home
         *   (P1.5) General social network assessment of different
             location options

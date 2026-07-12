@@ -36,6 +36,17 @@ export class NewSettlementDecisionReport {
     ) { }
 }
 
+export class PlannedSettlement {
+    constructor(
+        readonly name: string,
+        readonly x: number,
+        readonly y: number,
+        readonly cluster: SettlementCluster,
+        readonly parent: Settlement,
+        readonly clans: Clan[]
+    ) {}
+}
+
 export class MigrationCalc {
     wantToMove: boolean = false;
     wantToMoveReason: string = '';
@@ -222,6 +233,7 @@ function getCompanyValue(n: number): number {
 }
 
 export function planMigration(world: World) {
+    world.plannedSettlements = [];
     // 1. First call assessMigration on every clan in every settlement.
     for (const clan of world.allClans) {
         clan.assessMigration();
@@ -342,24 +354,23 @@ export function planMigration(world: World) {
                 plan.best = plan.targets.get(clan.settlement);
             }
         }
+
+        if (agreedToMigrate && finalTopChoices.length > 0) {
+            const newSettlementName = randomHamletName();
+            const [x, y] = settlement.cluster.placer_.placeFor();
+            const planned = new PlannedSettlement(newSettlementName, x, y, settlement.cluster, settlement, finalTopChoices);
+            world.plannedSettlements.push(planned);
+        }
     }
 }
 
 export function migrate(world: World) {
-    const migratingBySource = new Map<Settlement, Clan[]>();
-
     for (const clan of world.allClans) {
         clan.previousSettlement_ = clan.settlement;
         const plan = clan.migrationPlan;
         if (plan && plan.willMigrate && plan.best) {
             const target = plan.best.target;
-            if (target === NewSettlement) {
-                const source = clan.settlement;
-                if (!migratingBySource.has(source)) {
-                    migratingBySource.set(source, []);
-                }
-                migratingBySource.get(source)!.push(clan);
-            } else {
+            if (target !== NewSettlement) {
                 // Individual migration to an existing settlement (fallback/just in case)
                 const actualTarget = target as Settlement;
                 clan.moveTo(actualTarget);
@@ -373,21 +384,24 @@ export function migrate(world: World) {
         }
     }
 
-    // Execute group new-settlement migrations
-    for (const [source, migratingClans] of migratingBySource.entries()) {
-        if (migratingClans.length === 0) continue;
+    // Execute group new-settlement migrations from planned settlements
+    for (const planned of world.plannedSettlements) {
+        if (planned.clans.length === 0) continue;
 
-        const newSettlementName = randomHamletName();
-        const newSettlement = source.cluster.foundSettlement(newSettlementName, source);
+        // Instantiate the actual settlement at the pre-chosen coords
+        const newSettlement = new Settlement(world, planned.name, planned.x, planned.y, planned.cluster, planned.parent);
 
-        for (const clan of migratingClans) {
+        for (const clan of planned.clans) {
             clan.moveTo(newSettlement);
             clan.traits.delete(PersonalityTraits.SETTLED);
             clan.traits.add(PersonalityTraits.MOBILE);
             world.addNote(
                 '✨',
-                `Clan ${clan.name} moved from ${source.name} to found ${newSettlement.name}`,
+                `Clan ${clan.name} moved from ${planned.parent.name} to found ${newSettlement.name}`,
             );
         }
     }
+
+    // Clear planned settlements after execution
+    world.plannedSettlements = [];
 }

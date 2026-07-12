@@ -104,6 +104,22 @@
         for (const cluster of world.clusters) {
             drawCluster(cluster);
         }
+        for (const planned of worldDTO.plannedSettlements) {
+            drawPlannedSettlement(planned);
+        }
+    }
+
+    function drawPlannedSettlement(planned: any) {
+        const x = planned.x;
+        const y = planned.y;
+
+        context!.strokeStyle = "#d69e2e";
+        context!.lineWidth = 2;
+        context!.setLineDash([3, 3]);
+        context!.beginPath();
+        context!.arc(x, y, 4.5, 0, 2 * Math.PI);
+        context!.stroke();
+        context!.setLineDash([]);
     }
 
     function drawCluster(cluster: SettlementCluster) {
@@ -207,6 +223,7 @@ ${settlement.cluster.population} \
     }
 
     let hoveredSettlement = $state<any>(null);
+    let hoveredPlannedSettlement = $state<any>(null);
     let tooltipX = $state(0);
     let tooltipY = $state(0);
 
@@ -215,7 +232,10 @@ ${settlement.cluster.population} \
         const mouseY = e.offsetY;
 
         let best = null;
+        let bestPlanned = null;
         let bestds = 8 * 8; // within 8 pixels is a reasonable hover radius
+
+        // Check regular settlements
         for (const s of world.allSettlements) {
             const dx = s.x - mouseX;
             const dy = s.y - mouseY;
@@ -224,23 +244,44 @@ ${settlement.cluster.population} \
             if (ds < bestds) {
                 bestds = ds;
                 best = s;
+                bestPlanned = null;
             }
         }
+
+        // Check planned settlements
+        for (const ps of worldDTO.plannedSettlements) {
+            const dx = ps.x - mouseX;
+            const dy = ps.y - mouseY;
+            const ds = dx * dx + dy * dy;
+
+            if (ds < bestds) {
+                bestds = ds;
+                best = null;
+                bestPlanned = ps;
+            }
+        }
+
+        tooltipX = e.offsetX + 12;
+        tooltipY = e.offsetY + 12;
 
         if (best) {
             const dto = worldDTO.clusters
                 .flatMap(c => c.settlements)
                 .find(s => s.uuid === best.uuid);
             hoveredSettlement = dto;
-            tooltipX = e.offsetX + 12;
-            tooltipY = e.offsetY + 12;
+            hoveredPlannedSettlement = null;
+        } else if (bestPlanned) {
+            hoveredSettlement = null;
+            hoveredPlannedSettlement = bestPlanned;
         } else {
             hoveredSettlement = null;
+            hoveredPlannedSettlement = null;
         }
     }
 
     function handleMouseLeave() {
         hoveredSettlement = null;
+        hoveredPlannedSettlement = null;
     }
 
     onMount(() => {
@@ -324,6 +365,34 @@ ${settlement.cluster.population} \
         </div>
     {/if}
 
+    {#if hoveredPlannedSettlement}
+        <div 
+            class="map-tooltip"
+            style="position: absolute; left: {tooltipX}px; top: {tooltipY}px;"
+        >
+            <div class="tooltip-title">
+                {hoveredPlannedSettlement.name}
+                <span class="planned-tag">(Planned)</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Cluster:</span>
+                <span class="value">{hoveredPlannedSettlement.clusterName}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Parent:</span>
+                <span class="value">{hoveredPlannedSettlement.parentName}</span>
+            </div>
+            <div class="tooltip-row" style="flex-direction: column; align-items: flex-start; margin-top: 4px; border-top: 1px dashed #62531d; padding-top: 4px; width: 100%;">
+                <span class="label" style="margin-bottom: 2px;">Founding Clans:</span>
+                <ul class="clan-list" style="margin: 0; padding-left: 16px; font-weight: 500; list-style-type: square; color: #2c1e05;">
+                    {#each hoveredPlannedSettlement.clans as clan}
+                        <li>{clan.name}</li>
+                    {/each}
+                </ul>
+            </div>
+        </div>
+    {/if}
+
     <div style="display: flex; justify-content: space-between">
         <ButtonPanel
             config={{
@@ -403,5 +472,21 @@ ${settlement.cluster.population} \
 
     .high-stress {
         color: #e53e3e;
+    }
+
+    .planned-tag {
+        color: #d69e2e;
+        font-size: 0.75rem;
+        font-weight: normal;
+        margin-left: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .clan-list {
+        font-size: 0.8rem;
+        line-height: 1.3;
+        margin: 0;
+        padding-left: 14px;
     }
 </style>

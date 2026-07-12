@@ -9,7 +9,7 @@ import type { Process } from "../econ/process";
 export const MILES_PER_UNIT = 0.16666667;
 
 export class SettlementCluster {
-    private placer_ = new SettlementPlacer(this);
+    readonly placer_ = new SettlementPlacer(this);
     readonly settlements: Settlement[] = [];
 
     private floodLevel_: FloodLevel = FloodLevels.Normal;

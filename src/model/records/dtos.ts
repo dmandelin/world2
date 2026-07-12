@@ -10,7 +10,7 @@ import type { FloodLevel } from "../environment/flood";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
-import type { MigrationCalc, NewSettlementDecisionReport } from "../people/migration";
+import type { MigrationCalc, NewSettlementDecisionReport, PlannedSettlement } from "../people/migration";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
@@ -243,10 +243,29 @@ export class ClusterDTO {
     }
 }
 
+export class PlannedSettlementDTO {
+    readonly name: string;
+    readonly x: number;
+    readonly y: number;
+    readonly parentName: string;
+    readonly clusterName: string;
+    readonly clans: { uuid: string; name: string }[];
+
+    constructor(planned: PlannedSettlement) {
+        this.name = planned.name;
+        this.x = planned.x;
+        this.y = planned.y;
+        this.parentName = planned.parent.name;
+        this.clusterName = planned.cluster.name;
+        this.clans = planned.clans.map(c => ({ uuid: c.uuid, name: c.name }));
+    }
+}
+
 export class WorldDTO {
     readonly year: string;
     readonly clanMap: ReadonlyMap<UUID, ClanDTO>;
     readonly clusters: ClusterDTO[];
+    readonly plannedSettlements: PlannedSettlementDTO[];
 
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
@@ -265,6 +284,7 @@ export class WorldDTO {
         this.year = this.world.year.toString();
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
+        this.plannedSettlements = world.plannedSettlements.map(p => new PlannedSettlementDTO(p));
         this.connections = world.connections.clone();
         this.interactions = world.interactions.clone();
         this.conflicts = world.conflicts.clone();
