@@ -1,25 +1,25 @@
 <script lang="ts">
-    import ButtonPanel from './ButtonPanel.svelte';
-    import NotificationBar from './NotificationBar.svelte';
+    import ButtonPanel from "./ButtonPanel.svelte";
+    import NotificationBar from "./NotificationBar.svelte";
 
-    import { onDestroy, onMount } from 'svelte';
-    import { signed } from '../model/lib/format';
-    import { world } from '../model/world';
-    import type { SettlementCluster } from '../model/people/cluster';
-    import { Settlement } from '../model/people/settlement';
-    import TrendsPanel from './TrendsPanel.svelte';
-    import { weightedAverage } from '../model/lib/modelbasics';
-    
+    import { onDestroy, onMount } from "svelte";
+    import { signed } from "../model/lib/format";
+    import { world } from "../model/world";
+    import type { SettlementCluster } from "../model/people/cluster";
+    import { Settlement } from "../model/people/settlement";
+    import TrendsPanel from "./TrendsPanel.svelte";
+    import { weightedAverage } from "../model/lib/modelbasics";
+
     let { onSelect } = $props();
-    let selectedLens = $state('Pop');
+    let selectedLens = $state("Pop");
 
-    let canvas: HTMLCanvasElement|null;
-    let context: CanvasRenderingContext2D|null;
+    let canvas: HTMLCanvasElement | null;
+    let context: CanvasRenderingContext2D | null;
 
     let worldDTO = $state(world.dto!);
 
     function click(e: MouseEvent) {
-        console.log('click', e.offsetX, e.offsetY);
+        console.log("click", e.offsetX, e.offsetY);
 
         const clickX = e.offsetX;
         const clickY = e.offsetY;
@@ -38,7 +38,7 @@
         }
 
         if (best) {
-            console.log('select', best.name, event);
+            console.log("select", best.name, event);
             onSelect(best.uuid);
         } else {
             onSelect(undefined);
@@ -57,8 +57,8 @@
         for (const settlement of world.allSettlements) {
             const x = settlement.x;
             const y = settlement.y;
-            const fieldsRadius = 0.5 * Math.sqrt(settlement.population)
-            const fieldsColor = settlement.abandoned ? '#eee' : '#dfd';
+            const fieldsRadius = 0.5 * Math.sqrt(settlement.population);
+            const fieldsColor = settlement.abandoned ? "#eee" : "#dfd";
             context!.fillStyle = fieldsColor;
             context!.beginPath();
             context!.arc(x, y, fieldsRadius, 0, 2 * Math.PI);
@@ -70,9 +70,9 @@
     }
 
     function drawRivers() {
-        context!.strokeStyle = '#0185bb';
+        context!.strokeStyle = "#0185bb";
         context!.lineWidth = 5;
-        context!.fillStyle = '#A0D8F0';
+        context!.fillStyle = "#A0D8F0";
 
         // Euphrates
         context!.beginPath();
@@ -117,15 +117,15 @@
         const y = settlement.y;
         const s = 3;
 
-        context!.font = '14px sans-serif';
+        context!.font = "14px sans-serif";
 
         // Symbol
-        context!.fillStyle = settlement.abandoned ? '#777' : '#333';
+        context!.fillStyle = settlement.abandoned ? "#777" : "#333";
         if (!settlement.parent) {
             if (!settlement.abandoned) {
                 context!.fillRect(x - s, y - s, s * 2, s * 2);
             } else {
-                fillTextCentered('x', x, y);
+                fillTextCentered("x", x, y);
             }
         } else {
             context!.fillRect(x - 2, y - 2, 4, 4);
@@ -148,18 +148,18 @@
         // Basic stats
         const subsistence = weightedAverage(
             settlement.clans,
-            c => c.happiness.subsistenceAppeal,
-            c => c.population,
+            (c) => c.happiness.subsistenceAppeal,
+            (c) => c.population,
         );
         const appeal = weightedAverage(
             settlement.clans,
-            c => c.happiness.appeal,
-            c => c.population,
+            (c) => c.happiness.appeal,
+            (c) => c.population,
         );
         const happiness = weightedAverage(
             settlement.clans,
-            c => c.happiness.value,
-            c => c.population,
+            (c) => c.happiness.value,
+            (c) => c.population,
         );
 
         const stats = `${signed(subsistence)} | ${signed(appeal)} | ${signed(happiness)}`;
@@ -167,18 +167,18 @@
         let yo = 49;
         //context!.font = '12px sans-serif';
         fillTextCentered(stats, x, y + s + yo);
-}
+    }
 
     function drawLensLabel(settlement: any, x: number, y: number, yo: number) {
-        context!.fillStyle = '#333';
-        context!.font = '12px sans-serif';
+        context!.fillStyle = "#333";
+        context!.font = "12px sans-serif";
 
-        let label = '';
-        if (selectedLens === 'Pop') {
+        let label = "";
+        if (selectedLens === "Pop") {
             label = `${settlement.population} | \
 ${settlement.cluster.population} \
 (${signed(settlement.cluster.lastPopulationChange)})`;
-        } else if (selectedLens === 'Rit') {
+        } else if (selectedLens === "Rit") {
             label = `${signed(settlement.clans.rites.appeal)}`;
         }
         fillTextCentered(label, x, y + yo);
@@ -190,8 +190,8 @@ ${settlement.cluster.population} \
     }
 
     onMount(() => {
-        canvas = document.querySelector('canvas');
-        context = canvas!.getContext('2d');
+        canvas = document.querySelector("canvas");
+        context = canvas!.getContext("2d");
 
         world.watch(() => {
             worldDTO = world.dto!;
@@ -203,7 +203,7 @@ ${settlement.cluster.population} \
         //window.addEventListener('resize', resizeCanvas);
 
         return () => {
-            window.removeEventListener('resize', resizeCanvas);
+            window.removeEventListener("resize", resizeCanvas);
         };
     });
 
@@ -212,30 +212,36 @@ ${settlement.cluster.population} \
     });
 </script>
 
+<div>
+    <canvas
+        onclick={click}
+        width="564"
+        height="492"
+        style="width: 564px; height: 492px"
+    >
+    </canvas>
+    <div style="display: flex; justify-content: space-between">
+        <ButtonPanel
+            config={{
+                buttons: [{ label: "Pop" }, { label: "Rit" }],
+            }}
+            onSelected={(label) => {
+                selectedLens = label;
+                draw();
+            }}
+        />
+        <TrendsPanel
+            config={{
+                trends: worldDTO.trends,
+            }}
+        />
+    </div>
+    <NotificationBar notes={worldDTO.notes} />
+</div>
+
 <style>
     canvas {
         display: block;
         border: 4px solid #62531d;
     }
 </style>
-
-<div>
-    <canvas 
-        onclick={click} 
-        width="564" 
-        height="492" 
-        style="width: 564px; height: 492px">
-    </canvas>
-    <div style="display: flex; justify-content: space-between">
-        <ButtonPanel config={{
-            buttons: [
-                { label: 'Pop' },
-                { label: 'Rit' },
-            ],
-        }} onSelected={label => { selectedLens = label; draw(); } } />
-        <TrendsPanel config={{
-            trends: worldDTO.trends,
-        }} />
-    </div>
-    <NotificationBar notes={worldDTO.notes} />
-</div>

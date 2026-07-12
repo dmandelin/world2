@@ -8,7 +8,7 @@ import { HelpAllocation } from "../decisions/helpalloc";
 import { HousingDecision } from "../decisions/housingdecision";
 import { HousingTypes } from "../econ/housing";
 import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } from "./population";
-import { MigrationCalc, type NewSettlementSupplier} from "./migration";
+import { MigrationCalc } from "./migration";
 import { normal } from "../lib/distributions";
 import { Operation, ProductionReport } from "../econ/operation";
 import { Processes, SkillDefs } from "../econ/econdefs";
@@ -292,7 +292,7 @@ export class Clan implements TradePartner {
             && this.migrationPlan_.willMigrate;
     }
 
-    planMigration() {
+    assessMigration() {
         this.migrationPlan_ = new MigrationCalc(this);
     }
 
@@ -509,7 +509,7 @@ export class Clan implements TradePartner {
         // at the start of production during the advance phase.
         newClan.planMaintenance();
         newClan.planHousing();
-        newClan.planMigration();
+        newClan.assessMigration();
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
 

@@ -7,7 +7,7 @@ import { InteractionGraph, updateBasicInteractions } from "./relations/interacti
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { marry } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
-import { NewSettlementSupplier, migrate } from "./people/migration";
+import { migrate, planMigration } from "./people/migration";
 import { Note, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
@@ -241,14 +241,12 @@ export class World implements NoteTaker {
         this.planMutualHelp();
 
         // Make decisions.
+        if (!priming) {
+            planMigration(this);
+        }
         for (const clan of this.allClans) {
-            // Don't move immediately.
-            if (!priming) clan.planMigration();
             clan.planMaintenance();
             clan.planHousing();
-        }
-        for (const settlement of this.allSettlements) {
-            settlement.planMigrations();
         }
 
         log('World <<< Behave');

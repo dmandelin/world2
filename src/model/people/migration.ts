@@ -1,12 +1,12 @@
-import { sumFun, shuffled } from "../lib/basics";
+import { sumFun } from "../lib/basics";
 import { Clan, PersonalityTraits } from "./people";
 import { randomHamletName } from "./names";
-import { eloSuccessProbability, selectBySoftmaxVerbose, type SoftmaxSelection } from "../lib/modelbasics";
+import { eloSuccessProbability } from "../lib/modelbasics";
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
-import type { NoteTaker } from "../records/notifications";
 import { getAlignment } from "../relations/alignment";
 import type { World } from "../world";
+import { normal } from "../lib/distributions";
 
 class NewSettlementMigrationTarget {
     get name(): string { return 'New settlement'; }
@@ -18,23 +18,22 @@ export const NewSettlement = new NewSettlementMigrationTarget();
 
 export type MigrationTarget = Settlement | NewSettlementMigrationTarget;
 
-export class NewSettlementSupplier {
-    private readonly newBySource: Map<Settlement, Settlement> = new Map();
+export class NewSettlementDecisionReportItem {
+    constructor(
+        readonly clanName: string,
+        readonly stayPutAppeal: number,
+        readonly movingAppeals: number[],
+        readonly isTopChoice: boolean[]
+    ) { }
+}
 
-    constructor() { }
+export class NewSettlementDecisionReport {
+    readonly items: Record<string, NewSettlementDecisionReportItem> = {};
 
-    get(cluster: SettlementCluster, source: Settlement): Settlement {
-        // We assume that clans from the same source found a village
-        // together, but clans from different sources are independent.
-        if (this.newBySource.has(source)) {
-            return this.newBySource.get(source)!;
-        }
-
-        const name = randomHamletName();
-        const newSettlement = cluster.foundSettlement(name, source);
-        this.newBySource.set(source, newSettlement);
-        return newSettlement;
-    }
+    constructor(
+        readonly settlementName: string,
+        readonly roundsRun: number
+    ) { }
 }
 
 export class MigrationCalc {
@@ -45,21 +44,13 @@ export class MigrationCalc {
 
     targets: Map<MigrationTarget, CandidateMigrationCalc> = new Map();
     best: CandidateMigrationCalc | undefined;
-    softmaxSelection: SoftmaxSelection<CandidateMigrationCalc> | undefined;
     willMigrate: boolean = false;
 
     constructor(readonly clan: Clan, dummy: boolean = false) {
         if (dummy) return;
 
         this.trigger();
-
-        // We really only need this if moving but it can be nice to
-        // see the data.
         this.filter();
-        if (this.wantToMove) {
-            this.select();
-            this.decide();
-        }
     }
 
     private trigger() {
@@ -78,30 +69,6 @@ export class MigrationCalc {
             this.targets.set(target, new CandidateMigrationCalc(this.clan, target));
         }
         this.targets.set(NewSettlement, new CandidateMigrationCalc(this.clan, NewSettlement));
-    }
-
-    private select() {
-        this.softmaxSelection = selectBySoftmaxVerbose(
-            this.targets.values(),
-            item => item.isEligible ? item.value : -Infinity
-        );
-        for (const [calc, prob] of this.softmaxSelection.probabilities.entries()) {
-            calc.selectionProbability = prob;
-        }
-        this.best = this.softmaxSelection.selected;
-    }
-
-    private decide() {
-        this.willMigrate = this.best !== undefined && this.best.target !== this.clan.settlement;
-    }
-
-    advance(newSettlementSupplier: NewSettlementSupplier): boolean {
-        if (this.willMigrate) {
-            migrateClan(this.clan, this.best!.target, newSettlementSupplier, this.clan.world);
-            return true;
-        } else {
-            return false;
-        }
     }
 
     get targetsTable(): string[][] {
@@ -127,7 +94,7 @@ export class CandidateMigrationCalc {
     selectionProbability: number = 0;
 
     constructor(readonly clan: Clan, readonly target: MigrationTarget) {
-        if (target !== clan.settlement 
+        if (target !== clan.settlement
             && target !== NewSettlement &&
             !(target as Settlement).clans.some(c => getAlignment(c, clan) > 0.1)) {
             this.isEligible = false;
@@ -138,6 +105,8 @@ export class CandidateMigrationCalc {
             this.inertia(),
             this.fromConflict(),
             this.fromLandAvailability(),
+            this.fromStress(),
+            this.random(),
         ];
         this.value = sumFun(this.items, item => item.value);
     }
@@ -215,32 +184,11 @@ export class CandidateMigrationCalc {
     }
 
     private fromLandAvailability(): CandidateMigrationCalcItem {
-        // Originally we had an item for local standard of living, but this
-        // caused clans to move a lot to be near the richest clan, which isn't
-        // totally wrong, but wasn't actually helping them.
-        //
-        // But to the extent a clan depends on farmland, if they can plant
-        // more than they have locally, that's a reason.
         const farmingFraction = this.clan.effortAllocation.farmingRatio();
         if (farmingFraction === 0) {
             return { name: 'Land', reason: 'Not farming', value: 0 };
         }
 
-        // TODO - Bring back
-        /*
-        const agNode = this.clan.productionNodes
-            .find(n => n instanceof CommonsProductionNode && n.skillDef === SkillDefs.Agriculture);
-        if (!agNode) {
-            return { name: 'Land', reason: 'No agriculture', value: 0 };
-        }
-        const landRatio = agNode.report.landPerWorker();
-
-        let targetLandRatio = 1;
-        if (!(this.target instanceof NewSettlementMigrationTarget)) {
-            const targetAgNode = this.target.cluster.naturalFields;
-            targetLandRatio = targetAgNode.report.landPerWorker();
-        }
-            */
         const targetLandRatio = 1; // TODO - remove when bringing back
         const landRatio = 1; // TODO - remove when bringing back
 
@@ -250,6 +198,15 @@ export class CandidateMigrationCalc {
             value: (targetLandRatio - landRatio) * farmingFraction * 50,
         }
     }
+
+    private fromStress(): CandidateMigrationCalcItem {
+        const value = this.target === this.clan.settlement ? this.clan.stress.value : 0;
+        return { name: 'Stress', reason: 'Stress', value };
+    }
+
+    private random(): CandidateMigrationCalcItem {
+        return { name: 'Random', reason: 'Random variation', value: normal(0, 2) };
+    }
 }
 
 type CandidateMigrationCalcItem = {
@@ -258,44 +215,179 @@ type CandidateMigrationCalcItem = {
     reason: string;
 };
 
-function migrateClan(
-    clan: Clan,
-    target: MigrationTarget,
-    newSettlementSupplier: NewSettlementSupplier,
-    noteTaker: NoteTaker) {
-
-    const source = clan.settlement!;
-    let actualTarget: Settlement;
-    let isNew = false;
-
-    if (target instanceof NewSettlementMigrationTarget) {
-        actualTarget = newSettlementSupplier.get(source.cluster, source);
-        isNew = true;
-    } else {
-        actualTarget = target;
-    }
-
-    clan.moveTo(actualTarget);
-    clan.traits.delete(PersonalityTraits.SETTLED);
-    clan.traits.add(PersonalityTraits.MOBILE);
-
-    if (!isNew) {
-        noteTaker.addNote(
-            '↔',
-            `Clan ${clan.name} moved from ${source.name} to ${actualTarget.name}`,
-        );
-    }
+function getCompanyValue(n: number): number {
+    if (n <= 1) return -20;
+    if (n === 2) return -10;
+    return Math.min(5, n - 3);
 }
 
-export function advanceMigration(clan: Clan, newSettlementSupplier: NewSettlementSupplier): boolean {
-    clan.previousSettlement_ = clan.settlement;
-    if (clan.migrationPlan === undefined) return false;
-    return clan.migrationPlan.advance(newSettlementSupplier);
+export function planMigration(world: World) {
+    // 1. First call assessMigration on every clan in every settlement.
+    for (const clan of world.allClans) {
+        clan.assessMigration();
+    }
+
+    // 2. Agreement process per settlement
+    for (const settlement of world.allSettlements) {
+        const clans = settlement.clans;
+        if (clans.length === 0) continue;
+
+        // Max appeal of other targets for each clan (excluding NewSettlement)
+        const maxOtherAppeals = new Map<Clan, number>();
+        const stayPutAppeals = new Map<Clan, number>();
+
+        for (const clan of clans) {
+            const plan = clan.migrationPlan!;
+            const stayPutCandidate = plan.targets.get(clan.settlement);
+            stayPutAppeals.set(clan, stayPutCandidate ? stayPutCandidate.value : 0);
+
+            let maxOther = -Infinity;
+            for (const [target, candidate] of plan.targets.entries()) {
+                if (target !== NewSettlement) {
+                    const val = candidate.isEligible ? candidate.value : -Infinity;
+                    if (val > maxOther) {
+                        maxOther = val;
+                    }
+                }
+            }
+            maxOtherAppeals.set(clan, maxOther);
+        }
+
+        // We run a series of rounds
+        const movingAppeals = new Map<Clan, number[]>();
+        const isTopChoice = new Map<Clan, boolean[]>();
+
+        for (const clan of clans) {
+            const plan = clan.migrationPlan!;
+            const initialNewVal = plan.targets.get(NewSettlement)?.value ?? 0;
+            movingAppeals.set(clan, [initialNewVal]);
+
+            const maxOther = maxOtherAppeals.get(clan) ?? -Infinity;
+            isTopChoice.set(clan, [initialNewVal > maxOther]);
+        }
+
+        let roundsRun = 0;
+        const maxRounds = 50;
+
+        while (roundsRun < maxRounds) {
+            // Clans with moving as top choice in the previous round and wantToMove is true
+            const prevChoices = clans.filter(clan => {
+                const choices = isTopChoice.get(clan)!;
+                return choices[choices.length - 1] && clan.migrationPlan!.wantToMove;
+            });
+            const prevCount = prevChoices.length;
+
+            // Company value based on prevCount
+            const company = getCompanyValue(prevCount);
+
+            // Compute effective appeal for each clan in this round
+            const currentTopChoices: Clan[] = [];
+            for (const clan of clans) {
+                const initialNewVal = movingAppeals.get(clan)![0];
+                const randVal = normal(0, 2);
+                const roundVal = initialNewVal + randVal + company;
+
+                movingAppeals.get(clan)!.push(roundVal);
+
+                const maxOther = maxOtherAppeals.get(clan) ?? -Infinity;
+                const top = roundVal > maxOther;
+                isTopChoice.get(clan)!.push(top);
+
+                if (top && clan.migrationPlan!.wantToMove) {
+                    currentTopChoices.push(clan);
+                }
+            }
+
+            roundsRun++;
+
+            // Termination condition
+            const allPrevStillWant = prevChoices.every(c => currentTopChoices.includes(c));
+            const noneWant = currentTopChoices.length === 0;
+
+            if (allPrevStillWant || noneWant) {
+                break;
+            }
+        }
+
+        // TODO - later consider the alignment and capability of other clans in this process.
+
+        // Create the report
+        const report = new NewSettlementDecisionReport(settlement.name, roundsRun);
+        for (const clan of clans) {
+            const item = new NewSettlementDecisionReportItem(
+                clan.name,
+                stayPutAppeals.get(clan) ?? 0,
+                movingAppeals.get(clan) ?? [],
+                isTopChoice.get(clan) ?? []
+            );
+            report.items[clan.uuid] = item;
+        }
+        settlement.newSettlementDecisionReport = report;
+
+        // Record the decisions
+        const finalTopChoices = clans.filter(clan => {
+            const choices = isTopChoice.get(clan)!;
+            return choices[choices.length - 1] && clan.migrationPlan!.wantToMove;
+        });
+
+        const agreedToMigrate = finalTopChoices.length > 0;
+
+        for (const clan of clans) {
+            const plan = clan.migrationPlan!;
+            if (agreedToMigrate && finalTopChoices.includes(clan)) {
+                plan.willMigrate = true;
+                plan.best = plan.targets.get(NewSettlement);
+            } else {
+                plan.willMigrate = false;
+                plan.best = plan.targets.get(clan.settlement);
+            }
+        }
+    }
 }
 
 export function migrate(world: World) {
-    const nss = new NewSettlementSupplier();
-    for (const clan of shuffled(world.allClans)) {
-        advanceMigration(clan, nss);
+    const migratingBySource = new Map<Settlement, Clan[]>();
+
+    for (const clan of world.allClans) {
+        clan.previousSettlement_ = clan.settlement;
+        const plan = clan.migrationPlan;
+        if (plan && plan.willMigrate && plan.best) {
+            const target = plan.best.target;
+            if (target === NewSettlement) {
+                const source = clan.settlement;
+                if (!migratingBySource.has(source)) {
+                    migratingBySource.set(source, []);
+                }
+                migratingBySource.get(source)!.push(clan);
+            } else {
+                // Individual migration to an existing settlement (fallback/just in case)
+                const actualTarget = target as Settlement;
+                clan.moveTo(actualTarget);
+                clan.traits.delete(PersonalityTraits.SETTLED);
+                clan.traits.add(PersonalityTraits.MOBILE);
+                world.addNote(
+                    '↔',
+                    `Clan ${clan.name} moved from ${clan.previousSettlement.name} to ${actualTarget.name}`,
+                );
+            }
+        }
+    }
+
+    // Execute group new-settlement migrations
+    for (const [source, migratingClans] of migratingBySource.entries()) {
+        if (migratingClans.length === 0) continue;
+
+        const newSettlementName = randomHamletName();
+        const newSettlement = source.cluster.foundSettlement(newSettlementName, source);
+
+        for (const clan of migratingClans) {
+            clan.moveTo(newSettlement);
+            clan.traits.delete(PersonalityTraits.SETTLED);
+            clan.traits.add(PersonalityTraits.MOBILE);
+            world.addNote(
+                '✨',
+                `Clan ${clan.name} moved from ${source.name} to found ${newSettlement.name}`,
+            );
+        }
     }
 }

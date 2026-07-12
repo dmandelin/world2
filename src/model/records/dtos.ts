@@ -10,7 +10,7 @@ import type { FloodLevel } from "../environment/flood";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
-import type { MigrationCalc } from "../people/migration";
+import type { MigrationCalc, NewSettlementDecisionReport } from "../people/migration";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
@@ -178,6 +178,7 @@ export class SettlementDTO {
     readonly ditchTooltip: string[][];
     readonly floodLevel: FloodLevel;
     readonly refoundedAfterRiverShift: boolean;
+    readonly newSettlementDecisionReport: NewSettlementDecisionReport|undefined;
 
     readonly timeline: Timeline<SettlementTimePoint>;
 
@@ -204,6 +205,7 @@ export class SettlementDTO {
         this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
         this.floodLevel = settlement.floodLevel;
         this.refoundedAfterRiverShift = settlement.refoundedAfterRiverShift;
+        this.newSettlementDecisionReport = settlement.newSettlementDecisionReport;
 
         this.timeline = settlement.timeline;
     }

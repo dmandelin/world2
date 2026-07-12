@@ -140,7 +140,6 @@ export class SettlementCluster {
 
 class SettlementPlacer {
     readonly places = 12;
-    private first = true;
     private radius = Math.random() * 10 + 15;
     private originAngle = Math.random() * 2 * Math.PI;
     readonly openPlaces = Array.from({ length: this.places }, (_, i) => i);
@@ -149,8 +148,7 @@ class SettlementPlacer {
     constructor(readonly cluster: SettlementCluster) {}
 
     placeFor(): [number, number] {
-        if (this.first) {
-            this.first = false;
+        if (this.cluster.settlements.length === 0) {
             return [this.cluster.x, this.cluster.y];
         }
 

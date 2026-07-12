@@ -292,19 +292,24 @@ x   Add basic conflict model with:
     x   Iterated hawk-dove game
     x   Stress stakes
 *   Updated village splits
-    *   Clans with stress worse than the baseline "life" value
+    x   Clans with stress worse than the baseline "life" value
         may be motivated to move
-    *   Usually, more than one clan should move at once -
+    x   Usually, more than one clan should move at once -
         check decision-making and tuning so that moving into
         isolation is unappealing
     *   Detailed items
         x   Base move triggering on stress only so we can
             focus on that as cause of splits
-        *   Group decision procedure - move if enough want to
+        x   Group decision procedure - move if enough want to
             move that could create a decent community at the
             new location
-            *   Might need to be able to simulate choices, but
-                maybe can use simpler decider.
+        *   Figure out why clans sometimes end up really small
+            and/or re-add merging.
+        *   Better display of settlement size on map
+        *   Hover settlement details on map
+        *   Option to move back home
+        *   (P1.5) General social network assessment of different
+            location options
         *   Cost of moving
         *   Founder attribute and other settlement foundation
             attributes

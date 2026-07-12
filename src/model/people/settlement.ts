@@ -10,6 +10,7 @@ import type { Year } from "../records/year";
 import type { Clan } from "./people";
 import { economicResult } from "../econ/economy";
 import { getAlignment } from "../relations/alignment";
+import type { NewSettlementDecisionReport } from "./migration";
 
 export class Settlement {
     readonly uuid = crypto.randomUUID();
@@ -22,22 +23,23 @@ export class Settlement {
     private refoundedAfterRiverShift_ = false;
 
     readonly localTradeGoods = new Set<TradeGood>();
+    newSettlementDecisionReport: NewSettlementDecisionReport | undefined = undefined;
 
     // Infrastructure.
     ditchingLevel = 0;
     ditchQuality = 0.3;
-    maintenanceCalc: DitchMaintenanceCalc|undefined;
+    maintenanceCalc: DitchMaintenanceCalc | undefined;
 
     readonly timeline = new Timeline<SettlementTimePoint>();
 
     constructor(
         readonly world: World,
-        readonly name: string, 
+        readonly name: string,
         readonly x: number,
         readonly y: number,
         readonly cluster: SettlementCluster,
         readonly parent?: Settlement) {
-        
+
         this.foundationYear_ = world.year.clone();
 
         cluster.settlements.push(this);
@@ -68,7 +70,7 @@ export class Settlement {
     }
 
     get population() {
-        return sumFun(this.clans, clan => clan.population); 
+        return sumFun(this.clans, clan => clan.population);
     }
 
     get effectiveResidentPopulation() {
@@ -99,26 +101,6 @@ export class Settlement {
 
     get refoundedAfterRiverShift() {
         return this.refoundedAfterRiverShift_;
-    }
-
-    planMigrations(): void {
-        // Precondition: Clans have individually considered whether they
-        // want to move.
-
-        // At this point, if clans do want to move, it's mainly due to
-        // crowding, so there would never be any need for all clans to
-        // move out at once.
-        let remaining = this.population / 3;
-        for (const clan of shuffled(this.clans)) {
-            if (clan.migrationPlan?.willMigrate) {
-                if (remaining > 0) {
-                    remaining -= clan.population;
-                } else {
-                    clan.migrationPlan.othersLeftFirst = true;
-                    clan.migrationPlan.willMigrate = false;
-                }
-            }
-        }
     }
 
     advancePrePhase() {
@@ -170,7 +152,7 @@ export class Settlement {
 
         const sizeBefore = this.effectiveResidentPopulation;
         for (const clan of this.clans) clan.advancePopulation();
-        
+
         // Tell height.
         this.growTell(sizeBefore);
     }
@@ -205,7 +187,7 @@ export class Settlement {
             //   proportionally around the mean.
             const costFactor = 0.5; // Cost to decrease food security by 1
 
-            const helperClans = this.clans.filter(c => 
+            const helperClans = this.clans.filter(c =>
                 c !== recipientClan && getAlignment(c, recipientClan) > 0.05);
             const reductionFactor = 0.8 ** helperClans.length;
             const amountToReduceTotal = recipientClan.consumption.foodInsecurity.value * (1 - reductionFactor);
@@ -229,8 +211,8 @@ export class Settlement {
         // If population grew, scale down.
         if (this.effectiveResidentPopulation > previousEffectiveResidentPopulation) {
             this.tellHeightInMeters_ = this.tellHeightInMeters_
-              * previousEffectiveResidentPopulation
-              / this.effectiveResidentPopulation;
+                * previousEffectiveResidentPopulation
+                / this.effectiveResidentPopulation;
         }
 
         // 2cm per turn (1m/millennium) if full-time resident.

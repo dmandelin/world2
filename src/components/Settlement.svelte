@@ -8,6 +8,7 @@
     import TabbedView from "./TabbedView.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRelationshipsGraph from "./SettlementRelationshipsGraph.svelte";
+    import SettlementMigrationDetails from "./overview/SettlementMigrationDetails.svelte";
 
     let { settlement } = $props();
 
@@ -17,11 +18,16 @@
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Graph", snippet: relationshipsGraphTab },
         { label: "Happiness", snippet: happinessTab },
+        { label: "Migration", snippet: migrationTab },
         { label: "Demographics", snippet: demographicsTab },
         { label: "Health", snippet: healthTab },
         { label: "Trade", snippet: tradeTab },
     ];
 </script>
+
+{#snippet migrationTab()}
+    <SettlementMigrationDetails settlement={settlement} />
+{/snippet}
 
 {#snippet overviewTab()}
     <SettlementOverview settlement={settlement} />
