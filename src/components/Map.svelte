@@ -206,6 +206,43 @@ ${settlement.cluster.population} \
         context!.fillText(text, x - textWidth / 2, y);
     }
 
+    let hoveredSettlement = $state<any>(null);
+    let tooltipX = $state(0);
+    let tooltipY = $state(0);
+
+    function handleMouseMove(e: MouseEvent) {
+        const mouseX = e.offsetX;
+        const mouseY = e.offsetY;
+
+        let best = null;
+        let bestds = 8 * 8; // within 8 pixels is a reasonable hover radius
+        for (const s of world.allSettlements) {
+            const dx = s.x - mouseX;
+            const dy = s.y - mouseY;
+            const ds = dx * dx + dy * dy;
+
+            if (ds < bestds) {
+                bestds = ds;
+                best = s;
+            }
+        }
+
+        if (best) {
+            const dto = worldDTO.clusters
+                .flatMap(c => c.settlements)
+                .find(s => s.uuid === best.uuid);
+            hoveredSettlement = dto;
+            tooltipX = e.offsetX + 12;
+            tooltipY = e.offsetY + 12;
+        } else {
+            hoveredSettlement = null;
+        }
+    }
+
+    function handleMouseLeave() {
+        hoveredSettlement = null;
+    }
+
     onMount(() => {
         canvas = document.querySelector("canvas");
         context = canvas!.getContext("2d");
@@ -229,14 +266,64 @@ ${settlement.cluster.population} \
     });
 </script>
 
-<div>
+<div class="map-container" style="position: relative; display: inline-block;">
     <canvas
         onclick={click}
+        onmousemove={handleMouseMove}
+        onmouseleave={handleMouseLeave}
         width="564"
         height="492"
         style="width: 564px; height: 492px"
     >
     </canvas>
+
+    {#if hoveredSettlement}
+        {@const pop = hoveredSettlement.population}
+        {@const popDelta = hoveredSettlement.lastSizeChange}
+        {@const perCapitaFood = pop > 0 ? weightedAverage(
+            hoveredSettlement.clans,
+            (c: any) => c.consumption.perCapitaFood,
+            (c: any) => c.population
+        ) : 0}
+        {@const foodSecurity = pop > 0 ? weightedAverage(
+            hoveredSettlement.clans,
+            (c: any) => 1 - c.consumption.foodInsecurity.value,
+            (c: any) => c.population
+        ) : 0}
+        {@const stress = pop > 0 ? weightedAverage(
+            hoveredSettlement.clans,
+            (c: any) => c.stress.value,
+            (c: any) => c.population
+        ) : 0}
+        <div 
+            class="map-tooltip"
+            style="position: absolute; left: {tooltipX}px; top: {tooltipY}px;"
+        >
+            <div class="tooltip-title">{hoveredSettlement.name}</div>
+            <div class="tooltip-row">
+                <span class="label">Population:</span>
+                <span class="value">
+                    {pop} 
+                    {#if popDelta !== 0}
+                        <span class="delta {popDelta > 0 ? 'pos' : 'neg'}">({signed(popDelta)})</span>
+                    {/if}
+                </span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Food/Capita:</span>
+                <span class="value">{perCapitaFood.toFixed(2)}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Food Security:</span>
+                <span class="value">{(foodSecurity * 100).toFixed(0)}%</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Avg Stress:</span>
+                <span class="value {stress > 0 ? 'high-stress' : ''}">{signed(stress, 1)}</span>
+            </div>
+        </div>
+    {/if}
+
     <div style="display: flex; justify-content: space-between">
         <ButtonPanel
             config={{
@@ -260,5 +347,61 @@ ${settlement.cluster.population} \
     canvas {
         display: block;
         border: 4px solid #62531d;
+    }
+
+    .map-tooltip {
+        position: absolute;
+        padding: 8px 12px;
+        background-color: #f9f6eb;
+        opacity: 0.95;
+        z-index: 100;
+        border: 2px solid #62531d;
+        border-radius: 4px;
+        font-size: 0.825rem;
+        color: #2c1e05;
+        font-family: sans-serif;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        pointer-events: none;
+        min-width: 170px;
+    }
+
+    .tooltip-title {
+        font-weight: bold;
+        border-bottom: 1px solid #62531d;
+        margin-bottom: 6px;
+        padding-bottom: 2px;
+        font-size: 0.875rem;
+    }
+
+    .tooltip-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2px;
+    }
+
+    .tooltip-row .label {
+        color: #62531d;
+        margin-right: 8px;
+    }
+
+    .tooltip-row .value {
+        font-weight: 500;
+    }
+
+    .delta {
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    .delta.pos {
+        color: #38a169;
+    }
+
+    .delta.neg {
+        color: #e53e3e;
+    }
+
+    .high-stress {
+        color: #e53e3e;
     }
 </style>
