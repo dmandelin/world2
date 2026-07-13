@@ -1,4 +1,4 @@
-import type { StandaloneSettlementDTO } from "../records/dtos";
+import type { SettlementDTO } from "../records/dtos";
 
 const enabled = true;
 
@@ -33,8 +33,8 @@ export function isExemplarClan(clan: { uuid: string }): boolean {
 
 // Log exemplar settlement snapshots.
 export function logExperiment1(
-    beginningOfTurnSnapshot?: StandaloneSettlementDTO, 
-    endOfTurnSnapshot?: StandaloneSettlementDTO) {
+    beginningOfTurnSnapshot?: SettlementDTO, 
+    endOfTurnSnapshot?: SettlementDTO) {
     if (!enabled) return;
     
     if (endOfTurnSnapshot?.uuid !== exemplarSettlementUUID) {

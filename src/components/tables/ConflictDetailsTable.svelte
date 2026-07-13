@@ -51,18 +51,19 @@ td.split .p2 {
 }
 </style>
 
+{#if conflict}
 <table>
     <thead>
         <tr><td></td><td>D</td><td>H</td></tr>
     </thead>
     <tbody>
-        {#each conflict?.results as row, rowIndex}
+        {#each conflict.results as row, rowIndex}
         <tr>
         <td>{rowIndex === 0 ? 'D' : 'H'}</td>
             {#each row as cell, colIndex}
                 <td class="split">
                     <div style="height: 32px; width: 32px"></div>
-                    {#if c1.uuid === conflict?.uuid1}
+                    {#if c1.uuid === conflict.uuid1}
                         <span class="p1">{cell.c1Payoff}</span>
                         <span class="p2">{cell.c2Payoff}</span>
                     {:else}
@@ -75,3 +76,4 @@ td.split .p2 {
         {/each}
     </tbody>
 </table>
+{/if}

@@ -1,5 +1,6 @@
 import { PopulationScaler, ZeroCenteredScaler, type GraphData } from "../../components/linegraph";
-import type { ClanDTO } from "../../components/dtos";
+import type { ClanDTO } from "./dtos";
+import { getLocalPrestige } from "../relations/respect";
 import { znan } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
@@ -44,7 +45,7 @@ export class ClanTimePoint {
         this.population = clan.population;
         this.appeal = clan.appeal;
         this.happiness = clan.happinessValue;
-        this.averagePrestige = clan.averagePrestige;
+        this.averagePrestige = getLocalPrestige(clan);
     }
 }
 
@@ -55,7 +56,7 @@ export class SettlementTimePoint {
 
     constructor(settlement: Settlement) {
         this.year = settlement.world.year.clone();
-        this.population = settlement.clans.population;
+        this.population = settlement.population;
         this.diseaseLoad = settlement.cluster.diseaseLoad.value;
     }
 }
@@ -94,7 +95,7 @@ export function clanTimelineGraphData(clan: ClanDTO): GraphData {
     const graphData: GraphData = {
         title: 'Clan Timeline',
         showLegend: false,
-        labels: clan.world.timeline.map(timePoint => timePoint.year.toString()),
+        labels: clan.world.timeline.map((timePoint: TimePoint) => timePoint.year.toString()),
         yAxisScaler: new PopulationScaler(),
         datasets: [{
             label: 'Population',

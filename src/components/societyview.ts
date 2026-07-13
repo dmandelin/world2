@@ -8,9 +8,9 @@ export class SocietyView {
 
     constructor(settlement?: Settlement) {
         if (settlement) {
-            this.description = settlement.technai.description;
-            this.long = settlement.technai.long;
-            this.agricultureDescription = settlement.agricultureDescription;
+            this.description = [];
+            this.long = [];
+            this.agricultureDescription = '';
         }
     }
 }
