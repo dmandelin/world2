@@ -102,33 +102,80 @@
                 tooltipSnippet: drModifierTooltip,
                 deltaValue: c => c.lastPopulationChange.drModifier,
                 deltaFormat: pct,
+            },
+            {
+                label: 'Support Ratio',
+                class: 'actual',
+                cellClass: 'rap',
+                renderValueSnippet: supportRatioValueRender,
+                deltaValue: c => safeDiv(c.population, c.workers),
+                deltaFormat: v => v.toFixed(1),
             }
         ]);
 
-        // Group 2: Stress / QoL
+        // Group 2: Welfare & Residence (Happiness, Social Welfare, Material Welfare, QoL, Stress, Residence)
         groups.push([
+            {
+                label: 'Happiness',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.happiness.appeal,
+                format: signed,
+                tooltipSnippet: happinessTooltip,
+                deltaValue: c => c.happiness.appeal,
+                deltaFormat: signed,
+            },
+            {
+                label: 'Social Welfare',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.happiness.socialAppeal,
+                format: signed,
+                tooltipSnippet: socialWelfareTooltip,
+                deltaValue: c => c.happiness.socialAppeal,
+                deltaFormat: signed,
+            },
+            {
+                label: 'Material Welfare',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.happiness.subsistenceAppeal,
+                format: signed,
+                tooltipSnippet: materialWelfareTooltip,
+                deltaValue: c => c.happiness.subsistenceAppeal,
+                deltaFormat: signed,
+            },
+            {
+                label: 'QoL',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.qol.value,
+                format: signed,
+                tooltipSnippet: qolTooltip,
+                deltaValue: c => c.qol.value,
+                deltaFormat: signed,
+            },
             {
                 label: 'Stress',
                 class: 'actual',
-                cellClass: 'ra',
+                cellClass: 'rap',
                 renderValueSnippet: stressValueRender,
                 tooltipSnippet: stressTooltip,
                 deltaValue: c => c.stress.value,
                 deltaFormat: signed,
             },
             {
-                label: 'QoL',
-                class: 'actual',
+                label: 'Residence',
                 cellClass: 'ra',
-                value: c => c.qol.value,
-                format: signed,
-                tooltipSnippet: qolTooltip,
-                deltaValue: c => c.qol.value,
-                deltaFormat: signed,
+                value: c => c.residenceLevel.fractionInSettlement,
+                format: pct,
+                tooltipSnippet: residenceTooltip,
+                deltaValue: c => c.residenceLevel.fractionInSettlement,
+                deltaFormat: pct,
             }
         ]);
 
-        // Group 3: Food / Welfare
+        // Group 3: Food
         groups.push([
             {
                 label: 'Food',
@@ -169,44 +216,10 @@
                 tooltipSnippet: foodSecurityTooltip,
                 deltaValue: c => 1 - c.consumption.foodInsecurity.value,
                 deltaFormat: pct,
-            },
-            {
-                label: 'Material Welfare',
-                class: 'actual',
-                cellClass: 'rap',
-                value: c => c.happiness.subsistenceAppeal,
-                format: signed,
-                tooltipSnippet: materialWelfareTooltip,
-                deltaValue: c => c.happiness.subsistenceAppeal,
-                deltaFormat: signed,
             }
         ]);
 
-        // Group 4: Connections / Social
-        groups.push([
-            {
-                label: 'Connections',
-                class: 'actual',
-                cellClass: 'rap',
-                value: c => [...connectionsOf(c)].length,
-                format: v => v.toString(),
-                tooltipSnippet: connectionsTooltip,
-                deltaValue: c => [...connectionsOf(c)].length,
-                deltaFormat: signed,
-            },
-            {
-                label: 'Social Welfare',
-                class: 'actual',
-                cellClass: 'rap',
-                value: c => c.happiness.socialAppeal,
-                format: signed,
-                tooltipSnippet: socialWelfareTooltip,
-                deltaValue: c => c.happiness.socialAppeal,
-                deltaFormat: signed,
-            }
-        ]);
-
-        // Group 5: Activities & Processes (Effort Allocation)
+        // Group 4: Activities & Processes (Effort Allocation)
         groups.push([
             {
                 label: 'Activities',
@@ -230,32 +243,7 @@
             }
         ]);
 
-        // Group 6: Residence
-        groups.push([
-            {
-                label: 'Residence',
-                cellClass: 'ra',
-                value: c => c.residenceLevel.fractionInSettlement,
-                format: pct,
-                tooltipSnippet: residenceTooltip,
-                deltaValue: c => c.residenceLevel.fractionInSettlement,
-                deltaFormat: pct,
-            }
-        ]);
-
-        // Group 7: Support Ratio
-        groups.push([
-            {
-                label: 'Support Ratio',
-                class: 'actual',
-                cellClass: 'rap',
-                renderValueSnippet: supportRatioValueRender,
-                deltaValue: c => safeDiv(c.population, c.workers),
-                deltaFormat: v => v.toFixed(1),
-            }
-        ]);
-
-        // Group 8: Processes (dynamic)
+        // Group 5: Processes (dynamic)
         for (const process of relevantProcesses) {
             groups.push([
                 {
@@ -327,7 +315,7 @@
             ]);
         }
 
-        // Group 9: Skills (dynamic)
+        // Group 6: Skills (dynamic)
         if (csnaps.length > 0) {
             const skillGroup: RowDef[] = [];
             for (const skill of csnaps[0].e.skills.keys()) {
@@ -420,6 +408,23 @@
                 label: '',
                 valueFn:  item => item.explanation,
              }]);
+    }
+
+    function clanHappinessTooltipTable(clan: ClanDTO) {
+        return new FilteredIterableTable(
+            clan.happiness.items.values(),
+             item => item.label,
+             _ => true,
+             [{
+                data: 'State',
+                label: 'State',
+                valueFn: item => item.stateDisplay,
+            }, {
+                data: 'Appeal',
+                label: 'Appeal',
+                valueFn: item => item.appeal,
+                formatFn: (v: number) => signed(v, 0),
+            }]);
     }
 
     function clanSustenanceHappinessTooltipTable(clan: ClanDTO) {
@@ -590,6 +595,10 @@
     {#each clan.notifications as n}
         <SimpleTooltip tip={n.message}>{n.tag}</SimpleTooltip>
     {/each}
+{/snippet}
+
+{#snippet happinessTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanHappinessTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
 {#snippet peopleTooltip(cs: ClanLastTurnSnapshots)}
