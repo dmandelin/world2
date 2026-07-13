@@ -67,6 +67,11 @@ x   Visualize marriage appeal
     x   Standard of living
     *   Gifts
 x   Limited information effects
+*   Clarify limited information effects
+    *   Visualize information level in a more obvious way
+    *   Give a little more texture: create reasons for clans
+        not to just relate equally to everyone
+    *   Updating help system might help on this
 *   Have clans communicate and sync their marriage appeal
     judgments
     *   Visualize results

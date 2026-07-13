@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import { FilteredIterableTable, IterableTable, SingleMapTable } from "../tables/tables2";
     import { pct, signed, signedFormat, spct, tsigned, unsigned, unsignedFormat, stressColor } from "../../model/lib/format";
     import { safeDiv, sortedByKey } from "../../model/lib/basics";
@@ -10,7 +11,7 @@
     import SkillDelta from "../SkillDelta.svelte";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
-    import { getClanLastTurnSnapshots, SettlementDTO, type ClanDTO, type WorldDTO } from "../../model/records/dtos";
+    import { getClanLastTurnSnapshots, SettlementDTO, type ClanDTO, type WorldDTO, type ClanLastTurnSnapshots } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     import { get } from "svelte/store";
@@ -33,6 +34,321 @@
         sortedByKey(
             new Set(csnaps.flatMap(cs => cs.e.production.rs.map(opr => opr.operation.process))),
             process => process.sortKey));
+
+    interface RowDef {
+        label: string;
+        class?: string;
+        isHeader?: boolean;
+        colspan?: number;
+        cellClass?: string;
+
+        // Value definition
+        value?: (c: ClanDTO) => any;
+        format?: (v: any) => string;
+        renderValueSnippet?: Snippet<[ClanLastTurnSnapshots]>;
+        renderSnippet?: Snippet<[ClanLastTurnSnapshots]>;
+
+        // Tooltip definition
+        useTooltip?: boolean;
+        tooltipSnippet?: Snippet<[ClanLastTurnSnapshots, any]>;
+        context?: any;
+
+        // Delta definition
+        deltaValue?: (c: ClanDTO) => number;
+        deltaFormat?: (v: number) => string;
+        customDeltaSnippet?: Snippet<[ClanLastTurnSnapshots, any]>;
+        customDeltaContext?: any;
+    }
+
+    let rowGroups = $derived.by<RowDef[][]>(() => {
+        const groups: RowDef[][] = [];
+
+        // Group 1: Demographics / Population
+        groups.push([
+            {
+                label: 'People',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.population,
+                tooltipSnippet: peopleTooltip,
+                customDeltaSnippet: peopleDeltaCell,
+            },
+            {
+                label: '&nbsp;Next support ratio',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => safeDiv(c.population, c.workers),
+                format: v => v.toFixed(1),
+                tooltipSnippet: nextSupportRatioTooltip,
+                deltaValue: c => safeDiv(c.population, c.workers),
+                deltaFormat: v => v.toFixed(1),
+            },
+            {
+                label: 'Birth rate modifier',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.lastPopulationChange.brModifier,
+                format: spct,
+                tooltipSnippet: brModifierTooltip,
+                deltaValue: c => c.lastPopulationChange.brModifier,
+                deltaFormat: pct,
+            },
+            {
+                label: 'Death rate modifier',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.lastPopulationChange.drModifier,
+                format: spct,
+                tooltipSnippet: drModifierTooltip,
+                deltaValue: c => c.lastPopulationChange.drModifier,
+                deltaFormat: pct,
+            }
+        ]);
+
+        // Group 2: Stress / QoL
+        groups.push([
+            {
+                label: 'Stress',
+                class: 'actual',
+                cellClass: 'ra',
+                renderValueSnippet: stressValueRender,
+                tooltipSnippet: stressTooltip,
+                deltaValue: c => c.stress.value,
+                deltaFormat: signed,
+            },
+            {
+                label: 'QoL',
+                class: 'actual',
+                cellClass: 'ra',
+                value: c => c.qol.value,
+                format: signed,
+                tooltipSnippet: qolTooltip,
+                deltaValue: c => c.qol.value,
+                deltaFormat: signed,
+            }
+        ]);
+
+        // Group 3: Food / Welfare
+        groups.push([
+            {
+                label: 'Food',
+                class: 'actual',
+                cellClass: 'ra',
+                value: c => c.consumption.perCapitaFood,
+                format: pct,
+                tooltipSnippet: foodTooltip,
+                deltaValue: c => c.consumption.perCapitaFood,
+                deltaFormat: pct,
+            },
+            {
+                label: '&nbsp;Target',
+                class: 'actual',
+                cellClass: 'ra',
+                value: c => c.targetPerCapitaFood,
+                format: pct,
+                tooltipSnippet: targetFoodTooltip,
+                deltaValue: c => c.targetPerCapitaFood,
+                deltaFormat: pct,
+            },
+            {
+                label: 'Food Storage',
+                class: 'actual',
+                cellClass: 'ra',
+                value: c => c.consumption.perCapitaFoodStock,
+                format: pct,
+                tooltipSnippet: foodStorageTooltip,
+                deltaValue: c => c.consumption.perCapitaFoodStock,
+                deltaFormat: pct,
+            },
+            {
+                label: 'Food Security',
+                class: 'actual',
+                cellClass: 'ra',
+                value: c => 1 - c.consumption.foodInsecurity.value,
+                format: pct,
+                tooltipSnippet: foodSecurityTooltip,
+                deltaValue: c => 1 - c.consumption.foodInsecurity.value,
+                deltaFormat: pct,
+            },
+            {
+                label: 'Material Welfare',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.happiness.subsistenceAppeal,
+                format: signed,
+                tooltipSnippet: materialWelfareTooltip,
+                deltaValue: c => c.happiness.subsistenceAppeal,
+                deltaFormat: signed,
+            }
+        ]);
+
+        // Group 4: Connections / Social
+        groups.push([
+            {
+                label: 'Connections',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => [...connectionsOf(c)].length,
+                format: v => v.toString(),
+                tooltipSnippet: connectionsTooltip,
+                deltaValue: c => [...connectionsOf(c)].length,
+                deltaFormat: signed,
+            },
+            {
+                label: 'Social Welfare',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.happiness.socialAppeal,
+                format: signed,
+                tooltipSnippet: socialWelfareTooltip,
+                deltaValue: c => c.happiness.socialAppeal,
+                deltaFormat: signed,
+            }
+        ]);
+
+        // Group 5: Activities & Processes (Effort Allocation)
+        groups.push([
+            {
+                label: 'Activities',
+                colspan: 2,
+                renderSnippet: activitiesRender,
+            },
+            {
+                label: '(Previous)',
+                colspan: 2,
+                renderSnippet: activitiesPrevRender,
+            },
+            {
+                label: 'Processes',
+                colspan: 2,
+                renderSnippet: processesRender,
+            },
+            {
+                label: '(Previous)',
+                colspan: 2,
+                renderSnippet: processesPrevRender,
+            }
+        ]);
+
+        // Group 6: Residence
+        groups.push([
+            {
+                label: 'Residence',
+                cellClass: 'ra',
+                value: c => c.residenceLevel.fractionInSettlement,
+                format: pct,
+                tooltipSnippet: residenceTooltip,
+                deltaValue: c => c.residenceLevel.fractionInSettlement,
+                deltaFormat: pct,
+            }
+        ]);
+
+        // Group 7: Support Ratio
+        groups.push([
+            {
+                label: 'Support Ratio',
+                class: 'actual',
+                cellClass: 'rap',
+                renderValueSnippet: supportRatioValueRender,
+                deltaValue: c => safeDiv(c.population, c.workers),
+                deltaFormat: v => v.toFixed(1),
+            }
+        ]);
+
+        // Group 8: Processes (dynamic)
+        for (const process of relevantProcesses) {
+            groups.push([
+                {
+                    label: process.name,
+                    class: 'actual',
+                    isHeader: true,
+                },
+                {
+                    label: '&nbsp;Production',
+                    class: 'actual',
+                    cellClass: 'rap',
+                    useTooltip: true,
+                    value: c => c.production.getForProcess(process, "amount") ?? 0,
+                    format: v => v.toFixed(0),
+                    deltaValue: c => c.production.getForProcess(process, "amount") ?? 0,
+                    deltaFormat: v => v.toFixed(0),
+                },
+                {
+                    label: '&nbsp;Land',
+                    class: 'actual',
+                    cellClass: 'rap',
+                    useTooltip: true,
+                    value: c => c.production.getForProcess(process, "land") ?? 0,
+                    format: v => v.toFixed(0),
+                    deltaValue: c => c.production.getForProcess(process, "land") ?? 0,
+                    deltaFormat: v => v.toFixed(0),
+                },
+                {
+                    label: '&nbsp;Labor',
+                    class: 'actual',
+                    cellClass: 'rap',
+                    useTooltip: true,
+                    value: c => c.production.getForProcess(process, "labor") ?? 0,
+                    format: v => v.toFixed(0),
+                    deltaValue: c => c.production.getForProcess(process, "labor") ?? 0,
+                    deltaFormat: v => v.toFixed(0),
+                },
+                {
+                    label: '&nbsp;Help',
+                    class: 'actual',
+                    cellClass: 'rap',
+                    useTooltip: true,
+                    value: c => c.production.getForProcess(process, "help") ?? 0,
+                    format: v => v.toFixed(0),
+                    deltaValue: c => c.production.getForProcess(process, "help") ?? 0,
+                    deltaFormat: v => v.toFixed(0),
+                },
+                {
+                    label: '&nbsp;Productivity',
+                    class: 'actual',
+                    cellClass: 'rap',
+                    value: c => c.production.getForProcess(process, "laborProductivityFactor") ?? 0,
+                    format: spct,
+                    tooltipSnippet: processProductivityTooltip,
+                    context: process,
+                    deltaValue: c => c.production.getForProcess(process, "laborProductivityFactor") ?? 0,
+                    deltaFormat: v => v.toFixed(2),
+                },
+                {
+                    label: '&nbsp;Net Labor Prod',
+                    class: 'actual',
+                    cellClass: 'rap',
+                    useTooltip: true,
+                    value: c => netLaborProductivity(c, process),
+                    format: spct,
+                    deltaValue: c => netLaborProductivity(c, process),
+                    deltaFormat: v => v.toFixed(2),
+                }
+            ]);
+        }
+
+        // Group 9: Skills (dynamic)
+        if (csnaps.length > 0) {
+            const skillGroup: RowDef[] = [];
+            for (const skill of csnaps[0].e.skills.keys()) {
+                skillGroup.push({
+                    label: skill.name,
+                    class: 'actual',
+                    cellClass: 'rap',
+                    useTooltip: true,
+                    value: c => c.skills.v(skill),
+                    format: unsigned,
+                    customDeltaSnippet: skillDeltaCell,
+                    customDeltaContext: skill,
+                });
+            }
+            if (skillGroup.length > 0) {
+                groups.push(skillGroup);
+            }
+        }
+
+        return groups;
+    });
 
     function clanSustenanceTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
@@ -248,7 +564,7 @@
     }
 </style>
 
-{#snippet deltaCell(cs: {p?: ClanDTO, e: ClanDTO}, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString())}
+{#snippet deltaCell(cs: ClanLastTurnSnapshots, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString())}
     {@const delta = cs.p ? valueFunc(cs.e) - valueFunc(cs.p) : 0}
     <td class={delta >= 0 ? 'delta-positive' : delta <= 0 ? 'delta-negative' : delta >=0 ? 'delta-negative' : ''}>
         <Tooltip>
@@ -276,6 +592,168 @@
     {/each}
 {/snippet}
 
+{#snippet peopleTooltip(cs: ClanLastTurnSnapshots)}
+    <PopulationPyramid clan={cs.e} />
+    <hr>
+    <div>Workers: {unsigned(cs.e.workers)}</div>
+    <div>Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}</div>
+{/snippet}
+
+{#snippet peopleDeltaTooltip(cs: ClanLastTurnSnapshots)}
+    <PopulationChange clan={cs.e} />
+{/snippet}
+
+{#snippet peopleDeltaCell(cs: ClanLastTurnSnapshots)}
+    <td class="delta">
+        <Tooltip>
+            {cs.e.lastPopulationChange ? tsigned(cs.e.lastPopulationChange.change) : ''}
+            <div slot="tooltip" style="text-align: left; color: initial;">
+                {@render peopleDeltaTooltip(cs)}
+            </div>
+        </Tooltip>
+    </td>
+{/snippet}
+
+{#snippet nextSupportRatioTooltip(cs: ClanLastTurnSnapshots)}
+    <div>Workers: {cs.e.workers}</div>
+    <div>Carers and Dependents: {cs.e.population - cs.e.workers}</div>
+    <div>Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}</div>
+{/snippet}
+
+{#snippet brModifierTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={new IterableTable(
+        cs.e.lastPopulationChange.brModifiers,
+        item => item.source,
+        [{
+             data: 'State',
+             label: '',
+             valueFn: item => item.inputValue,
+             formatFn: (v: number|string) => typeof v === 'number' ? v.toFixed(2) : v,
+        },
+        {
+            data: 'Value',
+            label: '',
+            valueFn: item => item.value,
+            formatFn: (v: number) => spct(v, 0),
+        }])} />
+{/snippet}
+
+{#snippet drModifierTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={new IterableTable(
+        cs.e.lastPopulationChange.drModifiers,
+        item => item.source,
+        [{
+             data: 'State',
+             label: '',
+             valueFn: item => item.inputValue,
+             formatFn: (v: number|string) => typeof v === 'number' ? v.toFixed(2) : v,
+        }, {
+            data: 'Value',
+            label: '',
+            valueFn: item => item.value,
+            formatFn: (v: number) => spct(v, 0),
+        }])} />
+{/snippet}
+
+{#snippet stressValueRender(cs: ClanLastTurnSnapshots)}
+    <span style="color: {stressColor(cs.e.stress.value)}">{signed(cs.e.stress.value)}</span>
+{/snippet}
+
+{#snippet stressTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanStressTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet qolTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanQolTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet foodTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet targetFoodTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet foodStorageTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanFoodStockTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet foodSecurityTooltip(cs: ClanLastTurnSnapshots)}
+    <h3>Production Risks</h3>
+    <p>Base from production: {pct(cs.e.consumption.foodInsecurity.base)}</p>
+    <p>Base buffering: {pct(cs.e.consumption.foodInsecurity.baseBuffering)}
+        from {(cs.e.consumption.perCapitaFoodStock*365).toFixed()} days stored
+    </p>
+    <p>Storage failure risk: {pct(cs.e.consumption.foodInsecurity.storageRisk)}</p>
+    <p>Risk-adjusted buffering: {pct(cs.e.consumption.foodInsecurity.buffering)}</p>
+    <p>Total risk: {pct(cs.e.consumption.foodInsecurity.value)}</p>
+{/snippet}
+
+{#snippet materialWelfareTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanSustenanceHappinessTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet connectionsTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanConnectionsTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet socialWelfareTooltip(cs: ClanLastTurnSnapshots)}
+    <h4>Sources</h4>
+    <TableView2 table={clanSocialHappinessTooltipTable(cs.e)}></TableView2>
+    <h4>Society Detail</h4>
+    <TableView2 table={clanSocietyHappinessDetailTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet activitiesRender(cs: ClanLastTurnSnapshots)}
+    <ClanEffortMiniBar clan={cs.e} m={cs.e.effortAllocation.m} />
+{/snippet}
+
+{#snippet activitiesPrevRender(cs: ClanLastTurnSnapshots)}
+    {#if cs.p}<ClanEffortMiniBar clan={cs.p} m={cs.p.effortAllocation.m} />{/if}
+{/snippet}
+
+{#snippet processesRender(cs: ClanLastTurnSnapshots)}
+    <ClanEffortMiniBar clan={cs.e} m={cs.e.effortAllocation.pm} />
+{/snippet}
+
+{#snippet processesPrevRender(cs: ClanLastTurnSnapshots)}
+    {#if cs.p}<ClanEffortMiniBar clan={cs.p} m={cs.p.effortAllocation.pm} />{/if}
+{/snippet}
+
+{#snippet residenceTooltip(cs: ClanLastTurnSnapshots)}
+    <ClanResidenceTooltip clan={cs.e} />
+{/snippet}
+
+{#snippet supportRatioPrevTooltip(cs: ClanLastTurnSnapshots)}
+    {#if cs.p}
+        <div>Workers: {cs.p.workers}</div>
+        <div>Carers and Dependents: {cs.p.population - cs.p.workers}</div>
+        <div>Population Per Worker: {safeDiv(cs.p.population, cs.p.workers).toFixed(1)}</div>
+    {/if}
+{/snippet}
+
+{#snippet supportRatioValueRender(cs: ClanLastTurnSnapshots)}
+    {#if cs.p}
+        <Tooltip>
+            {safeDiv(cs.p.population, cs.p.workers).toFixed(1)}
+            <div slot="tooltip" style="text-align: left; color: initial;">
+                {@render supportRatioPrevTooltip(cs)}
+            </div>
+        </Tooltip>
+    {:else}
+        -
+    {/if}
+{/snippet}
+
+{#snippet processProductivityTooltip(cs: ClanLastTurnSnapshots, process: Process)}
+    <TableView2 table={productivityModifierTooltipTable(cs.e, process)} />
+{/snippet}
+
+{#snippet skillDeltaCell(cs: ClanLastTurnSnapshots, skill: any)}
+    <td><SkillDelta {skill} clan={cs.e}></SkillDelta></td>
+{/snippet}
+
 <div id="top" class={predictMode ? 'predict' : ''}>
     <h3 style="margin-block-end: 0.5em;">{title}</h3>
 
@@ -296,396 +774,55 @@
             </tr>
         </thead>
         <tbody>
-            <tr class="actual">
-                <td>People</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {cs.e.population}
-                            <div slot="tooltip">
-                                <PopulationPyramid clan={cs.e} />
-                                <hr>
-                                <div>Workers: {unsigned(cs.e.workers)}</div>
-                                <div>Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}</div>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    <td class="delta">
-                        <Tooltip>
-                            {cs.e.lastPopulationChange ? tsigned(cs.e.lastPopulationChange.change) : ''}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <PopulationChange clan={cs.e} />
-                            </div>
-                        </Tooltip>
-                    </td>
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>&nbsp;Next support ratio</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}
-                            <div slot="tooltip">
-                                <div>Workers: {cs.e.workers}</div>
-                                <div>Carers and Dependents: {cs.e.population - cs.e.workers}</div>
-                                <div>Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(1)}</div>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => safeDiv(c.population, c.workers), v => v.toFixed(1))}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Birth rate modifier</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {spct(cs.e.lastPopulationChange.brModifier)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={new IterableTable(
-                                    cs.e.lastPopulationChange.brModifiers,
-                                    item => item.source,
-                                    [{
-                                         data: 'State',
-                                         label: '',
-                                         valueFn: item => item.inputValue,
-                                         formatFn: (v: number|string) => typeof v === 'number' ? v.toFixed(2) : v,
-                                    },
-                                    {
-                                        data: 'Value',
-                                        label: '',
-                                        valueFn: item => item.value,
-                                        formatFn: (v: number) => spct(v, 0),
-                                    }])} />
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.lastPopulationChange.brModifier, pct)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Death rate modifier</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {spct(cs.e.lastPopulationChange.drModifier)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={new IterableTable(
-                                    cs.e.lastPopulationChange.drModifiers,
-                                    item => item.source,
-                                    [{
-                                         data: 'State',
-                                         label: '',
-                                         valueFn: item => item.inputValue,
-                                         formatFn: (v: number|string) => typeof v === 'number' ? v.toFixed(2) : v,
-                                    }, {
-                                        data: 'Value',
-                                        label: '',
-                                        valueFn: item => item.value,
-                                        formatFn: (v: number) => spct(v, 0),
-                                    }])} />
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.lastPopulationChange.drModifier, pct)}
-                {/each}
-            </tr>            
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr class="actual">
-                <td>Stress</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            <span style="color: {stressColor(cs.e.stress.value)}">{signed(cs.e.stress.value)}</span>
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanStressTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.stress.value, signed)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>QoL</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {signed(cs.e.qol.value)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanQolTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.qol.value, signed)}
-                {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr class="actual">
-                <td>Food</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {pct(cs.e.consumption.perCapitaFood)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.consumption.perCapitaFood, pct)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>&nbsp;Target</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {pct(cs.e.targetPerCapitaFood)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.targetPerCapitaFood, pct)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Food Storage</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {pct(cs.e.consumption.perCapitaFoodStock)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanFoodStockTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.consumption.perCapitaFoodStock, pct)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Food Security</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {pct(1 - cs.e.consumption.foodInsecurity.value)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <h3>Production Risks</h3>
-                                <p>Base from production: {pct(cs.e.consumption.foodInsecurity.base)}</p>
-                                <p>Base buffering: {pct(cs.e.consumption.foodInsecurity.baseBuffering)}
-                                    from {(cs.e.consumption.perCapitaFoodStock*365).toFixed()} days stored
-                                </p>
-                                <p>Storage failure risk: {pct(cs.e.consumption.foodInsecurity.storageRisk)}</p>
-                                <p>Risk-adjusted buffering: {pct(cs.e.consumption.foodInsecurity.buffering)}</p>
-                                <p>Total risk: {pct(cs.e.consumption.foodInsecurity.value)}</p>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => 1 - c.consumption.foodInsecurity.value, pct)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Material Welfare</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {signed(cs.e.happiness.subsistenceAppeal)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanSustenanceHappinessTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.happiness.subsistenceAppeal, signed)}
-                {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr class="actual">
-                <td>Connections</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {[...connectionsOf(cs.e)].length}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <TableView2 table={clanConnectionsTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => [...connectionsOf(c)].length, signed)}
-                {/each}
-            </tr>
-            <tr class="actual">
-                <td>Social Welfare</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        <Tooltip>
-                            {signed(cs.e.happiness.socialAppeal)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <h4>Sources</h4>
-                                <TableView2 table={clanSocialHappinessTooltipTable(cs.e)}></TableView2>
-                                <h4>Society Detail</h4>
-                                <TableView2 table={clanSocietyHappinessDetailTooltipTable(cs.e)}></TableView2>
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.happiness.socialAppeal, signed)}
-                {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr>
-                <td>Activities</td>
-                {#each csnaps as cs}
-                    <td colspan="2"><ClanEffortMiniBar clan={cs.e} m={cs.e.effortAllocation.m} /></td>
-                {/each}
-            </tr>
-            <tr>
-                <td>(Previous)</td>
-                {#each csnaps as cs}
-                    <td colspan="2">{#if cs.p}<ClanEffortMiniBar clan={cs.p} m={cs.p.effortAllocation.m} />{/if}</td>
-                {/each}
-            </tr>
-            <tr>
-                <td>Processes</td>
-                {#each csnaps as cs}
-                    <td colspan="2"><ClanEffortMiniBar clan={cs.e} m={cs.e.effortAllocation.pm} /></td>
-                {/each}
-            </tr>
-            <tr>
-                <td>(Previous)</td>
-                {#each csnaps as cs}
-                    <td colspan="2">{#if cs.p}<ClanEffortMiniBar clan={cs.p} m={cs.p.effortAllocation.pm} />{/if}</td>
-                {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr>
-                <td>Residence</td>
-                {#each csnaps as cs}
-                    <td class="ra">
-                        <Tooltip>
-                            {pct(cs.e.residenceLevel.fractionInSettlement)}
-                            <div slot="tooltip" style="text-align: left; color: initial;">
-                                <ClanResidenceTooltip clan={cs.e} />
-                            </div>
-                        </Tooltip>
-                    </td>
-                    {@render deltaCell(cs, c => c.residenceLevel.fractionInSettlement, pct)}
-                {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            <tr class="actual">
-                <td>Support Ratio</td>
-                {#each csnaps as cs}
-                    <td class="rap">
-                        {#if cs.p}
-                            <Tooltip>
-                                {safeDiv(cs.p.population, cs.p.workers).toFixed(1)}
-                                <div slot="tooltip">
-                                    <div>Workers: {cs.p.workers}</div>
-                                    <div>Carers and Dependents: {cs.p.population - cs.p.workers}</div>
-                                    <div>Population Per Worker: {safeDiv(cs.p.population, cs.p.workers).toFixed(1)}</div>
-                                </div>
-                            </Tooltip>
+            {#each rowGroups as group, groupIdx}
+                {#if groupIdx > 0}
+                    <tr><td style="height: 0.5em"></td></tr>
+                {/if}
+                {#each group as row}
+                    <tr class={row.class ?? ''}>
+                        {#if row.isHeader}
+                            <td colspan={1 + csnaps.length * 2}>{row.label}</td>
                         {:else}
-                        -
+                            <td>{@html row.label}</td>
+                            {#each csnaps as cs}
+                                {#if row.colspan === 2}
+                                    <td colspan="2">
+                                        {#if row.renderSnippet}
+                                            {@render row.renderSnippet(cs)}
+                                        {/if}
+                                    </td>
+                                {:else}
+                                    <td class={row.cellClass}>
+                                        {#if row.renderValueSnippet}
+                                            {@render row.renderValueSnippet(cs)}
+                                        {:else if row.value}
+                                            {@const val = row.value(cs.e)}
+                                            {#if row.tooltipSnippet || row.useTooltip}
+                                                <Tooltip>
+                                                    {row.format ? row.format(val) : val}
+                                                    <div slot="tooltip" style="text-align: left; color: initial;">
+                                                        {#if row.tooltipSnippet}
+                                                            {@render row.tooltipSnippet(cs, row.context)}
+                                                        {/if}
+                                                    </div>
+                                                </Tooltip>
+                                            {:else}
+                                                {row.format ? row.format(val) : val}
+                                            {/if}
+                                        {/if}
+                                    </td>
+                                    {#if row.customDeltaSnippet}
+                                        {@render row.customDeltaSnippet(cs, row.customDeltaContext)}
+                                    {:else if row.deltaValue}
+                                        {@render deltaCell(cs, row.deltaValue, row.deltaFormat)}
+                                    {:else}
+                                        <td></td>
+                                    {/if}
+                                {/if}
+                            {/each}
                         {/if}
-                    </td>
-                    {@render deltaCell(cs, c => safeDiv(c.population, c.workers), v => v.toFixed(1))}
+                    </tr>
                 {/each}
-            </tr>
-            <tr><td style="height: 0.5em"></td></tr>
-            {#each relevantProcesses as process}
-                <tr class="actual">
-                    <td>{process.name}</td>
-                </tr>
-                <tr class="actual">
-                    <td>&nbsp;Production</td>
-                    {#each csnaps as cs}
-                        <td class="rap">
-                            <Tooltip>
-                                {cs.e.production.getForProcess(process, "amount")?.toFixed(0) ?? 0}
-                            </Tooltip>
-                        </td>
-                        {@render deltaCell(cs, c => c.production.getForProcess(process, "amount") ?? 0, v => v.toFixed(0))}
-                    {/each}
-                </tr>
-                <tr class="actual">
-                    <td>&nbsp;Land</td>
-                    {#each csnaps as cs}
-                        <td class="rap">
-                            <Tooltip>
-                                {cs.e.production.getForProcess(process, "land")?.toFixed(0) ?? 0}
-                            </Tooltip>
-                        </td>
-                        {@render deltaCell(cs, c => c.production.getForProcess(process, "land") ?? 0, v => v.toFixed(0))}
-                    {/each}
-                </tr>
-                <tr class="actual">
-                    <td>&nbsp;Labor</td>
-                    {#each csnaps as cs}
-                        <td class="rap">
-                            <Tooltip>
-                                {cs.e.production.getForProcess(process, "labor")?.toFixed(0) ?? 0}
-                                <div slot="tooltip">
-                                </div>
-                            </Tooltip>
-                        </td>
-                        {@render deltaCell(cs, c => c.production.getForProcess(process, "labor") ?? 0, v => v.toFixed(0))}
-                    {/each}
-                </tr>
-                <tr class="actual">
-                    <td>&nbsp;Help</td>
-                    {#each csnaps as cs}
-                        <td class="rap">
-                            <Tooltip>
-                                {cs.e.production.getForProcess(process, "help")?.toFixed(0) ?? 0}
-                                <div slot="tooltip">
-                                </div>
-                            </Tooltip>
-                        </td>
-                        {@render deltaCell(cs, c => c.production.getForProcess(process, "help") ?? 0, v => v.toFixed(0))}
-                    {/each}
-                </tr>
-                <tr class="actual">
-                    <td>&nbsp;Productivity</td>
-                    {#each csnaps as cs}
-                        <td class="rap">
-                            <Tooltip>
-                                {spct(cs.e.production.getForProcess(process, "laborProductivityFactor") ?? 0)}
-                                <div slot="tooltip">
-                                    <TableView2 table={productivityModifierTooltipTable(cs.e, process)} />
-                                </div>
-                            </Tooltip>
-                        </td>
-                        {@render deltaCell(cs, c => c.production.getForProcess(process, "laborProductivityFactor") ?? 0, v => v.toFixed(2))}
-                    {/each}
-                </tr>
-                <tr class="actual">
-                    <td>&nbsp;Net Labor Prod</td>
-                    {#each csnaps as cs}
-                        <td class="rap">
-                            <Tooltip>
-                                {spct(netLaborProductivity(cs.e, process))}
-                                <div slot="tooltip">
-                                </div>
-                            </Tooltip>
-                        </td>
-                        {@render deltaCell(cs, c => netLaborProductivity(c, process), v => v.toFixed(2))}
-                    {/each}
-                </tr>
-            {/each}
-            <tr><td style="height: 0.5em"></td></tr>
-            {#each csnaps[0].e.skills.keys() as skill}
-                <tr class="actual">
-                    <td>{skill.name}</td>
-                    {#each csnaps as cs}
-                        <td class="rap">
-                            <Tooltip>
-                                {unsigned(cs.e.skills.v(skill))}
-                                <div slot="tooltip"></div>
-                            </Tooltip>
-                        </td>
-                        <td><SkillDelta skill={skill} clan={cs.e}></SkillDelta></td>
-                    {/each}
-                </tr>
             {/each}
         </tbody>
     </table>
