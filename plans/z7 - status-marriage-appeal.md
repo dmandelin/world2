@@ -60,6 +60,22 @@ we have:
 Item list:
 
 *   Fix the issue of lots of little shrinking villages
+    *   Appears to be related to local ecology skill getting
+        reset and then not growing
+        *   We might be resetting too hard
+        *   Could consider making this not use imitation
+            learning if it's field-specific
+        *   Could also add land first, and then tie this value
+            to the land
+    *   Create a cluster view that shows some summary info
+        per settlement in the cluster, including productivity
+*   Visualize marriage connections
+*   Visualize marriage quality/benefits clans are getting
+*   Update marriage matching algorithm and see if it creates
+    any more textured relationships
+*   Get into land amount and quality soon - the third major
+    source of early differential productivity, and it will
+    also intersect with marriage
 x   Visualize marriage appeal
 *   Verify marriage appeal based on:
     *   (When avail) land

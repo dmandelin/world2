@@ -8,7 +8,7 @@ import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } fr
 import { marry } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
-import { Note, type NoteTaker } from "./records/notifications";
+import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
 import { Settlement } from "./people/settlement";
@@ -52,8 +52,8 @@ export class World implements NoteTaker {
     constructor() {
     }
 
-    addNote(shortLabel: string, message: string) {
-        this.notes.push(new Note(this.year.toString(), shortLabel, message));
+    addNote(shortLabel: string, message: string, tooltip?: string, entities?: NoteEntity[]) {
+        this.notes.push(new Note(this.year.toString(), shortLabel, message, tooltip, entities));
     }
 
     clansFromPairID(pairID: string): [Clan, Clan] {

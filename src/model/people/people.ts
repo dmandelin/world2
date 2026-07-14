@@ -370,7 +370,9 @@ export class Clan implements TradePartner {
         if (this.housingDecision.choice !== this.housing) {
             this.world.addNote(
                 'H',
-                `Clan ${this.name} in ${this.settlement.name} changing housing from ${this.housing.name} to ${this.housingDecision.choice.name}.`,
+                `{0} in {1} changing housing from ${this.housing.name} to ${this.housingDecision.choice.name}.`,
+                undefined,
+                [{ uuid: this.uuid, name: this.name }, { uuid: this.settlement.uuid, name: this.settlement.name }],
             );
             this.housing = this.housingDecision.choice;
         }

@@ -378,7 +378,13 @@ export function migrate(world: World) {
                 clan.traits.add(PersonalityTraits.MOBILE);
                 world.addNote(
                     '↔',
-                    `Clan ${clan.name} moved from ${clan.previousSettlement.name} to ${actualTarget.name}`,
+                    `{0} moved from {1} to {2}`,
+                    undefined,
+                    [
+                        { uuid: clan.uuid, name: clan.name },
+                        { uuid: clan.previousSettlement.uuid, name: clan.previousSettlement.name },
+                        { uuid: actualTarget.uuid, name: actualTarget.name },
+                    ],
                 );
             }
         }
@@ -395,11 +401,18 @@ export function migrate(world: World) {
             clan.moveTo(newSettlement);
             clan.traits.delete(PersonalityTraits.SETTLED);
             clan.traits.add(PersonalityTraits.MOBILE);
-            world.addNote(
-                '✨',
-                `Clan ${clan.name} moved from ${planned.parent.name} to found ${newSettlement.name}`,
-            );
         }
+
+        const clanNames = planned.clans.map(c => c.name).join(', ');
+        world.addNote(
+            '✨',
+            `Founded {0} from {1}`,
+            `Founding clans: ${clanNames}`,
+            [
+                { uuid: newSettlement.uuid, name: newSettlement.name },
+                { uuid: planned.parent.uuid, name: planned.parent.name },
+            ],
+        );
     }
 
     // Clear planned settlements after execution
