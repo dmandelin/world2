@@ -17,6 +17,9 @@
     import { get } from "svelte/store";
     import { connectionsOf } from "../../model/relations/connection";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
+    import LineGraph from "../LineGraph.svelte";
+    import { PopulationScaler, ZeroCenteredScaler, DefaultScaler, type YAxisScaler } from "../linegraph";
+    import { clanKeyTimelineGraphData, type ClanTimePoint } from "../../model/records/timeline";
     
 	let { 
         settlement, 
@@ -58,6 +61,9 @@
         deltaFormat?: (v: number) => string;
         customDeltaSnippet?: Snippet<[ClanLastTurnSnapshots, any]>;
         customDeltaContext?: any;
+
+        timelineKey?: keyof ClanTimePoint;
+        scaler?: YAxisScaler;
     }
 
     let rowGroups = $derived.by<RowDef[][]>(() => {
@@ -82,6 +88,8 @@
                 tooltipSnippet: nextSupportRatioTooltip,
                 deltaValue: c => safeDiv(c.population, c.workers),
                 deltaFormat: v => v.toFixed(1),
+                timelineKey: 'supportRatio',
+                scaler: new DefaultScaler(),
             },
             {
                 label: 'Birth rate modifier',
@@ -92,6 +100,8 @@
                 tooltipSnippet: brModifierTooltip,
                 deltaValue: c => c.lastPopulationChange.brModifier,
                 deltaFormat: pct,
+                timelineKey: 'brModifier',
+                scaler: new DefaultScaler(),
             },
             {
                 label: 'Death rate modifier',
@@ -102,6 +112,8 @@
                 tooltipSnippet: drModifierTooltip,
                 deltaValue: c => c.lastPopulationChange.drModifier,
                 deltaFormat: pct,
+                timelineKey: 'drModifier',
+                scaler: new DefaultScaler(),
             },
             {
                 label: 'Support Ratio',
@@ -110,6 +122,8 @@
                 renderValueSnippet: supportRatioValueRender,
                 deltaValue: c => safeDiv(c.population, c.workers),
                 deltaFormat: v => v.toFixed(1),
+                timelineKey: 'supportRatio',
+                scaler: new DefaultScaler(),
             }
         ]);
 
@@ -124,6 +138,8 @@
                 tooltipSnippet: happinessTooltip,
                 deltaValue: c => c.happiness.appeal,
                 deltaFormat: signed,
+                timelineKey: 'appeal',
+                scaler: new ZeroCenteredScaler(),
             },
             {
                 label: 'Social Welfare',
@@ -134,6 +150,8 @@
                 tooltipSnippet: socialWelfareTooltip,
                 deltaValue: c => c.happiness.socialAppeal,
                 deltaFormat: signed,
+                timelineKey: 'socialAppeal',
+                scaler: new ZeroCenteredScaler(),
             },
             {
                 label: 'Material Welfare',
@@ -144,6 +162,8 @@
                 tooltipSnippet: materialWelfareTooltip,
                 deltaValue: c => c.happiness.subsistenceAppeal,
                 deltaFormat: signed,
+                timelineKey: 'subsistenceAppeal',
+                scaler: new ZeroCenteredScaler(),
             },
             {
                 label: 'QoL',
@@ -154,6 +174,8 @@
                 tooltipSnippet: qolTooltip,
                 deltaValue: c => c.qol.value,
                 deltaFormat: signed,
+                timelineKey: 'qol',
+                scaler: new ZeroCenteredScaler(),
             },
             {
                 label: 'Stress',
@@ -163,6 +185,8 @@
                 tooltipSnippet: stressTooltip,
                 deltaValue: c => c.stress.value,
                 deltaFormat: signed,
+                timelineKey: 'stress',
+                scaler: new ZeroCenteredScaler(),
             },
             {
                 label: 'Residence',
@@ -172,6 +196,8 @@
                 tooltipSnippet: residenceTooltip,
                 deltaValue: c => c.residenceLevel.fractionInSettlement,
                 deltaFormat: pct,
+                timelineKey: 'residenceFraction',
+                scaler: new DefaultScaler(),
             }
         ]);
 
@@ -186,6 +212,8 @@
                 tooltipSnippet: marriageAppealTooltip,
                 deltaValue: c => c.marriageAppealAverage,
                 deltaFormat: v => signed(v, 2),
+                timelineKey: 'marriageAppealAverage',
+                scaler: new ZeroCenteredScaler(),
             },
             {
                 label: 'Marriage Appeal SD',
@@ -195,6 +223,8 @@
                 format: v => v.toFixed(2),
                 deltaValue: c => c.marriageAppealStdDev,
                 deltaFormat: v => signed(v, 2),
+                timelineKey: 'marriageAppealStdDev',
+                scaler: new DefaultScaler(),
             }
         ]);
 
@@ -209,6 +239,8 @@
                 tooltipSnippet: foodTooltip,
                 deltaValue: c => c.consumption.perCapitaFood,
                 deltaFormat: pct,
+                timelineKey: 'food',
+                scaler: new DefaultScaler(),
             },
             {
                 label: '&nbsp;Target',
@@ -219,6 +251,8 @@
                 tooltipSnippet: targetFoodTooltip,
                 deltaValue: c => c.targetPerCapitaFood,
                 deltaFormat: pct,
+                timelineKey: 'targetFood',
+                scaler: new DefaultScaler(),
             },
             {
                 label: 'Food Storage',
@@ -229,6 +263,8 @@
                 tooltipSnippet: foodStorageTooltip,
                 deltaValue: c => c.consumption.perCapitaFoodStock,
                 deltaFormat: pct,
+                timelineKey: 'foodStorage',
+                scaler: new DefaultScaler(),
             },
             {
                 label: 'Food Security',
@@ -239,6 +275,8 @@
                 tooltipSnippet: foodSecurityTooltip,
                 deltaValue: c => 1 - c.consumption.foodInsecurity.value,
                 deltaFormat: pct,
+                timelineKey: 'foodSecurity',
+                scaler: new DefaultScaler(),
             }
         ]);
 
@@ -611,7 +649,7 @@
     }
 </style>
 
-{#snippet deltaCell(cs: ClanLastTurnSnapshots, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString())}
+{#snippet deltaCell(cs: ClanLastTurnSnapshots, valueFunc: (c: ClanDTO) => number, fmt: (v: number) => string = v => v.toString(), timelineKey?: keyof ClanTimePoint, scaler?: YAxisScaler, title?: string)}
     {@const delta = cs.p ? valueFunc(cs.e) - valueFunc(cs.p) : 0}
     <td class={delta >= 0 ? 'delta-positive' : delta <= 0 ? 'delta-negative' : delta >=0 ? 'delta-negative' : ''}>
         <Tooltip>
@@ -620,7 +658,7 @@
             {:else}
                 -
             {/if}
-            <div slot="tooltip" style="text-align: left; color: initial;">
+            <div slot="tooltip" style="text-align: left; color: initial; min-width: 250px;">
                 {#if cs.p}
                     {fmt(valueFunc(cs.p))}
                 {:else}
@@ -628,6 +666,12 @@
                 {/if}
                 &rarr;
                 {fmt(valueFunc(cs.e))}
+                {#if timelineKey && scaler && title}
+                    <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;" />
+                    <div style="width: 250px; height: 150px;">
+                        <LineGraph data={clanKeyTimelineGraphData(cs.e, timelineKey, title, scaler)} />
+                    </div>
+                {/if}
             </div>
         </Tooltip>
     </td>
@@ -656,6 +700,10 @@
 
 {#snippet peopleDeltaTooltip(cs: ClanLastTurnSnapshots)}
     <PopulationChange clan={cs.e} />
+    <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;" />
+    <div style="width: 250px; height: 150px;">
+        <LineGraph data={clanKeyTimelineGraphData(cs.e, 'population', 'Population', new PopulationScaler())} />
+    </div>
 {/snippet}
 
 {#snippet peopleDeltaCell(cs: ClanLastTurnSnapshots)}
@@ -869,7 +917,7 @@
                                     {#if row.customDeltaSnippet}
                                         {@render row.customDeltaSnippet(cs, row.customDeltaContext)}
                                     {:else if row.deltaValue}
-                                        {@render deltaCell(cs, row.deltaValue, row.deltaFormat)}
+                                        {@render deltaCell(cs, row.deltaValue, row.deltaFormat, row.timelineKey, row.scaler, row.label.replace(/&nbsp;|<[^>]*>/g, '').trim())}
                                     {:else}
                                         <td></td>
                                     {/if}

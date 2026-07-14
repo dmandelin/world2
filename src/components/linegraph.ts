@@ -5,7 +5,7 @@ type Dataset = {
   color: string;
 };
 
-abstract class YAxisScaler {
+export abstract class YAxisScaler {
   abstract endpoints(datasets: Dataset[]): [number, number];
 
   range(datasets: Dataset[]): [number, number] {

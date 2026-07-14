@@ -84,7 +84,7 @@ x   Limited information effects
 *   Show more long-term success statistics
     *   Visualize clan family trees
     *   Make it possible to view clan groups as clans
-    *   Graphs of clan population, appeal, success over time
+    x   Graphs of clan population, appeal, success over time
     *   Graphs on clan rankings over time
 *   Give clans more ways to deal with the issue of high
     dependency ratio

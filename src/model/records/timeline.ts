@@ -1,8 +1,8 @@
-import { PopulationScaler, ZeroCenteredScaler, type GraphData } from "../../components/linegraph";
+import { PopulationScaler, ZeroCenteredScaler, DefaultScaler, type YAxisScaler, type GraphData } from "../../components/linegraph";
 import type { ClanDTO } from "./dtos";
 import { getLocalPrestige } from "../relations/respect";
-import { znan } from "../lib/basics";
-import { weightedAverage } from "../lib/modelbasics";
+import { znan, safeDiv } from "../lib/basics";
+import { weightedAverage, populationAverage, populationStdDev } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
 import type { World } from "../world";
 import type { Year } from "./year";
@@ -37,15 +37,60 @@ export class Timeline<T> {
 
 export class ClanTimePoint {
     readonly population: number;
+    readonly workers: number;
+    readonly supportRatio: number;
+    readonly brModifier: number;
+    readonly drModifier: number;
     readonly appeal: number;
-    readonly happiness: number;
+    readonly socialAppeal: number;
+    readonly subsistenceAppeal: number;
+    readonly qol: number;
+    readonly stress: number;
+    readonly residenceFraction: number;
+    readonly marriageAppealAverage: number;
+    readonly marriageAppealStdDev: number;
+    readonly food: number;
+    readonly targetFood: number;
+    readonly foodStorage: number;
+    readonly foodSecurity: number;
     readonly averagePrestige: number;
+    readonly happiness: number;
 
     constructor(clan: Clan) {
         this.population = clan.population;
+        this.workers = clan.workers;
+        this.supportRatio = safeDiv(clan.population, clan.workers);
+        this.brModifier = clan.lastPopulationChange?.brModifier ?? 0;
+        this.drModifier = clan.lastPopulationChange?.drModifier ?? 0;
         this.appeal = clan.appeal;
-        this.happiness = clan.happinessValue;
+        this.socialAppeal = clan.happiness.socialAppeal;
+        this.subsistenceAppeal = clan.happiness.subsistenceAppeal;
+        this.qol = clan.qol.value;
+        this.stress = clan.stress.value;
+        this.residenceFraction = clan.residenceLevel.fractionInSettlement;
+        
+        const otherClans = clan.settlement.clans.filter(c => c.uuid !== clan.uuid);
+        if (otherClans.length === 0) {
+            this.marriageAppealAverage = 0;
+            this.marriageAppealStdDev = 0;
+        } else {
+            this.marriageAppealAverage = populationAverage(
+                otherClans,
+                c => clan.world.perceptions.get(c.uuid, clan.uuid)?.marriageInterest?.value ?? 0
+            );
+            this.marriageAppealStdDev = populationStdDev(
+                otherClans,
+                c => clan.world.perceptions.get(c.uuid, clan.uuid)?.marriageInterest?.value ?? 0,
+                this.marriageAppealAverage
+            );
+        }
+
+        this.food = clan.consumption.perCapitaFood;
+        this.targetFood = clan.targetPerCapitaFood;
+        this.foodStorage = clan.consumption.perCapitaFoodStock;
+        this.foodSecurity = 1 - clan.consumption.foodInsecurity.value;
         this.averagePrestige = getLocalPrestige(clan);
+        this.happiness = clan.happinessValue;
     }
 }
 
@@ -126,6 +171,37 @@ export function clanTimelineGraphData(clan: ClanDTO): GraphData {
             graphData.datasets[0].data.push(undefined);
             graphData.secondYAxis?.datasets[0].data.push(undefined);
             graphData.secondYAxis?.datasets[1].data.push(undefined);
+        }
+    }
+
+    return graphData;
+}
+
+export function clanKeyTimelineGraphData(
+    clan: ClanDTO,
+    key: keyof ClanTimePoint,
+    title: string,
+    scaler: YAxisScaler
+): GraphData {
+    const graphData: GraphData = {
+        title: title,
+        showLegend: false,
+        labels: clan.world.timeline.map((timePoint: TimePoint) => timePoint.year.toString()),
+        yAxisScaler: scaler,
+        datasets: [{
+            label: title,
+            data: [],
+            color: 'blue',
+        }],
+    };
+
+    for (const tp of clan.world.timeline.points) {
+        const clanData = tp.clans.get(clan.uuid);
+        if (clanData) {
+            const val = clanData[key];
+            graphData.datasets[0].data.push(typeof val === 'number' ? val : undefined);
+        } else {
+            graphData.datasets[0].data.push(undefined);
         }
     }
 
