@@ -35,6 +35,8 @@ export class Timeline<T> {
     }
 }
 
+import { SkillDefs } from "../econ/econdefs";
+
 export class ClanTimePoint {
     readonly population: number;
     readonly workers: number;
@@ -55,6 +57,13 @@ export class ClanTimePoint {
     readonly foodSecurity: number;
     readonly averagePrestige: number;
     readonly happiness: number;
+
+    readonly skillLocalEcology: number;
+    readonly skillFishing: number;
+    readonly skillAgriculture: number;
+    readonly skillIrrigation: number;
+    readonly skillConstruction: number;
+    readonly skillRitual: number;
 
     constructor(clan: Clan) {
         this.population = clan.population;
@@ -91,6 +100,13 @@ export class ClanTimePoint {
         this.foodSecurity = 1 - clan.consumption.foodInsecurity.value;
         this.averagePrestige = getLocalPrestige(clan);
         this.happiness = clan.happinessValue;
+
+        this.skillLocalEcology = clan.skills.v(SkillDefs.LocalEcology);
+        this.skillFishing = clan.skills.v(SkillDefs.Fishing);
+        this.skillAgriculture = clan.skills.v(SkillDefs.Agriculture);
+        this.skillIrrigation = clan.skills.v(SkillDefs.Irrigation);
+        this.skillConstruction = clan.skills.v(SkillDefs.Construction);
+        this.skillRitual = clan.skills.v(SkillDefs.Ritual);
     }
 }
 
