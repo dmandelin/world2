@@ -175,7 +175,30 @@
             }
         ]);
 
-        // Group 3: Food
+        // Group 3: Marriage Appeal
+        groups.push([
+            {
+                label: 'Avg Marriage Appeal',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.marriageAppealAverage,
+                format: v => signed(v, 2),
+                tooltipSnippet: marriageAppealTooltip,
+                deltaValue: c => c.marriageAppealAverage,
+                deltaFormat: v => signed(v, 2),
+            },
+            {
+                label: 'Marriage Appeal SD',
+                class: 'actual',
+                cellClass: 'rap',
+                value: c => c.marriageAppealStdDev,
+                format: v => v.toFixed(2),
+                deltaValue: c => c.marriageAppealStdDev,
+                deltaFormat: v => signed(v, 2),
+            }
+        ]);
+
+        // Group 4: Food
         groups.push([
             {
                 label: 'Food',
@@ -219,7 +242,7 @@
             }
         ]);
 
-        // Group 4: Activities & Processes (Effort Allocation)
+        // Group 5: Activities & Processes (Effort Allocation)
         groups.push([
             {
                 label: 'Activities',
@@ -243,7 +266,7 @@
             }
         ]);
 
-        // Group 5: Processes (dynamic)
+        // Group 6: Processes (dynamic)
         for (const process of relevantProcesses) {
             groups.push([
                 {
@@ -315,7 +338,7 @@
             ]);
         }
 
-        // Group 6: Skills (dynamic)
+        // Group 7: Skills (dynamic)
         if (csnaps.length > 0) {
             const skillGroup: RowDef[] = [];
             for (const skill of csnaps[0].e.skills.keys()) {
@@ -408,6 +431,25 @@
                 label: '',
                 valueFn:  item => item.explanation,
              }]);
+    }
+
+    function clanMarriageAppealTooltipTable(clan: ClanDTO) {
+        const otherClans = clan.settlement.clans.filter(c => c.uuid !== clan.uuid);
+        return new FilteredIterableTable(
+            otherClans,
+            c => c.name,
+            _ => true,
+            [{
+                data: 'Population',
+                label: 'Population',
+                valueFn: c => c.population,
+                formatFn: unsignedFormat(0),
+            }, {
+                data: 'Interest',
+                label: 'Interest',
+                valueFn: c => clan.world.marriageInterestToward(c, clan)?.value ?? 0,
+                formatFn: (v: number) => signed(v, 2),
+            }]);
     }
 
     function clanHappinessTooltipTable(clan: ClanDTO) {
@@ -599,6 +641,10 @@
 
 {#snippet happinessTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanHappinessTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet marriageAppealTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanMarriageAppealTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
 {#snippet peopleTooltip(cs: ClanLastTurnSnapshots)}

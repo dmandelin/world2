@@ -1,4 +1,4 @@
-import { populationAverage } from "../lib/modelbasics";
+import { populationAverage, populationStdDev } from "../lib/modelbasics";
 import { sortedByKey, sumFun } from "../lib/basics";
 import { TradeGood } from "../trade";
 import type { Clan, ClanNotification } from "../people/people";
@@ -155,6 +155,25 @@ export class ClanDTO {
 
     get world(): WorldDTO {
         return this.settlement.world;
+    }
+
+    get marriageAppealAverage(): number {
+        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
+        if (otherClans.length === 0) return 0;
+        return populationAverage(
+            otherClans,
+            c => this.world.marriageInterestToward(c, this)?.value ?? 0
+        );
+    }
+
+    get marriageAppealStdDev(): number {
+        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
+        if (otherClans.length === 0) return 0;
+        return populationStdDev(
+            otherClans,
+            c => this.world.marriageInterestToward(c, this)?.value ?? 0,
+            this.marriageAppealAverage
+        );
     }
 }
 

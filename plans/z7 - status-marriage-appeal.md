@@ -86,6 +86,8 @@ x   Limited information effects
     *   Make it possible to view clan groups as clans
     *   Graphs of clan population, appeal, success over time
     *   Graphs on clan rankings over time
+*   Give clans more ways to deal with the issue of high
+    dependency ratio
 *   Make sure skill blends with marriage
 *   Consider giving transitive relationship benefits
 *   Differential land availability/quality

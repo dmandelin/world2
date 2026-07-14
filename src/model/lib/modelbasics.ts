@@ -83,6 +83,31 @@ export function populationAverage<T extends { population: number }>(
     return weightedAverage(items, valueFun, item => item.population);
 }
 
+export function weightedStdDev<T>(
+    items: readonly T[],
+    valueFun: (t: T) => number,
+    weightFun: (t: T) => number,
+    mean?: number
+): number {
+    const totalWeight = items.reduce((acc, item) => acc + weightFun(item), 0);
+    if (totalWeight === 0) return 0;
+    const computedMean = mean ?? weightedAverage(items, valueFun, weightFun);
+    const variance = items.reduce((acc, item) => {
+        const w = weightFun(item);
+        const v = valueFun(item);
+        return acc + w * Math.pow(v - computedMean, 2);
+    }, 0) / totalWeight;
+    return Math.sqrt(variance);
+}
+
+export function populationStdDev<T extends { population: number }>(
+    items: readonly T[],
+    valueFun: (t: T) => number,
+    mean?: number
+): number {
+    return weightedStdDev(items, valueFun, item => item.population, mean);
+}
+
 export function meanAndStdDev(values: readonly number[]): [number, number] {
     const n = values.length;
     if (n === 0) return [0, 0];
