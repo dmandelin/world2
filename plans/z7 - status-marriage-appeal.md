@@ -59,6 +59,7 @@ we have:
 
 Item list:
 
+*   Fix the issue of lots of little shrinking villages
 x   Visualize marriage appeal
 *   Verify marriage appeal based on:
     *   (When avail) land

@@ -6,6 +6,10 @@
     let { settlement }: { settlement: SettlementDTO } = $props();
 
     const metrics: { key: keyof ClanTimePoint; label: string }[] = [
+        { key: "activityCare", label: "Activity: Care" },
+        { key: "activityHelp", label: "Activity: Help" },
+        { key: "activityLeisure", label: "Activity: Leisure" },
+        { key: "activityProduction", label: "Activity: Production" },
         { key: "marriageAppealAverage", label: "Avg Marriage Appeal" },
         { key: "brModifier", label: "Birth Rate Modifier" },
         { key: "drModifier", label: "Death Rate Modifier" },
@@ -17,6 +21,8 @@
         { key: "subsistenceAppeal", label: "Material Welfare" },
         { key: "population", label: "Population" },
         { key: "averagePrestige", label: "Prestige" },
+        { key: "processAgriculture", label: "Process: Agriculture" },
+        { key: "processFishing", label: "Process: Fishing" },
         { key: "qol", label: "Quality of Life" },
         { key: "residenceFraction", label: "Residence Fraction" },
         { key: "skillAgriculture", label: "Skill: Agriculture" },
@@ -113,6 +119,7 @@
             {datasets}
             {mode}
             {smoothing}
+            unit={selectedMetricKey.startsWith("activity") || selectedMetricKey.startsWith("process") ? "%" : ""}
             title={`${selectedMetricLabel} Over Time`}
         />
     </div>

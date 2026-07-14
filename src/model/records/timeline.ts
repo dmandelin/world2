@@ -35,7 +35,8 @@ export class Timeline<T> {
     }
 }
 
-import { SkillDefs } from "../econ/econdefs";
+import { SkillDefs, Processes } from "../econ/econdefs";
+import { Activities } from "../decisions/effort";
 
 export class ClanTimePoint {
     readonly population: number;
@@ -64,6 +65,13 @@ export class ClanTimePoint {
     readonly skillIrrigation: number;
     readonly skillConstruction: number;
     readonly skillRitual: number;
+
+    readonly activityLeisure: number;
+    readonly activityCare: number;
+    readonly activityHelp: number;
+    readonly activityProduction: number;
+    readonly processFishing: number;
+    readonly processAgriculture: number;
 
     constructor(clan: Clan) {
         this.population = clan.population;
@@ -107,6 +115,13 @@ export class ClanTimePoint {
         this.skillIrrigation = clan.skills.v(SkillDefs.Irrigation);
         this.skillConstruction = clan.skills.v(SkillDefs.Construction);
         this.skillRitual = clan.skills.v(SkillDefs.Ritual);
+
+        this.activityLeisure = clan.effortAllocation.get(Activities.Leisure) * 100;
+        this.activityCare = clan.effortAllocation.get(Activities.Care) * 100;
+        this.activityHelp = clan.effortAllocation.get(Activities.Help) * 100;
+        this.activityProduction = clan.effortAllocation.get(Activities.Production) * 100;
+        this.processFishing = clan.effortAllocation.getForProcess(Processes.Fishing) * 100;
+        this.processAgriculture = clan.effortAllocation.getForProcess(Processes.Agriculture) * 100;
     }
 }
 

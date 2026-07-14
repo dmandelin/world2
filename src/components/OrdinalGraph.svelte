@@ -19,12 +19,14 @@
         datasets,
         mode,
         smoothing = "exact",
+        unit = "",
         title,
     }: {
         labels: string[];
         datasets: Dataset[];
         mode: "order" | "values";
         smoothing?: "exact" | "smoothed";
+        unit?: string;
         title?: string;
     } = $props();
 
@@ -275,10 +277,8 @@
                 displayValue:
                     val !== undefined
                         ? mode === "order"
-                            ? `#${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)} (${rawVal?.toFixed(1) ?? ""})`
-                            : val % 1 === 0
-                              ? val.toFixed(0)
-                              : val.toFixed(1)
+                            ? `#${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)} (${rawVal?.toFixed(1) ?? ""}${unit})`
+                            : (val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)) + unit
                         : "N/A",
             };
         });
@@ -365,7 +365,7 @@
                     alignment-baseline="middle"
                     fill="#666"
                 >
-                    {mode === "order" ? `#${tick}` : tick.toFixed(1)}
+                    {mode === "order" ? `#${tick}` : tick.toFixed(1) + unit}
                 </text>
             {/each}
 
