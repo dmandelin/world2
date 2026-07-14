@@ -28,6 +28,7 @@
 
     let selectedMetricKey = $state<keyof ClanTimePoint>("marriageAppealAverage");
     let mode = $state<"order" | "values">("order");
+    let smoothing = $state<"exact" | "smoothed">("exact");
 
     let labels = $derived(settlement.world.timeline.points.map((tp) => tp.year.toString()));
 
@@ -80,6 +81,24 @@
                 </button>
             </div>
         </div>
+
+        <div class="control-group">
+            <span class="label-span">Smoothing</span>
+            <div class="toggle-group">
+                <button
+                    class:active={smoothing === "exact"}
+                    onclick={() => (smoothing = "exact")}
+                >
+                    Exact
+                </button>
+                <button
+                    class:active={smoothing === "smoothed"}
+                    onclick={() => (smoothing = "smoothed")}
+                >
+                    Smoothed
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="graph-wrapper">
@@ -87,6 +106,7 @@
             {labels}
             {datasets}
             {mode}
+            {smoothing}
             title={`${selectedMetricLabel} Over Time`}
         />
     </div>

@@ -18,11 +18,13 @@
         labels,
         datasets,
         mode,
+        smoothing = "exact",
         title,
     }: {
         labels: string[];
         datasets: Dataset[];
         mode: "order" | "values";
+        smoothing?: "exact" | "smoothed";
         title?: string;
     } = $props();
 
@@ -37,8 +39,32 @@
     let gw = $derived(Math.max(0, width - margin - rightMargin));
     let gh = $derived(Math.max(0, height - topMargin - bottomMargin));
 
-    // 1. Process rankings reactively if in 'order' mode
+    function smoothValues(values: (number | undefined)[], alpha = 0.4): (number | undefined)[] {
+        const smoothed: (number | undefined)[] = [];
+        let lastVal: number | undefined = undefined;
+        for (let i = 0; i < values.length; i++) {
+            const val = values[i];
+            if (val === undefined || isNaN(val)) {
+                smoothed.push(undefined);
+                lastVal = undefined; // Reset smoothing state across gaps
+            } else {
+                if (lastVal === undefined) {
+                    smoothed.push(val);
+                    lastVal = val;
+                } else {
+                    const newVal: number = alpha * val + (1 - alpha) * lastVal;
+                    smoothed.push(newVal);
+                    lastVal = newVal;
+                }
+            }
+        }
+        return smoothed;
+    }
+
+    // 1. Process rankings and apply smoothing reactively
     let processedDatasets = $derived.by(() => {
+        let base: { id: string; label: string; color: string; plottedValues: (number | undefined)[]; values: (number | undefined)[] }[];
+
         if (mode === "order") {
             const rankLists: (number | undefined)[][] = datasets.map(() => []);
 
@@ -67,16 +93,25 @@
                 }
             }
 
-            return datasets.map((ds, idx) => ({
+            base = datasets.map((ds, idx) => ({
                 ...ds,
                 plottedValues: rankLists[idx],
             }));
         } else {
-            return datasets.map((ds) => ({
+            base = datasets.map((ds) => ({
                 ...ds,
                 plottedValues: ds.values,
             }));
         }
+
+        if (smoothing === "smoothed") {
+            return base.map((ds) => ({
+                ...ds,
+                plottedValues: smoothValues(ds.plottedValues),
+            }));
+        }
+
+        return base;
     });
 
     // 2. Reactively compute the value range
@@ -240,8 +275,10 @@
                 displayValue:
                     val !== undefined
                         ? mode === "order"
-                            ? `#${val} (${rawVal?.toFixed(1) ?? ""})`
-                            : val.toFixed(1)
+                            ? `#${val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)} (${rawVal?.toFixed(1) ?? ""})`
+                            : val % 1 === 0
+                              ? val.toFixed(0)
+                              : val.toFixed(1)
                         : "N/A",
             };
         });
