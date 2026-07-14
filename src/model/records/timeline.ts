@@ -136,46 +136,6 @@ export class TimePoint {
     }
 }
 
-export function clanTimelineGraphData(clan: ClanDTO): GraphData {
-    const graphData: GraphData = {
-        title: 'Clan Timeline',
-        showLegend: false,
-        labels: clan.world.timeline.map((timePoint: TimePoint) => timePoint.year.toString()),
-        yAxisScaler: new PopulationScaler(),
-        datasets: [{
-            label: 'Population',
-            data: [],
-            color: 'blue',
-        }],
-        secondYAxis: {
-            scaler: new ZeroCenteredScaler(),
-            datasets: [{
-                label: 'QoL',
-                data: [],
-                color: 'red',
-            }, {
-                label: 'Prestige',
-                data: [],
-                color: 'green',
-            }],
-        },
-    };
-
-    for (const tp of clan.world.timeline.points) {
-        const clanData = tp.clans.get(clan.uuid);
-        if (clanData) {
-            graphData.datasets[0].data.push(clanData.population);
-            graphData.secondYAxis?.datasets[0].data.push(clanData.appeal);
-            graphData.secondYAxis?.datasets[1].data.push(clanData.averagePrestige);
-        } else {
-            graphData.datasets[0].data.push(undefined);
-            graphData.secondYAxis?.datasets[0].data.push(undefined);
-            graphData.secondYAxis?.datasets[1].data.push(undefined);
-        }
-    }
-
-    return graphData;
-}
 
 export function clanKeyTimelineGraphData(
     clan: ClanDTO,

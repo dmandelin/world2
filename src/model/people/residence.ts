@@ -167,14 +167,4 @@ export function groupSedentismImage(sedentismFraction: number): string {
     }
 }
 
-export function clanSedentismDescription(sedentismFraction: number): string {
-    if (sedentismFraction < 0.25) {
-        return 'Nomadic';
-    } else if (sedentismFraction < 0.5) {
-        return 'Seminomadic';
-    } else if (sedentismFraction < 0.75) {
-        return 'Semisedentary';
-    } else {
-        return 'Sedentary';
-    }
-}
+

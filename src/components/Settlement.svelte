@@ -1,9 +1,7 @@
 <script>
     import SettlementDemographics from "./SettlementDemographics.svelte";
     import SettlementHappiness from "./SettlementHappiness.svelte";
-    import SettlementHealth from "./SettlementHealth.svelte";
     import SettlementOverview from "./overview/SettlementOverview.svelte";
-    import SettlementPeople from "./SettlementPeople.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
     import TabbedView from "./TabbedView.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
@@ -14,13 +12,11 @@
 
     const tabs = [
         { label: "Overview", snippet: overviewTab },
-        { label: "People", snippet: peopleTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Graph", snippet: relationshipsGraphTab },
         { label: "Happiness", snippet: happinessTab },
         { label: "Migration", snippet: migrationTab },
         { label: "Demographics", snippet: demographicsTab },
-        { label: "Health", snippet: healthTab },
         { label: "Trade", snippet: tradeTab },
     ];
 </script>
@@ -33,16 +29,8 @@
     <SettlementOverview settlement={settlement} />
 {/snippet}
 
-{#snippet peopleTab()}
-    <SettlementPeople settlement={settlement} />
-{/snippet}
-
 {#snippet demographicsTab()}
     <SettlementDemographics settlement={settlement} />
-{/snippet}
-
-{#snippet healthTab()}
-    <SettlementHealth settlement={settlement} />
 {/snippet}
 
 {#snippet tradeTab()}
@@ -60,11 +48,5 @@
 {#snippet relationshipsGraphTab()}
     <SettlementRelationshipsGraph settlement={settlement} />
 {/snippet}
-
-<style>
-    h4 {
-        margin: 0.5rem 0;
-    }
-</style>
 
 <TabbedView tabs={tabs} /> 

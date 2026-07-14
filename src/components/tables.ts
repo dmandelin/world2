@@ -67,25 +67,7 @@ export class HappinessTable {
     }
 }
     
-export function appealTable(items: readonly HappinessItem<any>[]): string[][] {
-    const header = ['Source', 'A'];
-    const rows = items.map(item => [
-        item.label,
-        item.appeal.toFixed(1),
-    ]);
-    return [header, ...rows];
-}
 
-export function happinessTable(items: readonly HappinessItem<any>[]): string[][] {
-    const header = ['Source', 'E', 'A', 'V'];
-    const rows = items.map(item => [
-        item.label,
-        item.expectedAppeal.toFixed(1),
-        item.appeal.toFixed(1),
-        item.value.toFixed(1),
-    ]);
-    return [header, ...rows];
-}
 
 class PopulationChangeTableItem {
     constructor(
