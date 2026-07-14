@@ -7,11 +7,13 @@
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRelationshipsGraph from "./SettlementRelationshipsGraph.svelte";
     import SettlementMigrationDetails from "./overview/SettlementMigrationDetails.svelte";
+    import SettlementComparison from "./overview/SettlementComparison.svelte";
 
     let { settlement } = $props();
 
     const tabs = [
         { label: "Overview", snippet: overviewTab },
+        { label: "Comparison", snippet: comparisonTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Graph", snippet: relationshipsGraphTab },
         { label: "Happiness", snippet: happinessTab },
@@ -20,6 +22,10 @@
         { label: "Trade", snippet: tradeTab },
     ];
 </script>
+
+{#snippet comparisonTab()}
+    <SettlementComparison settlement={settlement} />
+{/snippet}
 
 {#snippet migrationTab()}
     <SettlementMigrationDetails settlement={settlement} />

@@ -53,12 +53,18 @@ const CLAN_COLORS: string[] = [
 export function randomClanName(exclude: string[]|Set<String>): string {
     if (Array.isArray(exclude)) exclude = new Set(exclude);
     const available = CLAN_NAMES.filter(name => !exclude.has(name));
+    if (available.length === 0) {
+        return CLAN_NAMES[Math.floor(Math.random() * CLAN_NAMES.length)];
+    }
     return available[Math.floor(Math.random() * available.length)];
 }
 
 export function randomClanColor(exclude: string[]|Set<String>): string {
     if (Array.isArray(exclude)) exclude = new Set(exclude);
     const available = CLAN_COLORS.filter(color => !exclude.has(color));
+    if (available.length === 0) {
+        return CLAN_COLORS[Math.floor(Math.random() * CLAN_COLORS.length)];
+    }
     return available[Math.floor(Math.random() * available.length)];
 }
 
