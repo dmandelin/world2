@@ -43,11 +43,11 @@ export class World implements NoteTaker {
 
     readonly watchers = new Set<(world: World) => void>();
 
-    beginningOfTurnSnapshot_: WorldDTO|undefined;
-    endOfTurnSnapshot_: WorldDTO|undefined;
-    previousEndOfTurnSnapshot_: WorldDTO|undefined;
+    beginningOfTurnSnapshot_: WorldDTO | undefined;
+    endOfTurnSnapshot_: WorldDTO | undefined;
+    previousEndOfTurnSnapshot_: WorldDTO | undefined;
 
-    dto: WorldDTO|undefined;
+    dto: WorldDTO | undefined;
 
     constructor() {
     }
@@ -303,11 +303,6 @@ export class World implements NoteTaker {
 
         for (const trend of this.trends) trend.update(this.year);
         this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
-
-        for (const settlement of this.allSettlements) {
-            // TODO - Combine this with newer logging.
-            settlement.addTimePoint();
-        }
     }
 
 
@@ -399,7 +394,7 @@ export class World implements NoteTaker {
     notify() {
         this.dto = new WorldDTO(this);
 
-        for (const watcher of this.watchers) 
+        for (const watcher of this.watchers)
             watcher(this);
     }
 }
@@ -408,7 +403,7 @@ class SettlementsBuilder {
     private clanNames: Set<string> = new Set();
     private clanColors: Set<string> = new Set();
 
-    constructor(readonly world: World) {}
+    constructor(readonly world: World) { }
 
     createCluster(name: string, x: number, y: number, clanCount: number) {
         const cluster = new SettlementCluster(name, x, y);
@@ -419,7 +414,7 @@ class SettlementsBuilder {
                 this.world,
                 settlement,
                 this.world.annals,
-                randomClanName(this.clanNames), 
+                randomClanName(this.clanNames),
                 randomClanColor(this.clanColors),
                 dice(3, 6, 15));
             this.clanNames.add(clan.name);
@@ -430,7 +425,7 @@ class SettlementsBuilder {
     }
 
     createClusters(params: readonly [string, number, number, number][]) {
-        return params.map(([name, x, y, clanCount]) => 
+        return params.map(([name, x, y, clanCount]) =>
             this.createCluster(name, x, y, clanCount));
     }
 }
