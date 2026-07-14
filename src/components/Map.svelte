@@ -12,17 +12,20 @@
 
     let { onSelect } = $props();
     let selectedLens = $state("Pop");
+    let isBig = $state(false);
 
-    let canvas: HTMLCanvasElement | null;
-    let context: CanvasRenderingContext2D | null;
+    let canvas: HTMLCanvasElement | null = null;
+    let context: CanvasRenderingContext2D | null = null;
 
     let worldDTO = $state(world.dto!);
 
     function click(e: MouseEvent) {
-        console.log("click", e.offsetX, e.offsetY);
-
-        const clickX = e.offsetX;
-        const clickY = e.offsetY;
+        if (!canvas) return;
+        const scaleX = canvas.width / canvas.clientWidth;
+        const scaleY = canvas.height / canvas.clientHeight;
+        const clickX = e.offsetX * scaleX;
+        const clickY = e.offsetY * scaleY;
+        console.log("click", clickX, clickY);
 
         let best = null;
         let bestds = 50 * 50;
@@ -112,12 +115,13 @@
     function drawPlannedSettlement(planned: any) {
         const x = planned.x;
         const y = planned.y;
+        const scaleMultiplier = isBig ? 1 : 2;
 
         context!.strokeStyle = "#d69e2e";
-        context!.lineWidth = 2;
-        context!.setLineDash([3, 3]);
+        context!.lineWidth = 2 * scaleMultiplier;
+        context!.setLineDash([3 * scaleMultiplier, 3 * scaleMultiplier]);
         context!.beginPath();
-        context!.arc(x, y, 4.5, 0, 2 * Math.PI);
+        context!.arc(x, y, 4.5 * scaleMultiplier, 0, 2 * Math.PI);
         context!.stroke();
         context!.setLineDash([]);
     }
@@ -131,8 +135,9 @@
     function drawSettlement(settlement: Settlement) {
         const x = settlement.x;
         const y = settlement.y;
+        const scaleMultiplier = isBig ? 1 : 2;
 
-        context!.font = "14px sans-serif";
+        context!.font = `${14 * scaleMultiplier}px sans-serif`;
 
         // Symbol
         context!.fillStyle = settlement.abandoned ? "#777" : "#333";
@@ -142,33 +147,34 @@
             const pop = settlement.population;
             if (pop < 50) {
                 // Tiny upward-pointing triangle (width 4, height 4)
+                const size = 2 * scaleMultiplier;
                 context!.beginPath();
-                context!.moveTo(x, y - 2);
-                context!.lineTo(x - 2, y + 2);
-                context!.lineTo(x + 2, y + 2);
+                context!.moveTo(x, y - size);
+                context!.lineTo(x - size, y + size);
+                context!.lineTo(x + size, y + size);
                 context!.closePath();
                 context!.fill();
             } else if (pop < 150) {
                 // Black dot, radius 1.8 (approx same size/slightly smaller than tiny 4x4 square)
                 context!.beginPath();
-                context!.arc(x, y, 1.8, 0, 2 * Math.PI);
+                context!.arc(x, y, 1.8 * scaleMultiplier, 0, 2 * Math.PI);
                 context!.fill();
             } else if (pop < 500) {
                 // Black dot, radius 2.8 (approx same size/slightly smaller than large 6x6 square)
                 context!.beginPath();
-                context!.arc(x, y, 2.8, 0, 2 * Math.PI);
+                context!.arc(x, y, 2.8 * scaleMultiplier, 0, 2 * Math.PI);
                 context!.fill();
             } else {
                 // Circle a little larger (radius 4.5)
                 context!.beginPath();
-                context!.arc(x, y, 4.5, 0, 2 * Math.PI);
+                context!.arc(x, y, 4.5 * scaleMultiplier, 0, 2 * Math.PI);
                 context!.fill();
             }
         }
 
         // Name
         if (!settlement.parent && !settlement.abandoned) {
-            fillTextCentered(settlement.name, x + 18, y + 17);
+            fillTextCentered(settlement.name, x + 18 * scaleMultiplier, y + 17 * scaleMultiplier);
         }
 
         // TODO - Clean this up. For now, it's just too much,
@@ -228,8 +234,11 @@ ${settlement.cluster.population} \
     let tooltipY = $state(0);
 
     function handleMouseMove(e: MouseEvent) {
-        const mouseX = e.offsetX;
-        const mouseY = e.offsetY;
+        if (!canvas) return;
+        const scaleX = canvas.width / canvas.clientWidth;
+        const scaleY = canvas.height / canvas.clientHeight;
+        const mouseX = e.offsetX * scaleX;
+        const mouseY = e.offsetY * scaleY;
 
         let best = null;
         let bestPlanned = null;
@@ -285,7 +294,6 @@ ${settlement.cluster.population} \
     }
 
     onMount(() => {
-        canvas = document.querySelector("canvas");
         context = canvas!.getContext("2d");
 
         world.watch(() => {
@@ -305,18 +313,51 @@ ${settlement.cluster.population} \
     onDestroy(() => {
         world.unwatch(draw);
     });
+
+    $effect(() => {
+        if (isBig !== undefined && canvas && context) {
+            draw();
+        }
+    });
 </script>
 
-<div class="map-container" style="position: relative; display: inline-block;">
-    <canvas
-        onclick={click}
-        onmousemove={handleMouseMove}
-        onmouseleave={handleMouseLeave}
-        width="564"
-        height="492"
-        style="width: 564px; height: 492px"
-    >
-    </canvas>
+<div class="map-container" style="position: relative; display: inline-block; width: {isBig ? '564px' : '282px'}; transition: width 0.2s;">
+    <div class="canvas-wrapper" style="position: relative; line-height: 0;">
+        <button
+            onclick={() => (isBig = !isBig)}
+            class="map-size-toggle"
+            title={isBig ? "Minimize Map" : "Maximize Map"}
+        >
+            {#if isBig}
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>
+                </svg>
+            {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                </svg>
+            {/if}
+        </button>
+        <a
+            href="https://github.com/dmandelin/world2/blob/main/README.md"
+            target="_blank"
+            rel="noopener"
+            class="what-is-this-link"
+            title="Open Readme"
+        >
+            &#x1F517; What is this?
+        </a>
+        <canvas
+            bind:this={canvas}
+            onclick={click}
+            onmousemove={handleMouseMove}
+            onmouseleave={handleMouseLeave}
+            width="564"
+            height="492"
+            style="width: {isBig ? '564px' : '282px'}; height: {isBig ? '492px' : '246px'};"
+        >
+        </canvas>
+    </div>
 
     {#if hoveredSettlement}
         {@const pop = hoveredSettlement.population}
@@ -393,7 +434,7 @@ ${settlement.cluster.population} \
         </div>
     {/if}
 
-    <div style="display: flex; justify-content: space-between">
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
         <ButtonPanel
             config={{
                 buttons: [{ label: "Pop" }, { label: "Rit" }],
@@ -488,5 +529,61 @@ ${settlement.cluster.population} \
         line-height: 1.3;
         margin: 0;
         padding-left: 14px;
+    }
+
+    .map-size-toggle {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(249, 246, 235, 0.9);
+        border: 2px solid #62531d;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #62531d;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .map-size-toggle:hover {
+        background-color: #f0ebd1;
+    }
+
+    .map-size-toggle:active {
+        transform: scale(0.95);
+    }
+
+    .what-is-this-link {
+        position: absolute;
+        top: 8px;
+        left: 44px;
+        z-index: 10;
+        background-color: rgba(249, 246, 235, 0.9);
+        border: 2px solid #62531d;
+        border-radius: 4px;
+        padding: 0 10px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #62531d;
+        font-weight: bold;
+        font-size: 0.8rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .what-is-this-link:hover {
+        background-color: #f0ebd1;
+    }
+
+    .what-is-this-link:active {
+        transform: scale(0.95);
     }
 </style>

@@ -11,8 +11,9 @@
 
 <style>
     .panel {
-        width: 564px;
+        width: 100%;
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: flex-end;
         gap: 0.5rem;
