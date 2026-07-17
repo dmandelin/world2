@@ -1,26 +1,11 @@
 import type { ClanDTO, SettlementDTO } from '../model/records/dtos';
-import { Clan } from '../model/people/people';
-import { pct, signed, spct } from '../model/lib/format';
-import type { ClanSkillChange } from '../model/people/skillchange';
-import { sortedByKey, sumFun } from '../model/lib/basics';
-import type { HappinessItem } from '../model/people/happiness';
+import { pct, spct } from '../model/lib/format';
+import { sumFun } from '../model/lib/basics';
 import type { PopulationChangeItem, PopulationChangeModifier } from '../model/people/population';
 
 export type AverageAttitudeTable = {
     header: string[];
     rows: string[][];
-}
-
-export function skillImitationTable(sc: ClanSkillChange) {
-    const header = ['Source', '𝕊', 'R', '𝕎'];
-    const rows = sortedByKey(sc.imitationTargetItems, i => -i.weight).map(item => [
-        item.label, 
-        item.trait.toFixed(),
-        item.respect.toFixed(),
-        item.weight.toFixed(2),
-    ]);
-    return [header, ...rows];
-
 }
 
 export class HappinessTable {
@@ -66,7 +51,7 @@ export class HappinessTable {
         }
     }
 }
-    
+
 
 
 class PopulationChangeTableItem {
@@ -77,7 +62,7 @@ class PopulationChangeTableItem {
         public expectedRate: number,
         public actualRate: number,
         public actual: number,
-    ) {}
+    ) { }
 
     add(other: PopulationChangeItem, previousPopulation: number): void {
         this.standardRate += other.standardRate * previousPopulation;
@@ -94,7 +79,7 @@ class PopulationChangeTableItem {
             (this.actualRate * 1000 / previousPopulation).toFixed(),
             this.actual.toFixed(),
         ];
-    }   
+    }
 }
 
 export type PopulationChangeModifierTable = {
@@ -105,13 +90,13 @@ export type PopulationChangeModifierTable = {
 class PopulationChangeModifierTableItem {
     constructor(
         readonly source: string,
-        public inputValue: number|string,
+        public inputValue: number | string,
         public value: number,
-    ) {}
+    ) { }
 }
 
 export function populationChangeModifierTable(
-    settlement: SettlementDTO, 
+    settlement: SettlementDTO,
     modifiersFun: (clan: ClanDTO) => PopulationChangeModifier[],
     modifierFun: (clan: ClanDTO) => number): PopulationChangeModifierTable {
     const items: Map<string, PopulationChangeModifierTableItem> = new Map();
@@ -126,12 +111,12 @@ export function populationChangeModifierTable(
                     existingItem.inputValue += mod.inputValue * clan.population / settlement.population;
                 }
             } else {
-                items.set(mod.source, 
+                items.set(mod.source,
                     new PopulationChangeModifierTableItem(
-                        mod.source, 
+                        mod.source,
                         typeof mod.inputValue === 'string'
-                        ? ''
-                        : mod.inputValue * clan.population / settlement.population,
+                            ? ''
+                            : mod.inputValue * clan.population / settlement.population,
                         mod.value * clan.population / settlement.population));
             }
         }
@@ -140,7 +125,7 @@ export function populationChangeModifierTable(
         if (existingTotal) {
             existingTotal.value += totalMod * clan.population / settlement.population;
         } else {
-            items.set('Total', 
+            items.set('Total',
                 new PopulationChangeModifierTableItem(
                     'Total', '', totalMod * clan.population / settlement.population));
         }
@@ -169,7 +154,7 @@ export function populationChangeModifierTable(
     return { header, rows };
 }
 
-export function combinedPopulationChangeModifierTable(settlement: SettlementDTO): 
+export function combinedPopulationChangeModifierTable(settlement: SettlementDTO):
     PopulationChangeModifierTable {
 
     const brTable = populationChangeModifierTable(
@@ -214,13 +199,13 @@ export function populationChangeTable(settlement: SettlementDTO): PopulationChan
             if (existingItem) {
                 existingItem.add(item, clan.lastPopulationChange.previousSize);
             } else {
-                items.set(item.name, 
+                items.set(item.name,
                     new PopulationChangeTableItem(
-                        item.name, 
+                        item.name,
                         clan.lastPopulationChange.previousSize,
-                        item.standardRate * clan.lastPopulationChange.previousSize, 
-                        item.expectedRate * clan.lastPopulationChange.previousSize, 
-                        item.actualRate * clan.lastPopulationChange.previousSize, 
+                        item.standardRate * clan.lastPopulationChange.previousSize,
+                        item.expectedRate * clan.lastPopulationChange.previousSize,
+                        item.actualRate * clan.lastPopulationChange.previousSize,
                         item.actual));
             }
         }

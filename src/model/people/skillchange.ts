@@ -127,19 +127,6 @@ export class ClanSkillChange {
     get delta(): number {
         return sumFun(this.items, o => o.delta);
     }
-
-    get changeSourcesTooltip(): string[][] {
-        const header = ['Source', 'Δ'];
-        const data = this.items.map(o => [
-            o.label,
-            o.delta.toFixed(),
-        ]);
-        const footer = [
-            'Total',
-            sumFun(this.items, o => o.delta).toFixed(),
-        ]
-        return [header, ...data, footer];
-    }
 }
 
 export class ClanSkillChangeItem {
