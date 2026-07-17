@@ -73,6 +73,7 @@
 
     interface RowDef {
         label: string;
+        labelTooltip?: string;
         class?: string;
         isHeader?: boolean;
         colspan?: number;
@@ -394,7 +395,8 @@
                     deltaFormat: (v) => v.toFixed(0),
                 },
                 {
-                    label: "&nbsp;Productivity",
+                    label: "&nbsp;Base LP",
+                    labelTooltip: "Base labor productivity",
                     class: "actual",
                     cellClass: "rap",
                     value: (c) =>
@@ -413,13 +415,33 @@
                     deltaFormat: (v) => v.toFixed(2),
                 },
                 {
-                    label: "&nbsp;Net Labor Prod",
+                    label: "&nbsp;Net LP",
+                    labelTooltip: "Net labor productivity",
                     class: "actual",
                     cellClass: "rap",
                     useTooltip: true,
                     value: (c) => netLaborProductivity(c, process),
                     format: spct,
                     deltaValue: (c) => netLaborProductivity(c, process),
+                    deltaFormat: (v) => v.toFixed(2),
+                },
+                {
+                    label: "&nbsp;YPC",
+                    labelTooltip: "Yield per capita",
+                    class: "actual",
+                    cellClass: "rap",
+                    useTooltip: true,
+                    value: (c) =>
+                        safeDiv(
+                            c.production.getForProcess(process, "amount") ?? 0,
+                            c.previousPopulation,
+                        ),
+                    format: (v) => v.toFixed(2),
+                    deltaValue: (c) =>
+                        safeDiv(
+                            c.production.getForProcess(process, "amount") ?? 0,
+                            c.previousPopulation,
+                        ),
                     deltaFormat: (v) => v.toFixed(2),
                 },
             ]);
@@ -1045,7 +1067,15 @@
                         {#if row.isHeader}
                             <td colspan={1 + csnaps.length * 2}>{row.label}</td>
                         {:else}
-                            <td>{@html row.label}</td>
+                            <td>
+                                {#if row.labelTooltip}
+                                    <SimpleTooltip tip={row.labelTooltip}
+                                        >{@html row.label}</SimpleTooltip
+                                    >
+                                {:else}
+                                    {@html row.label}
+                                {/if}
+                            </td>
                             {#each csnaps as cs}
                                 {#if row.colspan === 2}
                                     <td colspan="2">

@@ -54,8 +54,8 @@ export class SettlementProductionItemDTO {
         readonly workers: number,
         readonly productivity: number,
         readonly tfp: number,
-        readonly amount: number|undefined,
-    ) {}
+        readonly amount: number | undefined,
+    ) { }
 }
 
 export class ClanProductionItemDTO {
@@ -65,8 +65,8 @@ export class ClanProductionItemDTO {
         readonly workerFraction: number,
         readonly workers: number,
         readonly tfp: number,
-        readonly amount: number|undefined,
-    ) {}
+        readonly amount: number | undefined,
+    ) { }
 }
 
 export class ClanDTO {
@@ -77,7 +77,7 @@ export class ClanDTO {
     color: string;
 
     housing: Housing;
-    housingDecision: HousingDecision|undefined;
+    housingDecision: HousingDecision | undefined;
     residenceLevel: ResidenceLevel;
     residenceFraction: number;
 
@@ -96,7 +96,7 @@ export class ClanDTO {
     effortAllocation: EffortAllocation;
     workers: number;
     seniority: number;
-    migrationPlan: MigrationCalc|undefined;
+    migrationPlan: MigrationCalc | undefined;
     lastPopulationChange: PopulationChange;
     population: number;
     effectiveResidentPopulation: number;
@@ -131,7 +131,7 @@ export class ClanDTO {
         this.consumption = clan.consumption;
         this.stress = clan.stress.clone();
         this.qol = clan.qol;
-        
+
         this.isDitching = clan.isDitching;
         this.targetPerCapitaFood = clan.targetPerCapitaFood;
         this.effortAllocation = clan.effortAllocation.clone();
@@ -155,6 +155,10 @@ export class ClanDTO {
 
     get world(): WorldDTO {
         return this.settlement.world;
+    }
+
+    get previousPopulation(): number {
+        return this.lastPopulationChange.previousSize;
     }
 
     get marriageAppealAverage(): number {
@@ -198,13 +202,13 @@ export class SettlementDTO {
     readonly ditchTooltip: string[][];
     readonly floodLevel: FloodLevel;
     readonly refoundedAfterRiverShift: boolean;
-    readonly newSettlementDecisionReport: NewSettlementDecisionReport|undefined;
+    readonly newSettlementDecisionReport: NewSettlementDecisionReport | undefined;
 
     readonly timeline: Timeline<SettlementTimePoint>;
 
     constructor(settlement: Settlement, readonly cluster: ClusterDTO, readonly world: WorldDTO) {
         this.ref = settlement;
-        this.clans = sortedByKey([...settlement.clans].map(clan => 
+        this.clans = sortedByKey([...settlement.clans].map(clan =>
             new ClanDTO(clan, this)), clan => clan.name);
 
         this.uuid = settlement.uuid;
@@ -232,7 +236,7 @@ export class SettlementDTO {
 
     get farmingRatio(): number {
         return populationAverage(
-            this.clans, 
+            this.clans,
             clan => clan.effortAllocation.farmingRatio());
     }
 }
@@ -298,7 +302,7 @@ export class WorldDTO {
 
     readonly beginningOfTurnSnapshot: WorldDTO;
     readonly endOfTurnSnapshot: WorldDTO;
-    readonly previousEndOfTurnSnapshot: WorldDTO|undefined;
+    readonly previousEndOfTurnSnapshot: WorldDTO | undefined;
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
@@ -369,19 +373,19 @@ export class WorldDTO {
         return 0;
     }
 
-    conflictBetween(clan: ClanDTO, other: ClanDTO): Conflict|undefined {
+    conflictBetween(clan: ClanDTO, other: ClanDTO): Conflict | undefined {
         return this.conflicts.get(clan, other);
     }
 
-    alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment|undefined {
+    alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.alignment;
     }
 
-    respectToward(clan: ClanDTO, other: ClanDTO): Respect|undefined {
+    respectToward(clan: ClanDTO, other: ClanDTO): Respect | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.respect;
     }
 
-    marriageInterestToward(clan: ClanDTO, other: ClanDTO): MarriageInterest|undefined {
+    marriageInterestToward(clan: ClanDTO, other: ClanDTO): MarriageInterest | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
     }
 
