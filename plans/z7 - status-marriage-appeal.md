@@ -59,6 +59,12 @@ we have:
 
 Item list:
 
+*   Next bits on skills:
+    *   Structure expected change calculations better
+    *   Work harder to tune the scaling at different effort
+        levels
+    *   Fix bug with move still appearing in the tooltip
+        in the turn after a move
 *   Fix the issue of lots of little shrinking villages
     *   Appears to be related to local ecology skill getting
         reset and then not growing

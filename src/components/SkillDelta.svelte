@@ -10,43 +10,103 @@
     import { ClanSkillChangeItem } from "../model/people/skillchange";
     import type { ImitationTargetItem } from "../model/people/skillchange";
 
-    let { clan, skill }: { clan: ClanDTO, skill: SkillDef } = $props();
+    let { clan, skill }: { clan: ClanDTO; skill: SkillDef } = $props();
     let clanSkill = $derived(clan.skills.get(skill)!);
 
-    let imitationTable = $derived(clanSkill.lastChange ? new IterableTable<ImitationTargetItem, [number, number, number]>(
-        sortedByKey(clanSkill.lastChange.imitationTargetItems, i => -i.weight),
-        item => item.label,
-        [
-            { data: '𝕊', label: '𝕊', valueFn: r => r.trait, formatFn: v => v.toFixed() },
-            { data: 'R', label: 'R', valueFn: r => r.respect, formatFn: v => v.toFixed() },
-            { data: '𝕎', label: '𝕎', valueFn: r => r.weight, formatFn: v => v.toFixed(2) },
-        ],
-    ) : undefined);
+    let imitationTable = $derived(
+        clanSkill.lastChange && !skill.clanSkill
+            ? new IterableTable<ImitationTargetItem, [number, number, number]>(
+                  sortedByKey(
+                      clanSkill.lastChange.imitationTargetItems,
+                      (i) => -i.weight,
+                  ),
+                  (item) => item.label,
+                  [
+                      {
+                          data: "𝕊",
+                          label: "𝕊",
+                          valueFn: (r) => r.trait,
+                          formatFn: (v) => v.toFixed(),
+                      },
+                      {
+                          data: "R",
+                          label: "R",
+                          valueFn: (r) => r.respect,
+                          formatFn: (v) => v.toFixed(),
+                      },
+                      {
+                          data: "𝕎",
+                          label: "𝕎",
+                          valueFn: (r) => r.weight,
+                          formatFn: (v) => v.toFixed(2),
+                      },
+                  ],
+              )
+            : undefined,
+    );
 
     let changeSourcesTable = $derived.by(() => {
         if (!clanSkill.lastChange) return undefined;
         const items = clanSkill.lastChange.items;
-        const totalDelta = sumFun(items, o => o.delta);
+        const totalDelta = sumFun(items, (o) => o.delta);
+        const totalExpectedDelta = sumFun(items, (o) => o.expectedDelta);
         const rows: TableRow<ClanSkillChangeItem, string>[] = [
-            ...items.map(item => ({
+            ...items.map((item) => ({
                 data: item,
                 label: item.label,
             })),
             {
-                data: new ClanSkillChangeItem('Total', totalDelta),
-                label: 'Total',
+                data: new ClanSkillChangeItem(
+                    "Total",
+                    totalDelta,
+                    totalExpectedDelta,
+                ),
+                label: "Total",
                 bold: true,
             },
         ];
         return {
             columns: [
-                { data: 'Δ', label: 'Δ', valueFn: (r: ClanSkillChangeItem) => r.delta, formatFn: (v: number) => v.toFixed() },
+                {
+                    data: "𝔼",
+                    label: "𝔼",
+                    valueFn: (r: ClanSkillChangeItem) => r.expectedDelta,
+                    formatFn: (v: number) => v.toFixed(),
+                },
+                {
+                    data: "Δ",
+                    label: "Δ",
+                    valueFn: (r: ClanSkillChangeItem) => r.delta,
+                    formatFn: (v: number) => v.toFixed(),
+                },
             ],
             rows,
             hideHeader: false,
-        } satisfies Table<ClanSkillChangeItem, string, [number]>;
+        } satisfies Table<ClanSkillChangeItem, string, [number, number]>;
     });
 </script>
+
+<Tooltip>
+    {signed(clanSkill.lastChange?.delta || 0)}
+    <div slot="tooltip" class="ttt">
+        {#if clanSkill.lastChange}
+            <p>
+                <b>{pct(clanSkill.lastChange.effortFactor)}</b> learning rate
+                from
+                <br />
+                <b>{pct(clanSkill.lastChange.relativeEffort)}</b> effort
+            </p>
+            <h4>Imitation Sources</h4>
+            {#if imitationTable}
+                <DataTable2 table={imitationTable} />
+            {/if}
+            <h4>Skill Changes</h4>
+            {#if changeSourcesTable}
+                <DataTable2 table={changeSourcesTable} />
+            {/if}
+        {/if}
+    </div>
+</Tooltip>
 
 <style>
     .ttt {
@@ -55,21 +115,3 @@
         margin: 0;
     }
 </style>
-
-<Tooltip>
-    {signed(clanSkill.lastChange?.delta || 0)}
-    <div slot="tooltip" class="ttt">
-        {#if clanSkill.lastChange}
-            <h4>Imitation Sources</h4>
-            {#if imitationTable}
-                <DataTable2 table={imitationTable} />
-            {/if}
-            <h4>Effort = {pct(clanSkill.lastChange.relativeEffort)}</h4>
-            <h4>Learning factor = {pct(clanSkill.lastChange.effortFactor)})</h4>
-            <h4>Skill Changes</h4>
-            {#if changeSourcesTable}
-                <DataTable2 table={changeSourcesTable} />
-            {/if}
-        {/if}
-    </div>
-</Tooltip>

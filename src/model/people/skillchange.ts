@@ -69,7 +69,7 @@ export class ClanSkillChange {
     ) {
         this.effort = skillDef.getEffort(clan);
         this.relativeEffort = this.effort / skillDef.referenceEffort;
-        this.effortFactor = Math.pow(this.relativeEffort, 0.15);
+        this.effortFactor = Math.pow(this.relativeEffort, 1.15);
 
         this.initialValue = skill.value;
 
@@ -77,7 +77,8 @@ export class ClanSkillChange {
         this.baseFromTradition = this.initialValue;
         const relativeDeltaFromError = -0.1 + 0.15 * (Math.random() - Math.random());
         const deltaFromError = this.baseFromTradition * relativeDeltaFromError;
-        this.items.push(new ClanSkillChangeItem('Error', deltaFromError));
+        const expectedDeltaFromError = this.baseFromTradition * -0.1;
+        this.items.push(new ClanSkillChangeItem('Error', deltaFromError, expectedDeltaFromError));
 
         // Lose local knowledge on a move.
         // TODO - Have this work somewhat differently for hunting and gathering
@@ -85,9 +86,10 @@ export class ClanSkillChange {
         if (clan.settlement !== clan.previousSettlement) {
             // TODO - Have a smaller reset for some other skills
             if (skillDef.resetsOnMove) {
-                const relativeDeltaFromMove = -0.5 + 0.3 * (Math.random() - Math.random());
+                const relativeDeltaFromMove = -0.5 + 0.2 * (Math.random() - Math.random());
                 const deltaFromMove = this.baseFromTradition * relativeDeltaFromMove;
-                this.items.push(new ClanSkillChangeItem('Move', deltaFromMove));
+                const expectedDeltaFromMove = this.baseFromTradition * -0.5;
+                this.items.push(new ClanSkillChangeItem('Move', deltaFromMove, expectedDeltaFromMove));
             }
         }
 
@@ -109,19 +111,22 @@ export class ClanSkillChange {
             }
             const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
             if (this.initialValue !== imitationTarget.trait) {
+                const imitationDelta = moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta) - this.initialValue;
+                const expectedImitationDelta = imitationTarget.weight * imitationDelta;
                 this.items.push(new ClanSkillChangeItem(
                     imitationTarget.label,
-                    (moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta)
-                        - this.initialValue)
+                    imitationDelta,
+                    expectedImitationDelta
                 ));
             }
         }
 
         // Learn by observation. This should roughly balance error at skill 50.
-        const clanSkillFactor = skillDef.clanSkill ? 2 : 1;
+        const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
         const deltaFromObservation = clanSkillFactor * this.effortFactor *
-            (5 + 10 * (Math.random() - Math.random()));
-        this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation));
+            (5 + 5 * (Math.random() - Math.random()));
+        const expectedDeltaFromObservation = clanSkillFactor * this.effortFactor * 5;
+        this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));
     }
 
     get delta(): number {
@@ -133,6 +138,7 @@ export class ClanSkillChangeItem {
     constructor(
         readonly label: string,
         readonly delta: number,
+        readonly expectedDelta: number,
     ) { }
 }
 
