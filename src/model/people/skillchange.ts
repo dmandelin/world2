@@ -60,7 +60,7 @@ export class ClanSkillChange {
     readonly baseFromTradition: number;
 
     readonly items: ClanSkillChangeItem[] = [];
-    readonly imitationTargetItems: readonly ImitationTargetItem[];
+    readonly imitationTargetItems: readonly ImitationTargetItem[] = [];
 
     constructor(
         readonly clan: Clan,
@@ -72,7 +72,7 @@ export class ClanSkillChange {
         this.effortFactor = Math.pow(this.relativeEffort, 0.15);
 
         this.initialValue = skill.value;
-        
+
         // Maintain tradition with some error.
         this.baseFromTradition = this.initialValue;
         const relativeDeltaFromError = -0.1 + 0.15 * (Math.random() - Math.random());
@@ -93,28 +93,33 @@ export class ClanSkillChange {
 
         // Learn by imitation. Imitation target might be self, meaning
         // the clan prefers its own traditions.
-        const maxImitationDelta = 5 * this.effortFactor;
-        this.imitationTargetItems = [...clan.settlement!.clans].map(
-            c => new ImitationTargetItem(
-                c.name,
-                c.skills.v(skillDef),
-                100 * getRespect(clan, c)
-            ));
-        const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
-        for (const item of this.imitationTargetItems) {
-            item.weight /= totalWeight;
-        }
-        const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
-        if (this.initialValue !== imitationTarget.trait) {
-            this.items.push(new ClanSkillChangeItem(
-                imitationTarget.label, 
-                (moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta)
-                 - this.initialValue)
-            ));
+        //
+        // "Clan skills" are developed internally and not via imitation.
+        if (!skillDef.clanSkill) {
+            const maxImitationDelta = 5 * this.effortFactor;
+            this.imitationTargetItems = [...clan.settlement!.clans].map(
+                c => new ImitationTargetItem(
+                    c.name,
+                    c.skills.v(skillDef),
+                    100 * getRespect(clan, c)
+                ));
+            const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
+            for (const item of this.imitationTargetItems) {
+                item.weight /= totalWeight;
+            }
+            const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
+            if (this.initialValue !== imitationTarget.trait) {
+                this.items.push(new ClanSkillChangeItem(
+                    imitationTarget.label,
+                    (moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta)
+                        - this.initialValue)
+                ));
+            }
         }
 
         // Learn by observation. This should roughly balance error at skill 50.
-        const deltaFromObservation = this.effortFactor * 
+        const clanSkillFactor = skillDef.clanSkill ? 2 : 1;
+        const deltaFromObservation = clanSkillFactor * this.effortFactor *
             (5 + 10 * (Math.random() - Math.random()));
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation));
     }
@@ -126,10 +131,10 @@ export class ClanSkillChange {
     get changeSourcesTooltip(): string[][] {
         const header = ['Source', 'Δ'];
         const data = this.items.map(o => [
-            o.label, 
+            o.label,
             o.delta.toFixed(),
         ]);
-        const footer = [ 
+        const footer = [
             'Total',
             sumFun(this.items, o => o.delta).toFixed(),
         ]
@@ -141,7 +146,7 @@ export class ClanSkillChangeItem {
     constructor(
         readonly label: string,
         readonly delta: number,
-    ) {}
+    ) { }
 }
 
 export class ImitationTargetItem {

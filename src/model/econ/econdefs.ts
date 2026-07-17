@@ -13,6 +13,7 @@ export const SkillDefs = {
         10,
         (clan: Clan): number => clan.production.effortForProcesses(Processes.Agriculture, Processes.Fishing),
         true,
+        true,
     ),
     Fishing: new SkillDef(1, 'Fishing', 'skill-fishing-256.png', '#14b8a6',
         10,
@@ -35,8 +36,8 @@ export const SkillDefs = {
 };
 
 export const Processes = {
-    Fishing: 
+    Fishing:
         new Process('Fishing', 1, 'F', '#3b82f6', TradeGoods.Fish, 3),
-    Agriculture: 
+    Agriculture:
         new Process('Agriculture', 2, 'A', '#10b981', TradeGoods.Cereals, 3),
 };

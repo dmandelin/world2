@@ -19,7 +19,7 @@ import { ClanSkillChange } from './skillchange';
 // as the baseline for modifiers. 0 means the clan has not
 // practiced the skill.
 
-export class SkillDef implements Tagged{
+export class SkillDef implements Tagged {
     constructor(
         readonly sortKey: number,
         readonly name: string,
@@ -28,12 +28,13 @@ export class SkillDef implements Tagged{
         readonly referenceEffort: number = 10,
         readonly getEffort: (clan: Clan) => number = () => 0,
         readonly resetsOnMove: boolean = false,
-    ) {}
+        readonly clanSkill: boolean = false,
+    ) { }
 }
 
 export class ClanSkill {
     value_: number;
-    lastChange_: ClanSkillChange|undefined;
+    lastChange_: ClanSkillChange | undefined;
 
     constructor(value: number) {
         this.value_ = value;
@@ -43,7 +44,7 @@ export class ClanSkill {
         return this.value_;
     }
 
-    get lastChange(): ClanSkillChange|undefined {
+    get lastChange(): ClanSkillChange | undefined {
         return this.lastChange_;
     }
 
