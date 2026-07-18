@@ -60,7 +60,7 @@ we have:
 Item list:
 
 *   Next bits on skills:
-    *   Structure expected change calculations better
+    x   Structure expected change calculations better
     x   Work harder to tune the scaling at different effort
         levels
     x   Fix bug with move still appearing in the tooltip

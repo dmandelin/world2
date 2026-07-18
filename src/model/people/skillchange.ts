@@ -130,9 +130,9 @@ export class ClanSkillChange {
                 adjustedLossFactor *= 2;
             }
         }
-        const relativeDeltaFromError = -adjustedLossFactor - lossSwing * (Math.random() - Math.random());
-        const expectedDeltaFromError = this.initialValue * -adjustedLossFactor;
-        const deltaFromError = this.initialValue * relativeDeltaFromError;
+        const expectedDeltaFromError = -adjustedLossFactor * this.initialValue;
+        const deltaFromError = expectedDeltaFromError
+            + this.initialValue * lossSwing * (Math.random() - Math.random());
         this.items.push(new ClanSkillChangeItem('Error', deltaFromError, expectedDeltaFromError));
 
         // Focus influences learning rate.
@@ -140,13 +140,16 @@ export class ClanSkillChange {
         this.focusFactor = Math.pow(this.focus, 0.25);
 
         // Learn by imitation. Imitation target might be self, meaning
-        // the clan prefers its own traditions.
+        // the clan prefers its own traditions. Imitation is generally
+        // faster than observation.
         //
         // "Clan skills" are developed internally and not via imitation.
+        let learningFromOther = false;
         if (!skillDef.clanSkill) {
-            const maxImitationDelta = 5 * this.focusFactor;
+            const maxImitationDelta = 10 * this.focusFactor;
             this.imitationTargetItems = [...clan.settlement!.clans].map(
                 c => new ImitationTargetItem(
+                    c.uuid,
                     c.name,
                     c.skills.v(skillDef),
                     100 * getRespect(clan, c)
@@ -156,6 +159,9 @@ export class ClanSkillChange {
                 item.weight /= totalWeight;
             }
             const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
+            if (imitationTarget.uuid !== clan.uuid) {
+                learningFromOther = true;
+            }
             if (this.initialValue !== imitationTarget.trait) {
                 const imitationDelta = moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta) - this.initialValue;
                 const expectedImitationDelta = imitationTarget.weight * imitationDelta;
@@ -172,9 +178,11 @@ export class ClanSkillChange {
         // TODO - might want less observation learning if they're imitating,
         //        but still allow some
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
-        const deltaFromObservation = clanSkillFactor * this.focusFactor *
-            (5 + 5 * (Math.random() - Math.random()));
-        const expectedDeltaFromObservation = clanSkillFactor * this.focusFactor * 5;
+        const learningFromOtherFactor = learningFromOther ? 0.5 : 1;
+        const observationLearningFactor = this.focusFactor * clanSkillFactor * learningFromOtherFactor;
+        const expectedDeltaFromObservation = 5 * observationLearningFactor;
+        const deltaFromObservation = expectedDeltaFromObservation +
+            observationLearningFactor * (5 * (Math.random() - Math.random()));
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));
     }
 
@@ -195,6 +203,7 @@ export class ImitationTargetItem {
     weight: number;
 
     constructor(
+        readonly uuid: string,
         readonly label: string,
         readonly trait: number,
         readonly respect: number,
