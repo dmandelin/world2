@@ -61,18 +61,28 @@ Item list:
 
 *   Next bits on skills:
     *   Structure expected change calculations better
-    *   Work harder to tune the scaling at different effort
+    x   Work harder to tune the scaling at different effort
         levels
-    *   Fix bug with move still appearing in the tooltip
+    x   Fix bug with move still appearing in the tooltip
         in the turn after a move
+    *   (P1) Use skill-specific rating instead of general respect
+    *   Consider rescaling focus to be defined in terms of
+        total time not production time; however, note that
+        leisure and care should help innovation
 *   Fix the issue of lots of little shrinking villages
     *   Appears to be related to local ecology skill getting
         reset and then not growing
-        *   We might be resetting too hard
-        *   Could consider making this not use imitation
+        x   We might be resetting too hard
+        x   Could consider making this not use imitation
             learning if it's field-specific
         *   Could also add land first, and then tie this value
             to the land
+    *   Somewhat better now, but consider:
+        *   Make clans more reluctant to move out alone
+        *   If we do let them move out alone, give them
+            actions to move back or recruit others
+        *   Give some options for help extending through
+            the cluster
     *   Create a cluster view that shows some summary info
         per settlement in the cluster, including productivity
 *   Visualize marriage connections

@@ -9,7 +9,7 @@ export class Operation {
     constructor(
         readonly clan: Clan,
         readonly process: Process,
-    ) {}
+    ) { }
 
     produce(labor: number, land: number, help: number): OperationProductionReport {
         // Assume output is linear in workers and land at this scale, 
@@ -36,8 +36,8 @@ export class Operation {
 }
 
 export function produce(
-    operations: Operation[], 
-    labor: ReadonlyMap<Operation, number>, 
+    operations: Operation[],
+    labor: ReadonlyMap<Operation, number>,
     land: ReadonlyMap<Operation, number>,
     help: ReadonlyMap<Operation, number>): ProductionReport {
     const reports: OperationProductionReport[] = [];
@@ -52,22 +52,26 @@ export function produce(
 }
 
 export class ProductionReport {
-    constructor(readonly rs: OperationProductionReport[]) {}
+    constructor(readonly rs: OperationProductionReport[]) { }
 
-    forProcess(process: Process): OperationProductionReport|undefined {
+    forProcess(process: Process): OperationProductionReport | undefined {
         return this.rs.filter(r => r.operation.process === process)[0];
     }
-    
-    getForProcess<K extends keyof OperationProductionReport>(process: Process, propName: K): 
-    OperationProductionReport[K]|undefined {
+
+    getForProcess<K extends keyof OperationProductionReport>(process: Process, propName: K):
+        OperationProductionReport[K] | undefined {
         const r = this.rs.filter(r => r.operation.process === process)[0];
         return r ? r[propName] : undefined;
     }
 
     effortForProcesses(...processes: Process[]): number {
         return sumFun(this.rs
-                .filter(r => processes.includes(r.operation.process)), 
+            .filter(r => processes.includes(r.operation.process)),
             r => r.labor);
+    }
+
+    effort(): number {
+        return sumFun(this.rs, r => r.labor);
     }
 
     totals(): Map<TradeGood, number> {

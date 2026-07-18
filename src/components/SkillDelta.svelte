@@ -91,10 +91,10 @@
     <div slot="tooltip" class="ttt">
         {#if clanSkill.lastChange}
             <p>
-                <b>{pct(clanSkill.lastChange.effortFactor)}</b> learning rate
+                <b>{pct(clanSkill.lastChange.focusFactor)}</b> learning rate
                 from
                 <br />
-                <b>{pct(clanSkill.lastChange.relativeEffort)}</b> effort
+                <b>{pct(clanSkill.lastChange.focus)}</b> focus
             </p>
             <h4>Imitation Sources</h4>
             {#if imitationTable}

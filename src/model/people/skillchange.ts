@@ -97,18 +97,13 @@ import { getRespect } from '../relations/respect';
 // increasing during the simulation.
 
 export class ClanSkillChange {
-    // Effort (in person-turns) during which skill learning occurred.
-    readonly effort: number;
-    // Effort relative to baseline for skill learning.
-    readonly relativeEffort: number;
+    // Effort as a percentage of overall effort.
+    readonly focus: number;
     // Amount of learning relative to baseline due to effort.
-    readonly effortFactor: number;
+    readonly focusFactor: number;
 
     // Value before the change.
     readonly initialValue: number;
-
-    // Value if traditions are passed on without error.
-    readonly baseFromTradition: number;
 
     readonly items: ClanSkillChangeItem[] = [];
     readonly imitationTargetItems: readonly ImitationTargetItem[] = [];
@@ -118,38 +113,38 @@ export class ClanSkillChange {
         readonly skillDef: SkillDef,
         readonly skill: ClanSkill,
     ) {
-        this.effort = skillDef.getEffort(clan);
-        this.relativeEffort = this.effort / skillDef.referenceEffort;
-        this.effortFactor = Math.pow(this.relativeEffort, 1.15);
+        const lossFactor = 0.1;
+        const lossSwing = 0.05;
 
+        // Maintaining traditions
         this.initialValue = skill.value;
 
-        // Maintain tradition with some error.
-        this.baseFromTradition = this.initialValue;
-        const relativeDeltaFromError = -0.1 + 0.15 * (Math.random() - Math.random());
-        const deltaFromError = this.baseFromTradition * relativeDeltaFromError;
-        const expectedDeltaFromError = this.baseFromTradition * -0.1;
-        this.items.push(new ClanSkillChangeItem('Error', deltaFromError, expectedDeltaFromError));
-
+        // Error in preserving traditions, proportional to the amount to preserve.
+        let adjustedLossFactor = lossFactor;
         // Lose local knowledge on a move.
         // TODO - Have this work somewhat differently for hunting and gathering
         // vs farming knowledge, as one is more locally bound than the other.
         if (clan.settlement !== clan.previousSettlement) {
             // TODO - Have a smaller reset for some other skills
             if (skillDef.resetsOnMove) {
-                const relativeDeltaFromMove = -0.5 + 0.2 * (Math.random() - Math.random());
-                const deltaFromMove = this.baseFromTradition * relativeDeltaFromMove;
-                const expectedDeltaFromMove = this.baseFromTradition * -0.5;
-                this.items.push(new ClanSkillChangeItem('Move', deltaFromMove, expectedDeltaFromMove));
+                adjustedLossFactor *= 2;
             }
         }
+        const relativeDeltaFromError = -adjustedLossFactor - lossSwing * (Math.random() - Math.random());
+        const expectedDeltaFromError = this.initialValue * -adjustedLossFactor;
+        const deltaFromError = this.initialValue * relativeDeltaFromError;
+        this.items.push(new ClanSkillChangeItem('Error', deltaFromError, expectedDeltaFromError));
+
+        // Focus influences learning rate.
+        this.focus = skillDef.getEffort(clan) / Math.max(1, clan.production.effort());
+        this.focusFactor = Math.pow(this.focus, 0.25);
 
         // Learn by imitation. Imitation target might be self, meaning
         // the clan prefers its own traditions.
         //
         // "Clan skills" are developed internally and not via imitation.
         if (!skillDef.clanSkill) {
-            const maxImitationDelta = 5 * this.effortFactor;
+            const maxImitationDelta = 5 * this.focusFactor;
             this.imitationTargetItems = [...clan.settlement!.clans].map(
                 c => new ImitationTargetItem(
                     c.name,
@@ -172,13 +167,14 @@ export class ClanSkillChange {
             }
         }
 
-        // Learn by observation. This should roughly balance error at skill 50.
+        // Learn by observation. This should roughly balance error at skill 50
+        // with focus 1.
         // TODO - might want less observation learning if they're imitating,
         //        but still allow some
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
-        const deltaFromObservation = clanSkillFactor * this.effortFactor *
+        const deltaFromObservation = clanSkillFactor * this.focusFactor *
             (5 + 5 * (Math.random() - Math.random()));
-        const expectedDeltaFromObservation = clanSkillFactor * this.effortFactor * 5;
+        const expectedDeltaFromObservation = clanSkillFactor * this.focusFactor * 5;
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));
     }
 
