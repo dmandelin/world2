@@ -70,6 +70,17 @@ Item list:
     *   Consider rescaling focus to be defined in terms of
         total time not production time; however, note that
         leisure and care should help innovation
+    *   Make ability to imitate and effectiveness depend
+        on relationship/interaction/attention
+*   (P2) Further effects of skill imitation
+    *   Think about the actual interactions that enable
+        imitation -- for now, we simply assume that there
+        is enough organic interaction people can copy
+        anyone locally
+    *   Alignment effects?
+    *   Respect?
+    *   Payment?
+    *   Conflict?
 *   Fix the issue of lots of little shrinking villages
     *   Appears to be related to local ecology skill getting
         reset and then not growing

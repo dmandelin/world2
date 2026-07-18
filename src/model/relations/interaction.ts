@@ -22,19 +22,16 @@ export class BasicInteraction extends Interaction {
         super(c1, c2);
     }
 
-    relativeAttention(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
-        let subjectAmount, objectAmount;
-        if (subject.uuid === this.c1) {
-            subjectAmount = this.amount1to2;
-            objectAmount = this.amount2to1;
-        } else {
-            subjectAmount = this.amount2to1;
-            objectAmount = this.amount1to2;
-        }
+    directedRelativeAttention(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+        const amount = subject.uuid === this.c1 ? this.amount1to2 : this.amount2to1;
+        return amount / object.population;
+    }
 
-        const subjectToObjectRelativeAttention = subjectAmount / object.population;
-        const objectToSubjectRelativeAttention = objectAmount / subject.population;
-        return Math.min(subjectToObjectRelativeAttention, objectToSubjectRelativeAttention);
+    relativeAttention(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+        return Math.min(
+            this.directedRelativeAttention(subject, object),
+            this.directedRelativeAttention(object, subject)
+        );
     }
 
     information(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {

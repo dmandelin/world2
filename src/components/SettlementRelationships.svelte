@@ -16,6 +16,7 @@
     import EntityLink from "./state/EntityLink.svelte";
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
+    import type { ClanInformation } from "../model/relations/information";
     import type { Snippet } from "svelte";
     import ConflictDetailsTable from "./tables/ConflictDetailsTable.svelte";
     import { BasicInteraction } from "../model/relations/interaction";
@@ -25,6 +26,7 @@
     let clans = $derived(settlement.clans);
 
     let stressMode: "stress" | "mutual aid" | "conflict" = $state("stress");
+    let interactionMode: "interactions" | "information" = $state("interactions");
 
     function buildRelationshipsTable<CellValue>(
         valueFn: (rowClan: ClanDTO, colClan: ClanDTO) => CellValue,
@@ -55,6 +57,14 @@
     ): number {
         const att = world.attentionTo(rowClan, colClan);
         return att / colClan.population;
+    }
+
+    function informationCellValue(
+        rowClan: ClanDTO,
+        colClan: ClanDTO,
+    ): number {
+        const info = world.informationToward(rowClan, colClan);
+        return info ? info.value : 0;
     }
 
     function alignmentCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -246,6 +256,31 @@
     {/if}
 {/snippet}
 
+{#snippet informationCellTooltip(
+    value: number,
+    subject: ClanDTO,
+    object: ClanDTO,
+)}
+    {@const info = world.informationToward(subject, object)}
+    {#if info}
+        <TableView2
+            table={new IterableTable(info.items, (i) => i.label, [
+                {
+                    data: "Value",
+                    label: "Value",
+                    valueFn: (i) => i.value,
+                    formatFn: (i: number) => unsigned(i, 2),
+                },
+                {
+                    data: "Explanation",
+                    label: "Explanation",
+                    valueFn: (i) => i.explanation,
+                },
+            ])}
+        ></TableView2>
+    {/if}
+{/snippet}
+
 {#snippet respectCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
     {@const r = world.respectToward(subject, object)}
     {#if r}
@@ -331,14 +366,46 @@
 <div style="display: flex; flex-direction: row; gap: 2rem;">
     <div>
         <div>
-            <h3>Interaction Level</h3>
-            <TableView2
-                table={buildRelationshipsTable(
-                    interactionLevelCellValue,
-                    unsignedFormat(2),
-                    interactionVolumeCellTooltip,
-                )}
-            ></TableView2>
+            <div
+                style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 0.5rem;"
+            >
+                <h3 style="margin: 0;">Interaction Level</h3>
+                <div class="stress-button-group">
+                    <button
+                        type="button"
+                        class="stress-btn {interactionMode === 'interactions'
+                            ? 'active'
+                            : ''}"
+                        onclick={() => (interactionMode = 'interactions')}
+                        >Interactions</button
+                    >
+                    <button
+                        type="button"
+                        class="stress-btn {interactionMode === 'information'
+                            ? 'active'
+                            : ''}"
+                        onclick={() => (interactionMode = 'information')}
+                        >Information</button
+                    >
+                </div>
+            </div>
+            {#if interactionMode === 'interactions'}
+                <TableView2
+                    table={buildRelationshipsTable(
+                        interactionLevelCellValue,
+                        unsignedFormat(2),
+                        interactionVolumeCellTooltip,
+                    )}
+                ></TableView2>
+            {:else}
+                <TableView2
+                    table={buildRelationshipsTable(
+                        informationCellValue,
+                        unsignedFormat(2),
+                        informationCellTooltip,
+                    )}
+                ></TableView2>
+            {/if}
         </div>
         <div>
             <div
