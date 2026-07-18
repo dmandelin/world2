@@ -6,12 +6,17 @@
     }
 </script>
 
+<div class="sidebar">
+    <button id="advance" onclick={click}>{world.year} ▶</button>
+</div>
+
 <style>
     .sidebar {
-        position: absolute;
+        position: fixed;
         top: 1em;
         right: 1em;
         background-color: transparent;
+        z-index: 100;
     }
 
     #advance {
@@ -26,7 +31,3 @@
         color: #62531d;
     }
 </style>
-
-<div class="sidebar">
-    <button id="advance" onclick={click}>{world.year} ▶</button>
-</div>
