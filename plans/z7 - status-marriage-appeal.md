@@ -66,6 +66,7 @@ Item list:
     x   Fix bug with move still appearing in the tooltip
         in the turn after a move
     *   (P1) Use skill-specific rating instead of general respect
+    *   (P1) Fix bug where clans always imitate someone
     *   Consider rescaling focus to be defined in terms of
         total time not production time; however, note that
         leisure and care should help innovation
