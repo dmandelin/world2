@@ -22,6 +22,8 @@
         }
         return val !== undefined && val !== null ? val.toString() : "";
     }
+
+    let hasRowPrefix = $derived(table.rows.some(r => r.prefix !== undefined));
 </script>
 
 {#snippet cellHTML(row: TableRow<any, any>, column: TableColumn<any, any, any>)}
@@ -45,9 +47,23 @@
     {#if !table.hideHeader}
         <thead>
             <tr>
-                <td></td>
+                {#if hasRowPrefix}
+                    <td></td>
+                {/if}
+                <td class="row-header"></td>
                 {#each table.columns as column}
-                    <th>{column.label}</th>
+                    <th>
+                        {#if column.headerTooltip}
+                            <Tooltip>
+                                {column.label}
+                                <div slot="tooltip">
+                                    {column.headerTooltip}
+                                </div>
+                            </Tooltip>
+                        {:else}
+                            {column.label}
+                        {/if}
+                    </th>
                 {/each}
             </tr>
         </thead>
@@ -55,7 +71,11 @@
     <tbody>
         {#each table.rows as row, rowIndex}
             <tr>
+                {#if hasRowPrefix}
+                    <td class="row-prefix">{row.prefix ?? ""}</td>
+                {/if}
                 <td
+                    class="row-header"
                     class:bold={true}
                     class:clickable={!!table.onClickRowHeader}
                     onclick={() => table.onClickRowHeader?.(row.data)}
@@ -130,5 +150,14 @@
 
     .bold {
         font-weight: bold;
+    }
+
+    .row-header {
+        text-align: left !important;
+    }
+
+    .row-prefix {
+        text-align: center !important;
+        padding-right: 0px;
     }
 </style>

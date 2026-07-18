@@ -59,13 +59,33 @@ we have:
 
 Item list:
 
+*   Need to look at wacky productivity values
+    *   Avoid clans moving out alone for now
+    *   Switch to new help system (productivity bonus
+        based on help relationship value)
+    *   Temporarily boost agricultural productivity to
+        account for using prime land first
+    *   Introduce land model
+    *   Make ditching work again
+
 *   Next bits on skills:
+    *   Sort out what is showing values from what time for
+        skill UI
     x   Structure expected change calculations better
     x   Work harder to tune the scaling at different effort
         levels
     x   Fix bug with move still appearing in the tooltip
         in the turn after a move
-    *   (P1) Use skill-specific rating instead of general respect
+    x   (P1) Use skill-specific rating instead of general respect
+    *   More stuff to add to the rating
+        *   Happiness?
+        *   Food storage?
+        *   Relationships?
+        *   Alignment?
+        *   Conflict?
+    *   Consider letting clans sync opinions on whom to
+        imitate
+    *   Consider adding a self bias, probably variable
     *   (P1) Fix bug where clans always imitate someone
     *   Consider rescaling focus to be defined in terms of
         total time not production time; however, note that

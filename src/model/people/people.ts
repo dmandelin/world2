@@ -50,7 +50,7 @@ const CLAN_COLORS: string[] = [
     'red', 'orange', 'green', 'blue', 'purple', 'brown', 'black', 'gray', 'pink', 'cyan'
 ];
 
-export function randomClanName(exclude: string[]|Set<String>): string {
+export function randomClanName(exclude: string[] | Set<String>): string {
     if (Array.isArray(exclude)) exclude = new Set(exclude);
     const available = CLAN_NAMES.filter(name => !exclude.has(name));
     if (available.length === 0) {
@@ -59,7 +59,7 @@ export function randomClanName(exclude: string[]|Set<String>): string {
     return available[Math.floor(Math.random() * available.length)];
 }
 
-export function randomClanColor(exclude: string[]|Set<String>): string {
+export function randomClanColor(exclude: string[] | Set<String>): string {
     if (Array.isArray(exclude)) exclude = new Set(exclude);
     const available = CLAN_COLORS.filter(color => !exclude.has(color));
     if (available.length === 0) {
@@ -75,7 +75,7 @@ function randomStat(): number {
 }
 
 export class PersonalityTrait {
-    constructor(readonly name: string) {}
+    constructor(readonly name: string) { }
 }
 
 export const PersonalityTraits = {
@@ -102,7 +102,7 @@ export class Clan implements TradePartner {
     // Number of turns it's generally agreed the clan has been in the settlement,
     // counting a cadet clan based on the parent clan's tenure.
     seniority: number = 2;
-    
+
     lastPopulationChange: PopulationChange = PopulationChangeBuilder.empty(this);
 
     skills = new ClanSkills(this);
@@ -114,9 +114,9 @@ export class Clan implements TradePartner {
     previousSettlement_: Settlement;
 
     readonly rites: Rites; // TODO - remove if not used
-    ritualGoodsUsage: 'Private'|'Communal' = 'Private';
+    ritualGoodsUsage: 'Private' | 'Communal' = 'Private';
 
-    housingDecision: HousingDecision|undefined;
+    housingDecision: HousingDecision | undefined;
     housing = HousingTypes.Huts;
 
     isDitching = false;
@@ -128,7 +128,7 @@ export class Clan implements TradePartner {
 
     targetPerCapitaFood: number;
     readonly tradeRelationships = new Set<TradeRelationship>();
-    
+
     stress = new Stress();
 
     production: ProductionReport = new ProductionReport([]);
@@ -172,7 +172,7 @@ export class Clan implements TradePartner {
             --this.slices[0][gix];
             --error;
         }
-        while (error < 0) { 
+        while (error < 0) {
             let gix = Math.floor(Math.random() * 2);
             ++this.slices[0][gix];
             ++error;
@@ -257,6 +257,14 @@ export class Clan implements TradePartner {
         return this.population * this.residenceFraction;
     }
 
+    informationOn(other: Clan): number {
+        if (other === this) {
+            return 1.0;
+        }
+        return this.world.perceptions
+            .get(this, other)?.information.value ?? 0;
+    }
+
     mutualAidPayoff(): number {
         let value = 0;
         for (const [_, interactions] of this.world.interactions.getFor(this)) {
@@ -277,7 +285,7 @@ export class Clan implements TradePartner {
     conflictPayoff() {
         return sumFun(
             this.world.conflicts.entriesForClan(this),
-            ([_, conflict]) => conflict.value(this));        
+            ([_, conflict]) => conflict.value(this));
     }
 
     updateStress() {
@@ -300,7 +308,7 @@ export class Clan implements TradePartner {
         return this.happiness.appeal;
     }
 
-    get migrationPlan(): MigrationCalc|undefined {
+    get migrationPlan(): MigrationCalc | undefined {
         return this.migrationPlan_;
     }
 
@@ -348,8 +356,8 @@ export class Clan implements TradePartner {
             // in common production models, clans can trade their
             // consumption resources for this.
 
-            const sustenanceAvailable = 
-                  this.consumption.perCapita(TradeGoods.Cereals)
+            const sustenanceAvailable =
+                this.consumption.perCapita(TradeGoods.Cereals)
                 + this.consumption.perCapita(TradeGoods.Fish);
             //const cost = sustenanceAvailable * 0.05;
             const cost = 0; // TODO - add back cost when we add a real benefit
@@ -440,7 +448,7 @@ export class Clan implements TradePartner {
                 this.traits.add(PersonalityTraits.SETTLED);
             } else if (r >= 0.9) {
                 this.traits.add(PersonalityTraits.MOBILE);
-            }   
+            }
         }
     }
 
@@ -481,7 +489,7 @@ export class Clan implements TradePartner {
         }
 
         this.intelligence = Math.round(
-            (this.intelligence * origSize + other.intelligence * other.population) / 
+            (this.intelligence * origSize + other.intelligence * other.population) /
             (origSize + other.population));
 
         // TODO - Handle relationships
@@ -507,6 +515,7 @@ export class Clan implements TradePartner {
         newClan.skills = this.skills.cloneFor(newClan);
         newClan.traits.clear();
         for (const trait of this.traits) newClan.traits.add(trait);
+        newClan.effortAllocation = new EffortAllocation(newClan, this.effortAllocation.m, this.effortAllocation.pm);
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
             newClan.slices[i][1] = Math.round(this.slices[i][1] * fraction);
@@ -545,5 +554,5 @@ export class Clan implements TradePartner {
 }
 
 export class ClanNotification {
-    constructor(readonly tag: string, readonly message: string) {}
+    constructor(readonly tag: string, readonly message: string) { }
 }

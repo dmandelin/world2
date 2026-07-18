@@ -55,7 +55,8 @@
     }
 
     function draw() {
-        context!.clearRect(0, 0, canvas!.width, canvas!.height);
+        if (!canvas || !context) return;
+        context.clearRect(0, 0, canvas.width, canvas.height);
 
         for (const settlement of world.allSettlements) {
             const x = settlement.x;
@@ -293,13 +294,15 @@ ${settlement.cluster.population} \
         hoveredPlannedSettlement = null;
     }
 
+    function onWorldUpdate() {
+        worldDTO = world.dto!;
+        draw();
+    }
+
     onMount(() => {
         context = canvas!.getContext("2d");
 
-        world.watch(() => {
-            worldDTO = world.dto!;
-            draw();
-        });
+        world.watch(onWorldUpdate);
         draw();
 
         //resizeCanvas();
@@ -311,7 +314,7 @@ ${settlement.cluster.population} \
     });
 
     onDestroy(() => {
-        world.unwatch(draw);
+        world.unwatch(onWorldUpdate);
     });
 
     $effect(() => {

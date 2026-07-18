@@ -13,37 +13,54 @@
     let { clan, skill }: { clan: ClanDTO; skill: SkillDef } = $props();
     let clanSkill = $derived(clan.skills.get(skill)!);
 
-    let imitationTable = $derived(
-        clanSkill.lastChange && !skill.clanSkill
-            ? new IterableTable<ImitationTargetItem, [number, number, number]>(
-                  sortedByKey(
-                      clanSkill.lastChange.imitationTargetItems,
-                      (i) => -i.weight,
-                  ),
-                  (item) => item.label,
-                  [
-                      {
-                          data: "𝕊",
-                          label: "𝕊",
-                          valueFn: (r) => r.trait,
-                          formatFn: (v) => v.toFixed(),
-                      },
-                      {
-                          data: "R",
-                          label: "R",
-                          valueFn: (r) => r.respect,
-                          formatFn: (v) => v.toFixed(),
-                      },
-                      {
-                          data: "𝕎",
-                          label: "𝕎",
-                          valueFn: (r) => r.weight,
-                          formatFn: (v) => v.toFixed(2),
-                      },
-                  ],
-              )
-            : undefined,
-    );
+    let imitationTable = $derived.by(() => {
+        if (!clanSkill.lastChange || skill.clanSkill) return undefined;
+        const table = new IterableTable<ImitationTargetItem, [number, number, number, number]>(
+            sortedByKey(
+                clanSkill.lastChange.imitationTargetItems,
+                (i) => -i.weight,
+            ),
+            (item) => item.label,
+            [
+                {
+                    data: "S",
+                    label: "S",
+                    headerTooltip: "Actual skill level",
+                    valueFn: (r) => r.trait,
+                    formatFn: (v) => v.toFixed(),
+                },
+                {
+                    data: "I",
+                    label: "I",
+                    headerTooltip: "Information level",
+                    valueFn: (r) => r.information,
+                    formatFn: pct,
+                },
+                {
+                    data: "ES",
+                    label: "ES",
+                    headerTooltip: "Estimated (perceived) skill level",
+                    valueFn: (r) => r.perceivedSkill,
+                    formatFn: (v) => v.toFixed(),
+                },
+                {
+                    data: "W",
+                    label: "W",
+                    headerTooltip: "Imitation target choice probability weight",
+                    valueFn: (r) => r.weight,
+                    formatFn: (v) => v.toFixed(2),
+                },
+            ],
+        );
+        for (const row of table.rows) {
+            if (row.data.uuid === clan.uuid) {
+                row.prefix = row.data.chosen ? "S" : "s";
+            } else if (row.data.chosen) {
+                row.prefix = "★";
+            }
+        }
+        return table;
+    });
 
     let changeSourcesTable = $derived.by(() => {
         if (!clanSkill.lastChange) return undefined;

@@ -2,7 +2,6 @@ import { type Clan } from './people';
 import { type ClanSkill, type SkillDef } from './skills';
 import { moveToward } from '../lib/modelbasics';
 import { chooseWeighted, sumFun } from '../lib/basics';
-import { getRespect } from '../relations/respect';
 
 // About skill changes
 //
@@ -144,24 +143,47 @@ export class ClanSkillChange {
         // faster than observation.
         //
         // "Clan skills" are developed internally and not via imitation.
-        let learningFromOther = false;
         if (!skillDef.clanSkill) {
-            const maxImitationDelta = 10 * this.focusFactor;
+            const maxImitationDelta = 15 * this.focusFactor;
             this.imitationTargetItems = [...clan.settlement!.clans].map(
                 c => new ImitationTargetItem(
                     c.uuid,
                     c.name,
+                    clan.informationOn(c),
                     c.skills.v(skillDef),
-                    100 * getRespect(clan, c)
                 ));
-            const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
+
+            // Calculate the average skill observed by the clan
+            let sumInfoTimesSkill = 0;
+            let sumInfo = 0;
             for (const item of this.imitationTargetItems) {
-                item.weight /= totalWeight;
+                sumInfoTimesSkill += item.information * item.trait;
+                sumInfo += item.information;
             }
+            const averageSkillObserved = sumInfo > 0
+                ? sumInfoTimesSkill / sumInfo
+                : sumFun(this.imitationTargetItems, item => item.trait) / Math.max(1, this.imitationTargetItems.length);
+
+            // Compute weights based on perceived skills (Elo-like formula)
+            for (const item of this.imitationTargetItems) {
+                item.perceivedSkill = item.information * item.trait + (1.0 - item.information) * averageSkillObserved;
+                // If two clans have a 30-point skill difference, they are 75% likely to imitate the higher-skill clan (3:1 ratio)
+                item.weight = Math.pow(3, item.perceivedSkill / 30);
+            }
+
+            const totalWeight = sumFun(this.imitationTargetItems, o => o.weight);
+            if (totalWeight > 0) {
+                for (const item of this.imitationTargetItems) {
+                    item.weight /= totalWeight;
+                }
+            } else {
+                for (const item of this.imitationTargetItems) {
+                    item.weight = 1.0 / this.imitationTargetItems.length;
+                }
+            }
+
             const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
-            if (imitationTarget.uuid !== clan.uuid) {
-                learningFromOther = true;
-            }
+            imitationTarget.chosen = true;
             if (this.initialValue !== imitationTarget.trait) {
                 const imitationDelta = moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta) - this.initialValue;
                 const expectedImitationDelta = imitationTarget.weight * imitationDelta;
@@ -176,13 +198,13 @@ export class ClanSkillChange {
         // Learn by observation. This should roughly balance error at skill 50
         // with focus 1.
         // TODO - might want less observation learning if they're imitating,
-        //        but still allow some
+        //        but still allow some. However, this has a big impact on
+        //        tuning so must be done carefully.
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
-        const learningFromOtherFactor = learningFromOther ? 0.5 : 1;
-        const observationLearningFactor = this.focusFactor * clanSkillFactor * learningFromOtherFactor;
-        const expectedDeltaFromObservation = 5 * observationLearningFactor;
+        const observationLearningFactor = this.focusFactor * clanSkillFactor;
+        const expectedDeltaFromObservation = 6 * observationLearningFactor;
         const deltaFromObservation = expectedDeltaFromObservation +
-            observationLearningFactor * (5 * (Math.random() - Math.random()));
+            observationLearningFactor * (4 * (Math.random() - Math.random()));
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));
     }
 
@@ -201,14 +223,17 @@ export class ClanSkillChangeItem {
 
 export class ImitationTargetItem {
     weight: number;
+    perceivedSkill: number;
+    chosen: boolean;
 
     constructor(
         readonly uuid: string,
         readonly label: string,
+        readonly information: number,
         readonly trait: number,
-        readonly respect: number,
     ) {
-        if (isNaN(respect)) debugger;
-        this.weight = (4 ** trait) * (1.3 ** respect);
+        this.weight = 0;
+        this.perceivedSkill = 0;
+        this.chosen = false;
     }
 }

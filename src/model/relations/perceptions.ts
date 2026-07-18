@@ -6,7 +6,7 @@ import { MarriageInterest } from "./marriageInterest";
 import type { Clan } from "../people/people";
 import type { Interaction } from "./interaction";
 import type { World } from "../world";
-import type { UUID } from "../records/basicdata";
+import { uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
 
 // A clan's perceptions of another.
 export class Perceptions {
@@ -16,8 +16,8 @@ export class Perceptions {
     readonly marriageInterest = new MarriageInterest();
 
     constructor(
-        information: ClanInformation = new ClanInformation(), 
-        alignment: Alignment = new Alignment(), 
+        information: ClanInformation = new ClanInformation(),
+        alignment: Alignment = new Alignment(),
         respect: Respect = new Respect(),
         marriageInterest: MarriageInterest = new MarriageInterest()
     ) {
@@ -36,8 +36,8 @@ export class Perceptions {
 
     clone(): Perceptions {
         return new Perceptions(
-            this.information.clone(), 
-            this.alignment.clone(), 
+            this.information.clone(),
+            this.alignment.clone(),
             this.respect.clone(),
             this.marriageInterest.clone()
         );
@@ -51,29 +51,29 @@ export class PerceptionsGraph {
     // object -> subject -> perceptions
     private readonly r_ = new Map<UUID, Map<UUID, Perceptions>>();
 
-    getFor(subject: UUID): Iterable<[UUID, Perceptions]> {
-        const subjectMap = this.m_.get(subject);
+    getFor(subject: HasOrIsUUID): Iterable<[UUID, Perceptions]> {
+        const subjectMap = this.m_.get(uuidOf(subject));
         if (!subjectMap) return [];
         return subjectMap.entries();
     }
 
-    getRegarding(object: UUID): Iterable<[UUID, Perceptions]> {
-        const objectMap = this.r_.get(object);
+    getRegarding(object: HasOrIsUUID): Iterable<[UUID, Perceptions]> {
+        const objectMap = this.r_.get(uuidOf(object));
         if (!objectMap) return [];
         return objectMap.entries();
     }
 
-    get(subject: UUID, object: UUID): Perceptions | undefined {
-        let subjectMap = this.m_.get(subject);
+    get(subject: HasOrIsUUID, object: HasOrIsUUID): Perceptions | undefined {
+        let subjectMap = this.m_.get(uuidOf(subject));
         if (!subjectMap) return undefined;
-        return subjectMap.get(object);
+        return subjectMap.get(uuidOf(object));
     }
 
-    getOrCreate(subject: UUID, object: UUID): Perceptions {
+    getOrCreate(subject: HasOrIsUUID, object: HasOrIsUUID): Perceptions {
         let perceptions = this.get(subject, object);
         if (!perceptions) {
             perceptions = new Perceptions();
-            this.add(subject, object, perceptions);
+            this.add(uuidOf(subject), uuidOf(object), perceptions);
         }
         return perceptions;
     }

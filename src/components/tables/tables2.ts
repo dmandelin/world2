@@ -46,6 +46,9 @@ export interface TableColumn<RowData, ColData, CellData> {
     // If set, the cell will have a tooltip with this snippet.
     tooltip?: Snippet<[CellData, RowData, ColData]>;
 
+    // If set, the column header will display a tooltip with this text.
+    headerTooltip?: string;
+
     // If set, clicking on a cell will call this function with the cell data, 
     // row data, and column.
     onClickCell?: (data: CellData, row: RowData, col: ColData) => void;
@@ -61,6 +64,9 @@ export interface TableRow<RowData, ColData> {
 
     // Whether to display this row in bold.
     bold?: boolean;
+
+    // Optional prefix text to render in a separate column to the left of the label.
+    prefix?: string;
 
     // If set, the cell will have a tooltip with this snippet.
     tooltip?: Snippet<[any, RowData, ColData]>;

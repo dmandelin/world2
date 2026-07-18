@@ -426,6 +426,25 @@
                     deltaFormat: (v) => v.toFixed(2),
                 },
                 {
+                    label: "&nbsp;YPL",
+                    labelTooltip: "Yield per labor (yield per effort)",
+                    class: "actual",
+                    cellClass: "rap",
+                    useTooltip: true,
+                    value: (c) =>
+                        safeDiv(
+                            c.production.getForProcess(process, "amount") ?? 0,
+                            c.production.getForProcess(process, "labor") ?? 0,
+                        ),
+                    format: (v) => v.toFixed(2),
+                    deltaValue: (c) =>
+                        safeDiv(
+                            c.production.getForProcess(process, "amount") ?? 0,
+                            c.production.getForProcess(process, "labor") ?? 0,
+                        ),
+                    deltaFormat: (v) => v.toFixed(2),
+                },
+                {
                     label: "&nbsp;YPC",
                     labelTooltip: "Yield per capita",
                     class: "actual",
@@ -1067,7 +1086,7 @@
                         {#if row.isHeader}
                             <td colspan={1 + csnaps.length * 2}>{row.label}</td>
                         {:else}
-                            <td>
+                            <td class="row-label">
                                 {#if row.labelTooltip}
                                     <SimpleTooltip tip={row.labelTooltip}
                                         >{@html row.label}</SimpleTooltip
@@ -1166,5 +1185,12 @@
     .clan-header {
         text-align: center;
         font-weight: bold;
+    }
+
+    .row-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 12em;
     }
 </style>
