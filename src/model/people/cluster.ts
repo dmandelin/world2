@@ -9,6 +9,7 @@ import type { Process } from "../econ/process";
 export const MILES_PER_UNIT = 0.16666667;
 
 export class SettlementCluster {
+    readonly uuid = crypto.randomUUID();
     readonly placer_ = new SettlementPlacer(this);
     readonly settlements: Settlement[] = [];
 

@@ -244,6 +244,7 @@ export class SettlementDTO {
 }
 
 export class ClusterDTO {
+    readonly uuid: string;
     readonly name: string;
     readonly settlements: SettlementDTO[];
     readonly population: number;
@@ -252,6 +253,7 @@ export class ClusterDTO {
     readonly diseaseLoad: DiseaseLoadCalc;
 
     constructor(private readonly cluster: SettlementCluster, readonly world: WorldDTO) {
+        this.uuid = cluster.uuid;
         this.name = cluster.name;
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this, world));
         this.population = cluster.population;

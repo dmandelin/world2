@@ -2,6 +2,7 @@
     import ClanDetails from "../components/clan/ClanDetails.svelte";
     import Land from "../components/Land.svelte";
     import Map from "../components/Map.svelte";
+    import SettlementCluster from "../components/SettlementCluster.svelte";
     import SettlementDecorated from "../components/SettlementDecorated.svelte";
     import Sidebar from "../components/Sidebar.svelte";
     import EntityLink from "../components/state/EntityLink.svelte";
@@ -26,6 +27,8 @@
                 settlement={uiState().selectedSettlement!}
                 onSelect={selectSettlement}
             />
+        {:else if uiState().selectedCluster}
+            <SettlementCluster cluster={uiState().selectedCluster!} />
         {:else}
             <Land world={worldState()} />
         {/if}
@@ -40,3 +43,4 @@
         color: #2c250d;
     }
 </style>
+

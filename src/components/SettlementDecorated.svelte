@@ -17,6 +17,7 @@
     import ButtonPanel from "./ButtonPanel.svelte";
     import Settlement from "./Settlement.svelte";
     import Tooltip from "./Tooltip.svelte";
+    import EntityLink from "./state/EntityLink.svelte";
 
     let {
         settlement,
@@ -124,7 +125,7 @@
         </div>
         <div>
             <h4>
-                {settlement.cluster.name} |
+                <EntityLink entity={settlement.cluster} /> |
                 <img
                     src="stat-population-256.png"
                     alt="Population"
