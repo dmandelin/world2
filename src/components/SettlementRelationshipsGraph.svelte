@@ -3,7 +3,7 @@
     import type { ClanDTO, SettlementDTO } from '../model/records/dtos';
     import { colorInterpolator } from '../model/lib/basics';
     import { connectionsOfType, FriendshipConnection, KinConnection, MarriageConnection } from '../model/relations/connection';
-    import { BasicInteraction } from '../model/relations/interaction';
+    import { BasicInteraction } from '../model/relations/basicinteraction';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);

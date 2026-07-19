@@ -24,7 +24,7 @@ import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { Stress } from "./stress";
-import { BasicInteraction } from "../relations/interaction";
+import { BasicInteraction } from "../relations/basicinteraction";
 
 const CLAN_NAMES: string[] = [
     "Abzu", "Adab", "Akkad", "Akkul", "Akkur", "Alulim", "Amurru", "Anzu", "Apin", "Aratta", "Asarlu",

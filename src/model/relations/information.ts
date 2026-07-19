@@ -1,7 +1,8 @@
 import { sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { Connection } from "./connection";
-import { BasicInteraction, type Interaction } from "./interaction";
+import type { Interaction } from "./interaction";
+import { BasicInteraction } from "./basicinteraction";
 import { pct } from "../lib/format";
 
 export class ClanInformationItem {

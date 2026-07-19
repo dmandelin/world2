@@ -19,7 +19,7 @@
     import type { ClanInformation } from "../model/relations/information";
     import type { Snippet } from "svelte";
     import ConflictDetailsTable from "./tables/ConflictDetailsTable.svelte";
-    import { BasicInteraction } from "../model/relations/interaction";
+    import { BasicInteraction } from "../model/relations/basicinteraction";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);

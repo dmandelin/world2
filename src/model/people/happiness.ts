@@ -5,7 +5,7 @@ import { pct } from "../lib/format";
 import { TradeGoods } from "../trade";
 import type { Clan } from "./people";
 import { connectionsOf } from "../relations/connection";
-import { getRelativeAttention } from "../relations/interaction";
+import { getRelativeAttention } from "../relations/basicinteraction";
 import { getAlignment } from "../relations/alignment";
 import { getLocalRespect } from "../relations/respect";
 
