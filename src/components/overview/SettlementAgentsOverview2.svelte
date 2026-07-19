@@ -50,11 +50,9 @@
 
     let {
         settlement,
-        title,
         predictMode,
     }: {
         settlement: SettlementDTO;
-        title?: string;
         predictMode?: boolean;
     } = $props();
 
@@ -78,6 +76,7 @@
         isHeader?: boolean;
         colspan?: number;
         cellClass?: string;
+        topics?: string[];
 
         // Value definition
         value?: (c: ClanDTO) => any;
@@ -112,6 +111,7 @@
                 value: (c) => c.population,
                 tooltipSnippet: peopleTooltip,
                 customDeltaSnippet: peopleDeltaCell,
+                topics: ["demographics"],
             },
             {
                 label: "&nbsp;Next support ratio",
@@ -124,6 +124,7 @@
                 deltaFormat: (v) => v.toFixed(1),
                 timelineKey: "supportRatio",
                 scaler: new DefaultScaler(),
+                topics: ["demographics", "productivity"],
             },
             {
                 label: "Birth rate modifier",
@@ -136,6 +137,7 @@
                 deltaFormat: pct,
                 timelineKey: "brModifier",
                 scaler: new DefaultScaler(),
+                topics: ["demographics"],
             },
             {
                 label: "Death rate modifier",
@@ -148,6 +150,7 @@
                 deltaFormat: pct,
                 timelineKey: "drModifier",
                 scaler: new DefaultScaler(),
+                topics: ["demographics"],
             },
             {
                 label: "Support Ratio",
@@ -158,6 +161,7 @@
                 deltaFormat: (v) => v.toFixed(1),
                 timelineKey: "supportRatio",
                 scaler: new DefaultScaler(),
+                topics: ["demographics"],
             },
         ]);
 
@@ -174,6 +178,7 @@
                 deltaFormat: signed,
                 timelineKey: "appeal",
                 scaler: new ZeroCenteredScaler(),
+                topics: ["welfare"],
             },
             {
                 label: "Social Welfare",
@@ -186,6 +191,7 @@
                 deltaFormat: signed,
                 timelineKey: "socialAppeal",
                 scaler: new ZeroCenteredScaler(),
+                topics: ["welfare"],
             },
             {
                 label: "Material Welfare",
@@ -198,6 +204,7 @@
                 deltaFormat: signed,
                 timelineKey: "subsistenceAppeal",
                 scaler: new ZeroCenteredScaler(),
+                topics: ["welfare"],
             },
             {
                 label: "QoL",
@@ -210,6 +217,7 @@
                 deltaFormat: signed,
                 timelineKey: "qol",
                 scaler: new ZeroCenteredScaler(),
+                topics: ["welfare"],
             },
             {
                 label: "Stress",
@@ -221,6 +229,7 @@
                 deltaFormat: signed,
                 timelineKey: "stress",
                 scaler: new ZeroCenteredScaler(),
+                topics: ["welfare"],
             },
             {
                 label: "Residence",
@@ -232,6 +241,7 @@
                 deltaFormat: pct,
                 timelineKey: "residenceFraction",
                 scaler: new DefaultScaler(),
+                topics: ["demographics", "welfare"],
             },
         ]);
 
@@ -248,6 +258,7 @@
                 deltaFormat: (v) => signed(v, 2),
                 timelineKey: "marriageAppealAverage",
                 scaler: new ZeroCenteredScaler(),
+                topics: ["perceptions"],
             },
             {
                 label: "Marriage Appeal SD",
@@ -259,6 +270,7 @@
                 deltaFormat: (v) => signed(v, 2),
                 timelineKey: "marriageAppealStdDev",
                 scaler: new DefaultScaler(),
+                topics: ["perceptions"],
             },
         ]);
 
@@ -275,6 +287,7 @@
                 deltaFormat: pct,
                 timelineKey: "food",
                 scaler: new DefaultScaler(),
+                topics: ["food", "welfare"],
             },
             {
                 label: "&nbsp;Target",
@@ -287,6 +300,7 @@
                 deltaFormat: pct,
                 timelineKey: "targetFood",
                 scaler: new DefaultScaler(),
+                topics: ["food"],
             },
             {
                 label: "Food Storage",
@@ -299,6 +313,7 @@
                 deltaFormat: pct,
                 timelineKey: "foodStorage",
                 scaler: new DefaultScaler(),
+                topics: ["food"],
             },
             {
                 label: "Food Security",
@@ -311,6 +326,7 @@
                 deltaFormat: pct,
                 timelineKey: "foodSecurity",
                 scaler: new DefaultScaler(),
+                topics: ["food", "welfare"],
             },
         ]);
 
@@ -320,21 +336,25 @@
                 label: "Activities",
                 colspan: 2,
                 renderSnippet: activitiesRender,
+                topics: ["production"],
             },
             {
                 label: "(Previous)",
                 colspan: 2,
                 renderSnippet: activitiesPrevRender,
+                topics: ["production"],
             },
             {
                 label: "Processes",
                 colspan: 2,
                 renderSnippet: processesRender,
+                topics: ["production"],
             },
             {
                 label: "(Previous)",
                 colspan: 2,
                 renderSnippet: processesPrevRender,
+                topics: ["production"],
             },
         ]);
 
@@ -357,6 +377,7 @@
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "amount") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
+                    topics: ["production"],
                 },
                 {
                     label: "&nbsp;Land",
@@ -369,6 +390,7 @@
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "land") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
+                    topics: ["production"],
                 },
                 {
                     label: "&nbsp;Labor",
@@ -381,6 +403,7 @@
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "labor") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
+                    topics: ["production"],
                 },
                 {
                     label: "&nbsp;Help",
@@ -393,6 +416,7 @@
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "help") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
+                    topics: ["production"],
                 },
                 {
                     label: "&nbsp;Base LP",
@@ -413,6 +437,7 @@
                             "laborProductivityFactor",
                         ) ?? 0,
                     deltaFormat: (v) => v.toFixed(2),
+                    topics: ["production", "productivity"],
                 },
                 {
                     label: "&nbsp;Net LP",
@@ -424,6 +449,7 @@
                     format: spct,
                     deltaValue: (c) => netLaborProductivity(c, process),
                     deltaFormat: (v) => v.toFixed(2),
+                    topics: ["production", "productivity"],
                 },
                 {
                     label: "&nbsp;YPL",
@@ -443,6 +469,7 @@
                             c.production.getForProcess(process, "labor") ?? 0,
                         ),
                     deltaFormat: (v) => v.toFixed(2),
+                    topics: ["production", "productivity"],
                 },
                 {
                     label: "&nbsp;YPC",
@@ -462,6 +489,7 @@
                             c.previousPopulation,
                         ),
                     deltaFormat: (v) => v.toFixed(2),
+                    topics: ["production", "productivity"],
                 },
             ]);
         }
@@ -479,6 +507,7 @@
                     format: unsigned,
                     customDeltaSnippet: skillDeltaCell,
                     customDeltaContext: skill,
+                    topics: ["skills"],
                 });
             }
             if (skillGroup.length > 0) {
@@ -766,6 +795,51 @@
             (r.laborProductivityFactor * Math.min(r.labor, r.land)) / r.labor
         );
     }
+
+    let selectedLens = $state<string>("All");
+    const lenses: Record<string, string[]> = {
+        All: ["*"],
+        Econ: ["production", "productivity", "food", "skills"],
+        Productivity: ["productivity"],
+    };
+
+    function isRowVisible(row: RowDef, selectedLensTopics: string[]): boolean {
+        if (selectedLensTopics.includes("*")) {
+            return true;
+        }
+        if (!row.topics) {
+            return false;
+        }
+        return row.topics.some((t) => selectedLensTopics.includes(t));
+    }
+
+    let filteredRowGroups = $derived.by<RowDef[][]>(() => {
+        const selectedLensTopics = lenses[selectedLens];
+        const result: RowDef[][] = [];
+        for (const group of rowGroups) {
+            const visibleNonHeaderRows = group.filter(
+                (row) => !row.isHeader && isRowVisible(row, selectedLensTopics),
+            );
+            if (visibleNonHeaderRows.length > 0) {
+                const groupResult = group.filter(
+                    (row) =>
+                        row.isHeader || isRowVisible(row, selectedLensTopics),
+                );
+                result.push(groupResult);
+            } else {
+                const hasHeader = group.some((row) => row.isHeader);
+                if (!hasHeader) {
+                    const visibleRows = group.filter((row) =>
+                        isRowVisible(row, selectedLensTopics),
+                    );
+                    if (visibleRows.length > 0) {
+                        result.push(visibleRows);
+                    }
+                }
+            }
+        }
+        return result;
+    });
 </script>
 
 {#snippet deltaCell(
@@ -1060,7 +1134,17 @@
 {/snippet}
 
 <div id="top" class={predictMode ? "predict" : ""}>
-    <h3 style="margin-block-end: 0.5em;">{title}</h3>
+    <div class="lens-button-group">
+        {#each Object.keys(lenses) as lens}
+            <button
+                type="button"
+                class="lens-btn {selectedLens === lens ? 'active' : ''}"
+                onclick={() => (selectedLens = lens)}
+            >
+                {lens}
+            </button>
+        {/each}
+    </div>
 
     <table>
         <thead>
@@ -1082,7 +1166,7 @@
             </tr>
         </thead>
         <tbody>
-            {#each rowGroups as group, groupIdx}
+            {#each filteredRowGroups as group, groupIdx}
                 {#if groupIdx > 0}
                     <tr><td style="height: 0.5em"></td></tr>
                 {/if}
@@ -1197,5 +1281,33 @@
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 12em;
+    }
+
+    .lens-button-group {
+        display: inline-flex;
+        gap: 0.25rem;
+        background-color: #f3edd8;
+        padding: 0.25rem;
+        border-radius: 4px;
+        align-items: center;
+    }
+    .lens-btn {
+        all: unset;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+        border-radius: 3px;
+        color: #333;
+        transition:
+            background-color 0.2s,
+            font-weight 0.2s;
+    }
+    .lens-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    .lens-btn.active {
+        font-weight: bold;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 </style>
