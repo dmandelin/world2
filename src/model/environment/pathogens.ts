@@ -1,7 +1,7 @@
 import { Processes } from "../econ/econdefs";
 import { Process } from "../econ/process";
 import { sum, sumFun } from "../lib/basics";
-import type { SettlementCluster } from "../people/cluster";
+import type { SettlementDecorated } from "../people/cluster";
 import type { Clan } from "../people/people";
 
 function getDiseaseLoadFactor(process: Process): number {
@@ -19,7 +19,7 @@ export class DiseaseLoadCalc {
     readonly value: number;
 
     constructor(
-        readonly cluster: SettlementCluster, 
+        readonly cluster: SettlementDecorated,
         readonly laborMap: Map<Process, Map<Clan, number>>) {
         // For now, we'll assume things are rapidly transmitted across the
         // cluster, so we can calculate a uniform load.
@@ -41,11 +41,11 @@ export class DiseaseLoadCalc {
                 }
             }
         }
-        
+
         for (const item of this.items.values()) {
             item.finish();
         }
-        
+
         // Not enough traffic for cross-cluster effects at the start.
 
         this.value = sumFun([...this.items.values()], item => item.load);
@@ -55,7 +55,7 @@ export class DiseaseLoadCalc {
 export class DiseaseLoadItem {
     load: number = 0;
 
-    constructor(readonly label: string, public effort: number, public diseaseLoadFactor: number) {}
+    constructor(readonly label: string, public effort: number, public diseaseLoadFactor: number) { }
 
     finish(): void {
         if (this.effort == 0) return;

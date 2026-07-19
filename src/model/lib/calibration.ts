@@ -1,5 +1,5 @@
 import { Annals } from "../annals";
-import { SettlementCluster } from "../people/cluster";
+import { SettlementDecorated } from "../people/cluster";
 import { Clan } from "../people/people";
 import { Settlement } from "../people/settlement";
 import { world } from "../world";
@@ -53,7 +53,7 @@ const STABLE_BIRTH_RATE = 2.97;
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
 export function calibrate() {
-    const s = new Settlement(world, "test", 0, 0, new SettlementCluster('test', 0, 0));
+    const s = new Settlement(world, "test", 0, 0, new SettlementDecorated('test', 0, 0));
     const clan = new Clan(world, s, new Annals(), 'test', 'test', 30);
 
     // Look for a stationary distribution.
@@ -84,15 +84,15 @@ export function calibrate() {
     const grpy = Math.pow(sr, 1 / (N * 20));
     const grpc = Math.pow(sr, 100 / (N * 20));
     const grpm = Math.pow(sr, 1000 / (N * 20));
-    console.log(`growth rates: ${((grpt-1)*100).toFixed(2)}%/t,  ${((grpy-1)*100).toFixed(2)}%/y`);
+    console.log(`growth rates: ${((grpt - 1) * 100).toFixed(2)}%/t,  ${((grpy - 1) * 100).toFixed(2)}%/y`);
     console.log(`              ${grpc.toFixed(3)}x/C,  ${grpm.toFixed(3)}x/M`);
 }
 
 function list(slices: number[][]) {
     const total = totalPop(slices);
-    console.log(`--- ${total} (${(slices[1][0]/total*100).toFixed(1)}%)`);
+    console.log(`--- ${total} (${(slices[1][0] / total * 100).toFixed(1)}%)`);
     for (const slice of slices) {
-        console.log((slice[0]/total).toFixed(4), '|', (slice[1]/total).toFixed(4));
+        console.log((slice[0] / total).toFixed(4), '|', (slice[1] / total).toFixed(4));
     }
 }
 

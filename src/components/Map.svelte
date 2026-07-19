@@ -5,7 +5,7 @@
     import { onDestroy, onMount } from "svelte";
     import { signed } from "../model/lib/format";
     import { world } from "../model/world";
-    import type { SettlementCluster } from "../model/people/cluster";
+    import type { SettlementDecorated } from "../model/people/cluster";
     import { Settlement } from "../model/people/settlement";
     import TrendsPanel from "./TrendsPanel.svelte";
     import { weightedAverage } from "../model/lib/modelbasics";
@@ -127,7 +127,7 @@
         context!.setLineDash([]);
     }
 
-    function drawCluster(cluster: SettlementCluster) {
+    function drawCluster(cluster: SettlementDecorated) {
         for (const settlement of cluster.settlements) {
             drawSettlement(settlement);
         }
@@ -175,7 +175,11 @@
 
         // Name
         if (!settlement.parent && !settlement.abandoned) {
-            fillTextCentered(settlement.name, x + 18 * scaleMultiplier, y + 17 * scaleMultiplier);
+            fillTextCentered(
+                settlement.name,
+                x + 18 * scaleMultiplier,
+                y + 17 * scaleMultiplier,
+            );
         }
 
         // TODO - Clean this up. For now, it's just too much,
@@ -276,8 +280,8 @@ ${settlement.cluster.population} \
 
         if (best) {
             const dto = worldDTO.clusters
-                .flatMap(c => c.settlements)
-                .find(s => s.uuid === best.uuid);
+                .flatMap((c) => c.settlements)
+                .find((s) => s.uuid === best.uuid);
             hoveredSettlement = dto;
             hoveredPlannedSettlement = null;
         } else if (bestPlanned) {
@@ -324,7 +328,12 @@ ${settlement.cluster.population} \
     });
 </script>
 
-<div class="map-container" style="position: relative; display: inline-block; width: {isBig ? '564px' : '282px'}; transition: width 0.2s;">
+<div
+    class="map-container"
+    style="position: relative; display: inline-block; width: {isBig
+        ? '564px'
+        : '282px'}; transition: width 0.2s;"
+>
     <div class="canvas-wrapper" style="position: relative; line-height: 0;">
         <button
             onclick={() => (isBig = !isBig)}
@@ -332,12 +341,32 @@ ${settlement.cluster.population} \
             title={isBig ? "Minimize Map" : "Maximize Map"}
         >
             {#if isBig}
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
                 </svg>
             {:else}
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
                 </svg>
             {/if}
         </button>
@@ -357,7 +386,9 @@ ${settlement.cluster.population} \
             onmouseleave={handleMouseLeave}
             width="564"
             height="492"
-            style="width: {isBig ? '564px' : '282px'}; height: {isBig ? '492px' : '246px'};"
+            style="width: {isBig ? '564px' : '282px'}; height: {isBig
+                ? '492px'
+                : '246px'};"
         >
         </canvas>
     </div>
@@ -365,22 +396,31 @@ ${settlement.cluster.population} \
     {#if hoveredSettlement}
         {@const pop = hoveredSettlement.population}
         {@const popDelta = hoveredSettlement.lastSizeChange}
-        {@const perCapitaFood = pop > 0 ? weightedAverage(
-            hoveredSettlement.clans,
-            (c: any) => c.consumption.perCapitaFood,
-            (c: any) => c.population
-        ) : 0}
-        {@const foodSecurity = pop > 0 ? weightedAverage(
-            hoveredSettlement.clans,
-            (c: any) => 1 - c.consumption.foodInsecurity.value,
-            (c: any) => c.population
-        ) : 0}
-        {@const stress = pop > 0 ? weightedAverage(
-            hoveredSettlement.clans,
-            (c: any) => c.stress.value,
-            (c: any) => c.population
-        ) : 0}
-        <div 
+        {@const perCapitaFood =
+            pop > 0
+                ? weightedAverage(
+                      hoveredSettlement.clans,
+                      (c: any) => c.consumption.perCapitaFood,
+                      (c: any) => c.population,
+                  )
+                : 0}
+        {@const foodSecurity =
+            pop > 0
+                ? weightedAverage(
+                      hoveredSettlement.clans,
+                      (c: any) => 1 - c.consumption.foodInsecurity.value,
+                      (c: any) => c.population,
+                  )
+                : 0}
+        {@const stress =
+            pop > 0
+                ? weightedAverage(
+                      hoveredSettlement.clans,
+                      (c: any) => c.stress.value,
+                      (c: any) => c.population,
+                  )
+                : 0}
+        <div
             class="map-tooltip"
             style="position: absolute; left: {tooltipX}px; top: {tooltipY}px;"
         >
@@ -388,9 +428,11 @@ ${settlement.cluster.population} \
             <div class="tooltip-row">
                 <span class="label">Population:</span>
                 <span class="value">
-                    {pop} 
+                    {pop}
                     {#if popDelta !== 0}
-                        <span class="delta {popDelta > 0 ? 'pos' : 'neg'}">({signed(popDelta)})</span>
+                        <span class="delta {popDelta > 0 ? 'pos' : 'neg'}"
+                            >({signed(popDelta)})</span
+                        >
                     {/if}
                 </span>
             </div>
@@ -404,13 +446,15 @@ ${settlement.cluster.population} \
             </div>
             <div class="tooltip-row">
                 <span class="label">Avg Stress:</span>
-                <span class="value {stress > 0 ? 'high-stress' : ''}">{signed(stress, 1)}</span>
+                <span class="value {stress > 0 ? 'high-stress' : ''}"
+                    >{signed(stress, 1)}</span
+                >
             </div>
         </div>
     {/if}
 
     {#if hoveredPlannedSettlement}
-        <div 
+        <div
             class="map-tooltip"
             style="position: absolute; left: {tooltipX}px; top: {tooltipY}px;"
         >
@@ -420,15 +464,24 @@ ${settlement.cluster.population} \
             </div>
             <div class="tooltip-row">
                 <span class="label">Cluster:</span>
-                <span class="value">{hoveredPlannedSettlement.clusterName}</span>
+                <span class="value">{hoveredPlannedSettlement.clusterName}</span
+                >
             </div>
             <div class="tooltip-row">
                 <span class="label">Parent:</span>
                 <span class="value">{hoveredPlannedSettlement.parentName}</span>
             </div>
-            <div class="tooltip-row" style="flex-direction: column; align-items: flex-start; margin-top: 4px; border-top: 1px dashed #62531d; padding-top: 4px; width: 100%;">
-                <span class="label" style="margin-bottom: 2px;">Founding Clans:</span>
-                <ul class="clan-list" style="margin: 0; padding-left: 16px; font-weight: 500; list-style-type: square; color: #2c1e05;">
+            <div
+                class="tooltip-row"
+                style="flex-direction: column; align-items: flex-start; margin-top: 4px; border-top: 1px dashed #62531d; padding-top: 4px; width: 100%;"
+            >
+                <span class="label" style="margin-bottom: 2px;"
+                    >Founding Clans:</span
+                >
+                <ul
+                    class="clan-list"
+                    style="margin: 0; padding-left: 16px; font-weight: 500; list-style-type: square; color: #2c1e05;"
+                >
                     {#each hoveredPlannedSettlement.clans as clan}
                         <li>{clan.name}</li>
                     {/each}
@@ -437,7 +490,9 @@ ${settlement.cluster.population} \
         </div>
     {/if}
 
-    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+    <div
+        style="display: flex; justify-content: space-between; flex-wrap: wrap;"
+    >
         <ButtonPanel
             config={{
                 buttons: [{ label: "Pop" }, { label: "Rit" }],
@@ -473,7 +528,7 @@ ${settlement.cluster.population} \
         font-size: 0.825rem;
         color: #2c1e05;
         font-family: sans-serif;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         pointer-events: none;
         min-width: 170px;
     }
@@ -551,7 +606,9 @@ ${settlement.cluster.population} \
         cursor: pointer;
         color: #62531d;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        transition: background-color 0.2s, transform 0.1s;
+        transition:
+            background-color 0.2s,
+            transform 0.1s;
     }
 
     .map-size-toggle:hover {
@@ -579,7 +636,9 @@ ${settlement.cluster.population} \
         font-weight: bold;
         font-size: 0.8rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        transition: background-color 0.2s, transform 0.1s;
+        transition:
+            background-color 0.2s,
+            transform 0.1s;
     }
 
     .what-is-this-link:hover {

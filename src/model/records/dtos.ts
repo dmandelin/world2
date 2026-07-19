@@ -18,7 +18,7 @@ import type { QualityOfLife } from "../econ/qol";
 import type { ResidenceLevel } from "../people/residence";
 import type { Rites } from "../rites";
 import type { Settlement } from "../people/settlement";
-import type { SettlementCluster } from "../people/cluster";
+import type { SettlementDecorated } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
 import type { TrendDTO } from "../records/trends";
 import { type World } from "../world";
@@ -251,7 +251,7 @@ export class ClusterDTO {
     readonly averageHappiness: number;
     readonly diseaseLoad: DiseaseLoadCalc;
 
-    constructor(private readonly cluster: SettlementCluster, readonly world: WorldDTO) {
+    constructor(private readonly cluster: SettlementDecorated, readonly world: WorldDTO) {
         this.name = cluster.name;
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this, world));
         this.population = cluster.population;

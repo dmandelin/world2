@@ -3,7 +3,7 @@ import { Clan, PersonalityTraits } from "./people";
 import { randomHamletName } from "./names";
 import { eloSuccessProbability } from "../lib/modelbasics";
 import { Settlement } from "./settlement";
-import { SettlementCluster } from "./cluster";
+import { SettlementDecorated } from "./cluster";
 import { getAlignment } from "../relations/alignment";
 import type { World } from "../world";
 import { normal } from "../lib/distributions";
@@ -11,7 +11,7 @@ import { normal } from "../lib/distributions";
 class NewSettlementMigrationTarget {
     get name(): string { return 'New settlement'; }
     get population(): number { return 0; }
-    get cluster(): SettlementCluster | undefined { return undefined; }
+    get cluster(): SettlementDecorated | undefined { return undefined; }
 }
 
 export const NewSettlement = new NewSettlementMigrationTarget();
@@ -41,7 +41,7 @@ export class PlannedSettlement {
         readonly name: string,
         readonly x: number,
         readonly y: number,
-        readonly cluster: SettlementCluster,
+        readonly cluster: SettlementDecorated,
         readonly parent: Settlement,
         readonly clans: Clan[]
     ) { }
