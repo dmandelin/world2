@@ -29,7 +29,7 @@ def count_lines_of_code():
                 
                 with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
-                    lines = content.count('') + 1
+                    lines = content.count('\n') + 1
                     chars = len(content)
                     
                     # Update stats
