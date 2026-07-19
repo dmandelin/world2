@@ -42,7 +42,7 @@ export class KinConnection extends Connection {
         this.senior = senior;
         this.cadet = cadet;
     }
-    
+
     debugString(): string {
         return `kin: ${this.senior} -> ${this.cadet}`;
     }
@@ -90,8 +90,8 @@ export class NeighborConnection extends Connection {
     alignmentItem(subject: Clan, object: Clan): GenericItem {
         return new GenericItem(
             'Neighbors',
-            -.5,
-            'Conflicts'
+            0.05,
+            'Neighbors'
         );
     }
 }
@@ -116,15 +116,15 @@ export class ConnectionGraph {
         return connections.find(c => c instanceof type) as T | undefined;
     }
 
-    entriesForHasUUID(c: HasOrIsUUID) : Iterable<[PairID, Connection[]]> {
+    entriesForHasUUID(c: HasOrIsUUID): Iterable<[PairID, Connection[]]> {
         const pairIDs = this.a_.get(uuidOf(c));
         if (!pairIDs) return [];
         return [...pairIDs].map(pairID => [pairID, this.m_.get(pairID)!] as [PairID, Connection[]]);
     }
 
     getOrCreate<T extends Connection>(
-        c1: HasOrIsUUID, 
-        c2: HasOrIsUUID, 
+        c1: HasOrIsUUID,
+        c2: HasOrIsUUID,
         type: new (...args: any[]) => T,
         provider?: () => T): T {
         const pairID = pairIDOf(c1, c2);
@@ -157,9 +157,9 @@ export class ConnectionGraph {
         }
         return connection;
     }
-    
+
     keepOnlyForType<T extends Connection>(
-        keepFn: (c1: Clan, c2: Clan, connection: Connection) => boolean, 
+        keepFn: (c1: Clan, c2: Clan, connection: Connection) => boolean,
         type: new () => T,
         world: World) {
         for (const [pairID, connections] of this.m_) {
@@ -208,24 +208,23 @@ export class ConnectionGraph {
     }
 }
 
-export function *connectionsOf<T extends Clan|ClanDTO>(clan: T): IterableIterator<[T, Connection[]]> {
+export function* connectionsOf<T extends Clan | ClanDTO>(clan: T): IterableIterator<[T, Connection[]]> {
     for (const [pairID, connections] of clan.world.connections.entriesForHasUUID(clan)) {
         const [c1, c2] = clan.world.clansFromPairID(pairID);
         yield [(c1 === clan ? c2 : c1) as T, connections];
     }
 }
 
-export function *connectedClans<T extends Clan|ClanDTO>(clan: T): IterableIterator<T> {
+export function* connectedClans<T extends Clan | ClanDTO>(clan: T): IterableIterator<T> {
     for (const [pairID, _] of clan.world.connections.entriesForHasUUID(clan)) {
         const [c1, c2] = clan.world.clansFromPairID(pairID);
         yield (c1 === clan ? c2 : c1) as T;
     }
 }
 
-export function *connectionsOfType<T extends Clan|ClanDTO, U extends Connection>(
-    clan: T, 
-    type: new (...args: any[]) => U): IterableIterator<[T, U]> 
-{
+export function* connectionsOfType<T extends Clan | ClanDTO, U extends Connection>(
+    clan: T,
+    type: new (...args: any[]) => U): IterableIterator<[T, U]> {
     for (const [pairID, connection] of clan.world.connections.entriesForHasUUID(clan)) {
         if (connection instanceof type) {
             const [c1, c2] = clan.world.clansFromPairID(pairID);

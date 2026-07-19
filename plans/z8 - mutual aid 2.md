@@ -44,9 +44,14 @@ tiers:
 
 x   Basic help stats with matching
 x   Trust model
-*   Fix overly negative alignment busting trust
+x   Fix overly negative alignment busting trust
 x   Travel cost model
 *   Switch over economic production model
 *   Sort out stress benefits and relation to BasicInteraction
+*   Have conflict and mutual aid affect alignment
+    and trust appropriately (pay attention to
+    update order)
 *   Have clans prefer relationships with lower
     distance and higher trust
+*   Give clans ways to update alignment and
+    trust if they need to

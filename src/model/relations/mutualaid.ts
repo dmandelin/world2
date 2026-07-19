@@ -19,14 +19,15 @@ export class MutualAidInteraction extends Interaction {
     }
 
     get icebergCost(): number {
+        // TODO - This should probably be superlinear.
         return 0.045 * this.distance;
     }
 
-    information(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+    information(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
         return 0;
     }
 
-    alignmentItem(subject: Clan|ClanDTO, object: Clan|ClanDTO): GenericItem {
+    alignmentItem(subject: Clan | ClanDTO, object: Clan | ClanDTO): GenericItem {
         return new GenericItem(
             'Mutual Aid',
             0,
