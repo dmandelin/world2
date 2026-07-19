@@ -8,7 +8,7 @@ import { updateBasicInteractions } from "./relations/basicinteraction";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { marry } from "./relations/marriage";
-import { MILES_PER_UNIT, SettlementDecorated } from "./people/cluster";
+import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
@@ -363,7 +363,7 @@ export class World implements NoteTaker {
     }
 
     get totalPopulation() {
-        return sumFun(this.clusters, (cl: SettlementDecorated) => cl.population);
+        return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);
     }
 
     get allSettlements() {
@@ -409,7 +409,7 @@ class SettlementsBuilder {
     constructor(readonly world: World) { }
 
     createCluster(name: string, x: number, y: number, clanCount: number) {
-        const cluster = new SettlementDecorated(name, x, y);
+        const cluster = new SettlementCluster(name, x, y);
         const settlement = new Settlement(this.world, name, x, y, cluster);
 
         for (let i = 0; i < clanCount; i++) {

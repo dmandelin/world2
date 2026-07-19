@@ -8,7 +8,7 @@ import type { Process } from "../econ/process";
 
 export const MILES_PER_UNIT = 0.16666667;
 
-export class SettlementDecorated {
+export class SettlementCluster {
     readonly placer_ = new SettlementPlacer(this);
     readonly settlements: Settlement[] = [];
 
@@ -20,7 +20,7 @@ export class SettlementDecorated {
         this.settlements = [];
     }
 
-    milesTo(other: SettlementDecorated): number {
+    milesTo(other: SettlementCluster): number {
         const distance = Math.sqrt((this.x - other.x) ** 2 + (this.y - other.y) ** 2);
         return MILES_PER_UNIT * distance;
     }
@@ -145,7 +145,7 @@ class SettlementPlacer {
     readonly openPlaces = Array.from({ length: this.places }, (_, i) => i);
     private jitter = 3;
 
-    constructor(readonly cluster: SettlementDecorated) { }
+    constructor(readonly cluster: SettlementCluster) { }
 
     placeFor(): [number, number] {
         if (this.cluster.settlements.length === 0) {

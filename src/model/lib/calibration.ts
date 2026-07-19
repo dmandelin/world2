@@ -1,5 +1,5 @@
 import { Annals } from "../annals";
-import { SettlementDecorated } from "../people/cluster";
+import { SettlementCluster } from "../people/cluster";
 import { Clan } from "../people/people";
 import { Settlement } from "../people/settlement";
 import { world } from "../world";
@@ -53,7 +53,7 @@ const STABLE_BIRTH_RATE = 2.97;
 const BASE_DEATH_RATES = [0.3, 0.4, 0.65, 1.0];
 
 export function calibrate() {
-    const s = new Settlement(world, "test", 0, 0, new SettlementDecorated('test', 0, 0));
+    const s = new Settlement(world, "test", 0, 0, new SettlementCluster('test', 0, 0));
     const clan = new Clan(world, s, new Annals(), 'test', 'test', 30);
 
     // Look for a stationary distribution.

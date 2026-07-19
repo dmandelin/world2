@@ -1,7 +1,7 @@
 import { Processes } from "../econ/econdefs";
 import { Process } from "../econ/process";
 import { sum, sumFun } from "../lib/basics";
-import type { SettlementDecorated } from "../people/cluster";
+import type { SettlementCluster } from "../people/cluster";
 import type { Clan } from "../people/people";
 
 function getDiseaseLoadFactor(process: Process): number {
@@ -19,7 +19,7 @@ export class DiseaseLoadCalc {
     readonly value: number;
 
     constructor(
-        readonly cluster: SettlementDecorated,
+        readonly cluster: SettlementCluster,
         readonly laborMap: Map<Process, Map<Clan, number>>) {
         // For now, we'll assume things are rapidly transmitted across the
         // cluster, so we can calculate a uniform load.

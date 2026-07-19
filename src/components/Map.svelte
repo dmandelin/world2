@@ -5,7 +5,7 @@
     import { onDestroy, onMount } from "svelte";
     import { signed } from "../model/lib/format";
     import { world } from "../model/world";
-    import type { SettlementDecorated } from "../model/people/cluster";
+    import type { SettlementCluster } from "../model/people/cluster";
     import { Settlement } from "../model/people/settlement";
     import TrendsPanel from "./TrendsPanel.svelte";
     import { weightedAverage } from "../model/lib/modelbasics";
@@ -127,7 +127,7 @@
         context!.setLineDash([]);
     }
 
-    function drawCluster(cluster: SettlementDecorated) {
+    function drawCluster(cluster: SettlementCluster) {
         for (const settlement of cluster.settlements) {
             drawSettlement(settlement);
         }

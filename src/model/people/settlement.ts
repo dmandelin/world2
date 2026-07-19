@@ -1,7 +1,7 @@
 import { isExemplarClan } from "../lib/debug";
 import { shuffled, sumFun } from "../lib/basics";
 import { DitchMaintenanceCalc } from "../infrastructure";
-import { MILES_PER_UNIT, type SettlementDecorated } from "./cluster";
+import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
 import type { TradeGood } from "../trade";
@@ -37,7 +37,7 @@ export class Settlement {
         readonly name: string,
         readonly x: number,
         readonly y: number,
-        readonly cluster: SettlementDecorated,
+        readonly cluster: SettlementCluster,
         readonly parent?: Settlement) {
 
         this.foundationYear_ = world.year.clone();

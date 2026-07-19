@@ -20,7 +20,7 @@ import { Traits } from "./traits";
 import { type FloodLevel, FloodLevels } from "../environment/flood";
 import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
 import type { Settlement } from "./settlement";
-import type { SettlementDecorated } from "./cluster";
+import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { Stress } from "./stress";
@@ -208,7 +208,7 @@ export class Clan implements TradePartner {
         return this.settlement_;
     }
 
-    get cluster(): SettlementDecorated {
+    get cluster(): SettlementCluster {
         return this.settlement.cluster;
     }
 
