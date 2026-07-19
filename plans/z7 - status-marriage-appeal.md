@@ -60,7 +60,7 @@ we have:
 Item list:
 
 *   Need to look at wacky productivity values
-    *   Avoid clans moving out alone for now
+    x   Avoid clans moving out alone for now
     *   Switch to new help system (productivity bonus
         based on help relationship value)
     *   Temporarily boost agricultural productivity to

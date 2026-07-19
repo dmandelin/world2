@@ -216,8 +216,8 @@ type CandidateMigrationCalcItem = {
 };
 
 function getCompanyValue(n: number): number {
-    if (n <= 1) return -20;
-    if (n === 2) return -10;
+    if (n <= 1) return -30;
+    if (n === 2) return -15;
     return Math.min(5, n - 3);
 }
 
