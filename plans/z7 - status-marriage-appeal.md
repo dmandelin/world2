@@ -59,6 +59,10 @@ we have:
 
 Item list:
 
+*   Fix persistent bug with sometimes clans apparently
+    not offering to move despite appeal saying they
+    should.
+
 *   Need to look at wacky productivity values
     x   Avoid clans moving out alone for now
     *   Switch to new help system (productivity bonus

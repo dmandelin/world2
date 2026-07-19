@@ -148,6 +148,7 @@
         }
         return `${formattedNum}<span style="color: transparent; margin-left: 4px; font-weight: bold;">★</span>`;
     }
+
 </script>
 
 {#snippet interactionVolumeCellTooltip(
@@ -362,6 +363,7 @@
         </div>
     {/if}
 {/snippet}
+
 
 <div style="display: flex; flex-direction: row; gap: 2rem;">
     <div>

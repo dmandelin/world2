@@ -9,6 +9,9 @@
         row: TableRow<any, any>,
         column: TableColumn<any, any, any>,
     ) {
+        if (row.valueFn) {
+            return row.valueFn(column.data);
+        }
         return column.valueFn(row.data);
     }
 
@@ -17,6 +20,9 @@
         column: TableColumn<any, any, any>,
     ) {
         const val = cellValue(row, column);
+        if (row.formatFn) {
+            return row.formatFn(val, column.data);
+        }
         if (column.formatFn) {
             return column.formatFn(val, row.data, column.data);
         }
@@ -52,7 +58,7 @@
                 {/if}
                 <td class="row-header"></td>
                 {#each table.columns as column}
-                    <th>
+                    <th class={column.class ?? ''}>
                         {#if column.headerTooltip}
                             <Tooltip>
                                 {column.label}
@@ -70,20 +76,30 @@
     {/if}
     <tbody>
         {#each table.rows as row, rowIndex}
-            <tr>
+            <tr class:row-divider={row.divider}>
                 {#if hasRowPrefix}
                     <td class="row-prefix">{row.prefix ?? ""}</td>
                 {/if}
                 <td
-                    class="row-header"
+                    class="row-header {row.class ?? ''}"
                     class:bold={true}
                     class:clickable={!!table.onClickRowHeader}
                     onclick={() => table.onClickRowHeader?.(row.data)}
                 >
-                    {row.label}
+                    {#if row.headerTooltip}
+                        <Tooltip>
+                            {row.label}
+                            <div slot="tooltip">
+                                {@render row.headerTooltip(row.data)}
+                            </div>
+                        </Tooltip>
+                    {:else}
+                        {row.label}
+                    {/if}
                 </td>
                 {#each table.columns as column, colIndex}
                     <td
+                        class="{row.class ?? ''} {column.class ?? ''}"
                         class:bold={row.bold}
                         class:clickable={!!column.onClickCell}
                         onclick={() =>
@@ -159,5 +175,15 @@
     .row-prefix {
         text-align: center !important;
         padding-right: 0px;
+    }
+
+    tr.row-divider td {
+        border-top: 2px solid #d3c4ad;
+    }
+
+    :global(td.out-of-settlement),
+    :global(th.out-of-settlement) {
+        background-color: #ebdcb9;
+        color: #6e5b47;
     }
 </style>

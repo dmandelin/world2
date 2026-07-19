@@ -5,6 +5,7 @@ import { connectedClans, ConnectionGraph, NeighborConnection } from "./relations
 import { createTrends } from "./records/trends";
 import { InteractionGraph } from "./relations/interaction";
 import { updateBasicInteractions } from "./relations/basicinteraction";
+import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { marry } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
@@ -237,6 +238,7 @@ export class World implements NoteTaker {
 
         this.planConnections();
         updateBasicInteractions(this);
+        updateMutualAidInteractions(this);
         // Update perceptions here so they can influence the rest of planning.
         updatePerceptions(this);
 

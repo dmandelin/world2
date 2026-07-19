@@ -1,0 +1,126 @@
+import { GenericItem, type UUID } from "../records/basicdata";
+import type { Clan } from "../people/people";
+import type { ClanDTO } from "../records/dtos";
+import type { World } from "../world";
+import { Interaction } from "./interaction";
+
+export class MutualAidInteraction extends Interaction {
+    readonly trust: number = 0.5;
+    amount: number = 0;
+
+    constructor(c1: UUID, c2: UUID) {
+        super(c1, c2);
+    }
+
+    information(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+        return 0;
+    }
+
+    alignmentItem(subject: Clan|ClanDTO, object: Clan|ClanDTO): GenericItem {
+        return new GenericItem(
+            'Mutual Aid',
+            this.amount * this.trust,
+            `Mutual aid value: ${(this.amount * this.trust).toFixed(1)} (Amount: ${this.amount.toFixed(1)} * Trust: ${this.trust.toFixed(1)})`,
+        );
+    }
+}
+
+export function clanHelpDemand(population: number): number {
+    if (population <= 0) return 0;
+    return population * Math.sqrt(10 / population);
+}
+
+export function updateMutualAidInteractions(world: World): void {
+    // 1. Ensure MutualAidInteraction exists between connected pairs of clans
+    for (const [pairID, connections] of world.connections.entries()) {
+        if (connections.length > 0) {
+            const [c1, c2] = world.clansFromPairID(pairID);
+            world.interactions.getOrCreate(c1, c2, MutualAidInteraction);
+        }
+    }
+
+    // Get all clans with population > 0 in the world
+    const clans = world.allClans.filter(c => c.population > 0);
+
+    // Initialize/Reset matching amounts of all MutualAidInteractions to 0
+    const mutualAidInteractions: MutualAidInteraction[] = [];
+    for (const c1 of clans) {
+        for (const [otherRef, interactions] of world.interactions.getFor(c1)) {
+            const other = world.allClans.find(c => c.uuid === otherRef);
+            if (!other || c1.uuid >= other.uuid) continue; // Process each unique pair once
+            for (const interaction of interactions) {
+                if (interaction instanceof MutualAidInteraction) {
+                    interaction.amount = 0;
+                    mutualAidInteractions.push(interaction);
+                }
+            }
+        }
+    }
+
+    // 2. Distributed ask/answer algorithm for help matching
+    // Run for 20 rounds for better convergence
+    for (let round = 0; round < 20; round++) {
+        // Calculate remaining demand for each clan
+        const remainingDemands = new Map<string, number>();
+        for (const clan of clans) {
+            const totalHelpReceived = getHelpReceivedFromMutualAid(world, clan);
+            const demand = clanHelpDemand(clan.population);
+            const remaining = Math.max(0, demand - totalHelpReceived);
+            remainingDemands.set(clan.uuid, remaining);
+        }
+
+        // Count connected active neighbors (neighbors that still have remaining demand)
+        const connectedNeighborCounts = new Map<string, number>();
+        for (const clan of clans) {
+            let count = 0;
+            for (const [otherRef, interactions] of world.interactions.getFor(clan)) {
+                if (interactions.some(i => i instanceof MutualAidInteraction)) {
+                    const otherRemaining = remainingDemands.get(otherRef) ?? 0;
+                    if (otherRemaining > 0.001) {
+                        count++;
+                    }
+                }
+            }
+            connectedNeighborCounts.set(clan.uuid, count);
+        }
+
+        // Calculate proposals and apply increments
+        let totalDelta = 0;
+        for (const interaction of mutualAidInteractions) {
+            const c1UUID = interaction.c1;
+            const c2UUID = interaction.c2;
+
+            const r1 = remainingDemands.get(c1UUID) ?? 0;
+            const count1 = connectedNeighborCounts.get(c1UUID) ?? 0;
+            const proposal1 = count1 > 0 && r1 > 0 ? r1 / count1 : 0;
+
+            const r2 = remainingDemands.get(c2UUID) ?? 0;
+            const count2 = connectedNeighborCounts.get(c2UUID) ?? 0;
+            const proposal2 = count2 > 0 && r2 > 0 ? r2 / count2 : 0;
+
+            const delta = Math.min(proposal1, proposal2);
+            if (delta > 0.001) {
+                interaction.amount += delta;
+                totalDelta += delta;
+            }
+        }
+
+        // If no meaningful matching occurred in this round, we can break early
+        if (totalDelta < 0.001) {
+            break;
+        }
+    }
+}
+
+// Helper to calculate help total for a clan
+function getHelpReceivedFromMutualAid(world: World, clan: Clan): number {
+    let total = 0;
+    for (const [otherRef, interactions] of world.interactions.getFor(clan)) {
+        for (const interaction of interactions) {
+            if (interaction instanceof MutualAidInteraction) {
+                total += interaction.amount;
+            }
+        }
+    }
+    return total;
+}

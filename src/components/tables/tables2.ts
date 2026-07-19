@@ -52,6 +52,9 @@ export interface TableColumn<RowData, ColData, CellData> {
     // If set, clicking on a cell will call this function with the cell data, 
     // row data, and column.
     onClickCell?: (data: CellData, row: RowData, col: ColData) => void;
+
+    // Optional CSS class name to style header and cells.
+    class?: string;
 }
 
 // View-data model for a table row.
@@ -70,13 +73,28 @@ export interface TableRow<RowData, ColData> {
 
     // If set, the cell will have a tooltip with this snippet.
     tooltip?: Snippet<[any, RowData, ColData]>;
+
+    // If set, the row header (label) will have a tooltip with this snippet.
+    headerTooltip?: Snippet<[RowData]>;
+
+    // If set, get the value for this cell from the row instead of the column.
+    valueFn?: (col: ColData) => any;
+
+    // If set, format the cell value using this function.
+    formatFn?: (value: any, col: ColData) => string;
+
+    // If true, render a visual divider above this row.
+    divider?: boolean;
+
+    // Optional CSS class name to style header and cells.
+    class?: string;
 }
 
 // View-data model for a table. Includes schema, data, formatting, and behavior.
 // TODO - decide if we actually need this
 export interface CrossTable<RowColData, CellData> {
     // Column-oriented schema describing value types, formatting, and behavior.
-    columns: TableColumn<RowColData, RowColData, CellData>[];
+    columns: TableColumn<RowColData, any, any>[];
 
     // Row data. Typically, the row of the table represents these entities. 
     rows: TableRow<RowColData, RowColData>[];
@@ -184,8 +202,25 @@ export class IterableTable<RowData, ColumnCellDataTypes extends any[]> implement
     }
 }
 
+export interface RowDataColumnSpec<RowData> {
+    label: string;
+    valueFn: (row: RowData) => any;
+    formatFn?: (value: any, row?: RowData, col?: any) => string;
+    tooltip?: Snippet<[any, RowData, any]>;
+    headerTooltip?: string;
+}
+
+export interface RowDataRowSpec<ColData> {
+    label: string;
+    valueFn: (col: ColData) => any;
+    formatFn?: (value: any, col: ColData) => string;
+    tooltip?: Snippet<[any, any, ColData]>;
+    headerTooltip?: Snippet<[any]>;
+    divider?: boolean;
+}
+
 export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, CellData> {
-    columns: TableColumn<RowColData, RowColData, CellData>[];
+    columns: TableColumn<RowColData, any, any>[];
     rows: TableRow<RowColData, RowColData>[];
     readonly isCrossTable = true;
 
@@ -195,19 +230,54 @@ export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, Ce
         valueFn: (row: RowColData, col: RowColData) => CellData,
         formatFn: (value: CellData) => string,
         tooltip?: Snippet<[CellData, RowColData, RowColData]>,
+        rowHeaderTooltip?: Snippet<[RowColData]>,
+        rowDataCols?: RowDataColumnSpec<RowColData>[],
+        rowDataRows?: RowDataRowSpec<RowColData>[],
+        colClassFn?: (item: RowColData) => string,
+        rowClassFn?: (item: RowColData) => string,
     ) {
         this.columns = [...data].map(e => ({
             data: e,
             label: labelFn(e),
             valueFn: (row: RowColData) => valueFn(row, e),
             formatFn,
+            class: colClassFn?.(e),
         }));
+
+        if (rowDataCols) {
+            for (const spec of rowDataCols) {
+                this.columns.push({
+                    data: spec.label,
+                    label: spec.label,
+                    valueFn: spec.valueFn,
+                    formatFn: spec.formatFn,
+                    tooltip: spec.tooltip,
+                    headerTooltip: spec.headerTooltip,
+                });
+            }
+        }
 
         this.rows = [...data].map(e => ({
             data: e,
             label: labelFn(e),
             tooltip,
+            headerTooltip: rowHeaderTooltip,
+            class: rowClassFn?.(e),
         }));
+
+        if (rowDataRows) {
+            for (const spec of rowDataRows) {
+                this.rows.push({
+                    data: spec as any,
+                    label: spec.label,
+                    valueFn: spec.valueFn,
+                    formatFn: spec.formatFn,
+                    tooltip: spec.tooltip as any,
+                    headerTooltip: spec.headerTooltip,
+                    divider: spec.divider,
+                });
+            }
+        }
     }
 }
 
