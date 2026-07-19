@@ -62,7 +62,21 @@
             const interactions = world.interactions.get(clan.ref, other.ref);
             const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
             if (interaction) {
-                sum += interaction.amount * interaction.trust;
+                sum += interaction.amount * (1 - interaction.icebergCost) * interaction.trust;
+            }
+        }
+        return sum;
+    }
+
+    function totalHelpLostAmount(clan: ClanDTO): number {
+        let sum = 0;
+        const allClansList = buildClansList();
+        for (const other of allClansList) {
+            if (clan.uuid === other.uuid) continue;
+            const interactions = world.interactions.get(clan.ref, other.ref);
+            const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+            if (interaction) {
+                sum += interaction.amount * interaction.icebergCost;
             }
         }
         return sum;
@@ -108,7 +122,7 @@
 
         if (mutualAidOption === "Amount") return interaction.amount;
         if (mutualAidOption === "Trust") return interaction.trust;
-        return interaction.amount * interaction.trust;
+        return interaction.amount * (1 - interaction.icebergCost) * interaction.trust;
     }
 
     function newMutualAidFormat(value: number | null): string {
@@ -149,9 +163,11 @@
                     label: "Sat",
                     valueFn: (col: ClanDTO) => {
                         if (!isClanInSettlement(col)) return null;
-                        const total = totalHelpReceivedAmount(col);
+                        const gross = totalHelpReceivedAmount(col);
+                        const cost = totalHelpLostAmount(col);
+                        const net = gross - cost;
                         const demand = clanHelpDemand(col.population);
-                        return demand > 0 ? total / demand : 0;
+                        return demand > 0 ? net / demand : 0;
                     },
                     formatFn: (val: number | null) => val === null ? "" : pct(val),
                     tooltip: amountSatRowTooltip as any,
@@ -176,6 +192,16 @@
                     },
                     formatFn: (val: number | null) => val === null ? "" : unsigned(val, 1),
                     tooltip: amountTotalRowTooltip as any,
+                    headerTooltip: rowHeaderMetricTooltip as any,
+                },
+                {
+                    label: "Cost",
+                    valueFn: (col: ClanDTO) => {
+                        if (!isClanInSettlement(col)) return null;
+                        return totalHelpLostAmount(col);
+                    },
+                    formatFn: (val: number | null) => val === null ? "" : unsigned(val, 1),
+                    tooltip: amountCostRowTooltip as any,
                     headerTooltip: rowHeaderMetricTooltip as any,
                 }
             );
@@ -229,16 +255,24 @@
         {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
         {#if ma}
             {@const demand = clanHelpDemand(colClan.population)}
-            {@const valueVal = ma.amount * ma.trust}
-            <div style="font-size: 0.9em; padding: 0.25rem; min-width: 200px;">
+            {@const grossVal = ma.amount}
+            {@const travelCostVal = ma.amount * ma.icebergCost}
+            {@const netVal = ma.amount * (1 - ma.icebergCost)}
+            {@const valueVal = netVal * ma.trust}
+            <div style="font-size: 0.9em; padding: 0.25rem; min-width: 220px;">
                 <strong>Mutual Aid Details:</strong>
                 <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
                     <li>• Helpee (Col): {colClan.name} {#if isClanInSettlement(colClan)}(Demand: {unsigned(demand, 1)}){/if}</li>
                     <li>• Helper (Row): {rowClan.name}</li>
                     <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                    <li>• Amount Exchanged: {unsigned(ma.amount, 1)}</li>
+                    <li>• Distance: {unsigned(ma.distance, 1)} miles</li>
+                    <li>• Iceberg Cost Rate: {pct(ma.icebergCost)}</li>
+                    <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+                    <li>• Amount Sent: {unsigned(grossVal, 1)}</li>
+                    <li>• Lost in Transit: {unsigned(travelCostVal, 1)}</li>
+                    <li>• Net Amount Received: {unsigned(netVal, 1)}</li>
                     <li>• Trust Factor: {unsigned(ma.trust, 2)}</li>
-                    <li>• Value (Amount × Trust): {unsigned(valueVal, 1)}</li>
+                    <li>• Value (Net × Trust): {unsigned(valueVal, 1)}</li>
                 </ul>
             </div>
         {/if}
@@ -253,11 +287,13 @@
     <div style="font-size: 0.9em; padding: 0.25rem;">
         <strong>{spec.label}:</strong>
         {#if spec.label === "Sat"}
-            Help satisfaction ratio (Total Received / Demand)
+            Help satisfaction ratio (Net Help Received / Demand)
         {:else if spec.label === "Demand"}
             Help demand based on population
         {:else if spec.label === "Total"}
             Total help amount or value received
+        {:else if spec.label === "Cost"}
+            Total help amount lost in transit (Amount × Iceberg Cost)
         {:else if spec.label === "Trust"}
             Weighted average trust factor
         {:else if spec.label === "Average"}
@@ -280,15 +316,19 @@
 
 {#snippet amountSatRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
     {#if value !== null}
-        {@const total = totalHelpReceivedAmount(colClan)}
+        {@const gross = totalHelpReceivedAmount(colClan)}
+        {@const cost = totalHelpLostAmount(colClan)}
+        {@const net = gross - cost}
         {@const demand = clanHelpDemand(colClan.population)}
         <div style="font-size: 0.9em; padding: 0.25rem;">
             <strong>Help Satisfaction (Sat) for {colClan.name}:</strong> {pct(value)}
             <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
-                <li>• Total help received: {unsigned(total, 1)}</li>
+                <li>• Gross help amount: {unsigned(gross, 1)}</li>
+                <li>• Travel cost (lost): {unsigned(cost, 1)}</li>
+                <li>• Net help received (net): {unsigned(net, 1)}</li>
                 <li>• Help demand: {unsigned(demand, 1)}</li>
                 <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                <li><strong>Formula:</strong> {unsigned(total, 1)} / {unsigned(demand, 1)} = {pct(value)}</li>
+                <li><strong>Formula:</strong> Net Received / Demand = {pct(value)}</li>
             </ul>
         </div>
     {/if}
@@ -354,12 +394,35 @@
                         {@const interactions = world.interactions.get(colClan.ref, other.ref)}
                         {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
                         {#if ma && ma.amount > 0}
-                            <li>• From helper {other.name}: {unsigned(ma.amount * ma.trust, 1)} (amount: {unsigned(ma.amount, 1)} × trust: {unsigned(ma.trust, 2)})</li>
+                            {@const netVal = ma.amount * (1 - ma.icebergCost)}
+                            {@const valueVal = netVal * ma.trust}
+                            <li>• From helper {other.name}: {unsigned(valueVal, 1)} (gross: {unsigned(ma.amount, 1)} -> net: {unsigned(netVal, 1)} × trust: {unsigned(ma.trust, 2)})</li>
                         {/if}
                     {/if}
                 {/each}
                 <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
                 <li><strong>Total Help Value:</strong> {unsigned(value, 1)}</li>
+            </ul>
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet amountCostRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+    {#if value !== null}
+        <div style="font-size: 0.9em; padding: 0.25rem; min-width: 200px;">
+            <strong>Total Help Lost in Transit for {colClan.name} Breakdown:</strong>
+            <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+                {#each buildClansList() as other}
+                    {#if colClan.uuid !== other.uuid}
+                        {@const interactions = world.interactions.get(colClan.ref, other.ref)}
+                        {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
+                        {#if ma && ma.amount > 0 && ma.icebergCost > 0}
+                            <li>• From helper {other.name}: {unsigned(ma.amount * ma.icebergCost, 1)} (amount: {unsigned(ma.amount, 1)} × cost: {pct(ma.icebergCost)})</li>
+                        {/if}
+                    {/if}
+                {/each}
+                <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+                <li><strong>Total Cost (Lost):</strong> {unsigned(value, 1)}</li>
             </ul>
         </div>
     {/if}

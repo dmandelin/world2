@@ -47,3 +47,5 @@ x   Basic help stats with matching
 *   Travel cost model
 *   Switch over economic production model
 *   Sort out stress benefits and relation to BasicInteraction
+*   Have clans prefer relationships with lower
+    distance and higher trust

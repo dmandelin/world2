@@ -7,9 +7,14 @@ import { Interaction } from "./interaction";
 export class MutualAidInteraction extends Interaction {
     readonly trust: number = 0.5;
     amount: number = 0;
+    distance: number = 0; // in miles
 
     constructor(c1: UUID, c2: UUID) {
         super(c1, c2);
+    }
+
+    get icebergCost(): number {
+        return 0.045 * this.distance;
     }
 
     information(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
@@ -19,8 +24,8 @@ export class MutualAidInteraction extends Interaction {
     alignmentItem(subject: Clan|ClanDTO, object: Clan|ClanDTO): GenericItem {
         return new GenericItem(
             'Mutual Aid',
-            this.amount * this.trust,
-            `Mutual aid value: ${(this.amount * this.trust).toFixed(1)} (Amount: ${this.amount.toFixed(1)} * Trust: ${this.trust.toFixed(1)})`,
+            0,
+            `Mutual aid value: 0.0 (Zeroed out for now)`,
         );
     }
 }
@@ -35,7 +40,12 @@ export function updateMutualAidInteractions(world: World): void {
     for (const [pairID, connections] of world.connections.entries()) {
         if (connections.length > 0) {
             const [c1, c2] = world.clansFromPairID(pairID);
-            world.interactions.getOrCreate(c1, c2, MutualAidInteraction);
+            const interaction = world.interactions.getOrCreate(c1, c2, MutualAidInteraction);
+            if (c1.settlement && c2.settlement) {
+                interaction.distance = c1.settlement.milesTo(c2.settlement);
+            } else {
+                interaction.distance = 0;
+            }
         }
     }
 
@@ -69,12 +79,13 @@ export function updateMutualAidInteractions(world: World): void {
             remainingDemands.set(clan.uuid, remaining);
         }
 
-        // Count connected active neighbors (neighbors that still have remaining demand)
+        // Count connected active neighbors (neighbors that still have remaining demand and can receive help)
         const connectedNeighborCounts = new Map<string, number>();
         for (const clan of clans) {
             let count = 0;
             for (const [otherRef, interactions] of world.interactions.getFor(clan)) {
-                if (interactions.some(i => i instanceof MutualAidInteraction)) {
+                const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+                if (ma && ma.icebergCost < 1.0) {
                     const otherRemaining = remainingDemands.get(otherRef) ?? 0;
                     if (otherRemaining > 0.001) {
                         count++;
@@ -90,13 +101,15 @@ export function updateMutualAidInteractions(world: World): void {
             const c1UUID = interaction.c1;
             const c2UUID = interaction.c2;
 
+            const netFactor = 1 - interaction.icebergCost;
+
             const r1 = remainingDemands.get(c1UUID) ?? 0;
             const count1 = connectedNeighborCounts.get(c1UUID) ?? 0;
-            const proposal1 = count1 > 0 && r1 > 0 ? r1 / count1 : 0;
+            const proposal1 = count1 > 0 && r1 > 0 && netFactor > 0 ? (r1 / count1) / netFactor : 0;
 
             const r2 = remainingDemands.get(c2UUID) ?? 0;
             const count2 = connectedNeighborCounts.get(c2UUID) ?? 0;
-            const proposal2 = count2 > 0 && r2 > 0 ? r2 / count2 : 0;
+            const proposal2 = count2 > 0 && r2 > 0 && netFactor > 0 ? (r2 / count2) / netFactor : 0;
 
             const delta = Math.min(proposal1, proposal2);
             if (delta > 0.001) {
@@ -118,7 +131,7 @@ function getHelpReceivedFromMutualAid(world: World, clan: Clan): number {
     for (const [otherRef, interactions] of world.interactions.getFor(clan)) {
         for (const interaction of interactions) {
             if (interaction instanceof MutualAidInteraction) {
-                total += interaction.amount;
+                total += interaction.amount * (1 - interaction.icebergCost);
             }
         }
     }
