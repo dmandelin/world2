@@ -1,7 +1,6 @@
 import type { EffortAllocation } from "../decisions/effort";
 import type { Clan } from "../people/people";
 import { Consumption } from "./consumption";
-import { OperationHelp } from "./help";
 import { LaborAllocation } from "./labor";
 import { LandAllocation } from "./land";
 import { produce, type ProductionReport } from "./operation";
@@ -17,13 +16,11 @@ export function economicResult(
     // fixed during optimization.
     const operations = clan.operations;
     const population = clan.population;
-    const helpReceived = clan.helpReceived;
 
     const labor = LaborAllocation.from(clan, effort);
     const land = LandAllocation.from(clan);
-    const help = OperationHelp.from(clan, helpReceived);
 
-    const production = produce(operations, labor.m, land.m, help.m);
+    const production = produce(operations, labor.m, land.m);
 
     const consumption = Consumption.from(population, effort, production);
 

@@ -5,7 +5,7 @@
         IterableTable,
         SingleMapTable,
     } from "../tables/tables2";
-    import { MutualAidInteraction, clanHelpDemand } from "../../model/relations/mutualaid";
+    import { MutualAidInteraction, clanHelpDemand, getHelpReceivedValueFromMutualAid, getHelpProductivityModifier } from "../../model/relations/mutualaid";
     import {
         pct,
         signed,
@@ -267,7 +267,32 @@
                     return demand > 0 ? totalValue / demand : 0;
                 },
                 deltaFormat: pct,
+                timelineKey: "mutualAidSat",
+                scaler: new DefaultScaler(),
                 topics: ["welfare"],
+            },
+            {
+                label: "Help Modifier",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => {
+                    const world = settlement.world;
+                    const helpValue = getHelpReceivedValueFromMutualAid(world, c.ref);
+                    const demand = clanHelpDemand(c.population);
+                    return getHelpProductivityModifier(helpValue, demand);
+                },
+                format: spct,
+                tooltipSnippet: helpProductivityModifierTooltip,
+                deltaValue: (c) => {
+                    const world = settlement.world;
+                    const helpValue = getHelpReceivedValueFromMutualAid(world, c.ref);
+                    const demand = clanHelpDemand(c.population);
+                    return getHelpProductivityModifier(helpValue, demand);
+                },
+                deltaFormat: pct,
+                timelineKey: "helpModifier",
+                scaler: new DefaultScaler(),
+                topics: ["welfare", "production"],
             },
             {
                 label: "Residence",
@@ -443,19 +468,7 @@
                     deltaFormat: (v) => v.toFixed(0),
                     topics: ["production"],
                 },
-                {
-                    label: "&nbsp;Help",
-                    class: "actual",
-                    cellClass: "rap",
-                    useTooltip: true,
-                    value: (c) =>
-                        c.production.getForProcess(process, "help") ?? 0,
-                    format: (v) => v.toFixed(0),
-                    deltaValue: (c) =>
-                        c.production.getForProcess(process, "help") ?? 0,
-                    deltaFormat: (v) => v.toFixed(0),
-                    topics: ["production"],
-                },
+
                 {
                     label: "&nbsp;Base LP",
                     labelTooltip: "Base labor productivity",
@@ -1156,6 +1169,28 @@
                 {/if}
             {/each}
         </ul>
+    </div>
+{/snippet}
+
+{#snippet helpProductivityModifierTooltip(cs: ClanLastTurnSnapshots)}
+    {@const world = settlement.world}
+    {@const clan = cs.e}
+    {@const helpValue = getHelpReceivedValueFromMutualAid(world, clan)}
+    {@const demand = clanHelpDemand(clan.population)}
+    {@const modifier = getHelpProductivityModifier(helpValue, demand)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+        <strong>Help Productivity Modifier:</strong>
+        <p style="margin: 0.25rem 0;">A multiplier applied to Agriculture productivity based on help value received.</p>
+        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            <li>• Net help value received: {unsigned(helpValue, 1)}</li>
+            <li>• Help demand: {unsigned(demand, 1)}</li>
+            <li>• Help ratio: {pct(demand > 0 ? helpValue / demand : 1.0)}</li>
+            <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+            <li>• Modifier: <strong>{spct(modifier)}</strong></li>
+        </ul>
+        <div style="font-size: 0.8em; color: #6e5b47; font-style: italic; margin-top: 0.25rem;">
+            Curve: 0.6 if no help, 1.0 if exactly met, maxes out around 1.3.
+        </div>
     </div>
 {/snippet}
 

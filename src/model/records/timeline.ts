@@ -37,6 +37,7 @@ export class Timeline<T> {
 
 import { SkillDefs, Processes } from "../econ/econdefs";
 import { Activities } from "../decisions/effort";
+import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from "../relations/mutualaid";
 
 export class ClanTimePoint {
     readonly population: number;
@@ -58,6 +59,8 @@ export class ClanTimePoint {
     readonly foodSecurity: number;
     readonly averagePrestige: number;
     readonly happiness: number;
+    readonly mutualAidSat: number;
+    readonly helpModifier: number;
 
     readonly skillLocalEcology: number;
     readonly skillFishing: number;
@@ -108,6 +111,12 @@ export class ClanTimePoint {
         this.foodSecurity = 1 - clan.consumption.foodInsecurity.value;
         this.averagePrestige = getLocalPrestige(clan);
         this.happiness = clan.happinessValue;
+        
+        const world = clan.world;
+        const helpValue = getHelpReceivedValueFromMutualAid(world, clan);
+        const demand = clanHelpDemand(clan.population);
+        this.mutualAidSat = demand > 0 ? helpValue / demand : 0;
+        this.helpModifier = getHelpProductivityModifier(helpValue, demand);
 
         this.skillLocalEcology = clan.skills.v(SkillDefs.LocalEcology);
         this.skillFishing = clan.skills.v(SkillDefs.Fishing);

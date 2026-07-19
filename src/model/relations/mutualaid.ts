@@ -1,6 +1,6 @@
 import { GenericItem, type UUID } from "../records/basicdata";
 import type { Clan } from "../people/people";
-import type { ClanDTO } from "../records/dtos";
+import type { ClanDTO, WorldDTO } from "../records/dtos";
 import type { World } from "../world";
 import { Interaction } from "./interaction";
 import { Trust } from "./trust";
@@ -133,7 +133,7 @@ export function updateMutualAidInteractions(world: World): void {
 }
 
 // Helper to calculate help total for a clan
-function getHelpReceivedFromMutualAid(world: World, clan: Clan): number {
+function getHelpReceivedFromMutualAid(world: World | WorldDTO, clan: Clan | ClanDTO): number {
     let total = 0;
     for (const [otherRef, interactions] of world.interactions.getFor(clan)) {
         for (const interaction of interactions) {
@@ -143,4 +143,23 @@ function getHelpReceivedFromMutualAid(world: World, clan: Clan): number {
         }
     }
     return total;
+}
+
+export function getHelpReceivedValueFromMutualAid(world: World | WorldDTO, clan: Clan | ClanDTO): number {
+    let total = 0;
+    for (const [otherRef, interactions] of world.interactions.getFor(clan)) {
+        for (const interaction of interactions) {
+            if (interaction instanceof MutualAidInteraction) {
+                total += interaction.amount * (1 - interaction.icebergCost) * interaction.trust;
+            }
+        }
+    }
+    return total;
+}
+
+export function getHelpProductivityModifier(help: number, demand: number): number {
+    if (demand <= 0) return 1.0;
+    const r = help / demand;
+    // f(r) = 0.6 + 0.7 * (1 - e^(-0.8473 * r))
+    return 0.6 + 0.7 * (1 - Math.exp(-0.8473 * r));
 }

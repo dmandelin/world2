@@ -46,7 +46,7 @@ x   Basic help stats with matching
 x   Trust model
 x   Fix overly negative alignment busting trust
 x   Travel cost model
-*   Switch over economic production model
+x   Switch over economic production model
 *   Sort out stress benefits and relation to BasicInteraction
 *   Have conflict and mutual aid affect alignment
     and trust appropriately (pay attention to
@@ -55,3 +55,6 @@ x   Travel cost model
     distance and higher trust
 *   Give clans ways to update alignment and
     trust if they need to
+*   Make sure clans actually have matching skills
+*   Differential value of help
+*   Other ways of paying for help/debt

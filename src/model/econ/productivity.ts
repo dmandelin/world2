@@ -5,15 +5,16 @@ import { FloodLevel, FloodLevels } from '../environment/flood';
 import { Processes, SkillDefs } from './econdefs';
 import type { Process } from './process';
 import type { SkillDef } from '../people/skills';
+import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from '../relations/mutualaid';
 
 // Map of process to skills that affect productivity and the
 // weight of that skill.
-const processSkills: Map<Process, [SkillDef, number][]>= new Map([
+const processSkills: Map<Process, [SkillDef, number][]> = new Map([
     [Processes.Agriculture, [
         [SkillDefs.Agriculture, 2],
         [SkillDefs.LocalEcology, 2]]],
     [Processes.Fishing, [
-        [SkillDefs.Fishing, 2], 
+        [SkillDefs.Fishing, 2],
         [SkillDefs.LocalEcology, 2]]],
 ]);
 
@@ -21,16 +22,16 @@ export class Productivity {
     // TODO - Make land quality matter
     // TODO - Make culture/personality matter
 
-    constructor(readonly items: ProductivityItem[]) {}
+    constructor(readonly items: ProductivityItem[]) { }
 
     get tfp(): number {
         return product(this.items.map(item => item.value));
     }
 
-    static forClanProcess(clan: Clan, process: Process, labor: number, land: number, help: number): Productivity {
+    static forClanProcess(clan: Clan, process: Process, labor: number, land: number): Productivity {
         const items = [
             ...ProductivityItem.fromSkills(clan, process),
-            ...ProductivityItem.fromHelp(clan, process, labor, land, help),
+            ...ProductivityItem.fromHelp(clan, process),
             ...ProductivityItem.fromEnvironment(clan, process),
         ];
 
@@ -43,7 +44,7 @@ export class ProductivityItem {
         readonly label: string,
         readonly value: number,
         readonly explanation: string,
-    ) {}
+    ) { }
 
     static forStat(label: string, statValue: number, statFactor: number): ProductivityItem {
         const f = 1 + statFactor / 300;
@@ -62,31 +63,28 @@ export class ProductivityItem {
         }
     }
 
-    static *fromHelp(clan: Clan, process: Process, labor: number, land: number, help: number) {
-        if (process !== Processes.Agriculture) return;
+    static *fromHelp(clan: Clan, process: Process) {
 
-        // Clan-scale cultivators need help to be fully productive,
-        // especially at harvest time, when a lot of labor is needed
-        // at once.
-        const relativeHelp = help / (0.2 * Math.min(labor, land));
-        const helpFactor = relativeHelp < 1
-            ? 0.5 * (1 - relativeHelp)
-            : Math.min(1.5, Math.pow(relativeHelp, 0.25));
+        const helpValue = getHelpReceivedValueFromMutualAid(clan.world, clan);
+        const demand = clanHelpDemand(clan.population);
+        const modifier = getHelpProductivityModifier(helpValue, demand);
+        const relativeHelp = demand > 0 ? helpValue / demand : 1.0;
+
         yield new ProductivityItem(
             'Help',
-            helpFactor,
-            `${pct(relativeHelp)} of needed help`,
+            modifier,
+            `${pct(relativeHelp)} of help demand`,
         );
     }
 
     static *fromEnvironment(clan: Clan, process: Process, floodLevel?: FloodLevel) {
         if (process !== Processes.Agriculture) return;
         floodLevel = floodLevel ?? clan.settlement.floodLevel;
-            
+
         const ditchQuality = clan.settlement.ditchQuality;
         const baseProductivity = floodLevel.baseAgriculturalProductivity;
         const maxProductivity = floodLevel.maxAgriculturalProductivity;
-        const productivity = (1-ditchQuality)*baseProductivity + ditchQuality*maxProductivity;
+        const productivity = (1 - ditchQuality) * baseProductivity + ditchQuality * maxProductivity;
         const differentialProductivity = productivity / baseProductivity;
 
         // For now we'll assume migrations are neutral, because although they

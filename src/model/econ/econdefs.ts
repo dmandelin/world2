@@ -30,7 +30,7 @@ export const SkillDefs = {
 
 export const Processes = {
     Fishing:
-        new Process('Fishing', 1, 'F', '#3b82f6', TradeGoods.Fish, 3),
+        new Process('Fishing', 1, 'F', '#3b82f6', TradeGoods.Fish, 3.3),
     Agriculture:
-        new Process('Agriculture', 2, 'A', '#10b981', TradeGoods.Cereals, 3),
+        new Process('Agriculture', 2, 'A', '#10b981', TradeGoods.Cereals, 3.3),
 };
