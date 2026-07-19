@@ -116,8 +116,8 @@ export class Settlement {
     }
 
     advancePostPhase() {
+        this.maintain();
         // TODO - Bring back some aspect of these
-        // this.maintain();
         // this.distribute();
         // this.exchange();
         // this.redistribute();

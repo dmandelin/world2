@@ -210,3 +210,31 @@ export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, Ce
         }));
     }
 }
+
+// Table from a 2D string array where:
+// - Row 0 contains column header labels (excluding column 0, which is the row header label)
+// - Subsequent rows have the row label in index 0, and cell values in indices 1+
+export class TwoDArrayTable implements Table<string[], string, string[]> {
+    columns: TableColumn<string[], string, string>[];
+    rows: TableRow<string[], string>[];
+
+    constructor(data: string[][]) {
+        if (!data || data.length === 0) {
+            this.columns = [] as any;
+            this.rows = [];
+            return;
+        }
+
+        const headers = data[0];
+        this.columns = headers.slice(1).map((label, index) => ({
+            data: label,
+            label,
+            valueFn: (row: string[]) => row[index + 1],
+        })) as any;
+
+        this.rows = data.slice(1).map(row => ({
+            data: row,
+            label: row[0],
+        }));
+    }
+}

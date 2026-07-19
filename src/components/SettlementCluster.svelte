@@ -4,10 +4,9 @@
     import { SettlementDTO, type ClanDTO } from "../model/records/dtos";
     import { groupSedentismDescription, groupSedentismImage } from "../model/people/residence";
     import { populationAverage } from "../model/lib/modelbasics";
-    import { IterableTable } from "./tables/tables2";
+    import { IterableTable, TwoDArrayTable } from "./tables/tables2";
     import TableView2 from "./tables/TableView2.svelte";
     import ButtonPanel from "./ButtonPanel.svelte";
-    import DataTable from "./DataTable.svelte";
     import Settlement from "./Settlement.svelte";
     import Tooltip from "./Tooltip.svelte";
 
@@ -54,6 +53,7 @@
 
     let settlementStressTooltipTable = $derived(getStressTooltipTable(settlement.clans));
     let clusterStressTooltipTable = $derived(getStressTooltipTable(settlement.cluster.clans));
+    let ditchTooltipTable = $derived(new TwoDArrayTable(settlement.ditchTooltip));
 </script>
 
 <style>
@@ -98,7 +98,7 @@
                         No ditch
                     {/if}
                     <div slot="tooltip">
-                        <DataTable rows={settlement.ditchTooltip} />
+                        <TableView2 table={ditchTooltipTable} />
                     </div>
                 </Tooltip>
             </div>
