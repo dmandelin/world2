@@ -44,7 +44,7 @@ export class PlannedSettlement {
         readonly cluster: SettlementCluster,
         readonly parent: Settlement,
         readonly clans: Clan[]
-    ) {}
+    ) { }
 }
 
 export class MigrationCalc {
@@ -114,7 +114,6 @@ export class CandidateMigrationCalc {
 
         this.items = [
             this.inertia(),
-            this.fromConflict(),
             this.fromLandAvailability(),
             this.fromStress(),
             this.random(),
@@ -182,16 +181,6 @@ export class CandidateMigrationCalc {
             default:
                 return 'distant';
         }
-    }
-
-    private fromConflict(): CandidateMigrationCalcItem {
-        let item: CandidateMigrationCalcItem;
-        if (this.target instanceof NewSettlementMigrationTarget) {
-            item = { name: 'Conflict', reason: 'New settlement', value: 0 };
-        } else {
-            item = { name: 'Conflict', reason: 'Conflict', value: this.target.averageAppealFrom('Conflict') };
-        }
-        return item;
     }
 
     private fromLandAvailability(): CandidateMigrationCalcItem {
