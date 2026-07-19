@@ -12,11 +12,6 @@
 
         const columns: TableColumn<any, any, any>[] = [
             {
-                data: "clanName",
-                label: "Clan",
-                valueFn: (item: any) => item.clanName,
-            },
-            {
                 data: "stayPut",
                 label: "Stay Put Appeal",
                 valueFn: (item: any) => item.stayPutAppeal,
@@ -156,7 +151,6 @@
     }
 
     .settlement-migration-container :global(th) {
-        text-align: left;
         padding: 0.5rem 0.75rem;
         background: #f2ebd5;
         color: #62531d;

@@ -6,9 +6,12 @@
     import type { TableColumn, TableRow } from "../tables/tables2";
     import type { ClanDTO } from "../../model/records/dtos";
 
-    let { clan, compact = false }: { clan: ClanDTO; compact?: boolean } = $props();
+    let { clan, compact = false }: { clan: ClanDTO; compact?: boolean } =
+        $props();
     let plan = $derived(clan.migrationPlan);
-    let reportItem = $derived(clan.settlement.newSettlementDecisionReport?.items[clan.uuid]);
+    let reportItem = $derived(
+        clan.settlement.newSettlementDecisionReport?.items[clan.uuid],
+    );
 
     let candidates = $derived(plan ? Array.from(plan.targets.values()) : []);
 
@@ -79,13 +82,16 @@
     });
 </script>
 
-<div class="clan-migration-container" class:compact={compact}>
+<div class="clan-migration-container" class:compact>
     {#if compact}
         <!-- Compact Tooltip Layout -->
         <div class="compact-section compact-traits">
             <strong>Traits:</strong>
             {#each clan.traits as trait, i}
-                <span class="compact-trait">{trait}</span>{i < clan.traits.length - 1 ? ', ' : ''}
+                <span class="compact-trait">{trait}</span>{i <
+                clan.traits.length - 1
+                    ? ", "
+                    : ""}
             {:else}
                 <span class="text-gray">None</span>
             {/each}
@@ -95,9 +101,13 @@
             <div class="compact-section compact-trigger">
                 <strong>Trigger:</strong>
                 {#if plan.wantToMove}
-                    <span class="text-orange font-bold">CONSIDERING MOVING</span> <span class="text-gray">({plan.wantToMoveReason})</span>
+                    <span class="text-orange font-bold">CONSIDERING MOVING</span
+                    > <span class="text-gray">({plan.wantToMoveReason})</span>
                 {:else}
-                    <span class="text-gray font-bold">STAYING PUT</span> <span class="text-gray">({plan.wantToMoveReason || 'Content'})</span>
+                    <span class="text-gray font-bold">STAYING PUT</span>
+                    <span class="text-gray"
+                        >({plan.wantToMoveReason || "Content"})</span
+                    >
                 {/if}
             </div>
 
@@ -113,8 +123,13 @@
                 <div class="compact-section compact-outcome">
                     <strong>Decision:</strong>
                     {#if reportItem}
-                        Rounds: {reportItem.movingAppeals.length - 1} |
-                        Appeals: {reportItem.movingAppeals.map((val, idx) => `R${idx}:${val.toFixed(1)}${reportItem.isTopChoice[idx] ? '★' : ''}`).join(' → ')} |
+                        Rounds: {reportItem.movingAppeals.length - 1} | Appeals:
+                        {reportItem.movingAppeals
+                            .map(
+                                (val, idx) =>
+                                    `R${idx}:${val.toFixed(1)}${reportItem.isTopChoice[idx] ? "★" : ""}`,
+                            )
+                            .join(" → ")} |
                     {/if}
                     {#if plan.willMigrate}
                         <span class="outcome-pill will">Will Migrate</span>
@@ -137,7 +152,10 @@
 
         {#if plan}
             <!-- Step 1: Decision Trigger -->
-            <div class="decision-step trigger-card" class:active={plan.wantToMove}>
+            <div
+                class="decision-step trigger-card"
+                class:active={plan.wantToMove}
+            >
                 <div class="step-header">
                     <span class="step-num">1</span>
                     <h3>Migration Trigger</h3>
@@ -147,9 +165,12 @@
                         <div class="status-indicator active">
                             <span class="status-dot"></span>
                             <div class="status-details">
-                                <span class="status-title">CONSIDERING MOVING</span>
+                                <span class="status-title"
+                                    >CONSIDERING MOVING</span
+                                >
                                 <span class="status-desc"
-                                    >Triggered due to: <strong>{plan.wantToMoveReason}</strong
+                                    >Triggered due to: <strong
+                                        >{plan.wantToMoveReason}</strong
                                     ></span
                                 >
                             </div>
@@ -170,7 +191,10 @@
             </div>
 
             <!-- Step 2: Appeal Assessment -->
-            <div class="decision-step appeal-card" class:ghosted={!plan.wantToMove}>
+            <div
+                class="decision-step appeal-card"
+                class:ghosted={!plan.wantToMove}
+            >
                 <div class="step-header">
                     <span class="step-num">2</span>
                     <h3>Appeal Assessment</h3>
@@ -179,8 +203,8 @@
                     {/if}
                 </div>
                 <p class="section-desc">
-                    The clan's assessment of how appealing other places would be to
-                    live in:
+                    The clan's assessment of how appealing other places would be
+                    to live in:
                 </p>
                 {#if table && table.rows.length > 0}
                     <div class="table-wrapper">
@@ -199,27 +223,68 @@
 
                     {#if reportItem}
                         <div style="margin-bottom: 1rem;">
-                            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #62531d; font-weight: 600;">Agreement Negotiations (New Settlement)</h4>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #fdfcf7; border: 1px solid #dcd7bd; border-radius: 6px;">
+                            <h4
+                                style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #62531d; font-weight: 600;"
+                            >
+                                Agreement Negotiations (New Settlement)
+                            </h4>
+                            <table
+                                style="width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #fdfcf7; border: 1px solid #dcd7bd; border-radius: 6px;"
+                            >
                                 <thead>
-                                    <tr style="background: #f2ebd5; border-bottom: 1px solid #d2cbb5; text-align: left;">
-                                        <th style="padding: 0.4rem 0.6rem; font-weight: 600;">Round</th>
-                                        <th style="padding: 0.4rem 0.6rem; font-weight: 600;">Staying Put Appeal</th>
-                                        <th style="padding: 0.4rem 0.6rem; font-weight: 600;">Founding Appeal</th>
-                                        <th style="padding: 0.4rem 0.6rem; font-weight: 600;">Top Choice?</th>
+                                    <tr
+                                        style="background: #f2ebd5; border-bottom: 1px solid #d2cbb5; text-align: left;"
+                                    >
+                                        <th
+                                            style="padding: 0.4rem 0.6rem; font-weight: 600;"
+                                            >Round</th
+                                        >
+                                        <th
+                                            style="padding: 0.4rem 0.6rem; font-weight: 600;"
+                                            >Staying Put Appeal</th
+                                        >
+                                        <th
+                                            style="padding: 0.4rem 0.6rem; font-weight: 600;"
+                                            >Founding Appeal</th
+                                        >
+                                        <th
+                                            style="padding: 0.4rem 0.6rem; font-weight: 600;"
+                                            >Top Choice?</th
+                                        >
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {#each reportItem.movingAppeals as appeal, idx}
-                                        <tr style="border-bottom: 1px solid #e9e4cd;">
-                                            <td style="padding: 0.4rem 0.6rem;" class="font-mono">{idx === 0 ? 'Initial (R0)' : `Round ${idx}`}</td>
-                                            <td style="padding: 0.4rem 0.6rem;">{signed(reportItem.stayPutAppeal, 1)}</td>
-                                            <td style="padding: 0.4rem 0.6rem;">{signed(appeal, 1)}</td>
+                                        <tr
+                                            style="border-bottom: 1px solid #e9e4cd;"
+                                        >
+                                            <td
+                                                style="padding: 0.4rem 0.6rem;"
+                                                class="font-mono"
+                                                >{idx === 0
+                                                    ? "Initial (R0)"
+                                                    : `Round ${idx}`}</td
+                                            >
+                                            <td style="padding: 0.4rem 0.6rem;"
+                                                >{signed(
+                                                    reportItem.stayPutAppeal,
+                                                    1,
+                                                )}</td
+                                            >
+                                            <td style="padding: 0.4rem 0.6rem;"
+                                                >{signed(appeal, 1)}</td
+                                            >
                                             <td style="padding: 0.4rem 0.6rem;">
                                                 {#if reportItem.isTopChoice[idx]}
-                                                    <span class="outcome-pill will">FOUND NEW ★</span>
+                                                    <span
+                                                        class="outcome-pill will"
+                                                        >FOUND NEW ★</span
+                                                    >
                                                 {:else}
-                                                    <span class="outcome-pill wont">STAY PUT</span>
+                                                    <span
+                                                        class="outcome-pill wont"
+                                                        >STAY PUT</span
+                                                    >
                                                 {/if}
                                             </td>
                                         </tr>
@@ -238,14 +303,16 @@
                                 <span class="banner-icon">✨</span>
                                 <div>
                                     <strong>Will Migrate</strong> to found a
-                                    <span class="dest-name">New Settlement</span>
+                                    <span class="dest-name">New Settlement</span
+                                    >
                                 </div>
                             </div>
                         {:else}
                             <div class="banner-content">
                                 <span class="banner-icon">📍</span>
                                 <div>
-                                    <strong>Will Not Migrate</strong> (remains at {clan.settlement.name})
+                                    <strong>Will Not Migrate</strong> (remains
+                                    at {clan.settlement.name})
                                 </div>
                             </div>
                         {/if}
@@ -495,7 +562,6 @@
 
     .banner-content {
         display: flex;
-        align-items: center;
         gap: 0.75rem;
         font-size: 0.95rem;
     }
