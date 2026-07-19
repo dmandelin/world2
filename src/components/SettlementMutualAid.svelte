@@ -1,7 +1,11 @@
 <script lang="ts">
     import { CrossTab, type RowDataRowSpec } from "./tables/tables2";
-    import { MutualAidInteraction, clanHelpDemand } from "../model/relations/mutualaid";
-    import { pct, unsigned } from "../model/lib/format";
+    import {
+        MutualAidInteraction,
+        clanHelpDemand,
+    } from "../model/relations/mutualaid";
+    import { TRUST_DECAY_ALPHA } from "../model/relations/trust";
+    import { pct, signed, unsigned } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
@@ -10,10 +14,10 @@
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
 
-    let mutualAidOption: "Amount" | "Value" | "Trust" = $state("Amount");
+    let mutualAidOption: "Amount" | "Value" | "Trust" = $state("Value");
 
     function isClanInSettlement(clan: ClanDTO): boolean {
-        return settlement.clans.some(c => c.uuid === clan.uuid);
+        return settlement.clans.some((c) => c.uuid === clan.uuid);
     }
 
     function buildClansList(): ClanDTO[] {
@@ -24,18 +28,27 @@
             inSettlementClans.push(clan);
         }
 
-        const sortedInSettlement = sortedByKey(inSettlementClans, (c) => c.name);
+        const sortedInSettlement = sortedByKey(
+            inSettlementClans,
+            (c) => c.name,
+        );
 
         const outSettlementClansMap = new Map<string, ClanDTO>();
         for (const clan of settlement.clans) {
-            for (const [other, ma] of world.interactionsForType(clan, MutualAidInteraction)) {
+            for (const [other, ma] of world.interactionsForType(
+                clan,
+                MutualAidInteraction,
+            )) {
                 if (!inSettlement.has(other.uuid)) {
                     outSettlementClansMap.set(other.uuid, other);
                 }
             }
         }
 
-        const sortedOutSettlement = sortedByKey(Array.from(outSettlementClansMap.values()), (c) => c.name);
+        const sortedOutSettlement = sortedByKey(
+            Array.from(outSettlementClansMap.values()),
+            (c) => c.name,
+        );
 
         return [...sortedInSettlement, ...sortedOutSettlement];
     }
@@ -46,7 +59,9 @@
         for (const other of allClansList) {
             if (clan.uuid === other.uuid) continue;
             const interactions = world.interactions.get(clan.ref, other.ref);
-            const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+            const interaction = interactions.find(
+                (i) => i instanceof MutualAidInteraction,
+            ) as MutualAidInteraction | undefined;
             if (interaction) {
                 sum += interaction.amount;
             }
@@ -60,9 +75,14 @@
         for (const other of allClansList) {
             if (clan.uuid === other.uuid) continue;
             const interactions = world.interactions.get(clan.ref, other.ref);
-            const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+            const interaction = interactions.find(
+                (i) => i instanceof MutualAidInteraction,
+            ) as MutualAidInteraction | undefined;
             if (interaction) {
-                sum += interaction.amount * (1 - interaction.icebergCost) * interaction.trust;
+                sum +=
+                    interaction.amount *
+                    (1 - interaction.icebergCost) *
+                    interaction.trust;
             }
         }
         return sum;
@@ -74,7 +94,9 @@
         for (const other of allClansList) {
             if (clan.uuid === other.uuid) continue;
             const interactions = world.interactions.get(clan.ref, other.ref);
-            const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+            const interaction = interactions.find(
+                (i) => i instanceof MutualAidInteraction,
+            ) as MutualAidInteraction | undefined;
             if (interaction) {
                 sum += interaction.amount * interaction.icebergCost;
             }
@@ -89,7 +111,9 @@
         for (const other of allClansList) {
             if (clan.uuid === other.uuid) continue;
             const interactions = world.interactions.get(clan.ref, other.ref);
-            const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+            const interaction = interactions.find(
+                (i) => i instanceof MutualAidInteraction,
+            ) as MutualAidInteraction | undefined;
             if (interaction) {
                 sum += interaction.trust;
                 count++;
@@ -105,7 +129,9 @@
         for (const other of allClansList) {
             if (clan.uuid === other.uuid) continue;
             const interactions = world.interactions.get(clan.ref, other.ref);
-            const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+            const interaction = interactions.find(
+                (i) => i instanceof MutualAidInteraction,
+            ) as MutualAidInteraction | undefined;
             if (interaction && interaction.amount > 0) {
                 sumValue += interaction.amount * interaction.trust;
                 sumAmount += interaction.amount;
@@ -114,15 +140,24 @@
         return sumAmount > 0 ? sumValue / sumAmount : 0.5;
     }
 
-    function newMutualAidCellValue(rowClan: ClanDTO, colClan: ClanDTO): number | null {
+    function newMutualAidCellValue(
+        rowClan: ClanDTO,
+        colClan: ClanDTO,
+    ): number | null {
         if (rowClan.uuid === colClan.uuid) return null;
         const interactions = world.interactions.get(rowClan.ref, colClan.ref);
-        const interaction = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+        const interaction = interactions.find(
+            (i) => i instanceof MutualAidInteraction,
+        ) as MutualAidInteraction | undefined;
         if (!interaction) return null;
 
         if (mutualAidOption === "Amount") return interaction.amount;
         if (mutualAidOption === "Trust") return interaction.trust;
-        return interaction.amount * (1 - interaction.icebergCost) * interaction.trust;
+        return (
+            interaction.amount *
+            (1 - interaction.icebergCost) *
+            interaction.trust
+        );
     }
 
     function newMutualAidFormat(value: number | null): string {
@@ -152,13 +187,36 @@
                     if (!isClanInSettlement(col)) return null;
                     return averageTrustAll(col);
                 },
-                formatFn: (val: number | null) => val === null ? "" : unsigned(val, 2),
+                formatFn: (val: number | null) =>
+                    val === null ? "" : unsigned(val, 2),
                 tooltip: averageTrustRowTooltip as any,
                 headerTooltip: rowHeaderMetricTooltip as any,
                 divider: true,
             });
         } else if (mutualAidOption === "Amount") {
             rowDataRows.push(
+                {
+                    label: "Demand",
+                    valueFn: (col: ClanDTO) => {
+                        if (!isClanInSettlement(col)) return null;
+                        return clanHelpDemand(col.population);
+                    },
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : unsigned(val, 1),
+                    tooltip: amountDemandRowTooltip as any,
+                    headerTooltip: rowHeaderMetricTooltip as any,
+                },
+                {
+                    label: "Total",
+                    valueFn: (col: ClanDTO) => {
+                        if (!isClanInSettlement(col)) return null;
+                        return totalHelpReceivedAmount(col);
+                    },
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : unsigned(val, 1),
+                    tooltip: amountTotalRowTooltip as any,
+                    headerTooltip: rowHeaderMetricTooltip as any,
+                },
                 {
                     label: "Sat",
                     valueFn: (col: ClanDTO) => {
@@ -169,30 +227,11 @@
                         const demand = clanHelpDemand(col.population);
                         return demand > 0 ? net / demand : 0;
                     },
-                    formatFn: (val: number | null) => val === null ? "" : pct(val),
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : pct(val),
                     tooltip: amountSatRowTooltip as any,
                     headerTooltip: rowHeaderMetricTooltip as any,
                     divider: true,
-                },
-                {
-                    label: "Demand",
-                    valueFn: (col: ClanDTO) => {
-                        if (!isClanInSettlement(col)) return null;
-                        return clanHelpDemand(col.population);
-                    },
-                    formatFn: (val: number | null) => val === null ? "" : unsigned(val, 1),
-                    tooltip: amountDemandRowTooltip as any,
-                    headerTooltip: rowHeaderMetricTooltip as any,
-                },
-                {
-                    label: "Total",
-                    valueFn: (col: ClanDTO) => {
-                        if (!isClanInSettlement(col)) return null;
-                        return totalHelpReceivedAmount(col);
-                    },
-                    formatFn: (val: number | null) => val === null ? "" : unsigned(val, 1),
-                    tooltip: amountTotalRowTooltip as any,
-                    headerTooltip: rowHeaderMetricTooltip as any,
                 },
                 {
                     label: "Cost",
@@ -200,23 +239,24 @@
                         if (!isClanInSettlement(col)) return null;
                         return totalHelpLostAmount(col);
                     },
-                    formatFn: (val: number | null) => val === null ? "" : unsigned(val, 1),
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : unsigned(val, 1),
                     tooltip: amountCostRowTooltip as any,
                     headerTooltip: rowHeaderMetricTooltip as any,
-                }
+                },
             );
         } else if (mutualAidOption === "Value") {
             rowDataRows.push(
                 {
-                    label: "Trust",
+                    label: "Demand",
                     valueFn: (col: ClanDTO) => {
                         if (!isClanInSettlement(col)) return null;
-                        return averageTrustValue(col);
+                        return clanHelpDemand(col.population);
                     },
-                    formatFn: (val: number | null) => val === null ? "" : unsigned(val, 2),
-                    tooltip: valueTrustRowTooltip as any,
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : unsigned(val, 1),
+                    tooltip: amountDemandRowTooltip as any,
                     headerTooltip: rowHeaderMetricTooltip as any,
-                    divider: true,
                 },
                 {
                     label: "Total",
@@ -224,10 +264,36 @@
                         if (!isClanInSettlement(col)) return null;
                         return totalHelpReceivedValue(col);
                     },
-                    formatFn: (val: number | null) => val === null ? "" : unsigned(val, 1),
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : unsigned(val, 1),
                     tooltip: valueTotalRowTooltip as any,
                     headerTooltip: rowHeaderMetricTooltip as any,
-                }
+                },
+                {
+                    label: "Trust",
+                    valueFn: (col: ClanDTO) => {
+                        if (!isClanInSettlement(col)) return null;
+                        return averageTrustValue(col);
+                    },
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : unsigned(val, 2),
+                    tooltip: valueTrustRowTooltip as any,
+                    headerTooltip: rowHeaderMetricTooltip as any,
+                },
+                {
+                    label: "Sat",
+                    valueFn: (col: ClanDTO) => {
+                        if (!isClanInSettlement(col)) return null;
+                        const value = totalHelpReceivedValue(col);
+                        const demand = clanHelpDemand(col.population);
+                        return demand > 0 ? value / demand : 0;
+                    },
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : pct(val),
+                    tooltip: valueSatRowTooltip as any,
+                    headerTooltip: rowHeaderMetricTooltip as any,
+                    divider: true,
+                },
             );
         }
 
@@ -249,32 +315,81 @@
     }
 </script>
 
-{#snippet newMutualAidCellTooltip(value: number | null, rowClan: ClanDTO, colClan: ClanDTO)}
+{#snippet newMutualAidCellTooltip(
+    value: number | null,
+    rowClan: ClanDTO,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         {@const interactions = world.interactions.get(rowClan.ref, colClan.ref)}
-        {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
+        {@const ma = interactions.find(
+            (i) => i instanceof MutualAidInteraction,
+        ) as MutualAidInteraction | undefined}
         {#if ma}
-            {@const demand = clanHelpDemand(colClan.population)}
-            {@const grossVal = ma.amount}
-            {@const travelCostVal = ma.amount * ma.icebergCost}
-            {@const netVal = ma.amount * (1 - ma.icebergCost)}
-            {@const valueVal = netVal * ma.trust}
-            <div style="font-size: 0.9em; padding: 0.25rem; min-width: 220px;">
-                <strong>Mutual Aid Details:</strong>
-                <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
-                    <li>• Helpee (Col): {colClan.name} {#if isClanInSettlement(colClan)}(Demand: {unsigned(demand, 1)}){/if}</li>
-                    <li>• Helper (Row): {rowClan.name}</li>
-                    <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                    <li>• Distance: {unsigned(ma.distance, 1)} miles</li>
-                    <li>• Iceberg Cost Rate: {pct(ma.icebergCost)}</li>
-                    <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                    <li>• Amount Sent: {unsigned(grossVal, 1)}</li>
-                    <li>• Lost in Transit: {unsigned(travelCostVal, 1)}</li>
-                    <li>• Net Amount Received: {unsigned(netVal, 1)}</li>
-                    <li>• Trust Factor: {unsigned(ma.trust, 2)}</li>
-                    <li>• Value (Net × Trust): {unsigned(valueVal, 1)}</li>
-                </ul>
-            </div>
+            {#if mutualAidOption === "Trust"}
+                <div style="font-size: 0.85em; padding: 0.2rem; min-width: 220px; line-height: 1.35; color: #4e3f30;">
+                    <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
+                        Trust: {rowClan.name} → {colClan.name}
+                    </div>
+                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.6rem; margin-bottom: 0.35rem;">
+                        <span>Prev Trust:</span> <strong style="text-align: right;">{unsigned(ma.trustModel.prevTrust, 2)}</strong>
+                        <span>Alignment:</span> <strong style="text-align: right;">{signed(ma.trustModel.alignment, 2)}</strong>
+                        <span>Rel. Attention:</span> <strong style="text-align: right;">{unsigned(ma.trustModel.relativeAttention, 2)}</strong>
+                    </div>
+                    <div style="border-top: 1px dashed #ccc; padding-top: 0.25rem; margin-top: 0.25rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Target Trust:</span>
+                            <strong>{unsigned(ma.trustModel.target, 2)}</strong>
+                        </div>
+                        <div style="font-size: 0.8em; color: #6e5b47; font-style: italic; margin-top: 0.05rem;">
+                            Max(align, Min(1, 0.5 + align + att/2))
+                        </div>
+                    </div>
+                    <div style="border-top: 1px dashed #ccc; padding-top: 0.25rem; margin-top: 0.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>New Trust:</span>
+                            <strong style="font-size: 1.1em; color: #845a3b;">{unsigned(ma.trustModel.value, 2)}</strong>
+                        </div>
+                        <div style="font-size: 0.8em; color: #6e5b47; font-style: italic; margin-top: 0.05rem;">
+                            {TRUST_DECAY_ALPHA} × prev + {(1 - TRUST_DECAY_ALPHA).toFixed(1)} × target
+                        </div>
+                    </div>
+                </div>
+            {:else}
+                {@const demand = clanHelpDemand(colClan.population)}
+                {@const grossVal = ma.amount}
+                {@const travelCostVal = ma.amount * ma.icebergCost}
+                {@const netVal = ma.amount * (1 - ma.icebergCost)}
+                {@const valueVal = netVal * ma.trust}
+                <div style="font-size: 0.9em; padding: 0.25rem; min-width: 220px;">
+                    <strong>Mutual Aid Details:</strong>
+                    <ul
+                        style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+                    >
+                        <li>
+                            • Helpee (Col): {colClan.name}
+                            {#if isClanInSettlement(colClan)}(Demand: {unsigned(
+                                    demand,
+                                    1,
+                                )}){/if}
+                        </li>
+                        <li>• Helper (Row): {rowClan.name}</li>
+                        <hr
+                            style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                        />
+                        <li>• Distance: {unsigned(ma.distance, 1)} miles</li>
+                        <li>• Iceberg Cost Rate: {pct(ma.icebergCost)}</li>
+                        <hr
+                            style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                        />
+                        <li>• Amount Sent: {unsigned(grossVal, 1)}</li>
+                        <li>• Lost in Transit: {unsigned(travelCostVal, 1)}</li>
+                        <li>• Net Amount Received: {unsigned(netVal, 1)}</li>
+                        <li>• Trust Factor: {unsigned(ma.trust, 2)}</li>
+                        <li>• Value (Net × Trust): {unsigned(valueVal, 1)}</li>
+                    </ul>
+                </div>
+            {/if}
         {/if}
     {:else}
         <div style="font-size: 0.9em; padding: 0.25rem;">
@@ -302,163 +417,318 @@
     </div>
 {/snippet}
 
-{#snippet averageTrustRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+{#snippet averageTrustRowTooltip(
+    value: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Average Trust of {colClan.name} Relationships:</strong> {unsigned(value, 2)}
+            <strong>Average Trust of {colClan.name} Relationships:</strong>
+            {unsigned(value, 2)}
             <br />
             <span style="font-size: 0.85em; color: #666;">
-                Average of the fixed 0.5 trust factor across all connected relationships.
+                Average of the fixed 0.5 trust factor across all connected
+                relationships.
             </span>
         </div>
     {/if}
 {/snippet}
 
-{#snippet amountSatRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+{#snippet valueSatRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+    {#if value !== null}
+        {@const val = totalHelpReceivedValue(colClan)}
+        {@const demand = clanHelpDemand(colClan.population)}
+        <div style="font-size: 0.9em; padding: 0.25rem;">
+            <strong
+                >Value-based Help Satisfaction (Sat) for {colClan.name}:</strong
+            >
+            {pct(value)}
+            <ul
+                style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+            >
+                <li>
+                    • Total help value (after trust & travel cost): {unsigned(
+                        val,
+                        1,
+                    )}
+                </li>
+                <li>• Help demand: {unsigned(demand, 1)}</li>
+                <hr
+                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                />
+                <li>
+                    <strong>Formula:</strong> Total Value / Demand = {pct(
+                        value,
+                    )}
+                </li>
+            </ul>
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet amountSatRowTooltip(
+    value: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         {@const gross = totalHelpReceivedAmount(colClan)}
         {@const cost = totalHelpLostAmount(colClan)}
         {@const net = gross - cost}
         {@const demand = clanHelpDemand(colClan.population)}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Help Satisfaction (Sat) for {colClan.name}:</strong> {pct(value)}
-            <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            <strong>Help Satisfaction (Sat) for {colClan.name}:</strong>
+            {pct(value)}
+            <ul
+                style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+            >
                 <li>• Gross help amount: {unsigned(gross, 1)}</li>
                 <li>• Travel cost (lost): {unsigned(cost, 1)}</li>
                 <li>• Net help received (net): {unsigned(net, 1)}</li>
                 <li>• Help demand: {unsigned(demand, 1)}</li>
-                <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                <li><strong>Formula:</strong> Net Received / Demand = {pct(value)}</li>
+                <hr
+                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                />
+                <li>
+                    <strong>Formula:</strong> Net Received / Demand = {pct(
+                        value,
+                    )}
+                </li>
             </ul>
         </div>
     {/if}
 {/snippet}
 
-{#snippet amountDemandRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+{#snippet amountDemandRowTooltip(
+    value: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Help Demand for {colClan.name}:</strong> {unsigned(value, 1)}
-            <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            <strong>Help Demand for {colClan.name}:</strong>
+            {unsigned(value, 1)}
+            <ul
+                style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+            >
                 <li>• Population: {colClan.population}</li>
-                <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                <li><strong>Formula:</strong> {colClan.population} × √(10 / {colClan.population}) = {unsigned(value, 1)}</li>
+                <hr
+                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                />
+                <li>
+                    <strong>Formula:</strong>
+                    {colClan.population} × √(10 / {colClan.population}) = {unsigned(
+                        value,
+                        1,
+                    )}
+                </li>
             </ul>
         </div>
     {/if}
 {/snippet}
 
-{#snippet amountTotalRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+{#snippet amountTotalRowTooltip(
+    value: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 200px;">
             <strong>Total Help Received by {colClan.name} Breakdown:</strong>
-            <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            <ul
+                style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+            >
                 {#each buildClansList() as other}
                     {#if colClan.uuid !== other.uuid}
-                        {@const interactions = world.interactions.get(colClan.ref, other.ref)}
-                        {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
+                        {@const interactions = world.interactions.get(
+                            colClan.ref,
+                            other.ref,
+                        )}
+                        {@const ma = interactions.find(
+                            (i) => i instanceof MutualAidInteraction,
+                        ) as MutualAidInteraction | undefined}
                         {#if ma && ma.amount > 0}
-                            <li>• From helper {other.name}: {unsigned(ma.amount, 1)}</li>
+                            <li>
+                                • From helper {other.name}: {unsigned(
+                                    ma.amount,
+                                    1,
+                                )}
+                            </li>
                         {/if}
                     {/if}
                 {/each}
-                <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                <li><strong>Total Help Received:</strong> {unsigned(value, 1)}</li>
+                <hr
+                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                />
+                <li>
+                    <strong>Total Help Received:</strong>
+                    {unsigned(value, 1)}
+                </li>
             </ul>
         </div>
     {/if}
 {/snippet}
 
-{#snippet valueTrustRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+{#snippet valueTrustRowTooltip(
+    value: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         {@const sumVal = totalHelpReceivedValue(colClan)}
         {@const sumAmt = totalHelpReceivedAmount(colClan)}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Weighted Average Trust for {colClan.name}:</strong> {unsigned(value, 2)}
-            <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
-                <li>• Total help value (amount × trust): {unsigned(sumVal, 1)}</li>
+            <strong>Weighted Average Trust for {colClan.name}:</strong>
+            {unsigned(value, 2)}
+            <ul
+                style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+            >
+                <li>
+                    • Total help value (amount × trust): {unsigned(sumVal, 1)}
+                </li>
                 <li>• Total help amount: {unsigned(sumAmt, 1)}</li>
-                <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                <li><strong>Formula:</strong> {unsigned(sumVal, 1)} / {unsigned(sumAmt, 1)} = {unsigned(value, 2)}</li>
+                <hr
+                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                />
+                <li>
+                    <strong>Formula:</strong>
+                    {unsigned(sumVal, 1)} / {unsigned(sumAmt, 1)} = {unsigned(
+                        value,
+                        2,
+                    )}
+                </li>
             </ul>
         </div>
     {/if}
 {/snippet}
 
-{#snippet valueTotalRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+{#snippet valueTotalRowTooltip(
+    value: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 200px;">
-            <strong>Total Help Value Received by {colClan.name} Breakdown:</strong>
-            <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            <strong
+                >Total Help Value Received by {colClan.name} Breakdown:</strong
+            >
+            <ul
+                style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+            >
                 {#each buildClansList() as other}
                     {#if colClan.uuid !== other.uuid}
-                        {@const interactions = world.interactions.get(colClan.ref, other.ref)}
-                        {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
+                        {@const interactions = world.interactions.get(
+                            colClan.ref,
+                            other.ref,
+                        )}
+                        {@const ma = interactions.find(
+                            (i) => i instanceof MutualAidInteraction,
+                        ) as MutualAidInteraction | undefined}
                         {#if ma && ma.amount > 0}
                             {@const netVal = ma.amount * (1 - ma.icebergCost)}
                             {@const valueVal = netVal * ma.trust}
-                            <li>• From helper {other.name}: {unsigned(valueVal, 1)} (gross: {unsigned(ma.amount, 1)} -> net: {unsigned(netVal, 1)} × trust: {unsigned(ma.trust, 2)})</li>
+                            <li>
+                                • From helper {other.name}: {unsigned(
+                                    valueVal,
+                                    1,
+                                )} (gross: {unsigned(ma.amount, 1)} -> net: {unsigned(
+                                    netVal,
+                                    1,
+                                )} × trust: {unsigned(ma.trust, 2)})
+                            </li>
                         {/if}
                     {/if}
                 {/each}
-                <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+                <hr
+                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                />
                 <li><strong>Total Help Value:</strong> {unsigned(value, 1)}</li>
             </ul>
         </div>
     {/if}
 {/snippet}
 
-{#snippet amountCostRowTooltip(value: number | null, spec: any, colClan: ClanDTO)}
+{#snippet amountCostRowTooltip(
+    value: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if value !== null}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 200px;">
-            <strong>Total Help Lost in Transit for {colClan.name} Breakdown:</strong>
-            <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            <strong
+                >Total Help Lost in Transit for {colClan.name} Breakdown:</strong
+            >
+            <ul
+                style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+            >
                 {#each buildClansList() as other}
                     {#if colClan.uuid !== other.uuid}
-                        {@const interactions = world.interactions.get(colClan.ref, other.ref)}
-                        {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
+                        {@const interactions = world.interactions.get(
+                            colClan.ref,
+                            other.ref,
+                        )}
+                        {@const ma = interactions.find(
+                            (i) => i instanceof MutualAidInteraction,
+                        ) as MutualAidInteraction | undefined}
                         {#if ma && ma.amount > 0 && ma.icebergCost > 0}
-                            <li>• From helper {other.name}: {unsigned(ma.amount * ma.icebergCost, 1)} (amount: {unsigned(ma.amount, 1)} × cost: {pct(ma.icebergCost)})</li>
+                            <li>
+                                • From helper {other.name}: {unsigned(
+                                    ma.amount * ma.icebergCost,
+                                    1,
+                                )} (amount: {unsigned(ma.amount, 1)} × cost: {pct(
+                                    ma.icebergCost,
+                                )})
+                            </li>
                         {/if}
                     {/if}
                 {/each}
-                <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-                <li><strong>Total Cost (Lost):</strong> {unsigned(value, 1)}</li>
+                <hr
+                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+                />
+                <li>
+                    <strong>Total Cost (Lost):</strong>
+                    {unsigned(value, 1)}
+                </li>
             </ul>
         </div>
     {/if}
 {/snippet}
 
 <div style="padding: 1rem 2rem;">
-    <div style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+    <div
+        style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 1rem;"
+    >
         <h3 style="margin: 0;">Mutual Aid Interactions</h3>
         <div class="stress-button-group">
             <button
                 type="button"
-                class="stress-btn {mutualAidOption === 'Amount' ? 'active' : ''}"
-                onclick={() => (mutualAidOption = 'Amount')}
-            >Amount</button>
+                class="stress-btn {mutualAidOption === 'Value' ? 'active' : ''}"
+                onclick={() => (mutualAidOption = "Value")}>Value</button
+            >
             <button
                 type="button"
-                class="stress-btn {mutualAidOption === 'Value' ? 'active' : ''}"
-                onclick={() => (mutualAidOption = 'Value')}
-            >Value</button>
+                class="stress-btn {mutualAidOption === 'Amount'
+                    ? 'active'
+                    : ''}"
+                onclick={() => (mutualAidOption = "Amount")}>Amount</button
+            >
             <button
                 type="button"
                 class="stress-btn {mutualAidOption === 'Trust' ? 'active' : ''}"
-                onclick={() => (mutualAidOption = 'Trust')}
-            >Trust</button>
+                onclick={() => (mutualAidOption = "Trust")}>Trust</button
+            >
         </div>
     </div>
-    
+
     <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-        This matrix shows help exchanges between helpers (rows) and helpees (columns).
-        Clans from outside this settlement are marked with an asterisk (*) and shaded.
+        This matrix shows help exchanges between helpers (rows) and helpees
+        (columns). Clans from outside this settlement are marked with an
+        asterisk (*) and shaded.
     </p>
 
     <div class="table-container">
-        <TableView2
-            table={buildNewMutualAidTable()}
-        />
+        <TableView2 table={buildNewMutualAidTable()} />
     </div>
 </div>
 

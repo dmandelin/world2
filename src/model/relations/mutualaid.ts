@@ -3,14 +3,19 @@ import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
 import type { World } from "../world";
 import { Interaction } from "./interaction";
+import { Trust } from "./trust";
 
 export class MutualAidInteraction extends Interaction {
-    readonly trust: number = 0.5;
+    readonly trustModel: Trust = new Trust();
     amount: number = 0;
     distance: number = 0; // in miles
 
     constructor(c1: UUID, c2: UUID) {
         super(c1, c2);
+    }
+
+    get trust(): number {
+        return this.trustModel.value;
     }
 
     get icebergCost(): number {
@@ -46,6 +51,7 @@ export function updateMutualAidInteractions(world: World): void {
             } else {
                 interaction.distance = 0;
             }
+            interaction.trustModel.update(c1, c2);
         }
     }
 

@@ -43,8 +43,9 @@ tiers:
 # Items
 
 x   Basic help stats with matching
-*   Trust model
-*   Travel cost model
+x   Trust model
+*   Fix overly negative alignment busting trust
+x   Travel cost model
 *   Switch over economic production model
 *   Sort out stress benefits and relation to BasicInteraction
 *   Have clans prefer relationships with lower

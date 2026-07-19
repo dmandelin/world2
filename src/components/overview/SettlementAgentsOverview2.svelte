@@ -5,6 +5,7 @@
         IterableTable,
         SingleMapTable,
     } from "../tables/tables2";
+    import { MutualAidInteraction, clanHelpDemand } from "../../model/relations/mutualaid";
     import {
         pct,
         signed,
@@ -229,6 +230,43 @@
                 deltaFormat: signed,
                 timelineKey: "stress",
                 scaler: new ZeroCenteredScaler(),
+                topics: ["welfare"],
+            },
+            {
+                label: "Mutual Aid",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => {
+                    const world = settlement.world;
+                    let totalValue = 0;
+                    for (const other of world.clanMap.values()) {
+                        if (c.uuid === other.uuid) continue;
+                        const interactions = world.interactions.get(c.ref, other.ref);
+                        const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+                        if (ma) {
+                            totalValue += ma.amount * (1 - ma.icebergCost) * ma.trust;
+                        }
+                    }
+                    const demand = clanHelpDemand(c.population);
+                    return demand > 0 ? totalValue / demand : 0;
+                },
+                format: pct,
+                tooltipSnippet: mutualAidSatTooltip,
+                deltaValue: (c) => {
+                    const world = settlement.world;
+                    let totalValue = 0;
+                    for (const other of world.clanMap.values()) {
+                        if (c.uuid === other.uuid) continue;
+                        const interactions = world.interactions.get(c.ref, other.ref);
+                        const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+                        if (ma) {
+                            totalValue += ma.amount * (1 - ma.icebergCost) * ma.trust;
+                        }
+                    }
+                    const demand = clanHelpDemand(c.population);
+                    return demand > 0 ? totalValue / demand : 0;
+                },
+                deltaFormat: pct,
                 topics: ["welfare"],
             },
             {
@@ -1094,6 +1132,31 @@
 
 {#snippet residenceTooltip(cs: ClanLastTurnSnapshots)}
     <ClanResidenceTooltip clan={cs.e} />
+{/snippet}
+
+{#snippet mutualAidSatTooltip(cs: ClanLastTurnSnapshots)}
+    {@const world = settlement.world}
+    {@const clan = cs.e}
+    {@const demand = clanHelpDemand(clan.population)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+        <strong>Mutual Aid Satisfaction (Value Sat):</strong>
+        <p style="margin: 0.25rem 0;">Satisfaction based on net help value received relative to demand.</p>
+        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            <li>• Help demand: {unsigned(demand, 1)}</li>
+            <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+            {#each Array.from(world.clanMap.values()) as other}
+                {#if clan.uuid !== other.uuid}
+                    {@const interactions = world.interactions.get(clan.ref, other.ref)}
+                    {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
+                    {#if ma && ma.amount > 0}
+                        {@const netVal = ma.amount * (1 - ma.icebergCost)}
+                        {@const valueVal = netVal * ma.trust}
+                        <li>• From {other.name}: {unsigned(valueVal, 1)} (net: {unsigned(netVal, 1)} × trust: {unsigned(ma.trust, 2)})</li>
+                    {/if}
+                {/if}
+            {/each}
+        </ul>
+    </div>
 {/snippet}
 
 {#snippet supportRatioPrevTooltip(cs: ClanLastTurnSnapshots)}
