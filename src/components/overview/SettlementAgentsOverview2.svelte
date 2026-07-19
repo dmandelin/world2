@@ -935,9 +935,14 @@
 {/snippet}
 
 {#snippet stressValueRender(cs: ClanLastTurnSnapshots)}
-    <span style="color: {stressColor(cs.e.stress.value)}"
-        >{signed(cs.e.stress.value)}</span
-    >
+    <Tooltip>
+        <span style="color: {stressColor(cs.e.stress.value)}"
+            >{signed(cs.e.stress.value)}</span
+        >
+        <div slot="tooltip" style="text-align: left; color: initial;">
+            {@render stressTooltip(cs)}
+        </div>
+    </Tooltip>
 {/snippet}
 
 {#snippet stressTooltip(cs: ClanLastTurnSnapshots)}
