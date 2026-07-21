@@ -104,8 +104,8 @@ export function updateBasicInteractions(world: World): void {
         offers.set(c1, offerMap);
     }
 
-    // Clear previous interactions.
-    world.interactions.clear();
+    // Clear previous basic interactions.
+    world.interactions.removeType(BasicInteraction);
 
     // Match offers and ensure relationships exist.
     const acceptedOffers = new Map<Clan, Set<Clan>>();

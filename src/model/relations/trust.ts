@@ -1,5 +1,5 @@
+import { clamp } from "../lib/basics";
 import type { Clan } from "../people/people";
-import type { ClanDTO } from "../records/dtos";
 import { getAlignment } from "./alignment";
 import { getRelativeAttention } from "./basicinteraction";
 
@@ -18,12 +18,12 @@ export class Trust {
         this.prevTrust = this.value;
         this.alignment = getAlignment(subject, object);
         this.relativeAttention = getRelativeAttention(subject, object);
-        
+
         // Target: 0.5 + alignment + (relativeAttention / 2)
         // Bounded by [alignment, 1.0] and overall [0, 1.0]
         const rawTarget = 0.5 + this.alignment + (this.relativeAttention / 2);
-        this.target = Math.max(0, Math.max(this.alignment, Math.min(1.0, rawTarget)));
-        
+        this.target = clamp(rawTarget, 0, 1);
+
         this.value = TRUST_DECAY_ALPHA * this.prevTrust + (1.0 - TRUST_DECAY_ALPHA) * this.target;
     }
 }

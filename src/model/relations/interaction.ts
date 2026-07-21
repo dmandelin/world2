@@ -20,6 +20,20 @@ export class InteractionGraph {
         this.a_.clear();
     }
 
+    removeType<T extends Interaction>(type: new (...args: any[]) => T): void {
+        for (const [pairID, interactions] of [...this.m_.entries()]) {
+            const filtered = interactions.filter(i => !(i instanceof type));
+            if (filtered.length === 0) {
+                this.m_.delete(pairID);
+                const [c1, c2] = pairID.split('|');
+                this.a_.get(c1)?.delete(pairID);
+                this.a_.get(c2)?.delete(pairID);
+            } else {
+                this.m_.set(pairID, filtered);
+            }
+        }
+    }
+
     get(c1: HasOrIsUUID, c2: HasOrIsUUID): Interaction[]  {
         const pairID = pairIDOf(c1, c2);
         return this.m_.get(pairID) ?? [];

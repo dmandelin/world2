@@ -48,7 +48,7 @@ x   Fix overly negative alignment busting trust
 x   Travel cost model
 x   Switch over economic production model
 
-*   Fix bug where trust seems not to go over 0.75
+x   Fix bug where trust seems not to go over 0.75
 *   Update "help" activity allocation, but it's not clear
     exactly how
 
@@ -63,3 +63,5 @@ x   Switch over economic production model
 *   Make sure clans actually have matching skills
 *   Differential value of help
 *   Other ways of paying for help/debt
+
+*   Give clans with high support ratios better options
