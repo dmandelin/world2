@@ -1,5 +1,5 @@
 import type { Clan } from "../people/people";
-import { uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
+import { GenericItem, uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
 import type { World } from "../world";
 
 // How many iterations of the simple conflict game to apply per
@@ -79,7 +79,7 @@ export class ConflictGraph {
         }
     }
 
-    *entriesForHasUUID(c: HasOrIsUUID): Iterable<[UUID, Conflict]>{
+    *entriesForHasUUID(c: HasOrIsUUID): Iterable<[UUID, Conflict]> {
         const uuid = uuidOf(c);
         const c1Map = this.m_.get(uuid);
         if (!c1Map) return;
@@ -188,8 +188,18 @@ export class Conflict {
 
     value(c: HasOrIsUUID) {
         return this.uuid1 === uuidOf(c)
-             ? this.totalOf(r => r.c1Payoff)
-             : this.totalOf(r => r.c2Payoff);
+            ? this.totalOf(r => r.c1Payoff)
+            : this.totalOf(r => r.c2Payoff);
+    }
+
+    alignmentItem(subject: HasOrIsUUID, object?: HasOrIsUUID): GenericItem {
+        const conflictPayoff = this.value(subject);
+        // Some conflict is understood to be normal.
+        return new GenericItem(
+            'Conflict',
+            0.1 * Math.min(conflictPayoff + 3, 0),
+            'Conflict'
+        );
     }
 
     private totalOf(fn: (r: ConflictResults) => number): number {

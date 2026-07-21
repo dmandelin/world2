@@ -54,7 +54,7 @@ x   Fix bug where trust seems not to go over 0.75
 
 *   Sort out stress benefits and relation to BasicInteraction
 x   Mutual aid affects alignment
-*   Conflict affects alignment
+x   Conflict affects alignment
 *   Conflict affects trust
 *   Have clans prefer relationships with lower
     distance and higher trust

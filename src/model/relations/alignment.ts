@@ -5,6 +5,7 @@ import type { ClanDTO } from "../records/dtos";
 import type { World } from "../world";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
+import type { Conflict } from "./conflict";
 
 export class Alignment {
     items: GenericItem[] = [];
@@ -13,11 +14,13 @@ export class Alignment {
         subject: Clan,
         object: Clan,
         connections: Connection[],
-        interactions: Interaction[]): void {
+        interactions: Interaction[],
+        conflict?: Conflict): void {
 
         this.items = [
             ...connections.map(connection => connection.alignmentItem(subject, object)),
-            ...interactions.map(interaction => interaction.alignmentItem(subject, object))
+            ...interactions.map(interaction => interaction.alignmentItem(subject, object)),
+            ...(conflict ? [conflict.alignmentItem(subject, object)] : [])
         ];
     }
 
