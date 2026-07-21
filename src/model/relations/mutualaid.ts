@@ -4,6 +4,7 @@ import type { ClanDTO, WorldDTO } from "../records/dtos";
 import type { World } from "../world";
 import { Interaction } from "./interaction";
 import { Trust } from "./trust";
+import { unsigned } from "../lib/format";
 
 export class MutualAidInteraction extends Interaction {
     readonly trustModel: Trust = new Trust();
@@ -30,8 +31,8 @@ export class MutualAidInteraction extends Interaction {
     alignmentItem(subject: Clan | ClanDTO, object: Clan | ClanDTO): GenericItem {
         return new GenericItem(
             'Mutual Aid',
-            0,
-            `Mutual aid value: 0.0 (Zeroed out for now)`,
+            0.1 * (1 - this.icebergCost) * this.trust * this.amount,
+            `Mutual aid value: ${unsigned((1 - this.icebergCost) * this.trust * this.amount, 2)}`,
         );
     }
 }

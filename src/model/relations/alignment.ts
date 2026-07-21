@@ -1,4 +1,4 @@
-import { maxbyWithValue, sumFun } from "../lib/basics";
+import { clamp, maxbyWithValue, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { GenericItem } from "../records/basicdata";
 import type { ClanDTO } from "../records/dtos";
@@ -10,9 +10,9 @@ export class Alignment {
     items: GenericItem[] = [];
 
     updateFor(
-        subject: Clan, 
-        object: Clan, 
-        connections: Connection[], 
+        subject: Clan,
+        object: Clan,
+        connections: Connection[],
         interactions: Interaction[]): void {
 
         this.items = [
@@ -27,9 +27,11 @@ export class Alignment {
         return a;
     }
 
-    get value(): number { return sumFun(this.items, item => item.value); }
+    get value(): number {
+        return clamp(sumFun(this.items, item => item.value), -1, 1);
+    }
 }
 
-export function getAlignment(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+export function getAlignment(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     return subject.world.perceptions.get(subject.uuid, object.uuid)?.alignment.value ?? 0;
 }
