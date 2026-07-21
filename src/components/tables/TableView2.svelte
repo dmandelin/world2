@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CrossTable, Table, TableColumn, TableRow } from "./tables2";
-    import Tooltip from "../Tooltip.svelte";
+    import Tooltip2 from "../Tooltip2.svelte";
 
     let { table }: { table: Table<any, any, any> | CrossTable<any, any> } =
         $props<{ table: Table<any, any, any> | CrossTable<any, any> }>();
@@ -60,12 +60,12 @@
                 {#each table.columns as column}
                     <th class={column.class ?? ''}>
                         {#if column.headerTooltip}
-                            <Tooltip>
-                                {column.label}
-                                <div slot="tooltip">
+                            {column.label}
+                            <Tooltip2>
+                                <div style="text-align: left; color: initial;">
                                     {column.headerTooltip}
                                 </div>
-                            </Tooltip>
+                            </Tooltip2>
                         {:else}
                             {column.label}
                         {/if}
@@ -87,12 +87,12 @@
                     onclick={() => table.onClickRowHeader?.(row.data)}
                 >
                     {#if row.headerTooltip}
-                        <Tooltip>
-                            {row.label}
-                            <div slot="tooltip">
+                        {row.label}
+                        <Tooltip2>
+                            <div style="text-align: left; color: initial;">
                                 {@render row.headerTooltip(row.data)}
                             </div>
-                        </Tooltip>
+                        </Tooltip2>
                     {:else}
                         {row.label}
                     {/if}
@@ -112,27 +112,27 @@
                         {#if table.isCrossTable && rowIndex === colIndex}
                             &nbsp;
                         {:else if column.tooltip}
-                            <Tooltip>
-                                {@render cellHTML(row, column)}
-                                <div slot="tooltip">
+                            {@render cellHTML(row, column)}
+                            <Tooltip2>
+                                <div style="text-align: left; color: initial;">
                                     {@render column.tooltip(
                                         cellValue(row, column),
                                         row.data,
                                         column.data,
                                     )}
                                 </div>
-                            </Tooltip>
+                            </Tooltip2>
                         {:else if row.tooltip}
-                            <Tooltip>
-                                {@render cellHTML(row, column)}
-                                <div slot="tooltip">
+                            {@render cellHTML(row, column)}
+                            <Tooltip2>
+                                <div style="text-align: left; color: initial;">
                                     {@render row.tooltip(
                                         cellValue(row, column),
                                         row.data,
                                         column.data,
                                     )}
                                 </div>
-                            </Tooltip>
+                            </Tooltip2>
                         {:else}
                             {@render cellHTML(row, column)}
                         {/if}

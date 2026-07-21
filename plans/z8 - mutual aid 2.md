@@ -49,8 +49,8 @@ x   Travel cost model
 x   Switch over economic production model
 
 *   Fix bug where trust seems not to go over 0.75
-*   Clean up "help" activity allocation, it's redundant with
-    the iceberg costs
+*   Update "help" activity allocation, but it's not clear
+    exactly how
 
 *   Sort out stress benefits and relation to BasicInteraction
 *   Have conflict and mutual aid affect alignment
