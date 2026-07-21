@@ -245,7 +245,7 @@
                     data: "Value",
                     label: "Value",
                     valueFn: (i) => i.value,
-                    formatFn: (i: number) => unsigned(i, 2),
+                    formatFn: (i: number) => signed(i, 2),
                 },
                 {
                     data: "Explanation",

@@ -1,6 +1,7 @@
 import type { Clan } from "../people/people";
 import { GenericItem, uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
 import type { World } from "../world";
+import { unsigned } from "../lib/format";
 
 // How many iterations of the simple conflict game to apply per
 // turn for any pair of clans.
@@ -171,6 +172,14 @@ const S = -2;
 const P = -5;
 
 
+export function calcConflictItemValue(conflictPayoff: number): number {
+    const absPayoff = Math.abs(conflictPayoff);
+    const first5 = Math.min(absPayoff, 5);
+    const above5 = Math.max(0, absPayoff - 5);
+    const mag = 0.02 * first5 + 0.1 * above5;
+    return conflictPayoff < 0 ? -mag : mag;
+}
+
 export class Conflict {
     readonly uuid1: string;
     readonly uuid2: string;
@@ -192,14 +201,17 @@ export class Conflict {
             : this.totalOf(r => r.c2Payoff);
     }
 
-    alignmentItem(subject: HasOrIsUUID, object?: HasOrIsUUID): GenericItem {
+    conflictItem(subject: HasOrIsUUID): GenericItem {
         const conflictPayoff = this.value(subject);
-        // Some conflict is understood to be normal.
         return new GenericItem(
             'Conflict',
-            0.1 * Math.min(conflictPayoff + 3, 0),
-            'Conflict'
+            calcConflictItemValue(conflictPayoff),
+            `Conflict payoff: ${unsigned(conflictPayoff, 1)}`
         );
+    }
+
+    alignmentItem(subject: HasOrIsUUID, object?: HasOrIsUUID): GenericItem {
+        return this.conflictItem(subject);
     }
 
     private totalOf(fn: (r: ConflictResults) => number): number {

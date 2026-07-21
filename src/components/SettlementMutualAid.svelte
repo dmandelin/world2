@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { CrossTab, type RowDataRowSpec } from "./tables/tables2";
+    import { CrossTab, IterableTable, type RowDataRowSpec } from "./tables/tables2";
     import {
         MutualAidInteraction,
         clanHelpDemand,
@@ -327,22 +327,33 @@
         ) as MutualAidInteraction | undefined}
         {#if ma}
             {#if mutualAidOption === "Trust"}
-                <div style="font-size: 0.85em; padding: 0.2rem; min-width: 220px; line-height: 1.35; color: #4e3f30;">
+                <div style="font-size: 0.85em; padding: 0.2rem; min-width: 240px; line-height: 1.35; color: #4e3f30;">
                     <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
                         Trust: {rowClan.name} → {colClan.name}
                     </div>
-                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.6rem; margin-bottom: 0.35rem;">
-                        <span>Prev Trust:</span> <strong style="text-align: right;">{unsigned(ma.trustModel.prevTrust, 2)}</strong>
-                        <span>Alignment:</span> <strong style="text-align: right;">{signed(ma.trustModel.alignment, 2)}</strong>
-                        <span>Rel. Attention:</span> <strong style="text-align: right;">{unsigned(ma.trustModel.relativeAttention, 2)}</strong>
+                    <div style="margin-bottom: 0.35rem;">
+                        <span>Prev Trust:</span> <strong>{unsigned(ma.trustModel.prevTrust, 2)}</strong>
                     </div>
                     <div style="border-top: 1px dashed #ccc; padding-top: 0.25rem; margin-top: 0.25rem;">
-                        <div style="display: flex; justify-content: space-between;">
+                        <div style="font-weight: bold; margin-bottom: 0.2rem;">Target Trust Breakdown:</div>
+                        <TableView2
+                            table={new IterableTable(ma.trustModel.items, (i) => i.label, [
+                                {
+                                    data: "Value",
+                                    label: "Value",
+                                    valueFn: (i) => i.value,
+                                    formatFn: (i: number) => signed(i, 2),
+                                },
+                                {
+                                    data: "Explanation",
+                                    label: "Explanation",
+                                    valueFn: (i) => i.explanation,
+                                },
+                            ])}
+                        />
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.25rem;">
                             <span>Target Trust:</span>
                             <strong>{unsigned(ma.trustModel.target, 2)}</strong>
-                        </div>
-                        <div style="font-size: 0.8em; color: #6e5b47; font-style: italic; margin-top: 0.05rem;">
-                            Max(align, Min(1, 0.5 + align + att/2))
                         </div>
                     </div>
                     <div style="border-top: 1px dashed #ccc; padding-top: 0.25rem; margin-top: 0.25rem;">

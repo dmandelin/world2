@@ -1,29 +1,51 @@
-import { clamp } from "../lib/basics";
+import { clamp, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
+import { GenericItem } from "../records/basicdata";
 import { getAlignment } from "./alignment";
 import { getRelativeAttention } from "./basicinteraction";
+import type { Conflict } from "./conflict";
 
 export const TRUST_DECAY_ALPHA = 0.5;
 
 export class Trust {
     value: number = 0.5;
-
-    // Track detailed breakdown for tooltips
-    target: number = 0.5;
-    alignment: number = 0;
-    relativeAttention: number = 0;
     prevTrust: number = 0.5;
+    items: GenericItem[] = [];
 
-    update(subject: Clan, object: Clan): void {
+    get target(): number {
+        return clamp(sumFun(this.items, item => item.value), 0, 1);
+    }
+
+    get alignment(): number {
+        return this.items.find(i => i.label === 'Alignment')?.value ?? 0;
+    }
+
+    get relativeAttention(): number {
+        return (this.items.find(i => i.label === 'Relative Attention')?.value ?? 0) * 2;
+    }
+
+    update(subject: Clan, object: Clan, conflict?: Conflict): void {
         this.prevTrust = this.value;
-        this.alignment = getAlignment(subject, object);
-        this.relativeAttention = getRelativeAttention(subject, object);
+        const alignmentVal = getAlignment(subject, object);
+        const relAttnVal = getRelativeAttention(subject, object);
+        conflict = conflict ?? subject.world?.conflicts?.get(subject, object);
 
-        // Target: 0.5 + alignment + (relativeAttention / 2)
-        // Bounded by [alignment, 1.0] and overall [0, 1.0]
-        const rawTarget = 0.5 + this.alignment + (this.relativeAttention / 2);
-        this.target = clamp(rawTarget, 0, 1);
+        this.items = [
+            new GenericItem('Base', 0.5, 'Base target trust'),
+            new GenericItem('Alignment', alignmentVal, 'Overall clan alignment'),
+            new GenericItem('Relative Attention', relAttnVal / 2, 'Attention devoted to relationship'),
+            ...(conflict ? [conflict.conflictItem(subject)] : []),
+        ];
 
         this.value = TRUST_DECAY_ALPHA * this.prevTrust + (1.0 - TRUST_DECAY_ALPHA) * this.target;
     }
+
+    clone(): Trust {
+        const t = new Trust();
+        t.value = this.value;
+        t.prevTrust = this.prevTrust;
+        t.items = [...this.items];
+        return t;
+    }
 }
+
