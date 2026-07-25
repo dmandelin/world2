@@ -11,6 +11,8 @@
         { key: "activityLeisure", label: "Activity: Leisure" },
         { key: "activityProduction", label: "Activity: Production" },
         { key: "marriageAppealAverage", label: "Avg Marriage Appeal" },
+        { key: "avgPartnerAppeal", label: "Avg Partner Appeal" },
+        { key: "avgWeddingAppeal", label: "Avg Wedding Appeal" },
         { key: "brModifier", label: "Birth Rate Modifier" },
         { key: "drModifier", label: "Death Rate Modifier" },
         { key: "food", label: "Food" },

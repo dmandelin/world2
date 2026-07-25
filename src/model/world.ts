@@ -7,7 +7,7 @@ import { InteractionGraph } from "./relations/interaction";
 import { updateBasicInteractions } from "./relations/basicinteraction";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
-import { marry } from "./relations/marriage";
+import { marry, MarriageDecisions } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
@@ -22,6 +22,7 @@ import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { Conflicts } from "./relations/conflict";
 
 export class World implements NoteTaker {
+    lastMarriageDecisions?: MarriageDecisions;
     readonly year = new Year();
     readonly yearsPerTurn = 20;
     plannedSettlements: PlannedSettlement[] = [];

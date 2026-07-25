@@ -37,6 +37,7 @@ export class Timeline<T> {
 
 import { SkillDefs, Processes } from "../econ/econdefs";
 import { Activities } from "../decisions/effort";
+import { MarriageConnection } from "../relations/connection";
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from "../relations/mutualaid";
 
 export class ClanTimePoint {
@@ -53,6 +54,8 @@ export class ClanTimePoint {
     readonly residenceFraction: number;
     readonly marriageAppealAverage: number;
     readonly marriageAppealStdDev: number;
+    readonly avgWeddingAppeal: number;
+    readonly avgPartnerAppeal: number;
     readonly food: number;
     readonly targetFood: number;
     readonly foodStorage: number;
@@ -105,6 +108,50 @@ export class ClanTimePoint {
             );
         }
 
+        const world = clan.world;
+        const decisions = world.lastMarriageDecisions;
+        if (decisions) {
+            let weightedSum = 0;
+            let totalMarriages = 0;
+            for (const other of world.allClans) {
+                if (other.uuid === clan.uuid) continue;
+                let count = 0;
+                for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
+                    if (hClan.uuid === clan.uuid) {
+                        for (const [wClan, cnt] of map.entries()) {
+                            if (wClan.uuid === other.uuid) {
+                                count = cnt;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (count > 0) {
+                    const mi = world.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
+                    const appeal = mi ? mi.value : 0;
+                    weightedSum += count * appeal;
+                    totalMarriages += count;
+                }
+            }
+            this.avgWeddingAppeal = totalMarriages > 0 ? weightedSum / totalMarriages : 0;
+        } else {
+            this.avgWeddingAppeal = 0;
+        }
+
+        let partnerWeightedSum = 0;
+        let partnerTotalWeight = 0;
+        for (const other of world.allClans) {
+            if (other.uuid === clan.uuid) continue;
+            const conn = world.connections.getForType(clan, other, MarriageConnection);
+            if (conn && conn.relatedness > 0) {
+                const mi = world.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
+                const appeal = mi ? mi.value : 0;
+                partnerWeightedSum += conn.relatedness * appeal;
+                partnerTotalWeight += conn.relatedness;
+            }
+        }
+        this.avgPartnerAppeal = partnerTotalWeight > 0 ? partnerWeightedSum / partnerTotalWeight : 0;
+
         this.food = clan.consumption.perCapitaFood;
         this.targetFood = clan.targetPerCapitaFood;
         this.foodStorage = clan.consumption.perCapitaFoodStock;
@@ -112,7 +159,6 @@ export class ClanTimePoint {
         this.averagePrestige = getLocalPrestige(clan);
         this.happiness = clan.happinessValue;
         
-        const world = clan.world;
         const helpValue = getHelpReceivedValueFromMutualAid(world, clan);
         const demand = clanHelpDemand(clan.population);
         this.mutualAidSat = demand > 0 ? helpValue / demand : 0;

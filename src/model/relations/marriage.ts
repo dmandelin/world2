@@ -56,6 +56,7 @@ class ClanMarriageState {
 // proposals or their current option.
 export function marry(world: World): void {
     const decisions = getMarriageDecisions(world);
+    world.lastMarriageDecisions = decisions;
     applyMarriageDecisions(world, decisions);
 }
 

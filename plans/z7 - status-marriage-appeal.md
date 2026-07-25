@@ -121,9 +121,9 @@ Item list:
             the cluster
     *   Create a cluster view that shows some summary info
         per settlement in the cluster, including productivity
-*   Visualize marriage connections
-*   Visualize marriage quality/benefits clans are getting
-*   Update marriage matching algorithm and see if it creates
+x   Visualize marriage connections
+x   Visualize marriage quality/benefits clans are getting
+x   Update marriage matching algorithm and see if it creates
     any more textured relationships
 *   Get into land amount and quality soon - the third major
     source of early differential productivity, and it will
@@ -145,16 +145,16 @@ x   Limited information effects
     judgments
     *   Visualize results
     *   Show results as some sort of ranking
-*   Update marriage matching model to have clans trying to get
+x   Update marriage matching model to have clans trying to get
     their best matches
-    *   Visualize results
-    *   Visualize how successful each clan was in the marriage
+    x   Visualize results
+    x   Visualize how successful each clan was in the marriage
         matching process
 *   Show more long-term success statistics
     *   Visualize clan family trees
     *   Make it possible to view clan groups as clans
     x   Graphs of clan population, appeal, success over time
-    *   Graphs on clan rankings over time
+    x   Graphs on clan rankings over time
 *   Give clans more ways to deal with the issue of high
     dependency ratio
 *   Make sure skill blends with marriage

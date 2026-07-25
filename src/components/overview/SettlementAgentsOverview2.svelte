@@ -35,7 +35,8 @@
     import type { Process } from "../../model/econ/process";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     import { get } from "svelte/store";
-    import { connectionsOf } from "../../model/relations/connection";
+    import { connectionsOf, MarriageConnection } from "../../model/relations/connection";
+    import { getMarriageDecisions, type MarriageDecisions } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import LineGraph from "../LineGraph.svelte";
     import {
@@ -98,6 +99,19 @@
 
         timelineKey?: keyof ClanTimePoint;
         scaler?: YAxisScaler;
+    }
+
+    function getPairingCount(decisions: MarriageDecisions, c1: ClanDTO, c2: ClanDTO): number {
+        for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
+            if (hClan.uuid === c1.uuid) {
+                for (const [wClan, count] of map.entries()) {
+                    if (wClan.uuid === c2.uuid) {
+                        return count;
+                    }
+                }
+            }
+        }
+        return 0;
     }
 
     let rowGroups = $derived.by<RowDef[][]>(() => {
@@ -334,6 +348,55 @@
                 timelineKey: "marriageAppealStdDev",
                 scaler: new DefaultScaler(),
                 topics: ["perceptions"],
+            },
+            {
+                label: "Avg Wedding Appeal",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => {
+                    const world = settlement.world;
+                    const decisions = world.lastMarriageDecisions ?? getMarriageDecisions(world as any);
+                    let weightedSum = 0;
+                    let totalMarriages = 0;
+                    for (const other of world.clanMap.values()) {
+                        if (other.uuid === c.uuid) continue;
+                        const count = getPairingCount(decisions, c, other);
+                        if (count > 0) {
+                            const mi = world.marriageInterestToward(c, other);
+                            const appeal = mi ? mi.value : 0;
+                            weightedSum += count * appeal;
+                            totalMarriages += count;
+                        }
+                    }
+                    return totalMarriages > 0 ? weightedSum / totalMarriages : null;
+                },
+                format: (v) => v === null ? "" : signed(v, 1),
+                tooltipSnippet: avgWeddingAppealTooltip,
+                topics: ["perceptions", "demographics"],
+            },
+            {
+                label: "Avg Partner Appeal",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => {
+                    const world = settlement.world;
+                    let weightedSum = 0;
+                    let totalWeight = 0;
+                    for (const other of world.clanMap.values()) {
+                        if (other.uuid === c.uuid) continue;
+                        const conn = world.connections.getForType(c, other, MarriageConnection);
+                        if (conn && conn.relatedness > 0) {
+                            const mi = world.marriageInterestToward(c, other);
+                            const appeal = mi ? mi.value : 0;
+                            weightedSum += conn.relatedness * appeal;
+                            totalWeight += conn.relatedness;
+                        }
+                    }
+                    return totalWeight > 0 ? weightedSum / totalWeight : null;
+                },
+                format: (v) => v === null ? "" : signed(v, 1),
+                tooltipSnippet: avgPartnerAppealTooltip,
+                topics: ["perceptions", "welfare"],
             },
         ]);
 
@@ -1191,6 +1254,47 @@
         <div style="font-size: 0.8em; color: #6e5b47; font-style: italic; margin-top: 0.25rem;">
             Curve: 0.6 if no help, 1.0 if exactly met, maxes out around 1.3.
         </div>
+    </div>
+{/snippet}
+
+{#snippet avgWeddingAppealTooltip(cs: ClanLastTurnSnapshots)}
+    {@const world = settlement.world}
+    {@const clan = cs.e}
+    {@const decisions = world.lastMarriageDecisions ?? getMarriageDecisions(world as any)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+        <strong>Avg Wedding Appeal:</strong>
+        <p style="margin: 0.25rem 0;">Average marriage appeal of {clan.name} toward its marriage partners last turn, weighted by the number of marriages with each partner.</p>
+        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            {#each Array.from(world.clanMap.values()) as other}
+                {#if clan.uuid !== other.uuid}
+                    {@const count = getPairingCount(decisions, clan, other)}
+                    {#if count > 0}
+                        {@const mi = world.marriageInterestToward(clan, other)}
+                        <li>• With {other.name}: {count} marriage{count > 1 ? 's' : ''} (Appeal: {mi ? signed(mi.value, 1) : "0"})</li>
+                    {/if}
+                {/if}
+            {/each}
+        </ul>
+    </div>
+{/snippet}
+
+{#snippet avgPartnerAppealTooltip(cs: ClanLastTurnSnapshots)}
+    {@const world = settlement.world}
+    {@const clan = cs.e}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+        <strong>Avg Partner Appeal:</strong>
+        <p style="margin: 0.25rem 0;">Average marriage appeal of {clan.name} toward all clans it is currently related to by marriage, weighted by relatedness.</p>
+        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+            {#each Array.from(world.clanMap.values()) as other}
+                {#if clan.uuid !== other.uuid}
+                    {@const conn = world.connections.getForType(clan, other, MarriageConnection)}
+                    {#if conn && conn.relatedness > 0}
+                        {@const mi = world.marriageInterestToward(clan, other)}
+                        <li>• With {other.name}: {pct(conn.relatedness)} related (Appeal: {mi ? signed(mi.value, 1) : "0"})</li>
+                    {/if}
+                {/if}
+            {/each}
+        </ul>
     </div>
 {/snippet}
 

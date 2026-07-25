@@ -11,6 +11,7 @@ import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
 import type { MigrationCalc, NewSettlementDecisionReport, PlannedSettlement } from "../people/migration";
+import type { MarriageDecisions } from "../relations/marriage";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
@@ -294,6 +295,7 @@ export class WorldDTO {
     readonly clanMap: ReadonlyMap<UUID, ClanDTO>;
     readonly clusters: ClusterDTO[];
     readonly plannedSettlements: PlannedSettlementDTO[];
+    readonly lastMarriageDecisions?: MarriageDecisions;
 
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
@@ -310,6 +312,7 @@ export class WorldDTO {
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
+        this.lastMarriageDecisions = world.lastMarriageDecisions;
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.plannedSettlements = world.plannedSettlements.map(p => new PlannedSettlementDTO(p));

@@ -41,8 +41,8 @@ interaction, those might there effectively combined to a
 
 Items:
 
-*   Make sure new marriage appeal is being applied in matching
-*   Visualize level of marriage success for a clan
+x   Make sure new marriage appeal is being applied in matching
+x   Visualize level of marriage success for a clan
 *   Fertility bonus for higher marriage appeal due to earlier
     marriages
 *   BasicInteraction: track appeal/respect, and use that to
