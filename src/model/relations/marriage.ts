@@ -5,6 +5,13 @@ import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
 import { getLocalRespect } from "./respect";
 
+export class MarriageDecisions {
+    constructor(
+        readonly potentialWives: PotentialPartnerSet[],
+        readonly pairingCounts: PairingCounts,
+    ) {}
+}
+
 // Marry people in the 20-40 age range in the given region.
 //
 // This is intended to be run just before advancing the population,
@@ -24,6 +31,11 @@ import { getLocalRespect } from "./respect";
 // For pairings, the model is that potential husbands and their
 // clans "offer" and potential wives and their clans "choose".
 export function marry(world: World): void {
+    const decisions = getMarriageDecisions(world);
+    applyMarriageDecisions(world, decisions);
+}
+
+export function getMarriageDecisions(world: World): MarriageDecisions {
     const clans = world.allClans;
     const pairingCounts = new PairingCounts();
 
@@ -75,6 +87,12 @@ export function marry(world: World): void {
         }
     }
 
+    return new MarriageDecisions(potentialWives, pairingCounts);
+}
+
+export function applyMarriageDecisions(world: World, decisions: MarriageDecisions): void {
+    const { potentialWives, pairingCounts } = decisions;
+
     // Update clan marriage relationships:
     // - New marriages increase thickness by the fraction of the generation
     //   married to that clan.
@@ -114,7 +132,7 @@ export function marry(world: World): void {
     }
 }
 
-class PotentialPartnerSet {
+export class PotentialPartnerSet {
     marriedTo: Map<Clan, number> = new Map();
     taken = 0;
 
@@ -129,7 +147,7 @@ class PotentialPartnerSet {
     get available() { return this.count - this.taken; }
 }
 
-class PairingCounts {
+export class PairingCounts {
     counts: Map<Clan, Map<Clan, number>> = new Map();
 
     add(clan1: Clan, clan2: Clan, count: number = 1) {

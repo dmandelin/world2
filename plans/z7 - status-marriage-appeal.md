@@ -65,9 +65,9 @@ Item list:
 
 *   Need to look at wacky productivity values
     x   Avoid clans moving out alone for now
-    *   Switch to new help system (productivity bonus
+    x   Switch to new help system (productivity bonus
         based on help relationship value)
-    *   Temporarily boost agricultural productivity to
+    x   Temporarily boost agricultural productivity to
         account for using prime land first
     *   Introduce land model
     *   Make ditching work again
