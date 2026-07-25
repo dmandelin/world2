@@ -59,13 +59,17 @@
                 <td class="row-header"></td>
                 {#each table.columns as column}
                     <th class={column.class ?? ''}>
-                        {#if column.headerTooltip}
+                        {#if column.headerSnippet}
+                            {@render column.headerSnippet(column.data)}
+                        {:else if column.headerTooltip}
                             {column.label}
                             <Tooltip2>
                                 <div style="text-align: left; color: initial;">
                                     {column.headerTooltip}
                                 </div>
                             </Tooltip2>
+                        {:else if column.html}
+                            {@html column.label}
                         {:else}
                             {column.label}
                         {/if}
@@ -76,69 +80,77 @@
     {/if}
     <tbody>
         {#each table.rows as row, rowIndex}
-            <tr class:row-divider={row.divider}>
-                {#if hasRowPrefix}
-                    <td class="row-prefix">{row.prefix ?? ""}</td>
-                {/if}
-                <td
-                    class="row-header {row.class ?? ''}"
-                    class:bold={true}
-                    class:clickable={!!table.onClickRowHeader}
-                    onclick={() => table.onClickRowHeader?.(row.data)}
-                >
-                    {#if row.headerTooltip}
-                        {row.label}
-                        <Tooltip2>
-                            <div style="text-align: left; color: initial;">
-                                {@render row.headerTooltip(row.data)}
-                            </div>
-                        </Tooltip2>
-                    {:else}
-                        {row.label}
+            {#if row.isHeader}
+                <tr class="header-row {row.class ?? ''}">
+                    <td colspan={1 + table.columns.length + (hasRowPrefix ? 1 : 0)}>
+                        <strong>{@html row.label}</strong>
+                    </td>
+                </tr>
+            {:else}
+                <tr class:row-divider={row.divider}>
+                    {#if hasRowPrefix}
+                        <td class="row-prefix">{row.prefix ?? ""}</td>
                     {/if}
-                </td>
-                {#each table.columns as column, colIndex}
                     <td
-                        class="{row.class ?? ''} {column.class ?? ''}"
-                        class:bold={row.bold}
-                        class:clickable={!!column.onClickCell}
-                        onclick={() =>
-                            column.onClickCell?.(
-                                cellValue(row, column),
-                                row.data,
-                                column.data,
-                            )}
+                        class="row-header {row.class ?? ''}"
+                        class:bold={true}
+                        class:clickable={!!table.onClickRowHeader}
+                        onclick={() => table.onClickRowHeader?.(row.data)}
                     >
-                        {#if table.isCrossTable && rowIndex === colIndex}
-                            &nbsp;
-                        {:else if column.tooltip}
-                            {@render cellHTML(row, column)}
+                        {#if row.headerTooltip}
+                            {row.label}
                             <Tooltip2>
                                 <div style="text-align: left; color: initial;">
-                                    {@render column.tooltip(
-                                        cellValue(row, column),
-                                        row.data,
-                                        column.data,
-                                    )}
-                                </div>
-                            </Tooltip2>
-                        {:else if row.tooltip}
-                            {@render cellHTML(row, column)}
-                            <Tooltip2>
-                                <div style="text-align: left; color: initial;">
-                                    {@render row.tooltip(
-                                        cellValue(row, column),
-                                        row.data,
-                                        column.data,
-                                    )}
+                                    {@render row.headerTooltip(row.data)}
                                 </div>
                             </Tooltip2>
                         {:else}
-                            {@render cellHTML(row, column)}
+                            {@html row.label}
                         {/if}
                     </td>
-                {/each}
-            </tr>
+                    {#each table.columns as column, colIndex}
+                        <td
+                            class="{row.class ?? ''} {column.class ?? ''}"
+                            class:bold={row.bold}
+                            class:clickable={!!column.onClickCell}
+                            onclick={() =>
+                                column.onClickCell?.(
+                                    cellValue(row, column),
+                                    row.data,
+                                    column.data,
+                                )}
+                        >
+                            {#if table.isCrossTable && rowIndex === colIndex}
+                                &nbsp;
+                            {:else if column.tooltip}
+                                {@render cellHTML(row, column)}
+                                <Tooltip2>
+                                    <div style="text-align: left; color: initial;">
+                                        {@render column.tooltip(
+                                            cellValue(row, column),
+                                            row.data,
+                                            column.data,
+                                        )}
+                                    </div>
+                                </Tooltip2>
+                            {:else if row.tooltip}
+                                {@render cellHTML(row, column)}
+                                <Tooltip2>
+                                    <div style="text-align: left; color: initial;">
+                                        {@render row.tooltip(
+                                            cellValue(row, column),
+                                            row.data,
+                                            column.data,
+                                        )}
+                                    </div>
+                                </Tooltip2>
+                            {:else}
+                                {@render cellHTML(row, column)}
+                            {/if}
+                        </td>
+                    {/each}
+                </tr>
+            {/if}
         {/each}
     </tbody>
 </table>
@@ -179,6 +191,19 @@
 
     tr.row-divider td {
         border-top: 2px solid #d3c4ad;
+    }
+
+    :global(th.col-header) {
+        text-align: center !important;
+        font-weight: bold;
+        vertical-align: bottom;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .header-row td {
+        padding-top: 0.3em;
+        font-style: italic;
+        text-align: left !important;
     }
 
     :global(td.out-of-settlement),

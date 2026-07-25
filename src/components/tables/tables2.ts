@@ -49,6 +49,9 @@ export interface TableColumn<RowData, ColData, CellData> {
     // If set, the column header will display a tooltip with this text.
     headerTooltip?: string;
 
+    // If set, the column header will be rendered with this snippet.
+    headerSnippet?: Snippet<[ColData]>;
+
     // If set, clicking on a cell will call this function with the cell data, 
     // row data, and column.
     onClickCell?: (data: CellData, row: RowData, col: ColData) => void;
@@ -64,6 +67,9 @@ export interface TableRow<RowData, ColData> {
 
     // Display label. Shown in the header column.
     label: string;
+
+    // If true, this row is a section header spanning all columns.
+    isHeader?: boolean;
 
     // Whether to display this row in bold.
     bold?: boolean;

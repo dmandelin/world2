@@ -1,33 +1,16 @@
-<style>
-    #top {
-        margin-left: 1rem;
-    }
-
-    h1 {
-        margin: 0 0 1rem 0;
-    }
-
-    .graph-container {
-        padding: 16px 4px 16px 16px;
-        width: 300px;
-        height: 200px;
-        border: 1px solid #ccc;
-    }
-</style>
-
 <script lang="ts">
-    import { maxbyWithValue, minbyWithValue, type OptByWithValue } from "../model/lib/basics";
-    import { pctFormat, signedFormat, unsigned } from "../model/lib/format";
+    import { maxbyWithValue, safeDiv } from "../model/lib/basics";
     import DataTable from "./DataTable.svelte";
-    import DataTable2 from "./tables/TableView2.svelte";
     import LineGraph from "./LineGraph.svelte";
-    import { IterableTable } from "./tables/tables2";
     import type { ClanDTO, WorldDTO } from "../model/records/dtos";
     import { PopulationScaler, ZeroCenteredScaler } from "./linegraph";
-    import { selectClan, selectSettlement } from "./state/uistate.svelte";
-    import { getLocalPrestige } from "../model/relations/respect";
+    import { SkillDefs } from "../model/econ/econdefs";
+    import EntityStatsTable, { type EntityColumnSpec } from "./tables/EntityStatsTable.svelte";
 
     let { world }: { world: WorldDTO } = $props();
+
+    let activeTab = $state<"Overview" | "Areas" | "Settlements" | "Clans">("Areas");
+    const tabs: ("Overview" | "Areas" | "Settlements" | "Clans")[] = ["Overview", "Areas", "Settlements", "Clans"];
 
     let popData = $derived.by(() => {
         return {
@@ -63,93 +46,186 @@
         };
     });
 
-    let notableClansTable = $derived.by(() => {
-        const specs: [string, OptByWithValue<ClanDTO>, (clan: ClanDTO) => number, (n: number) => string][] = [
-            ['Biggest', maxbyWithValue, clan => clan.population, n => n.toFixed()],
-            ['Smallest', minbyWithValue,  clan => clan.population, n => n.toFixed()],
-            ['Best fed', maxbyWithValue, clan => clan.consumption.perCapitaFood, pctFormat(0, false)],
-            ['Worst fed', minbyWithValue, clan => clan.consumption.perCapitaFood, pctFormat(0, false)],
-            ['Best SoL', maxbyWithValue, clan => clan.happiness.appeal, signedFormat()],
-            ['Worst SoL', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
-            ['Happiest', maxbyWithValue, clan => clan.happiness.appeal, signedFormat()],
-            ['Least happy', minbyWithValue, clan => clan.happiness.appeal, signedFormat()],
-            ['Most prestigious', maxbyWithValue, clan => getLocalPrestige(clan), unsigned],
-            ['Least prestigious', minbyWithValue, clan => getLocalPrestige(clan), unsigned],
+    let allClans = $derived([...world.clanMap.values()]);
+
+    let areaColumns = $derived.by<EntityColumnSpec[]>(() => {
+        const cols: EntityColumnSpec[] = [
+            {
+                label: "World",
+                clans: allClans,
+                population: world.population,
+            }
         ];
 
-        const clans = [...world.clanMap.values()];
-        const items =
-            specs.map(([name, optBy, clanValueFn, fmt]) => {
-                const [clan, value] = optBy(clans, clanValueFn);
-                return { name, clan, displayValue: fmt(value) };
+        for (const cluster of world.clusters) {
+            cols.push({
+                label: cluster.name,
+                entity: { uuid: cluster.uuid, name: cluster.name },
+                clans: cluster.clans,
+                population: cluster.population,
             });
-
-
-        return {
-            ...new IterableTable(items, i => i.name, [
-                {
-                    data: 'Value',
-                    label: 'Value',
-                    valueFn: i => i.displayValue,
-                },
-                { 
-                    data: 'Clan',
-                    label: 'Clan',
-                    valueFn: i => i.clan.name,
-                    onClickCell: (data, row) => selectClan(row.clan),
-                },
-                {
-                    data: 'of',
-                    label: 'of',
-                    valueFn: i => 'of',
-                },
-                {
-                    data: 'Settlement',
-                    label: 'Settlement',
-                    valueFn: i => i.clan.ref.settlement.name,
-                    onClickCell: (data, row) => selectSettlement(row.clan.ref.settlement),
-                },
-            ]),
-            hideHeader: true
-        };
+        }
+        return cols;
     });
 
+    let settlementColumns = $derived.by<EntityColumnSpec[]>(() => {
+        const cols: EntityColumnSpec[] = [
+            {
+                label: "World",
+                clans: allClans,
+                population: world.population,
+            }
+        ];
+
+        const topSettlements = [...world.settlements]
+            .sort((a, b) => b.population - a.population)
+            .slice(0, 7);
+
+        for (const settlement of topSettlements) {
+            cols.push({
+                label: settlement.name,
+                entity: settlement,
+                clans: settlement.clans,
+                population: settlement.population,
+            });
+        }
+        return cols;
+    });
+
+    let clanColumns = $derived.by<EntityColumnSpec[]>(() => {
+        const cols: EntityColumnSpec[] = [
+            {
+                label: "World",
+                clans: allClans,
+                population: world.population,
+            }
+        ];
+
+        if (allClans.length === 0) return cols;
+
+        const specs: { label: string; keyFn: (c: ClanDTO) => number }[] = [
+            { label: "Largest", keyFn: (c) => c.population },
+            { label: "Healthiest", keyFn: (c) => safeDiv(c.lastPopulationChange.brModifier, c.lastPopulationChange.drModifier) },
+            { label: "Happiest", keyFn: (c) => c.happiness.appeal },
+            { label: "Best Fed", keyFn: (c) => c.qol.valueFrom("food") },
+            { label: "Best Farmers", keyFn: (c) => c.skills.v(SkillDefs.Agriculture) },
+            { label: "Best Fishers", keyFn: (c) => c.skills.v(SkillDefs.Fishing) },
+        ];
+
+        for (const spec of specs) {
+            const [clan] = maxbyWithValue(allClans, spec.keyFn);
+            if (clan) {
+                cols.push({
+                    label: spec.label,
+                    entity: clan,
+                    clans: [clan],
+                    population: clan.population,
+                });
+            }
+        }
+
+        return cols;
+    });
 </script>
 
 <div id="top">
     <h1>𒌦 &centerdot; The Land</h1>
     <h3>{world.population} people</h3>
 
-    <div style="display: flex; gap: 2em;">
-        <div>
-            <h4>Statistics</h4>
-            <DataTable rows={world.stats} />
-
-            <h4>Notable Clans</h4>
-            <DataTable2 table={notableClansTable} />
-        </div>
-
-        <div>
-            <div class="graph-container">
-                <LineGraph data={popData} />
-            </div>
-
-            <div class="graph-container" style="margin-top: 2rem;">
-                <LineGraph data={qolData} />
-            </div>
-        </div>
-    </div>
-
-    <div>
-        <h4>Connections</h4>
-        {#each world.connections.entries() as [pairID, connections]}
-        {@const [c1, c2] = world.clansFromPairID(pairID)}
-            <div><b>{c1.name} - {c2.name}</b></div>
-            {#each connections as connection}
-                <div>
-                    {connection.debugString()}
-                </div>
-            {/each}
+    <div class="tab-button-group">
+        {#each tabs as tab}
+            <button
+                type="button"
+                class="tab-btn {activeTab === tab ? 'active' : ''}"
+                onclick={() => activeTab = tab}
+            >
+                {tab}
+            </button>
         {/each}
     </div>
+
+    <div class="tab-content">
+        {#if activeTab === "Overview"}
+            <div style="display: flex; gap: 2em; margin-top: 1rem;">
+                <div>
+                    <h4>Statistics</h4>
+                    <DataTable rows={world.stats} />
+                </div>
+
+                <div>
+                    <div class="graph-container">
+                        <LineGraph data={popData} />
+                    </div>
+
+                    <div class="graph-container" style="margin-top: 2rem;">
+                        <LineGraph data={qolData} />
+                    </div>
+                </div>
+            </div>
+        {:else if activeTab === "Areas"}
+            <div style="margin-top: 1rem;">
+                <EntityStatsTable columns={areaColumns} />
+            </div>
+        {:else if activeTab === "Settlements"}
+            <div style="margin-top: 1rem;">
+                <EntityStatsTable columns={settlementColumns} />
+            </div>
+        {:else if activeTab === "Clans"}
+            <div style="margin-top: 1rem;">
+                <EntityStatsTable columns={clanColumns} />
+            </div>
+        {/if}
+    </div>
 </div>
+
+<style>
+    #top {
+        margin-left: 1rem;
+    }
+
+    h1 {
+        margin: 0 0 0.5rem 0;
+    }
+
+    h3 {
+        margin: 0 0 1rem 0;
+    }
+
+    .graph-container {
+        padding: 16px 4px 16px 16px;
+        width: 300px;
+        height: 200px;
+        border: 1px solid #ccc;
+    }
+
+    .tab-button-group {
+        display: inline-flex;
+        gap: 0.25rem;
+        background-color: #f3edd8;
+        padding: 0.25rem;
+        border-radius: 4px;
+        align-items: center;
+    }
+
+    .tab-btn {
+        all: unset;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+        border-radius: 3px;
+        color: #333;
+        transition:
+            background-color 0.2s,
+            font-weight 0.2s;
+    }
+
+    .tab-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn.active {
+        font-weight: bold;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+</style>
