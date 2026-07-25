@@ -6,6 +6,7 @@
     import TabbedView from "./TabbedView.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementRelationshipsGraph from "./SettlementRelationshipsGraph.svelte";
+    import SettlementRelationshipsGraph2 from "./SettlementRelationshipsGraph2.svelte";
     import SettlementMigrationDetails from "./overview/SettlementMigrationDetails.svelte";
     import SettlementComparison from "./overview/SettlementComparison.svelte";
     import SettlementProductivity from "./SettlementProductivity.svelte";
@@ -21,6 +22,7 @@
         { label: "Marriages", snippet: marriagesTab },
         { label: "Mutual Aid", snippet: mutualAidTab },
         { label: "Graph", snippet: relationshipsGraphTab },
+        { label: "Graph2", snippet: relationshipsGraph2Tab },
         { label: "Happiness", snippet: happinessTab },
         { label: "Productivity", snippet: productivityTab },
         { label: "Migration", snippet: migrationTab },
@@ -71,6 +73,10 @@
 
 {#snippet relationshipsGraphTab()}
     <SettlementRelationshipsGraph settlement={settlement} />
+{/snippet}
+
+{#snippet relationshipsGraph2Tab()}
+    <SettlementRelationshipsGraph2 settlement={settlement} />
 {/snippet}
 
 <TabbedView tabs={tabs} /> 
