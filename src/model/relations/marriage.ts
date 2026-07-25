@@ -3,13 +3,36 @@ import { weightedRandInt } from "../lib/distributions";
 import type { World } from "../world";
 import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
-import { getLocalRespect } from "./respect";
 
 export class MarriageDecisions {
     constructor(
         readonly potentialWives: PotentialPartnerSet[],
         readonly pairingCounts: PairingCounts,
-    ) {}
+    ) { }
+}
+
+function getMarriageAppeal(world: World, subject: Clan, object: Clan): number {
+    return world.perceptions.get(subject.uuid, object.uuid)?.marriageInterest?.value ?? 0;
+}
+
+class ClanMarriageState {
+    unmatchedHusbands: number;
+    unmatchedWives: number;
+    // Map of wifeClan -> count of provisionally matched wives from that wifeClan to this husbandClan
+    provisionalMarriages: Map<Clan, number> = new Map();
+
+    constructor(readonly clan: Clan) {
+        const count = clan.slices[1][0];
+        this.unmatchedHusbands = count;
+        this.unmatchedWives = count;
+    }
+
+    addProvisionalMarriage(wifeClan: Clan, count: number) {
+        this.provisionalMarriages.set(
+            wifeClan,
+            (this.provisionalMarriages.get(wifeClan) ?? 0) + count
+        );
+    }
 }
 
 // Marry people in the 20-40 age range in the given region.
@@ -28,63 +51,104 @@ export class MarriageDecisions {
 // marriage to that level of detail. Variances can be chalked up
 // to adoption, matrilocal marriage in individual cases, and so on.
 //
-// For pairings, the model is that potential husbands and their
-// clans "offer" and potential wives and their clans "choose".
+// The algorithm is a variant of Gale-Shapley. In each round, unmatched
+// husbands propose to potential wives, who pick the best of the
+// proposals or their current option.
 export function marry(world: World): void {
     const decisions = getMarriageDecisions(world);
     applyMarriageDecisions(world, decisions);
 }
 
 export function getMarriageDecisions(world: World): MarriageDecisions {
-    const clans = world.allClans;
+    const states = new Map<Clan, ClanMarriageState>();
+    for (const clan of world.allClans) {
+        states.set(clan, new ClanMarriageState(clan));
+    }
+
+    const maxRounds = 20;
+    for (let round = 0; round < maxRounds; round++) {
+        const proposingHusbandStates = [...states.values()].filter(
+            s => s.unmatchedHusbands > 0
+        );
+        if (proposingHusbandStates.length === 0) break;
+
+        const candidateWifeStates = [...states.values()].filter(
+            s => s.unmatchedWives > 0
+        );
+        if (candidateWifeStates.length === 0) break;
+
+        const proposalsToWives = new Map<Clan, ClanMarriageState[]>();
+        let totalProposalsMade = 0;
+
+        for (const hState of proposingHusbandStates) {
+            const validWifeCandidates = candidateWifeStates.filter(
+                w => w.clan !== hState.clan
+            );
+            if (validWifeCandidates.length === 0) continue;
+
+            const sortedWives = sortedByKey(
+                validWifeCandidates,
+                w => -getMarriageAppeal(world, hState.clan, w.clan)
+            );
+
+            const top3Wives = sortedWives.slice(0, 3);
+            for (const wState of top3Wives) {
+                let proposals = proposalsToWives.get(wState.clan);
+                if (!proposals) {
+                    proposals = [];
+                    proposalsToWives.set(wState.clan, proposals);
+                }
+                proposals.push(hState);
+                totalProposalsMade++;
+            }
+        }
+
+        if (totalProposalsMade === 0) break;
+
+        let matchesMadeThisRound = 0;
+
+        for (const [wifeClan, proposingHStates] of proposalsToWives.entries()) {
+            const wState = states.get(wifeClan)!;
+            if (wState.unmatchedWives <= 0) continue;
+
+            const sortedHProposals = sortedByKey(
+                proposingHStates,
+                h => -getMarriageAppeal(world, wifeClan, h.clan)
+            );
+
+            for (const hState of sortedHProposals) {
+                if (wState.unmatchedWives <= 0) break;
+                if (hState.unmatchedHusbands <= 0) continue;
+
+                const count = Math.min(hState.unmatchedHusbands, wState.unmatchedWives);
+                if (count > 0) {
+                    hState.unmatchedHusbands -= count;
+                    wState.unmatchedWives -= count;
+                    hState.addProvisionalMarriage(wifeClan, count);
+                    matchesMadeThisRound += count;
+                }
+            }
+        }
+
+        if (matchesMadeThisRound === 0) break;
+    }
+
     const pairingCounts = new PairingCounts();
+    const potentialWives: PotentialPartnerSet[] = [];
 
-    const potentialHusbands = clans.map(clan => {
-        const count = clan.slices[1][0];
-        return new PotentialPartnerSet(clan, count);
-    });
+    for (const [clan, state] of states.entries()) {
+        const initialCount = clan.slices[1][0];
+        const wifeSet = new PotentialPartnerSet(clan, initialCount);
 
-    const unsortedPotentialWives = clans.map(clan => {
-        const count = clan.slices[1][0];
-        return new PotentialPartnerSet(clan, count);
-    });
-    const potentialWives = sortedByKey(
-        unsortedPotentialWives,
-        ps => -getLocalRespect(ps.clan),
-    );
-
-    // Let each potential wife choose from available offers. Here we only
-    // record the wedding, but don't update populations yet.
-    for (const wifeSet of potentialWives) {
-        // Assume offers from clans in the same village, and some
-        // probability of offers from others. Include the clan itself
-        // as a "woman doesn't move away for whatever reason" option.
-        const offers: PotentialPartnerSet[] = [];
-        for (const husbandSet of potentialHusbands) {
-            if (husbandSet.clan.settlement === wifeSet.clan.settlement ||
-                (Math.random() < 0.25 &&
-                    husbandSet.clan.settlement.milesTo(wifeSet.clan.settlement) < 12)) {
-                offers.push(husbandSet);
+        for (const [husbandClan, hState] of states.entries()) {
+            const count = hState.provisionalMarriages.get(clan) ?? 0;
+            if (count > 0) {
+                wifeSet.addMarriage(husbandClan, count);
+                pairingCounts.add(husbandClan, clan, count);
             }
         }
 
-        for (let i = 0; i < wifeSet.count; ++i) {
-            if (offers.length === 0) break;
-            const choiceIndex = weightedRandInt(offers, o => Math.pow(10, -getLocalRespect(o.clan)));
-            const chosenHusbandSet = offers[choiceIndex];
-            if (chosenHusbandSet.clan === wifeSet.clan) {
-                continue;
-            }
-
-            chosenHusbandSet.addMarriage(wifeSet.clan);
-            wifeSet.addMarriage(chosenHusbandSet.clan);
-            pairingCounts.add(chosenHusbandSet.clan, wifeSet.clan);
-
-            if (chosenHusbandSet.available === 0) {
-                remove(potentialHusbands, chosenHusbandSet);
-                offers.splice(choiceIndex, 1);
-            }
-        }
+        potentialWives.push(wifeSet);
     }
 
     return new MarriageDecisions(potentialWives, pairingCounts);
