@@ -43,7 +43,7 @@ Items:
 
 x   Make sure new marriage appeal is being applied in matching
 x   Visualize level of marriage success for a clan
-*   Fertility bonus for higher marriage appeal due to earlier
+x   Fertility bonus for higher marriage appeal due to earlier
     marriages
 *   BasicInteraction: track appeal/respect, and use that to
     apply differential stress effects and roll up a ranking

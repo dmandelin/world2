@@ -4,6 +4,8 @@ import { clamp, productFun, sum } from "../lib/basics";
 import { spct } from "../lib/format";
 import { fishRatio, foodVarietyHealthFactor } from "./happiness";
 import { getLocalPrestige } from "../relations/respect";
+import { zScore } from "../lib/modelbasics";
+import { getMarriageDecisions } from "../relations/marriage";
 
 export const INITIAL_POPULATION_RATIOS = [
     [0.2157, 0.2337],
@@ -29,7 +31,7 @@ export class PopulationChangeItem {
         readonly expectedRate: number,
         readonly actualRate: number,
         readonly actual: number,
-    ) {}
+    ) { }
 
     get asRow(): string[] {
         return [
@@ -46,9 +48,26 @@ export class PopulationChangeItem {
 export class PopulationChangeModifier {
     constructor(
         readonly source: string,
-        readonly inputValue: string|number,
+        readonly inputValue: string | number,
         readonly value: number,
-    ) {}
+    ) { }
+}
+
+function getAvgAppealToBrides(clan: Clan): number {
+    const decisions = clan.world.lastMarriageDecisions ?? getMarriageDecisions(clan.world);
+    let weightedSum = 0;
+    let totalBrides = 0;
+    for (const wifeSet of decisions.potentialWives) {
+        const brideClan = wifeSet.clan;
+        const bridesToThisClan = wifeSet.marriedTo.get(clan) ?? 0;
+        if (bridesToThisClan > 0) {
+            const mi = clan.world.perceptions.get(brideClan.uuid, clan.uuid)?.marriageInterest;
+            const appeal = mi ? mi.value : 0;
+            weightedSum += bridesToThisClan * appeal;
+            totalBrides += bridesToThisClan;
+        }
+    }
+    return totalBrides > 0 ? weightedSum / totalBrides : 0;
 }
 
 export class PopulationChange {
@@ -59,7 +78,7 @@ export class PopulationChange {
 
     constructor(
         readonly clan: Clan,
-        readonly diseaseLoad: DiseaseLoadCalc|undefined,
+        readonly diseaseLoad: DiseaseLoadCalc | undefined,
         readonly items: PopulationChangeItem[],
         readonly newSlices: number[][],
         readonly brModifiers: PopulationChangeModifier[],
@@ -145,7 +164,7 @@ export class PopulationChangeBuilder {
         // as famine. For birth rates, the direct effect isn't huge, because 
         // there will be famine for only a small fraction of the turn at most,
         // but there's also an optimism/pessimism effect.
-        const foodInsecurityBrModifier = 1 + clamp(-this.clan.consumption.foodInsecurity.value/4, -0.5, 0.2);
+        const foodInsecurityBrModifier = 1 + clamp(-this.clan.consumption.foodInsecurity.value / 4, -0.5, 0.2);
         this.brModifiers.push(new PopulationChangeModifier(
             'Famine', this.clan.consumption.foodInsecurity.value, foodInsecurityBrModifier));
 
@@ -154,6 +173,15 @@ export class PopulationChangeBuilder {
         const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
         this.brModifiers.push(new PopulationChangeModifier(
             'Shelter', this.clan.housing.name, shelterModifier));
+
+        const allBrideAppeals = this.clan.world.allClans.map(c => getAvgAppealToBrides(c));
+        const clanBrideAppeal = getAvgAppealToBrides(this.clan);
+        const brideAppealZScore = zScore(clanBrideAppeal, allBrideAppeals);
+        const marriageAppealBrModifier = clamp(1 + 0.1 * brideAppealZScore, 0.67, 1.5);
+        this.brModifiers.push(new PopulationChangeModifier(
+            'Marriage Appeal', clanBrideAppeal, marriageAppealBrModifier));
+
+
 
         // Movement has a significant effect on birth rates. The key idea is
         // that in the most mobile lifestyles (e.g., hunting and gathering
@@ -218,9 +246,9 @@ export class PopulationChangeBuilder {
         ];
 
         return new PopulationChange(
-            this.clan, 
-            this.diseaseLoad, 
-            items, 
+            this.clan,
+            this.diseaseLoad,
+            items,
             this.newSlices,
             this.brModifiers,
             this.brModifier,
@@ -301,11 +329,11 @@ export class PopulationChangeBuilder {
             });
         }
         sources.push({
-                name: 'Hazards',
-                deaths: 0, ed: 0, sedr: 0,
-                mod: drFactor,
-                drFun: (i: number) => BASE_DEATH_RATES[i] * drFactor,
-            });
+            name: 'Hazards',
+            deaths: 0, ed: 0, sedr: 0,
+            mod: drFactor,
+            drFun: (i: number) => BASE_DEATH_RATES[i] * drFactor,
+        });
         const famineDr = 0.1 * clamp(this.clan.consumption.foodInsecurity.value, 0, 1) ** 2;
         if (famineDr * this.clan.population >= 1) {
             sources.push({
@@ -359,9 +387,9 @@ export class PopulationChangeBuilder {
             // Expected values.
             for (const [k, source] of sources.entries()) {
                 source.ed += femaleDRs[k] * this.clan.slices[i][0]
-                           + femaleDRs[k] * 1.1 * this.clan.slices[i][1];
+                    + femaleDRs[k] * 1.1 * this.clan.slices[i][1];
                 source.sedr += femaleDRs[k] * INITIAL_POPULATION_RATIOS[i][0]
-                       + femaleDRs[k] * 1.1 * BASE_DEATH_RATES[i];
+                    + femaleDRs[k] * 1.1 * BASE_DEATH_RATES[i];
             }
         }
         const last = sources[sources.length - 1];
@@ -375,9 +403,9 @@ export class PopulationChangeBuilder {
 
         return sources.map(source =>
             new PopulationChangeItem(
-                source.name, 
-                source.mod, 
-                -source.sedr, 
+                source.name,
+                source.mod,
+                -source.sedr,
                 -source.ed / this.initialPopulation,
                 -source.deaths / this.initialPopulation,
                 -source.deaths));
