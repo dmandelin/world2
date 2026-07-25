@@ -47,10 +47,16 @@ x   Fertility bonus for higher marriage appeal due to earlier
     marriages
 *   BasicInteraction: track appeal/respect, and use that to
     apply differential stress effects and roll up a ranking
+    *   TODO - work up how this will work
 *   MutualAid: track appeal, that will then influence who gets
     more and better matches
 *   Disaster aid: track appeal, use to decide how much aid to
     send
+
+*   Alignment: have clans influence each others' perceptions
+*   Information: make sure information level is accounted for
+    in other perceptions
+    *   have clans transmit information to each other
 
 # Food Security
 
