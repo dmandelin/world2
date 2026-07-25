@@ -118,11 +118,10 @@ export class SettlementCluster {
             clan.effortAllocation.applyStart();
         }
 
-        // TODO - Bring back in some form
-        let allowedUpdatesRemaining = 1;
+        let allowedUpdatesRemaining = 4;
         while (allowedUpdatesRemaining--) {
             let updated = false;
-            // TODO - Some sensible ordering.
+            // TODO - Some sensible ordering, maybe random
             for (const clan of this.clans) {
                 const clanUpdated = clan.effortAllocation.applyStep(this.buildLaborMaps());
                 if (clanUpdated) {

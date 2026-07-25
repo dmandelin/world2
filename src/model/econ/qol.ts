@@ -39,8 +39,8 @@ export class QualityOfLife {
     static fromLeisure(consumption: Consumption): QualityOfLifeItem {
         // Avoid -Infinity
         const leisureFraction = Math.max(0.001, consumption.leisureFraction);
-        // Appeal 0 at 10% leisure share
-        const value = clamp(5 * Math.log2(leisureFraction / 0.1), -20, 20);
+        // Appeal 0 at 30% leisure share
+        const value = clamp(5 * Math.log2(leisureFraction / 0.3), -20, 20);
         return new QualityOfLifeItem(
             "Leisure", "leisure", value, `${pct(leisureFraction)} leisure`);
 
@@ -65,5 +65,5 @@ export class QualityOfLifeItem {
         readonly tag: string,
         readonly value: number,
         readonly explanation: string,
-    ) {}
+    ) { }
 }

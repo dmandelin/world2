@@ -117,6 +117,15 @@ export class EffortAllocation {
         return new EffortAllocation(this.clan, this.m_, new Map(pm));
     }
 
+    shiftedActivity(from: Activity, to: Activity, delta: number): EffortAllocation {
+        const actualDelta = Math.min(this.get(from), delta);
+
+        const m = new Map(this.m_);
+        m.set(from, this.get(from) - actualDelta);
+        m.set(to, this.get(to) + actualDelta);
+        return new EffortAllocation(this.clan, m, this.pm_);
+    }
+
     // "Applying" the allocation refers to the process of converting
     // the high-level choices to specific effort allocations.
 
@@ -137,7 +146,7 @@ export class EffortAllocation {
 
         if (isExemplarClan(this.clan)) {
             console.log(
-                `Start effort allocation for ${this.clan.name}:`, 
+                `Start effort allocation for ${this.clan.name}:`,
                 this.clan.effortAllocation.debugString());
         }
     }
@@ -146,6 +155,8 @@ export class EffortAllocation {
     // a change was made.
     applyStep(labor: Map<Process, Map<Clan, number>>): boolean {
         const er = economicResult(this.clan, this.clan.effortAllocation);
+
+        let options: EffortAllocation[] = [];
         if (er.qol.valueFrom("food") < 0) {
             if (true || isExemplarClan(this.clan)) {
                 console.log(`[Effort] ${this.clan.name} has food stress, value is ${er.qol.valueFrom("food").toFixed(2)}`);
@@ -156,55 +167,67 @@ export class EffortAllocation {
             // Try shifting activities. Here, we assume that under stress,
             // clans try something different for a while, so they can find
             // out how good the results are.
-            const options = [
+            // TODO - Add some experimentation cost, though this doesn't
+            //        matter that much unless they have free choice.
+            options = [
                 this.shifted(Processes.Fishing, Processes.Agriculture, 0.05),
                 this.shifted(Processes.Agriculture, Processes.Fishing, 0.05),
+                this.shiftedActivity(Activities.Leisure, Activities.Production, 0.05),
             ];
-            let bestOption: EffortAllocation = this;
-            let bestOptionValue = er.qol.valueFrom("food");
-            for (const option of options) {
-                const optionResult = economicResult(this.clan, option);
-                const optionValue = optionResult.qol.valueFrom("food");
-                if (optionValue > bestOptionValue) {
-                    bestOptionValue = optionValue;
-                    bestOption = option;
-                }
-            }
-            if (bestOption !== this) {
-                console.log(`Shifting effort for ${this.clan.name} from ${this.debugString()} to ${bestOption.debugString()} with expected food QoL change from ${er.qol.valueFrom("food").toFixed(2)} to ${bestOptionValue.toFixed(2)}`);
-            }
-            this.pm_ = bestOption.pm_;
-            return true;
+        } else if (er.qol.valueFrom("leisure") < 0) {
+            // TODO - Consider some option for reallocating for efficiency.
+            options = [
+                this.shiftedActivity(Activities.Production, Activities.Leisure, 0.05),
+            ];
+        } else {
+            return false;
         }
 
-        return false;
+        let bestOption: EffortAllocation = this;
+        let bestOptionValue = er.qol.value;
+        for (const option of options) {
+            const optionResult = economicResult(this.clan, option);
+            const optionValue = optionResult.qol.value;
+            if (optionValue > bestOptionValue) {
+                bestOptionValue = optionValue;
+                bestOption = option;
+            }
+        }
+        if (bestOption === this) {
+            return false;
+        }
+
+        console.log(`Shifting effort for ${this.clan.name} from ${this.debugString()} to ${bestOption.debugString()} with expected food QoL change from ${er.qol.valueFrom("food").toFixed(2)} to ${bestOptionValue.toFixed(2)}`);
+        this.m_ = bestOption.m_;
+        this.pm_ = bestOption.pm_;
+        return true;
     }
 }
 
 export type Activity = Tagged;
 
 export class Activities {
-    static readonly Leisure: Activity = { 
-        name: 'Leisure', 
-        sortKey: 4, 
-        shortName: 'L', 
+    static readonly Leisure: Activity = {
+        name: 'Leisure',
+        sortKey: 4,
+        shortName: 'L',
         color: '#ffd700',
-     };
-    static readonly Care: Activity = { 
-        name: 'Care', 
-        sortKey: 3, 
-        shortName: 'C', 
+    };
+    static readonly Care: Activity = {
+        name: 'Care',
+        sortKey: 3,
+        shortName: 'C',
         color: '#ef4444',
     };
     static readonly Help: Activity = {
-        name: 'Help', 
-        sortKey: 2, 
-        shortName: 'H', 
+        name: 'Help',
+        sortKey: 2,
+        shortName: 'H',
         color: '#34d399',
     };
     static readonly Production: Activity = {
-        name: 'Production', 
-        sortKey: 1, 
+        name: 'Production',
+        sortKey: 1,
         shortName: 'P',
         color: '#3b82f6',
     };
