@@ -60,6 +60,76 @@ x   Fertility bonus for higher marriage appeal due to earlier
 
 # Food Security
 
+## Hunter-Gatherers vs Early Farmers
+
+It appears that hunter-gatherers often face hunger, but seldom
+famine. They use diverse food sources and move around as needed,
+so they can usually find something. But there is often a "hungry
+season" of the year with less food (but enough to live on) and
+there can sometimes be local scarcity. Given their immediate-
+return economy, the usual response is to call on friends, neighbors,
+and kin and ask to live in their territory for a while. The group
+may disperse somewhat, with different families going to different
+other groups. Note also that hunter-gatherer can and do store
+food, although especially at higher latitudes where seasons are
+more variable. Note also also that hunter-gatherers often have a
+positive policy of keeping few possessions, since mobility is so
+crucial.
+
+Early farmers could perhaps achieve better food security if
+they worked at it, but to start, they had more problems. First,
+the harvest happens only one or two times of they year. Also,
+they can have a bad harvest, and they probably won't know they're
+going to have a bad harvest in advance. Therefore, their normal
+practice should be to cultivate fields enough to feed them even
+in bad years and/or store food from good years. As a result,
+they'll typically try to grow rather more food than they need
+(assuming median yields), typically producing 110-250% of their
+needs, perhaps on average around 140%. Thus, when there isn't a
+bad year, they'll have some left over, which can be used for
+other purposes such as a large celebration (which might even be
+delayed until a good year) or for work feasts for some project
+such as a new building. Note that early storage was probably not
+that reliable, which would also have to be accounted for.
+
+## Social vs Physical Distance
+
+People certainly looked for local help, but also wanted to cultivate
+longer-distance relationships in case their entire local area had a
+bad year -- there's a tradeoff between trust/transport risks and
+area risks. In particular, insurance relationships must be "kept
+warm" to be reliable, which will be more costly with distance.
+
+## Reciprocity or Gift?
+
+Apparently stored food is generally considered family property,
+but cooked food is expected to be shared. Related to this, in
+some places, early on kitchens were outside among dwellings, but
+later on inside, perhaps reflecting a change to cooked food also
+being mostly cooked for and consumed by the family.
+
+It also seems that in cases of bad harvest due to weather and the
+like, people didn't necessarily expect direct reciprocity, but
+instead gave minimal survival help. They'd hope for return favors
+later, but they'd probably also tolerate some long-term resource
+flow outward, especially to help keep alive people they're going
+to depend on for certain things.
+
+However, those points wouldn't necessarily apply at long distance
+or in times of general local scarcity. In those situations, people
+might trade tokens for food, such as fine pottery. Exactly what
+that meant is unclear: it appears to be somewhat money-like, but
+it also seems that these were somewhat symbols of prestige, along
+the lines of, if my family has hard times today but some fine
+pottery we can still give as "gifts", so it's perhaps a costly
+signal of the fact we're basically successful and useful and could
+be good partners tomorrow when we recover. Exactly how these
+exchanges are structured varies by society, so that in some cases
+it looks much like sales, other times gifts, possibly other more
+complicated arrangements.
+
+## Previous Notes
+
 Let's start with a model something like this:
 
 *   Distribution of annual crises of varying severity,
