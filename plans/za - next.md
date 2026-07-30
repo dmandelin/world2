@@ -22,6 +22,26 @@ Overall themes are:
     of each other
 *   risk
 
+# Activity Distribution and Production Variations
+
+Check that the activity distributions have enough leisure
+compared to historical values.
+
+*   Total time on farming + crafts is probably not more than
+    30-50%.
+    *   This might even include a lot of care, with babies
+        hanging out during craft and home work.
+*   Leisure time is probably 30-40%. This can include rest,
+    socializing, and certain kinds of crafting.
+*   Festivals, rituals, and the like might be 20-30%.
+
+Values vary greatly by society, so the above values are very
+mushy, but we should at least make sure that (a) things aren't
+too far off and (b) there is plenty of leisure at the start.
+
+Also check that farming productivity coefficient of variation
+comes out somewhere around 0.3.
+
 # Status and Marriage Appeal
 
 There seems not to be much of an "overall" status value in
@@ -100,7 +120,89 @@ bad year -- there's a tradeoff between trust/transport risks and
 area risks. In particular, insurance relationships must be "kept
 warm" to be reliable, which will be more costly with distance.
 
-## Reciprocity or Gift?
+## Levels of Reciprocity
+
+There is a classic model with generalized, balanced, and negative
+reciprocity, which I think we can model with `r`.
+
+### Background
+
+Typical scales of reciprocity based on physical and social distance
+are something like:
+
+*   Clan/Household: Generalized
+*   Kin: More generalized than balanced
+*   Village neighbors: More balanced than generalized
+*   Related villages: Balanced
+*   Unrelated villages: Negative
+
+We should slice things so they come out something like this, but
+we don't have to exactly match.
+
+### Affinity
+
+Let's codify the concept of "relatedness" by "similarity" as
+r_0 := "affinity". This is not necessarily genetic or any other
+kind of relatedness: it's how similar clan A considers clan B
+to itself, based on whatever parameters are most culturally
+relevant.
+
+Scale is an issue yet to be worked out. If this is supposed to
+work as an `r` value in inclusive fitness theory, it could be
+scaled so that r_0 = 0 for an average other clan. But it might
+be better to start unscaled, and do that at a later step.
+
+### Utility Functions
+
+Applying `r` values is convenient if we have utility functions.
+Some general ideas on what we can do there:
+
+*   log(demographics) as starting point
+    *   People aren't necessarily psychologically indexing on 
+        this, but their actual decisions may roughly match it.
+    *   This could be modeled by using log(demographic effect)
+        for various individual features.
+*   Add in other psychological factors
+*   Add in `r` times partner utilities
+*   Add penalty for conflict/losses from other clans
+
+### Initial Inter-Clan Helping I: Survival Aid
+
+At the village level, reciprocity is more balanced, but for
+keeping neighbors alive, it's more generalized. In general,
+we can expect:
+
+*   Clans with more will share out to clans with less, enough
+    to get them to a local "good enough" level, perhaps the
+    -1SD local recent historical consumption level
+    *   Clans that don't even have good enough usually won't
+        share: sharing breaks down under extreme scarcity
+    *   However, a certain amount of theft would also be 
+        tolerated
+*   Clans receiving aid reciprocate in *some* way, but not
+    necessarily to the same amount. This could be some sort
+    of favors, deference, or labor help.
+*   Sharing is "haphazard", with various families calling on
+    each other at various times.
+*   With kin, sharing is more (but not completely) generalized.
+    A simple way to model this might be to consider a somewhat
+    higher "good enough" level.
+*   We can probably also use utility functions to have givers
+    give until marginal utility is 0
+*   Sharing can be reduced or cut off in case of conflict
+
+### Initial Inter-Clan Helping II: Favors and Gifts
+
+For less critical things than food (and usually for land and
+crafted goods), local relationships look more like balanced
+reciprocity. We can still expect some free gift exchange, and
+not expecting values to match up exactly.
+
+The current model might have most of the features needed here.
+This kind of helping should also increase alignment, and in
+fact, that might be the primary benefit of this exchange.
+
+## Reciprocity or Gift? (TODO - Update per above)
 
 Apparently stored food is generally considered family property,
 but cooked food is expected to be shared. Related to this, in
@@ -127,6 +229,29 @@ be good partners tomorrow when we recover. Exactly how these
 exchanges are structured varies by society, so that in some cases
 it looks much like sales, other times gifts, possibly other more
 complicated arrangements.
+
+Payback is less expected or demanded from kin, as predicted by
+evolutionary theory.
+
+Demand sharing and theft both rise when there are lots of changes
+of people, so that reciprocity can't be tracked.
+
+Emergent chiefs might be seen somewhat as fathers to the whole
+group, expected to be generous to all.
+
+## Norms vs Motivations
+
+It appears that in these types of societies, people were more or less
+out for their own families (and other relatives, to lesser extents),
+but were constrained by highly prosocial norms, resulting in a lot
+of covert struggle. For example, it might be expected that if a
+cousin shows up, you give them food or beer; but someone might hide
+their beer and fail to cook and food and then claim they have none.
+People could also act apparently "generously" for "selfish" reasons,
+such as supporting a neer-do-well family because maybe they or their
+children will be good allies someday: you never know. These forces
+are typically strong enough to keep people acting cooperatively, but
+exceptions do occur.
 
 ## Previous Notes
 
