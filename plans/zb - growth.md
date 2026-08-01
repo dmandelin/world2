@@ -373,6 +373,17 @@ to start building a more advanced granary as a further amenity.
 
 Detailed list of first parts:
 
+*   Precursors
+    *   Mutual aid
+        x   Have clans prefer more trusted clans
+        *   (P2) Differential ability to help
+        *   Don't have a fixed, massive trust boost -
+            if interactions are minimal, so should be trust
+    *   Gossip
+        *   Have clans prefer more aligned clans
+        *   Have gossip more effective if more aligned
+        *   (P2) Differential ability to collect information
+    *   Add any new similarity factors to alignment
 *   "Status"
     *   Base on generosity/holiness
     *   +Marriage appeal
@@ -382,6 +393,8 @@ Detailed list of first parts:
             *   display in UI
             *   also have mechanics for alignment/rituals
     *   Piety trait
+    *   Option to work harder
+    *   Option to give gifts
     *   Status to help with dispute resolution
     *   Share out judgments/information
 *   Marriage appeal - mostly should be there
