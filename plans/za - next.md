@@ -22,6 +22,26 @@ Overall themes are:
     of each other
 *   risk
 
+Rough order to build:
+
+*   "Status"
+    *   Base on generosity/holiness
+    *   +Marriage appeal
+    *   +Save first in crisis
+        *   Implies we have some way of detecting a crisis
+            *   ~general food shortfall in settlement
+            *   display in UI
+            *   also have mechanics for alignment/rituals
+*   Marriage appeal - mostly should be there
+    *   Verify uses the right piece from "status"
+*   Food security and help
+    *   Standard food redistribution
+        *   Prevent starvation
+        *   Alter status and affiliation
+    *   Crop failure model (though we might be able to get
+        by with dependency ratios as source of difference
+        for now)
+
 # Activity Distribution and Production Variations
 
 Check that the activity distributions have enough leisure
@@ -202,42 +222,189 @@ The current model might have most of the features needed here.
 This kind of helping should also increase alignment, and in
 fact, that might be the primary benefit of this exchange.
 
-## Reciprocity or Gift? (TODO - Update per above)
+### Reciprocity: General Dynamics
 
-Apparently stored food is generally considered family property,
-but cooked food is expected to be shared. Related to this, in
-some places, early on kitchens were outside among dwellings, but
-later on inside, perhaps reflecting a change to cooked food also
-being mostly cooked for and consumed by the family.
+Let's consider different structures of social life and how
+they may evolve in a system like this.
 
-It also seems that in cases of bad harvest due to weather and the
-like, people didn't necessarily expect direct reciprocity, but
-instead gave minimal survival help. They'd hope for return favors
-later, but they'd probably also tolerate some long-term resource
-flow outward, especially to help keep alive people they're going
-to depend on for certain things.
+Within clans, we imagine:
 
-However, those points wouldn't necessarily apply at long distance
-or in times of general local scarcity. In those situations, people
-might trade tokens for food, such as fine pottery. Exactly what
-that meant is unclear: it appears to be somewhat money-like, but
-it also seems that these were somewhat symbols of prestige, along
-the lines of, if my family has hard times today but some fine
-pottery we can still give as "gifts", so it's perhaps a costly
-signal of the fact we're basically successful and useful and could
-be good partners tomorrow when we recover. Exactly how these
-exchanges are structured varies by society, so that in some cases
-it looks much like sales, other times gifts, possibly other more
-complicated arrangements.
+*   Generalized reciprocity: People are closely related, and also
+    depend on each other; they share fairly freely, but not
+    absolutely
+*   Low cost: Everything goes into a bin, and people take what
+    they need
 
-Payback is less expected or demanded from kin, as predicted by
-evolutionary theory.
+Between local clans, in theory they could use the same system, but it
+appears it usually doesn't work quite like that. The precise causes
+are unclear, but there is less relatedness and less interaction,
+so lower levels of `r` and trust. Instead, there appears to be a
+mix of generalized and balanced reciprocity:
 
-Demand sharing and theft both rise when there are lots of changes
-of people, so that reciprocity can't be tracked.
+*   Generalized reciprocity in keeping people alive: Everyone needs 
+    major insurance, and each other. At small scale, this seems to
+    be dyadic -- larger stores came later
+*   Balanced reciprocity in other things such as land and luxuries
 
-Emergent chiefs might be seen somewhat as fathers to the whole
-group, expected to be generous to all.
+The dyadic interactions have implications:
+
+*   N^2/2 links (where N is the number of clans) to maintain. Trust
+    isn't free, so that does cost something.
+    *   Note that these links also help keep the peace, so there's
+        demand for them beyond the actual trade benefits
+
+In terms of alignment, it seems that at this point people are scored
+highly based on what they give away. Norms DO NOT allow that to be
+converted in dominance, but it does make the giver more of a target
+for gifts and help when needed, and probably as a marriage partner
+too. This also already allows for a little asymmetry, where some are
+giving somehow better or more high-status benefits away than others.
+
+Keep in mind that at this particular point, there isn't necessarily
+that much to acquire, so it's natural to give away extra food for
+social credit. Even artifacts might be of limited use to one person,
+so more value is ultimately gained by sharing it around rather than
+keeping it at home. This would apply to objects not used that often,
+but may not apply to daily-use tools.
+
+The next conceptual step would be the "big man", alluded to above as
+the person giving away stuff. In general, this starts to become more
+significant like this:
+
+*   The big man attracts "followers", families and individuals from
+    other clans who owe the big man favors and/or depend on him for
+    favors
+    *   The notion here seems to be dependency: there are somehow
+        people who are not doing that great under the mutual reciprocity
+        system.
+        *   One hypothetical way to not do as well would be to not
+            have enough special or luxury goods, but we posit that
+            in the early days that was *mostly* not yet much of a
+            factor. But later it could be very much, and perhaps now
+            for stone tools or fine pottery.
+        *   If the village is growing, maybe relationships are breaking
+            down somewhat and someone doesn't have enough partners
+        *   Could also be relevant for creating more cross-village
+            exchange
+        *   If the big man is just generating a lot more surplus than
+            usual, he may top up followers to a higher level than 
+            "not starving".
+    *   Followers then offer deference, labor help, and gifts (e.g.,
+        of specialized items they randomly acquired)
+    *   This interation boosts alignment on both sides.
+*   The big man hosts big community events. This then creates an
+    interaction not just dyadically between big man and followers,
+    but between big man and the community as a whole
+    *   The prototype is big feasts.
+    *   There can be varying levels of competition over how big and
+        impressive the feasts are.
+    *   This would have an especially large influence on fame: how many
+        people know of the big man, which presumably starts mattering
+        more once communities are big enough that not everyone knows
+        everyone.
+    *   This should also influence mutual alignment and identity of
+        attendees
+*   The big man changes how disputes work
+    *   Followers should generally respond dovishly to conflicts with
+        their big man
+    *   The big man can arbitrate between followers (or two big men
+        on a conflict between their followers)
+    *   The big man would generally have more power to win disputes,
+        but this depends on norms and the type of dispute
+
+"Economic" factors:
+
+*   Relationship costs
+    *   N followers and a big man need only N+1 links; at 4 clans this
+        is about equal to the equal matching system, but beyond that
+        the big-man relationship becomes cheaper
+*   Demand for big men
+    *   As provider of public goods
+        *   Can do projects (stores, canals) with economies of scale
+            solving coordination problems more cheaply than equal-matching
+            communities
+        *   Can solve certain disputes more directly
+    *   As individual (or clan) patron
+        *   Similar services and benefits to equal neighbor relationships,
+            but:
+            *   Big man might be available when neighbors are not
+            *   Big man more likely to have actual resources when needed
+            *   Big man might provide more/better help/gifts
+*   Supply of big men
+    *   The literature seems to attribute this to personality.
+    *   In general, we expect that having a few big men could be functional,
+        but if everyone is trying to be a big man, there is probably way too
+        much conflict and way too little actual work. There needs to be some
+        dynamic ratio control. In more formal systems, that could be via
+        elections, royal status, or something. But here we basically have
+        self-appointed leaders, so it makes sense to posit that it is indeed
+        a personality trait (set) representing a game-theoretic strategy.
+    *   We still need an explanation for what the big men get out of this,
+        which we can probably learn more about in the literature, but I
+        doubt it's that wrong to assume:
+        *   More marriages
+        *   Better marriages
+        *   Higher appeal for other positive relationships and interactions
+            *   In particular, for being saved in case of disaster. In more
+                fixed chiefly systems, it seems the chiefs are seen as holier
+                and thus needing to be protected most, but that doesn't apply
+                yet. Perhaps the idea is that not everyone is qualified to
+                be a big man, and they're the rare factor in "production",
+                so as long as society is big enough to need them, it's more
+                important to keep them around on an individual level
+*   Demand for big-man clients
+    *   Somewhat obvious, the whole point is to win fame and cooperation
+    *   Clients would provide many benefits, as usual a combined package
+        per culture, but typically involving deference, labor, gifts, help
+        in disputes, and any sort of positive scaling
+*   Supply of big-man clients
+    *   Most people like autonomy enough not to be followers if they don't
+        think they need to, so followers would start as people in need
+    *   Big-man feasts and gifts are trickier: clans adhering to egalitarian
+        norms might reject them; the notion is perhaps that if there is a
+        core of followers picking up benefits, then others may start joining
+        in to keep up. Also, the followers' positive opinion of the big men
+        would rub off.
+
+But now we have the question of, does this "big man" concept developed for
+other places and times have any applicability for our setting? That can be
+researched further, but meanwhile, a few ideas. The south seems to have had
+a more collective (as opposed to individual) elite, so we might have less
+of a "big man" and more of a council, performing somewhat similar functions.
+It seems first "temples" may have been sponsored by multiple families, in
+similar fashion. The last vague point is that emerging elites seemed to deal
+mostly in cereals. What might have been going on?
+
+One role of emerging village elites could be managing storage infrastructure
+and pooling, with benefits such as:
+
+*   Management of conflict over sharing
+*   More reliable storage
+*   Storage more accessible to dole out on demand or for special projects
+
+If so, that could be part of an explanation for why a more collective
+structure. But what's the "personality" here? Even with individual self-
+aggrandizement perhaps not the main thing, clan pride still could be.
+In our setting, this does also seem to be linked to religion, so perhaps
+religious motivation is a key differentiator. We can also link the two
+by positing that clans that grow more food are seen as holier.
+
+Overall, it seems reasonable to have individual clans be "big clans".
+This can be a personality trait, but with clans that happen to have
+more markers of divine favor (whatever they may be), they will be more
+likely to try to be a "big clan". Big clans then provide a set of services:
+
+*   Help for those not having access to help otherwise
+*   Better help
+*   Public goods and services such as cereal banks, rituals, religious
+    structures, and infrastructure
+*   Dispute mediation
+
+Qs:
+
+*   Evolutionary benefits to headmen/big men
+*   Staple finance background
+
 
 ## Norms vs Motivations
 
