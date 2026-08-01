@@ -362,3 +362,28 @@ be enough for settlements to grow some. The temple will also
 add to amenities if credibility is good. Finally, with the 
 offering shrines, we may have some clan receiving enough donations
 to start building a more advanced granary as a further amenity.
+
+Detailed list of first parts:
+
+*   "Status"
+    *   Base on generosity/holiness
+    *   +Marriage appeal
+    *   +Save first in crisis
+        *   Implies we have some way of detecting a crisis
+            *   ~general food shortfall in settlement
+            *   display in UI
+            *   also have mechanics for alignment/rituals
+    *   Piety trait
+*   Marriage appeal - mostly should be there
+    *   Verify uses the right piece from "status"
+*   Food security and help
+    *   Standard food redistribution
+        *   Prevent starvation
+        *   Alter status and affiliation
+    *   Crop failure model (though we might be able to get
+        by with dependency ratios as source of difference
+        for now)
+*   Clan self rituals
+*   Clan ritual provisions
+*   Village leadership structure
+*   Ritual leadership structure
