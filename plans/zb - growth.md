@@ -319,6 +319,14 @@ they don't have to be).
 *   Intellect/Imagination - ability to learn and invent; relevant
     to coordination and oratory for leadership
 
+# More Discussion on Status
+
+The ethnographies seem to say that "giving away lots of stuff" is
+the main way to rise in status. More modern research finds that
+people assess each other on two dimensions: power and alignment.
+We could have clans assess each other in that way, but for now,
+a combined version seems to make sense. 
+
 # Item List
 
 The rough sequence might be:
@@ -374,6 +382,8 @@ Detailed list of first parts:
             *   display in UI
             *   also have mechanics for alignment/rituals
     *   Piety trait
+    *   Status to help with dispute resolution
+    *   Share out judgments/information
 *   Marriage appeal - mostly should be there
     *   Verify uses the right piece from "status"
 *   Food security and help
