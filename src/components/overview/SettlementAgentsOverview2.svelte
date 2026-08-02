@@ -515,17 +515,29 @@
                 topics: ["food", "welfare"],
             },
             {
-                label: "Food Storage",
+                label: "&nbsp;Stored",
                 class: "actual",
                 cellClass: "ra",
-                value: (c) => c.consumption.perCapitaFoodStock,
+                value: (c) => c.consumption.perCapitaFoodStored,
                 format: pct,
-                tooltipSnippet: foodStorageTooltip,
-                deltaValue: (c) => c.consumption.perCapitaFoodStock,
+                tooltipSnippet: foodTooltip,
+                deltaValue: (c) => c.consumption.perCapitaFoodStored,
                 deltaFormat: pct,
-                timelineKey: "foodStorage",
+                timelineKey: "food",
                 scaler: new DefaultScaler(),
-                topics: ["food"],
+                topics: ["food", "welfare"],
+            },
+            {
+                label: "Food Stock",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => c.stock.perCapitaFoodStock(c.population),
+                format: pct,
+                tooltipSnippet: foodStockTooltip,
+                deltaValue: (c) => c.stock.perCapitaFoodStock(c.population),
+                deltaFormat: pct,
+                scaler: new DefaultScaler(),
+                topics: ["food", "welfare"],
             },
         ]);
 
@@ -720,14 +732,8 @@
                 {
                     data: "Stored",
                     label: "Stored",
-                    valueFn: (cg) => cg.stock,
+                    valueFn: (cg) => cg.stored,
 
-                    formatFn: unsignedFormat(2),
-                },
-                {
-                    data: "Storage loss",
-                    label: "Storage loss",
-                    valueFn: (cg) => cg.stockLoss,
                     formatFn: unsignedFormat(2),
                 },
                 {
@@ -829,14 +835,26 @@
 
     function clanFoodStockTooltipTable(clan: ClanDTO) {
         return new FilteredIterableTable(
-            clan.consumption.m.values(),
-            (cg) => cg.good.name,
-            (cg) => cg.good.isSubsistence,
+            clan.stock.items,
+            (item) => item.good.name,
+            (item) => item.good.isSubsistence,
             [
                 {
                     data: "Stock",
                     label: "Stock",
-                    valueFn: (cg) => cg.stock,
+                    valueFn: (item) => item.perCapitaAmount(clan.population),
+                    formatFn: unsignedFormat(2),
+                },
+                {
+                    data: "Additions",
+                    label: "Additions",
+                    valueFn: (item) => item.perCapitaAdditions(clan.population),
+                    formatFn: unsignedFormat(2),
+                },
+                {
+                    data: "Storage Loss",
+                    label: "Storage Loss",
+                    valueFn: (item) => item.perCapitaStorageLoss(clan.population),
                     formatFn: unsignedFormat(2),
                 },
             ],
@@ -959,14 +977,16 @@
                     data: "Previous",
                     label: "Prev",
                     valueFn: (c) =>
-                        clan.world.marriageInterestToward(c, clan)?.previousValue ?? 0,
+                        clan.world.marriageInterestToward(c, clan)
+                            ?.previousValue ?? 0,
                     formatFn: (v: number) => signed(v, 1),
                 },
                 {
                     data: "Current Total",
                     label: "Total",
                     valueFn: (c) =>
-                        clan.world.marriageInterestToward(c, clan)?.currentItemsTotal ?? 0,
+                        clan.world.marriageInterestToward(c, clan)
+                            ?.currentItemsTotal ?? 0,
                     formatFn: (v: number) => signed(v, 1),
                 },
                 {
@@ -1392,7 +1412,7 @@
     <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet foodStorageTooltip(cs: ClanLastTurnSnapshots)}
+{#snippet foodStockTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanFoodStockTooltipTable(cs.e)}></TableView2>
 {/snippet}
 

@@ -12,15 +12,15 @@ export class Consumption {
     // most relevant for welfare.
 
     constructor(
-        readonly population: number, 
+        readonly population: number,
         effortAllocation: EffortAllocation,
         readonly m: ReadonlyMap<TradeGood, ConsumptionGood>) {
-            this.leisureFraction = effortAllocation.get(Activities.Leisure) ?? 0;
-        }
+        this.leisureFraction = effortAllocation.get(Activities.Leisure) ?? 0;
+    }
 
     static from(
-        population: number, 
-        effortAllocation: EffortAllocation, 
+        population: number,
+        effortAllocation: EffortAllocation,
         source: ProductionReport | NetFlows): Consumption {
 
         const netFlows = source instanceof NetFlows ? source : new NetFlows(source);
@@ -38,8 +38,6 @@ export class Consumption {
                 consumed: fishConsumed,
                 wasted: fishCg - fishConsumed,
                 stored: 0,
-                stock: 0,
-                stockLoss: 0,
             });
         }
 
@@ -50,31 +48,12 @@ export class Consumption {
             const excessCereals = cerealsCg - cerealsConsumed;
             unmetFoodDesire -= cerealsConsumed;
 
-            // This has to be handled carefully because excessCereals is a flow,
-            // which we need to convert into a stock of stored cereals. Also note
-            // that logically some cereals are produced each year, but our turns
-            // are rather longer, but this can be mostly ignored as including this
-            // in the analysis just adds constant factors, so below we'll pretend
-            // years and turns are equivalent.
-            //
-            // Let S be the stock, E the excess cereals, and c the iceberg cost
-            // in fraction of stock lost per year. Then the storage losses are cS.
-            // At steady state, E = cS, so S = E / c.
-            //
-            // At the start, we'll assume storage is mostly simple pits and bins,
-            // with some use of simple hand-made pottery (which might not be
-            // practical for big bulk storage) and a fairly high loss rate. We can
-            // update that as needed.
-
-            const icebergCost = 0.5;
-            const storedCereals = excessCereals / icebergCost;
+            const storedCereals = excessCereals;
             m.set(TradeGoods.Cereals, {
                 good: TradeGoods.Cereals,
                 consumed: cerealsConsumed,
                 wasted: 0,
                 stored: storedCereals,
-                stock: storedCereals,
-                stockLoss: storedCereals * icebergCost,
             });
         }
 
@@ -91,8 +70,6 @@ export class Consumption {
                 consumed: population > 0 ? amount / population : 0,
                 wasted: 0,
                 stored: 0,
-                stock: 0,
-                stockLoss: 0,
             });
         }
         return new Consumption(population, effortAllocation, m);
@@ -102,8 +79,8 @@ export class Consumption {
         return (this.m.get(TradeGoods.Fish)?.consumed ?? 0) + (this.m.get(TradeGoods.Cereals)?.consumed ?? 0);
     }
 
-    get perCapitaFoodStock(): number {
-        return (this.m.get(TradeGoods.Fish)?.stock ?? 0) + (this.m.get(TradeGoods.Cereals)?.stock ?? 0);
+    get perCapitaFoodStored(): number {
+        return (this.m.get(TradeGoods.Fish)?.stored ?? 0) + (this.m.get(TradeGoods.Cereals)?.stored ?? 0);
     }
 
     get fishRatio(): number {
@@ -112,8 +89,8 @@ export class Consumption {
         return cereals + fish === 0 ? 0.5 : fish / (cereals + fish);
     }
 
-    get foodQuality(): {quantity: number, fishRatio: number} {
-        return {quantity: this.perCapitaFood, fishRatio: this.fishRatio};
+    get foodQuality(): { quantity: number, fishRatio: number } {
+        return { quantity: this.perCapitaFood, fishRatio: this.fishRatio };
     }
 
     perCapita(good: TradeGood): number {
@@ -127,9 +104,7 @@ export class ConsumptionGood {
         public consumed: number,
         public wasted: number,
         public stored: number,
-        public stock: number,
-        public stockLoss: number,
-    ) {}
+    ) { }
 }
 
 // Standard of living data. This is basically the subset of happiness
@@ -163,6 +138,6 @@ export class StandardOfLivingItem {
         readonly name: string,
         readonly value: number,
         readonly explanation: string,
-    ) {}
+    ) { }
 }
 

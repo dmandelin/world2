@@ -155,7 +155,7 @@ export class ClanTimePoint {
         this.foodProduced = clan.netFlows ? clan.netFlows.totalFoodProduced / (clan.population || 1) : 0;
         this.foodTransferred = clan.netFlows ? clan.netFlows.netFoodTransferred / (clan.population || 1) : 0;
         this.food = clan.consumption.perCapitaFood;
-        this.foodStorage = clan.consumption.perCapitaFoodStock;
+        this.foodStorage = clan.stock ? clan.stock.perCapitaFoodStock(clan.population) : 0;
         this.averagePrestige = getLocalPrestige(clan);
         this.happiness = clan.happinessValue;
         

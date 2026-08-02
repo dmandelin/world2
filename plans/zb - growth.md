@@ -490,7 +490,7 @@ flood events could then also be integrated.
     probably just need to make more understandable.
 x   Status effects for food transfers.
 x   Make respect stickier with time.
-*   Update how food storage works with consumption for
+x   Update how food storage works with consumption for
     new turn length.
 *   Give food storage the ability to be consumed next
     turn.
@@ -560,7 +560,7 @@ Rough growth sequence:
 
 We'll need to firm up the model for each step.
 
-*   Local food exchange with status rise for givers
+x   Local food exchange with status rise for givers
     *   Need "piety" trait to influence how much they want to
         grow and give
 *   Clan self rituals and authority

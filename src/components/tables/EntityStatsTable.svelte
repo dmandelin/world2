@@ -91,7 +91,7 @@
         // Group 4: Food
         groups.push([
             { label: "Food", value: (c) => c.consumption.perCapitaFood, format: pct },
-            { label: "Food Storage", value: (c) => c.consumption.perCapitaFoodStock, format: pct },
+            { label: "Food Stock", value: (c) => c.stock ? c.stock.perCapitaFoodStock(c.population) : 0, format: pct },
         ]);
 
         // Group 5: Processes (dynamic)

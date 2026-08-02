@@ -377,6 +377,20 @@ export class World implements NoteTaker {
         for (const clan of allClans) {
             clan.consumption = Consumption.from(clan.population, clan.effortAllocation, clan.netFlows);
             clan.qol = QualityOfLife.from(clan.consumption);
+
+            // Update stock: add stored goods and apply storage loss.
+            const additions = new Map<TradeGood, number>();
+            for (const [good, cg] of clan.consumption.m.entries()) {
+                const totalNetGood = clan.netFlows.netGood(good);
+                const totalConsumed = cg.consumed * clan.population;
+                const unconsumed = Math.max(0, totalNetGood - totalConsumed);
+                if (unconsumed > 0) {
+                    additions.set(good, unconsumed);
+                }
+            }
+            clan.stock.updateAdditions(additions);
+            clan.stock.applyLosses();
+
             if (isExemplarClan(clan)) {
                 console.log(`Production for ${clan.name}:`);
                 console.log(clan.effortAllocation);

@@ -16,6 +16,7 @@ import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
 import type { NetFlows } from "../econ/netflows";
+import type { Stock } from "../econ/stock";
 import type { QualityOfLife } from "../econ/qol";
 import type { ResidenceLevel } from "../people/residence";
 import type { Rites } from "../rites";
@@ -91,6 +92,7 @@ export class ClanDTO {
     effort: number;
     production: ProductionReport;
     netFlows: NetFlows;
+    stock: Stock;
     consumption: Consumption;
     stress: Stress;
     qol: QualityOfLife;
@@ -132,6 +134,7 @@ export class ClanDTO {
         this.effort = clan.effort;
         this.production = clan.production;
         this.netFlows = clan.netFlows;
+        this.stock = clan.stock.clone();
         this.consumption = clan.consumption;
         this.stress = clan.stress.clone();
         this.qol = clan.qol;

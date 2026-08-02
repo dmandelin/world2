@@ -25,6 +25,7 @@ import type { World } from "../world";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { Stress } from "./stress";
 import { NetFlows } from "../econ/netflows";
+import { Stock } from "../econ/stock";
 import { BasicInteraction } from "../relations/basicinteraction";
 
 const CLAN_NAMES: string[] = [
@@ -133,6 +134,7 @@ export class Clan implements TradePartner {
 
     production: ProductionReport = new ProductionReport([]);
     netFlows: NetFlows = new NetFlows();
+    stock: Stock = new Stock();
     consumption: Consumption;
     qol: QualityOfLife = new QualityOfLife(new Map());
 
