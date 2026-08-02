@@ -311,7 +311,7 @@ export class World implements NoteTaker {
             }
         }
 
-        this.advanceSubturns();
+        this.advanceEconomy();
 
         // Advance perceptions and learnings.
         for (const cl of this.clusters) {
@@ -352,7 +352,7 @@ export class World implements NoteTaker {
         log('World <<< Advance');
     }
 
-    advanceSubturns() {
+    advanceEconomy() {
         // Advance economy.
         for (const cl of this.clusters) {
             for (const settlement of cl.settlements) {
