@@ -2,6 +2,7 @@ import { populationAverage, populationStdDev } from "../lib/modelbasics";
 import { sortedByKey, sumFun } from "../lib/basics";
 import { TradeGood } from "../trade";
 import type { Clan, ClanNotification } from "../people/people";
+import type { ClanTraits } from "../people/traits";
 import type { ClanSkills } from "../people/clanskills";
 import type { Consumption } from "../econ/consumption";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
@@ -110,9 +111,7 @@ export class ClanDTO {
     happiness: HappinessCalc;
 
     skills: ClanSkills;
-    intelligence: number;
-    strength: number;
-    traits: string[];
+    traits: ClanTraits;
 
     notifications: ClanNotification[];
 
@@ -154,15 +153,17 @@ export class ClanDTO {
         this.happiness = clan.happiness.clone();
 
         this.skills = clan.skills;
-        this.intelligence = clan.intelligence;
-        this.strength = clan.strength;
-        this.traits = [...clan.traits].map(t => t.name);
+        this.traits = clan.traits.clone();
 
         this.notifications = [...clan.notifications];
     }
 
     get world(): WorldDTO {
         return this.settlement.world;
+    }
+
+    get foodTargetPerCapita(): number {
+        return this.ref.foodTargetPerCapita;
     }
 
     get previousPopulation(): number {

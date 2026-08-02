@@ -14,10 +14,8 @@ import { Processes, SkillDefs } from "../econ/econdefs";
 import { QualityOfLife } from "../econ/qol";
 import { ResidenceLevel } from "./residence";
 import { Rites } from "../rites";
-import { TradeGoods } from "../trade";
-import { Traits } from "./traits";
 import { type FloodLevel, FloodLevels } from "../environment/flood";
-import { type TradeGood, type TradePartner, TradeRelationship } from "../trade";
+import { type TradeGood, TradeGoods, type TradePartner, TradeRelationship } from "../trade";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
@@ -69,21 +67,7 @@ export function randomClanColor(exclude: string[] | Set<String>): string {
     return available[Math.floor(Math.random() * available.length)];
 }
 
-function randomStat(): number {
-    // Standard deviation for individuals is 15, so it should be
-    // somewhat less for an entire clan.
-    return clamp(Math.round(normal(50, 12)), 0, 100);
-}
-
-export class PersonalityTrait {
-    constructor(readonly name: string) { }
-}
-
-export const PersonalityTraits = {
-    GRINCH: new PersonalityTrait('Grinch'),
-    SETTLED: new PersonalityTrait('Settled'),
-    MOBILE: new PersonalityTrait('Mobile'),
-};
+import { ClanTraits, NUMERIC_TRAITS } from "./traits";
 
 export interface GoodsReceiver {
     share: number;
@@ -108,8 +92,7 @@ export class Clan implements TradePartner {
 
     skills = new ClanSkills(this);
 
-    // The initial population had been temporary residents.
-    readonly traits = new Set<PersonalityTrait>([PersonalityTraits.MOBILE]);
+    traits = new ClanTraits();
 
     migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
     previousSettlement_: Settlement;
@@ -150,8 +133,6 @@ export class Clan implements TradePartner {
         public name: string,
         public color: string,
         public population: number,
-        public strength: number = randomStat(),
-        public intelligence: number = randomStat(),
     ) {
         this.world.clanMap.set(this.uuid, this);
         this.world.timeline.register(this.uuid, this.name);
@@ -415,13 +396,17 @@ export class Clan implements TradePartner {
         }
     }
 
-    getTrait(trait: string): number {
-        if (trait === Traits.Intelligence) {
-            return this.intelligence;
-        } else if (trait === Traits.Strength) {
-            return this.strength;
+    get foodTargetPerCapita(): number {
+        const piety = this.traits.piety;
+        if (piety >= 50) {
+            return Math.max(0.1, Math.pow(1.2, (piety - 50) / 15));
+        } else {
+            return Math.max(0.1, Math.pow(0.9, (50 - piety) / 15));
         }
-        return 0;
+    }
+
+    getTrait(trait: string): number {
+        return this.traits.get(trait);
     }
 
     prepareTraitChanges(elapsedYears: number = this.world?.yearsPerTick ?? 1) {
@@ -430,37 +415,7 @@ export class Clan implements TradePartner {
 
     commitTraitChanges() {
         this.skills.commitAdvance();
-
-        this.strength = this.advancedTrait(this.strength);
-        this.intelligence = this.advancedTrait(this.intelligence);
-
-        // Mobility traits
-        if (this.traits.has(PersonalityTraits.MOBILE)) {
-            // If they've been here a while they might cease to be mobile.
-            if (this.seniority >= 1 && Math.random() < 0.3) {
-                this.traits.delete(PersonalityTraits.MOBILE);
-            }
-        } else if (this.traits.has(PersonalityTraits.SETTLED)) {
-            // They might get a little sick of the place.
-            if (Math.random() < 0.1) {
-                this.traits.delete(PersonalityTraits.SETTLED);
-            }
-        } else {
-            const r = Math.random();
-            if (this.seniority >= 1 && Math.random() < 0.3) {
-                this.traits.add(PersonalityTraits.SETTLED);
-            } else if (r >= 0.9) {
-                this.traits.add(PersonalityTraits.MOBILE);
-            }
-        }
-    }
-
-    advancedTrait(value: number) {
-        const incr = Math.round(normal(2));
-        if (incr > 0 && value > 50 || incr < 0 && value < 50) {
-            if (Math.random() < Math.abs(value - 50) / 50) return value;
-        }
-        return clamp(value + incr, 0, 100);
+        this.traits.mutate();
     }
 
     moveTo(settlement: Settlement) {
@@ -491,9 +446,12 @@ export class Clan implements TradePartner {
             this.slices[i][1] += other.slices[i][1];
         }
 
-        this.intelligence = Math.round(
-            (this.intelligence * origSize + other.intelligence * other.population) /
-            (origSize + other.population));
+        for (const key of NUMERIC_TRAITS) {
+            const val = Math.round(
+                (this.traits.get(key) * origSize + other.traits.get(key) * other.population) /
+                (origSize + other.population));
+            this.traits.set(key, val);
+        }
 
         // TODO - Handle relationships
 
@@ -513,11 +471,8 @@ export class Clan implements TradePartner {
         const name = randomClanName(this.world.allClans.map(clan => clan.name));
         const color = randomClanColor(this.world.allClans.map(clan => clan.color));
         const newClan = new Clan(this.world, this.settlement, this.annals, name, color, newSize);
-        newClan.strength = this.strength;
-        newClan.intelligence = this.intelligence;
+        newClan.traits = this.traits.cloneWithSplitBump();
         newClan.skills = this.skills.cloneFor(newClan);
-        newClan.traits.clear();
-        for (const trait of this.traits) newClan.traits.add(trait);
         newClan.effortAllocation = new EffortAllocation(newClan, this.effortAllocation.m, this.effortAllocation.pm);
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);

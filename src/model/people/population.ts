@@ -203,6 +203,14 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Stress', stress, stressDrModifier));
 
+        const intellect = safeVal(this.clan.traits?.intellect ?? 50, 50);
+        const foresightBrModifier = Math.pow(0.9, (intellect - 50) / 15);
+        const foresightDrModifier = Math.pow(0.95, (intellect - 50) / 15);
+        this.brModifiers.push(new PopulationChangeModifier(
+            'Foresight', intellect, foresightBrModifier));
+        this.drModifiers.push(new PopulationChangeModifier(
+            'Foresight', intellect, foresightDrModifier));
+
         this.brModifier = safeVal(productFun(this.brModifiers, m => m.value), 1);
         this.drModifier = safeVal(productFun(this.drModifiers, m => m.value), 1);
     }

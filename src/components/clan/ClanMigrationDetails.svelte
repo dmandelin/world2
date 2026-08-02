@@ -87,14 +87,8 @@
         <!-- Compact Tooltip Layout -->
         <div class="compact-section compact-traits">
             <strong>Traits:</strong>
-            {#each clan.traits as trait, i}
-                <span class="compact-trait">{trait}</span>{i <
-                clan.traits.length - 1
-                    ? ", "
-                    : ""}
-            {:else}
-                <span class="text-gray">None</span>
-            {/each}
+            <span class="compact-trait">Piety ({clan.traits?.piety ?? 50})</span>,
+            <span class="compact-trait">Intellect ({clan.traits?.intellect ?? 50})</span>
         </div>
 
         {#if plan}
@@ -144,9 +138,8 @@
         <div class="traits-header">
             <span class="traits-title">Clan Traits:</span>
             <div class="traits-list">
-                {#each clan.traits as trait}
-                    <span class="trait-badge">{trait}</span>
-                {/each}
+                <span class="trait-badge">Piety: {clan.traits?.piety ?? 50}</span>
+                <span class="trait-badge">Intellect: {clan.traits?.intellect ?? 50}</span>
             </div>
         </div>
 

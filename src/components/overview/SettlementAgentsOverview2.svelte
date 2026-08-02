@@ -570,6 +570,7 @@
                 tooltipSnippet: foodStockTooltip,
                 deltaValue: (c) => c.stock.perCapitaFoodStock(c.population),
                 deltaFormat: pct,
+                timelineKey: "foodStorage",
                 scaler: new DefaultScaler(),
                 topics: ["food", "welfare"],
             },
@@ -747,6 +748,34 @@
                 groups.push(skillGroup);
             }
         }
+
+        // Group 8: Traits
+        groups.push([
+            {
+                label: "Piety",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.traits.piety,
+                format: (v) => v.toFixed(0),
+                deltaValue: (c) => c.traits.piety,
+                deltaFormat: (v) => v.toFixed(0),
+                timelineKey: "traitPiety",
+                scaler: new DefaultScaler(),
+                topics: ["traits"],
+            },
+            {
+                label: "Intellect",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.traits.intellect,
+                format: (v) => v.toFixed(0),
+                deltaValue: (c) => c.traits.intellect,
+                deltaFormat: (v) => v.toFixed(0),
+                timelineKey: "traitIntellect",
+                scaler: new DefaultScaler(),
+                topics: ["traits"],
+            },
+        ]);
 
         return groups;
     });
@@ -1479,6 +1508,9 @@
 {/snippet}
 
 {#snippet foodProducedTooltip(cs: ClanLastTurnSnapshots)}
+    <div style="margin-bottom: 6px;">
+        <b>Food Target:</b> {pct(cs.e.foodTargetPerCapita)} / capita
+    </div>
     <TableView2 table={clanFoodProductionTooltipTable(cs.e)}></TableView2>
 {/snippet}
 

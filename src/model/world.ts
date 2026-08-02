@@ -374,9 +374,9 @@ export class World implements NoteTaker {
             }
         }
 
-        // Step 1 & 2: Arrange consumption (first from production up to 1.0 food/capita, then from stock)
+        // Step 1 & 2: Arrange consumption (first from production up to target food/capita, then from stock)
         for (const clan of allClans) {
-            let targetFood = 1.0 * clan.population;
+            let targetFood = clan.foodTargetPerCapita * clan.population;
 
             // Consume out of production (Fish first, Cereals second)
             const availFish = clan.production.forGood(TradeGoods.Fish);
@@ -480,11 +480,11 @@ export class World implements NoteTaker {
             changed = false;
             roundCount++;
 
-            const needyClans = shuffled(allClans.filter(c => c.consumption.totalFood < c.population));
+            const needyClans = shuffled(allClans.filter(c => c.consumption.totalFood < c.foodTargetPerCapita * c.population));
             if (needyClans.length === 0) break;
 
             for (const needyClan of needyClans) {
-                let demand = needyClan.population - needyClan.consumption.totalFood;
+                let demand = (needyClan.foodTargetPerCapita * needyClan.population) - needyClan.consumption.totalFood;
                 if (demand <= 1e-9) continue;
 
                 const partners = this.getRelationshipPartners(needyClan);

@@ -5,6 +5,9 @@
     import type { Table, TableRow } from "./tables/tables2";
     import DataTable2 from "./tables/TableView2.svelte";
     import Tooltip from "./Tooltip.svelte";
+    import LineGraph from "./LineGraph.svelte";
+    import { DefaultScaler } from "./linegraph";
+    import { clanKeyTimelineGraphData, type ClanTimePoint } from "../model/records/timeline";
     import type { ClanDTO } from "../model/records/dtos";
     import type { SkillDef } from "../model/people/skills";
     import { ClanSkillChangeItem } from "../model/people/skillchange";
@@ -12,6 +15,16 @@
 
     let { clan, skill }: { clan: ClanDTO; skill: SkillDef } = $props();
     let clanSkill = $derived(clan.skills.get(skill)!);
+
+    const skillToKeyMap: Record<string, keyof ClanTimePoint> = {
+        'Local Ecology': 'skillLocalEcology',
+        'Fishing': 'skillFishing',
+        'Agriculture': 'skillAgriculture',
+        'Irrigation': 'skillIrrigation',
+        'Construction': 'skillConstruction',
+        'Ritual': 'skillRitual',
+    };
+    let timelineKey = $derived(skillToKeyMap[skill.name]);
 
     let imitationTable = $derived.by(() => {
         if (!clanSkill.lastChange || skill.clanSkill) return undefined;
@@ -108,10 +121,9 @@
     <div slot="tooltip" class="ttt">
         {#if clanSkill.lastChange}
             <p>
-                <b>{pct(clanSkill.lastChange.focusFactor)}</b> learning rate
-                from
+                <b>{pct(clanSkill.lastChange.focusFactor)}</b> learning rate from <b>{pct(clanSkill.lastChange.focus)}</b> focus
                 <br />
-                <b>{pct(clanSkill.lastChange.focus)}</b> focus
+                <b>{pct(clanSkill.lastChange.intellectFactor)}</b> intellect factor ({clanSkill.lastChange.intellect})
             </p>
             <h4>Imitation Sources</h4>
             {#if imitationTable}
@@ -120,6 +132,19 @@
             <h4>Skill Changes</h4>
             {#if changeSourcesTable}
                 <DataTable2 table={changeSourcesTable} />
+            {/if}
+            {#if timelineKey}
+                <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;" />
+                <div style="width: 250px; height: 150px;">
+                    <LineGraph
+                        data={clanKeyTimelineGraphData(
+                            clan,
+                            timelineKey,
+                            skill.name,
+                            new DefaultScaler(),
+                        )}
+                    />
+                </div>
             {/if}
         {/if}
     </div>

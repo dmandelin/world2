@@ -101,6 +101,9 @@ export class ClanSkillChange {
     // Amount of learning relative to baseline due to effort.
     readonly focusFactor: number;
 
+    readonly intellect: number;
+    readonly intellectFactor: number;
+
     // Value before the change.
     readonly initialValue: number;
 
@@ -138,6 +141,10 @@ export class ClanSkillChange {
         this.focus = skillDef.getEffort(clan) / Math.max(1, clan.production.effort());
         this.focusFactor = Math.pow(this.focus, 0.25);
 
+        // Intellect factor influences learning rate.
+        this.intellect = clan.traits.intellect;
+        this.intellectFactor = Math.pow(2, (this.intellect - 50) / 15);
+
         // Learn by imitation. Imitation target might be self, meaning
         // the clan prefers its own traditions. Imitation is generally
         // faster than observation.
@@ -148,7 +155,7 @@ export class ClanSkillChange {
         // too similar in skill too fast. We need to allow some, but more
         // conditionally.
         if (false && !skillDef.clanSkill) {
-            const maxImitationDelta = 0.75 * this.elapsedYears * this.focusFactor;
+            const maxImitationDelta = 0.75 * this.elapsedYears * this.focusFactor * this.intellectFactor;
             this.imitationTargetItems = [...clan.settlement!.clans].map(
                 c => new ImitationTargetItem(
                     c.uuid,
@@ -206,7 +213,7 @@ export class ClanSkillChange {
         //        but still allow some. However, this has a big impact on
         //        tuning so must be done carefully.
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
-        const observationRate = 0.3 * this.elapsedYears * this.focusFactor * clanSkillFactor;
+        const observationRate = 0.3 * this.elapsedYears * this.focusFactor * clanSkillFactor * this.intellectFactor;
         const expectedDeltaFromObservation = observationRate;
         const deltaFromObservation = stochasticRound(expectedDeltaFromObservation);
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));

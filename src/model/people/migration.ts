@@ -1,5 +1,5 @@
 import { sumFun } from "../lib/basics";
-import { Clan, PersonalityTraits } from "./people";
+import { Clan } from "./people";
 import { randomHamletName } from "./names";
 import { eloSuccessProbability } from "../lib/modelbasics";
 import { Settlement } from "./settlement";
@@ -104,7 +104,11 @@ export class CandidateMigrationCalc {
     readonly value: number;
     selectionProbability: number = 0;
 
-    constructor(readonly clan: Clan, readonly target: MigrationTarget) {
+    constructor(
+        readonly clan: Clan,
+        readonly target: MigrationTarget,
+        readonly isPlanning: boolean = false,
+    ) {
         if (target !== clan.settlement
             && target !== NewSettlement &&
             !(target as Settlement).clans.some(c => getAlignment(c, clan) > 0.1)) {
@@ -124,47 +128,16 @@ export class CandidateMigrationCalc {
     private inertia(): CandidateMigrationCalcItem {
         const moveType = this.moveType();
         if (moveType === 'home') {
-            switch (true) {
-                case this.clan.traits.has(PersonalityTraits.MOBILE):
-                    return { name: 'Inertia', reason: 'Home (Mobile)', value: 1 };
-                case this.clan.traits.has(PersonalityTraits.SETTLED):
-                    return { name: 'Inertia', reason: 'Home (Settled)', value: 5 };
-                default:
-                    return { name: 'Inertia', reason: 'Home', value: 2 };
-            }
+            return { name: 'Inertia', reason: 'Home', value: 2 };
         }
-
         if (moveType === 'new') {
-            switch (true) {
-                case this.clan.traits.has(PersonalityTraits.MOBILE):
-                    return { name: 'Inertia', reason: 'New (Mobile)', value: -2 };
-                case this.clan.traits.has(PersonalityTraits.SETTLED):
-                    return { name: 'Inertia', reason: 'New (Settled)', value: -8 };
-                default:
-                    return { name: 'Inertia', reason: 'New', value: -5 };
-            }
+            return { name: 'Inertia', reason: 'New', value: -5 };
         }
-
         if (moveType === 'local') {
-            switch (true) {
-                case this.clan.traits.has(PersonalityTraits.MOBILE):
-                    return { name: 'Inertia', reason: 'Local (Mobile)', value: -1 };
-                case this.clan.traits.has(PersonalityTraits.SETTLED):
-                    return { name: 'Inertia', reason: 'Local (Settled)', value: -5 };
-                default:
-                    return { name: 'Inertia', reason: 'Local', value: -2 };
-            }
+            return { name: 'Inertia', reason: 'Local', value: -2 };
         }
-
         if (moveType === 'distant') {
-            switch (true) {
-                case this.clan.traits.has(PersonalityTraits.MOBILE):
-                    return { name: 'Inertia', reason: 'Distant (Mobile)', value: -3 };
-                case this.clan.traits.has(PersonalityTraits.SETTLED):
-                    return { name: 'Inertia', reason: 'Distant (Settled)', value: -10 };
-                default:
-                    return { name: 'Inertia', reason: 'Distant', value: -5 };
-            }
+            return { name: 'Inertia', reason: 'Distant', value: -5 };
         }
 
         throw new Error(`Unknown move type ${moveType}`);
@@ -363,8 +336,6 @@ export function migrate(world: World) {
                 // Individual migration to an existing settlement (fallback/just in case)
                 const actualTarget = target as Settlement;
                 clan.moveTo(actualTarget);
-                clan.traits.delete(PersonalityTraits.SETTLED);
-                clan.traits.add(PersonalityTraits.MOBILE);
                 world.addNote(
                     '↔',
                     `{0} moved from {1} to {2}`,
@@ -388,8 +359,6 @@ export function migrate(world: World) {
 
         for (const clan of planned.clans) {
             clan.moveTo(newSettlement);
-            clan.traits.delete(PersonalityTraits.SETTLED);
-            clan.traits.add(PersonalityTraits.MOBILE);
         }
 
         const clanNames = planned.clans.map(c => c.name).join(', ');

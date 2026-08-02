@@ -30,6 +30,7 @@ export class Respect {
         this.items_ = [
             RespectItem.forGenerosity(subject, object),
             RespectItem.forSkills(subject, object),
+            RespectItem.forPiety(subject, object),
             RespectItem.forStress(subject, object),
             RespectItem.forStandardOfLiving(subject, object),
             RespectItem.forRandom(subject, object),
@@ -104,6 +105,17 @@ export class RespectItem {
             foodGiven,
             2,
             `Generosity`
+        );
+    }
+
+    static forPiety(subject: Clan, object: Clan): RespectItem {
+        const objectPiety = object.traits ? object.traits.piety : 50;
+        const subjectPiety = subject.traits ? subject.traits.piety : 50;
+        return new RespectItem(
+            'Piety',
+            (objectPiety - subjectPiety) / 5,
+            1,
+            'Piety'
         );
     }
 

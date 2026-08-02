@@ -594,7 +594,7 @@ Detailed list of first parts:
 
 *   Precursors
     *   The new trust model:
-        *   Trust and target trust start at alignment
+        *   Add trust as a decision factor for sending help
         *   Each turn's events result in various pluses and minuses
             to target trust, then average to get trust
         *   Limited information => reduction in max trust for this
@@ -614,27 +614,33 @@ Detailed list of first parts:
         *   (P2) Differential ability to collect information
     *   Add any new similarity factors to alignment
 *   "Status"
-    *   Base on generosity/holiness
-    *   +Marriage appeal
+    x   Base on generosity/holiness
+    x   +Marriage appeal
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement
             *   display in UI
             *   also have mechanics for alignment/rituals
-    *   Piety trait
-    *   Option to work harder
+    x   Piety trait
+    x   Option to work harder
     *   Option to give gifts
     *   Status to help with dispute resolution
     *   Share out judgments/information
-*   Marriage appeal - mostly should be there
-    *   Verify uses the right piece from "status"
+x   Marriage appeal - mostly should be there
+    x   Verify uses the right piece from "status"
+*   Oratory skill
+*   Effect of traits on alignment (probably need affinity concept)
+*   Have some internal evolution of traits -- try to estimate
+    level of pressure from outside.
 *   Food security and help
     *   Standard food redistribution
-        *   Prevent starvation
-        *   Alter status and affiliation
+        x   Prevent starvation
+        *   Alter status and affiliation - we have some effect but
+            this seems to depend on norms
     *   Crop failure model (though we might be able to get
         by with dependency ratios as source of difference
         for now)
+    *   Labor help model
 *   Clan self rituals
 *   Clan ritual provisions
 *   Village leadership structure

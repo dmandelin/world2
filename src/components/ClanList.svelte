@@ -1,6 +1,5 @@
 <script lang="ts">
     import { pct, spct, wg } from "../model/lib/format";
-    import { PersonalityTrait } from "../model/people/people";
     import Clan from "./Clan.svelte";
 
     let { clans, updateTrigger = $bindable() } = $props();
@@ -95,8 +94,7 @@
             <th class="ra">Size</th>
             <th class="ra">+/-</th>
             <th>GS</th>
-            <th class="ra">Traits</th>
-            <th class="ra">Str</th>
+            <th class="ra">Pie</th>
             <th class="ra">Int</th>
             <th class="ra">Farm</th>
             <th class="ra">Inc</th>
@@ -117,9 +115,8 @@
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.lastSizeChange}</td>
                 <td>{clan.giftStrategy}</td>
-                <td class="ra">{[...clan.traits].map((t: PersonalityTrait) => t.name).join(' ')}</td>
-                <td class="ra">{wg(clan.strength)}</td>
-                <td class="ra">{wg(clan.intelligence)}</td>
+                <td class="ra">{wg(clan.traits.piety)}</td>
+                <td class="ra">{wg(clan.traits.intellect)}</td>
                 <td class="ra">{wg(clan.productionAbility)}</td>
                 <td class="ra">{wg(clan.income)}</td>
                 <td class="ra">{clan.interactionModifier.toFixed(1)}</td>
