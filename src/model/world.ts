@@ -311,24 +311,7 @@ export class World implements NoteTaker {
             }
         }
 
-        // Advance economy.
-        for (const cl of this.clusters) {
-            for (const settlement of cl.settlements) {
-                for (const clan of settlement.clans) {
-                    const r = economicResult(clan, clan.effortAllocation);
-                    clan.production = r.production;
-                    clan.consumption = r.consumption;
-                    clan.qol = r.qol;
-                    if (isExemplarClan(clan)) {
-                        console.log(`Production for ${clan.name}:`);
-                        console.log(clan.effortAllocation);
-                        console.log(clan.production);
-                        console.log(clan.consumption);
-                        console.log(clan.qol);
-                    }
-                }
-            }
-        }
+        this.advanceSubturns();
 
         // Advance perceptions and learnings.
         for (const cl of this.clusters) {
@@ -367,6 +350,27 @@ export class World implements NoteTaker {
         this.endOfTurnSnapshot_ = new WorldDTO(this);
 
         log('World <<< Advance');
+    }
+
+    advanceSubturns() {
+        // Advance economy.
+        for (const cl of this.clusters) {
+            for (const settlement of cl.settlements) {
+                for (const clan of settlement.clans) {
+                    const r = economicResult(clan, clan.effortAllocation);
+                    clan.production = r.production;
+                    clan.consumption = r.consumption;
+                    clan.qol = r.qol;
+                    if (isExemplarClan(clan)) {
+                        console.log(`Production for ${clan.name}:`);
+                        console.log(clan.effortAllocation);
+                        console.log(clan.production);
+                        console.log(clan.consumption);
+                        console.log(clan.qol);
+                    }
+                }
+            }
+        }
     }
 
     recordEndOfTurnState() {
