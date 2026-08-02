@@ -59,7 +59,6 @@ export class ClanTimePoint {
     readonly food: number;
     readonly targetFood: number;
     readonly foodStorage: number;
-    readonly foodSecurity: number;
     readonly averagePrestige: number;
     readonly happiness: number;
     readonly mutualAidSat: number;
@@ -155,7 +154,6 @@ export class ClanTimePoint {
         this.food = clan.consumption.perCapitaFood;
         this.targetFood = clan.targetPerCapitaFood;
         this.foodStorage = clan.consumption.perCapitaFoodStock;
-        this.foodSecurity = 1 - clan.consumption.foodInsecurity.value;
         this.averagePrestige = getLocalPrestige(clan);
         this.happiness = clan.happinessValue;
         

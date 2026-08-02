@@ -1,12 +1,11 @@
 import { Activities, type Activity, EffortAllocation } from "../decisions/effort";
-import { FoodQualityHappinessItem, FoodQuantityHappinessItem, FoodSecurityHappinessItem, LeisureHappinessItem } from "../people/happiness";
+import { FoodQualityHappinessItem, FoodQuantityHappinessItem, LeisureHappinessItem } from "../people/happiness";
 import { TradeGoods, type TradeGood } from "../trade";
 import type { ProductionReport } from "./operation";
 
 // Consumption data.
 export class Consumption {
     readonly leisureFraction;
-    readonly foodInsecurity: FoodInsecurity;
 
     // Note that we store per capita consumption in the map, as that's the
     // most relevant for welfare.
@@ -16,7 +15,6 @@ export class Consumption {
         effortAllocation: EffortAllocation,
         readonly m: ReadonlyMap<TradeGood, ConsumptionGood>) {
             this.leisureFraction = effortAllocation.get(Activities.Leisure) ?? 0;
-            this.foodInsecurity = new FoodInsecurity(this);
         }
 
     static from(
@@ -126,35 +124,6 @@ export class ConsumptionGood {
         public stock: number,
         public stockLoss: number,
     ) {}
-}
-
-export class FoodInsecurity {
-    // Base risk from production processes.
-    readonly base: number;
-
-    // Base buffering from stored food.
-    readonly baseBuffering: number;
-
-    // Even with plenty of storage, there's still some risk if the
-    // storage system fails. For now we assume simple pits and reed
-    // baskets.
-    readonly storageRisk = 0.2;
-
-    // Buffering from stored food after accounting for storage risk.
-    readonly buffering: number;
-
-    // Total food insecurity value.
-    readonly value: number;
-
-    constructor(consumption: Consumption) {
-        // Hunter-gatherers have a variety of sources, so their baseline
-        // food insecurity is lower, but enough stored food can make
-        // farmers more secure.
-        this.base = 0.1 * consumption.fishRatio + 0.2 * (1 - consumption.fishRatio);
-        this.baseBuffering = 0.5 * consumption.perCapitaFoodStock;
-        this.buffering = this.baseBuffering * (1 - this.storageRisk);
-        this.value = Math.max(0, this.base - this.buffering);
-    }
 }
 
 // Standard of living data. This is basically the subset of happiness

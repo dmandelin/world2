@@ -16,7 +16,6 @@
         { key: "brModifier", label: "Birth Rate Modifier" },
         { key: "drModifier", label: "Death Rate Modifier" },
         { key: "food", label: "Food" },
-        { key: "foodSecurity", label: "Food Security" },
         { key: "foodStorage", label: "Food Storage" },
         { key: "appeal", label: "Happiness" },
         { key: "marriageAppealStdDev", label: "Marriage Appeal SD" },

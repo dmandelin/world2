@@ -26,7 +26,6 @@ const BASE_BIRTH_RATE = 0.25;
 const BASE_DEATH_RATES = [0.0125, 0.0175, 0.025, 0.05];
 
 const FLOOD_BASE_DEATH_RATE = 0.0025;
-const FAMINE_BASE_DEATH_RATE = 0.005;
 
 export class PopulationChangeItem {
     constructor(
@@ -172,11 +171,6 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Food Quality', fishRat, safeVal(1 / foodQualityModifier, 1)));
 
-        const foodInsec = safeVal(this.clan.consumption.foodInsecurity.value, 0);
-        const foodInsecurityBrModifier = 1 + clamp(-foodInsec / 4, -0.5, 0.2);
-        this.brModifiers.push(new PopulationChangeModifier(
-            'Famine', foodInsec, foodInsecurityBrModifier));
-
         const shelterModifier = 1 + 0.01 * safeVal(this.clan.housing.shelter, 1);
         this.brModifiers.push(new PopulationChangeModifier(
             'Shelter', this.clan.housing.name, shelterModifier));
@@ -320,15 +314,6 @@ export class PopulationChangeBuilder {
             mod: drFactor,
             drFun: (i: number) => BASE_DEATH_RATES[i] * drFactor * this.yearsElapsed,
         });
-        const famineDr = FAMINE_BASE_DEATH_RATE * clamp(this.clan.consumption.foodInsecurity.value, 0, 1) ** 2 * this.yearsElapsed;
-        if (famineDr > 0) {
-            sources.push({
-                name: 'Famine',
-                deaths: 0, ed: 0, sedr: 0,
-                mod: this.clan.consumption.foodInsecurity.value,
-                drFun: () => famineDr,
-            });
-        }
 
         const newborns = [
             this.femaleBirths - this.femaleDiseaseDeaths,

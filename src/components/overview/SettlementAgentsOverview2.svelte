@@ -441,19 +441,6 @@
                 scaler: new DefaultScaler(),
                 topics: ["food"],
             },
-            {
-                label: "Food Security",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) => 1 - c.consumption.foodInsecurity.value,
-                format: pct,
-                tooltipSnippet: foodSecurityTooltip,
-                deltaValue: (c) => 1 - c.consumption.foodInsecurity.value,
-                deltaFormat: pct,
-                timelineKey: "foodSecurity",
-                scaler: new DefaultScaler(),
-                topics: ["food", "welfare"],
-            },
         ]);
 
         // Group 5: Activities & Processes (Effort Allocation)
@@ -1151,24 +1138,6 @@
 
 {#snippet foodStorageTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanFoodStockTooltipTable(cs.e)}></TableView2>
-{/snippet}
-
-{#snippet foodSecurityTooltip(cs: ClanLastTurnSnapshots)}
-    <h3>Production Risks</h3>
-    <p>Base from production: {pct(cs.e.consumption.foodInsecurity.base)}</p>
-    <p>
-        Base buffering: {pct(cs.e.consumption.foodInsecurity.baseBuffering)}
-        from {(cs.e.consumption.perCapitaFoodStock * 365).toFixed()} days stored
-    </p>
-    <p>
-        Storage failure risk: {pct(cs.e.consumption.foodInsecurity.storageRisk)}
-    </p>
-    <p>
-        Risk-adjusted buffering: {pct(
-            cs.e.consumption.foodInsecurity.buffering,
-        )}
-    </p>
-    <p>Total risk: {pct(cs.e.consumption.foodInsecurity.value)}</p>
 {/snippet}
 
 {#snippet materialWelfareTooltip(cs: ClanLastTurnSnapshots)}

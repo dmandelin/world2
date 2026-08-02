@@ -93,7 +93,6 @@
             { label: "Food", value: (c) => c.consumption.perCapitaFood, format: pct },
             { label: "Food Target", value: (c) => c.targetPerCapitaFood, format: pct },
             { label: "Food Storage", value: (c) => c.consumption.perCapitaFoodStock, format: pct },
-            { label: "Food Security", value: (c) => 1 - c.consumption.foodInsecurity.value, format: pct },
         ]);
 
         // Group 5: Processes (dynamic)

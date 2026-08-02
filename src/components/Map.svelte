@@ -404,14 +404,6 @@ ${settlement.cluster.population} \
                       (c: any) => c.population,
                   )
                 : 0}
-        {@const foodSecurity =
-            pop > 0
-                ? weightedAverage(
-                      hoveredSettlement.clans,
-                      (c: any) => 1 - c.consumption.foodInsecurity.value,
-                      (c: any) => c.population,
-                  )
-                : 0}
         {@const stress =
             pop > 0
                 ? weightedAverage(
@@ -439,10 +431,6 @@ ${settlement.cluster.population} \
             <div class="tooltip-row">
                 <span class="label">Food/Capita:</span>
                 <span class="value">{perCapitaFood.toFixed(2)}</span>
-            </div>
-            <div class="tooltip-row">
-                <span class="label">Food Security:</span>
-                <span class="value">{(foodSecurity * 100).toFixed(0)}%</span>
             </div>
             <div class="tooltip-row">
                 <span class="label">Avg Stress:</span>

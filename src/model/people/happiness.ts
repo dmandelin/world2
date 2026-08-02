@@ -198,30 +198,7 @@ export function foodVarietyHealthFactor(fishRatio: number): number {
     return 1 - 0.125 * p * p;
 }
 
-export class FoodSecurityHappinessItem extends NumericHappinessItem {
-    label = 'Food Security';
-    stateLabel = 'Value';
 
-    get isSubsistence(): boolean {
-        return true;
-    }
-
-    get stateDisplay(): string {
-        return pct(1 - this.state_);
-    }
-
-    appealOf(foodSecurityRisk: number): number {
-        return clamp(-50 * foodSecurityRisk, -50, +20);
-    }
-
-    updateState(clan: Clan): void {
-        this.state_ = clan.consumption.foodInsecurity.value;
-    }
-
-    clone(): FoodSecurityHappinessItem {
-        return new FoodSecurityHappinessItem(this.expectedAppeal, this.state_);
-    }
-}
 
 class ShelterHappinessItem extends NumericHappinessItem {
     get label(): string {
@@ -442,7 +419,6 @@ export class HappinessCalc {
         this.add(
             new FoodQuantityHappinessItem(), 
             new FoodQualityHappinessItem(),
-            new FoodSecurityHappinessItem(),
             new ShelterHappinessItem(),
             new FloodHappinessItem(),
             new RitualHappinessItem(),

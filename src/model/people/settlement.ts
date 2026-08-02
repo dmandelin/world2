@@ -105,50 +105,6 @@ export class Settlement {
         this.ditchQuality = this.maintenanceCalc.quality;
     }
 
-    // Redistribute food to try to reduce food insecurity. Currently
-    // the model assumes everyone uses a Communal Sharing model for
-    // this: not sharing all resources equally, but taking care of
-    // everyone when in need in the same way.
-    redistribute() {
-        if (this.clans.length <= 1) {
-            return;
-        }
-
-        for (const recipientClan of this.clans) {
-            if (recipientClan.consumption.foodInsecurity.value <= 0) {
-                continue;
-            }
-
-            // Let's make a simple assumption that one clan can reduce 
-            // the food insecurity of another by up to 20% of its current
-            // value by paying 1/2 that amount in increased food insecurity
-            // for itself.
-            // - With multiple helpers, we compute the reduction limit for
-            //   the gxre that out among helpers.
-            // - When clans are different in size, the effects are changed
-            //   proportionally around the mean.
-            const costFactor = 0.5; // Cost to decrease food security by 1
-
-            const helperClans = this.clans.filter(c =>
-                c !== recipientClan && getAlignment(c, recipientClan) > 0.05);
-            const reductionFactor = 0.8 ** helperClans.length;
-            const amountToReduceTotal = recipientClan.consumption.foodInsecurity.value * (1 - reductionFactor);
-            const amountToReducePerHelper = amountToReduceTotal / helperClans.length;
-
-            for (const helperClan of helperClans) {
-                const populationFactor = recipientClan.population / helperClan.population;
-                const amountToReduce = amountToReducePerHelper * Math.sqrt(populationFactor);
-                const costToHelper = amountToReduce * costFactor / Math.sqrt(populationFactor);
-                // TODO - rework in functional way when ready
-                //recipientClan.consumption.foodInsecurity.addProductionInsecurity(
-                //    `Help from ${helperClan.name}`, -amountToReduce);
-                //helperClan.consumption.foodInsecurity.addProductionInsecurity(
-                //    `Helping ${recipientClan.name}`, costToHelper);
-            }
-
-        }
-    }
-
     growTell(previousEffectiveResidentPopulation: number) {
         // If population grew, scale down.
         if (this.effectiveResidentPopulation > previousEffectiveResidentPopulation) {
