@@ -174,13 +174,11 @@ export class EffortAllocation {
                 this.shifted(Processes.Agriculture, Processes.Fishing, 0.05),
                 this.shiftedActivity(Activities.Leisure, Activities.Production, 0.05),
             ];
-        } else if (er.qol.valueFrom("leisure") < 0) {
+        } else {
             // TODO - Consider some option for reallocating for efficiency.
             options = [
                 this.shiftedActivity(Activities.Production, Activities.Leisure, 0.05),
             ];
-        } else {
-            return false;
         }
 
         let bestOption: EffortAllocation = this;
