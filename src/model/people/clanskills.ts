@@ -59,9 +59,9 @@ export class ClanSkills {
 
     // We have to split skill updates into prepare/commit phases because
     // the skill change depends on the skill value of other clans.
-    prepareAdvance() {
+    prepareAdvance(elapsedYears: number = this.clan.world?.yearsPerTick ?? 1) {
         for (const [skillDef, clanSkill] of this.m_.entries()) {
-            clanSkill.prepareAdvance(this.clan, skillDef);
+            clanSkill.prepareAdvance(this.clan, skillDef, elapsedYears);
         }
     }
 

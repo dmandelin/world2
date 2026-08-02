@@ -421,8 +421,8 @@ export class Clan implements TradePartner {
         return 0;
     }
 
-    prepareTraitChanges() {
-        this.skills.prepareAdvance();
+    prepareTraitChanges(elapsedYears: number = this.world?.yearsPerTick ?? 1) {
+        this.skills.prepareAdvance(elapsedYears);
     }
 
     commitTraitChanges() {

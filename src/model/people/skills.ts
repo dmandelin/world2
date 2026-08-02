@@ -47,8 +47,8 @@ export class ClanSkill {
         return this.lastChange_;
     }
 
-    prepareAdvance(clan: Clan, skillDef: SkillDef): void {
-        this.lastChange_ = new ClanSkillChange(clan, skillDef, this);
+    prepareAdvance(clan: Clan, skillDef: SkillDef, elapsedYears: number = clan.world?.yearsPerTick ?? 1): void {
+        this.lastChange_ = new ClanSkillChange(elapsedYears, clan, skillDef, this);
     }
 
     commitAdvance(): void {

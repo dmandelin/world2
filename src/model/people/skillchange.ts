@@ -108,12 +108,14 @@ export class ClanSkillChange {
     readonly imitationTargetItems: readonly ImitationTargetItem[] = [];
 
     constructor(
+        readonly elapsedYears: number,
         readonly clan: Clan,
         readonly skillDef: SkillDef,
         readonly skill: ClanSkill,
     ) {
-        const lossFactor = 0.1;
-        const lossSwing = 0.05;
+        // Base per-year rates
+        const lossFactor = 0.005 * this.elapsedYears;
+        const lossSwing = 0.0025 * this.elapsedYears;
 
         // Maintaining traditions
         this.initialValue = skill.value;
@@ -144,7 +146,7 @@ export class ClanSkillChange {
         //
         // "Clan skills" are developed internally and not via imitation.
         if (!skillDef.clanSkill) {
-            const maxImitationDelta = 15 * this.focusFactor;
+            const maxImitationDelta = 0.75 * this.elapsedYears * this.focusFactor;
             this.imitationTargetItems = [...clan.settlement!.clans].map(
                 c => new ImitationTargetItem(
                     c.uuid,
@@ -201,10 +203,11 @@ export class ClanSkillChange {
         //        but still allow some. However, this has a big impact on
         //        tuning so must be done carefully.
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
-        const observationLearningFactor = this.focusFactor * clanSkillFactor;
-        const expectedDeltaFromObservation = 6 * observationLearningFactor;
+        const observationRate = 0.3 * this.elapsedYears * this.focusFactor * clanSkillFactor;
+        const observationSwingRate = 0.2 * this.elapsedYears * this.focusFactor * clanSkillFactor;
+        const expectedDeltaFromObservation = observationRate;
         const deltaFromObservation = expectedDeltaFromObservation +
-            observationLearningFactor * (4 * (Math.random() - Math.random()));
+            observationSwingRate * (Math.random() - Math.random());
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));
     }
 
