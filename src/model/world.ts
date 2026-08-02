@@ -1,12 +1,13 @@
 import { Annals } from "./annals";
-import { chooseFrom, sumFun, dice } from "./lib/basics";
+import { chooseFrom, removeAll, sumFun, dice } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { connectedClans, ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { createTrends } from "./records/trends";
 import { InteractionGraph } from "./relations/interaction";
 import { updateBasicInteractions } from "./relations/basicinteraction";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
-import { log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
+import { isExemplarClan, log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
+import { economicResult } from "./econ/economy";
 import { marry, MarriageDecisions } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
@@ -283,156 +284,225 @@ export class World implements NoteTaker {
 
         // Advance within clusters.
         for (const cl of this.clusters) {
-            cl.advance();
+            for (const settlement of cl.settlements) {
+                // Refound settlement if it has to move.
+                settlement.refoundedAfterRiverShift = false;
+                if (Math.random() <= settlement.floodLevel.riverShiftProbability()) {
+                    settlement.refoundedAfterRiverShift = true;
+                    settlement.foundationYear = settlement.world.year.clone();
+                }
+
+                for (const clan of settlement.clans) clan.residenceLevel.update();
+            }
+
+            // This has to happen before actual economic production
+            // and distribution.
+            cl.applyEffortAllocations();
+
+            // Update disease load:
+            // - After labor allocations, since those influence disease load, and we
+            //   want current-turn load to reflect current-turn activity.
+            // - Before production, because at some point disease will probably
+            //   influence productivity.
+            cl.updateDisease();
+
+            for (const settlement of cl.settlements) {
+                settlement.maintain();
+            }
         }
-        // Advance the year.
-        this.year.advance(this.yearsPerTurn);
 
-        // Update perceptions based on the end-of-turn state.
-        updatePerceptions(this);
+        // Advance economy.
+        for (const cl of this.clusters) {
+            for (const settlement of cl.settlements) {
+                for (const clan of settlement.clans) {
+                    const r = economicResult(clan, clan.effortAllocation);
+                    clan.production = r.production;
+                    clan.consumption = r.consumption;
+                    clan.qol = r.qol;
+                    if (isExemplarClan(clan)) {
+                        console.log(`Production for ${clan.name}:`);
+                        console.log(clan.effortAllocation);
+                        console.log(clan.production);
+                        console.log(clan.consumption);
+                        console.log(clan.qol);
+                    }
+                }
 
-        this.previousEndOfTurnSnapshot_ = this.endOfTurnSnapshot_;
-        this.endOfTurnSnapshot_ = new WorldDTO(this);
+                // Advance perceptions and learnings.
+                for (const cl of this.clusters) {
+                    for (const settlement of cl.settlements) {
+                        // Update stress based on conflict.
+                        for (const clan of settlement.clans) clan.updateStress();
 
-        log('World <<< Advance');
-    }
+                        // Update happiness based on consumption and leisure.
+                        for (const clan of settlement.clans) clan.updateHappiness();
 
-    recordEndOfTurnState() {
-        // Update timeline.
-        // TODO - Combine this with newer logging.
-        this.timeline.add(this.year, new TimePoint(this));
-        for (const settlement of this.allSettlements) {
-            settlement.addTimePoint();
-        }
+                        // Advance traits and seniority.
+                        for (const clan of settlement.clans) clan.prepareTraitChanges();
+                        for (const clan of settlement.clans) clan.commitTraitChanges();
+                        // Skill changes depend on knowing if we just moved, so seniority
+                        // is updated after that.
+                        for (const clan of settlement.clans) clan.advanceSeniority();
 
-        for (const trend of this.trends) trend.update(this.year);
-        this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
-    }
+                        const sizeBefore = settlement.effectiveResidentPopulation;
+                        for (const clan of settlement.clans) clan.advancePopulation();
+
+                        // Tell height.
+                        settlement.growTell(sizeBefore);
+                    }
+
+                    // Prune empty settlements.
+                    removeAll(cl.settlements, s => s.population === 0);
+                }
+
+                // Advance the year.
+                this.year.advance(this.yearsPerTurn);
+
+                // Update perceptions based on the end-of-turn state.
+                updatePerceptions(this);
+
+                this.previousEndOfTurnSnapshot_ = this.endOfTurnSnapshot_;
+                this.endOfTurnSnapshot_ = new WorldDTO(this);
+
+                log('World <<< Advance');
+            }
+
+            recordEndOfTurnState() {
+                // Update timeline.
+                // TODO - Combine this with newer logging.
+                this.timeline.add(this.year, new TimePoint(this));
+                for (const settlement of this.allSettlements) {
+                    settlement.addTimePoint();
+                }
+
+                for (const trend of this.trends) trend.update(this.year);
+                this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
+            }
 
 
-    planConnections() {
-        // Make everyone a neighbor of everyone else in the same settlement.
-        this.connections.keepOnlyForType(
-            (c1, c2, connection) => c1.settlement === c2.settlement,
-            NeighborConnection,
-            this,
-        );
-        for (const settlement of this.allSettlements) {
-            for (const c1 of settlement.clans) {
-                for (const c2 of settlement.clans) {
-                    if (c1.uuid >= c2.uuid) continue;
-                    this.connections.getOrCreate(c1, c2, NeighborConnection);
+            planConnections() {
+                // Make everyone a neighbor of everyone else in the same settlement.
+                this.connections.keepOnlyForType(
+                    (c1, c2, connection) => c1.settlement === c2.settlement,
+                    NeighborConnection,
+                    this,
+                );
+                for (const settlement of this.allSettlements) {
+                    for (const c1 of settlement.clans) {
+                        for (const c2 of settlement.clans) {
+                            if (c1.uuid >= c2.uuid) continue;
+                            this.connections.getOrCreate(c1, c2, NeighborConnection);
+                        }
+                    }
                 }
             }
-        }
-    }
 
-    planMutualHelp() {
-        // For now, it's all within-settlement, but this may change, so the
-        // code will leave here for now.
+            planMutualHelp() {
+                // For now, it's all within-settlement, but this may change, so the
+                // code will leave here for now.
 
-        const helpLimit = 0.1;
-        for (const settlement of this.allSettlements) {
-            this.planMutualHelpForSettlement(settlement, helpLimit);
-        }
-    }
-
-    planMutualHelpForSettlement(settlement: Settlement, helpLimit: number) {
-        // Simplest algorithm: everyone offers equal amounts of help up to the
-        // limit to everyone have a relationship with in the same settlement.
-        // Each pair then sends each other the min of their offers.
-        for (const c1 of settlement.clans) {
-            c1.helpAllocation.clear();
-            const recipients = [...connectedClans(c1)]
-                .filter(c2 => c1.settlement === c2.settlement);
-            if (recipients.length === 0) continue;
-            const offer = helpLimit / recipients.length;
-            for (const c2 of recipients) {
-                c1.helpAllocation.set(c2, offer);
+                const helpLimit = 0.1;
+                for (const settlement of this.allSettlements) {
+                    this.planMutualHelpForSettlement(settlement, helpLimit);
+                }
             }
-        }
 
-        for (const c1 of settlement.clans) {
-            for (const [c2, c1OfferToC2] of c1.helpAllocation) {
-                if (c1.uuid >= c2.uuid) continue; // Process each pair only once.
-                const c2OfferToC1 = c2.helpAllocation.get(c1) ?? 0;
-                const matchedAmount = Math.min(c1.population * c1OfferToC2, c2.population * c2OfferToC1);
-                c1.helpAllocation.set(c2, c1.population > 0 ? matchedAmount / c1.population : 0);
-                c2.helpAllocation.set(c1, c2.population > 0 ? matchedAmount / c2.population : 0);
+            planMutualHelpForSettlement(settlement: Settlement, helpLimit: number) {
+                // Simplest algorithm: everyone offers equal amounts of help up to the
+                // limit to everyone have a relationship with in the same settlement.
+                // Each pair then sends each other the min of their offers.
+                for (const c1 of settlement.clans) {
+                    c1.helpAllocation.clear();
+                    const recipients = [...connectedClans(c1)]
+                        .filter(c2 => c1.settlement === c2.settlement);
+                    if (recipients.length === 0) continue;
+                    const offer = helpLimit / recipients.length;
+                    for (const c2 of recipients) {
+                        c1.helpAllocation.set(c2, offer);
+                    }
+                }
+
+                for (const c1 of settlement.clans) {
+                    for (const [c2, c1OfferToC2] of c1.helpAllocation) {
+                        if (c1.uuid >= c2.uuid) continue; // Process each pair only once.
+                        const c2OfferToC1 = c2.helpAllocation.get(c1) ?? 0;
+                        const matchedAmount = Math.min(c1.population * c1OfferToC2, c2.population * c2OfferToC1);
+                        c1.helpAllocation.set(c2, c1.population > 0 ? matchedAmount / c1.population : 0);
+                        c2.helpAllocation.set(c1, c2.population > 0 ? matchedAmount / c2.population : 0);
+                    }
+                }
             }
-        }
-    }
 
     get totalPopulation() {
-        return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);
-    }
+                return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);
+            }
 
     get allSettlements() {
-        return this.clusters.flatMap(c => c.settlements);
-    }
+                return this.clusters.flatMap(c => c.settlements);
+            }
 
     get allClans() {
-        return this.clusters.flatMap(s => s.clans);
-    }
+                return this.clusters.flatMap(s => s.clans);
+            }
 
     get beginningOfTurnSnapshot() {
-        return this.beginningOfTurnSnapshot_;
-    }
+                return this.beginningOfTurnSnapshot_;
+            }
 
     get endOfTurnSnapshot() {
-        return this.endOfTurnSnapshot_;
-    }
+                return this.endOfTurnSnapshot_;
+            }
 
     get previousEndOfTurnSnapshot() {
-        return this.previousEndOfTurnSnapshot_;
-    }
+                return this.previousEndOfTurnSnapshot_;
+            }
 
-    watch(watcher: (world: World) => void) {
-        this.watchers.add(watcher);
-    }
+            watch(watcher: (world: World) => void) {
+                this.watchers.add(watcher);
+            }
 
-    unwatch(watcher: (world: World) => void) {
-        this.watchers.delete(watcher);
-    }
+            unwatch(watcher: (world: World) => void) {
+                this.watchers.delete(watcher);
+            }
 
-    notify() {
-        this.dto = new WorldDTO(this);
+            notify() {
+                this.dto = new WorldDTO(this);
 
-        for (const watcher of this.watchers)
-            watcher(this);
-    }
-}
-
-class SettlementsBuilder {
-    private clanNames: Set<string> = new Set();
-    private clanColors: Set<string> = new Set();
-
-    constructor(readonly world: World) { }
-
-    createCluster(name: string, x: number, y: number, clanCount: number) {
-        const cluster = new SettlementCluster(name, x, y);
-        const settlement = new Settlement(this.world, name, x, y, cluster);
-
-        for (let i = 0; i < clanCount; i++) {
-            const clan = new Clan(
-                this.world,
-                settlement,
-                this.world.annals,
-                randomClanName(this.clanNames),
-                randomClanColor(this.clanColors),
-                dice(3, 6, 15));
-            this.clanNames.add(clan.name);
-            this.clanColors.add(clan.color);
+                for (const watcher of this.watchers)
+                    watcher(this);
+            }
         }
 
-        return cluster;
-    }
+        class SettlementsBuilder {
+            private clanNames: Set<string> = new Set();
+            private clanColors: Set<string> = new Set();
 
-    createClusters(params: readonly [string, number, number, number][]) {
-        return params.map(([name, x, y, clanCount]) =>
-            this.createCluster(name, x, y, clanCount));
-    }
-}
+            constructor(readonly world: World) { }
 
-export const world = new World();
-world.initialize();
+            createCluster(name: string, x: number, y: number, clanCount: number) {
+                const cluster = new SettlementCluster(name, x, y);
+                const settlement = new Settlement(this.world, name, x, y, cluster);
+
+                for (let i = 0; i < clanCount; i++) {
+                    const clan = new Clan(
+                        this.world,
+                        settlement,
+                        this.world.annals,
+                        randomClanName(this.clanNames),
+                        randomClanColor(this.clanColors),
+                        dice(3, 6, 15));
+                    this.clanNames.add(clan.name);
+                    this.clanColors.add(clan.color);
+                }
+
+                return cluster;
+            }
+
+            createClusters(params: readonly [string, number, number, number][]) {
+                return params.map(([name, x, y, clanCount]) =>
+                    this.createCluster(name, x, y, clanCount));
+            }
+        }
+
+        export const world = new World();
+        world.initialize();

@@ -58,30 +58,6 @@ export class SettlementCluster {
         this.diseaseLoad = new DiseaseLoadCalc(this, this.buildLaborMaps());
     }
 
-    advance(): void {
-        for (const settlement of this.settlements) {
-            settlement.advancePrePhase();
-        }
-
-        // This has to happen before actual economic production
-        // and distribution.
-        this.applyEffortAllocations();
-
-        // Update disease load:
-        // - After labor allocations, since those influence disease load, and we
-        //   want current-turn load to reflect current-turn activity.
-        // - Before production, because at some point disease will probably
-        //   influence productivity.
-        this.updateDisease();
-
-        for (const settlement of this.settlements) {
-            settlement.advancePostPhase();
-        }
-
-        // Prune empty settlements.
-        removeAll(this.settlements, s => s.population === 0);
-    }
-
     private buildLaborMaps(): Map<Process, Map<Clan, number>> {
         const labor = new Map<Process, Map<Clan, number>>();
         for (const settlement of this.settlements) {
@@ -109,7 +85,7 @@ export class SettlementCluster {
     }
 
     // Compute actual effort allocations based on choices.
-    private applyEffortAllocations(): void {
+    applyEffortAllocations(): void {
         // Each clan should get a chance to use commons, so we change
         // incrementally, but there is also a tendency for persistence,
         // so we can start from the status quo.

@@ -18,9 +18,9 @@ export class Settlement {
     readonly clans: Clan[] = [];
     readonly daughters: Settlement[] = [];
 
-    private foundationYear_: Year;
+    foundationYear: Year;
     private tellHeightInMeters_: number = 0;
-    private refoundedAfterRiverShift_ = false;
+    refoundedAfterRiverShift = false;
 
     readonly localTradeGoods = new Set<TradeGood>();
     newSettlementDecisionReport: NewSettlementDecisionReport | undefined = undefined;
@@ -40,7 +40,7 @@ export class Settlement {
         readonly cluster: SettlementCluster,
         readonly parent?: Settlement) {
 
-        this.foundationYear_ = world.year.clone();
+        this.foundationYear = world.year.clone();
 
         cluster.settlements.push(this);
         if (this.parent) {
@@ -58,7 +58,7 @@ export class Settlement {
     }
 
     get yearsInPlace(): number {
-        return this.world.year.sub(this.foundationYear_);
+        return this.world.year.sub(this.foundationYear);
     }
 
     get tellHeightInMeters() {
@@ -97,64 +97,6 @@ export class Settlement {
 
     get floodLevel() {
         return this.cluster.floodLevel;
-    }
-
-    get refoundedAfterRiverShift() {
-        return this.refoundedAfterRiverShift_;
-    }
-
-    advancePrePhase() {
-        // Refound settlement if it has to move.
-        this.refoundedAfterRiverShift_ = false;
-        if (Math.random() <= this.floodLevel.riverShiftProbability()) {
-            this.refoundedAfterRiverShift_ = true;
-            this.foundationYear_ = this.world.year.clone();
-        }
-
-
-        for (const clan of this.clans) clan.residenceLevel.update();
-    }
-
-    advancePostPhase() {
-        this.maintain();
-        // TODO - Bring back some aspect of these
-        // this.distribute();
-        // this.exchange();
-        // this.redistribute();
-
-        // Advance economy.
-        for (const clan of this.clans) {
-            const r = economicResult(clan, clan.effortAllocation);
-            clan.production = r.production;
-            clan.consumption = r.consumption;
-            clan.qol = r.qol;
-            if (isExemplarClan(clan)) {
-                console.log(`Production for ${clan.name}:`);
-                console.log(clan.effortAllocation);
-                console.log(clan.production);
-                console.log(clan.consumption);
-                console.log(clan.qol);
-            }
-        }
-
-        // Update stress based on conflict.
-        for (const clan of this.clans) clan.updateStress();
-
-        // Update happiness based on consumption and leisure.
-        for (const clan of this.clans) clan.updateHappiness();
-
-        // Advance traits and seniority.
-        for (const clan of this.clans) clan.prepareTraitChanges();
-        for (const clan of this.clans) clan.commitTraitChanges();
-        // Skill changes depend on knowing if we just moved, so seniority
-        // is updated after that.
-        for (const clan of this.clans) clan.advanceSeniority();
-
-        const sizeBefore = this.effectiveResidentPopulation;
-        for (const clan of this.clans) clan.advancePopulation();
-
-        // Tell height.
-        this.growTell(sizeBefore);
     }
 
     maintain() {
