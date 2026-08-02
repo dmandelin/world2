@@ -21,11 +21,11 @@ import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { Conflicts } from "./relations/conflict";
-
 export class World implements NoteTaker {
     lastMarriageDecisions?: MarriageDecisions;
     readonly year = new Year();
-    readonly yearsPerTurn = 20;
+    readonly yearsPerTurn = 1;
+    readonly yearsPerTick = 1;
     plannedSettlements: PlannedSettlement[] = [];
 
     readonly timeline = new Timeline<TimePoint>();
@@ -79,10 +79,8 @@ export class World implements NoteTaker {
         // two turns. We can put some restrictions on what happens,
         // such as not having clans migrate.
 
-        this.behave(true);
-        this.advance();
-        this.behave(true);
-        this.advance();
+        this.runTurn(true);
+        this.runTurn(true);
 
         // Run planning because we're about to activate planning view.
         this.behave(true);
@@ -212,12 +210,19 @@ export class World implements NoteTaker {
     // ----------------------------------------------------------------
     // Action handlers to trigger turn substeps
 
+    runTurn(priming: boolean = false) {
+        const ticksPerTurn = Math.round(this.yearsPerTurn / this.yearsPerTick);
+        for (let t = 0; t < ticksPerTurn; t++) {
+            this.behave(priming);
+            this.advanceTick();
+        }
+    }
+
     advanceFromUserPlanningView() {
         log('World >>> Advance from user planning view');
         for (const clan of this.allClans) clan.clearNotifications();
         console.log('Cleared notifications for all clans');
-        this.advance();
-        this.behave();
+        this.runTurn(false);
         log('World <<< Advance from user planning view');
         this.notify();
     }
@@ -258,8 +263,8 @@ export class World implements NoteTaker {
         log('World <<< Behave');
     }
 
-    // Advance phase.
-    private advance() {
+    // Advance phase (1 tick).
+    private advanceTick() {
         this.advanceState();
         // TODO - Try to remove
         this.recordEndOfTurnState();
@@ -341,7 +346,7 @@ export class World implements NoteTaker {
         }
 
         // Advance the year.
-        this.year.advance(this.yearsPerTurn);
+        this.year.advance(this.yearsPerTick);
 
         // Update perceptions based on the end-of-turn state.
         updatePerceptions(this);

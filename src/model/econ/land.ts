@@ -14,7 +14,7 @@ export class LandAllocation {
                 operation.process === Processes.Agriculture
               ? clan.settlement.population
               : clan.cluster.population;
-            m.set(operation, totalLand * clan.population / totalPopulation);
+            m.set(operation, totalPopulation > 0 ? totalLand * clan.population / totalPopulation : 0);
         }
         return new LandAllocation(m);
     }

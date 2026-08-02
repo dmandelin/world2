@@ -401,8 +401,8 @@ export class Clan implements TradePartner {
         return this.slices.reduce((acc, slice) => acc + slice[0] + slice[1], 0);
     }
 
-    advancePopulation(noEffect: boolean = false) {
-        this.lastPopulationChange = new PopulationChangeBuilder(this).build();
+    advancePopulation(noEffect: boolean = false, yearsElapsed: number = this.world.yearsPerTick) {
+        this.lastPopulationChange = new PopulationChangeBuilder(this, yearsElapsed).build();
         if (!noEffect) {
             for (let i = 0; i < this.slices.length; ++i) {
                 this.slices[i][0] = this.lastPopulationChange.newSlices[i][0];

@@ -88,7 +88,7 @@ export class Rites {
 
     private numbers(participantCount: number): number {
         const n = participantCount ? participantCount : 1;
-        const r = n / this.expectedParticipantCount;
+        const r = Math.max(0.001, n / (this.expectedParticipantCount || 1));
         return Math.log2(r) * 5;
     }
 

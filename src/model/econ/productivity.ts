@@ -85,7 +85,7 @@ export class ProductivityItem {
         const baseProductivity = floodLevel.baseAgriculturalProductivity;
         const maxProductivity = floodLevel.maxAgriculturalProductivity;
         const productivity = (1 - ditchQuality) * baseProductivity + ditchQuality * maxProductivity;
-        const differentialProductivity = productivity / baseProductivity;
+        const differentialProductivity = baseProductivity > 0 ? productivity / baseProductivity : 1;
 
         // For now we'll assume migrations are neutral, because although they
         // take work, in the early days people might have been migrating to

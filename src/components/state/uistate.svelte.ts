@@ -15,16 +15,16 @@ export function worldState() {
 
 // Primary settable UI state values.
 export const uiPrimaryState = $state({
-    selectedSettlementUUID: (_world.allSettlements[0]!.uuid) as string|undefined,
+    selectedSettlementUUID: (_world.allSettlements[0]?.uuid) as string|undefined,
     selectedClanUUID: undefined as string|undefined,
     selectedClusterUUID: undefined as string|undefined,
 });
 
 // Exported readonly UI state.
 const _uiState = $derived(({
-    selectedSettlement: _worldState.settlements.find(s => s.uuid === uiPrimaryState.selectedSettlementUUID),
-    selectedClan: [..._worldState.clanMap.values()].find(c => c.uuid === uiPrimaryState.selectedClanUUID),
-    selectedCluster: _worldState.clusters.find(cl => cl.uuid === uiPrimaryState.selectedClusterUUID),
+    selectedSettlement: _worldState?.settlements?.find(s => s.uuid === uiPrimaryState.selectedSettlementUUID),
+    selectedClan: _worldState?.clanMap ? [..._worldState.clanMap.values()].find(c => c.uuid === uiPrimaryState.selectedClanUUID) : undefined,
+    selectedCluster: _worldState?.clusters?.find(cl => cl.uuid === uiPrimaryState.selectedClusterUUID),
 }));
 export function uiState() {
     return _uiState;

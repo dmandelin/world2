@@ -78,7 +78,7 @@ export class Settlement {
     }
 
     get residenceFraction() {
-        return this.effectiveResidentPopulation / this.population;
+        return this.population > 0 ? this.effectiveResidentPopulation / this.population : 1;
     }
 
     get averageAppeal() {
@@ -124,7 +124,7 @@ export class Settlement {
             // value by paying 1/2 that amount in increased food insecurity
             // for itself.
             // - With multiple helpers, we compute the reduction limit for
-            //   the group, then share that out among helpers.
+            //   the gxre that out among helpers.
             // - When clans are different in size, the effects are changed
             //   proportionally around the mean.
             const costFactor = 0.5; // Cost to decrease food security by 1
@@ -157,8 +157,8 @@ export class Settlement {
                 / this.effectiveResidentPopulation;
         }
 
-        // 2cm per turn (1m/millennium) if full-time resident.
-        this.tellHeightInMeters_ += 0.001 * this.world.yearsPerTurn * this.residenceFraction;
+        // 1mm per year (1m/millennium) if full-time resident.
+        this.tellHeightInMeters_ += 0.001 * this.world.yearsPerTick * this.residenceFraction;
     }
 
     updateSeniority() {

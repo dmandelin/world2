@@ -30,7 +30,7 @@ export class Consumption {
         let unmetFoodDesire = 1;
 
         // Consume fish immediately, with any excess wasted.
-        const fishCg = (p.get(TradeGoods.Fish) ?? 0) / population;
+        const fishCg = population > 0 ? (p.get(TradeGoods.Fish) ?? 0) / population : 0;
         if (fishCg) {
             const fishConsumed = Math.min(fishCg, unmetFoodDesire);
             unmetFoodDesire -= fishConsumed;
@@ -45,7 +45,7 @@ export class Consumption {
         }
 
         // Consume cereals, putting any excess into storage.
-        const cerealsCg = (p.get(TradeGoods.Cereals) ?? 0) / population;
+        const cerealsCg = population > 0 ? (p.get(TradeGoods.Cereals) ?? 0) / population : 0;
         if (cerealsCg) {
             const cerealsConsumed = Math.min(cerealsCg, unmetFoodDesire);
             const excessCereals = cerealsCg - cerealsConsumed;
@@ -84,7 +84,7 @@ export class Consumption {
             if (good === TradeGoods.Fish || good === TradeGoods.Cereals) continue;
             m.set(good, {
                 good,
-                consumed: amount / population,
+                consumed: population > 0 ? amount / population : 0,
                 wasted: 0,
                 stored: 0,
                 stock: 0,

@@ -71,6 +71,7 @@ export function removeAll<T>(aa: T[], predicate: (t: T) => boolean): void {
 }
 
 export function clamp(value: number, min: number = 0.0, max: number = 1.0) {
+    if (isNaN(value)) return min;
     return Math.min(Math.max(value, min), max);
 }
 

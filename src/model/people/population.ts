@@ -14,14 +14,19 @@ export const INITIAL_POPULATION_RATIOS = [
     [0.0324, 0.0256],
 ];
 
-// Per 20-year turn, for childbearing-age women with:
+export const SLICE_WIDTH = 20;
+
+// Per year, for childbearing-age women with:
 // - standard nutrition
 // - minimal shelter
 // - no migration
-const BASE_BIRTH_RATE = 5;
+const BASE_BIRTH_RATE = 0.25;
 
-// Per 20-year turn by age tier.
-const BASE_DEATH_RATES = [0.25, 0.35, 0.5, 1.0];
+// Per year by age tier.
+const BASE_DEATH_RATES = [0.0125, 0.0175, 0.025, 0.05];
+
+const FLOOD_BASE_DEATH_RATE = 0.0025;
+const FAMINE_BASE_DEATH_RATE = 0.005;
 
 export class PopulationChangeItem {
     constructor(
@@ -77,6 +82,7 @@ export class PopulationChange {
     readonly deaths: number;
 
     constructor(
+        readonly yearsElapsed: number,
         readonly clan: Clan,
         readonly diseaseLoad: DiseaseLoadCalc | undefined,
         readonly items: PopulationChangeItem[],
@@ -119,8 +125,8 @@ export class PopulationChange {
             'Total',
             1,
             sedr,
-            ed / this.previousSize,
-            actual / this.previousSize,
+            this.previousSize > 0 ? ed / this.previousSize : 0,
+            this.previousSize > 0 ? actual / this.previousSize : 0,
             actual
         );
     }
@@ -143,101 +149,74 @@ export class PopulationChangeBuilder {
     femaleDiseaseDeaths = 0;
     maleDiseaseDeaths = 0;
 
-    constructor(readonly clan: Clan) {
-        const subsistence = this.clan.consumption.perCapitaFood;
+    constructor(
+        readonly clan: Clan,
+        readonly yearsElapsed: number = clan.world?.yearsPerTick ?? 1,
+    ) {
+        const safeVal = (v: number, fallback: number = 1) => (isNaN(v) || !isFinite(v)) ? fallback : v;
+
+        const subsistence = safeVal(this.clan.consumption.perCapitaFood, 1);
         const foodQuantityBrModifier = clamp(subsistence, 0, 2);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', this.clan.consumption.perCapitaFood, foodQuantityBrModifier));
+            'Food Quantity', subsistence, foodQuantityBrModifier));
         const subsistenceDrModifier = subsistence >= 1
             ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
             : 1 + clamp((1 - subsistence) / 2, 0, 0.5);
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', this.clan.consumption.perCapitaFood, subsistenceDrModifier));
+            'Food Quantity', subsistence, subsistenceDrModifier));
 
-        const foodQualityModifier = foodVarietyHealthFactor(this.clan.consumption.fishRatio);
+        const fishRat = safeVal(this.clan.consumption.fishRatio, 0.5);
+        const foodQualityModifier = safeVal(foodVarietyHealthFactor(fishRat), 1);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quality', this.clan.consumption.fishRatio, foodQualityModifier));
+            'Food Quality', fishRat, foodQualityModifier));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quality', this.clan.consumption.fishRatio, 1 / foodQualityModifier));
+            'Food Quality', fishRat, safeVal(1 / foodQualityModifier, 1)));
 
-        // The effect of food insecurity on death rates is modeled directly
-        // as famine. For birth rates, the direct effect isn't huge, because 
-        // there will be famine for only a small fraction of the turn at most,
-        // but there's also an optimism/pessimism effect.
-        const foodInsecurityBrModifier = 1 + clamp(-this.clan.consumption.foodInsecurity.value / 4, -0.5, 0.2);
+        const foodInsec = safeVal(this.clan.consumption.foodInsecurity.value, 0);
+        const foodInsecurityBrModifier = 1 + clamp(-foodInsec / 4, -0.5, 0.2);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Famine', this.clan.consumption.foodInsecurity.value, foodInsecurityBrModifier));
+            'Famine', foodInsec, foodInsecurityBrModifier));
 
-        // Up to 10% increase/decrease in birth/death rates for shelter.
-        // That's for a warm environment and assuming some shelter always.
-        const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
+        const shelterModifier = 1 + 0.01 * safeVal(this.clan.housing.shelter, 1);
         this.brModifiers.push(new PopulationChangeModifier(
             'Shelter', this.clan.housing.name, shelterModifier));
 
-        const allBrideAppeals = this.clan.world.allClans.map(c => getAvgAppealToBrides(c));
-        const clanBrideAppeal = getAvgAppealToBrides(this.clan);
-        const brideAppealZScore = zScore(clanBrideAppeal, allBrideAppeals);
+        const allBrideAppeals = this.clan.world.allClans.map(c => safeVal(getAvgAppealToBrides(c), 0));
+        const clanBrideAppeal = safeVal(getAvgAppealToBrides(this.clan), 0);
+        const brideAppealZScore = safeVal(zScore(clanBrideAppeal, allBrideAppeals), 0);
         const marriageAppealBrModifier = clamp(1 + 0.1 * brideAppealZScore, 0.67, 1.5);
         this.brModifiers.push(new PopulationChangeModifier(
             'Marriage Appeal', clanBrideAppeal, marriageAppealBrModifier));
 
-
-
-        // Movement has a significant effect on birth rates. The key idea is
-        // that in the most mobile lifestyles (e.g., hunting and gathering
-        // with daily travel to collection sites), mothers must carry their
-        // children under 4, so they space births that far apart. In settled
-        // lifestyles, birth frequency is 1.3-2x higher. That actually
-        // represents a choice to wean earlier that presumably has a transition
-        // process, but for now the model will simply assume mothers do that.
-        // In our setting, rich marsh resources probably didn't require mothers
-        // to be hugely mobile, so we use a lower value for birth rate impact.
-        // However, our people might end up extra-settled near rich farming
-        // resources, which should be kept in mind.
-        const mobilityBrModifier = clamp(1 + 0.5 * this.clan.residenceFraction, 1, 1.5);
+        const resFrac = safeVal(this.clan.residenceFraction, 1);
+        const mobilityBrModifier = clamp(1 + 0.5 * resFrac, 1, 1.5);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Settlement', this.clan.residenceFraction, mobilityBrModifier));
-        // It's not clear that hunting and gathering is more or less hazardous
-        // than farming, so no death rate modifier.
+            'Settlement', resFrac, mobilityBrModifier));
 
-        // This factor stands in for all the effects of prestige on population
-        // that are not modeled elsewhere. For now, it only has an effect on
-        // marriage matching, so we make it pretty big to account for whatever
-        // else would be going on such as stress or better access to certain
-        // resources.
-        const prestigeBrModifier = 1 + 0.003 * getLocalPrestige(this.clan);
+        const prestigeVal = safeVal(getLocalPrestige(this.clan), 0);
+        const prestigeBrModifier = 1 + 0.003 * prestigeVal;
         this.brModifiers.push(new PopulationChangeModifier(
-            'Prestige', getLocalPrestige(this.clan), prestigeBrModifier));
-        const prestigeDrModifier = 1 - 0.002 * getLocalPrestige(this.clan);
+            'Prestige', prestigeVal, prestigeBrModifier));
+        const prestigeDrModifier = 1 - 0.002 * prestigeVal;
         this.drModifiers.push(new PopulationChangeModifier(
-            'Prestige', getLocalPrestige(this.clan), prestigeDrModifier));
+            'Prestige', prestigeVal, prestigeDrModifier));
 
-        // Stress affects general health and has a significant impact on
-        // both birth and death rates.
-        const stress = this.clan.stress.value;
+        const stress = safeVal(this.clan.stress.value, 0);
         const stressBrModifier = 1 + 0.005 * stress;
         this.brModifiers.push(new PopulationChangeModifier(
             'Stress', stress, stressBrModifier));
         const stressDrModifier = 1 - 0.005 * stress;
         this.drModifiers.push(new PopulationChangeModifier(
-            'Stress', stress, stressDrModifier))
+            'Stress', stress, stressDrModifier));
 
-        this.brModifier = productFun(this.brModifiers, m => m.value);
-        if (isNaN(this.brModifier)) debugger;
-        this.drModifier = productFun(this.drModifiers, m => m.value);
-        if (isNaN(this.drModifier)) debugger;
+        this.brModifier = safeVal(productFun(this.brModifiers, m => m.value), 1);
+        this.drModifier = safeVal(productFun(this.drModifiers, m => m.value), 1);
     }
 
     build(): PopulationChange {
-        // First slice.
         const birthsItem = this.calculateBirths();
         const diseaseItem = this.calculateDisease(); // depends on births
-        this.newSlices.push([
-            this.femaleBirths - this.femaleDiseaseDeaths,
-            this.maleBirths - this.maleDiseaseDeaths,
-        ]);
-
-        const hazardsItems = this.calculateHazards();
+        const hazardsItems = this.calculateHazards(); // computes this.newSlices
 
         const items = [
             birthsItem,
@@ -246,6 +225,7 @@ export class PopulationChangeBuilder {
         ];
 
         return new PopulationChange(
+            this.yearsElapsed,
             this.clan,
             this.diseaseLoad,
             items,
@@ -270,9 +250,11 @@ export class PopulationChangeBuilder {
     }
 
     calculateBirths() {
-        const pmbr = this.brModifier * BASE_BIRTH_RATE;
+        const pmbr = this.brModifier * BASE_BIRTH_RATE * this.yearsElapsed;
         const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
-        this.births = Math.round(eb);
+        const intEb = Math.floor(eb);
+        const fracEb = eb - intEb;
+        this.births = intEb + (Math.random() < fracEb ? 1 : 0);
         if (!isFinite(this.births)) debugger;
         if (this.births > 1000) {
             debugger;
@@ -285,12 +267,13 @@ export class PopulationChangeBuilder {
         if (isNaN(this.femaleBirths) || isNaN(this.maleBirths)) {
             debugger;
         }
+        const initPop = this.initialPopulation;
         return new PopulationChangeItem(
             'Births',
             this.brModifier,
             INITIAL_POPULATION_RATIOS[1][0] * pmbr,
-            eb / this.initialPopulation,
-            this.births / this.initialPopulation,
+            initPop > 0 ? eb / initPop : 0,
+            initPop > 0 ? this.births / initPop : 0,
             this.births,
         );
     }
@@ -301,10 +284,13 @@ export class PopulationChangeBuilder {
         // TODO - Make nutrition affect disease.
         // Fold in a term for other hazards.
         const mortality = this.diseaseLoad.value + 0.2;
-        this.diseaseDeaths = Math.round(mortality * this.births);
+        const expectedDisease = mortality * this.births;
+        this.diseaseDeaths = Math.floor(expectedDisease) + (Math.random() < (expectedDisease % 1) ? 1 : 0);
         if (!isFinite(this.diseaseDeaths)) debugger;
-        const diseaseDeathRate = this.diseaseDeaths / this.initialPopulation;
-        this.femaleDiseaseDeaths = Math.round(mortality * this.femaleBirths);
+        const initPop = this.initialPopulation;
+        const diseaseDeathRate = initPop > 0 ? this.diseaseDeaths / initPop : 0;
+        const expectedFemaleDisease = mortality * this.femaleBirths;
+        this.femaleDiseaseDeaths = Math.min(this.diseaseDeaths, Math.floor(expectedFemaleDisease) + (Math.random() < (expectedFemaleDisease % 1) ? 1 : 0));
         this.maleDiseaseDeaths = this.diseaseDeaths - this.femaleDiseaseDeaths;
         return new PopulationChangeItem(
             'Disease',
@@ -325,17 +311,17 @@ export class PopulationChangeBuilder {
                 name: 'Flood',
                 deaths: 0, ed: 0, sedr: 0,
                 mod: this.floodLevel.damageFactor,
-                drFun: () => this.floodLevel.damageFactor * 0.05,
+                drFun: () => this.floodLevel.damageFactor * FLOOD_BASE_DEATH_RATE * this.yearsElapsed,
             });
         }
         sources.push({
             name: 'Hazards',
             deaths: 0, ed: 0, sedr: 0,
             mod: drFactor,
-            drFun: (i: number) => BASE_DEATH_RATES[i] * drFactor,
+            drFun: (i: number) => BASE_DEATH_RATES[i] * drFactor * this.yearsElapsed,
         });
-        const famineDr = 0.1 * clamp(this.clan.consumption.foodInsecurity.value, 0, 1) ** 2;
-        if (famineDr * this.clan.population >= 1) {
+        const famineDr = FAMINE_BASE_DEATH_RATE * clamp(this.clan.consumption.foodInsecurity.value, 0, 1) ** 2 * this.yearsElapsed;
+        if (famineDr > 0) {
             sources.push({
                 name: 'Famine',
                 deaths: 0, ed: 0, sedr: 0,
@@ -344,8 +330,15 @@ export class PopulationChangeBuilder {
             });
         }
 
-        for (let i = 0; i < this.clan.slices.length - 1; ++i) {
-            // Calculate per-cause and overall death rates.
+        const newborns = [
+            this.femaleBirths - this.femaleDiseaseDeaths,
+            this.maleBirths - this.maleDiseaseDeaths,
+        ];
+
+        const survivors: number[][] = [];
+
+        // Calculate hazard deaths for all 4 age slices (0..3)
+        for (let i = 0; i < this.clan.slices.length; ++i) {
             const femaleDRs = [];
             let femaleDR = 0;
             for (const source of sources) {
@@ -354,9 +347,11 @@ export class PopulationChangeBuilder {
                 femaleDR += dr;
             }
 
-            // Calculate survivors and per-cause deaths for each slice.
+            const initialF = this.clan.slices[i][0] + (i === 0 ? newborns[0] : 0);
+            const initialM = this.clan.slices[i][1] + (i === 0 ? newborns[1] : 0);
+
             let [fSurvivors, mSurvivors] = [0, 0];
-            for (let j = 0; j < this.clan.slices[i][0]; ++j) {
+            for (let j = 0; j < initialF; ++j) {
                 let cumFemaleDR = 0;
                 let survived = true;
                 for (let k = 0; k < femaleDRs.length; ++k) {
@@ -369,11 +364,12 @@ export class PopulationChangeBuilder {
                 }
                 if (survived) ++fSurvivors;
             }
-            for (let j = 0; j < this.clan.slices[i][1]; ++j) {
+
+            for (let j = 0; j < initialM; ++j) {
                 let cumMaleDR = 0;
                 let survived = true;
                 for (let k = 0; k < femaleDRs.length; ++k) {
-                    cumMaleDR += 1.1 * femaleDRs[i];
+                    cumMaleDR += 1.1 * femaleDRs[k];
                     if (Math.random() < cumMaleDR) {
                         survived = false;
                         ++sources[k].deaths;
@@ -382,36 +378,65 @@ export class PopulationChangeBuilder {
                 }
                 if (survived) ++mSurvivors;
             }
-            this.newSlices.push([fSurvivors, mSurvivors]);
 
-            // Expected values.
+            survivors.push([fSurvivors, mSurvivors]);
+
+            // Expected values
             for (const [k, source] of sources.entries()) {
-                source.ed += femaleDRs[k] * this.clan.slices[i][0]
-                    + femaleDRs[k] * 1.1 * this.clan.slices[i][1];
-                source.sedr += femaleDRs[k] * INITIAL_POPULATION_RATIOS[i][0]
-                    + femaleDRs[k] * 1.1 * BASE_DEATH_RATES[i];
+                source.ed += femaleDRs[k] * initialF + femaleDRs[k] * 1.1 * initialM;
+                source.sedr += femaleDRs[k] * INITIAL_POPULATION_RATIOS[i][0] + femaleDRs[k] * 1.1 * BASE_DEATH_RATES[i];
             }
         }
-        const last = sources[sources.length - 1];
-        // Old age
-        last.ed += this.clan.slices[this.clan.slices.length - 1][0]
-            + this.clan.slices[this.clan.slices.length - 1][1];
-        last.sedr += INITIAL_POPULATION_RATIOS[this.clan.slices.length - 1][0]
-            + INITIAL_POPULATION_RATIOS[this.clan.slices.length - 1][1];
-        last.deaths += this.clan.slices[this.clan.slices.length - 1][0]
-            + this.clan.slices[this.clan.slices.length - 1][1];
 
+        // Aging transitions (1/SLICE_WIDTH per year of slice survivors age out into next category)
+        const agingFraction = Math.min(1, this.yearsElapsed / SLICE_WIDTH);
+        const agingOut: number[][] = [];
+        for (let i = 0; i < 4; ++i) {
+            const expF = survivors[i][0] * agingFraction;
+            const outF = Math.floor(expF) + (Math.random() < (expF % 1) ? 1 : 0);
+            const expM = survivors[i][1] * agingFraction;
+            const outM = Math.floor(expM) + (Math.random() < (expM % 1) ? 1 : 0);
+            agingOut.push([Math.min(survivors[i][0], outF), Math.min(survivors[i][1], outM)]);
+        }
+
+        // Old age deaths (elders aging out of slice 3 expire)
+        const last = sources[sources.length - 1]!;
+        const oldAgeDeaths = agingOut[3][0] + agingOut[3][1];
+        last.deaths += oldAgeDeaths;
+        last.ed += agingFraction * (survivors[3][0] + 1.1 * survivors[3][1]);
+        last.sedr += agingFraction * (INITIAL_POPULATION_RATIOS[3][0] + 1.1 * BASE_DEATH_RATES[3]);
+
+        // Construct new slices
+        this.newSlices.length = 0;
+        this.newSlices.push([
+            survivors[0][0] - agingOut[0][0],
+            survivors[0][1] - agingOut[0][1],
+        ]);
+        this.newSlices.push([
+            (survivors[1][0] - agingOut[1][0]) + agingOut[0][0],
+            (survivors[1][1] - agingOut[1][1]) + agingOut[0][1],
+        ]);
+        this.newSlices.push([
+            (survivors[2][0] - agingOut[2][0]) + agingOut[1][0],
+            (survivors[2][1] - agingOut[2][1]) + agingOut[1][1],
+        ]);
+        this.newSlices.push([
+            (survivors[3][0] - agingOut[3][0]) + agingOut[2][0],
+            (survivors[3][1] - agingOut[3][1]) + agingOut[2][1],
+        ]);
+
+        const initPop = this.initialPopulation;
         return sources.map(source =>
             new PopulationChangeItem(
                 source.name,
                 source.mod,
                 -source.sedr,
-                -source.ed / this.initialPopulation,
-                -source.deaths / this.initialPopulation,
+                initPop > 0 ? -source.ed / initPop : 0,
+                initPop > 0 ? -source.deaths / initPop : 0,
                 -source.deaths));
     }
 
     static empty(clan: Clan) {
-        return new PopulationChange(clan, undefined, [], clan.slices, [], 1, [], 1);
+        return new PopulationChange(1, clan, undefined, [], clan.slices, [], 1, [], 1);
     }
 }

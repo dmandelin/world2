@@ -29,25 +29,11 @@ import type { Settlement } from "../people/settlement";
 // To change:
 // - Update the model to have 100-year and 500-year floods:
 //   x 100-year: significant losses
-//   x 500-year: settlement may be wiped out; however, people
-//               could rebuild in place depending on exactly
-//               what happened
-//   x Flood damage
-//     x Housing rebuild costs
-//     x Hazard casualties with display
-//   - Tells of 1m+ should offer significant protection
-//   x Make sure we have housing rebuild costs for major floods
-// x Update ditch quality formula to tune
-// x Update display:
-//   x Moving average of shifts
-//   x Full in-persona tenure indicator
-// - Make sure we have some negative happiness effect from
-//   flooding
-// - Get some population growth going again
-
-// TODO - Deal with this better. The main issue is that fixing it
-// statically seems too inflexible, although it would be easiest.
-const yearsPerTurn = 20;
+//   it, forcing a move.
+//
+// High natural flooding has high variation, which is bad, but high productivity,
+// which is good. Ditching allows high productivity with low variation.
+// Ditching requires a lot of labor, so it's a trade-off.
 
 export class FloodLevel {
     constructor(
@@ -66,8 +52,8 @@ export class FloodLevel {
         return a.index > b.index ? a : b;
     }
 
-    riverShiftProbability(): number {
-        return 1 - (1 - this.expectedRiverShifts) ** yearsPerTurn;
+    riverShiftProbability(yearsElapsed: number = 1): number {
+        return 1 - (1 - this.expectedRiverShifts) ** yearsElapsed;
     }
 }
 

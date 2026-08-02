@@ -1,6 +1,6 @@
 import { clamp, sumFun } from "../lib/basics";
 import { pct } from "../lib/format";
-import { foodVarietyAppeal } from "../people/happiness";
+import { foodVarietyAppeal, FoodQuantityHappinessItem } from "../people/happiness";
 import type { Consumption } from "./consumption";
 
 export class QualityOfLife {
@@ -47,7 +47,7 @@ export class QualityOfLife {
     }
 
     static fromFoodQuantity(consumption: Consumption): QualityOfLifeItem {
-        const value = 50 * Math.log2(consumption.perCapitaFood);
+        const value = FoodQuantityHappinessItem.appealOf(consumption.perCapitaFood);
         return new QualityOfLifeItem(
             "Food quantity", "food", value, `${pct(consumption.perCapitaFood)} of needs`);
     }

@@ -116,7 +116,7 @@ export class ResidenceLevel {
         }
 
         // Assign location for Either skills based on weights.
-        const baseHomeFraction = homeWeight / totalWeight;
+        const baseHomeFraction = totalWeight > 0 ? homeWeight / totalWeight : 1;
         for (const item of eitherItems) {
             item.fraction *= baseHomeFraction;
         }

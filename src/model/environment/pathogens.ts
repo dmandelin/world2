@@ -58,7 +58,7 @@ export class DiseaseLoadItem {
     constructor(readonly label: string, public effort: number, public diseaseLoadFactor: number) { }
 
     finish(): void {
-        if (this.effort == 0) return;
-        this.load = 0.05 * Math.log10(this.effort) * this.diseaseLoadFactor;
+        if (this.effort <= 0) return;
+        this.load = Math.max(0, 0.05 * Math.log10(Math.max(0.001, this.effort)) * this.diseaseLoadFactor);
     }
 }

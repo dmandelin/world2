@@ -116,7 +116,8 @@ export class FoodQuantityHappinessItem extends NumericHappinessItem {
     }
 
     static appealOf(perCapitaSubsistence: number): number {
-        return 50 * Math.log2(perCapitaSubsistence);
+        const food = Math.max(0.01, perCapitaSubsistence);
+        return clamp(50 * Math.log2(food), -100, 100);
     }
 
     updateState(clan: Clan): void {
