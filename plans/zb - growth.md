@@ -492,8 +492,10 @@ x   Status effects for food transfers.
 x   Make respect stickier with time.
 x   Update how food storage works with consumption for
     new turn length.
-*   Give food storage the ability to be consumed next
+x   Give food storage the ability to be consumed next
     turn.
+*   Give clans the ability to transfer food storage to
+    other clans.
 
 Let's quickly sketch how this could work.
 

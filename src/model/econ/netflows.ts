@@ -24,6 +24,11 @@ export class NetFlows {
         }
     }
 
+    receiveFromStock(good: TradeGood, amount: number): void {
+        const prev = this.produced.get(good) ?? 0;
+        this.produced.set(good, prev + amount);
+    }
+
     give(recipient: Clan, good: TradeGood, amountSent: number): void {
         this.given.push({
             clan: recipient,

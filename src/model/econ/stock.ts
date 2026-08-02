@@ -6,6 +6,8 @@ export class StockItem {
         public amount: number = 0,
         public additions: number = 0,
         public storageLoss: number = 0,
+        public retrievals: number = 0,
+        public retrievalCost: number = 0,
     ) { }
 
     perCapitaAmount(pop: number): number {
@@ -19,6 +21,14 @@ export class StockItem {
     perCapitaStorageLoss(pop: number): number {
         return pop > 0 ? this.storageLoss / pop : 0;
     }
+
+    perCapitaRetrievals(pop: number): number {
+        return pop > 0 ? this.retrievals / pop : 0;
+    }
+
+    perCapitaRetrievalCost(pop: number): number {
+        return pop > 0 ? this.retrievalCost / pop : 0;
+    }
 }
 
 export class Stock {
@@ -27,7 +37,10 @@ export class Stock {
     constructor(initialItems?: Map<TradeGood, StockItem> | ReadonlyMap<TradeGood, StockItem>) {
         if (initialItems) {
             for (const [good, item] of initialItems.entries()) {
-                this.items_.set(good, new StockItem(good, item.amount, item.additions, item.storageLoss));
+                this.items_.set(
+                    good,
+                    new StockItem(good, item.amount, item.additions, item.storageLoss, item.retrievals, item.retrievalCost)
+                );
             }
         }
     }
@@ -43,7 +56,7 @@ export class Stock {
     getItem(good: TradeGood): StockItem {
         let item = this.items_.get(good);
         if (!item) {
-            item = new StockItem(good, 0, 0, 0);
+            item = new StockItem(good, 0, 0, 0, 0, 0);
             this.items_.set(good, item);
         }
         return item;
@@ -93,6 +106,73 @@ export class Stock {
 
     perCapitaFoodStorageLoss(pop: number): number {
         return pop > 0 ? this.totalFoodStorageLoss / pop : 0;
+    }
+
+    get totalFoodRetrievals(): number {
+        let total = 0;
+        for (const item of this.items_.values()) {
+            if (item.good.isSubsistence) {
+                total += item.retrievals;
+            }
+        }
+        return total;
+    }
+
+    perCapitaFoodRetrievals(pop: number): number {
+        return pop > 0 ? this.totalFoodRetrievals / pop : 0;
+    }
+
+    get totalFoodRetrievalCost(): number {
+        let total = 0;
+        for (const item of this.items_.values()) {
+            if (item.good.isSubsistence) {
+                total += item.retrievalCost;
+            }
+        }
+        return total;
+    }
+
+    perCapitaFoodRetrievalCost(pop: number): number {
+        return pop > 0 ? this.totalFoodRetrievalCost / pop : 0;
+    }
+
+    resetTurnStats(): void {
+        for (const item of this.items_.values()) {
+            item.additions = 0;
+            item.storageLoss = 0;
+            item.retrievals = 0;
+            item.retrievalCost = 0;
+        }
+    }
+
+    retrieveFood(needed: number, retrievalCostRate: number = 0.20): Map<TradeGood, number> {
+        const retrievedMap = new Map<TradeGood, number>();
+        let remainingNeeded = needed;
+        const costFactor = 1 + retrievalCostRate;
+
+        for (const item of this.items_.values()) {
+            if (!item.good.isSubsistence || item.amount <= 0 || remainingNeeded <= 0) continue;
+
+            const maxStockNeeded = remainingNeeded * costFactor;
+            if (item.amount >= maxStockNeeded) {
+                const retrieved = remainingNeeded;
+                const cost = retrieved * retrievalCostRate;
+                item.amount -= maxStockNeeded;
+                item.retrievals += retrieved;
+                item.retrievalCost += cost;
+                retrievedMap.set(item.good, (retrievedMap.get(item.good) ?? 0) + retrieved);
+                remainingNeeded = 0;
+            } else {
+                const retrieved = item.amount / costFactor;
+                const cost = item.amount - retrieved;
+                item.retrievals += retrieved;
+                item.retrievalCost += cost;
+                item.amount = 0;
+                retrievedMap.set(item.good, (retrievedMap.get(item.good) ?? 0) + retrieved);
+                remainingNeeded -= retrieved;
+            }
+        }
+        return retrievedMap;
     }
 
     updateAdditions(additionsMap: Map<TradeGood, number>): void {

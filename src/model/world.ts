@@ -372,6 +372,8 @@ export class World implements NoteTaker {
             }
         }
 
+        this.retrieveFoodFromStocks(allClans);
+
         this.redistributeFood(allClans);
 
         for (const clan of allClans) {
@@ -398,6 +400,21 @@ export class World implements NoteTaker {
                 console.log(clan.netFlows);
                 console.log(clan.consumption);
                 console.log(clan.qol);
+            }
+        }
+    }
+
+    retrieveFoodFromStocks(allClans: Clan[]) {
+        for (const clan of allClans) {
+            clan.stock.resetTurnStats();
+            const currentFood = clan.netFlows.totalFood;
+            const targetFood = clan.population * 1.0;
+            const deficit = Math.max(0, targetFood - currentFood);
+            if (deficit > 0) {
+                const retrievedMap = clan.stock.retrieveFood(deficit, 0.20);
+                for (const [good, amount] of retrievedMap.entries()) {
+                    clan.netFlows.receiveFromStock(good, amount);
+                }
             }
         }
     }

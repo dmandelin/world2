@@ -539,6 +539,30 @@
                 scaler: new DefaultScaler(),
                 topics: ["food", "welfare"],
             },
+            {
+                label: "Food Retrievals",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => c.stock.perCapitaFoodRetrievals(c.population),
+                format: pct,
+                tooltipSnippet: foodStockTooltip,
+                deltaValue: (c) => c.stock.perCapitaFoodRetrievals(c.population),
+                deltaFormat: pct,
+                scaler: new DefaultScaler(),
+                topics: ["food", "welfare"],
+            },
+            {
+                label: "Retrieval Costs",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => c.stock.perCapitaFoodRetrievalCost(c.population),
+                format: pct,
+                tooltipSnippet: foodStockTooltip,
+                deltaValue: (c) => c.stock.perCapitaFoodRetrievalCost(c.population),
+                deltaFormat: pct,
+                scaler: new DefaultScaler(),
+                topics: ["food", "welfare"],
+            },
         ]);
 
         // Group 5: Activities & Processes (Effort Allocation)
@@ -849,6 +873,18 @@
                     data: "Additions",
                     label: "Additions",
                     valueFn: (item) => item.perCapitaAdditions(clan.population),
+                    formatFn: unsignedFormat(2),
+                },
+                {
+                    data: "Retrievals",
+                    label: "Retrievals",
+                    valueFn: (item) => item.perCapitaRetrievals(clan.population),
+                    formatFn: unsignedFormat(2),
+                },
+                {
+                    data: "Retrieval Cost",
+                    label: "Retrieval Cost",
+                    valueFn: (item) => item.perCapitaRetrievalCost(clan.population),
                     formatFn: unsignedFormat(2),
                 },
                 {
