@@ -29,7 +29,6 @@ import { BasicInteraction } from "../relations/basicinteraction";
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
-import type { MarriageInterest } from "../relations/marriageInterest";
 import type { ClanInformation } from "../relations/information";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
@@ -393,7 +392,7 @@ export class WorldDTO {
         return this.perceptions.get(clan.uuid, other.uuid)?.respect;
     }
 
-    marriageInterestToward(clan: ClanDTO, other: ClanDTO): MarriageInterest | undefined {
+    marriageInterestToward(clan: ClanDTO, other: ClanDTO): Respect | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
     }
 

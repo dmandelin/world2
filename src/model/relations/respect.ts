@@ -2,58 +2,35 @@ import { sumFun } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
-import { KinConnection } from "./connection";
-
-// Notes on how the calculations will work:
-//
-// Respect is based on information clan A has about clan B,
-// so it will depend on interactions and visibility.
-//
-// Clans' opinions on this should be able to influence each other.
-// However, that's not automatically important right away.
-//
-// Factors:
-// *   Major
-//     *   Relationships, especially with more prestigious clans
-//     *   Seniority (parent/cadet clan relationships)
-//     *   Tenure in the area
-//     *   "Face": For now, based on nutrition
-//         *   Also base on care and leisure
-//         *   Fairly salient, needs some interaction but not
-//             a lot
-//     *   Visible food storage - requires close observation
-//         to see this unless it's somehow advertised
-// *   Medium
-//     *   Asking for/giving help - giving help doesn't directly
-//         produce prestige (it's more about alignment), but it
-//         implies resources to spare
-//     *   Skill - requires close observation unless the skill is
-//         particularly prominent
-// *   Lesser
-//     *   Population
-//     *   Gifts
+import { SkillDefs } from "../econ/econdefs";
 
 export class Respect {
     private items_: RespectItem[] = [];
+    private informationValue_: number = 0;
 
     get items(): readonly RespectItem[] { return this.items_; }
-    get value(): number { return sumFun(this.items_, i => i.value); }
+    get informationValue(): number { return this.informationValue_; }
 
-    updateFor(subject: Clan, object: Clan): void {
+    get value(): number {
+        const infoMultiplier = Math.max(0, Math.min(1, this.informationValue_));
+        return sumFun(this.items_, i => i.value) * infoMultiplier;
+    }
+
+    updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
+        this.informationValue_ = informationValue;
         this.items_ = [
-            RespectItem.forRelationships(subject, object),
-            ...RespectItem.forSeniority(subject, object),
-            //RespectItem.forTenure(rv),
-            //RespectItem.forFace(rv),
-            //RespectItem.forVisibleWealth(rv),
-            //RespectItem.forSkill(rv),
-            //RespectItem.forPopulation(rv),
+            RespectItem.forGenerosity(subject, object),
+            RespectItem.forSkills(subject, object),
+            RespectItem.forStress(subject, object),
+            RespectItem.forStandardOfLiving(subject, object),
+            RespectItem.forRandom(subject, object),
         ];
-    }    
+    }
 
     clone(): Respect {
         const a = new Respect();
         a.items_ = [...this.items_];
+        a.informationValue_ = this.informationValue_;
         return a;
     }
 }
@@ -62,61 +39,81 @@ export class RespectItem {
     constructor(
         readonly label: string,
         readonly baseValue: number,
-        readonly informationModifier: number,
+        readonly modifier: number,
         readonly explanation: string,
-    ) {}
+    ) { }
 
     get value(): number {
-        return this.baseValue * this.informationModifier;
+        return this.baseValue * this.modifier;
     }
 
-    static forRelationships(subject: Clan, object: Clan): RespectItem {
-        // TODO - Have respect influence how much respect relationships
-        //        generate
-        // TODO - Have the strength of the relationship influence how
-        //        much respect it generates
-        const world = subject.world;
-        const objectConnections = [...world.connections.entriesForHasUUID(object)];
-        const base = sumFun(
-            objectConnections, 
-            ([other, connections]) => 0.1);
+    static forStress(subject: Clan, object: Clan): RespectItem {
         return new RespectItem(
-            'Relationships',
-            base,
-            world.perceptions.get(subject.uuid, object.uuid)?.information.value ?? 0,
-            `${objectConnections.length} clans`
+            'Stress',
+            object.stress.value - subject.stress.value,
+            0.1,
+            `Stress`
         );
     }
 
-    static forSeniority(subject: Clan, object: Clan): RespectItem[] {
-        const world = subject.world;
-        const connection = world.connections.getForType(subject, object, KinConnection);
-        if (!connection) return [];
-        const value = subject.uuid === connection.senior ? -0.05 : 0.05;
-        return [
-            new RespectItem(
-                'Seniority',
-                value,
-                1, // TODO - Make them need at least a little information.
-                `senior-cadet relationship`
-            )
-        ];
+    static forStandardOfLiving(subject: Clan, object: Clan): RespectItem {
+        return new RespectItem(
+            'Standard of Living',
+            object.qol.value - subject.qol.value,
+            0.2,
+            `Standard of Living`
+        );
+    }
+
+    static forSkills(subject: Clan, object: Clan): RespectItem {
+        const skillDefs = Object.values(SkillDefs);
+        const totalObjectSkill = sumFun(skillDefs, s => object.skills.v(s));
+        const avgObjectSkill = totalObjectSkill / (skillDefs.length || 1);
+        const totalSubjectSkill = sumFun(skillDefs, s => subject.skills.v(s));
+        const avgSubjectSkill = totalSubjectSkill / (skillDefs.length || 1);
+        return new RespectItem(
+            'Skills',
+            (avgObjectSkill - avgSubjectSkill) / 10,
+            1,
+            `Skills`
+        );
+    }
+
+    static forGenerosity(subject: Clan, object: Clan): RespectItem {
+        const foodGiven = object.netFlows ? object.netFlows.totalFoodGiven : 0;
+        return new RespectItem(
+            'Generosity',
+            foodGiven,
+            10,
+            `Generosity`
+        );
+    }
+
+    static forRandom(subject: Clan, object: Clan): RespectItem {
+        // Small random value in range [0, 2]
+        const randVal = Math.random() * 2;
+        return new RespectItem(
+            'Random',
+            randVal,
+            1,
+            `random factor`
+        );
     }
 }
 
-export function getRespect(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+export function getRespect(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     return subject.world.perceptions.get(subject.uuid, object.uuid)?.respect.value ?? 0;
 }
 
 // Average respect weighted by population.
-export function getRespectInScope(object: Clan|ClanDTO, scope: (Clan|ClanDTO)[]): number {
+export function getRespectInScope(object: Clan | ClanDTO, scope: (Clan | ClanDTO)[]): number {
     return weightedAverage(
-        scope, 
-        subject => getRespect(subject, object), 
+        scope,
+        subject => getRespect(subject, object),
         subject => subject.population);
 }
 
-export function getRespectInScopeDetail(object: Clan|ClanDTO, scope: (Clan|ClanDTO)[]) {
+export function getRespectInScopeDetail(object: Clan | ClanDTO, scope: (Clan | ClanDTO)[]) {
     const items = [];
     const totalPopulation = sumFun(scope, subject => subject.population) || 1;
     for (const subject of scope) {
@@ -131,7 +128,7 @@ export function getRespectInScopeDetail(object: Clan|ClanDTO, scope: (Clan|ClanD
     return items;
 }
 
-export function averageRespectInScope(scope: (Clan|ClanDTO)[]): number {
+export function averageRespectInScope(scope: (Clan | ClanDTO)[]): number {
     return weightedAverage(
         scope,
         object => getRespectInScope(object, scope),
@@ -140,23 +137,23 @@ export function averageRespectInScope(scope: (Clan|ClanDTO)[]): number {
 }
 
 // Respect within settlement relative to weighted average respect.
-export function getPrestigeInScope(clan: Clan|ClanDTO, scope: (Clan|ClanDTO)[]): number {
+export function getPrestigeInScope(clan: Clan | ClanDTO, scope: (Clan | ClanDTO)[]): number {
     return getRespectInScope(clan, scope) - averageRespectInScope(scope);
 }
 
-export function getLocalRespect(clan: Clan|ClanDTO): number {
+export function getLocalRespect(clan: Clan | ClanDTO): number {
     const settlement = clan.settlement;
     if (!settlement) return 0;
     return getRespectInScope(clan, settlement.clans);
 }
 
-export function getLocalPrestige(clan: Clan|ClanDTO): number {
+export function getLocalPrestige(clan: Clan | ClanDTO): number {
     const settlement = clan.settlement;
     if (!settlement) return 0;
     return getPrestigeInScope(clan, settlement.clans);
 }
 
-export function getAreaPrestige(clan: Clan|ClanDTO): number {
+export function getAreaPrestige(clan: Clan | ClanDTO): number {
     const cluster = clan.settlement.cluster;
     if (!cluster) return 0;
     return getPrestigeInScope(clan, cluster.clans);

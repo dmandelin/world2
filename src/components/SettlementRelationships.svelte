@@ -17,7 +17,8 @@
     let world = $derived(settlement.world);
 
     let stressMode: "stress" | "mutual aid" | "conflict" = $state("stress");
-    let interactionMode: "interactions" | "information" = $state("interactions");
+    let interactionMode: "interactions" | "information" =
+        $state("interactions");
 
     function buildRelationshipsTable<CellValue>(
         valueFn: (rowClan: ClanDTO, colClan: ClanDTO) => CellValue,
@@ -25,7 +26,10 @@
         cellTooltip: Snippet<[CellValue, ClanDTO, ClanDTO]>,
         html?: boolean,
     ): CrossTab<ClanDTO, CellValue> {
-        const sortedClans: ClanDTO[] = sortedByKey(settlement.clans, (c) => c.name);
+        const sortedClans: ClanDTO[] = sortedByKey(
+            settlement.clans,
+            (c) => c.name,
+        );
 
         const table = new CrossTab<ClanDTO, CellValue>(
             sortedClans,
@@ -36,7 +40,7 @@
         );
 
         if (html) {
-            table.columns.forEach((col) => col.html = true);
+            table.columns.forEach((col) => (col.html = true));
         }
 
         return table;
@@ -50,10 +54,7 @@
         return att / colClan.population;
     }
 
-    function informationCellValue(
-        rowClan: ClanDTO,
-        colClan: ClanDTO,
-    ): number {
+    function informationCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
         const info = world.informationToward(rowClan, colClan);
         return info ? info.value : 0;
     }
@@ -244,9 +245,9 @@
                     formatFn: (i: number) => unsigned(i, 2),
                 },
                 {
-                    data: "Inf Mod",
-                    label: "Inf Mod",
-                    valueFn: (i) => i.informationModifier,
+                    data: "Mod",
+                    label: "Mod",
+                    valueFn: (i) => i.modifier,
                     formatFn: (i: number) => unsigned(i, 2),
                 },
                 {
@@ -277,7 +278,7 @@
                     class="stress-btn {interactionMode === 'interactions'
                         ? 'active'
                         : ''}"
-                    onclick={() => (interactionMode = 'interactions')}
+                    onclick={() => (interactionMode = "interactions")}
                     >Interactions</button
                 >
                 <button
@@ -285,12 +286,12 @@
                     class="stress-btn {interactionMode === 'information'
                         ? 'active'
                         : ''}"
-                    onclick={() => (interactionMode = 'information')}
+                    onclick={() => (interactionMode = "information")}
                     >Information</button
                 >
             </div>
         </div>
-        {#if interactionMode === 'interactions'}
+        {#if interactionMode === "interactions"}
             <TableView2
                 table={buildRelationshipsTable(
                     interactionLevelCellValue,
@@ -316,9 +317,7 @@
             <div class="stress-button-group">
                 <button
                     type="button"
-                    class="stress-btn {stressMode === 'stress'
-                        ? 'active'
-                        : ''}"
+                    class="stress-btn {stressMode === 'stress' ? 'active' : ''}"
                     onclick={() => (stressMode = "stress")}>Stress</button
                 >
                 <button
@@ -334,8 +333,7 @@
                     class="stress-btn {stressMode === 'conflict'
                         ? 'active'
                         : ''}"
-                    onclick={() => (stressMode = "conflict")}
-                    >Conflict</button
+                    onclick={() => (stressMode = "conflict")}>Conflict</button
                 >
             </div>
         </div>

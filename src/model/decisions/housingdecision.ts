@@ -10,7 +10,7 @@ export class HousingImitationItem {
         readonly housing: Housing,
         readonly prestige: number,
         readonly weight: number,
-    ) {}
+    ) { }
 }
 
 export class HousingGuessItem {
@@ -18,7 +18,7 @@ export class HousingGuessItem {
         readonly housing: Housing,
         readonly benefit: number,
         readonly cost: number,
-    ) {}
+    ) { }
 
     get appeal(): number {
         return this.benefit + this.cost;
@@ -31,7 +31,7 @@ export class HousingChoiceItem {
         readonly housing: Housing,
         readonly appeal: number,
         public weight: number,
-    ) {}
+    ) { }
 }
 
 export class HousingDecision {
@@ -56,8 +56,8 @@ export class HousingDecision {
             (other, weight) => new HousingImitationItem(
                 other.name,
                 other.housing,
-                100 * getRespect(clan, other),
-                weight));
+                100 * 1, // TODO - bring back getRespect(clan, other),
+                1)); // TODO bring back weight));
         this.model = chooseWeighted(
             this.imitationItems,
             item => item.weight);
@@ -72,7 +72,7 @@ export class HousingDecision {
             const laborCost = 2 * housing.constructionCost / clan.world.yearsPerTurn + housing.maintenanceCost;
             const cost = -clamp(100 * laborCost, 0, 100);
             this.guessItems.set(housing, new HousingGuessItem(
-                housing, 
+                housing,
                 housing.basePrestige,
                 cost));
         }

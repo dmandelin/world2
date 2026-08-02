@@ -488,7 +488,8 @@ flood events could then also be integrated.
 
 *   Tooltips and displays on food are somewhat wonky,
     probably just need to make more understandable.
-*   Status effects for food transfers.
+x   Status effects for food transfers.
+*   Make respect stickier with time.
 *   Update how food storage works with consumption for
     new turn length.
 *   Give food storage the ability to be consumed next
