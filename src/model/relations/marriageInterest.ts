@@ -17,9 +17,10 @@ export class MarriageInterest {
     updateFor(subject: Clan, object: Clan, informationValue: number): void {
         this.informationValue_ = informationValue;
         this.items_ = [
+            MarriageInterestItem.forGenerosity(subject, object),
+            MarriageInterestItem.forSkills(subject, object),
             MarriageInterestItem.forStress(subject, object),
             MarriageInterestItem.forStandardOfLiving(subject, object),
-            MarriageInterestItem.forSkills(subject, object),
             MarriageInterestItem.forRandom(subject, object),
         ];
     }
@@ -36,19 +37,19 @@ export class MarriageInterestItem {
     constructor(
         readonly label: string,
         readonly baseValue: number,
-        readonly informationModifier: number,
+        readonly modifier: number,
         readonly explanation: string,
     ) { }
 
     get value(): number {
-        return this.baseValue * this.informationModifier;
+        return this.baseValue * this.modifier;
     }
 
     static forStress(subject: Clan, object: Clan): MarriageInterestItem {
         return new MarriageInterestItem(
             'Stress',
             object.stress.value - subject.stress.value,
-            1,
+            0.1,
             `Stress`
         );
     }
@@ -57,7 +58,7 @@ export class MarriageInterestItem {
         return new MarriageInterestItem(
             'Standard of Living',
             object.qol.value - subject.qol.value,
-            1,
+            0.2,
             `Standard of Living`
         );
     }
@@ -73,6 +74,16 @@ export class MarriageInterestItem {
             (avgObjectSkill - avgSubjectSkill) / 10,
             1,
             `Skills`
+        );
+    }
+
+    static forGenerosity(subject: Clan, object: Clan): MarriageInterestItem {
+        const foodGiven = object.netFlows ? object.netFlows.totalFoodGiven : 0;
+        return new MarriageInterestItem(
+            'Generosity',
+            foodGiven,
+            10,
+            `Generosity`
         );
     }
 
