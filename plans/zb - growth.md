@@ -319,7 +319,9 @@ they don't have to be).
 *   Intellect/Imagination - ability to learn and invent; relevant
     to coordination and oratory for leadership
 
-# More Discussion on Status
+# Additional Topics
+
+## More on Status
 
 The ethnographies seem to say that "giving away lots of stuff" is
 the main way to rise in status. More modern research finds that
@@ -327,9 +329,157 @@ people assess each other on two dimensions: power and alignment.
 We could have clans assess each other in that way, but for now,
 a combined version seems to make sense. 
 
-# Item List
+## More on Trust and Mutual Aid
 
-The rough sequence might be:
+The trust model seems to stick too high too easily. Let's think
+it through again.
+
+This type of relationship is essentially demand sharing, where
+a clan can ask another for a favor or item, and "normally"
+expect to get it. But clans have ways to dodge, such as pretending
+not to have the thing, so bids are not in fact always satisfied.
+Behavior would depend on alignment and trust:
+
+*   High alignment
+    *   High alignment could approximate generalized sharing,
+        where clans will pretty much give whatever is asked.
+    *   Sharing can thus proceed very fluidly, with people
+        generally getting what they need.
+    *   However, generalized sharing should probably not be
+        effective when there are lots of resource bottlenecks,
+        such as specific rare tools being needed, because it
+        doesn't allocate things to their most valuable use,
+        not without a bunch of arguments, anyway. So it can
+        apply to food, talk, and favors. Otherwise high
+        alignment isn't that relevant!
+    *   Generalized sharing should also generally benefit the
+        less productive partner more.
+*   Medium alignment
+    *   Medium alignment is intermediate between high and neutral.
+*   Neutral alignment
+    *   Neutral alignment can approximate balanced reciprocity.
+        It can still look like demand sharing if there aren't
+        resource bottlenecks and ability to protect property,
+        but by various means clans might deflect requests or
+        just start refusing them if they aren't getting their
+        requests satisfied.
+    *   So now trust matters. When someone asks us for something,
+        we think to ourselves, will we get something equivalent
+        back?
+        *   If there's a long track record of them giving us
+            good stuff too, then we think yes.
+        *   If there's only a short track record, it will depend
+            somewhat on our priors, but still gets a boost from
+            recent success.
+        *   "Don't fight with us" is a favor we'd always want
+            to get, so apparently playing dove/hawk would affect
+            trust.
+        *   If someone we trust trusts them, maybe we do too.
+        *   If they properly treat others, and we know this, we
+            trust them more.
+        *   If someone has high alignment to us, we trust them
+            more.
+    *   Effects of trust
+        *   High trust: Many requests can be satisfied, but not
+            quite as freely as in generalized sharing, since they
+            are constrained to be more equal, and important things
+            still might not be shared as freely.
+        *   Low trust: Sharing by request won't work well at all
+            any more, but maybe still could for really small stuff.
+            *   If applicable, other forms of sharing could enable
+                more effective sharing despite low trust
+                *   Trading stuff at the river by piling up and
+                    deciding whether to swap or not
+                *   Equality-matching work routines to pick up
+                    extra labor at predictable times
+
+For favor exchange, we can say most of the benefit comes from
+things that could be traded reciprocally. But things will just
+be easier and a few more trades possible with higher alignment.
+Because of diminishing returns on utility, high alignment also
+creates a desire to equalize, so we could add a little asymmetry,
+though we'd have to have utility for that. For now we'll index
+80% on trust, 20% on alignment. If alignment influences trust,
+we can use just trust.
+
+Now, how do we determine trust? First let's run through some
+scenarios:
+
+*   Positive interaction for a long time: Should have high trust,
+    practically despite any other factors, though negative alignment
+    or other red flags could affect it.
+*   New arrivals in village known to kin: This will depend somewhat
+    on clans' beliefs about this situation, which would probably
+    also depend on their prior experience with such. But, in this
+    case, it seems likely that they'd more or less trust the new
+    arrivals, just not massively right away.
+*   Partner frequently denies our favor requests: We don't expect
+    this to happen too much in a village setting, because word is
+    going to get around, so they wouldn't want to do that.
+*   Partner fails our favor request because they don't have anything
+    for us.
+
+We also need to think about how/why these dyadic mutual aid
+systems break down with scale. Basically, it must get hard to
+track tit for tat as the number of partners increases. But,
+the points above seem to imply a cooperative equilibrium, since
+everyone benefits by having cooperation work. Let's think more
+carefully. In general, we expect different families of a clan to
+be exchanging favors with different other families. So the clan
+has to internally gossip in order to aggregate opinion of other
+clans, though some family-family cooperation could go on based
+on trust just between those two. But there are only so many
+families in a clan to make that kind of connection, so the
+bandwidth is still limited. So what happens if we try to trade
+favors with 20 other clans? In many cases we might be unclear
+whom we even owe favors to. But I think the basic problem is,
+we don't know them. If we literally don't know who they are,
+then there can't be a track record nor expectation of reciprocity.
+Right now we seem to allow everyone to know every other clan
+and interact with them a little bit. I don't think that can
+be right with large scale, though, and the problem there is
+interaction costs. Second, even if we know them, but interact
+only a little bit, then there's only so much ground for trust
+built. It does also seem that clans should get confused at least
+a little if dealing with lots of other clans, so we probably
+should at least have a per-clan interaction cost. There should
+also be a minimum fractional attention to get any trust at
+all - if interactions are infrequent beyond a critical level,
+there is essentially no track record (though there could be
+other sources of trust such as alignment).
+
+The key factors so far are track record and alignment. But in
+general their behavior toward other clans should matter too.
+But that's just their track record with others, so let's think
+about what track record actually is first. We can imagine a
+clan having a sequence of interactions (with another clan or
+multiple other clans) in which it behaves "nice" or "nasty".
+Our clan then wants to predict which they'll do next in order
+to respond appropriately. That could get complicated, with a
+lot of different strategies, but we could start with a nasty
+countering 5 nices or so. A full analysis would get really
+complicated, so instead we can use some heuristic guesses for
+how much an instance of misbehavior affects the effective
+trust in the relationship.
+
+Pulling it all together, a primary component can be trust
+via a moving average/decay function on nice/nasty behavior
+starting from alignment. Alignment should also matter
+generally. Lack of information could lead to a limit on
+max trust.
+
+But wait: Can trust be based that much on track record, or
+does it have to be primarily based on kinship at first? At
+least neighbors should generally be able to come to trust
+each other. I think what we have is OK, keeping in mind
+that alignment will influence trust directly and indirectly,
+and that for other purposes, like letting people move in or
+supporting them in a conflict, alignment or some other such
+would be the main factor.
+
+# Items
+
+Rough growth sequence:
 
 *   Hunting and gathering, including gathering of cereals
 *   Hunting and gathering with some cultivation
@@ -374,6 +524,16 @@ to start building a more advanced granary as a further amenity.
 Detailed list of first parts:
 
 *   Precursors
+    *   The new trust model:
+        *   Trust and target trust start at alignment
+        *   Each turn's events result in various pluses and minuses
+            to target trust, then average to get trust
+        *   Limited information => reduction in max trust for this
+            kind of relationship
+        *   Variable interaction costs
+        *   Per-clan interaction cost
+        *   (P2) Variable trust strategies
+        *   (P2) Mutual aid partial defectors
     *   Mutual aid
         x   Have clans prefer more trusted clans
         *   (P2) Differential ability to help
