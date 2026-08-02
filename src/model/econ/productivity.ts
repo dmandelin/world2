@@ -100,5 +100,15 @@ export class ProductivityItem {
             'Flood control',
             differentialProductivity,
             pct(ditchQuality));
+
+        // Random component: agricultural yields are somewhat random.
+        const v = 1 + 0.3 * (Math.random() + Math.random());
+        const m = Math.random() < 0.5 ? v : 1 / v;
+
+        yield new ProductivityItem(
+            'Random',
+            m,
+            `${pct(m)} of average`,
+        );
     }
 }
