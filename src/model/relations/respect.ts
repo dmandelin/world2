@@ -24,6 +24,10 @@ export class Respect {
             RespectItem.forStress(subject, object),
             RespectItem.forStandardOfLiving(subject, object),
             RespectItem.forRandom(subject, object),
+
+            // TODO - Add size component?
+            // TODO - Add seniority component, depending on culture?
+            // TODO - Add "beauty" component?
         ];
     }
 
@@ -84,7 +88,7 @@ export class RespectItem {
         return new RespectItem(
             'Generosity',
             foodGiven,
-            10,
+            2,
             `Generosity`
         );
     }

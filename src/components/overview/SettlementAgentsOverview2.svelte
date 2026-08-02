@@ -5,7 +5,12 @@
         IterableTable,
         SingleMapTable,
     } from "../tables/tables2";
-    import { MutualAidInteraction, clanHelpDemand, getHelpReceivedValueFromMutualAid, getHelpProductivityModifier } from "../../model/relations/mutualaid";
+    import {
+        MutualAidInteraction,
+        clanHelpDemand,
+        getHelpReceivedValueFromMutualAid,
+        getHelpProductivityModifier,
+    } from "../../model/relations/mutualaid";
     import {
         pct,
         pctFormat,
@@ -36,8 +41,14 @@
     import type { Process } from "../../model/econ/process";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     import { get } from "svelte/store";
-    import { connectionsOf, MarriageConnection } from "../../model/relations/connection";
-    import { getMarriageDecisions, type MarriageDecisions } from "../../model/relations/marriage";
+    import {
+        connectionsOf,
+        MarriageConnection,
+    } from "../../model/relations/connection";
+    import {
+        getMarriageDecisions,
+        type MarriageDecisions,
+    } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import LineGraph from "../LineGraph.svelte";
     import {
@@ -102,7 +113,11 @@
         scaler?: YAxisScaler;
     }
 
-    function getPairingCount(decisions: MarriageDecisions, c1: ClanDTO, c2: ClanDTO): number {
+    function getPairingCount(
+        decisions: MarriageDecisions,
+        c1: ClanDTO,
+        c2: ClanDTO,
+    ): number {
         for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
             if (hClan.uuid === c1.uuid) {
                 for (const [wClan, count] of map.entries()) {
@@ -113,6 +128,19 @@
             }
         }
         return 0;
+    }
+
+    function getMarriageInterestItemValue(
+        world: WorldDTO,
+        observer: ClanDTO,
+        target: ClanDTO,
+        label: string,
+    ): number {
+        const r = world.marriageInterestToward(observer, target);
+        if (!r) return 0;
+        const infoMultiplier = Math.max(0, Math.min(1, r.informationValue));
+        const item = r.items.find((i) => i.label === label);
+        return item ? item.value * infoMultiplier : 0;
     }
 
     let rowGroups = $derived.by<RowDef[][]>(() => {
@@ -256,10 +284,16 @@
                     let totalValue = 0;
                     for (const other of world.clanMap.values()) {
                         if (c.uuid === other.uuid) continue;
-                        const interactions = world.interactions.get(c.ref, other.ref);
-                        const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+                        const interactions = world.interactions.get(
+                            c.ref,
+                            other.ref,
+                        );
+                        const ma = interactions.find(
+                            (i) => i instanceof MutualAidInteraction,
+                        ) as MutualAidInteraction | undefined;
                         if (ma) {
-                            totalValue += ma.amount * (1 - ma.icebergCost) * ma.trust;
+                            totalValue +=
+                                ma.amount * (1 - ma.icebergCost) * ma.trust;
                         }
                     }
                     const demand = clanHelpDemand(c.population);
@@ -272,10 +306,16 @@
                     let totalValue = 0;
                     for (const other of world.clanMap.values()) {
                         if (c.uuid === other.uuid) continue;
-                        const interactions = world.interactions.get(c.ref, other.ref);
-                        const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined;
+                        const interactions = world.interactions.get(
+                            c.ref,
+                            other.ref,
+                        );
+                        const ma = interactions.find(
+                            (i) => i instanceof MutualAidInteraction,
+                        ) as MutualAidInteraction | undefined;
                         if (ma) {
-                            totalValue += ma.amount * (1 - ma.icebergCost) * ma.trust;
+                            totalValue +=
+                                ma.amount * (1 - ma.icebergCost) * ma.trust;
                         }
                     }
                     const demand = clanHelpDemand(c.population);
@@ -292,7 +332,10 @@
                 cellClass: "rap",
                 value: (c) => {
                     const world = settlement.world;
-                    const helpValue = getHelpReceivedValueFromMutualAid(world, c.ref);
+                    const helpValue = getHelpReceivedValueFromMutualAid(
+                        world,
+                        c.ref,
+                    );
                     const demand = clanHelpDemand(c.population);
                     return getHelpProductivityModifier(helpValue, demand);
                 },
@@ -300,7 +343,10 @@
                 tooltipSnippet: helpProductivityModifierTooltip,
                 deltaValue: (c) => {
                     const world = settlement.world;
-                    const helpValue = getHelpReceivedValueFromMutualAid(world, c.ref);
+                    const helpValue = getHelpReceivedValueFromMutualAid(
+                        world,
+                        c.ref,
+                    );
                     const demand = clanHelpDemand(c.population);
                     return getHelpProductivityModifier(helpValue, demand);
                 },
@@ -330,10 +376,10 @@
                 class: "actual",
                 cellClass: "rap",
                 value: (c) => c.marriageAppealAverage,
-                format: (v) => signed(v, 2),
+                format: (v) => signed(v, 1),
                 tooltipSnippet: marriageAppealTooltip,
                 deltaValue: (c) => c.marriageAppealAverage,
-                deltaFormat: (v) => signed(v, 2),
+                deltaFormat: (v) => signed(v, 1),
                 timelineKey: "marriageAppealAverage",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["perceptions"],
@@ -343,9 +389,9 @@
                 class: "actual",
                 cellClass: "rap",
                 value: (c) => c.marriageAppealStdDev,
-                format: (v) => v.toFixed(2),
+                format: (v) => v.toFixed(1),
                 deltaValue: (c) => c.marriageAppealStdDev,
-                deltaFormat: (v) => signed(v, 2),
+                deltaFormat: (v) => signed(v, 1),
                 timelineKey: "marriageAppealStdDev",
                 scaler: new DefaultScaler(),
                 topics: ["perceptions"],
@@ -356,7 +402,9 @@
                 cellClass: "rap",
                 value: (c) => {
                     const world = settlement.world;
-                    const decisions = world.lastMarriageDecisions ?? getMarriageDecisions(world as any);
+                    const decisions =
+                        world.lastMarriageDecisions ??
+                        getMarriageDecisions(world as any);
                     let weightedSum = 0;
                     let totalMarriages = 0;
                     for (const other of world.clanMap.values()) {
@@ -369,9 +417,11 @@
                             totalMarriages += count;
                         }
                     }
-                    return totalMarriages > 0 ? weightedSum / totalMarriages : null;
+                    return totalMarriages > 0
+                        ? weightedSum / totalMarriages
+                        : null;
                 },
-                format: (v) => v === null ? "" : signed(v, 1),
+                format: (v) => (v === null ? "" : signed(v, 1)),
                 tooltipSnippet: avgWeddingAppealTooltip,
                 topics: ["perceptions", "demographics"],
             },
@@ -385,7 +435,11 @@
                     let totalWeight = 0;
                     for (const other of world.clanMap.values()) {
                         if (other.uuid === c.uuid) continue;
-                        const conn = world.connections.getForType(c, other, MarriageConnection);
+                        const conn = world.connections.getForType(
+                            c,
+                            other,
+                            MarriageConnection,
+                        );
                         if (conn && conn.relatedness > 0) {
                             const mi = world.marriageInterestToward(c, other);
                             const appeal = mi ? mi.value : 0;
@@ -395,7 +449,7 @@
                     }
                     return totalWeight > 0 ? weightedSum / totalWeight : null;
                 },
-                format: (v) => v === null ? "" : signed(v, 1),
+                format: (v) => (v === null ? "" : signed(v, 1)),
                 tooltipSnippet: avgPartnerAppealTooltip,
                 topics: ["perceptions", "welfare"],
             },
@@ -413,10 +467,16 @@
                 label: "&nbsp;Produced",
                 class: "actual",
                 cellClass: "ra",
-                value: (c) => c.netFlows ? c.netFlows.totalFoodProduced / (c.population || 1) : 0,
+                value: (c) =>
+                    c.netFlows
+                        ? c.netFlows.totalFoodProduced / (c.population || 1)
+                        : 0,
                 format: pct,
                 tooltipSnippet: foodProducedTooltip,
-                deltaValue: (c) => c.netFlows ? c.netFlows.totalFoodProduced / (c.population || 1) : 0,
+                deltaValue: (c) =>
+                    c.netFlows
+                        ? c.netFlows.totalFoodProduced / (c.population || 1)
+                        : 0,
                 deltaFormat: pct,
                 timelineKey: "foodProduced",
                 scaler: new DefaultScaler(),
@@ -426,10 +486,16 @@
                 label: "&nbsp;Transferred",
                 class: "actual",
                 cellClass: "ra",
-                value: (c) => c.netFlows ? c.netFlows.netFoodTransferred / (c.population || 1) : 0,
+                value: (c) =>
+                    c.netFlows
+                        ? c.netFlows.netFoodTransferred / (c.population || 1)
+                        : 0,
                 format: (v) => (v > 0 ? "+" : "") + pct(v),
                 tooltipSnippet: foodTransferredTooltip,
-                deltaValue: (c) => c.netFlows ? c.netFlows.netFoodTransferred / (c.population || 1) : 0,
+                deltaValue: (c) =>
+                    c.netFlows
+                        ? c.netFlows.netFoodTransferred / (c.population || 1)
+                        : 0,
                 deltaFormat: (v) => (v > 0 ? "+" : "") + pct(v),
                 timelineKey: "foodTransferred",
                 scaler: new ZeroCenteredScaler(),
@@ -675,30 +741,35 @@
     }
 
     function clanFoodProductionTooltipTable(clan: ClanDTO) {
-        const reports = clan.production.rs.filter((opr) => opr.good.isSubsistence);
-        return new IterableTable(
-            reports,
-            (opr) => opr.good.name,
-            [
-                {
-                    data: "Amount",
-                    label: "Total Produced",
-                    valueFn: (opr) => opr.amount,
-                    formatFn: unsignedFormat(1),
-                },
-                {
-                    data: "PerCapita",
-                    label: "Per Capita",
-                    valueFn: (opr) => (clan.population > 0 ? opr.amount / clan.population : 0),
-                    formatFn: pctFormat(0),
-                },
-            ],
+        const reports = clan.production.rs.filter(
+            (opr) => opr.good.isSubsistence,
         );
+        return new IterableTable(reports, (opr) => opr.good.name, [
+            {
+                data: "Amount",
+                label: "Total Produced",
+                valueFn: (opr) => opr.amount,
+                formatFn: unsignedFormat(1),
+            },
+            {
+                data: "PerCapita",
+                label: "Per Capita",
+                valueFn: (opr) =>
+                    clan.population > 0 ? opr.amount / clan.population : 0,
+                formatFn: pctFormat(0),
+            },
+        ]);
     }
 
     function clanFoodTransferredTooltipTable(clan: ClanDTO) {
         if (!clan.netFlows) return undefined;
-        const rows: { type: string; partner: string; good: string; amount: number; cost?: number }[] = [];
+        const rows: {
+            type: string;
+            partner: string;
+            good: string;
+            amount: number;
+            cost?: number;
+        }[] = [];
         for (const g of clan.netFlows.gotten) {
             if (g.good.isSubsistence) {
                 rows.push({
@@ -825,11 +896,71 @@
                     formatFn: unsignedFormat(0),
                 },
                 {
+                    data: "Generosity",
+                    label: "Generosity",
+                    valueFn: (c) =>
+                        getMarriageInterestItemValue(
+                            clan.world,
+                            c,
+                            clan,
+                            "Generosity",
+                        ),
+                    formatFn: (v: number) => signed(v, 1),
+                },
+                {
+                    data: "Skills",
+                    label: "Skills",
+                    valueFn: (c) =>
+                        getMarriageInterestItemValue(
+                            clan.world,
+                            c,
+                            clan,
+                            "Skills",
+                        ),
+                    formatFn: (v: number) => signed(v, 1),
+                },
+                {
+                    data: "Stress",
+                    label: "Stress",
+                    valueFn: (c) =>
+                        getMarriageInterestItemValue(
+                            clan.world,
+                            c,
+                            clan,
+                            "Stress",
+                        ),
+                    formatFn: (v: number) => signed(v, 1),
+                },
+                {
+                    data: "Standard of Living",
+                    label: "SoL",
+                    valueFn: (c) =>
+                        getMarriageInterestItemValue(
+                            clan.world,
+                            c,
+                            clan,
+                            "Standard of Living",
+                        ),
+                    formatFn: (v: number) => signed(v, 1),
+                },
+                {
+                    data: "Random",
+                    label: "Random",
+                    valueFn: (c) =>
+                        getMarriageInterestItemValue(
+                            clan.world,
+                            c,
+                            clan,
+                            "Random",
+                        ),
+                    formatFn: (v: number) => signed(v, 1),
+                },
+                {
                     data: "Interest",
                     label: "Interest",
                     valueFn: (c) =>
                         clan.world.marriageInterestToward(c, clan)?.value ?? 0,
-                    formatFn: (v: number) => signed(v, 2),
+                    formatFn: (v: number) => signed(v, 1),
                 },
             ],
         );
@@ -1296,18 +1427,34 @@
     {@const demand = clanHelpDemand(clan.population)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
         <strong>Mutual Aid Satisfaction (Value Sat):</strong>
-        <p style="margin: 0.25rem 0;">Satisfaction based on net help value received relative to demand.</p>
-        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+        <p style="margin: 0.25rem 0;">
+            Satisfaction based on net help value received relative to demand.
+        </p>
+        <ul
+            style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+        >
             <li>• Help demand: {unsigned(demand, 1)}</li>
-            <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+            <hr
+                style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+            />
             {#each Array.from(world.clanMap.values()) as other}
                 {#if clan.uuid !== other.uuid}
-                    {@const interactions = world.interactions.get(clan.ref, other.ref)}
-                    {@const ma = interactions.find(i => i instanceof MutualAidInteraction) as MutualAidInteraction | undefined}
+                    {@const interactions = world.interactions.get(
+                        clan.ref,
+                        other.ref,
+                    )}
+                    {@const ma = interactions.find(
+                        (i) => i instanceof MutualAidInteraction,
+                    ) as MutualAidInteraction | undefined}
                     {#if ma && ma.amount > 0}
                         {@const netVal = ma.amount * (1 - ma.icebergCost)}
                         {@const valueVal = netVal * ma.trust}
-                        <li>• From {other.name}: {unsigned(valueVal, 1)} (net: {unsigned(netVal, 1)} × trust: {unsigned(ma.trust, 2)})</li>
+                        <li>
+                            • From {other.name}: {unsigned(valueVal, 1)} (net: {unsigned(
+                                netVal,
+                                1,
+                            )} × trust: {unsigned(ma.trust, 2)})
+                        </li>
                     {/if}
                 {/if}
             {/each}
@@ -1323,15 +1470,24 @@
     {@const modifier = getHelpProductivityModifier(helpValue, demand)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
         <strong>Help Productivity Modifier:</strong>
-        <p style="margin: 0.25rem 0;">A multiplier applied to Agriculture productivity based on help value received.</p>
-        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+        <p style="margin: 0.25rem 0;">
+            A multiplier applied to Agriculture productivity based on help value
+            received.
+        </p>
+        <ul
+            style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+        >
             <li>• Net help value received: {unsigned(helpValue, 1)}</li>
             <li>• Help demand: {unsigned(demand, 1)}</li>
             <li>• Help ratio: {pct(demand > 0 ? helpValue / demand : 1.0)}</li>
-            <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+            <hr
+                style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+            />
             <li>• Modifier: <strong>{spct(modifier)}</strong></li>
         </ul>
-        <div style="font-size: 0.8em; color: #6e5b47; font-style: italic; margin-top: 0.25rem;">
+        <div
+            style="font-size: 0.8em; color: #6e5b47; font-style: italic; margin-top: 0.25rem;"
+        >
             Curve: 0.6 if no help, 1.0 if exactly met, maxes out around 1.3.
         </div>
     </div>
@@ -1340,17 +1496,27 @@
 {#snippet avgWeddingAppealTooltip(cs: ClanLastTurnSnapshots)}
     {@const world = settlement.world}
     {@const clan = cs.e}
-    {@const decisions = world.lastMarriageDecisions ?? getMarriageDecisions(world as any)}
+    {@const decisions =
+        world.lastMarriageDecisions ?? getMarriageDecisions(world as any)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
         <strong>Avg Wedding Appeal:</strong>
-        <p style="margin: 0.25rem 0;">Average marriage appeal of {clan.name} toward its marriage partners last turn, weighted by the number of marriages with each partner.</p>
-        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+        <p style="margin: 0.25rem 0;">
+            Average marriage appeal of {clan.name} toward its marriage partners last
+            turn, weighted by the number of marriages with each partner.
+        </p>
+        <ul
+            style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+        >
             {#each Array.from(world.clanMap.values()) as other}
                 {#if clan.uuid !== other.uuid}
                     {@const count = getPairingCount(decisions, clan, other)}
                     {#if count > 0}
                         {@const mi = world.marriageInterestToward(clan, other)}
-                        <li>• With {other.name}: {count} marriage{count > 1 ? 's' : ''} (Appeal: {mi ? signed(mi.value, 1) : "0"})</li>
+                        <li>
+                            • With {other.name}: {count} marriage{count > 1
+                                ? "s"
+                                : ""} (Appeal: {mi ? signed(mi.value, 1) : "0"})
+                        </li>
                     {/if}
                 {/if}
             {/each}
@@ -1363,14 +1529,26 @@
     {@const clan = cs.e}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
         <strong>Avg Partner Appeal:</strong>
-        <p style="margin: 0.25rem 0;">Average marriage appeal of {clan.name} toward all clans it is currently related to by marriage, weighted by relatedness.</p>
-        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
+        <p style="margin: 0.25rem 0;">
+            Average marriage appeal of {clan.name} toward all clans it is currently
+            related to by marriage, weighted by relatedness.
+        </p>
+        <ul
+            style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+        >
             {#each Array.from(world.clanMap.values()) as other}
                 {#if clan.uuid !== other.uuid}
-                    {@const conn = world.connections.getForType(clan, other, MarriageConnection)}
+                    {@const conn = world.connections.getForType(
+                        clan,
+                        other,
+                        MarriageConnection,
+                    )}
                     {#if conn && conn.relatedness > 0}
                         {@const mi = world.marriageInterestToward(clan, other)}
-                        <li>• With {other.name}: {pct(conn.relatedness)} related (Appeal: {mi ? signed(mi.value, 1) : "0"})</li>
+                        <li>
+                            • With {other.name}: {pct(conn.relatedness)} related
+                            (Appeal: {mi ? signed(mi.value, 1) : "0"})
+                        </li>
                     {/if}
                 {/if}
             {/each}
