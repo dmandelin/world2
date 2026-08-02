@@ -8,6 +8,7 @@
     import { MutualAidInteraction, clanHelpDemand, getHelpReceivedValueFromMutualAid, getHelpProductivityModifier } from "../../model/relations/mutualaid";
     import {
         pct,
+        pctFormat,
         signed,
         signedFormat,
         spct,
@@ -405,6 +406,38 @@
             {
                 label: "Food",
                 class: "actual",
+                isHeader: true,
+                topics: ["food", "welfare"],
+            },
+            {
+                label: "&nbsp;Produced",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => c.netFlows ? c.netFlows.totalFoodProduced / (c.population || 1) : 0,
+                format: pct,
+                tooltipSnippet: foodProducedTooltip,
+                deltaValue: (c) => c.netFlows ? c.netFlows.totalFoodProduced / (c.population || 1) : 0,
+                deltaFormat: pct,
+                timelineKey: "foodProduced",
+                scaler: new DefaultScaler(),
+                topics: ["food"],
+            },
+            {
+                label: "&nbsp;Transferred",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => c.netFlows ? c.netFlows.netFoodTransferred / (c.population || 1) : 0,
+                format: (v) => (v > 0 ? "+" : "") + pct(v),
+                tooltipSnippet: foodTransferredTooltip,
+                deltaValue: (c) => c.netFlows ? c.netFlows.netFoodTransferred / (c.population || 1) : 0,
+                deltaFormat: (v) => (v > 0 ? "+" : "") + pct(v),
+                timelineKey: "foodTransferred",
+                scaler: new ZeroCenteredScaler(),
+                topics: ["food"],
+            },
+            {
+                label: "&nbsp;Consumed",
+                class: "actual",
                 cellClass: "ra",
                 value: (c) => c.consumption.perCapitaFood,
                 format: pct,
@@ -414,19 +447,6 @@
                 timelineKey: "food",
                 scaler: new DefaultScaler(),
                 topics: ["food", "welfare"],
-            },
-            {
-                label: "&nbsp;Target",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) => c.targetPerCapitaFood,
-                format: pct,
-                tooltipSnippet: targetFoodTooltip,
-                deltaValue: (c) => c.targetPerCapitaFood,
-                deltaFormat: pct,
-                timelineKey: "targetFood",
-                scaler: new DefaultScaler(),
-                topics: ["food"],
             },
             {
                 label: "Food Storage",
@@ -649,6 +669,88 @@
                     label: "Wasted",
                     valueFn: (cg) => cg.wasted,
                     formatFn: unsignedFormat(2),
+                },
+            ],
+        );
+    }
+
+    function clanFoodProductionTooltipTable(clan: ClanDTO) {
+        const reports = clan.production.rs.filter((opr) => opr.good.isSubsistence);
+        return new IterableTable(
+            reports,
+            (opr) => opr.good.name,
+            [
+                {
+                    data: "Amount",
+                    label: "Total Produced",
+                    valueFn: (opr) => opr.amount,
+                    formatFn: unsignedFormat(1),
+                },
+                {
+                    data: "PerCapita",
+                    label: "Per Capita",
+                    valueFn: (opr) => (clan.population > 0 ? opr.amount / clan.population : 0),
+                    formatFn: pctFormat(0),
+                },
+            ],
+        );
+    }
+
+    function clanFoodTransferredTooltipTable(clan: ClanDTO) {
+        if (!clan.netFlows) return undefined;
+        const rows: { type: string; partner: string; good: string; amount: number; cost?: number }[] = [];
+        for (const g of clan.netFlows.gotten) {
+            if (g.good.isSubsistence) {
+                rows.push({
+                    type: "Gotten",
+                    partner: g.clan.name,
+                    good: g.good.name,
+                    amount: g.amount,
+                    cost: g.transactionCost ?? 0,
+                });
+            }
+        }
+        for (const g of clan.netFlows.given) {
+            if (g.good.isSubsistence) {
+                rows.push({
+                    type: "Given",
+                    partner: g.clan.name,
+                    good: g.good.name,
+                    amount: g.amount,
+                    cost: 0,
+                });
+            }
+        }
+        return new IterableTable(
+            rows,
+            (r) => `${r.type} ${r.partner} (${r.good})`,
+            [
+                {
+                    data: "Type",
+                    label: "Direction",
+                    valueFn: (r) => r.type,
+                },
+                {
+                    data: "Partner",
+                    label: "Partner",
+                    valueFn: (r) => r.partner,
+                },
+                {
+                    data: "Good",
+                    label: "Good",
+                    valueFn: (r) => r.good,
+                },
+                {
+                    data: "Amount",
+                    label: "Amount",
+                    valueFn: (r) => r.amount,
+                    formatFn: unsignedFormat(1),
+                },
+                {
+                    data: "Cost",
+                    label: "Trans. Cost",
+                    valueFn: (r) => r.cost ?? 0,
+                    formatFn: unsignedFormat(1),
                 },
             ],
         );
@@ -1128,11 +1230,20 @@
     <TableView2 table={clanQolTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet foodTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
+{#snippet foodProducedTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanFoodProductionTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet targetFoodTooltip(cs: ClanLastTurnSnapshots)}
+{#snippet foodTransferredTooltip(cs: ClanLastTurnSnapshots)}
+    {@const table = clanFoodTransferredTooltipTable(cs.e)}
+    {#if table && table.rows.length > 0}
+        <TableView2 {table}></TableView2>
+    {:else}
+        <div style="padding: 4px;">No food transfers</div>
+    {/if}
+{/snippet}
+
+{#snippet foodTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
 {/snippet}
 

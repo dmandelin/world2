@@ -91,7 +91,6 @@
         // Group 4: Food
         groups.push([
             { label: "Food", value: (c) => c.consumption.perCapitaFood, format: pct },
-            { label: "Food Target", value: (c) => c.targetPerCapitaFood, format: pct },
             { label: "Food Storage", value: (c) => c.consumption.perCapitaFoodStock, format: pct },
         ]);
 

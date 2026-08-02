@@ -24,6 +24,7 @@ import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { Stress } from "./stress";
+import { NetFlows } from "../econ/netflows";
 import { BasicInteraction } from "../relations/basicinteraction";
 
 const CLAN_NAMES: string[] = [
@@ -126,12 +127,12 @@ export class Clan implements TradePartner {
     helpAllocation: HelpAllocation = new HelpAllocation();
     operations: Operation[] = [];
 
-    targetPerCapitaFood: number;
     readonly tradeRelationships = new Set<TradeRelationship>();
 
     stress = new Stress();
 
     production: ProductionReport = new ProductionReport([]);
+    netFlows: NetFlows = new NetFlows();
     consumption: Consumption;
     qol: QualityOfLife = new QualityOfLife(new Map());
 
@@ -182,8 +183,6 @@ export class Clan implements TradePartner {
             new Operation(this, Processes.Fishing),
             new Operation(this, Processes.Agriculture),
         ]
-
-        this.targetPerCapitaFood = 0.9 + (randInt(3) + randInt(3)) * 0.1;
 
         // Must go after initializing production nodes since it builds effort for them.
         this.effortAllocation = new EffortAllocation(this);

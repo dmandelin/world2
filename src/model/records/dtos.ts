@@ -15,6 +15,7 @@ import type { MarriageDecisions } from "../relations/marriage";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
+import type { NetFlows } from "../econ/netflows";
 import type { QualityOfLife } from "../econ/qol";
 import type { ResidenceLevel } from "../people/residence";
 import type { Rites } from "../rites";
@@ -90,12 +91,12 @@ export class ClanDTO {
 
     effort: number;
     production: ProductionReport;
+    netFlows: NetFlows;
     consumption: Consumption;
     stress: Stress;
     qol: QualityOfLife;
 
     isDitching: boolean;
-    targetPerCapitaFood: number;
     effortAllocation: EffortAllocation;
     workers: number;
     seniority: number;
@@ -131,12 +132,12 @@ export class ClanDTO {
 
         this.effort = clan.effort;
         this.production = clan.production;
+        this.netFlows = clan.netFlows;
         this.consumption = clan.consumption;
         this.stress = clan.stress.clone();
         this.qol = clan.qol;
 
         this.isDitching = clan.isDitching;
-        this.targetPerCapitaFood = clan.targetPerCapitaFood;
         this.effortAllocation = clan.effortAllocation.clone();
         this.seniority = clan.seniority;
         this.population = clan.population;

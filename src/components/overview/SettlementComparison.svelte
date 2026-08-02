@@ -15,7 +15,9 @@
         { key: "avgWeddingAppeal", label: "Avg Wedding Appeal" },
         { key: "brModifier", label: "Birth Rate Modifier" },
         { key: "drModifier", label: "Death Rate Modifier" },
-        { key: "food", label: "Food" },
+        { key: "foodProduced", label: "Food Produced" },
+        { key: "foodTransferred", label: "Food Transferred" },
+        { key: "food", label: "Food Consumed" },
         { key: "foodStorage", label: "Food Storage" },
         { key: "appeal", label: "Happiness" },
         { key: "marriageAppealStdDev", label: "Marriage Appeal SD" },
@@ -35,7 +37,6 @@
         { key: "socialAppeal", label: "Social Welfare" },
         { key: "stress", label: "Stress" },
         { key: "supportRatio", label: "Support Ratio" },
-        { key: "targetFood", label: "Target Food" },
         { key: "workers", label: "Workers" },
     ];
 

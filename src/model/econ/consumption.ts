@@ -2,6 +2,7 @@ import { Activities, type Activity, EffortAllocation } from "../decisions/effort
 import { FoodQualityHappinessItem, FoodQuantityHappinessItem, LeisureHappinessItem } from "../people/happiness";
 import { TradeGoods, type TradeGood } from "../trade";
 import type { ProductionReport } from "./operation";
+import { NetFlows } from "./netflows";
 
 // Consumption data.
 export class Consumption {
@@ -20,15 +21,15 @@ export class Consumption {
     static from(
         population: number, 
         effortAllocation: EffortAllocation, 
-        produce: ProductionReport): Consumption {
+        source: ProductionReport | NetFlows): Consumption {
 
-        const p = produce.totals();
+        const netFlows = source instanceof NetFlows ? source : new NetFlows(source);
         const m = new Map<TradeGood, ConsumptionGood>();
 
         let unmetFoodDesire = 1;
 
         // Consume fish immediately, with any excess wasted.
-        const fishCg = population > 0 ? (p.get(TradeGoods.Fish) ?? 0) / population : 0;
+        const fishCg = population > 0 ? netFlows.netGood(TradeGoods.Fish) / population : 0;
         if (fishCg) {
             const fishConsumed = Math.min(fishCg, unmetFoodDesire);
             unmetFoodDesire -= fishConsumed;
@@ -43,7 +44,7 @@ export class Consumption {
         }
 
         // Consume cereals, putting any excess into storage.
-        const cerealsCg = population > 0 ? (p.get(TradeGoods.Cereals) ?? 0) / population : 0;
+        const cerealsCg = population > 0 ? netFlows.netGood(TradeGoods.Cereals) / population : 0;
         if (cerealsCg) {
             const cerealsConsumed = Math.min(cerealsCg, unmetFoodDesire);
             const excessCereals = cerealsCg - cerealsConsumed;
@@ -78,8 +79,13 @@ export class Consumption {
         }
 
         // Consume other goods directly.
-        for (const [good, amount] of p.entries()) {
+        const goodsSet = new Set<TradeGood>([
+            ...netFlows.produced.keys(),
+            ...netFlows.gotten.map(r => r.good)
+        ]);
+        for (const good of goodsSet) {
             if (good === TradeGoods.Fish || good === TradeGoods.Cereals) continue;
+            const amount = netFlows.netGood(good);
             m.set(good, {
                 good,
                 consumed: population > 0 ? amount / population : 0,

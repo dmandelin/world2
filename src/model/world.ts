@@ -1,5 +1,5 @@
 import { Annals } from "./annals";
-import { chooseFrom, removeAll, sumFun, dice } from "./lib/basics";
+import { chooseFrom, removeAll, sumFun, dice, shuffled } from "./lib/basics";
 import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { connectedClans, ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { createTrends } from "./records/trends";
@@ -8,6 +8,9 @@ import { updateBasicInteractions } from "./relations/basicinteraction";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { isExemplarClan, log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { economicResult } from "./econ/economy";
+import { NetFlows } from "./econ/netflows";
+import { Consumption } from "./econ/consumption";
+import { QualityOfLife } from "./econ/qol";
 import { marry, MarriageDecisions } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
@@ -357,24 +360,102 @@ export class World implements NoteTaker {
     }
 
     advanceEconomy() {
-        // Advance economy.
+        const allClans: Clan[] = [];
         for (const cl of this.clusters) {
             for (const settlement of cl.settlements) {
                 for (const clan of settlement.clans) {
+                    allClans.push(clan);
                     const r = economicResult(clan, clan.effortAllocation);
                     clan.production = r.production;
-                    clan.consumption = r.consumption;
-                    clan.qol = r.qol;
-                    if (isExemplarClan(clan)) {
-                        console.log(`Production for ${clan.name}:`);
-                        console.log(clan.effortAllocation);
-                        console.log(clan.production);
-                        console.log(clan.consumption);
-                        console.log(clan.qol);
-                    }
+                    clan.netFlows = new NetFlows(r.production);
                 }
             }
         }
+
+        this.redistributeFood(allClans);
+
+        for (const clan of allClans) {
+            clan.consumption = Consumption.from(clan.population, clan.effortAllocation, clan.netFlows);
+            clan.qol = QualityOfLife.from(clan.consumption);
+            if (isExemplarClan(clan)) {
+                console.log(`Production for ${clan.name}:`);
+                console.log(clan.effortAllocation);
+                console.log(clan.production);
+                console.log(clan.netFlows);
+                console.log(clan.consumption);
+                console.log(clan.qol);
+            }
+        }
+    }
+
+    redistributeFood(allClans: Clan[]) {
+        const ICEBERG_COST_DIFFERENT_SETTLEMENTS = 0.10;
+        let changed = true;
+        let roundCount = 0;
+        const maxRounds = 100;
+
+        while (changed && roundCount < maxRounds) {
+            changed = false;
+            roundCount++;
+
+            const needyClans = shuffled(allClans.filter(c => {
+                return c.netFlows.totalFood < c.population;
+            }));
+
+            if (needyClans.length === 0) break;
+
+            for (const needyClan of needyClans) {
+                let demand = needyClan.population - needyClan.netFlows.totalFood;
+                if (demand <= 1e-9) continue;
+
+                const partners = this.getRelationshipPartners(needyClan);
+                for (const partner of partners) {
+                    if (demand <= 1e-9) break;
+
+                    const partnerTotalFood = partner.netFlows.totalFood;
+                    if (partnerTotalFood <= partner.population) continue;
+
+                    const partnerCereals = partner.netFlows.netGood(TradeGoods.Cereals);
+                    if (partnerCereals <= 1e-9) continue;
+
+                    const spareFood = partnerTotalFood - partner.population;
+                    const spareCereals = Math.min(partnerCereals, spareFood);
+                    if (spareCereals <= 1e-9) continue;
+
+                    const sameSettlement = needyClan.settlement === partner.settlement;
+                    const costRate = sameSettlement ? 0 : ICEBERG_COST_DIFFERENT_SETTLEMENTS;
+                    const multiplier = 1 - costRate;
+
+                    const amountSent = Math.min(spareCereals, demand / multiplier);
+                    if (amountSent <= 1e-9) continue;
+
+                    const amountReceived = amountSent * multiplier;
+                    const transactionCost = amountSent - amountReceived;
+
+                    partner.netFlows.give(needyClan, TradeGoods.Cereals, amountSent);
+                    needyClan.netFlows.receive(partner, TradeGoods.Cereals, amountReceived, transactionCost);
+
+                    demand -= amountReceived;
+                    changed = true;
+                }
+            }
+        }
+    }
+
+    private getRelationshipPartners(clan: Clan): Clan[] {
+        const partners = new Set<Clan>();
+        for (const rel of clan.tradeRelationships) {
+            const partner = rel.partner(clan);
+            if (partner && 'population' in partner && 'netFlows' in partner) {
+                partners.add(partner as Clan);
+            }
+        }
+        if (this.connections) {
+            for (const other of connectedClans(clan)) {
+                partners.add(other);
+            }
+        }
+        return Array.from(partners);
     }
 
     recordEndOfTurnState() {

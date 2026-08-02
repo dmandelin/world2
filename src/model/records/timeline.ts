@@ -56,8 +56,9 @@ export class ClanTimePoint {
     readonly marriageAppealStdDev: number;
     readonly avgWeddingAppeal: number;
     readonly avgPartnerAppeal: number;
+    readonly foodProduced: number;
+    readonly foodTransferred: number;
     readonly food: number;
-    readonly targetFood: number;
     readonly foodStorage: number;
     readonly averagePrestige: number;
     readonly happiness: number;
@@ -151,8 +152,9 @@ export class ClanTimePoint {
         }
         this.avgPartnerAppeal = partnerTotalWeight > 0 ? partnerWeightedSum / partnerTotalWeight : 0;
 
+        this.foodProduced = clan.netFlows ? clan.netFlows.totalFoodProduced / (clan.population || 1) : 0;
+        this.foodTransferred = clan.netFlows ? clan.netFlows.netFoodTransferred / (clan.population || 1) : 0;
         this.food = clan.consumption.perCapitaFood;
-        this.targetFood = clan.targetPerCapitaFood;
         this.foodStorage = clan.consumption.perCapitaFoodStock;
         this.averagePrestige = getLocalPrestige(clan);
         this.happiness = clan.happinessValue;

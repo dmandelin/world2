@@ -484,6 +484,12 @@ integrated with conflicts anyway, so that we have one event
 stream for alignment and track record. Crop failures and
 flood events could then also be integrated.
 
+1-year turn change quick notes:
+
+*   Tooltips and displays on food are somewhat wonky,
+    probably just need to make more understandable.
+*   Status effects for food transfers.
+
 Let's quickly sketch how this could work.
 
 *   Each turn has a schedule of 5-10 steps, each of which
