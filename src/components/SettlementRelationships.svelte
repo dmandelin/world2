@@ -236,33 +236,49 @@
 {#snippet respectCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
     {@const r = world.respectToward(subject, object)}
     {#if r}
-        <TableView2
-            table={new IterableTable(r.items, (i) => i.label, [
-                {
-                    data: "Value",
-                    label: "Value",
-                    valueFn: (i) => i.value,
-                    formatFn: (i: number) => unsigned(i, 2),
-                },
-                {
-                    data: "Mod",
-                    label: "Mod",
-                    valueFn: (i) => i.modifier,
-                    formatFn: (i: number) => unsigned(i, 2),
-                },
-                {
-                    data: "Base",
-                    label: "Base",
-                    valueFn: (i) => i.baseValue,
-                    formatFn: (i: number) => unsigned(i, 2),
-                },
-                {
-                    data: "Explanation",
-                    label: "Explanation",
-                    valueFn: (i) => i.explanation,
-                },
-            ])}
-        ></TableView2>
+        <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+            <TableView2
+                table={new IterableTable(r.items, (i) => i.label, [
+                    {
+                        data: "Value",
+                        label: "Value",
+                        valueFn: (i) => i.value,
+                        formatFn: (i: number) => signed(i, 1),
+                    },
+                    {
+                        data: "Mod",
+                        label: "Mod",
+                        valueFn: (i) => i.modifier,
+                        formatFn: (i: number) => unsigned(i, 2),
+                    },
+                    {
+                        data: "Base",
+                        label: "Base",
+                        valueFn: (i) => i.baseValue,
+                        formatFn: (i: number) => signed(i, 1),
+                    },
+                    {
+                        data: "Explanation",
+                        label: "Explanation",
+                        valueFn: (i) => i.explanation,
+                    },
+                ])}
+            ></TableView2>
+            <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Previous Value:</span>
+                    <strong>{signed(r.previousValue, 1)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Current Items Total:</span>
+                    <strong>{signed(r.currentItemsTotal, 1)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
+                    <span>Current Value:</span>
+                    <strong>{signed(r.value, 1)}</strong>
+                </div>
+            </div>
+        </div>
     {/if}
 {/snippet}
 

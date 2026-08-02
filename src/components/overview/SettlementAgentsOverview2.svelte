@@ -956,6 +956,20 @@
                     formatFn: (v: number) => signed(v, 1),
                 },
                 {
+                    data: "Previous",
+                    label: "Prev",
+                    valueFn: (c) =>
+                        clan.world.marriageInterestToward(c, clan)?.previousValue ?? 0,
+                    formatFn: (v: number) => signed(v, 1),
+                },
+                {
+                    data: "Current Total",
+                    label: "Total",
+                    valueFn: (c) =>
+                        clan.world.marriageInterestToward(c, clan)?.currentItemsTotal ?? 0,
+                    formatFn: (v: number) => signed(v, 1),
+                },
+                {
                     data: "Interest",
                     label: "Interest",
                     valueFn: (c) =>

@@ -7,13 +7,22 @@ import { SkillDefs } from "../econ/econdefs";
 export class Respect {
     private items_: RespectItem[] = [];
     private informationValue_: number = 0;
+    private previousValue_: number = 0;
+    private value_: number = 0;
+
+    static readonly ALPHA = 0.1;
 
     get items(): readonly RespectItem[] { return this.items_; }
     get informationValue(): number { return this.informationValue_; }
+    get previousValue(): number { return this.previousValue_; }
 
-    get value(): number {
+    get currentItemsTotal(): number {
         const infoMultiplier = Math.max(0, Math.min(1, this.informationValue_));
         return sumFun(this.items_, i => i.value) * infoMultiplier;
+    }
+
+    get value(): number {
+        return this.value_;
     }
 
     updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
@@ -29,12 +38,17 @@ export class Respect {
             // TODO - Add seniority component, depending on culture?
             // TODO - Add "beauty" component?
         ];
+        this.previousValue_ = this.value_;
+        const currentTotal = this.currentItemsTotal;
+        this.value_ = Respect.ALPHA * currentTotal + (1 - Respect.ALPHA) * this.previousValue_;
     }
 
     clone(): Respect {
         const a = new Respect();
         a.items_ = [...this.items_];
         a.informationValue_ = this.informationValue_;
+        a.previousValue_ = this.previousValue_;
+        a.value_ = this.value_;
         return a;
     }
 }

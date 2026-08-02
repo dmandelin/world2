@@ -347,8 +347,6 @@
 )}
     {@const mi = world.marriageInterestToward(subject, object)}
     {#if mi && value !== null}
-        {@const rawTotal = mi.items.reduce((sum, item) => sum + item.value, 0)}
-        {@const infoMultiplier = Math.max(0, Math.min(1, mi.informationValue))}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
             <TableView2
                 table={new IterableTable(mi.items, (i) => i.label, [
@@ -373,15 +371,15 @@
             ></TableView2>
             <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                    <span>Raw Total:</span>
-                    <strong>{signed(rawTotal, 1)}</strong>
+                    <span>Previous Value:</span>
+                    <strong>{signed(mi.previousValue, 1)}</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                    <span>Information Multiplier:</span>
-                    <strong>{infoMultiplier.toFixed(2)}</strong>
+                    <span>Current Items Total:</span>
+                    <strong>{signed(mi.currentItemsTotal, 1)}</strong>
                 </div>
-                <div style="display: flex; justify-top: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
-                    <span>Final Value:</span>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
+                    <span>Current Value:</span>
                     <strong>{signed(mi.value, 1)}</strong>
                 </div>
             </div>
