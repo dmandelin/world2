@@ -1,7 +1,7 @@
 import { type Clan } from './people';
 import { type ClanSkill, type SkillDef } from './skills';
 import { moveToward } from '../lib/modelbasics';
-import { chooseWeighted, sumFun } from '../lib/basics';
+import { chooseWeighted, stochasticRound, sumFun } from '../lib/basics';
 
 // About skill changes
 //
@@ -115,7 +115,6 @@ export class ClanSkillChange {
     ) {
         // Base per-year rates
         const lossFactor = 0.005 * this.elapsedYears;
-        const lossSwing = 0.0025 * this.elapsedYears;
 
         // Maintaining traditions
         this.initialValue = skill.value;
@@ -132,8 +131,7 @@ export class ClanSkillChange {
             }
         }
         const expectedDeltaFromError = -adjustedLossFactor * this.initialValue;
-        const deltaFromError = expectedDeltaFromError
-            + this.initialValue * lossSwing * (Math.random() - Math.random());
+        const deltaFromError = stochasticRound(expectedDeltaFromError);
         this.items.push(new ClanSkillChangeItem('Error', deltaFromError, expectedDeltaFromError));
 
         // Focus influences learning rate.
@@ -145,7 +143,11 @@ export class ClanSkillChange {
         // faster than observation.
         //
         // "Clan skills" are developed internally and not via imitation.
-        if (!skillDef.clanSkill) {
+        //
+        // Imitation learning is disabled for now because clans become
+        // too similar in skill too fast. We need to allow some, but more
+        // conditionally.
+        if (false && !skillDef.clanSkill) {
             const maxImitationDelta = 0.75 * this.elapsedYears * this.focusFactor;
             this.imitationTargetItems = [...clan.settlement!.clans].map(
                 c => new ImitationTargetItem(
@@ -187,8 +189,9 @@ export class ClanSkillChange {
             const imitationTarget = chooseWeighted(this.imitationTargetItems, i => i.weight);
             imitationTarget.chosen = true;
             if (this.initialValue !== imitationTarget.trait) {
-                const imitationDelta = moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta) - this.initialValue;
-                const expectedImitationDelta = imitationTarget.weight * imitationDelta;
+                const continuousImitationDelta = moveToward(this.initialValue, imitationTarget.trait, maxImitationDelta) - this.initialValue;
+                const imitationDelta = stochasticRound(continuousImitationDelta);
+                const expectedImitationDelta = imitationTarget.weight * continuousImitationDelta;
                 this.items.push(new ClanSkillChangeItem(
                     imitationTarget.label,
                     imitationDelta,
@@ -204,10 +207,8 @@ export class ClanSkillChange {
         //        tuning so must be done carefully.
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
         const observationRate = 0.3 * this.elapsedYears * this.focusFactor * clanSkillFactor;
-        const observationSwingRate = 0.2 * this.elapsedYears * this.focusFactor * clanSkillFactor;
         const expectedDeltaFromObservation = observationRate;
-        const deltaFromObservation = expectedDeltaFromObservation +
-            observationSwingRate * (Math.random() - Math.random());
+        const deltaFromObservation = stochasticRound(expectedDeltaFromObservation);
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));
     }
 

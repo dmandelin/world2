@@ -40,6 +40,16 @@ export function dice(s: number, sides: number, mod: number): number {
     return total;
 }
 
+export function stochasticRound(value: number): number {
+    const sign = Math.sign(value);
+    if (sign === 0) return 0;
+    const abs = Math.abs(value);
+    const floor = Math.floor(abs);
+    const frac = abs - floor;
+    const extra = Math.random() < frac ? 1 : 0;
+    return sign * (floor + extra);
+}
+
 export function matchingCount<T>(aa: Iterable<T>, predicate: (t: T) => boolean): number {
     let count = 0;
     for (const item of aa) {

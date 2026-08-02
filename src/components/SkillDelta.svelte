@@ -88,7 +88,7 @@
                     data: "𝔼",
                     label: "𝔼",
                     valueFn: (r: ClanSkillChangeItem) => r.expectedDelta,
-                    formatFn: (v: number) => v.toFixed(),
+                    formatFn: (v: number) => v.toFixed(3),
                 },
                 {
                     data: "Δ",
