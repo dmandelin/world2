@@ -494,8 +494,10 @@ x   Update how food storage works with consumption for
     new turn length.
 x   Give food storage the ability to be consumed next
     turn.
-*   Give clans the ability to transfer food storage to
+x   Give clans the ability to transfer food storage to
     other clans.
+*   Make skill changes more stochastic so they're at
+    all visible.
 
 Let's quickly sketch how this could work.
 

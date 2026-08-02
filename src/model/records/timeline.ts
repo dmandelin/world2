@@ -152,8 +152,10 @@ export class ClanTimePoint {
         }
         this.avgPartnerAppeal = partnerTotalWeight > 0 ? partnerWeightedSum / partnerTotalWeight : 0;
 
-        this.foodProduced = clan.netFlows ? clan.netFlows.totalFoodProduced / (clan.population || 1) : 0;
-        this.foodTransferred = clan.netFlows ? clan.netFlows.netFoodTransferred / (clan.population || 1) : 0;
+        this.foodProduced = clan.distribution ? clan.distribution.totalFoodFromProduction / (clan.population || 1) : 0;
+        const foodTaken = clan.consumption ? clan.consumption.totalFoodTaken : 0;
+        const foodGiven = (clan.distribution?.totalFoodGiven ?? 0) + (clan.stockOutflow?.totalFoodGiven ?? 0);
+        this.foodTransferred = (foodTaken - foodGiven) / (clan.population || 1);
         this.food = clan.consumption.perCapitaFood;
         this.foodStorage = clan.stock ? clan.stock.perCapitaFoodStock(clan.population) : 0;
         this.averagePrestige = getLocalPrestige(clan);

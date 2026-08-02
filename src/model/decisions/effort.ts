@@ -132,10 +132,10 @@ export class EffortAllocation {
     // Initialize the application process.
     applyStart() {
         // Reserve effort needed for non-production activities, then
-        // have the rest be production.
+        // have the rest be production. Enforce at least 15% leisure.
         const fCare = Math.min(1, 0.25 * this.clan.children / this.clan.effort);
         const fHelp = this.clan.helpAllocation.total;
-        const fLeisure = this.get(Activities.Leisure);
+        const fLeisure = Math.max(0.15, this.get(Activities.Leisure));
         const reserved = fCare + fHelp + fLeisure;
         const fProduction = Math.max(0, 1 - reserved);
 
@@ -151,42 +151,36 @@ export class EffortAllocation {
         }
     }
 
+    private scoreOption(option: EffortAllocation): number {
+        const leisure = option.get(Activities.Leisure);
+        if (leisure < 0.15 - 1e-9) return -Infinity;
+
+        const er = economicResult(this.clan, option);
+        const foodPerCapita = (this.clan.population > 0) ? er.production.totalFood() / this.clan.population : 1.0;
+
+        if (foodPerCapita >= 1.0 - 1e-9) {
+            return 1000 + leisure;
+        } else {
+            return foodPerCapita;
+        }
+    }
+
     // Try to make one step change to the allocation. Return true if 
     // a change was made.
     applyStep(labor: Map<Process, Map<Clan, number>>): boolean {
-        const er = economicResult(this.clan, this.clan.effortAllocation);
-
-        let options: EffortAllocation[] = [];
-        if (er.qol.valueFrom("food") < 0) {
-            if (true || isExemplarClan(this.clan)) {
-                console.log(`[Effort] ${this.clan.name} has food stress, value is ${er.qol.valueFrom("food").toFixed(2)}`);
-                console.log(this.clan.effortAllocation.debugString());
-                console.log(er.qol.debugString);
-            }
-
-            // Try shifting activities. Here, we assume that under stress,
-            // clans try something different for a while, so they can find
-            // out how good the results are.
-            // TODO - Add some experimentation cost, though this doesn't
-            //        matter that much unless they have free choice.
-            options = [
-                this.shifted(Processes.Fishing, Processes.Agriculture, 0.05),
-                this.shifted(Processes.Agriculture, Processes.Fishing, 0.05),
-                this.shiftedActivity(Activities.Leisure, Activities.Production, 0.05),
-            ];
-        } else {
-            // TODO - Consider some option for reallocating for efficiency.
-            options = [
-                this.shiftedActivity(Activities.Production, Activities.Leisure, 0.05),
-            ];
-        }
+        const options: EffortAllocation[] = [
+            this.shifted(Processes.Fishing, Processes.Agriculture, 0.05),
+            this.shifted(Processes.Agriculture, Processes.Fishing, 0.05),
+            this.shiftedActivity(Activities.Leisure, Activities.Production, 0.05),
+            this.shiftedActivity(Activities.Production, Activities.Leisure, 0.05),
+        ];
 
         let bestOption: EffortAllocation = this;
-        let bestOptionValue = er.qol.value;
+        let bestOptionValue = this.scoreOption(this);
+
         for (const option of options) {
-            const optionResult = economicResult(this.clan, option);
-            const optionValue = optionResult.qol.value;
-            if (optionValue > bestOptionValue) {
+            const optionValue = this.scoreOption(option);
+            if (optionValue > bestOptionValue + 1e-6) {
                 bestOptionValue = optionValue;
                 bestOption = option;
             }
@@ -195,7 +189,6 @@ export class EffortAllocation {
             return false;
         }
 
-        console.log(`Shifting effort for ${this.clan.name} from ${this.debugString()} to ${bestOption.debugString()} with expected food QoL change from ${er.qol.valueFrom("food").toFixed(2)} to ${bestOptionValue.toFixed(2)}`);
         this.m_ = bestOption.m_;
         this.pm_ = bestOption.pm_;
         return true;

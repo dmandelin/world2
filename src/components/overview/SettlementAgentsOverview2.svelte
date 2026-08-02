@@ -84,10 +84,11 @@
     );
 
     interface RowDef {
-        label: string;
+        label?: string;
         labelTooltip?: string;
         class?: string;
         isHeader?: boolean;
+        isBreak?: boolean;
         colspan?: number;
         cellClass?: string;
         topics?: string[];
@@ -468,14 +469,16 @@
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
-                    c.netFlows
-                        ? c.netFlows.totalFoodProduced / (c.population || 1)
+                    c.distribution
+                        ? c.distribution.totalFoodFromProduction /
+                          (c.population || 1)
                         : 0,
                 format: pct,
                 tooltipSnippet: foodProducedTooltip,
                 deltaValue: (c) =>
-                    c.netFlows
-                        ? c.netFlows.totalFoodProduced / (c.population || 1)
+                    c.distribution
+                        ? c.distribution.totalFoodFromProduction /
+                          (c.population || 1)
                         : 0,
                 deltaFormat: pct,
                 timelineKey: "foodProduced",
@@ -483,82 +486,89 @@
                 topics: ["food"],
             },
             {
-                label: "&nbsp;Transferred",
+                label: "&nbsp;Taken",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
-                    c.netFlows
-                        ? c.netFlows.netFoodTransferred / (c.population || 1)
+                    c.consumption
+                        ? c.consumption.totalFoodTaken / (c.population || 1)
                         : 0,
-                format: (v) => (v > 0 ? "+" : "") + pct(v),
-                tooltipSnippet: foodTransferredTooltip,
-                deltaValue: (c) =>
-                    c.netFlows
-                        ? c.netFlows.netFoodTransferred / (c.population || 1)
-                        : 0,
-                deltaFormat: (v) => (v > 0 ? "+" : "") + pct(v),
-                timelineKey: "foodTransferred",
-                scaler: new ZeroCenteredScaler(),
+                format: pct,
+                tooltipSnippet: foodTakenTooltip,
                 topics: ["food"],
             },
             {
-                label: "&nbsp;Consumed",
+                label: "&nbsp;Given",
                 class: "actual",
                 cellClass: "ra",
-                value: (c) => c.consumption.perCapitaFood,
+                value: (c) =>
+                    ((c.distribution?.totalFoodGiven ?? 0) +
+                        (c.stockOutflow?.totalFoodGiven ?? 0)) /
+                    (c.population || 1),
+                format: pct,
+                tooltipSnippet: foodGivenTooltip,
+                topics: ["food"],
+            },
+            {
+                label: "&nbsp;Eaten",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => (c.consumption ? c.consumption.perCapitaFood : 0),
                 format: pct,
                 tooltipSnippet: foodTooltip,
-                deltaValue: (c) => c.consumption.perCapitaFood,
+                deltaValue: (c) =>
+                    c.consumption ? c.consumption.perCapitaFood : 0,
                 deltaFormat: pct,
                 timelineKey: "food",
                 scaler: new DefaultScaler(),
                 topics: ["food", "welfare"],
+            },
+            {
+                isBreak: true,
+                topics: ["food"],
             },
             {
                 label: "&nbsp;Stored",
                 class: "actual",
                 cellClass: "ra",
-                value: (c) => c.consumption.perCapitaFoodStored,
+                value: (c) =>
+                    c.distribution
+                        ? c.distribution.totalFoodToStock / (c.population || 1)
+                        : 0,
                 format: pct,
-                tooltipSnippet: foodTooltip,
-                deltaValue: (c) => c.consumption.perCapitaFoodStored,
-                deltaFormat: pct,
-                timelineKey: "food",
-                scaler: new DefaultScaler(),
-                topics: ["food", "welfare"],
+                topics: ["food"],
             },
             {
-                label: "Food Stock",
+                label: "&nbsp;Retreived",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.stockOutflow
+                        ? c.stockOutflow.totalFoodRetrieved /
+                          (c.population || 1)
+                        : 0,
+                format: pct,
+                topics: ["food"],
+            },
+            {
+                label: "&nbsp;Lost",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.stockOutflow
+                        ? c.stockOutflow.totalFoodLost / (c.population || 1)
+                        : 0,
+                format: pct,
+                topics: ["food"],
+            },
+            {
+                label: "&nbsp;Balance",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) => c.stock.perCapitaFoodStock(c.population),
                 format: pct,
                 tooltipSnippet: foodStockTooltip,
                 deltaValue: (c) => c.stock.perCapitaFoodStock(c.population),
-                deltaFormat: pct,
-                scaler: new DefaultScaler(),
-                topics: ["food", "welfare"],
-            },
-            {
-                label: "Food Retrievals",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) => c.stock.perCapitaFoodRetrievals(c.population),
-                format: pct,
-                tooltipSnippet: foodStockTooltip,
-                deltaValue: (c) => c.stock.perCapitaFoodRetrievals(c.population),
-                deltaFormat: pct,
-                scaler: new DefaultScaler(),
-                topics: ["food", "welfare"],
-            },
-            {
-                label: "Retrieval Costs",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) => c.stock.perCapitaFoodRetrievalCost(c.population),
-                format: pct,
-                tooltipSnippet: foodStockTooltip,
-                deltaValue: (c) => c.stock.perCapitaFoodRetrievalCost(c.population),
                 deltaFormat: pct,
                 scaler: new DefaultScaler(),
                 topics: ["food", "welfare"],
@@ -791,19 +801,17 @@
         ]);
     }
 
-    function clanFoodTransferredTooltipTable(clan: ClanDTO) {
-        if (!clan.netFlows) return undefined;
+    function clanFoodTakenTooltipTable(clan: ClanDTO) {
+        if (!clan.consumption) return undefined;
         const rows: {
-            type: string;
             partner: string;
             good: string;
             amount: number;
             cost?: number;
         }[] = [];
-        for (const g of clan.netFlows.gotten) {
+        for (const g of clan.consumption.fromDonations) {
             if (g.good.isSubsistence) {
                 rows.push({
-                    type: "Gotten",
                     partner: g.clan.name,
                     good: g.good.name,
                     amount: g.amount,
@@ -811,50 +819,86 @@
                 });
             }
         }
-        for (const g of clan.netFlows.given) {
-            if (g.good.isSubsistence) {
-                rows.push({
-                    type: "Given",
-                    partner: g.clan.name,
-                    good: g.good.name,
-                    amount: g.amount,
-                    cost: 0,
-                });
+        return new IterableTable(rows, (r) => `${r.partner} (${r.good})`, [
+            {
+                data: "Partner",
+                label: "Donor",
+                valueFn: (r) => r.partner,
+            },
+            {
+                data: "Good",
+                label: "Good",
+                valueFn: (r) => r.good,
+            },
+            {
+                data: "Amount",
+                label: "Amount",
+                valueFn: (r) => r.amount,
+                formatFn: unsignedFormat(2),
+            },
+            {
+                data: "Cost",
+                label: "Iceberg Cost",
+                valueFn: (r) => r.cost ?? 0,
+                formatFn: unsignedFormat(2),
+            },
+        ]);
+    }
+
+    function clanFoodGivenTooltipTable(clan: ClanDTO) {
+        const rows: {
+            partner: string;
+            good: string;
+            amount: number;
+            source: string;
+        }[] = [];
+        if (clan.distribution) {
+            for (const g of clan.distribution.toDonations) {
+                if (g.good.isSubsistence) {
+                    rows.push({
+                        partner: g.clan.name,
+                        good: g.good.name,
+                        amount: g.amount,
+                        source: "Production",
+                    });
+                }
             }
         }
-        return new IterableTable(
-            rows,
-            (r) => `${r.type} ${r.partner} (${r.good})`,
-            [
-                {
-                    data: "Type",
-                    label: "Direction",
-                    valueFn: (r) => r.type,
-                },
-                {
-                    data: "Partner",
-                    label: "Partner",
-                    valueFn: (r) => r.partner,
-                },
-                {
-                    data: "Good",
-                    label: "Good",
-                    valueFn: (r) => r.good,
-                },
-                {
-                    data: "Amount",
-                    label: "Amount",
-                    valueFn: (r) => r.amount,
-                    formatFn: unsignedFormat(1),
-                },
-                {
-                    data: "Cost",
-                    label: "Trans. Cost",
-                    valueFn: (r) => r.cost ?? 0,
-                    formatFn: unsignedFormat(1),
-                },
-            ],
-        );
+        if (clan.stockOutflow) {
+            for (const g of clan.stockOutflow.toDonations) {
+                if (g.good.isSubsistence) {
+                    rows.push({
+                        partner: g.clan.name,
+                        good: g.good.name,
+                        amount: g.amount,
+                        source: "Stock",
+                    });
+                }
+            }
+        }
+        return new IterableTable(rows, (r) => `${r.partner} (${r.good})`, [
+            {
+                data: "Partner",
+                label: "Recipient",
+                valueFn: (r) => r.partner,
+            },
+            {
+                data: "Good",
+                label: "Good",
+                valueFn: (r) => r.good,
+            },
+            {
+                data: "Source",
+                label: "Source",
+                valueFn: (r) => r.source,
+            },
+            {
+                data: "Amount",
+                label: "Amount",
+                valueFn: (r) => r.amount,
+                formatFn: unsignedFormat(2),
+            },
+        ]);
     }
 
     function clanFoodStockTooltipTable(clan: ClanDTO) {
@@ -878,19 +922,22 @@
                 {
                     data: "Retrievals",
                     label: "Retrievals",
-                    valueFn: (item) => item.perCapitaRetrievals(clan.population),
+                    valueFn: (item) =>
+                        item.perCapitaRetrievals(clan.population),
                     formatFn: unsignedFormat(2),
                 },
                 {
                     data: "Retrieval Cost",
                     label: "Retrieval Cost",
-                    valueFn: (item) => item.perCapitaRetrievalCost(clan.population),
+                    valueFn: (item) =>
+                        item.perCapitaRetrievalCost(clan.population),
                     formatFn: unsignedFormat(2),
                 },
                 {
                     data: "Storage Loss",
                     label: "Storage Loss",
-                    valueFn: (item) => item.perCapitaStorageLoss(clan.population),
+                    valueFn: (item) =>
+                        item.perCapitaStorageLoss(clan.population),
                     formatFn: unsignedFormat(2),
                 },
             ],
@@ -1435,12 +1482,21 @@
     <TableView2 table={clanFoodProductionTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet foodTransferredTooltip(cs: ClanLastTurnSnapshots)}
-    {@const table = clanFoodTransferredTooltipTable(cs.e)}
+{#snippet foodTakenTooltip(cs: ClanLastTurnSnapshots)}
+    {@const table = clanFoodTakenTooltipTable(cs.e)}
     {#if table && table.rows.length > 0}
         <TableView2 {table}></TableView2>
     {:else}
-        <div style="padding: 4px;">No food transfers</div>
+        <div style="padding: 4px;">No food aid taken</div>
+    {/if}
+{/snippet}
+
+{#snippet foodGivenTooltip(cs: ClanLastTurnSnapshots)}
+    {@const table = clanFoodGivenTooltipTable(cs.e)}
+    {#if table && table.rows.length > 0}
+        <TableView2 {table}></TableView2>
+    {:else}
+        <div style="padding: 4px;">No food aid given</div>
     {/if}
 {/snippet}
 
@@ -1701,79 +1757,95 @@
                     <tr><td style="height: 0.5em"></td></tr>
                 {/if}
                 {#each group as row}
-                    <tr class={row.class ?? ""}>
-                        {#if row.isHeader}
-                            <td colspan={1 + csnaps.length * 2}>{row.label}</td>
-                        {:else}
-                            <td class="row-label">
-                                {#if row.labelTooltip}
-                                    <SimpleTooltip tip={row.labelTooltip}
-                                        >{@html row.label}</SimpleTooltip
-                                    >
-                                {:else}
-                                    {@html row.label}
-                                {/if}
-                            </td>
-                            {#each csnaps as cs}
-                                {#if row.colspan === 2}
-                                    <td colspan="2">
-                                        {#if row.renderSnippet}
-                                            {@render row.renderSnippet(cs)}
-                                        {/if}
-                                    </td>
-                                {:else}
-                                    <td class={row.cellClass}>
-                                        {#if row.renderValueSnippet}
-                                            {@render row.renderValueSnippet(cs)}
-                                        {:else if row.value}
-                                            {@const val = row.value(cs.e)}
-                                            {#if row.tooltipSnippet || row.useTooltip}
-                                                <Tooltip>
+                    {#if row.isBreak}
+                        <tr
+                            ><td
+                                colspan={1 + csnaps.length * 2}
+                                style="height: 0.5em"
+                            ></td></tr
+                        >
+                    {:else}
+                        <tr class={row.class ?? ""}>
+                            {#if row.isHeader}
+                                <td colspan={1 + csnaps.length * 2}
+                                    >{row.label}</td
+                                >
+                            {:else}
+                                <td class="row-label">
+                                    {#if row.labelTooltip}
+                                        <SimpleTooltip tip={row.labelTooltip}
+                                            >{@html row.label}</SimpleTooltip
+                                        >
+                                    {:else}
+                                        {@html row.label}
+                                    {/if}
+                                </td>
+                                {#each csnaps as cs}
+                                    {#if row.colspan === 2}
+                                        <td colspan="2">
+                                            {#if row.renderSnippet}
+                                                {@render row.renderSnippet(cs)}
+                                            {/if}
+                                        </td>
+                                    {:else}
+                                        <td class={row.cellClass}>
+                                            {#if row.renderValueSnippet}
+                                                {@render row.renderValueSnippet(
+                                                    cs,
+                                                )}
+                                            {:else if row.value}
+                                                {@const val = row.value(cs.e)}
+                                                {#if row.tooltipSnippet || row.useTooltip}
+                                                    <Tooltip>
+                                                        {row.format
+                                                            ? row.format(val)
+                                                            : val}
+                                                        <div
+                                                            slot="tooltip"
+                                                            style="text-align: left; color: initial;"
+                                                        >
+                                                            {#if row.tooltipSnippet}
+                                                                {@render row.tooltipSnippet(
+                                                                    cs,
+                                                                    row.context,
+                                                                )}
+                                                            {/if}
+                                                        </div>
+                                                    </Tooltip>
+                                                {:else}
                                                     {row.format
                                                         ? row.format(val)
                                                         : val}
-                                                    <div
-                                                        slot="tooltip"
-                                                        style="text-align: left; color: initial;"
-                                                    >
-                                                        {#if row.tooltipSnippet}
-                                                            {@render row.tooltipSnippet(
-                                                                cs,
-                                                                row.context,
-                                                            )}
-                                                        {/if}
-                                                    </div>
-                                                </Tooltip>
-                                            {:else}
-                                                {row.format
-                                                    ? row.format(val)
-                                                    : val}
+                                                {/if}
                                             {/if}
+                                        </td>
+                                        {#if row.customDeltaSnippet}
+                                            {@render row.customDeltaSnippet(
+                                                cs,
+                                                row.customDeltaContext,
+                                            )}
+                                        {:else if row.deltaValue}
+                                            {@render deltaCell(
+                                                cs,
+                                                row.deltaValue,
+                                                row.deltaFormat,
+                                                row.timelineKey,
+                                                row.scaler,
+                                                (row.label ?? "")
+                                                    .replace(
+                                                        /&nbsp;|<[^>]*>/g,
+                                                        "",
+                                                    )
+                                                    .trim(),
+                                            )}
+                                        {:else}
+                                            <td></td>
                                         {/if}
-                                    </td>
-                                    {#if row.customDeltaSnippet}
-                                        {@render row.customDeltaSnippet(
-                                            cs,
-                                            row.customDeltaContext,
-                                        )}
-                                    {:else if row.deltaValue}
-                                        {@render deltaCell(
-                                            cs,
-                                            row.deltaValue,
-                                            row.deltaFormat,
-                                            row.timelineKey,
-                                            row.scaler,
-                                            row.label
-                                                .replace(/&nbsp;|<[^>]*>/g, "")
-                                                .trim(),
-                                        )}
-                                    {:else}
-                                        <td></td>
                                     {/if}
-                                {/if}
-                            {/each}
-                        {/if}
-                    </tr>
+                                {/each}
+                            {/if}
+                        </tr>
+                    {/if}
                 {/each}
             {/each}
         </tbody>

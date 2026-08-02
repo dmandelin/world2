@@ -79,6 +79,14 @@ export class ProductionReport {
         }
         return m;
     }
+
+    forGood(good: TradeGood): number {
+        return sumFun(this.rs.filter(r => r.good === good), r => r.amount);
+    }
+
+    totalFood(): number {
+        return sumFun(this.rs.filter(r => r.good.isSubsistence), r => r.amount);
+    }
 }
 
 export type OperationProductionReport = {

@@ -1,7 +1,6 @@
 import { Annals } from "../annals";
 import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
-import { Consumption } from "../econ/consumption";
 import { EffortAllocation } from "../decisions/effort";
 import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
@@ -24,7 +23,7 @@ import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { Stress } from "./stress";
-import { NetFlows } from "../econ/netflows";
+import { Distribution, StockOutflow, Consumption } from "../econ/flows";
 import { Stock } from "../econ/stock";
 import { BasicInteraction } from "../relations/basicinteraction";
 
@@ -133,7 +132,8 @@ export class Clan implements TradePartner {
     stress = new Stress();
 
     production: ProductionReport = new ProductionReport([]);
-    netFlows: NetFlows = new NetFlows();
+    distribution: Distribution;
+    stockOutflow: StockOutflow;
     stock: Stock = new Stock();
     consumption: Consumption;
     qol: QualityOfLife = new QualityOfLife(new Map());
@@ -188,7 +188,9 @@ export class Clan implements TradePartner {
 
         // Must go after initializing production nodes since it builds effort for them.
         this.effortAllocation = new EffortAllocation(this);
-        this.consumption = new Consumption(0, this.effortAllocation, new Map());
+        this.distribution = new Distribution(this);
+        this.stockOutflow = new StockOutflow(this);
+        this.consumption = new Consumption(this);
         // Low skill loading since rituals are simpler than village rituals and
         // clans are more happy just to be together. They still really care, though,
         // as the ancestors are watching, among other things.

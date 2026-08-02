@@ -22,7 +22,10 @@ export function economicResult(
 
     const production = produce(operations, labor.m, land.m);
 
-    const consumption = Consumption.from(population, effort, production);
+    const consumption = new Consumption(clan);
+    for (const [good, amount] of production.totals().entries()) {
+        consumption.addProduction(good, amount);
+    }
 
     const qol = QualityOfLife.from(consumption);
 

@@ -8,8 +8,7 @@ import { updateBasicInteractions } from "./relations/basicinteraction";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { isExemplarClan, log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { economicResult } from "./econ/economy";
-import { NetFlows } from "./econ/netflows";
-import { Consumption } from "./econ/consumption";
+import { Distribution, StockOutflow, Consumption } from "./econ/flows";
 import { QualityOfLife } from "./econ/qol";
 import { marry, MarriageDecisions } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
@@ -367,54 +366,106 @@ export class World implements NoteTaker {
                     allClans.push(clan);
                     const r = economicResult(clan, clan.effortAllocation);
                     clan.production = r.production;
-                    clan.netFlows = new NetFlows(r.production);
+                    clan.distribution = new Distribution(clan);
+                    clan.stockOutflow = new StockOutflow(clan);
+                    clan.consumption = new Consumption(clan);
+                    clan.stock.resetTurnStats();
                 }
             }
         }
 
-        this.retrieveFoodFromStocks(allClans);
-
-        this.redistributeFood(allClans);
-
+        // Step 1 & 2: Arrange consumption (first from production up to 1.0 food/capita, then from stock)
         for (const clan of allClans) {
-            clan.consumption = Consumption.from(clan.population, clan.effortAllocation, clan.netFlows);
-            clan.qol = QualityOfLife.from(clan.consumption);
+            let targetFood = 1.0 * clan.population;
 
-            // Update stock: add stored goods and apply storage loss.
-            const additions = new Map<TradeGood, number>();
-            for (const [good, cg] of clan.consumption.m.entries()) {
-                const totalNetGood = clan.netFlows.netGood(good);
-                const totalConsumed = cg.consumed * clan.population;
-                const unconsumed = Math.max(0, totalNetGood - totalConsumed);
-                if (unconsumed > 0) {
-                    additions.set(good, unconsumed);
+            // Consume out of production (Fish first, Cereals second)
+            const availFish = clan.production.forGood(TradeGoods.Fish);
+            const fishToConsume = Math.min(availFish, targetFood);
+            if (fishToConsume > 0) {
+                clan.distribution.addConsumption(TradeGoods.Fish, fishToConsume);
+                clan.consumption.addProduction(TradeGoods.Fish, fishToConsume);
+                targetFood -= fishToConsume;
+            }
+
+            const availCereals = clan.production.forGood(TradeGoods.Cereals);
+            const cerealsToConsume = Math.min(availCereals, targetFood);
+            if (cerealsToConsume > 0) {
+                clan.distribution.addConsumption(TradeGoods.Cereals, cerealsToConsume);
+                clan.consumption.addProduction(TradeGoods.Cereals, cerealsToConsume);
+                targetFood -= cerealsToConsume;
+            }
+
+            // If consumption is below 1.0 per capita, consume out of stock (paying 20% retrieval cost)
+            let deficit = Math.max(0, targetFood);
+            if (deficit > 1e-9) {
+                for (const item of clan.stock.items) {
+                    if (!item.good.isSubsistence || deficit <= 1e-9) continue;
+                    const stockAvail = item.amount;
+                    if (stockAvail <= 1e-9) continue;
+
+                    const maxRetrieved = stockAvail / 1.20;
+                    const retrieved = Math.min(deficit, maxRetrieved);
+                    const cost = retrieved * 0.20;
+
+                    clan.stockOutflow.addConsumption(item.good, retrieved, cost);
+                    clan.consumption.addStock(item.good, retrieved);
+
+                    deficit -= retrieved;
                 }
             }
-            clan.stock.updateAdditions(additions);
-            clan.stock.applyLosses();
+        }
+
+        // Step 3: Redistribution among all clans
+        this.redistributeFood(allClans);
+
+        // Step 4: Any remaining Cereals from production sent to stock
+        for (const clan of allClans) {
+            const prodCereals = clan.production.forGood(TradeGoods.Cereals);
+            const usedCereals = clan.distribution.totalToConsumption(TradeGoods.Cereals) + clan.distribution.totalToDonated(TradeGoods.Cereals);
+            const remainingCereals = Math.max(0, prodCereals - usedCereals);
+            if (remainingCereals > 0) {
+                clan.distribution.addStock(TradeGoods.Cereals, remainingCereals);
+            }
+        }
+
+        // Step 5: Record 20% storage loss from stock based on (current stock contents) + (StockOutflow)
+        for (const clan of allClans) {
+            for (const item of clan.stock.items) {
+                const outflow = clan.stockOutflow.totalOutflow(item.good);
+                const additions = clan.distribution.totalToStock(item.good);
+                const baseStock = Math.max(0, item.amount - outflow + additions);
+                const lossRate = item.good === TradeGoods.Cereals ? 0.20 : 1.0;
+                const lossAmount = baseStock * lossRate;
+                clan.stockOutflow.addLoss(item.good, lossAmount);
+            }
+        }
+
+        // Step 6 & 7: Apply Distribution and StockOutflow flows to stock and compute QoL
+        for (const clan of allClans) {
+            for (const good of Object.values(TradeGoods)) {
+                const additions = clan.distribution.totalToStock(good);
+                const retrievals = clan.stockOutflow.totalToConsumption(good) + clan.stockOutflow.totalToDonated(good);
+                const retrievalCost = clan.stockOutflow.totalRetrievalCost(good);
+                const storageLoss = clan.stockOutflow.totalLost(good);
+
+                const item = clan.stock.getItem(good);
+                item.additions = additions;
+                item.retrievals = retrievals;
+                item.retrievalCost = retrievalCost;
+                item.storageLoss = storageLoss;
+                item.amount = Math.max(0, item.amount + additions - retrievals - retrievalCost - storageLoss);
+            }
+
+            clan.qol = QualityOfLife.from(clan.consumption);
 
             if (isExemplarClan(clan)) {
                 console.log(`Production for ${clan.name}:`);
                 console.log(clan.effortAllocation);
                 console.log(clan.production);
-                console.log(clan.netFlows);
+                console.log(clan.distribution);
+                console.log(clan.stockOutflow);
                 console.log(clan.consumption);
                 console.log(clan.qol);
-            }
-        }
-    }
-
-    retrieveFoodFromStocks(allClans: Clan[]) {
-        for (const clan of allClans) {
-            clan.stock.resetTurnStats();
-            const currentFood = clan.netFlows.totalFood;
-            const targetFood = clan.population * 1.0;
-            const deficit = Math.max(0, targetFood - currentFood);
-            if (deficit > 0) {
-                const retrievedMap = clan.stock.retrieveFood(deficit, 0.20);
-                for (const [good, amount] of retrievedMap.entries()) {
-                    clan.netFlows.receiveFromStock(good, amount);
-                }
             }
         }
     }
@@ -429,45 +480,62 @@ export class World implements NoteTaker {
             changed = false;
             roundCount++;
 
-            const needyClans = shuffled(allClans.filter(c => {
-                return c.netFlows.totalFood < c.population;
-            }));
-
+            const needyClans = shuffled(allClans.filter(c => c.consumption.totalFood < c.population));
             if (needyClans.length === 0) break;
 
             for (const needyClan of needyClans) {
-                let demand = needyClan.population - needyClan.netFlows.totalFood;
+                let demand = needyClan.population - needyClan.consumption.totalFood;
                 if (demand <= 1e-9) continue;
 
                 const partners = this.getRelationshipPartners(needyClan);
                 for (const partner of partners) {
                     if (demand <= 1e-9) break;
 
-                    const partnerTotalFood = partner.netFlows.totalFood;
-                    if (partnerTotalFood <= partner.population) continue;
-
-                    const partnerCereals = partner.netFlows.netGood(TradeGoods.Cereals);
-                    if (partnerCereals <= 1e-9) continue;
-
-                    const spareFood = partnerTotalFood - partner.population;
-                    const spareCereals = Math.min(partnerCereals, spareFood);
-                    if (spareCereals <= 1e-9) continue;
-
                     const sameSettlement = needyClan.settlement === partner.settlement;
                     const costRate = sameSettlement ? 0 : ICEBERG_COST_DIFFERENT_SETTLEMENTS;
                     const multiplier = 1 - costRate;
 
-                    const amountSent = Math.min(spareCereals, demand / multiplier);
-                    if (amountSent <= 1e-9) continue;
+                    // Try donating remaining production cereals
+                    const prodCereals = partner.production.forGood(TradeGoods.Cereals);
+                    const prodCerealsUsed = partner.distribution.totalToConsumption(TradeGoods.Cereals) + partner.distribution.totalToDonated(TradeGoods.Cereals);
+                    const availProdCereals = Math.max(0, prodCereals - prodCerealsUsed);
 
-                    const amountReceived = amountSent * multiplier;
-                    const transactionCost = amountSent - amountReceived;
+                    if (availProdCereals > 1e-9) {
+                        const amountSent = Math.min(availProdCereals, demand / multiplier);
+                        if (amountSent > 1e-9) {
+                            const amountReceived = amountSent * multiplier;
+                            const transactionCost = amountSent - amountReceived;
 
-                    partner.netFlows.give(needyClan, TradeGoods.Cereals, amountSent);
-                    needyClan.netFlows.receive(partner, TradeGoods.Cereals, amountReceived, transactionCost);
+                            partner.distribution.addDonation(needyClan, TradeGoods.Cereals, amountSent);
+                            needyClan.consumption.addDonation(partner, TradeGoods.Cereals, amountReceived, transactionCost);
 
-                    demand -= amountReceived;
-                    changed = true;
+                            demand -= amountReceived;
+                            changed = true;
+                        }
+                    }
+
+                    if (demand > 1e-9) {
+                        // Check stock cereals for partner
+                        const stockCereals = partner.stock.getAmount(TradeGoods.Cereals);
+                        const stockOutflowCereals = partner.stockOutflow.totalOutflow(TradeGoods.Cereals);
+                        const availStockCereals = Math.max(0, stockCereals - stockOutflowCereals);
+
+                        if (availStockCereals > 1e-9) {
+                            const maxSentFromStock = availStockCereals / 1.20;
+                            const amountSent = Math.min(maxSentFromStock, demand / multiplier);
+                            if (amountSent > 1e-9) {
+                                const retrievalCost = amountSent * 0.20;
+                                const amountReceived = amountSent * multiplier;
+                                const transactionCost = amountSent - amountReceived;
+
+                                partner.stockOutflow.addDonation(needyClan, TradeGoods.Cereals, amountSent, retrievalCost);
+                                needyClan.consumption.addDonation(partner, TradeGoods.Cereals, amountReceived, transactionCost);
+
+                                demand -= amountReceived;
+                                changed = true;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -477,7 +545,7 @@ export class World implements NoteTaker {
         const partners = new Set<Clan>();
         for (const rel of clan.tradeRelationships) {
             const partner = rel.partner(clan);
-            if (partner && 'population' in partner && 'netFlows' in partner) {
+            if (partner && 'population' in partner && 'consumption' in partner) {
                 partners.add(partner as Clan);
             }
         }

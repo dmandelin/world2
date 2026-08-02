@@ -15,7 +15,7 @@ import type { MarriageDecisions } from "../relations/marriage";
 import type { Note } from "../records/notifications";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
-import type { NetFlows } from "../econ/netflows";
+import type { Distribution, StockOutflow } from "../econ/flows";
 import type { Stock } from "../econ/stock";
 import type { QualityOfLife } from "../econ/qol";
 import type { ResidenceLevel } from "../people/residence";
@@ -91,7 +91,8 @@ export class ClanDTO {
 
     effort: number;
     production: ProductionReport;
-    netFlows: NetFlows;
+    distribution: Distribution;
+    stockOutflow: StockOutflow;
     stock: Stock;
     consumption: Consumption;
     stress: Stress;
@@ -133,7 +134,8 @@ export class ClanDTO {
 
         this.effort = clan.effort;
         this.production = clan.production;
-        this.netFlows = clan.netFlows;
+        this.distribution = clan.distribution;
+        this.stockOutflow = clan.stockOutflow;
         this.stock = clan.stock.clone();
         this.consumption = clan.consumption;
         this.stress = clan.stress.clone();

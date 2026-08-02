@@ -98,7 +98,7 @@ export class RespectItem {
     }
 
     static forGenerosity(subject: Clan, object: Clan): RespectItem {
-        const foodGiven = object.netFlows ? object.netFlows.totalFoodGiven : 0;
+        const foodGiven = (object.distribution ? object.distribution.totalFoodGiven : 0) + (object.stockOutflow ? object.stockOutflow.totalFoodGiven : 0);
         return new RespectItem(
             'Generosity',
             foodGiven,
