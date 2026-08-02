@@ -496,7 +496,7 @@ x   Give food storage the ability to be consumed next
     turn.
 x   Give clans the ability to transfer food storage to
     other clans.
-*   Make skill changes more stochastic so they're at
+x   Make skill changes more stochastic so they're at
     all visible.
 
 Let's quickly sketch how this could work.
