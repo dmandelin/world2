@@ -400,8 +400,8 @@ export class WorldDTO {
         return this.perceptions.get(clan.uuid, other.uuid)?.information;
     }
 
-    advanceFromPlanningView() {
-        this.world.advanceFromUserPlanningView();
+    advanceFromPlanningView(ticks?: number) {
+        this.world.advanceFromUserPlanningView(ticks);
     }
 }
 

@@ -210,19 +210,18 @@ export class World implements NoteTaker {
     // ----------------------------------------------------------------
     // Action handlers to trigger turn substeps
 
-    runTurn(priming: boolean = false) {
-        const ticksPerTurn = Math.round(this.yearsPerTurn / this.yearsPerTick);
-        for (let t = 0; t < ticksPerTurn; t++) {
+    runTurn(priming: boolean = false, ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick)) {
+        for (let t = 0; t < ticks; t++) {
             this.behave(priming);
             this.advanceTick();
         }
     }
 
-    advanceFromUserPlanningView() {
+    advanceFromUserPlanningView(ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick)) {
         log('World >>> Advance from user planning view');
         for (const clan of this.allClans) clan.clearNotifications();
         console.log('Cleared notifications for all clans');
-        this.runTurn(false);
+        this.runTurn(false, ticks);
         log('World <<< Advance from user planning view');
         this.notify();
     }
