@@ -477,6 +477,60 @@ and that for other purposes, like letting people move in or
 supporting them in a conflict, alignment or some other such
 would be the main factor.
 
+An implementation issue is that trust should affect choice
+of mutual aid partners, but intensity of mutual aid should
+also affect trust. I've been thinking this should be
+integrated with conflicts anyway, so that we have one event
+stream for alignment and track record. Crop failures and
+flood events could then also be integrated.
+
+Let's quickly sketch how this could work.
+
+*   Each turn has a schedule of 5-10 steps, each of which
+    can run mutual help and/or conflict rounds.
+*   In a step, each clan generates a certain amount of
+    labor help that it needs (effort) in order to maintain
+    full productivity.
+    *   Harvest would be one that generally generates some
+    *   Can also allow for sickness and other such events
+*   Clans can ask other clans for help
+*   Other clans will help if they expect to get enough back
+    for it from:
+    *   Expected reciprocity based on track record, alignment,
+        and information
+    *   Inclusive value via alignment
+    *   Reputation
+*   In general:
+    *   A clan may be unable to provide help due to providing
+        help to other clans already - there's a low help limit,
+        clans can't just provide arbitrarily much effective
+        help
+        *   We may also want to add simple errors, where a
+            clan can't help for no good reason
+    *   Help at a greater distance costs more
+    *   Clans will track how much they owe
+        *   But with error
+        *   More error if dealing with more clans (or having
+            less interaction)
+        *   Less or nothing is owed when alignment is high
+            or need is strong
+    *   Owing creates psychological stress and requires some
+        deference
+    *   Thus clans will be more eager to give if they are
+        currently in debt
+    *   At some fairly high threshold of debt clans will be
+        cut off from further help beyond survival
+        *   Unless they enter into a subsidiary relationship
+    *   We can further fold general subsidy into this too:
+        *   Create variable crop yield per step
+        *   Clans that don't produce enough (with or without
+            labor help) can now ask for food
+    *   Norms can require satisfying certain demands, with
+        respect effects if not done.
+    *   Should probably start with general food help since
+        it's more basic, then work in labor help
+    *   Interactions can also result in conflicts
+
 # Items
 
 Rough growth sequence:
