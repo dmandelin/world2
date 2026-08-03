@@ -23,6 +23,7 @@ import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { Conflicts } from "./relations/conflict";
+import { getAlignment } from "./relations/alignment";
 export class World implements NoteTaker {
     lastMarriageDecisions?: MarriageDecisions;
     readonly year = new Year();
@@ -488,6 +489,7 @@ export class World implements NoteTaker {
                 if (demand <= 1e-9) continue;
 
                 const partners = this.getRelationshipPartners(needyClan);
+                partners.sort((a, b) => getAlignment(needyClan, b) - getAlignment(needyClan, a));
                 for (const partner of partners) {
                     if (demand <= 1e-9) break;
 
