@@ -616,16 +616,26 @@ Detailed list of first parts:
 *   "Status"
     x   Base on generosity/holiness
     x   +Marriage appeal
+    *   Show marriage appeal rankings in the UI
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement
             *   display in UI
             *   also have mechanics for alignment/rituals
+        *   Alignment impact of respect
+        *   Verify that alignment counts when not everyone can
+            be helped
     x   Piety trait
     x   Option to work harder
+    *   Fix issue with clans getting too related by marriage
+    *   Alignment to help with dispute resolution
     *   Option to give gifts
     *   Status to help with dispute resolution
     *   Share out judgments/information
+*   General crisis: have occasional village-wide losses of
+    production
+*   Breakpoints for multi-year advance on founding new
+    settlements or major crises
 x   Marriage appeal - mostly should be there
     x   Verify uses the right piece from "status"
 *   Oratory skill
@@ -641,6 +651,7 @@ x   Marriage appeal - mostly should be there
         by with dependency ratios as source of difference
         for now)
     *   Labor help model
+    *   Bigger death rate in case of very low yield
 *   Clan self rituals
 *   Clan ritual provisions
 *   Village leadership structure
