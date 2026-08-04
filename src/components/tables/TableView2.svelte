@@ -33,7 +33,9 @@
 </script>
 
 {#snippet cellHTML(row: TableRow<any, any>, column: TableColumn<any, any, any>)}
-    {#if column.imgsrc}
+    {#if column.cellSnippet}
+        {@render column.cellSnippet(cellValue(row, column), row.data, column.data)}
+    {:else if column.imgsrc}
         {#if cellValue(row, column)}
             <img
                 src={cellValue(row, column)}
@@ -56,7 +58,11 @@
                 {#if hasRowPrefix}
                     <td></td>
                 {/if}
-                <td class="row-header"></td>
+                <td class="row-header">
+                    {#if table.rowHeaderLabel}
+                        <strong>{table.rowHeaderLabel}</strong>
+                    {/if}
+                </td>
                 {#each table.columns as column}
                     <th class={column.class ?? ''}>
                         {#if column.headerSnippet}
@@ -97,7 +103,9 @@
                         class:clickable={!!table.onClickRowHeader}
                         onclick={() => table.onClickRowHeader?.(row.data)}
                     >
-                        {#if row.headerTooltip}
+                        {#if row.headerSnippet}
+                            {@render row.headerSnippet(row.data)}
+                        {:else if row.headerTooltip}
                             {row.label}
                             <Tooltip2>
                                 <div style="text-align: left; color: initial;">

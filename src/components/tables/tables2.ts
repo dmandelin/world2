@@ -16,6 +16,9 @@ export interface Table<RowData, ColData, ColumnCellDataTypes extends any[]> {
     // If set, clicking on a row header will call this function with the row data.
     onClickRowHeader?: (row: RowData) => void;
 
+    // Optional header label for the top-left cell (row header column header).
+    rowHeaderLabel?: string;
+
     isCrossTable?: false;
 }
 
@@ -42,6 +45,9 @@ export interface TableColumn<RowData, ColData, CellData> {
 
     // If set, the cell data will render as HTML.
     html?: boolean;
+
+    // If set, the cell will be rendered with this snippet instead of text/HTML.
+    cellSnippet?: Snippet<[CellData, RowData, ColData]>;
 
     // If set, the cell will have a tooltip with this snippet.
     tooltip?: Snippet<[CellData, RowData, ColData]>;
@@ -83,6 +89,9 @@ export interface TableRow<RowData, ColData> {
     // If set, the row header (label) will have a tooltip with this snippet.
     headerTooltip?: Snippet<[RowData]>;
 
+    // If set, the row header will be rendered with this snippet.
+    headerSnippet?: Snippet<[RowData]>;
+
     // If set, get the value for this cell from the row instead of the column.
     valueFn?: (col: ColData) => any;
 
@@ -110,6 +119,9 @@ export interface CrossTable<RowColData, CellData> {
 
     // If set, clicking on a row header will call this function with the row data.
     onClickRowHeader?: (row: RowColData) => void;
+
+    // Optional header label for the top-left cell (row header column header).
+    rowHeaderLabel?: string;
 
     isCrossTable: true;
 }
@@ -195,15 +207,20 @@ export class FilteredIterableTable<RowData, ColumnCellDataTypes extends any[]> i
 // - Columns as set in the constructor
 export class IterableTable<RowData, ColumnCellDataTypes extends any[]> implements Table<RowData, string, ColumnCellDataTypes> {
     rows: TableRow<RowData, string>[];
+    rowHeaderLabel?: string;
 
     constructor(       
         data: Iterable<RowData>,
         rowLabelFn: (row: RowData) => string,
         readonly columns: { [K in keyof ColumnCellDataTypes]: TableColumn<RowData, string, ColumnCellDataTypes[K]> },
+        rowHeaderSnippet?: Snippet<[RowData]>,
+        rowHeaderLabel?: string,
     ) {
+        this.rowHeaderLabel = rowHeaderLabel;
         this.rows = [...data].map(e => ({
             data: e,
             label: rowLabelFn(e),
+            headerSnippet: rowHeaderSnippet,
         }));
     }
 }
