@@ -143,7 +143,7 @@ export class ClanSkillChange {
 
         // Intellect factor influences learning rate.
         this.intellect = clan.traits.intellect;
-        this.intellectFactor = Math.pow(2, (this.intellect - 50) / 15);
+        this.intellectFactor = Math.pow(1.2, (this.intellect - 50) / 15);
 
         // Learn by imitation. Imitation target might be self, meaning
         // the clan prefers its own traditions. Imitation is generally
@@ -213,7 +213,7 @@ export class ClanSkillChange {
         //        but still allow some. However, this has a big impact on
         //        tuning so must be done carefully.
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
-        const observationRate = 0.3 * this.elapsedYears * this.focusFactor * clanSkillFactor * this.intellectFactor;
+        const observationRate = 0.25 * this.elapsedYears * this.focusFactor * clanSkillFactor * this.intellectFactor;
         const expectedDeltaFromObservation = observationRate;
         const deltaFromObservation = stochasticRound(expectedDeltaFromObservation);
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));
