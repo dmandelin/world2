@@ -627,6 +627,7 @@ Detailed list of first parts:
             be helped
     x   Piety trait
     x   Option to work harder
+    *   "Headman" to soft-lead festivals
     *   Fix issue with clans getting too related by marriage
     *   Alignment to help with dispute resolution
     *   Option to give gifts

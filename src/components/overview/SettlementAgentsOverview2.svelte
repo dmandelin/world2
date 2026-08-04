@@ -72,6 +72,77 @@
 
     let csnaps = $derived(getClanLastTurnSnapshots(settlement));
 
+    let marriageAppealRankings = $derived.by(() => {
+        if (!csnaps || csnaps.length === 0)
+            return new Map<
+                string,
+                { icon: string; title: string; color: string }
+            >();
+
+        const appeals = csnaps.map((cs) => ({
+            uuid: cs.c.uuid,
+            appeal: cs.e.marriageAppealAverage,
+        }));
+
+        const uniqueAppeals = Array.from(
+            new Set(appeals.map((a) => a.appeal)),
+        ).sort((a, b) => b - a);
+
+        const val1 = uniqueAppeals[0];
+        const val2 = uniqueAppeals.length > 1 ? uniqueAppeals[1] : undefined;
+        const valLast =
+            uniqueAppeals.length > 1
+                ? uniqueAppeals[uniqueAppeals.length - 1]
+                : undefined;
+
+        const resultMap = new Map<
+            string,
+            { icon: string; title: string; color: string }
+        >();
+
+        for (const item of appeals) {
+            const val = item.appeal;
+
+            if (val === val1 && uniqueAppeals.length > 1) {
+                resultMap.set(item.uuid, {
+                    icon: "★",
+                    title: `Top Marriage Appeal (#1) in Settlement (${signed(val, 2)})`,
+                    color: "#2563eb",
+                });
+            } else if (val === val2 && val2 !== undefined) {
+                resultMap.set(item.uuid, {
+                    icon: "★",
+                    title: `2nd Highest Marriage Appeal (#2) in Settlement (${signed(val, 2)})`,
+                    color: "#16a34a",
+                });
+            } else if (
+                val === valLast &&
+                valLast !== undefined &&
+                valLast !== val1
+            ) {
+                resultMap.set(item.uuid, {
+                    icon: "★",
+                    title: `Least Marriage Appeal in Settlement (${signed(val, 2)})`,
+                    color: "#111827",
+                });
+            } else if (val >= 0) {
+                resultMap.set(item.uuid, {
+                    icon: "=",
+                    title: `Marriage Appeal: ${signed(val, 2)} (≥ 0)`,
+                    color: "#2563eb",
+                });
+            } else {
+                resultMap.set(item.uuid, {
+                    icon: "=",
+                    title: `Marriage Appeal: ${signed(val, 2)} (≤ 0)`,
+                    color: "#111827",
+                });
+            }
+        }
+
+        return resultMap;
+    });
+
     let relevantProcesses = $derived.by(() =>
         sortedByKey(
             new Set(
@@ -1769,15 +1840,29 @@
             <tr>
                 <td></td>
                 {#each csnaps as cs}
+                    {@const rank = marriageAppealRankings.get(cs.c.uuid)}
                     <td class="clan-header" colspan="2">
                         <div
-                            style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 0.2em;"
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: center;"
                         >
-                            <EntityLink
-                                entity={cs.c}
-                                extra={clanNotifications}
-                            />
-                            <ClanMigrationIcon clan={cs.c} />
+                            {#if rank}
+                                <SimpleTooltip tip={rank.title}>
+                                    <span
+                                        style="color: {rank.color}; font-weight: bold; font-size: 1.1em; line-height: 1; display: inline-block; margin-bottom: 2px; cursor: default;"
+                                    >
+                                        {rank.icon}
+                                    </span>
+                                </SimpleTooltip>
+                            {/if}
+                            <div
+                                style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 0.2em;"
+                            >
+                                <EntityLink
+                                    entity={cs.c}
+                                    extra={clanNotifications}
+                                />
+                                <ClanMigrationIcon clan={cs.c} />
+                            </div>
                         </div>
                     </td>
                 {/each}
