@@ -630,12 +630,77 @@ Detailed list of first parts:
             be helped
     x   Piety trait
     x   Option to work harder
+    *   Initial "headman" concept
+        *   Don't use the name "headman" in the code, always
+            use "settlementHead" or "headOfSettlement" or
+            "head" (if settlement is clear from context)
+        *   Idea is that an individual can volunteer to lead
+            the village
+        *   Later, we'll elaborate the structure, but for now,
+            we'll assume some sort of diffuse leadership
+            benefits.
+        *   Higher piety => more likely to volunteer
+        *   If there is currently no headman, each turn give
+            each clan a small chance of generating a headman.
+            *   Tune so that if clan piety is 50, chance of
+                generating a headman is 10%. If piety 80,
+                chance of generating a headman is 90%. Use an
+                exponential like we usually do.
+            *   Make it somewhat more likely for a clan with
+                more people age 20-60 to generate a headman,
+                but not linearly: there's probably one clan
+                member who would mainly maybe do it, so make
+                that a smaller effect.
+            *   Give the headman his own piety value, which
+                should be (clan piety) + normal(10, 5).
+        *   For now, if two clans nominate a headman, make
+            there be no headman.
+        *   If there is a headman, show gold "🗣" in the UI above
+            the clan name of the headman in SettlementAgentsOverview2.
+        *   If there is no headman but two clans nominated a
+            headman, show gray "🗣" with strikethrough above the
+            clan name
+        *   Put settlement head symbols before marriage appeal
+            symbols in that area
+        *   If there is a head:
+            *   Give each clan -1 stress with reason "Leadership"
+            *   Give the head clan an additional -1 stress with
+                reason "Head of settlement"
+            *   Give the head clan an additional +1 marriage appeal
+            *   Give +2% bonus to agricultural productivity for
+                all clans
+            *   Make effective irrigation skill level +2 for ditching
+            *   In conflicts, reduce the chance of playing hawk by 5%
+            *   No other clan will nominate as long as there's a head.
+            *   The head has a 5% of retiring or dying each year.
+    *   A little more on the initial "headman" concept
+        *   Notifications for heads coming and going
+        *   Names for heads
+        *   Make clans more likely to self-nominate if respected
+            (or just make that be a follower test)
+        *   Make chance of head dying depend on clan health
+        *   Consider having the settlement sort of nominate the
+            headman, since in interactions people would probably
+            subtly or not so subtly encourage or discourage
+            *   Person still has to actually consent though -
+                they might move second but they still have a choice
+                too
+        *   Benefits more variable by headman quality and whether
+            anyone actually follows
+        *   More complex conflict resolution.
     *   "Headman" to soft-lead festivals
     *   "Headman" for ditching/planting
     x   Fix issue with clans getting too related by marriage
-    *   Alignment to help with dispute resolution
     *   Option to give gifts
-    *   Status to help with dispute resolution
+    *   Start adding identity
+        *   Has something to do with affinity, but also with the
+            existence or namedness/salience of the affinity
+            cluster
+        *   TODO - more workup
+    *   Mediation
+        *   Alignment to help with dispute resolution
+        *   Status to help with dispute resolution
+        *   Could simplify as "headman" for mediation if it helps
     *   Share out judgments/information
     *   Consider whether SoL should influence alignment fully
         through respect with egalitarian norms (or even respect)
