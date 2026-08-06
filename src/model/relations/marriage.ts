@@ -55,6 +55,9 @@ class ClanMarriageState {
 // husbands propose to potential wives, who pick the best of the
 // proposals or their current option.
 export function marry(world: World): void {
+    if (!world.year.isMultipleOf(20)) {
+        return;
+    }
     const decisions = getMarriageDecisions(world);
     world.lastMarriageDecisions = decisions;
     applyMarriageDecisions(world, decisions);
@@ -176,7 +179,6 @@ export function applyMarriageDecisions(world: World, decisions: MarriageDecision
     for (const [c1, m] of pairingCounts.counts) {
         for (const [c2, count] of m) {
             const relatednessIncrement = count / c1.population;
-            if (relatednessIncrement < 0.03) continue;
             const connection = world.connections.getOrCreate(c1, c2, MarriageConnection);
             connection.relatedness += relatednessIncrement;
             if (connection.relatedness > 1) {

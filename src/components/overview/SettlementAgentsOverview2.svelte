@@ -474,9 +474,8 @@
                 cellClass: "rap",
                 value: (c) => {
                     const world = settlement.world;
-                    const decisions =
-                        world.lastMarriageDecisions ??
-                        getMarriageDecisions(world as any);
+                    const decisions = world.lastMarriageDecisions;
+                    if (!decisions) return 0;
                     let weightedSum = 0;
                     let totalMarriages = 0;
                     for (const other of world.clanMap.values()) {
@@ -1580,7 +1579,8 @@
 
 {#snippet foodProducedTooltip(cs: ClanLastTurnSnapshots)}
     <div style="margin-bottom: 6px;">
-        <b>Food Target:</b> {pct(cs.e.foodTargetPerCapita)} / capita
+        <b>Food Target:</b>
+        {pct(cs.e.foodTargetPerCapita)} / capita
     </div>
     <TableView2 table={clanFoodProductionTooltipTable(cs.e)}></TableView2>
 {/snippet}

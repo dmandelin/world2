@@ -625,7 +625,7 @@ Detailed list of first parts:
             *   ~general food shortfall in settlement
             *   display in UI
             *   also have mechanics for alignment/rituals
-        *   Alignment impact of respect
+        x   Alignment impact of respect
         *   Verify that alignment counts when not everyone can
             be helped
     x   Piety trait
