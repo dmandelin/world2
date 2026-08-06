@@ -639,6 +639,8 @@ Detailed list of first parts:
     *   Share out judgments/information
     *   Consider whether SoL should influence alignment fully
         through respect with egalitarian norms (or even respect)
+    *   (P2) Fix marriage scheduling better, try not to completely
+        fix to 20-year boundaries, do better priming
 *   General crisis: have occasional village-wide losses of
     production
 *   Breakpoints for multi-year advance on founding new

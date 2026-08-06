@@ -1,11 +1,18 @@
 <script lang="ts">
-    import { CrossTab, IterableTable, type RowDataRowSpec } from "./tables/tables2";
+    import {
+        CrossTab,
+        IterableTable,
+        type RowDataRowSpec,
+    } from "./tables/tables2";
     import { MarriageConnection } from "../model/relations/connection";
-    import { pct, signed } from "../model/lib/format";
+    import { pct, signed, unsigned } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
-    import { getMarriageDecisions, type MarriageDecisions } from "../model/relations/marriage";
+    import {
+        getMarriageDecisions,
+        type MarriageDecisions,
+    } from "../model/relations/marriage";
     import type { Snippet } from "svelte";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
@@ -36,8 +43,16 @@
                 if (inSettlement.has(other.uuid)) continue;
                 const mi1 = world.marriageInterestToward(clan, other);
                 const mi2 = world.marriageInterestToward(other, clan);
-                const conn = world.connections.getForType(clan, other, MarriageConnection);
-                if ((mi1 && mi1.value !== 0) || (mi2 && mi2.value !== 0) || conn) {
+                const conn = world.connections.getForType(
+                    clan,
+                    other,
+                    MarriageConnection,
+                );
+                if (
+                    (mi1 && mi1.value !== 0) ||
+                    (mi2 && mi2.value !== 0) ||
+                    conn
+                ) {
                     outSettlementClansMap.set(other.uuid, other);
                 }
             }
@@ -51,8 +66,8 @@
         return [...sortedInSettlement, ...sortedOutSettlement];
     }
 
-    function getDecisions(): MarriageDecisions {
-        return world.lastMarriageDecisions ?? getMarriageDecisions(world as any);
+    function getDecisions(): MarriageDecisions | undefined {
+        return world.lastMarriageDecisions;
     }
 
     function popAvgAppeal(targetClan: ClanDTO): number | null {
@@ -70,7 +85,12 @@
         return totalPop > 0 ? weightedSum / totalPop : null;
     }
 
-    function getPairingCount(decisions: MarriageDecisions, c1: ClanDTO, c2: ClanDTO): number {
+    function getPairingCount(
+        decisions: MarriageDecisions | undefined,
+        c1: ClanDTO,
+        c2: ClanDTO,
+    ): number {
+        if (!decisions) return 0;
         for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
             if (hClan.uuid === c1.uuid) {
                 for (const [wClan, count] of map.entries()) {
@@ -83,7 +103,12 @@
         return 0;
     }
 
-    function getDirectionalMarriageCount(decisions: MarriageDecisions, husbandClan: ClanDTO, wifeClan: ClanDTO): number {
+    function getDirectionalMarriageCount(
+        decisions: MarriageDecisions | undefined,
+        husbandClan: ClanDTO,
+        wifeClan: ClanDTO,
+    ): number {
+        if (!decisions) return 0;
         for (const wifeSet of decisions.potentialWives) {
             if (wifeSet.clan.uuid === wifeClan.uuid) {
                 for (const [hClan, count] of wifeSet.marriedTo.entries()) {
@@ -96,7 +121,11 @@
         return 0;
     }
 
-    function totalRecentMarriagesForClan(clan: ClanDTO, decisions: MarriageDecisions): number {
+    function totalRecentMarriagesForClan(
+        clan: ClanDTO,
+        decisions: MarriageDecisions | undefined,
+    ): number {
+        if (!decisions) return 0;
         let sum = 0;
         const clansList = buildClansList();
         for (const other of clansList) {
@@ -106,9 +135,13 @@
         return sum;
     }
 
-    function recentMarriageFraction(rowClan: ClanDTO, colClan: ClanDTO): number | null {
+    function recentMarriageFraction(
+        rowClan: ClanDTO,
+        colClan: ClanDTO,
+    ): number | null {
         if (rowClan.uuid === colClan.uuid) return null;
         const decisions = getDecisions();
+        if (!decisions) return null;
         const total = totalRecentMarriagesForClan(colClan, decisions);
         if (total === 0) return null;
         const between = getPairingCount(decisions, rowClan, colClan);
@@ -116,9 +149,16 @@
         return between / total;
     }
 
-    function legacyMarriageFraction(rowClan: ClanDTO, colClan: ClanDTO): number | null {
+    function legacyMarriageFraction(
+        rowClan: ClanDTO,
+        colClan: ClanDTO,
+    ): number | null {
         if (rowClan.uuid === colClan.uuid) return null;
-        const conn = world.connections.getForType(rowClan, colClan, MarriageConnection);
+        const conn = world.connections.getForType(
+            rowClan,
+            colClan,
+            MarriageConnection,
+        );
         if (!conn || conn.relatedness === 0) return null;
         return conn.relatedness;
     }
@@ -133,7 +173,11 @@
         return mi.value;
     }
 
-    function marriageInterestFormat(value: number | null, rowClan?: ClanDTO, colClan?: ClanDTO): string {
+    function marriageInterestFormat(
+        value: number | null,
+        rowClan?: ClanDTO,
+        colClan?: ClanDTO,
+    ): string {
         if (value === null) {
             return "";
         }
@@ -252,7 +296,8 @@
             rowDataRows.push({
                 label: "Pop Avg",
                 valueFn: (col: ClanDTO) => popAvgAppeal(col),
-                formatFn: (val: number | null) => val === null ? "" : signed(val, 1),
+                formatFn: (val: number | null) =>
+                    val === null ? "" : signed(val, 1),
                 tooltip: popAvgRowTooltip as any,
                 divider: true,
             });
@@ -271,23 +316,25 @@
                 getColClass,
                 getRowClass,
             );
-            table.columns.forEach((col) => col.html = true);
+            table.columns.forEach((col) => (col.html = true));
             return table;
         } else if (marriageOption === "Recent") {
             rowDataRows.push(
                 {
                     label: "Own Rating",
                     valueFn: (col: ClanDTO) => recentSummary1(col),
-                    formatFn: (val: number | null) => val === null ? "" : signed(val, 1),
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : signed(val, 1),
                     tooltip: recentOwnRatingRowTooltip as any,
                     divider: true,
                 },
                 {
                     label: "Pop Rating",
                     valueFn: (col: ClanDTO) => recentSummary2(col),
-                    formatFn: (val: number | null) => val === null ? "" : signed(val, 1),
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : signed(val, 1),
                     tooltip: recentPopRatingRowTooltip as any,
-                }
+                },
             );
             return new CrossTab<ClanDTO, number | null>(
                 clansList,
@@ -310,16 +357,18 @@
                 {
                     label: "Own Rating",
                     valueFn: (col: ClanDTO) => legacySummary1(col),
-                    formatFn: (val: number | null) => val === null ? "" : signed(val, 1),
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : signed(val, 1),
                     tooltip: legacyOwnRatingRowTooltip as any,
                     divider: true,
                 },
                 {
                     label: "Pop Rating",
                     valueFn: (col: ClanDTO) => legacySummary2(col),
-                    formatFn: (val: number | null) => val === null ? "" : signed(val, 1),
+                    formatFn: (val: number | null) =>
+                        val === null ? "" : signed(val, 1),
                     tooltip: legacyPopRatingRowTooltip as any,
-                }
+                },
             );
             return new CrossTab<ClanDTO, number | null>(
                 clansList,
@@ -338,6 +387,7 @@
             );
         }
     }
+    let marriageTable = $derived(buildMarriageTable());
 </script>
 
 {#snippet marriageInterestCellTooltip(
@@ -357,6 +407,12 @@
                         formatFn: (i: number) => signed(i, 1),
                     },
                     {
+                        data: "Mod",
+                        label: "Mod",
+                        valueFn: (i) => i.modifier,
+                        formatFn: (i: number) => unsigned(i, 2),
+                    },
+                    {
                         data: "Base",
                         label: "Base",
                         valueFn: (i) => i.baseValue,
@@ -369,16 +425,24 @@
                     },
                 ])}
             ></TableView2>
-            <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <div
+                style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;"
+            >
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"
+                >
                     <span>Previous Value:</span>
                     <strong>{signed(mi.previousValue, 1)}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"
+                >
                     <span>Current Items Total:</span>
                     <strong>{signed(mi.currentItemsTotal, 1)}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
+                <div
+                    style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;"
+                >
                     <span>Current Value:</span>
                     <strong>{signed(mi.value, 1)}</strong>
                 </div>
@@ -393,21 +457,52 @@
     colClan: ClanDTO,
 )}
     {@const decisions = getDecisions()}
-    {@const rowToColMarriages = getDirectionalMarriageCount(decisions, rowClan, colClan)}
-    {@const colToRowMarriages = getDirectionalMarriageCount(decisions, colClan, rowClan)}
+    {@const rowToColMarriages = getDirectionalMarriageCount(
+        decisions,
+        rowClan,
+        colClan,
+    )}
+    {@const colToRowMarriages = getDirectionalMarriageCount(
+        decisions,
+        colClan,
+        rowClan,
+    )}
     {@const totalMarriages = rowToColMarriages + colToRowMarriages}
     {@const miRowToCol = world.marriageInterestToward(rowClan, colClan)}
     {@const miColToRow = world.marriageInterestToward(colClan, rowClan)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <strong>Recent Marriages: {colClan.name} & {rowClan.name}</strong>
-        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
-            <li>• Marriages with {rowClan.name} husbands: {rowToColMarriages}</li>
-            <li>• Marriages with {colClan.name} husbands: {colToRowMarriages}</li>
-            <li>• Total Marriages Last Turn: <strong>{totalMarriages}</strong></li>
-            <li>• % of {colClan.name}'s Marriages: <strong>{value !== null ? pct(value) : "0%"}</strong></li>
-            <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-            <li>• Marriage Appeal ({rowClan.name} → {colClan.name}): <strong>{miRowToCol ? signed(miRowToCol.value, 1) : "N/A"}</strong></li>
-            <li>• Marriage Appeal ({colClan.name} → {rowClan.name}): <strong>{miColToRow ? signed(miColToRow.value, 1) : "N/A"}</strong></li>
+        <ul
+            style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+        >
+            <li>
+                • Marriages with {rowClan.name} husbands: {rowToColMarriages}
+            </li>
+            <li>
+                • Marriages with {colClan.name} husbands: {colToRowMarriages}
+            </li>
+            <li>
+                • Total Marriages Last Turn: <strong>{totalMarriages}</strong>
+            </li>
+            <li>
+                • % of {colClan.name}'s Marriages:
+                <strong>{value !== null ? pct(value) : "0%"}</strong>
+            </li>
+            <hr
+                style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+            />
+            <li>
+                • Marriage Appeal ({rowClan.name} → {colClan.name}):
+                <strong
+                    >{miRowToCol ? signed(miRowToCol.value, 1) : "N/A"}</strong
+                >
+            </li>
+            <li>
+                • Marriage Appeal ({colClan.name} → {rowClan.name}):
+                <strong
+                    >{miColToRow ? signed(miColToRow.value, 1) : "N/A"}</strong
+                >
+            </li>
         </ul>
     </div>
 {/snippet}
@@ -422,12 +517,34 @@
     {@const miColToRow = world.marriageInterestToward(colClan, rowClan)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <strong>Marriage Legacy: {colClan.name} & {rowClan.name}</strong>
-        <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;">
-            <li>• % Related by Marriage: <strong>{value !== null ? pct(value) : "0%"}</strong></li>
-            <li>• % of Recent Marriages (last turn): <strong>{recentFrac !== null ? pct(recentFrac) : "0%"}</strong></li>
-            <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-            <li>• Marriage Appeal ({rowClan.name} → {colClan.name}): <strong>{miRowToCol ? signed(miRowToCol.value, 1) : "N/A"}</strong></li>
-            <li>• Marriage Appeal ({colClan.name} → {rowClan.name}): <strong>{miColToRow ? signed(miColToRow.value, 1) : "N/A"}</strong></li>
+        <ul
+            style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+        >
+            <li>
+                • % Related by Marriage: <strong
+                    >{value !== null ? pct(value) : "0%"}</strong
+                >
+            </li>
+            <li>
+                • % of Recent Marriages (last turn): <strong
+                    >{recentFrac !== null ? pct(recentFrac) : "0%"}</strong
+                >
+            </li>
+            <hr
+                style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
+            />
+            <li>
+                • Marriage Appeal ({rowClan.name} → {colClan.name}):
+                <strong
+                    >{miRowToCol ? signed(miRowToCol.value, 1) : "N/A"}</strong
+                >
+            </li>
+            <li>
+                • Marriage Appeal ({colClan.name} → {rowClan.name}):
+                <strong
+                    >{miColToRow ? signed(miColToRow.value, 1) : "N/A"}</strong
+                >
+            </li>
         </ul>
     </div>
 {/snippet}
@@ -435,70 +552,102 @@
 {#snippet popAvgRowTooltip(val: number | null, spec: any, colClan: ClanDTO)}
     {#if val !== null}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Population-Weighted Average Appeal toward {colClan.name}:</strong> {signed(val, 1)}
+            <strong
+                >Population-Weighted Average Appeal toward {colClan.name}:</strong
+            >
+            {signed(val, 1)}
             <br />
             <span style="font-size: 0.85em; color: #666;">
-                Average marriage appeal of all other clans toward {colClan.name}, weighted by population.
+                Average marriage appeal of all other clans toward {colClan.name},
+                weighted by population.
             </span>
         </div>
     {/if}
 {/snippet}
 
-{#snippet recentOwnRatingRowTooltip(val: number | null, spec: any, colClan: ClanDTO)}
+{#snippet recentOwnRatingRowTooltip(
+    val: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if val !== null}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Own Rating for {colClan.name}:</strong> {signed(val, 1)}
+            <strong>Own Rating for {colClan.name}:</strong>
+            {signed(val, 1)}
             <br />
             <span style="font-size: 0.85em; color: #666;">
-                Average marriage appeal of {colClan.name} toward its marriage partners last turn, weighted by % of recent marriages.
+                Average appeal of {colClan.name} toward its recent marriage partners,
+                weighted by % of marriages.
             </span>
         </div>
     {/if}
 {/snippet}
 
-{#snippet recentPopRatingRowTooltip(val: number | null, spec: any, colClan: ClanDTO)}
+{#snippet recentPopRatingRowTooltip(
+    val: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if val !== null}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Pop Rating for {colClan.name}:</strong> {signed(val, 1)}
+            <strong>Pop Rating for {colClan.name}:</strong>
+            {signed(val, 1)}
             <br />
             <span style="font-size: 0.85em; color: #666;">
-                Average global popularity (pop-weighted average appeal) of {colClan.name}'s marriage partners last turn, weighted by % of recent marriages.
+                Average global popularity (pop-weighted average appeal) of {colClan.name}'s
+                recent marriage partners, weighted by % of marriages.
             </span>
         </div>
     {/if}
 {/snippet}
 
-{#snippet legacyOwnRatingRowTooltip(val: number | null, spec: any, colClan: ClanDTO)}
+{#snippet legacyOwnRatingRowTooltip(
+    val: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if val !== null}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Own Rating for {colClan.name}:</strong> {signed(val, 1)}
+            <strong>Own Rating for {colClan.name}:</strong>
+            {signed(val, 1)}
             <br />
             <span style="font-size: 0.85em; color: #666;">
-                Average marriage appeal of {colClan.name} toward its partners, weighted by % related by marriage.
+                Average appeal of {colClan.name} toward its partners, weighted by
+                % related by marriage.
             </span>
         </div>
     {/if}
 {/snippet}
 
-{#snippet legacyPopRatingRowTooltip(val: number | null, spec: any, colClan: ClanDTO)}
+{#snippet legacyPopRatingRowTooltip(
+    val: number | null,
+    spec: any,
+    colClan: ClanDTO,
+)}
     {#if val !== null}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            <strong>Pop Rating for {colClan.name}:</strong> {signed(val, 1)}
+            <strong>Pop Rating for {colClan.name}:</strong>
+            {signed(val, 1)}
             <br />
             <span style="font-size: 0.85em; color: #666;">
-                Average global popularity (pop-weighted average appeal) of {colClan.name}'s partners, weighted by % related by marriage.
+                Average global popularity (pop-weighted average appeal) of {colClan.name}'s
+                partners, weighted by % related by marriage.
             </span>
         </div>
     {/if}
 {/snippet}
 
 <div style="padding: 1rem 2rem;">
-    <div style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+    <div
+        style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 1rem;"
+    >
         <h3 style="margin: 0;">Marriages</h3>
         <div class="stress-button-group">
             <button
                 type="button"
-                class="stress-btn {marriageOption === 'Interest' ? 'active' : ''}"
+                class="stress-btn {marriageOption === 'Interest'
+                    ? 'active'
+                    : ''}"
                 onclick={() => (marriageOption = "Interest")}>Interest</button
             >
             <button
@@ -516,20 +665,23 @@
 
     {#if marriageOption === "Interest"}
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-            Clans from outside this settlement are marked with an asterisk (*) and shaded. Stars indicate top 3 marriage targets for each row clan.
+            Clans from outside this settlement are marked with an asterisk (*)
+            and shaded. Stars indicate top 3 marriage targets for each row clan.
         </p>
     {:else if marriageOption === "Recent"}
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-            Shows the % of last turn's marriages that each column clan engaged in with each row clan.
+            Shows the % of last turn's marriages that each column clan engaged
+            in with each row clan.
         </p>
     {:else}
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-            Shows the % related by marriage between clans based on historical marriages.
+            Shows the % related by marriage between clans based on historical
+            marriages.
         </p>
     {/if}
 
     <div class="table-container">
-        <TableView2 table={buildMarriageTable()} />
+        <TableView2 table={marriageTable} />
     </div>
 </div>
 
