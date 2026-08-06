@@ -632,7 +632,7 @@ Detailed list of first parts:
     x   Option to work harder
     *   "Headman" to soft-lead festivals
     *   "Headman" for ditching/planting
-    *   Fix issue with clans getting too related by marriage
+    x   Fix issue with clans getting too related by marriage
     *   Alignment to help with dispute resolution
     *   Option to give gifts
     *   Status to help with dispute resolution
@@ -640,7 +640,8 @@ Detailed list of first parts:
     *   Consider whether SoL should influence alignment fully
         through respect with egalitarian norms (or even respect)
     *   (P2) Fix marriage scheduling better, try not to completely
-        fix to 20-year boundaries, do better priming
+        fix to 20-year boundaries, do better priming, debug relatedness
+        calculation (still seems off)
 *   General crisis: have occasional village-wide losses of
     production
 *   Breakpoints for multi-year advance on founding new

@@ -178,7 +178,7 @@ export function applyMarriageDecisions(world: World, decisions: MarriageDecision
     }
     for (const [c1, m] of pairingCounts.counts) {
         for (const [c2, count] of m) {
-            const relatednessIncrement = count / c1.population;
+            const relatednessIncrement = 0.5 * count / c1.population;
             const connection = world.connections.getOrCreate(c1, c2, MarriageConnection);
             connection.relatedness += relatednessIncrement;
             if (connection.relatedness > 1) {
