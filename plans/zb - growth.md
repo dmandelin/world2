@@ -613,10 +613,13 @@ Detailed list of first parts:
         *   Have gossip more effective if more aligned
         *   (P2) Differential ability to collect information
     *   Add any new similarity factors to alignment
+*   Other key fixes
+    *   Bigger death rate in case of very low yield
+        *   Some kind of famine notification
 *   "Status"
     x   Base on generosity/holiness
     x   +Marriage appeal
-    *   Show marriage appeal rankings in the UI
+    x   Show marriage appeal rankings in the UI
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement
@@ -628,11 +631,14 @@ Detailed list of first parts:
     x   Piety trait
     x   Option to work harder
     *   "Headman" to soft-lead festivals
+    *   "Headman" for ditching/planting
     *   Fix issue with clans getting too related by marriage
     *   Alignment to help with dispute resolution
     *   Option to give gifts
     *   Status to help with dispute resolution
     *   Share out judgments/information
+    *   Consider whether SoL should influence alignment fully
+        through respect with egalitarian norms (or even respect)
 *   General crisis: have occasional village-wide losses of
     production
 *   Breakpoints for multi-year advance on founding new
@@ -652,7 +658,6 @@ x   Marriage appeal - mostly should be there
         by with dependency ratios as source of difference
         for now)
     *   Labor help model
-    *   Bigger death rate in case of very low yield
 *   Clan self rituals
 *   Clan ritual provisions
 *   Village leadership structure

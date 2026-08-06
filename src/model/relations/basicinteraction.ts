@@ -33,7 +33,7 @@ export class BasicInteraction extends Interaction {
         const relativeAttention = this.relativeAttention(subject, object);
         return new GenericItem(
             'Interaction',
-            0.2 * relativeAttention,
+            0.1 * relativeAttention,
             `From ${pct(relativeAttention)}`,
         )
     }

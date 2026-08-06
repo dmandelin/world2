@@ -1,11 +1,13 @@
 import { clamp, maxbyWithValue, sumFun } from "../lib/basics";
+import { signed } from "../lib/format";
 import type { Clan } from "../people/people";
-import type { GenericItem } from "../records/basicdata";
+import { GenericItem } from "../records/basicdata";
 import type { ClanDTO } from "../records/dtos";
 import type { World } from "../world";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
 import type { Conflict } from "./conflict";
+import { getRespect, type Respect } from "./respect";
 
 export class Alignment {
     items: GenericItem[] = [];
@@ -15,12 +17,22 @@ export class Alignment {
         object: Clan,
         connections: Connection[],
         interactions: Interaction[],
-        conflict?: Conflict): void {
+        conflict?: Conflict,
+        respect?: Respect | number): void {
+
+        const respectValue = typeof respect === 'number'
+            ? respect
+            : (respect ? respect.value : getRespect(subject, object));
 
         this.items = [
             ...connections.map(connection => connection.alignmentItem(subject, object)),
             ...interactions.map(interaction => interaction.alignmentItem(subject, object)),
-            ...(conflict ? [conflict.alignmentItem(subject, object)] : [])
+            ...(conflict ? [conflict.alignmentItem(subject, object)] : []),
+            new GenericItem(
+                'Respect',
+                0.03 * respectValue,
+                `From respect ${signed(respectValue, 1)}`
+            )
         ];
     }
 

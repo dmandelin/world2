@@ -31,7 +31,7 @@ export class MutualAidInteraction extends Interaction {
     alignmentItem(subject: Clan | ClanDTO, object: Clan | ClanDTO): GenericItem {
         return new GenericItem(
             'Mutual Aid',
-            0.1 * (1 - this.icebergCost) * this.trust * this.amount,
+            0.05 * (1 - this.icebergCost) * this.trust * this.amount,
             `Mutual aid value: ${unsigned((1 - this.icebergCost) * this.trust * this.amount, 2)}`,
         );
     }
