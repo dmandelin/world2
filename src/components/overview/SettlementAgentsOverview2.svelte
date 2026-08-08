@@ -230,6 +230,38 @@
                 topics: ["demographics"],
             },
             {
+                label: "Health",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    Math.sqrt(
+                        (c.lastPopulationChange?.brModifier ?? 1) *
+                            (c.lastPopulationChange?.drModifier ?? 1),
+                    ),
+                format: spct,
+                deltaValue: (c) =>
+                    Math.sqrt(
+                        (c.lastPopulationChange?.brModifier ?? 1) *
+                            (c.lastPopulationChange?.drModifier ?? 1),
+                    ),
+                deltaFormat: pct,
+                timelineKey: "health",
+                scaler: new DefaultScaler(),
+                topics: ["demographics"],
+            },
+            {
+                label: "Residence",
+                cellClass: "ra",
+                value: (c) => c.residenceLevel.fractionInSettlement,
+                format: pct,
+                tooltipSnippet: residenceTooltip,
+                deltaValue: (c) => c.residenceLevel.fractionInSettlement,
+                deltaFormat: pct,
+                timelineKey: "residenceFraction",
+                scaler: new DefaultScaler(),
+                topics: ["demographics", "welfare"],
+            },
+            {
                 label: "Birth rate modifier",
                 class: "actual",
                 cellClass: "rap",
@@ -240,7 +272,7 @@
                 deltaFormat: pct,
                 timelineKey: "brModifier",
                 scaler: new DefaultScaler(),
-                topics: ["demographics"],
+                topics: ["demographics:detail"],
             },
             {
                 label: "Death rate modifier",
@@ -253,7 +285,7 @@
                 deltaFormat: pct,
                 timelineKey: "drModifier",
                 scaler: new DefaultScaler(),
-                topics: ["demographics"],
+                topics: ["demographics:detail"],
             },
             {
                 label: "Support Ratio",
@@ -268,7 +300,7 @@
             },
         ]);
 
-        // Group 2: Welfare & Residence (Happiness, Social Welfare, Material Welfare, QoL, Stress, Residence)
+        // Group 2: Welfare (Happiness, Social Welfare, Material Welfare, QoL, Stress, Mutual Aid, Help Modifier)
         groups.push([
             {
                 label: "Happiness",
@@ -413,18 +445,6 @@
                 timelineKey: "helpModifier",
                 scaler: new DefaultScaler(),
                 topics: ["welfare", "production"],
-            },
-            {
-                label: "Residence",
-                cellClass: "ra",
-                value: (c) => c.residenceLevel.fractionInSettlement,
-                format: pct,
-                tooltipSnippet: residenceTooltip,
-                deltaValue: (c) => c.residenceLevel.fractionInSettlement,
-                deltaFormat: pct,
-                timelineKey: "residenceFraction",
-                scaler: new DefaultScaler(),
-                topics: ["demographics", "welfare"],
             },
         ]);
 
@@ -1480,6 +1500,7 @@
             "support_ratio:detail",
         ],
         Productivity: ["productivity"],
+        Demographics: ["demographics", "demographics:detail"],
     };
 
     function isRowVisible(row: RowDef, selectedLensTopics: string[]): boolean {
