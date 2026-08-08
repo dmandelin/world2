@@ -321,6 +321,19 @@
                 topics: ["welfare"],
             },
             {
+                label: "Respect",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.marriageAppealAverage,
+                format: (v) => signed(v, 0),
+                tooltipSnippet: marriageAppealTooltip,
+                deltaValue: (c) => c.marriageAppealAverage,
+                deltaFormat: (v) => signed(v, 0),
+                timelineKey: "marriageAppealAverage",
+                scaler: new ZeroCenteredScaler(),
+                topics: ["perceptions"],
+            },
+            {
                 label: "Mutual Aid",
                 class: "actual",
                 cellClass: "rap",
@@ -399,91 +412,6 @@
                 timelineKey: "helpModifier",
                 scaler: new DefaultScaler(),
                 topics: ["food:detail"],
-            },
-        ]);
-
-        // Group 3: Marriage Appeal
-        groups.push([
-            {
-                label: "Avg Marriage Appeal",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => c.marriageAppealAverage,
-                format: (v) => signed(v, 1),
-                tooltipSnippet: marriageAppealTooltip,
-                deltaValue: (c) => c.marriageAppealAverage,
-                deltaFormat: (v) => signed(v, 1),
-                timelineKey: "marriageAppealAverage",
-                scaler: new ZeroCenteredScaler(),
-                topics: ["perceptions"],
-            },
-            {
-                label: "Marriage Appeal SD",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => c.marriageAppealStdDev,
-                format: (v) => v.toFixed(1),
-                deltaValue: (c) => c.marriageAppealStdDev,
-                deltaFormat: (v) => signed(v, 1),
-                timelineKey: "marriageAppealStdDev",
-                scaler: new DefaultScaler(),
-                topics: ["perceptions"],
-            },
-            {
-                label: "Avg Wedding Appeal",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => {
-                    const world = settlement.world;
-                    const decisions = world.lastMarriageDecisions;
-                    if (!decisions) return 0;
-                    let weightedSum = 0;
-                    let totalMarriages = 0;
-                    for (const other of world.clanMap.values()) {
-                        if (other.uuid === c.uuid) continue;
-                        const count = getPairingCount(decisions, c, other);
-                        if (count > 0) {
-                            const mi = world.marriageInterestToward(c, other);
-                            const appeal = mi ? mi.value : 0;
-                            weightedSum += count * appeal;
-                            totalMarriages += count;
-                        }
-                    }
-                    return totalMarriages > 0
-                        ? weightedSum / totalMarriages
-                        : null;
-                },
-                format: (v) => (v === null ? "" : signed(v, 1)),
-                tooltipSnippet: avgWeddingAppealTooltip,
-                topics: ["perceptions", "demographics"],
-            },
-            {
-                label: "Avg Partner Appeal",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => {
-                    const world = settlement.world;
-                    let weightedSum = 0;
-                    let totalWeight = 0;
-                    for (const other of world.clanMap.values()) {
-                        if (other.uuid === c.uuid) continue;
-                        const conn = world.connections.getForType(
-                            c,
-                            other,
-                            MarriageConnection,
-                        );
-                        if (conn && conn.relatedness > 0) {
-                            const mi = world.marriageInterestToward(c, other);
-                            const appeal = mi ? mi.value : 0;
-                            weightedSum += conn.relatedness * appeal;
-                            totalWeight += conn.relatedness;
-                        }
-                    }
-                    return totalWeight > 0 ? weightedSum / totalWeight : null;
-                },
-                format: (v) => (v === null ? "" : signed(v, 1)),
-                tooltipSnippet: avgPartnerAppealTooltip,
-                topics: ["perceptions", "welfare"],
             },
         ]);
 
