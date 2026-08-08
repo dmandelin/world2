@@ -308,45 +308,6 @@
         // Group 2: Welfare (Happiness, Social Welfare, Material Welfare, QoL, Stress, Mutual Aid, Help Modifier)
         groups.push([
             {
-                label: "Happiness",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => c.happiness.appeal,
-                format: signed,
-                tooltipSnippet: happinessTooltip,
-                deltaValue: (c) => c.happiness.appeal,
-                deltaFormat: signed,
-                timelineKey: "appeal",
-                scaler: new ZeroCenteredScaler(),
-                topics: ["welfare"],
-            },
-            {
-                label: "Social Welfare",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => c.happiness.socialAppeal,
-                format: signed,
-                tooltipSnippet: socialWelfareTooltip,
-                deltaValue: (c) => c.happiness.socialAppeal,
-                deltaFormat: signed,
-                timelineKey: "socialAppeal",
-                scaler: new ZeroCenteredScaler(),
-                topics: ["welfare"],
-            },
-            {
-                label: "Material Welfare",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => c.happiness.subsistenceAppeal,
-                format: signed,
-                tooltipSnippet: materialWelfareTooltip,
-                deltaValue: (c) => c.happiness.subsistenceAppeal,
-                deltaFormat: signed,
-                timelineKey: "subsistenceAppeal",
-                scaler: new ZeroCenteredScaler(),
-                topics: ["welfare"],
-            },
-            {
                 label: "QoL",
                 class: "actual",
                 cellClass: "rap",
@@ -356,18 +317,6 @@
                 deltaValue: (c) => c.qol.value,
                 deltaFormat: signed,
                 timelineKey: "qol",
-                scaler: new ZeroCenteredScaler(),
-                topics: ["welfare"],
-            },
-            {
-                label: "Stress",
-                class: "actual",
-                cellClass: "rap",
-                renderValueSnippet: stressValueRender,
-                tooltipSnippet: stressTooltip,
-                deltaValue: (c) => c.stress.value,
-                deltaFormat: signed,
-                timelineKey: "stress",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["welfare"],
             },
@@ -420,7 +369,7 @@
                 deltaFormat: pct,
                 timelineKey: "mutualAidSat",
                 scaler: new DefaultScaler(),
-                topics: ["welfare"],
+                topics: ["food:detail"],
             },
             {
                 label: "Help Modifier",
@@ -449,7 +398,7 @@
                 deltaFormat: pct,
                 timelineKey: "helpModifier",
                 scaler: new DefaultScaler(),
-                topics: ["welfare", "production"],
+                topics: ["food:detail"],
             },
         ]);
 
@@ -578,7 +527,8 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.distribution
-                        ? c.distribution.totalFoodGiftsGiven / (c.population || 1)
+                        ? c.distribution.totalFoodGiftsGiven /
+                          (c.population || 1)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -589,7 +539,8 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.consumption
-                        ? c.consumption.totalFoodGiftsReceived / (c.population || 1)
+                        ? c.consumption.totalFoodGiftsReceived /
+                          (c.population || 1)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -623,7 +574,8 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.consumption
-                        ? c.consumption.totalFoodAidReceived / (c.population || 1)
+                        ? c.consumption.totalFoodAidReceived /
+                          (c.population || 1)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -658,7 +610,8 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.stockOutflow
-                        ? c.stockOutflow.totalFoodRetrieved / (c.population || 1)
+                        ? c.stockOutflow.totalFoodRetrieved /
+                          (c.population || 1)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -738,8 +691,7 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.stockOutflow
-                        ? c.stockOutflow.totalFoodAidGiven /
-                          (c.population || 1)
+                        ? c.stockOutflow.totalFoodAidGiven / (c.population || 1)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -749,7 +701,9 @@
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
-                    c.stock ? c.stock.perCapitaFoodRetrievalCost(c.population) : 0,
+                    c.stock
+                        ? c.stock.perCapitaFoodRetrievalCost(c.population)
+                        : 0,
                 format: fmt2,
                 topics: ["food:detail"],
             },
@@ -758,7 +712,9 @@
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
-                    c.stock ? c.stock.perCapitaFoodStorageLoss(c.population) : 0,
+                    c.stock
+                        ? c.stock.perCapitaFoodStorageLoss(c.population)
+                        : 0,
                 format: fmt2,
                 topics: ["food:detail"],
             },
