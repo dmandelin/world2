@@ -1,5 +1,6 @@
 import { TradeGoods, type TradeGood } from "../trade";
 import type { Clan } from "../people/people";
+import { Activities } from "../decisions/effort";
 
 export type DirectFlowRecord = {
     clan: Clan;
@@ -307,7 +308,7 @@ export class Consumption extends GoodFlows {
     }
 
     get leisureFraction(): number {
-        return this.clan.effortAllocation?.get?.({ name: 'Leisure', sortKey: 4, shortName: 'L', color: '#ffd700' } as any) ?? 0.3;
+        return this.clan.effortAllocation?.get?.(Activities.Leisure) ?? 0.3;
     }
 
     perCapita(good: TradeGood): number {
