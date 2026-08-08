@@ -1117,7 +1117,7 @@
 
     interface RespectRowData {
         label: string;
-        type: "item" | "total" | "population";
+        type: "item" | "total" | "previous" | "smoothed" | "population";
         itemLabel?: string;
     }
 
@@ -1149,9 +1149,18 @@
                 label,
             })),
             {
-                data: { label: "Total", type: "total" as const },
-                label: "Total",
+                data: { label: "Current Judgments", type: "total" as const },
+                label: "Current Judgments",
                 divider: true,
+                bold: true,
+            },
+            {
+                data: { label: "Previous Value", type: "previous" as const },
+                label: "Previous Value",
+            },
+            {
+                data: { label: "Smoothed Respect", type: "smoothed" as const },
+                label: "Smoothed Respect",
                 bold: true,
             },
             {
@@ -1181,6 +1190,20 @@
                             clan.world.marriageInterestToward(c, clan)
                                 ?.currentItemsTotal ?? 0,
                     );
+                } else if (row.type === "previous") {
+                    return populationAverage(
+                        otherClans,
+                        (c) =>
+                            clan.world.marriageInterestToward(c, clan)
+                                ?.previousValue ?? 0,
+                    );
+                } else if (row.type === "smoothed") {
+                    return populationAverage(
+                        otherClans,
+                        (c) =>
+                            clan.world.marriageInterestToward(c, clan)?.value ??
+                            0,
+                    );
                 } else {
                     return sumFun(otherClans, (c) => c.population);
                 }
@@ -1198,6 +1221,10 @@
                 data: otherClan,
                 label: otherClan.name,
                 valueFn: (row: RespectRowData) => {
+                    const r = clan.world.marriageInterestToward(
+                        otherClan,
+                        clan,
+                    );
                     if (row.type === "item") {
                         return getMarriageInterestItemValue(
                             clan.world,
@@ -1206,10 +1233,11 @@
                             row.itemLabel!,
                         );
                     } else if (row.type === "total") {
-                        return (
-                            clan.world.marriageInterestToward(otherClan, clan)
-                                ?.currentItemsTotal ?? 0
-                        );
+                        return r?.currentItemsTotal ?? 0;
+                    } else if (row.type === "previous") {
+                        return r?.previousValue ?? 0;
+                    } else if (row.type === "smoothed") {
+                        return r?.value ?? 0;
                     } else {
                         return otherClan.population;
                     }
@@ -1515,6 +1543,12 @@
 
 {#snippet marriageAppealTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanRespectTooltipTable(cs.e)}></TableView2>
+    <div
+        style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
+    >
+        Retention ratio: 90% (Smoothed Respect = 10% Current Judgments + 90%
+        Previous Value).
+    </div>
 {/snippet}
 
 {#snippet peopleTooltip(cs: ClanLastTurnSnapshots)}

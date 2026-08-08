@@ -695,9 +695,12 @@ Detailed list of first parts:
                     x   Add gift layer
                     x   Deal with recursion around QoL and stress
                         and with stress generally
+                    x   Less generosity credit for gifts to friends
 
-                    *   Clean up issues with tuning and visualization
+                    x   Clean up issues with tuning and visualization
                     *   Fix apparent bugs in consumption values
+                    *   Transport costs on aid
+                    *   Transport costs on gifts
 
                     *   Make sure clans are giving help in case of dire need
 
@@ -709,15 +712,11 @@ Detailed list of first parts:
                     *   Variable aid alignment threshold
                     *   Variable aid food threshold
 
-                    *   Transport costs on aid
-                    *   Transport costs on gifts
+                    *   Have knowledge for respect and such be more than a multiplier - consider what facts are easier or harder to know
+                    *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis via gifts
 
-                    *   Less generosity credit for gifts to friends
-                    *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis
                     *   Make residence matter again in here somewhere
                     *   Consider if alignment of others should go into QoL or if that comes in via interactions
-                    *   Consider if respect should affect stress
-                    *   Have knowledge for respect and such be more than a multiplier - consider what facts are easier or harder to know
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement
