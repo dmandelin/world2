@@ -105,6 +105,7 @@ export class ClanDTO {
     seniority: number;
     migrationPlan: MigrationCalc | undefined;
     lastPopulationChange: PopulationChange;
+    perCapitaFoodProductionTarget: number;
     population: number;
     effectiveResidentPopulation: number;
 
@@ -144,6 +145,7 @@ export class ClanDTO {
         this.effortAllocation = clan.effortAllocation.clone();
         this.seniority = clan.seniority;
         this.population = clan.population;
+        this.perCapitaFoodProductionTarget = clan.perCapitaFoodProductionTarget;
         this.workers = clan.workers;
         this.effectiveResidentPopulation = clan.effectiveResidentPopulation;
         this.residenceFraction = clan.residenceFraction;
@@ -160,10 +162,6 @@ export class ClanDTO {
 
     get world(): WorldDTO {
         return this.settlement.world;
-    }
-
-    get foodTargetPerCapita(): number {
-        return this.ref.foodTargetPerCapita;
     }
 
     get previousPopulation(): number {
@@ -296,12 +294,15 @@ export class PlannedSettlementDTO {
     }
 }
 
+import type { FoodRedistributionResult } from "../econ/redistribution";
+
 export class WorldDTO {
     readonly year: string;
     readonly clanMap: ReadonlyMap<UUID, ClanDTO>;
     readonly clusters: ClusterDTO[];
     readonly plannedSettlements: PlannedSettlementDTO[];
     readonly lastMarriageDecisions?: MarriageDecisions;
+    readonly lastFoodRedistribution?: FoodRedistributionResult;
 
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
@@ -319,6 +320,7 @@ export class WorldDTO {
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
         this.lastMarriageDecisions = world.lastMarriageDecisions;
+        this.lastFoodRedistribution = world.lastFoodRedistribution;
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.plannedSettlements = world.plannedSettlements.map(p => new PlannedSettlementDTO(p));

@@ -24,8 +24,10 @@ import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { Conflicts } from "./relations/conflict";
 import { getAlignment } from "./relations/alignment";
+import { AID_ALIGNMENT_THRESHOLD, AID_FOOD_THRESHOLD, FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
 export class World implements NoteTaker {
     lastMarriageDecisions?: MarriageDecisions;
+    lastFoodRedistribution?: FoodRedistributionResult;
     readonly year = new Year();
     readonly yearsPerTurn = 1;
     readonly yearsPerTick = 1;
@@ -377,7 +379,7 @@ export class World implements NoteTaker {
 
         // Step 1 & 2: Arrange consumption (first from production up to target food/capita, then from stock)
         for (const clan of allClans) {
-            let targetFood = clan.foodTargetPerCapita * clan.population;
+            let targetFood = clan.population;
 
             // Consume out of production (Fish first, Cereals second)
             const availFish = clan.production.forGood(TradeGoods.Fish);
@@ -472,91 +474,7 @@ export class World implements NoteTaker {
     }
 
     redistributeFood(allClans: Clan[]) {
-        const ICEBERG_COST_DIFFERENT_SETTLEMENTS = 0.10;
-        let changed = true;
-        let roundCount = 0;
-        const maxRounds = 100;
-
-        while (changed && roundCount < maxRounds) {
-            changed = false;
-            roundCount++;
-
-            const needyClans = shuffled(allClans.filter(c => c.consumption.totalFood < c.foodTargetPerCapita * c.population));
-            if (needyClans.length === 0) break;
-
-            for (const needyClan of needyClans) {
-                let demand = (needyClan.foodTargetPerCapita * needyClan.population) - needyClan.consumption.totalFood;
-                if (demand <= 1e-9) continue;
-
-                const partners = this.getRelationshipPartners(needyClan);
-                partners.sort((a, b) => getAlignment(needyClan, b) - getAlignment(needyClan, a));
-                for (const partner of partners) {
-                    if (demand <= 1e-9) break;
-
-                    const sameSettlement = needyClan.settlement === partner.settlement;
-                    const costRate = sameSettlement ? 0 : ICEBERG_COST_DIFFERENT_SETTLEMENTS;
-                    const multiplier = 1 - costRate;
-
-                    // Try donating remaining production cereals
-                    const prodCereals = partner.production.forGood(TradeGoods.Cereals);
-                    const prodCerealsUsed = partner.distribution.totalToConsumption(TradeGoods.Cereals) + partner.distribution.totalToDonated(TradeGoods.Cereals);
-                    const availProdCereals = Math.max(0, prodCereals - prodCerealsUsed);
-
-                    if (availProdCereals > 1e-9) {
-                        const amountSent = Math.min(availProdCereals, demand / multiplier);
-                        if (amountSent > 1e-9) {
-                            const amountReceived = amountSent * multiplier;
-                            const transactionCost = amountSent - amountReceived;
-
-                            partner.distribution.addDonation(needyClan, TradeGoods.Cereals, amountSent);
-                            needyClan.consumption.addDonation(partner, TradeGoods.Cereals, amountReceived, transactionCost);
-
-                            demand -= amountReceived;
-                            changed = true;
-                        }
-                    }
-
-                    if (demand > 1e-9) {
-                        // Check stock cereals for partner
-                        const stockCereals = partner.stock.getAmount(TradeGoods.Cereals);
-                        const stockOutflowCereals = partner.stockOutflow.totalOutflow(TradeGoods.Cereals);
-                        const availStockCereals = Math.max(0, stockCereals - stockOutflowCereals);
-
-                        if (availStockCereals > 1e-9) {
-                            const maxSentFromStock = availStockCereals / 1.20;
-                            const amountSent = Math.min(maxSentFromStock, demand / multiplier);
-                            if (amountSent > 1e-9) {
-                                const retrievalCost = amountSent * 0.20;
-                                const amountReceived = amountSent * multiplier;
-                                const transactionCost = amountSent - amountReceived;
-
-                                partner.stockOutflow.addDonation(needyClan, TradeGoods.Cereals, amountSent, retrievalCost);
-                                needyClan.consumption.addDonation(partner, TradeGoods.Cereals, amountReceived, transactionCost);
-
-                                demand -= amountReceived;
-                                changed = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private getRelationshipPartners(clan: Clan): Clan[] {
-        const partners = new Set<Clan>();
-        for (const rel of clan.tradeRelationships) {
-            const partner = rel.partner(clan);
-            if (partner && 'population' in partner && 'consumption' in partner) {
-                partners.add(partner as Clan);
-            }
-        }
-        if (this.connections) {
-            for (const other of connectedClans(clan)) {
-                partners.add(other);
-            }
-        }
-        return Array.from(partners);
+        this.lastFoodRedistribution = redistributeFood(allClans);
     }
 
     recordEndOfTurnState() {

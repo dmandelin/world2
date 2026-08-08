@@ -258,14 +258,31 @@ export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, Ce
         rowDataRows?: RowDataRowSpec<RowColData>[],
         colClassFn?: (item: RowColData) => string,
         rowClassFn?: (item: RowColData) => string,
+        initialRowDataCols?: RowDataColumnSpec<RowColData>[],
     ) {
-        this.columns = [...data].map(e => ({
+        this.columns = [];
+
+        if (initialRowDataCols) {
+            for (const spec of initialRowDataCols) {
+                this.columns.push({
+                    data: spec.label,
+                    label: spec.label,
+                    valueFn: spec.valueFn,
+                    formatFn: spec.formatFn,
+                    tooltip: spec.tooltip,
+                    headerTooltip: spec.headerTooltip,
+                });
+            }
+        }
+
+        const dataCols = [...data].map(e => ({
             data: e,
             label: labelFn(e),
             valueFn: (row: RowColData) => valueFn(row, e),
             formatFn,
             class: colClassFn?.(e),
         }));
+        this.columns.push(...dataCols);
 
         if (rowDataCols) {
             for (const spec of rowDataCols) {

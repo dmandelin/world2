@@ -156,7 +156,7 @@ export class EffortAllocation {
         if (leisure < 0.15 - 1e-9) return -Infinity;
 
         const er = economicResult(this.clan, option);
-        const targetPerCapita = this.clan.foodTargetPerCapita;
+        const targetPerCapita = this.clan.perCapitaFoodProductionTarget;
         const foodPerCapita = (this.clan.population > 0) ? er.production.totalFood() / this.clan.population : targetPerCapita;
 
         if (foodPerCapita >= targetPerCapita - 1e-9) {

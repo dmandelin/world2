@@ -12,6 +12,7 @@
     import SettlementProductivity from "./SettlementProductivity.svelte";
     import SettlementMutualAid from "./SettlementMutualAid.svelte";
     import SettlementMarriages from "./SettlementMarriages.svelte";
+    import SettlementRedistribution from "./SettlementRedistribution.svelte";
 
     let { settlement } = $props();
 
@@ -20,6 +21,7 @@
         { label: "Comparison", snippet: comparisonTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Marriages", snippet: marriagesTab },
+        { label: "Redistribution", snippet: redistributionTab },
         { label: "Mutual Aid", snippet: mutualAidTab },
         { label: "Graph", snippet: relationshipsGraphTab },
         { label: "Graph2", snippet: relationshipsGraph2Tab },
@@ -65,6 +67,10 @@
 
 {#snippet marriagesTab()}
     <SettlementMarriages settlement={settlement} />
+{/snippet}
+
+{#snippet redistributionTab()}
+    <SettlementRedistribution settlement={settlement} />
 {/snippet}
 
 {#snippet mutualAidTab()}

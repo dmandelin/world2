@@ -616,10 +616,87 @@ Detailed list of first parts:
 *   Other key fixes
     *   Bigger death rate in case of very low yield
         *   Some kind of famine notification
+*   Other random ideas
+    *   Stress and conflict costs for different relationship
+        types, esp more conflict over differential goods in
+        communal sharing relationships
+        *   Not entirely sure how much empirical grounding there
+            is; equality can have more conflict and stress but
+            that's not necessarily true in all cases
 *   "Status"
     x   Base on generosity/holiness
     x   +Marriage appeal
     x   Show marriage appeal rankings in the UI
+    *   Starvation
+        *   Bigger impact from really low food levels
+    *   More complexity around sharing
+        *   General thoughts
+            *   Current issues
+                *   Clans have no option to refuse aid, which
+                    makes alignment less meangingful, and makes
+                    it unclear how we'd see change in these
+                    relationships
+                *   There's one univeral target level for how
+                    much aid to give, but clans would probably
+                    help keep almost anyone alive, but be more
+                    generous to some they like more
+                    *   Egalitarian norms might constrain how
+                        much they can do this
+                    *   But on the other hand, people are probably
+                        typically expected to favor close kin
+            *   Ideas for dealing with those
+                *   Give each clan an alignment threshold for
+                    offering aid. This specific idea goes with
+                    a universal target level, so let's look at
+                    that and then come back to this
+                *   Do we also need some sort of regular feasting
+                    thing where everyone gives a little bit to
+                    everyone else? But let's not add that just yet
+                *   Something like marginal utility should work,
+                    but it's not clear people really think that
+                    way nor that alignment has the right numerical
+                    values, thus "something like".
+                *   Thinking about typical responses to some
+                    alignment values:
+                    *   1.00
+                        *   Clans would share practically everything
+                            as long as it's equally useful and they
+                            don't have too-high transaction costs.
+                    *   0.00
+                        *   Here, clans are motivated to keep up
+                            reciprocity. If there's a norm for how
+                            much to share in this case, the might do
+                            that. Or it might be a negotiation between
+                            the two.
+                    *   -1.00
+                        *   No sharing
+                    *   -0.50
+                        *   Here, clans might not be motivated by
+                            reciprocity, but they still might be
+                            motivated by adhering to norms.
+                    *   0.50
+                        *   Here we expect to see both reciprocity and
+                            gifts
+                *   Pulling those together:
+                    *   We can see the ideas of pooling, partial
+                        pooling, gifts, reciprocity, and norms.
+                    *   How about this:
+                        *   "Free gifts" based on positive alignment and
+                            relationship, which exchange things in a
+                            redistributive way but without any obligation or effect on status
+                        *   Reciprocal relationships where clans will
+                            donate up to a certain level if alignment is
+                            above a threshold
+                        *   Norms: Look out for cases where a clan would
+                            be negatively judged for an action we allow,
+                            and flag those for later. Also note any cases where we automatically constrain behavior to norms for later further consideration
+                *   Items
+                    x   Do the basic idea
+                    *   Add gift layer
+                    *   Make sure clans are giving help in case of dire need
+                    *   Variable aid alignment threshold
+                    *   Variable aid food threshold
+                    *   Possible third-party reactions on refusal to give
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement

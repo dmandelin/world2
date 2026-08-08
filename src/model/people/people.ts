@@ -396,7 +396,7 @@ export class Clan implements TradePartner {
         }
     }
 
-    get foodTargetPerCapita(): number {
+    get perCapitaFoodProductionTarget(): number {
         const piety = this.traits.piety;
         if (piety >= 50) {
             return Math.max(0.1, Math.pow(1.2, (piety - 50) / 15));
