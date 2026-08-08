@@ -3,7 +3,9 @@
     import {
         FilteredIterableTable,
         IterableTable,
-        SingleMapTable,
+        type Table,
+        type TableColumn,
+        type TableRow,
     } from "../tables/tables2";
     import {
         MutualAidInteraction,
@@ -22,7 +24,8 @@
         unsignedFormat,
         stressColor,
     } from "../../model/lib/format";
-    import { safeDiv, sortedByKey } from "../../model/lib/basics";
+    import { safeDiv, sortedByKey, sumFun } from "../../model/lib/basics";
+    import { populationAverage } from "../../model/lib/modelbasics";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
     import EntityLink from "../state/EntityLink.svelte";
@@ -1112,106 +1115,118 @@
         );
     }
 
-    function clanMarriageAppealTooltipTable(clan: ClanDTO) {
+    interface RespectRowData {
+        label: string;
+        type: "item" | "total" | "population";
+        itemLabel?: string;
+    }
+
+    function clanRespectTooltipTable(
+        clan: ClanDTO,
+    ): Table<RespectRowData, any, any> {
         const otherClans = clan.settlement.clans.filter(
             (c) => c.uuid !== clan.uuid,
         );
-        return new FilteredIterableTable(
-            otherClans,
-            (c) => c.name,
-            (_) => true,
-            [
-                {
-                    data: "Population",
-                    label: "Population",
-                    valueFn: (c) => c.population,
-                    formatFn: unsignedFormat(0),
-                },
-                {
-                    data: "Generosity",
-                    label: "Generosity",
-                    valueFn: (c) =>
+
+        const sampleR = otherClans
+            .map((c) => clan.world.marriageInterestToward(c, clan))
+            .find((r) => r && r.items.length > 0);
+
+        const itemLabels = sampleR
+            ? sampleR.items.map((i) => i.label)
+            : [
+                  "Generosity",
+                  "Skills",
+                  "Piety",
+                  "Social QoL",
+                  "Material QoL",
+                  "Random",
+              ];
+
+        const rows: TableRow<RespectRowData, any>[] = [
+            ...itemLabels.map((label) => ({
+                data: { label, type: "item" as const, itemLabel: label },
+                label,
+            })),
+            {
+                data: { label: "Total", type: "total" as const },
+                label: "Total",
+                divider: true,
+                bold: true,
+            },
+            {
+                data: { label: "Population", type: "population" as const },
+                label: "Population",
+                class: "gray-row",
+            },
+        ];
+
+        const totalColumn: TableColumn<RespectRowData, any, number> = {
+            data: "total",
+            label: "Total",
+            valueFn: (row: RespectRowData) => {
+                if (row.type === "item") {
+                    return populationAverage(otherClans, (c) =>
                         getMarriageInterestItemValue(
                             clan.world,
                             c,
                             clan,
-                            "Generosity",
+                            row.itemLabel!,
                         ),
-                    formatFn: (v: number) => signed(v, 1),
-                },
-                {
-                    data: "Skills",
-                    label: "Skills",
-                    valueFn: (c) =>
-                        getMarriageInterestItemValue(
+                    );
+                } else if (row.type === "total") {
+                    return populationAverage(
+                        otherClans,
+                        (c) =>
+                            clan.world.marriageInterestToward(c, clan)
+                                ?.currentItemsTotal ?? 0,
+                    );
+                } else {
+                    return sumFun(otherClans, (c) => c.population);
+                }
+            },
+            formatFn: (v: number, row: RespectRowData) => {
+                if (row.type === "population") {
+                    return v.toFixed(0);
+                }
+                return signed(v, 1);
+            },
+        };
+
+        const clanColumns: TableColumn<RespectRowData, ClanDTO, number>[] =
+            otherClans.map((otherClan) => ({
+                data: otherClan,
+                label: otherClan.name,
+                valueFn: (row: RespectRowData) => {
+                    if (row.type === "item") {
+                        return getMarriageInterestItemValue(
                             clan.world,
-                            c,
+                            otherClan,
                             clan,
-                            "Skills",
-                        ),
-                    formatFn: (v: number) => signed(v, 1),
+                            row.itemLabel!,
+                        );
+                    } else if (row.type === "total") {
+                        return (
+                            clan.world.marriageInterestToward(otherClan, clan)
+                                ?.currentItemsTotal ?? 0
+                        );
+                    } else {
+                        return otherClan.population;
+                    }
                 },
-                {
-                    data: "Stress",
-                    label: "Stress",
-                    valueFn: (c) =>
-                        getMarriageInterestItemValue(
-                            clan.world,
-                            c,
-                            clan,
-                            "Stress",
-                        ),
-                    formatFn: (v: number) => signed(v, 1),
+                formatFn: (v: number, row: RespectRowData) => {
+                    if (row.type === "population") {
+                        return v.toFixed(0);
+                    }
+                    return signed(v, 1);
                 },
-                {
-                    data: "Standard of Living",
-                    label: "SoL",
-                    valueFn: (c) =>
-                        getMarriageInterestItemValue(
-                            clan.world,
-                            c,
-                            clan,
-                            "Standard of Living",
-                        ),
-                    formatFn: (v: number) => signed(v, 1),
-                },
-                {
-                    data: "Random",
-                    label: "Random",
-                    valueFn: (c) =>
-                        getMarriageInterestItemValue(
-                            clan.world,
-                            c,
-                            clan,
-                            "Random",
-                        ),
-                    formatFn: (v: number) => signed(v, 1),
-                },
-                {
-                    data: "Previous",
-                    label: "Prev",
-                    valueFn: (c) =>
-                        clan.world.marriageInterestToward(c, clan)
-                            ?.previousValue ?? 0,
-                    formatFn: (v: number) => signed(v, 1),
-                },
-                {
-                    data: "Current Total",
-                    label: "Total",
-                    valueFn: (c) =>
-                        clan.world.marriageInterestToward(c, clan)
-                            ?.currentItemsTotal ?? 0,
-                    formatFn: (v: number) => signed(v, 1),
-                },
-                {
-                    data: "Interest",
-                    label: "Interest",
-                    valueFn: (c) =>
-                        clan.world.marriageInterestToward(c, clan)?.value ?? 0,
-                    formatFn: (v: number) => signed(v, 1),
-                },
-            ],
-        );
+            }));
+
+        return {
+            columns: [totalColumn, ...clanColumns],
+            rows,
+            rowHeaderLabel: "Item",
+        };
     }
 
     function clanHappinessTooltipTable(clan: ClanDTO) {
@@ -1499,7 +1514,7 @@
 {/snippet}
 
 {#snippet marriageAppealTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2 table={clanMarriageAppealTooltipTable(cs.e)}></TableView2>
+    <TableView2 table={clanRespectTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
 {#snippet peopleTooltip(cs: ClanLastTurnSnapshots)}
@@ -2109,5 +2124,8 @@
         font-weight: bold;
         background-color: #fff;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    :global(td.gray-row) {
+        color: #888;
     }
 </style>
