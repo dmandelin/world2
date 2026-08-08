@@ -527,12 +527,17 @@
         ]);
 
         // Group 4: Food
+        const fmt2 = (v: number) => {
+            if (!v || Math.abs(v) < 0.005) return "";
+            return unsigned(v, 2);
+        };
+
         groups.push([
             {
                 label: "Food",
                 class: "actual",
                 isHeader: true,
-                topics: ["food", "welfare"],
+                topics: ["food", "food:detail", "welfare"],
             },
             {
                 label: "&nbsp;Produced",
@@ -543,106 +548,237 @@
                         ? c.distribution.totalFoodFromProduction /
                           (c.population || 1)
                         : 0,
-                format: pct,
+                format: fmt2,
                 tooltipSnippet: foodProducedTooltip,
                 deltaValue: (c) =>
                     c.distribution
                         ? c.distribution.totalFoodFromProduction /
                           (c.population || 1)
                         : 0,
-                deltaFormat: pct,
+                deltaFormat: fmt2,
                 timelineKey: "foodProduced",
                 scaler: new DefaultScaler(),
-                topics: ["food"],
+                topics: ["food", "food:detail"],
             },
             {
-                label: "&nbsp;Taken",
+                label: "&nbsp;&nbsp;Given as gifts",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.distribution
+                        ? c.distribution.totalFoodGiftsGiven / (c.population || 1)
+                        : 0,
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;&nbsp;Received as gifts",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
                     c.consumption
-                        ? c.consumption.totalFoodTaken / (c.population || 1)
+                        ? c.consumption.totalFoodGiftsReceived / (c.population || 1)
                         : 0,
-                format: pct,
-                tooltipSnippet: foodTakenTooltip,
-                topics: ["food"],
+                format: fmt2,
+                topics: ["food:detail"],
             },
             {
-                label: "&nbsp;Given",
+                label: "&nbsp;&nbsp;Net transfer via gifts",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => {
+                    const rec = c.consumption?.totalFoodGiftsReceived ?? 0;
+                    const giv = c.distribution?.totalFoodGiftsGiven ?? 0;
+                    return (rec - giv) / (c.population || 1);
+                },
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;&nbsp;(Prod) Given as aid",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
-                    ((c.distribution?.totalFoodGiven ?? 0) +
-                        (c.stockOutflow?.totalFoodGiven ?? 0)) /
-                    (c.population || 1),
-                format: pct,
-                tooltipSnippet: foodGivenTooltip,
-                topics: ["food"],
+                    c.distribution
+                        ? c.distribution.totalFoodAidGiven / (c.population || 1)
+                        : 0,
+                format: fmt2,
+                topics: ["food:detail"],
             },
             {
-                label: "&nbsp;Eaten",
+                label: "&nbsp;&nbsp;Received as aid",
                 class: "actual",
                 cellClass: "ra",
-                value: (c) => (c.consumption ? c.consumption.perCapitaFood : 0),
-                format: pct,
-                tooltipSnippet: foodTooltip,
-                deltaValue: (c) =>
-                    c.consumption ? c.consumption.perCapitaFood : 0,
-                deltaFormat: pct,
-                timelineKey: "food",
-                scaler: new DefaultScaler(),
-                topics: ["food", "welfare"],
+                value: (c) =>
+                    c.consumption
+                        ? c.consumption.totalFoodAidReceived / (c.population || 1)
+                        : 0,
+                format: fmt2,
+                topics: ["food:detail"],
             },
             {
-                isBreak: true,
-                topics: ["food"],
+                label: "&nbsp;&nbsp;Net transfer via aid",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => {
+                    const rec = c.consumption?.totalFoodAidReceived ?? 0;
+                    const givProd = c.distribution?.totalFoodAidGiven ?? 0;
+                    const givStock = c.stockOutflow?.totalFoodAidGiven ?? 0;
+                    return (rec - (givProd + givStock)) / (c.population || 1);
+                },
+                format: fmt2,
+                topics: ["food:detail"],
             },
             {
-                label: "&nbsp;Stored",
+                label: "&nbsp;Sent to storage",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
                     c.distribution
                         ? c.distribution.totalFoodToStock / (c.population || 1)
                         : 0,
-                format: pct,
-                topics: ["food"],
+                format: fmt2,
+                topics: ["food:detail"],
             },
             {
-                label: "&nbsp;Retreived",
+                label: "&nbsp;Retrieved from storage",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
                     c.stockOutflow
-                        ? c.stockOutflow.totalFoodRetrieved /
+                        ? c.stockOutflow.totalFoodRetrieved / (c.population || 1)
+                        : 0,
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;Consumed",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => (c.consumption ? c.consumption.perCapitaFood : 0),
+                format: fmt2,
+                tooltipSnippet: foodTooltip,
+                deltaValue: (c) =>
+                    c.consumption ? c.consumption.perCapitaFood : 0,
+                deltaFormat: fmt2,
+                timelineKey: "food",
+                scaler: new DefaultScaler(),
+                topics: ["food", "food:detail", "welfare"],
+            },
+            {
+                isBreak: true,
+                topics: ["food", "food:detail"],
+            },
+            {
+                label: "&nbsp;Initial stock",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => {
+                    if (!c.stock) return 0;
+                    const pop = c.population || 1;
+                    const init =
+                        c.stock.totalFoodStock -
+                        c.stock.totalFoodAdditions +
+                        c.stock.totalFoodRetrievals +
+                        c.stock.totalFoodRetrievalCost +
+                        c.stock.totalFoodStorageLoss;
+                    return init / pop;
+                },
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;Added to stock",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.stock ? c.stock.perCapitaFoodAdditions(c.population) : 0,
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;Retrieved to consume",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.stockOutflow
+                        ? c.stockOutflow.totalFoodToConsumption /
                           (c.population || 1)
                         : 0,
-                format: pct,
-                topics: ["food"],
+                format: fmt2,
+                topics: ["food:detail"],
             },
             {
-                label: "&nbsp;Lost",
+                label: "&nbsp;Given as gifts",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
                     c.stockOutflow
-                        ? c.stockOutflow.totalFoodLost / (c.population || 1)
+                        ? c.stockOutflow.totalFoodGiftsGiven /
+                          (c.population || 1)
                         : 0,
-                format: pct,
-                topics: ["food"],
+                format: fmt2,
+                topics: ["food:detail"],
             },
             {
-                label: "&nbsp;Balance",
+                label: "&nbsp;Given as aid",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.stockOutflow
+                        ? c.stockOutflow.totalFoodAidGiven /
+                          (c.population || 1)
+                        : 0,
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;Retrieval costs",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.stock ? c.stock.perCapitaFoodRetrievalCost(c.population) : 0,
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;Storage losses",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    c.stock ? c.stock.perCapitaFoodStorageLoss(c.population) : 0,
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;Net in/out",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => {
+                    if (!c.stock) return 0;
+                    const pop = c.population || 1;
+                    const net =
+                        c.stock.totalFoodAdditions -
+                        c.stock.totalFoodRetrievals -
+                        c.stock.totalFoodRetrievalCost -
+                        c.stock.totalFoodStorageLoss;
+                    return net / pop;
+                },
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;Final stock",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) => c.stock.perCapitaFoodStock(c.population),
-                format: pct,
+                format: fmt2,
                 tooltipSnippet: foodStockTooltip,
                 deltaValue: (c) => c.stock.perCapitaFoodStock(c.population),
-                deltaFormat: pct,
+                deltaFormat: fmt2,
                 timelineKey: "foodStorage",
                 scaler: new DefaultScaler(),
-                topics: ["food", "welfare"],
+                topics: ["food", "food:detail", "welfare"],
             },
         ]);
 
@@ -1349,16 +1485,18 @@
     let selectedLens = $state<string>("All");
     const lenses: Record<string, string[]> = {
         All: ["*"],
-        Econ: ["production", "productivity", "food", "skills"],
+        Econ: ["production", "productivity", "food:detail", "skills"],
         Productivity: ["productivity"],
     };
 
     function isRowVisible(row: RowDef, selectedLensTopics: string[]): boolean {
-        if (selectedLensTopics.includes("*")) {
-            return true;
-        }
         if (!row.topics) {
             return false;
+        }
+        if (selectedLensTopics.includes("*")) {
+            if (row.topics.some((t) => !t.includes(":"))) {
+                return true;
+            }
         }
         return row.topics.some((t) => selectedLensTopics.includes(t));
     }

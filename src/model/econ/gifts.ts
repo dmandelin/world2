@@ -112,8 +112,8 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
         for (const entry of entries) {
             const giftAbs = entry.rawGiftAbs * scaleFactor;
 
-            donor.distribution.addDonation(entry.recipient, TradeGoods.Cereals, giftAbs);
-            entry.recipient.consumption.addDonation(donor, TradeGoods.Cereals, giftAbs, 0);
+            donor.distribution.addGift(entry.recipient, TradeGoods.Cereals, giftAbs);
+            entry.recipient.consumption.addGift(donor, TradeGoods.Cereals, giftAbs);
 
             const recPop = entry.recipient.population || 1;
             const donorPop = donor.population || 1;

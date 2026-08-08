@@ -704,6 +704,8 @@ Detailed list of first parts:
                         *   For gifts
                     *   Transport costs on aid
                     *   Transport costs on gifts
+                    *   Less generosity credit for gifts to friends
+                    *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement

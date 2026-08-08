@@ -36,6 +36,7 @@ export class Distribution extends GoodFlows {
     readonly toConsumption = new Map<TradeGood, number>();
     readonly toStock = new Map<TradeGood, number>();
     readonly toDonations: DirectFlowRecord[] = [];
+    readonly toGifts: DirectFlowRecord[] = [];
 
     addConsumption(good: TradeGood, amount: number): void {
         if (amount <= 0) return;
@@ -54,6 +55,11 @@ export class Distribution extends GoodFlows {
         this.toDonations.push({ clan: recipient, good, amount });
     }
 
+    addGift(recipient: Clan, good: TradeGood, amount: number): void {
+        if (amount <= 0) return;
+        this.toGifts.push({ clan: recipient, good, amount });
+    }
+
     totalToConsumption(good: TradeGood): number {
         return this.toConsumption.get(good) ?? 0;
     }
@@ -65,6 +71,17 @@ export class Distribution extends GoodFlows {
     totalToDonated(good: TradeGood): number {
         let sum = 0;
         for (const r of this.toDonations) {
+            if (r.good === good) sum += r.amount;
+        }
+        for (const r of this.toGifts) {
+            if (r.good === good) sum += r.amount;
+        }
+        return sum;
+    }
+
+    totalToGifted(good: TradeGood): number {
+        let sum = 0;
+        for (const r of this.toGifts) {
             if (r.good === good) sum += r.amount;
         }
         return sum;
@@ -83,6 +100,15 @@ export class Distribution extends GoodFlows {
     }
 
     get totalFoodGiven(): number {
+        return this.sumRecordsGoods(this.toDonations, g => g.isSubsistence)
+             + this.sumRecordsGoods(this.toGifts, g => g.isSubsistence);
+    }
+
+    get totalFoodGiftsGiven(): number {
+        return this.sumRecordsGoods(this.toGifts, g => g.isSubsistence);
+    }
+
+    get totalFoodAidGiven(): number {
         return this.sumRecordsGoods(this.toDonations, g => g.isSubsistence);
     }
 }
@@ -150,6 +176,14 @@ export class StockOutflow extends GoodFlows {
         return this.sumRecordsGoods(this.toDonations, g => g.isSubsistence);
     }
 
+    get totalFoodAidGiven(): number {
+        return this.sumRecordsGoods(this.toDonations, g => g.isSubsistence);
+    }
+
+    get totalFoodGiftsGiven(): number {
+        return 0;
+    }
+
     get totalFoodRetrieved(): number {
         return this.totalFoodToConsumption + this.totalFoodGiven;
     }
@@ -177,6 +211,7 @@ export class Consumption extends GoodFlows {
     readonly fromProduction = new Map<TradeGood, number>();
     readonly fromStock = new Map<TradeGood, number>();
     readonly fromDonations: DirectFlowRecord[] = [];
+    readonly fromGifts: DirectFlowRecord[] = [];
 
     addProduction(good: TradeGood, amount: number): void {
         if (amount <= 0) return;
@@ -195,6 +230,11 @@ export class Consumption extends GoodFlows {
         this.fromDonations.push({ clan: donor, good, amount, transactionCost: cost });
     }
 
+    addGift(donor: Clan, good: TradeGood, amount: number): void {
+        if (amount <= 0) return;
+        this.fromGifts.push({ clan: donor, good, amount });
+    }
+
     totalFromProduction(good: TradeGood): number {
         return this.fromProduction.get(good) ?? 0;
     }
@@ -206,6 +246,17 @@ export class Consumption extends GoodFlows {
     totalFromDonated(good: TradeGood): number {
         let sum = 0;
         for (const r of this.fromDonations) {
+            if (r.good === good) sum += r.amount;
+        }
+        for (const r of this.fromGifts) {
+            if (r.good === good) sum += r.amount;
+        }
+        return sum;
+    }
+
+    totalFromGifted(good: TradeGood): number {
+        let sum = 0;
+        for (const r of this.fromGifts) {
             if (r.good === good) sum += r.amount;
         }
         return sum;
@@ -224,6 +275,15 @@ export class Consumption extends GoodFlows {
     }
 
     get totalFoodTaken(): number {
+        return this.sumRecordsGoods(this.fromDonations, g => g.isSubsistence)
+             + this.sumRecordsGoods(this.fromGifts, g => g.isSubsistence);
+    }
+
+    get totalFoodGiftsReceived(): number {
+        return this.sumRecordsGoods(this.fromGifts, g => g.isSubsistence);
+    }
+
+    get totalFoodAidReceived(): number {
         return this.sumRecordsGoods(this.fromDonations, g => g.isSubsistence);
     }
 
@@ -261,7 +321,8 @@ export class Consumption extends GoodFlows {
         const goodsSet = new Set<TradeGood>([
             ...this.fromProduction.keys(),
             ...this.fromStock.keys(),
-            ...this.fromDonations.map(r => r.good)
+            ...this.fromDonations.map(r => r.good),
+            ...this.fromGifts.map(r => r.good)
         ]);
         const pop = this.clan.population || 1;
         for (const good of goodsSet) {
