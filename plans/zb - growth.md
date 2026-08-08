@@ -693,6 +693,8 @@ Detailed list of first parts:
                 *   Items
                     x   Do the basic idea
                     x   Add gift layer
+                    *   Deal with recursion around QoL and stress
+                        and with stress generally
                     *   Clean up issues with tuning and visualization
                     *   Stress/conflict cost for mutual aid relating to
                         arguments over who has/needs what

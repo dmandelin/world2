@@ -41,33 +41,23 @@ export class QualityOfLife {
         return new QualityOfLife(m);
     }
 
-    static fromLeisure(consumption: Consumption): QualityOfLifeItem {
-        // Avoid -Infinity
-        const leisureFraction = Math.max(0.001, consumption.leisureFraction);
-        // Appeal 0 at 30% leisure share
-        const value = clamp(5 * Math.log2(leisureFraction / 0.3), -20, 20);
-        return new QualityOfLifeItem(
-            "Leisure", "leisure", value, `${pct(leisureFraction)} leisure`);
-
-    }
-
     static fromFoodQuantity(consumption: Consumption): QualityOfLifeItem {
         const value = FoodQuantityHappinessItem.appealOf(consumption.perCapitaFood);
         return new QualityOfLifeItem(
-            "Food quantity", "food", value, `${pct(consumption.perCapitaFood)} of needs`);
+            "Food quantity", "material", value, `${pct(consumption.perCapitaFood)} of needs`);
     }
 
     static fromFoodQuality(consumption: Consumption): QualityOfLifeItem {
         const value = foodVarietyAppeal(consumption.fishRatio);
         return new QualityOfLifeItem(
-            "Food quality", "food", value, `${pct(consumption.fishRatio)} fish`);
+            "Food quality", "material", value, `${pct(consumption.fishRatio)} fish`);
     }
 
     static fromFlood(consumption: Consumption): QualityOfLifeItem {
         const damageFactor = consumption.clan?.settlement?.floodLevel?.damageFactor ?? 0;
         const value = -damageFactor * 20;
         return new QualityOfLifeItem(
-            "Flood damage", "flood", value, `${pct(damageFactor)} damage`);
+            "Flood damage", "natural", value, `${pct(damageFactor)} damage`);
     }
 
     static fromConversation(consumption: Consumption): QualityOfLifeItem {
@@ -86,6 +76,16 @@ export class QualityOfLife {
         const value = consumption.clan ? getLocalRespect(consumption.clan) : 0;
         return new QualityOfLifeItem(
             "Respect", "social", value, `${value.toFixed(1)}`);
+    }
+
+    static fromLeisure(consumption: Consumption): QualityOfLifeItem {
+        // Avoid -Infinity
+        const leisureFraction = Math.max(0.001, consumption.leisureFraction);
+        // Appeal 0 at 30% leisure share
+        const value = clamp(5 * Math.log2(leisureFraction / 0.3), -20, 20);
+        return new QualityOfLifeItem(
+            "Leisure", "personal", value, `${pct(leisureFraction)} leisure`);
+
     }
 }
 
