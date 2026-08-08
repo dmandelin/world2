@@ -8,52 +8,6 @@ export type AverageAttitudeTable = {
     rows: string[][];
 }
 
-export class HappinessTable {
-    readonly header: string[];
-    readonly subheader: string[];
-    readonly rows: string[][];
-
-    constructor(readonly s: SettlementDTO,
-    ) {
-        const digits = 0;
-        this.header = ['Source', 'Average', ...s.clans.map(c => c.name)];
-        const subheaderGroup = ['E', 'A', 'V'];
-        this.subheader = ['', ...s.clans.flatMap(c => subheaderGroup), ...subheaderGroup];
-        this.rows = [];
-        const totalNumbers: number[] = [];
-        if (s.clans.length > 0) {
-            for (const label of s.clans[0].happiness.items.keys()) {
-                let clanNumbers: number[] = [];
-                let [ae, aa, av] = [0, 0, 0];  // Averages
-                for (const clan of s.clans) {
-                    const w = clan.population / s.population;
-                    const i = clan.happiness.items.get(label);
-                    if (!i) continue;
-
-                    const e = i.expectedAppeal;
-                    const a = i.appeal;
-                    const v = i.value;
-
-                    ae += e * w;
-                    aa += a * w;
-                    av += v * w;
-
-                    clanNumbers.push(e, a, v);
-                }
-                const rowNumbers = [ae, aa, av, ...clanNumbers];
-                this.rows.push([label, ...rowNumbers.map(n => n.toFixed(digits))]);
-                for (let i = 0; i < rowNumbers.length; i++) {
-                    totalNumbers[i] = (totalNumbers[i] ?? 0) + rowNumbers[i];
-                }
-            }
-            const row = ['Total', ...totalNumbers.map(n => n.toFixed(digits))];
-            this.rows.push(row);
-        }
-    }
-}
-
-
-
 class PopulationChangeTableItem {
     constructor(
         readonly name: string,

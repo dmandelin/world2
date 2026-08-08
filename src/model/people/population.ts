@@ -2,10 +2,14 @@ import type { Clan } from "./people";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { clamp, productFun, sum } from "../lib/basics";
 import { spct } from "../lib/format";
-import { fishRatio, foodVarietyHealthFactor } from "./happiness";
 import { getLocalPrestige } from "../relations/respect";
 import { zScore } from "../lib/modelbasics";
 import { getMarriageDecisions } from "../relations/marriage";
+
+function foodVarietyHealthFactor(fishRatio: number): number {
+    const p = 1 - fishRatio;
+    return 1 - 0.125 * p * p;
+}
 
 export const INITIAL_POPULATION_RATIOS = [
     [0.2157, 0.2337],
@@ -195,13 +199,13 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Prestige', prestigeVal, prestigeDrModifier));
 
-        const stress = safeVal(this.clan.stress.value, 0);
-        const stressBrModifier = 1 + 0.005 * stress;
+        const socialQoL = this.clan.qol.valueFrom("social") - (this.clan.qol.m.get("Respect")?.value ?? 0);
+        const socialQoLBrModifier = 1 + 0.005 * -socialQoL;
         this.brModifiers.push(new PopulationChangeModifier(
-            'Stress', stress, stressBrModifier));
-        const stressDrModifier = 1 - 0.005 * stress;
+            'Society', -socialQoL, socialQoLBrModifier));
+        const socialQoLDrModifier = 1 - 0.005 * socialQoL;
         this.drModifiers.push(new PopulationChangeModifier(
-            'Stress', stress, stressDrModifier));
+            'Society', -socialQoL, socialQoLDrModifier));
 
         const intellect = safeVal(this.clan.traits?.intellect ?? 50, 50);
         const foresightBrModifier = Math.pow(0.9, (intellect - 50) / 15);

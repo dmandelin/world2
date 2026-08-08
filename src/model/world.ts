@@ -328,12 +328,6 @@ export class World implements NoteTaker {
         // Advance perceptions and learnings.
         for (const cl of this.clusters) {
             for (const settlement of cl.settlements) {
-                // Update stress based on conflict.
-                for (const clan of settlement.clans) clan.updateStress();
-
-                // Update happiness based on consumption and leisure.
-                for (const clan of settlement.clans) clan.updateHappiness();
-
                 // Advance traits and seniority.
                 for (const clan of settlement.clans) clan.prepareTraitChanges();
                 for (const clan of settlement.clans) clan.commitTraitChanges();

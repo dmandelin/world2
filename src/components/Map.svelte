@@ -189,24 +189,13 @@
         // Lens label (e.g., population)
         drawLensLabel(settlement, x, y, 3 + 32);
 
-        // Basic stats
-        const subsistence = weightedAverage(
+        const qol = weightedAverage(
             settlement.clans,
-            (c) => c.happiness.subsistenceAppeal,
-            (c) => c.population,
-        );
-        const appeal = weightedAverage(
-            settlement.clans,
-            (c) => c.happiness.appeal,
-            (c) => c.population,
-        );
-        const happiness = weightedAverage(
-            settlement.clans,
-            (c) => c.happiness.value,
+            (c) => c.qol.value,
             (c) => c.population,
         );
 
-        const stats = `${signed(subsistence)} | ${signed(appeal)} | ${signed(happiness)}`;
+        const stats = `QoL: ${signed(qol, 1)}`;
 
         let yo = 49;
         //context!.font = '12px sans-serif';
@@ -404,11 +393,11 @@ ${settlement.cluster.population} \
                       (c: any) => c.population,
                   )
                 : 0}
-        {@const stress =
+        {@const qol =
             pop > 0
                 ? weightedAverage(
                       hoveredSettlement.clans,
-                      (c: any) => c.stress.value,
+                      (c: any) => c.qol.value,
                       (c: any) => c.population,
                   )
                 : 0}
@@ -433,9 +422,9 @@ ${settlement.cluster.population} \
                 <span class="value">{perCapitaFood.toFixed(2)}</span>
             </div>
             <div class="tooltip-row">
-                <span class="label">Avg Stress:</span>
-                <span class="value {stress > 0 ? 'high-stress' : ''}"
-                    >{signed(stress, 1)}</span
+                <span class="label">Avg QoL:</span>
+                <span class="value {qol > 0 ? 'pos' : 'neg'}"
+                    >{signed(qol, 1)}</span
                 >
             </div>
         </div>

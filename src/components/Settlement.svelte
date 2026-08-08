@@ -1,6 +1,5 @@
 <script>
     import SettlementDemographics from "./SettlementDemographics.svelte";
-    import SettlementHappiness from "./SettlementHappiness.svelte";
     import SettlementOverview from "./overview/SettlementOverview.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
     import TabbedView from "./TabbedView.svelte";
@@ -27,7 +26,6 @@
         { label: "Mutual Aid", snippet: mutualAidTab },
         { label: "Graph", snippet: relationshipsGraphTab },
         { label: "Graph2", snippet: relationshipsGraph2Tab },
-        { label: "Happiness", snippet: happinessTab },
         { label: "Productivity", snippet: productivityTab },
         { label: "Migration", snippet: migrationTab },
         { label: "Demographics", snippet: demographicsTab },
@@ -59,9 +57,6 @@
     <SettlementTrade settlement={settlement} />
 {/snippet}
 
-{#snippet happinessTab()}
-    <SettlementHappiness settlement={settlement} />
-{/snippet}
 
 {#snippet productivityTab()}
     <SettlementProductivity settlement={settlement} />

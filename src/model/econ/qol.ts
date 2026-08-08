@@ -1,8 +1,10 @@
 import { clamp, sumFun } from "../lib/basics";
 import { pct } from "../lib/format";
-import { foodVarietyAppeal, FoodQuantityHappinessItem } from "../people/happiness";
 import type { Consumption } from "./consumption";
 import { getLocalRespect } from "../relations/respect";
+import { createTwoSidedQuadratic } from "../lib/modelbasics";
+
+const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 2, 1, 0);
 
 export class QualityOfLife {
     readonly m: ReadonlyMap<string, QualityOfLifeItem>;
@@ -42,13 +44,14 @@ export class QualityOfLife {
     }
 
     static fromFoodQuantity(consumption: Consumption): QualityOfLifeItem {
-        const value = FoodQuantityHappinessItem.appealOf(consumption.perCapitaFood);
+        const food = Math.max(0.01, consumption.perCapitaFood);
+        const value = clamp(50 * Math.log2(food), -100, 100);
         return new QualityOfLifeItem(
             "Food quantity", "material", value, `${pct(consumption.perCapitaFood)} of needs`);
     }
 
     static fromFoodQuality(consumption: Consumption): QualityOfLifeItem {
-        const value = foodVarietyAppeal(consumption.fishRatio);
+        const value = foodVarietyAppealFun(consumption.fishRatio);
         return new QualityOfLifeItem(
             "Food quality", "material", value, `${pct(consumption.fishRatio)} fish`);
     }

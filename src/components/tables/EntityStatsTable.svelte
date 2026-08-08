@@ -46,11 +46,7 @@
 
         // Group 2: Welfare
         groups.push([
-            { label: "Happiness", value: (c) => c.happiness.appeal, format: signed },
-            { label: "Social Welfare", value: (c) => c.happiness.socialAppeal, format: signed },
-            { label: "Material Welfare", value: (c) => c.happiness.subsistenceAppeal, format: signed },
             { label: "QoL", value: (c) => c.qol.value, format: signed },
-            { label: "Stress", value: (c) => c.stress.value, format: signed },
             {
                 label: "Mutual Aid",
                 value: (c) => {

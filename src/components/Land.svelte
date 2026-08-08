@@ -106,7 +106,7 @@
         const specs: { label: string; keyFn: (c: ClanDTO) => number }[] = [
             { label: "Largest", keyFn: (c) => c.population },
             { label: "Healthiest", keyFn: (c) => safeDiv(c.lastPopulationChange.brModifier, c.lastPopulationChange.drModifier) },
-            { label: "Happiest", keyFn: (c) => c.happiness.appeal },
+            { label: "Highest QoL", keyFn: (c) => c.qol.value },
             { label: "Best Fed", keyFn: (c) => c.qol.valueFrom("food") },
             { label: "Best Farmers", keyFn: (c) => c.skills.v(SkillDefs.Agriculture) },
             { label: "Best Fishers", keyFn: (c) => c.skills.v(SkillDefs.Fishing) },
