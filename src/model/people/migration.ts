@@ -68,10 +68,10 @@ export class MigrationCalc {
         // TODO - make clans that just split want to move more often.
         // TODO - trigger on local capital/resource scarcity
         const scale = 10 / Math.log10(9);
-        const pMove = eloSuccessProbability(-20, this.clan.stress.value, scale);
+        const pMove = eloSuccessProbability(-10, this.clan.qol.valueFrom('social'), scale);
         if (Math.random() < pMove) {
             this.wantToMove = true;
-            this.wantToMoveReason = 'Stress';
+            this.wantToMoveReason = 'Social QoL';
         }
     }
 
@@ -119,7 +119,7 @@ export class CandidateMigrationCalc {
         this.items = [
             this.inertia(),
             this.fromLandAvailability(),
-            this.fromStress(),
+            this.fromSocialQoL(),
             this.random(),
         ];
         this.value = sumFun(this.items, item => item.value);
@@ -172,9 +172,9 @@ export class CandidateMigrationCalc {
         }
     }
 
-    private fromStress(): CandidateMigrationCalcItem {
-        const value = this.target === this.clan.settlement ? this.clan.stress.value : 0;
-        return { name: 'Stress', reason: 'Stress', value };
+    private fromSocialQoL(): CandidateMigrationCalcItem {
+        const value = this.target === this.clan.settlement ? this.clan.qol.valueFrom('social') : 0;
+        return { name: 'Social QoL', reason: 'Social QoL', value };
     }
 
     private random(): CandidateMigrationCalcItem {
