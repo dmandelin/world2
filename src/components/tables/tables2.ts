@@ -86,8 +86,8 @@ export interface TableRow<RowData, ColData> {
     // If set, the cell will have a tooltip with this snippet.
     tooltip?: Snippet<[any, RowData, ColData]>;
 
-    // If set, the row header (label) will have a tooltip with this snippet.
-    headerTooltip?: Snippet<[RowData]>;
+    // If set, the row header (label) will have a tooltip with this snippet or text.
+    headerTooltip?: Snippet<[RowData]> | string;
 
     // If set, the row header will be rendered with this snippet.
     headerSnippet?: Snippet<[RowData]>;
@@ -238,7 +238,7 @@ export interface RowDataRowSpec<ColData> {
     valueFn: (col: ColData) => any;
     formatFn?: (value: any, col: ColData) => string;
     tooltip?: Snippet<[any, any, ColData]>;
-    headerTooltip?: Snippet<[any]>;
+    headerTooltip?: Snippet<[any]> | string;
     divider?: boolean;
 }
 

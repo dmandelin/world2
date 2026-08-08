@@ -5,6 +5,10 @@
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
+    // Whether to show raw amounts or per-capita amounts (divided by each
+    // clan's start-of-turn population).
+    let displayMode: "amounts" | "per capita" = $state("amounts");
+
     const Fish = TradeGoods.Fish;
     const Cereals = TradeGoods.Cereals;
 
@@ -20,6 +24,14 @@
     function fmt(v: number): string {
         if (!v || Math.abs(v) < 0.005) return "";
         return v.toFixed(2);
+    }
+
+    // Format a cell value, dividing by start-of-turn population in per-capita mode.
+    function fmtCell(v: number, pop: number): string {
+        if (displayMode === "per capita") {
+            return fmt(pop > 0 ? v / pop : 0);
+        }
+        return fmt(v);
     }
 
     function significant(a: Amounts): boolean {
@@ -197,7 +209,26 @@
     <table>
         <thead>
             <tr>
-                <th rowspan="2"></th>
+                <th rowspan="2" class="mode-cell">
+                    <div class="mode-button-group">
+                        <button
+                            type="button"
+                            class="mode-btn {displayMode === 'amounts'
+                                ? 'active'
+                                : ''}"
+                            onclick={() => (displayMode = "amounts")}
+                            >Amounts</button
+                        >
+                        <button
+                            type="button"
+                            class="mode-btn {displayMode === 'per capita'
+                                ? 'active'
+                                : ''}"
+                            onclick={() => (displayMode = "per capita")}
+                            >Per Capita</button
+                        >
+                    </div>
+                </th>
                 {#each settlement.clans as clan}
                     <th colspan="3" class="clan-name">{clan.name}</th>
                 {/each}
@@ -216,11 +247,12 @@
                     <td class="metric-label" class:sub-label={!row.isMain}>
                         {row.label}
                     </td>
-                    {#each row.cells as cell}
+                    {#each row.cells as cell, i}
                         {#if cell}
-                            <td>{fmt(cell.fish)}</td>
-                            <td>{fmt(cell.cereals)}</td>
-                            <td class="total-col">{fmt(cell.fish + cell.cereals)}</td>
+                            {@const pop = settlement.clans[i].previousPopulation}
+                            <td>{fmtCell(cell.fish, pop)}</td>
+                            <td>{fmtCell(cell.cereals, pop)}</td>
+                            <td class="total-col">{fmtCell(cell.fish + cell.cereals, pop)}</td>
                         {:else}
                             <td></td>
                             <td></td>
@@ -237,6 +269,42 @@
     .econ-container {
         margin-top: 1rem;
         overflow-x: auto;
+    }
+
+    .mode-cell {
+        vertical-align: bottom;
+        padding-bottom: 0.4rem;
+    }
+
+    .mode-button-group {
+        display: inline-flex;
+        gap: 0.25rem;
+        background-color: #f3edd8;
+        padding: 0.25rem;
+        border-radius: 4px;
+        align-items: center;
+    }
+
+    .mode-btn {
+        all: unset;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+        border-radius: 3px;
+        color: #333;
+        transition:
+            background-color 0.2s,
+            font-weight 0.2s;
+    }
+
+    .mode-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .mode-btn.active {
+        font-weight: bold;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     table {

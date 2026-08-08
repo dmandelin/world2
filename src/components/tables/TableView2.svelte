@@ -109,7 +109,11 @@
                             {row.label}
                             <Tooltip2>
                                 <div style="text-align: left; color: initial;">
-                                    {@render row.headerTooltip(row.data)}
+                                    {#if typeof row.headerTooltip === "string"}
+                                        {row.headerTooltip}
+                                    {:else}
+                                        {@render row.headerTooltip(row.data)}
+                                    {/if}
                                 </div>
                             </Tooltip2>
                         {:else}

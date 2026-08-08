@@ -714,6 +714,7 @@ Detailed list of first parts:
 
                     *   Have knowledge for respect and such be more than a multiplier - consider what facts are easier or harder to know
                     *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis via gifts
+                    *   Give clans something else to do in case of another clan having low piety scores, like trying to teach them or something
 
                     *   Make residence matter again in here somewhere
                     *   Consider if alignment of others should go into QoL or if that comes in via interactions
