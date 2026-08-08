@@ -72,72 +72,77 @@
 
     let csnaps = $derived(getClanLastTurnSnapshots(settlement));
 
+    function getZScoreColor(z: number): string {
+        const clampedZ = Math.max(-2, Math.min(2, z));
+        const t = clampedZ / 2; // -1 to +1
+
+        let r: number, g: number, b: number;
+        if (t >= 0) {
+            // Neutral gray (107, 114, 128) -> Blue (37, 99, 235)
+            r = Math.round(107 + (37 - 107) * t);
+            g = Math.round(114 + (99 - 114) * t);
+            b = Math.round(128 + (235 - 128) * t);
+        } else {
+            // Neutral gray (107, 114, 128) -> Red (220, 38, 38)
+            const absT = -t;
+            r = Math.round(107 + (220 - 107) * absT);
+            g = Math.round(114 + (38 - 114) * absT);
+            b = Math.round(128 + (38 - 128) * absT);
+        }
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
     let marriageAppealRankings = $derived.by(() => {
         if (!csnaps || csnaps.length === 0)
             return new Map<
                 string,
-                { icon: string; title: string; color: string }
+                { rank: number; title: string; color: string }
             >();
 
-        const appeals = csnaps.map((cs) => ({
-            uuid: cs.c.uuid,
-            appeal: cs.e.marriageAppealAverage,
-        }));
+        const n = csnaps.length;
+        const values = csnaps.map((cs) => cs.e.marriageAppealAverage);
+        const mean = values.reduce((a, b) => a + b, 0) / (n || 1);
+        const variance =
+            values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n || 1);
+        const stdDev = Math.sqrt(variance);
 
-        const uniqueAppeals = Array.from(
-            new Set(appeals.map((a) => a.appeal)),
-        ).sort((a, b) => b - a);
+        const sorted = [...csnaps].sort(
+            (a, b) => b.e.marriageAppealAverage - a.e.marriageAppealAverage,
+        );
 
-        const val1 = uniqueAppeals[0];
-        const val2 = uniqueAppeals.length > 1 ? uniqueAppeals[1] : undefined;
-        const valLast =
-            uniqueAppeals.length > 1
-                ? uniqueAppeals[uniqueAppeals.length - 1]
-                : undefined;
+        const rankMap = new Map<string, number>();
+        sorted.forEach((cs, idx) => {
+            if (
+                idx > 0 &&
+                Math.abs(
+                    cs.e.marriageAppealAverage -
+                        sorted[idx - 1].e.marriageAppealAverage,
+                ) < 1e-6
+            ) {
+                rankMap.set(cs.c.uuid, rankMap.get(sorted[idx - 1].c.uuid)!);
+            } else {
+                rankMap.set(cs.c.uuid, idx + 1);
+            }
+        });
 
         const resultMap = new Map<
             string,
-            { icon: string; title: string; color: string }
+            { rank: number; title: string; color: string }
         >();
 
-        for (const item of appeals) {
-            const val = item.appeal;
+        for (const cs of csnaps) {
+            const val = cs.e.marriageAppealAverage;
+            const rank = rankMap.get(cs.c.uuid) ?? 1;
+            const z = stdDev > 1e-6 ? (val - mean) / stdDev : 0;
+            const color = getZScoreColor(z);
+            const zStr = z >= 0 ? `+${z.toFixed(2)}` : z.toFixed(2);
+            const title = `Rank #${rank} (Marriage Appeal: ${signed(val, 2)}, Z-Score: ${zStr})`;
 
-            if (val === val1 && uniqueAppeals.length > 1) {
-                resultMap.set(item.uuid, {
-                    icon: "★",
-                    title: `Top Marriage Appeal (#1) in Settlement (${signed(val, 2)})`,
-                    color: "#2563eb",
-                });
-            } else if (val === val2 && val2 !== undefined) {
-                resultMap.set(item.uuid, {
-                    icon: "★",
-                    title: `2nd Highest Marriage Appeal (#2) in Settlement (${signed(val, 2)})`,
-                    color: "#16a34a",
-                });
-            } else if (
-                val === valLast &&
-                valLast !== undefined &&
-                valLast !== val1
-            ) {
-                resultMap.set(item.uuid, {
-                    icon: "★",
-                    title: `Least Marriage Appeal in Settlement (${signed(val, 2)})`,
-                    color: "#111827",
-                });
-            } else if (val >= 0) {
-                resultMap.set(item.uuid, {
-                    icon: "=",
-                    title: `Marriage Appeal: ${signed(val, 2)} (≥ 0)`,
-                    color: "#2563eb",
-                });
-            } else {
-                resultMap.set(item.uuid, {
-                    icon: "=",
-                    title: `Marriage Appeal: ${signed(val, 2)} (≤ 0)`,
-                    color: "#111827",
-                });
-            }
+            resultMap.set(cs.c.uuid, {
+                rank,
+                title,
+                color,
+            });
         }
 
         return resultMap;
@@ -1999,11 +2004,11 @@
                         >
                             {#if rank}
                                 <SimpleTooltip tip={rank.title}>
-                                    <span
-                                        style="color: {rank.color}; font-weight: bold; font-size: 1.1em; line-height: 1; display: inline-block; margin-bottom: 2px; cursor: default;"
+                                    <div
+                                        style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background-color: {rank.color}; color: #ffffff; font-weight: bold; font-size: 0.75rem; line-height: 1; margin-bottom: 3px; cursor: default; box-shadow: 0 1px 2px rgba(0,0,0,0.15);"
                                     >
-                                        {rank.icon}
-                                    </span>
+                                        {rank.rank}
+                                    </div>
                                 </SimpleTooltip>
                             {/if}
                             <div
