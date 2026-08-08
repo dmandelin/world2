@@ -707,6 +707,8 @@ Detailed list of first parts:
                     *   Less generosity credit for gifts to friends
                     *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis
                     *   Make residence matter again in here somewhere
+                    *   Consider if alignment of others should go into QoL or if that comes in via interactions
+                    *   Consider if respect should affect stress
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement

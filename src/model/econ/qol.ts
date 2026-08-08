@@ -2,6 +2,7 @@ import { clamp, sumFun } from "../lib/basics";
 import { pct } from "../lib/format";
 import { foodVarietyAppeal, FoodQuantityHappinessItem } from "../people/happiness";
 import type { Consumption } from "./consumption";
+import { getLocalRespect } from "../relations/respect";
 
 export class QualityOfLife {
     readonly m: ReadonlyMap<string, QualityOfLifeItem>;
@@ -30,6 +31,7 @@ export class QualityOfLife {
             QualityOfLife.fromFlood,
             QualityOfLife.fromConversation,
             QualityOfLife.fromConflict,
+            QualityOfLife.fromRespect,
         ];
         const m = new Map<string, QualityOfLifeItem>();
         for (const itemFun of itemFuns) {
@@ -78,6 +80,12 @@ export class QualityOfLife {
         const value = consumption.clan?.conflictPayoff() ?? 0;
         return new QualityOfLifeItem(
             "Conflict", "social", value, `${value.toFixed(1)}`);
+    }
+
+    static fromRespect(consumption: Consumption): QualityOfLifeItem {
+        const value = consumption.clan ? getLocalRespect(consumption.clan) : 0;
+        return new QualityOfLifeItem(
+            "Respect", "social", value, `${value.toFixed(1)}`);
     }
 }
 
