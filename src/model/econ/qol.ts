@@ -28,6 +28,8 @@ export class QualityOfLife {
             QualityOfLife.fromFoodQuantity,
             QualityOfLife.fromFoodQuality,
             QualityOfLife.fromFlood,
+            QualityOfLife.fromConversation,
+            QualityOfLife.fromConflict,
         ];
         const m = new Map<string, QualityOfLifeItem>();
         for (const itemFun of itemFuns) {
@@ -64,6 +66,18 @@ export class QualityOfLife {
         const value = -damageFactor * 20;
         return new QualityOfLifeItem(
             "Flood damage", "flood", value, `${pct(damageFactor)} damage`);
+    }
+
+    static fromConversation(consumption: Consumption): QualityOfLifeItem {
+        const value = consumption.clan?.mutualAidPayoff() ?? 0;
+        return new QualityOfLifeItem(
+            "Conversation", "social", value, `${value.toFixed(1)}`);
+    }
+
+    static fromConflict(consumption: Consumption): QualityOfLifeItem {
+        const value = consumption.clan?.conflictPayoff() ?? 0;
+        return new QualityOfLifeItem(
+            "Conflict", "social", value, `${value.toFixed(1)}`);
     }
 }
 
