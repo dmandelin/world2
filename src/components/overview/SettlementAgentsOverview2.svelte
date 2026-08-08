@@ -453,31 +453,7 @@
                 topics: ["food", "food:detail"],
             },
             {
-                label: "&nbsp;&nbsp;Given as gifts",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) =>
-                    c.distribution
-                        ? c.distribution.totalFoodGiftsGiven /
-                          (c.population || 1)
-                        : 0,
-                format: fmt2,
-                topics: ["food:detail"],
-            },
-            {
-                label: "&nbsp;&nbsp;Received as gifts",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) =>
-                    c.consumption
-                        ? c.consumption.totalFoodGiftsReceived /
-                          (c.population || 1)
-                        : 0,
-                format: fmt2,
-                topics: ["food:detail"],
-            },
-            {
-                label: "&nbsp;&nbsp;Net transfer via gifts",
+                label: "&nbsp;&nbsp;Gifts",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) => {
@@ -486,33 +462,11 @@
                     return (rec - giv) / (c.population || 1);
                 },
                 format: fmt2,
+                tooltipSnippet: giftsTooltip,
                 topics: ["food:detail"],
             },
             {
-                label: "&nbsp;&nbsp;(Prod) Given as aid",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) =>
-                    c.distribution
-                        ? c.distribution.totalFoodAidGiven / (c.population || 1)
-                        : 0,
-                format: fmt2,
-                topics: ["food:detail"],
-            },
-            {
-                label: "&nbsp;&nbsp;Received as aid",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) =>
-                    c.consumption
-                        ? c.consumption.totalFoodAidReceived /
-                          (c.population || 1)
-                        : 0,
-                format: fmt2,
-                topics: ["food:detail"],
-            },
-            {
-                label: "&nbsp;&nbsp;Net transfer via aid",
+                label: "&nbsp;&nbsp;Aid",
                 class: "actual",
                 cellClass: "ra",
                 value: (c) => {
@@ -522,29 +476,20 @@
                     return (rec - (givProd + givStock)) / (c.population || 1);
                 },
                 format: fmt2,
+                tooltipSnippet: aidTooltip,
                 topics: ["food:detail"],
             },
             {
-                label: "&nbsp;Sent to storage",
+                label: "&nbsp;&nbsp;From Stock",
                 class: "actual",
                 cellClass: "ra",
-                value: (c) =>
-                    c.distribution
-                        ? c.distribution.totalFoodToStock / (c.population || 1)
-                        : 0,
+                value: (c) => {
+                    const ret = c.stockOutflow?.totalFoodRetrieved ?? 0;
+                    const sent = c.distribution?.totalFoodToStock ?? 0;
+                    return (ret - sent) / (c.population || 1);
+                },
                 format: fmt2,
-                topics: ["food:detail"],
-            },
-            {
-                label: "&nbsp;Retrieved from storage",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) =>
-                    c.stockOutflow
-                        ? c.stockOutflow.totalFoodRetrieved /
-                          (c.population || 1)
-                        : 0,
-                format: fmt2,
+                tooltipSnippet: fromStockTooltip,
                 topics: ["food:detail"],
             },
             {
@@ -935,104 +880,433 @@
         ]);
     }
 
-    function clanFoodTakenTooltipTable(clan: ClanDTO) {
-        if (!clan.consumption) return undefined;
-        const rows: {
-            partner: string;
-            good: string;
-            amount: number;
-            cost?: number;
-        }[] = [];
-        for (const g of clan.consumption.fromDonations) {
-            if (g.good.isSubsistence) {
-                rows.push({
-                    partner: g.clan.name,
-                    good: g.good.name,
-                    amount: g.amount,
-                    cost: g.transactionCost ?? 0,
-                });
-            }
-        }
-        return new IterableTable(rows, (r) => `${r.partner} (${r.good})`, [
-            {
-                data: "Partner",
-                label: "Donor",
-                valueFn: (r) => r.partner,
-            },
-            {
-                data: "Good",
-                label: "Good",
-                valueFn: (r) => r.good,
-            },
-            {
-                data: "Amount",
-                label: "Amount",
-                valueFn: (r) => r.amount,
-                formatFn: unsignedFormat(2),
-            },
-            {
-                data: "Cost",
-                label: "Iceberg Cost",
-                valueFn: (r) => r.cost ?? 0,
-                formatFn: unsignedFormat(2),
-            },
-        ]);
+    interface TransferTooltipRow {
+        label: string;
+        good?: string;
+        amount?: number;
+        perCapita?: number;
+        isNet?: boolean;
     }
 
-    function clanFoodGivenTooltipTable(clan: ClanDTO) {
-        const rows: {
-            partner: string;
-            good: string;
-            amount: number;
-            source: string;
-        }[] = [];
+    function createTransferTooltipTable(
+        rowHeaderLabel: string,
+        rows: TableRow<TransferTooltipRow, string>[],
+    ): Table<TransferTooltipRow, string, [string, number, number]> {
+        return {
+            rowHeaderLabel,
+            columns: [
+                {
+                    data: "good",
+                    label: "Good",
+                    valueFn: (r) => r.good ?? "",
+                },
+                {
+                    data: "amount",
+                    label: "Amount",
+                    valueFn: (r) => r.amount ?? 0,
+                    formatFn: (v, r?: TransferTooltipRow) =>
+                        r?.isNet ? signed(v, 2) : unsigned(v, 2),
+                },
+                {
+                    data: "perCapita",
+                    label: "Per Capita",
+                    valueFn: (r) => r.perCapita ?? 0,
+                    formatFn: (v, r?: TransferTooltipRow) =>
+                        r?.isNet ? signed(v, 2) : unsigned(v, 2),
+                },
+            ],
+            rows,
+        };
+    }
+
+    function clanGiftsTooltipTable(clan: ClanDTO) {
+        const pop = clan.population || 1;
+        const rows: TableRow<TransferTooltipRow, string>[] = [];
+
+        // Inflows (Received as gifts)
+        rows.push({
+            data: { label: "Inflows" },
+            label: "Inflows",
+            isHeader: true,
+        });
+
+        let totalInflow = 0;
+        if (clan.consumption) {
+            for (const g of clan.consumption.fromGifts) {
+                if (g.good.isSubsistence && g.amount > 0) {
+                    totalInflow += g.amount;
+                    rows.push({
+                        data: {
+                            label: `From ${g.clan.name}`,
+                            good: g.good.name,
+                            amount: g.amount,
+                            perCapita: g.amount / pop,
+                        },
+                        label: `From ${g.clan.name}`,
+                    });
+                }
+            }
+        }
+
+        if (totalInflow === 0) {
+            rows.push({
+                data: {
+                    label: "(None)",
+                    good: "-",
+                    amount: 0,
+                    perCapita: 0,
+                },
+                label: "(None)",
+            });
+        }
+
+        rows.push({
+            data: {
+                label: "Total Inflow",
+                good: "",
+                amount: totalInflow,
+                perCapita: totalInflow / pop,
+            },
+            label: "Total Inflow",
+            bold: true,
+            divider: true,
+        });
+
+        // Outflows (Given as gifts)
+        rows.push({
+            data: { label: "Outflows" },
+            label: "Outflows",
+            isHeader: true,
+        });
+
+        let totalOutflow = 0;
+        if (clan.distribution) {
+            for (const g of clan.distribution.toGifts) {
+                if (g.good.isSubsistence && g.amount > 0) {
+                    totalOutflow += g.amount;
+                    rows.push({
+                        data: {
+                            label: `To ${g.clan.name}`,
+                            good: g.good.name,
+                            amount: g.amount,
+                            perCapita: g.amount / pop,
+                        },
+                        label: `To ${g.clan.name}`,
+                    });
+                }
+            }
+        }
+
+        if (totalOutflow === 0) {
+            rows.push({
+                data: {
+                    label: "(None)",
+                    good: "-",
+                    amount: 0,
+                    perCapita: 0,
+                },
+                label: "(None)",
+            });
+        }
+
+        rows.push({
+            data: {
+                label: "Total Outflow",
+                good: "",
+                amount: totalOutflow,
+                perCapita: totalOutflow / pop,
+            },
+            label: "Total Outflow",
+            bold: true,
+            divider: true,
+        });
+
+        // Net Transfer
+        const netAmount = totalInflow - totalOutflow;
+        rows.push({
+            data: {
+                label: "Net Transfer",
+                good: "",
+                amount: netAmount,
+                perCapita: netAmount / pop,
+                isNet: true,
+            },
+            label: "Net Transfer",
+            bold: true,
+            divider: true,
+        });
+
+        return createTransferTooltipTable("Gifts", rows);
+    }
+
+    function clanAidTooltipTable(clan: ClanDTO) {
+        const pop = clan.population || 1;
+        const rows: TableRow<TransferTooltipRow, string>[] = [];
+
+        // Inflows (Received as aid)
+        rows.push({
+            data: { label: "Inflows" },
+            label: "Inflows",
+            isHeader: true,
+        });
+
+        let totalInflow = 0;
+        if (clan.consumption) {
+            for (const g of clan.consumption.fromDonations) {
+                if (g.good.isSubsistence && g.amount > 0) {
+                    totalInflow += g.amount;
+                    rows.push({
+                        data: {
+                            label: `From ${g.clan.name}`,
+                            good: g.good.name,
+                            amount: g.amount,
+                            perCapita: g.amount / pop,
+                        },
+                        label: `From ${g.clan.name}`,
+                    });
+                }
+            }
+        }
+
+        if (totalInflow === 0) {
+            rows.push({
+                data: {
+                    label: "(None)",
+                    good: "-",
+                    amount: 0,
+                    perCapita: 0,
+                },
+                label: "(None)",
+            });
+        }
+
+        rows.push({
+            data: {
+                label: "Total Inflow",
+                good: "",
+                amount: totalInflow,
+                perCapita: totalInflow / pop,
+            },
+            label: "Total Inflow",
+            bold: true,
+            divider: true,
+        });
+
+        // Outflows (Given as aid: distribution + stockOutflow)
+        rows.push({
+            data: { label: "Outflows" },
+            label: "Outflows",
+            isHeader: true,
+        });
+
+        let totalOutflow = 0;
         if (clan.distribution) {
             for (const g of clan.distribution.toDonations) {
-                if (g.good.isSubsistence) {
+                if (g.good.isSubsistence && g.amount > 0) {
+                    totalOutflow += g.amount;
                     rows.push({
-                        partner: g.clan.name,
-                        good: g.good.name,
-                        amount: g.amount,
-                        source: "Production",
+                        data: {
+                            label: `To ${g.clan.name} (Prod)`,
+                            good: g.good.name,
+                            amount: g.amount,
+                            perCapita: g.amount / pop,
+                        },
+                        label: `To ${g.clan.name} (Prod)`,
                     });
                 }
             }
         }
         if (clan.stockOutflow) {
             for (const g of clan.stockOutflow.toDonations) {
-                if (g.good.isSubsistence) {
+                if (g.good.isSubsistence && g.amount > 0) {
+                    totalOutflow += g.amount;
                     rows.push({
-                        partner: g.clan.name,
-                        good: g.good.name,
-                        amount: g.amount,
-                        source: "Stock",
+                        data: {
+                            label: `To ${g.clan.name} (Stock)`,
+                            good: g.good.name,
+                            amount: g.amount,
+                            perCapita: g.amount / pop,
+                        },
+                        label: `To ${g.clan.name} (Stock)`,
                     });
                 }
             }
         }
-        return new IterableTable(rows, (r) => `${r.partner} (${r.good})`, [
-            {
-                data: "Partner",
-                label: "Recipient",
-                valueFn: (r) => r.partner,
+
+        if (totalOutflow === 0) {
+            rows.push({
+                data: {
+                    label: "(None)",
+                    good: "-",
+                    amount: 0,
+                    perCapita: 0,
+                },
+                label: "(None)",
+            });
+        }
+
+        rows.push({
+            data: {
+                label: "Total Outflow",
+                good: "",
+                amount: totalOutflow,
+                perCapita: totalOutflow / pop,
             },
-            {
-                data: "Good",
-                label: "Good",
-                valueFn: (r) => r.good,
+            label: "Total Outflow",
+            bold: true,
+            divider: true,
+        });
+
+        // Net Transfer
+        const netAmount = totalInflow - totalOutflow;
+        rows.push({
+            data: {
+                label: "Net Transfer",
+                good: "",
+                amount: netAmount,
+                perCapita: netAmount / pop,
+                isNet: true,
             },
-            {
-                data: "Source",
-                label: "Source",
-                valueFn: (r) => r.source,
+            label: "Net Transfer",
+            bold: true,
+            divider: true,
+        });
+
+        return createTransferTooltipTable("Aid", rows);
+    }
+
+    function clanFromStockTooltipTable(clan: ClanDTO) {
+        const pop = clan.population || 1;
+        const rows: TableRow<TransferTooltipRow, string>[] = [];
+
+        // Inflows (Retrieved from stock)
+        rows.push({
+            data: { label: "Inflows" },
+            label: "Inflows",
+            isHeader: true,
+        });
+
+        let totalInflow = 0;
+        if (clan.stockOutflow) {
+            for (const [good, amount] of clan.stockOutflow.toConsumption.entries()) {
+                if (good.isSubsistence && amount > 0) {
+                    totalInflow += amount;
+                    rows.push({
+                        data: {
+                            label: "Retrieved for Consumption",
+                            good: good.name,
+                            amount: amount,
+                            perCapita: amount / pop,
+                        },
+                        label: "Retrieved for Consumption",
+                    });
+                }
+            }
+            for (const g of clan.stockOutflow.toDonations) {
+                if (g.good.isSubsistence && g.amount > 0) {
+                    totalInflow += g.amount;
+                    rows.push({
+                        data: {
+                            label: `Retrieved for Aid to ${g.clan.name}`,
+                            good: g.good.name,
+                            amount: g.amount,
+                            perCapita: g.amount / pop,
+                        },
+                        label: `Retrieved for Aid to ${g.clan.name}`,
+                    });
+                }
+            }
+        }
+
+        if (totalInflow === 0) {
+            rows.push({
+                data: {
+                    label: "(None)",
+                    good: "-",
+                    amount: 0,
+                    perCapita: 0,
+                },
+                label: "(None)",
+            });
+        }
+
+        rows.push({
+            data: {
+                label: "Total Inflow",
+                good: "",
+                amount: totalInflow,
+                perCapita: totalInflow / pop,
             },
-            {
-                data: "Amount",
-                label: "Amount",
-                valueFn: (r) => r.amount,
-                formatFn: unsignedFormat(2),
+            label: "Total Inflow",
+            bold: true,
+            divider: true,
+        });
+
+        // Outflows (Sent to stock)
+        rows.push({
+            data: { label: "Outflows" },
+            label: "Outflows",
+            isHeader: true,
+        });
+
+        let totalOutflow = 0;
+        if (clan.distribution) {
+            for (const [good, amount] of clan.distribution.toStock.entries()) {
+                if (good.isSubsistence && amount > 0) {
+                    totalOutflow += amount;
+                    rows.push({
+                        data: {
+                            label: "Sent to Storage",
+                            good: good.name,
+                            amount: amount,
+                            perCapita: amount / pop,
+                        },
+                        label: "Sent to Storage",
+                    });
+                }
+            }
+        }
+
+        if (totalOutflow === 0) {
+            rows.push({
+                data: {
+                    label: "(None)",
+                    good: "-",
+                    amount: 0,
+                    perCapita: 0,
+                },
+                label: "(None)",
+            });
+        }
+
+        rows.push({
+            data: {
+                label: "Total Outflow",
+                good: "",
+                amount: totalOutflow,
+                perCapita: totalOutflow / pop,
             },
-        ]);
+            label: "Total Outflow",
+            bold: true,
+            divider: true,
+        });
+
+        // Net Transfer
+        const netAmount = totalInflow - totalOutflow;
+        rows.push({
+            data: {
+                label: "Net Transfer",
+                good: "",
+                amount: netAmount,
+                perCapita: netAmount / pop,
+                isNet: true,
+            },
+            label: "Net Transfer",
+            bold: true,
+            divider: true,
+        });
+
+        return createTransferTooltipTable("From Stock", rows);
     }
 
     function clanFoodStockTooltipTable(clan: ClanDTO) {
@@ -1715,22 +1989,16 @@
     <TableView2 table={clanFoodProductionTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet foodTakenTooltip(cs: ClanLastTurnSnapshots)}
-    {@const table = clanFoodTakenTooltipTable(cs.e)}
-    {#if table && table.rows.length > 0}
-        <TableView2 {table}></TableView2>
-    {:else}
-        <div style="padding: 4px;">No food aid taken</div>
-    {/if}
+{#snippet giftsTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanGiftsTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet foodGivenTooltip(cs: ClanLastTurnSnapshots)}
-    {@const table = clanFoodGivenTooltipTable(cs.e)}
-    {#if table && table.rows.length > 0}
-        <TableView2 {table}></TableView2>
-    {:else}
-        <div style="padding: 4px;">No food aid given</div>
-    {/if}
+{#snippet aidTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanAidTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet fromStockTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2 table={clanFromStockTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
 {#snippet foodTooltip(cs: ClanLastTurnSnapshots)}
