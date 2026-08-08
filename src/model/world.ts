@@ -23,11 +23,10 @@ import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { Conflicts } from "./relations/conflict";
-import { getAlignment } from "./relations/alignment";
-import { AID_ALIGNMENT_THRESHOLD, AID_FOOD_THRESHOLD, FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
+import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
+import { FoodGiftsResult, shareFoodGifts } from "./econ/gifts";
+
 export class World implements NoteTaker {
-    lastMarriageDecisions?: MarriageDecisions;
-    lastFoodRedistribution?: FoodRedistributionResult;
     readonly year = new Year();
     readonly yearsPerTurn = 1;
     readonly yearsPerTick = 1;
@@ -55,6 +54,10 @@ export class World implements NoteTaker {
     beginningOfTurnSnapshot_: WorldDTO | undefined;
     endOfTurnSnapshot_: WorldDTO | undefined;
     previousEndOfTurnSnapshot_: WorldDTO | undefined;
+
+    lastMarriageDecisions?: MarriageDecisions;
+    lastFoodRedistribution?: FoodRedistributionResult;
+    lastFoodGifts?: FoodGiftsResult;
 
     dto: WorldDTO | undefined;
 
@@ -378,29 +381,32 @@ export class World implements NoteTaker {
             }
         }
 
+        // Run food gift sharing before arranging consumption!
+        this.lastFoodGifts = shareFoodGifts(allClans);
+
         // Step 1 & 2: Arrange consumption (first from production up to target food/capita, then from stock)
         for (const clan of allClans) {
-            let targetFood = clan.population;
+            let targetAdditionalFood = Math.max(0, clan.population - clan.consumption.totalFood);
 
             // Consume out of production (Fish first, Cereals second)
             const availFish = clan.production.forGood(TradeGoods.Fish);
-            const fishToConsume = Math.min(availFish, targetFood);
+            const fishToConsume = Math.min(availFish, targetAdditionalFood);
             if (fishToConsume > 0) {
                 clan.distribution.addConsumption(TradeGoods.Fish, fishToConsume);
                 clan.consumption.addProduction(TradeGoods.Fish, fishToConsume);
-                targetFood -= fishToConsume;
+                targetAdditionalFood -= fishToConsume;
             }
 
             const availCereals = clan.production.forGood(TradeGoods.Cereals);
-            const cerealsToConsume = Math.min(availCereals, targetFood);
+            const cerealsToConsume = Math.min(availCereals, targetAdditionalFood);
             if (cerealsToConsume > 0) {
                 clan.distribution.addConsumption(TradeGoods.Cereals, cerealsToConsume);
                 clan.consumption.addProduction(TradeGoods.Cereals, cerealsToConsume);
-                targetFood -= cerealsToConsume;
+                targetAdditionalFood -= cerealsToConsume;
             }
 
             // If consumption is below 1.0 per capita, consume out of stock (paying 20% retrieval cost)
-            let deficit = Math.max(0, targetFood);
+            let deficit = Math.max(0, targetAdditionalFood);
             if (deficit > 1e-9) {
                 for (const item of clan.stock.items) {
                     if (!item.good.isSubsistence || deficit <= 1e-9) continue;

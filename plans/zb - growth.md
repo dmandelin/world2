@@ -692,11 +692,18 @@ Detailed list of first parts:
                             and flag those for later. Also note any cases where we automatically constrain behavior to norms for later further consideration
                 *   Items
                     x   Do the basic idea
-                    *   Add gift layer
+                    x   Add gift layer
+                    *   Clean up issues with tuning and visualization
+                    *   Stress/conflict cost for mutual aid relating to
+                        arguments over who has/needs what
                     *   Make sure clans are giving help in case of dire need
                     *   Variable aid alignment threshold
                     *   Variable aid food threshold
                     *   Possible third-party reactions on refusal to give
+                        *   For food aid
+                        *   For gifts
+                    *   Transport costs on aid
+                    *   Transport costs on gifts
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement

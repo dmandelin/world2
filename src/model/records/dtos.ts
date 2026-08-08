@@ -36,6 +36,7 @@ import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
 import type { Stress } from "../people/stress";
+import type { FoodGiftsResult } from "../econ/gifts";
 
 export type TradeRelationshipsDTO = {
     name: string;
@@ -303,6 +304,7 @@ export class WorldDTO {
     readonly plannedSettlements: PlannedSettlementDTO[];
     readonly lastMarriageDecisions?: MarriageDecisions;
     readonly lastFoodRedistribution?: FoodRedistributionResult;
+    readonly lastFoodGifts?: FoodGiftsResult;
 
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
@@ -321,6 +323,7 @@ export class WorldDTO {
         this.year = this.world.year.toString();
         this.lastMarriageDecisions = world.lastMarriageDecisions;
         this.lastFoodRedistribution = world.lastFoodRedistribution;
+        this.lastFoodGifts = world.lastFoodGifts;
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.plannedSettlements = world.plannedSettlements.map(p => new PlannedSettlementDTO(p));
