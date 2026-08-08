@@ -493,6 +493,16 @@
                 topics: ["food:detail"],
             },
             {
+                label: "&nbsp;&nbsp;Wasted",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    -(c.distribution?.totalFoodWasted ?? 0) /
+                    (c.population || 1),
+                format: fmt2,
+                topics: ["food:detail"],
+            },
+            {
                 label: "&nbsp;Consumed",
                 class: "actual",
                 cellClass: "ra",

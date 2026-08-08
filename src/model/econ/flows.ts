@@ -36,6 +36,7 @@ export abstract class GoodFlows {
 export class Distribution extends GoodFlows {
     readonly toConsumption = new Map<TradeGood, number>();
     readonly toStock = new Map<TradeGood, number>();
+    readonly toWaste = new Map<TradeGood, number>();
     readonly toDonations: DirectFlowRecord[] = [];
     readonly toGifts: DirectFlowRecord[] = [];
 
@@ -49,6 +50,12 @@ export class Distribution extends GoodFlows {
         if (amount <= 0) return;
         const prev = this.toStock.get(good) ?? 0;
         this.toStock.set(good, prev + amount);
+    }
+
+    addWaste(good: TradeGood, amount: number): void {
+        if (amount <= 0) return;
+        const prev = this.toWaste.get(good) ?? 0;
+        this.toWaste.set(good, prev + amount);
     }
 
     addDonation(recipient: Clan, good: TradeGood, amount: number): void {
@@ -67,6 +74,10 @@ export class Distribution extends GoodFlows {
 
     totalToStock(good: TradeGood): number {
         return this.toStock.get(good) ?? 0;
+    }
+
+    totalToWaste(good: TradeGood): number {
+        return this.toWaste.get(good) ?? 0;
     }
 
     totalToDonated(good: TradeGood): number {
@@ -98,6 +109,10 @@ export class Distribution extends GoodFlows {
 
     get totalFoodToStock(): number {
         return this.sumMapGoods(this.toStock, g => g.isSubsistence);
+    }
+
+    get totalFoodWasted(): number {
+        return this.sumMapGoods(this.toWaste, g => g.isSubsistence);
     }
 
     get totalFoodGiven(): number {

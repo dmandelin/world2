@@ -432,6 +432,21 @@ export class World implements NoteTaker {
             }
         }
 
+        // Step 4b: Any remaining goods other than Cereals (e.g. surplus Fish,
+        // which can't be stored or gifted) are wasted.
+        for (const clan of allClans) {
+            for (const [good, produced] of clan.production.totals().entries()) {
+                if (good === TradeGoods.Cereals) continue;
+                const used = clan.distribution.totalToConsumption(good)
+                    + clan.distribution.totalToStock(good)
+                    + clan.distribution.totalToDonated(good);
+                const remaining = Math.max(0, produced - used);
+                if (remaining > 0) {
+                    clan.distribution.addWaste(good, remaining);
+                }
+            }
+        }
+
         // Step 5: Record 20% storage loss from stock based on (current stock contents) + (StockOutflow)
         for (const clan of allClans) {
             for (const item of clan.stock.items) {

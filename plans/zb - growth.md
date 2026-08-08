@@ -698,7 +698,7 @@ Detailed list of first parts:
                     x   Less generosity credit for gifts to friends
 
                     x   Clean up issues with tuning and visualization
-                    *   Fix apparent bugs in consumption values
+                    x   Fix apparent bugs in consumption values
                     *   Transport costs on aid
                     *   Transport costs on gifts
 
