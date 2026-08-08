@@ -101,10 +101,10 @@ export class RespectItem {
     }
 
     static forGenerosity(subject: Clan, object: Clan): RespectItem {
-        const foodGiven = (object.distribution ? object.distribution.totalFoodGiven : 0) + (object.stockOutflow ? object.stockOutflow.totalFoodGiven : 0);
+        const foodAidGiven = (object.distribution ? object.distribution.totalFoodAidGiven : 0) + (object.stockOutflow ? object.stockOutflow.totalFoodAidGiven : 0);
         return new RespectItem(
             'Generosity',
-            foodGiven,
+            foodAidGiven,
             2,
             `Generosity`
         );
