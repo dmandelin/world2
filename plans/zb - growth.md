@@ -702,6 +702,12 @@ Detailed list of first parts:
                     *   Transport costs on aid
                     *   Transport costs on gifts
 
+                    *   Bigger impact for large shortfalls of consumption
+                    *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis via gifts
+                    *   Don't have birth rate mega boost for settlement, implement early weaning model instead
+
+                    *   *** Think harder about what alignment and respect really mean and how they relate to all this
+
                     *   Make sure clans are giving help in case of dire need
 
                     *   Possible third-party reactions on refusal to give
@@ -713,9 +719,9 @@ Detailed list of first parts:
                     *   Variable aid food threshold
 
                     *   Have knowledge for respect and such be more than a multiplier - consider what facts are easier or harder to know
-                    *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis via gifts
                     *   Give clans something else to do in case of another clan having low piety scores, like trying to teach them or something
 
+                    *   Bring back disease load effect
                     *   Make residence matter again in here somewhere
                     *   Consider if alignment of others should go into QoL or if that comes in via interactions
     *   +Save first in crisis

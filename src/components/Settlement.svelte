@@ -19,6 +19,7 @@
 
     const tabs = [
         { label: "Overview", snippet: overviewTab },
+        { label: "Demographics", snippet: demographicsTab },
         { label: "QoL", snippet: qolTab },
         { label: "Comparison", snippet: comparisonTab },
         { label: "Econ", snippet: econTab },
@@ -30,7 +31,6 @@
         { label: "Graph2", snippet: relationshipsGraph2Tab },
         { label: "Productivity", snippet: productivityTab },
         { label: "Migration", snippet: migrationTab },
-        { label: "Demographics", snippet: demographicsTab },
         { label: "Trade", snippet: tradeTab },
     ];
 </script>

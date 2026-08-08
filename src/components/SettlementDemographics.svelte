@@ -1,128 +1,211 @@
 <script lang="ts">
-    import { populationChangeModifierTable, populationChangeTable } from "./tables";
-    import LineGraph from "./LineGraph.svelte";
-    import { PopulationScaler } from "./linegraph";
-    import type { SettlementTimePoint } from "../model/records/timeline";
+    import type { SettlementDTO, ClanDTO } from "../model/records/dtos";
+    import { DEATH_CAUSES } from "../model/people/population";
+    import { signed } from "../model/lib/format";
 
-    let { settlement } = $props();
-    let table = $derived(populationChangeTable(settlement));
+    let { settlement }: { settlement: SettlementDTO } = $props();
+    let clans = $derived(settlement.clans);
 
-    let brModifiers = $derived(populationChangeModifierTable(
-        settlement, 
-        clan => clan.lastPopulationChange.brModifiers,
-        clan => clan.lastPopulationChange.brModifier));
+    type RowDef =
+        | { label: string; kind: "births" }
+        | { label: string; kind: "cause"; cause: string }
+        | { label: string; kind: "totalDeaths" }
+        | { label: string; kind: "totalChange" };
 
-    let drModifiers = $derived(populationChangeModifierTable(
-        settlement, 
-        clan => clan.lastPopulationChange.drModifiers,
-        clan => clan.lastPopulationChange.drModifier));
+    const rowDefs: RowDef[] = [
+        { label: "Births", kind: "births" },
+        ...DEATH_CAUSES.map((c) => ({
+            label: c,
+            kind: "cause" as const,
+            cause: c,
+        })),
+        { label: "Total Deaths", kind: "totalDeaths" },
+        { label: "Total Change", kind: "totalChange" },
+    ];
 
-    let popData = $derived.by(() => {
+    function itemFor(clan: ClanDTO, row: RowDef) {
+        const pc = clan.lastPopulationChange;
+        switch (row.kind) {
+            case "births":
+                return pc.birthsItem;
+            case "cause":
+                return pc.items.find((i) => i.name === row.cause);
+            case "totalDeaths":
+                return pc.totalDeathsItem;
+            case "totalChange":
+                return pc.totalChangeItem;
+        }
+    }
+
+    // Cell values: base rate (risk ratio), actual rate, actual number.
+    function clanCell(clan: ClanDTO, row: RowDef) {
+        const item = itemFor(clan, row);
         return {
-            title: 'Population',
-            yAxisScaler: new PopulationScaler(),
-            labels: settlement.timeline.map((timePoint: SettlementTimePoint) => timePoint.year.toString()),
-            datasets: [{
-                label: 'Population',
-                data: settlement.timeline.map((timePoint: SettlementTimePoint) => timePoint.population),
-                color: '#666',
-            }],
-            secondYAxis: {
-                scaler: new PopulationScaler(),
-                datasets: [{
-                    label: 'Disease Load',
-                    data: settlement.timeline.map((timePoint: SettlementTimePoint) => timePoint.diseaseLoad * 1000),
-                    color: 'green',
-                }],
-            },
+            base: item?.expectedRate ?? 0,
+            actualRate: item?.actualRate ?? 0,
+            number: item?.actual ?? 0,
         };
-    });
+    }
+
+    // Settlement aggregate: population-weighted rates and summed counts.
+    function aggregateCell(row: RowDef) {
+        let prevSize = 0,
+            expCount = 0,
+            actCount = 0;
+        for (const clan of clans) {
+            const pc = clan.lastPopulationChange;
+            const item = itemFor(clan, row);
+            prevSize += pc.previousSize;
+            expCount += (item?.expectedRate ?? 0) * pc.previousSize;
+            actCount += item?.actual ?? 0;
+        }
+        return {
+            base: prevSize > 0 ? expCount / prevSize : 0,
+            actualRate: prevSize > 0 ? actCount / prevSize : 0,
+            number: actCount,
+        };
+    }
+
+    // The change row can be positive or negative; everything else is
+    // one-directional and shown as a magnitude.
+    const isSigned = (row: RowDef) => row.kind === "totalChange";
+
+    // Rates are shown per thousand people per year.
+    function fmtRate(v: number, signedRow: boolean): string {
+        const perMille = v * 1000;
+        return signedRow ? signed(perMille, 1) : Math.abs(perMille).toFixed(1);
+    }
+    function fmtNum(v: number, signedRow: boolean): string {
+        const n = Math.round(v);
+        return signedRow ? signed(n, 0) : Math.abs(n).toString();
+    }
+
+    let diseaseLoad = $derived(settlement.cluster.diseaseLoad.value);
 </script>
 
-<style>
-    td, th {
-        text-align: left;
-        padding: 0.125em 0.5em;
-    }
-
-    td:not(:first-child), th:not(:first-child) {
-        text-align: right;
-    }
-
-    tr:last-child {
-        font-weight: bold;
-    }
-</style>
-
-<div style="display: flex; gap: 4rem">
-    <div>
+<div class="demographics">
+    <p class="caption">
+        Rates are per thousand people per year. <strong>Base</strong> is the
+        expected rate (risk ratio), <strong>Act</strong> the realized rate, and
+        <strong>#</strong> the actual number of people. Disease load: {(
+            diseaseLoad * 1000
+        ).toFixed()}.
+    </p>
+    <div class="table-scroll">
         <table>
             <thead>
                 <tr>
-                    {#each table.header as cell}
-                        <th>{cell}</th>
+                    <th rowspan="2" class="metric">Cause</th>
+                    <th colspan="3" class="group agg-group">Settlement</th>
+                    {#each clans as clan}
+                        <th colspan="3" class="group">{clan.name}</th>
+                    {/each}
+                </tr>
+                <tr>
+                    <th class="agg sub">Base</th>
+                    <th class="agg sub">Act</th>
+                    <th class="agg sub">#</th>
+                    {#each clans as _clan}
+                        <th class="sub group-start">Base</th>
+                        <th class="sub">Act</th>
+                        <th class="sub">#</th>
                     {/each}
                 </tr>
             </thead>
             <tbody>
-                {#each table.rows as row}
-                    <tr>
-                        {#each row as cell}
-                            <td>{cell}</td>
+                {#each rowDefs as row}
+                    {@const agg = aggregateCell(row)}
+                    {@const sgn = isSigned(row)}
+                    <tr
+                        class:total-row={row.kind === "totalDeaths" ||
+                            row.kind === "totalChange"}
+                    >
+                        <td class="metric">{row.label}</td>
+                        <td class="agg">{fmtRate(agg.base, sgn)}</td>
+                        <td class="agg">{fmtRate(agg.actualRate, sgn)}</td>
+                        <td class="agg num">{fmtNum(agg.number, sgn)}</td>
+                        {#each clans as clan}
+                            {@const cell = clanCell(clan, row)}
+                            <td class="group-start">{fmtRate(cell.base, sgn)}</td
+                            >
+                            <td>{fmtRate(cell.actualRate, sgn)}</td>
+                            <td class="num">{fmtNum(cell.number, sgn)}</td>
                         {/each}
                     </tr>
                 {/each}
             </tbody>
         </table>
-    </div>
-    <div class="graph-container">
-        <LineGraph data={popData} />
     </div>
 </div>
 
-<div style="display: flex; gap: 2rem; margin-top: 1rem;">
-    <div>
-        <h4>Birth rate modifiers</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th colspan="2">Source</th>
-                    <th>Modifier</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each brModifiers.rows as row}
-                    <tr>
-                        {#each row as cell}
-                            <td>{cell}</td>
-                        {/each}
-                    </tr>
-                {/each}
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <h4>Death rate modifiers</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th colspan="2">Source</th>
-                    <th>Modifier</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each drModifiers.rows as row}
-                    <tr>
-                        {#each row as cell}
-                            <td>{cell}</td>
-                        {/each}
-                    </tr>
-                {/each}
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <h4>Disease</h4>
-        <p>{(settlement.cluster.diseaseLoad.value * 1000).toFixed()}</p>
-    </div>
-</div>
+<style>
+    .demographics {
+        margin-top: 1rem;
+    }
+
+    .caption {
+        max-width: 48rem;
+        margin: 0 0 0.75rem;
+        font-size: 0.85rem;
+        color: #4a5568;
+    }
+
+    .table-scroll {
+        overflow-x: auto;
+    }
+
+    table {
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    th,
+    td {
+        padding: 0.2rem 0.6rem;
+        text-align: right;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    th.metric,
+    td.metric {
+        text-align: left;
+        font-weight: 500;
+        color: #4a5568;
+    }
+
+    .group {
+        text-align: center;
+        font-weight: bold;
+        color: #2d3748;
+    }
+
+    /* Divider before each column group (settlement + each clan). */
+    .group,
+    .group-start,
+    .agg-group,
+    th.agg.sub:first-of-type {
+        border-left: 2px solid #cbd5e0;
+    }
+
+    .sub {
+        color: #718096;
+        font-weight: 500;
+    }
+
+    /* Tint the settlement aggregate columns. */
+    .agg,
+    .agg-group {
+        background-color: #f7f5ec;
+    }
+
+    .num {
+        font-weight: 600;
+    }
+
+    .total-row td {
+        font-weight: 700;
+        color: #1a202c;
+        border-top: 1px solid #cbd5e0;
+    }
+</style>

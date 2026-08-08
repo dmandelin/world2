@@ -1,6 +1,6 @@
 import type { Clan } from "./people";
 import { DiseaseLoadCalc } from "../environment/pathogens";
-import { clamp, productFun, sum } from "../lib/basics";
+import { clamp, productFun, sum, sumFun } from "../lib/basics";
 import { spct } from "../lib/format";
 import { getLocalPrestige } from "../relations/respect";
 import { zScore } from "../lib/modelbasics";
@@ -30,6 +30,56 @@ const BASE_BIRTH_RATE = 0.25;
 const BASE_DEATH_RATES = [0.0125, 0.0175, 0.025, 0.05];
 
 const FLOOD_BASE_DEATH_RATE = 0.0025;
+
+// Causes of death, in the order used for per-cause death-rate arrays.
+export const DEATH_CAUSES = ['Disease', 'Hazards', 'Flood', 'Old Age'] as const;
+
+// Cumulative probability of dying of disease across a full 20-year age slice.
+// Childhood (slice 0) risk scales with disease load between the min and max;
+// the later slices have fixed cumulative risks.
+const DISEASE_CHILDHOOD_MIN_CUM = 0.10;
+const DISEASE_CHILDHOOD_MAX_CUM = 0.40;
+const DISEASE_LATER_CUM = [0.02, 0.04, 0.10]; // slices 1..3
+
+const SEX_FACTORS = [1, 1.1]; // female, male mortality multiplier
+
+// Random number of successes in n independent trials, each with probability p.
+// Handles p > 1 by granting floor(p) guaranteed successes per trial plus a
+// Bernoulli draw for the fractional part. Slices are small, so per-item die
+// rolls are simple and fast enough.
+function randomCount(n: number, p: number): number {
+    if (n <= 0 || p <= 0) return 0;
+    const whole = Math.floor(p);
+    const frac = p - whole;
+    let count = n * whole;
+    for (let i = 0; i < n; i++) if (Math.random() < frac) ++count;
+    return count;
+}
+
+// Assign each of n people to at most one cause of death, given per-cause death
+// rates that sum to the overall probability of death. Returns deaths per cause.
+function drawDeathsByCause(n: number, deathRates: number[]): number[] {
+    const counts = new Array(deathRates.length).fill(0);
+    for (let person = 0; person < n; ++person) {
+        const u = Math.random();
+        let cum = 0;
+        for (let c = 0; c < deathRates.length; ++c) {
+            cum += deathRates[c];
+            if (u < cum) { ++counts[c]; break; }
+        }
+    }
+    return counts;
+}
+
+// Combine independent per-cause risk ratios into an overall probability of
+// death (competing risks), then distribute that probability back across the
+// causes in proportion to each cause's original risk.
+function redistributeRisks(risks: number[]): number[] {
+    const overall = 1 - risks.reduce((acc, r) => acc * (1 - r), 1);
+    const total = risks.reduce((a, b) => a + b, 0);
+    if (total <= 0) return risks.map(() => 0);
+    return risks.map(r => overall * (r / total));
+}
 
 export class PopulationChangeItem {
     constructor(
@@ -133,6 +183,40 @@ export class PopulationChange {
             actual
         );
     }
+
+    get birthsItem(): PopulationChangeItem | undefined {
+        return this.items.find(i => i.name === 'Births');
+    }
+
+    // Death causes, in DEATH_CAUSES order (everything that isn't births).
+    get deathItems(): PopulationChangeItem[] {
+        return this.items.filter(i => i.name !== 'Births');
+    }
+
+    get totalDeathsItem(): PopulationChangeItem {
+        const deaths = this.deathItems;
+        return new PopulationChangeItem(
+            'Total Deaths',
+            1,
+            sumFun(deaths, i => i.standardRate),
+            sumFun(deaths, i => i.expectedRate),
+            sumFun(deaths, i => i.actualRate),
+            sumFun(deaths, i => i.actual),
+        );
+    }
+
+    get totalChangeItem(): PopulationChangeItem {
+        const b = this.birthsItem;
+        const d = this.totalDeathsItem;
+        return new PopulationChangeItem(
+            'Total Change',
+            1,
+            (b?.standardRate ?? 0) + d.standardRate,
+            (b?.expectedRate ?? 0) + d.expectedRate,
+            (b?.actualRate ?? 0) + d.actualRate,
+            (b?.actual ?? 0) + d.actual,
+        );
+    }
 }
 
 export class PopulationChangeBuilder {
@@ -143,14 +227,6 @@ export class PopulationChangeBuilder {
     readonly drModifier: number;
 
     readonly newSlices: number[][] = [];
-
-    births = 0;
-    femaleBirths = 0;
-    maleBirths = 0;
-
-    diseaseDeaths = 0;
-    femaleDiseaseDeaths = 0;
-    maleDiseaseDeaths = 0;
 
     constructor(
         readonly clan: Clan,
@@ -219,22 +295,130 @@ export class PopulationChangeBuilder {
         this.drModifier = safeVal(productFun(this.drModifiers, m => m.value), 1);
     }
 
+    // Build a population change in three clear steps:
+    //   1. Compute expected rates (birth rate; per-slice, per-cause risk ratios).
+    //   2. Draw the actual change in people from each cause via random rolls.
+    //   3. Apply aging transitions and assemble the new age slices.
     build(): PopulationChange {
-        const birthsItem = this.calculateBirths();
-        const diseaseItem = this.calculateDisease(); // depends on births
-        const hazardsItems = this.calculateHazards(); // computes this.newSlices
+        const clan = this.clan;
+        const Y = this.yearsElapsed;
+        const prevSize = this.initialPopulation;
+        const nCauses = DEATH_CAUSES.length;
 
-        const items = [
-            birthsItem,
-            diseaseItem,
-            ...hazardsItems,
+        // ---- Step 1: expected rates ----
+
+        // Birth rate uses exactly the 20-40 slice (index 1) women, not an average.
+        const perWomanBirthRate = this.brModifier * BASE_BIRTH_RATE * Y;
+        const childbearingWomen = clan.slices[1][0];
+        const expectedBirths = childbearingWomen * perWomanBirthRate;
+
+        // Per-slice annual disease risk ratios, derived from the cumulative
+        // probability of dying of disease across each 20-year slice.
+        const childhoodDiseaseCum = clamp(
+            DISEASE_CHILDHOOD_MIN_CUM + this.diseaseLoad.value,
+            DISEASE_CHILDHOOD_MIN_CUM, DISEASE_CHILDHOOD_MAX_CUM);
+        const diseaseCumBySlice = [childhoodDiseaseCum, ...DISEASE_LATER_CUM];
+        const diseaseRiskBySlice = diseaseCumBySlice.map(
+            cum => 1 - Math.pow(1 - cum, 1 / SLICE_WIDTH));
+
+        const floodRisk = this.floodLevel.damageFactor * FLOOD_BASE_DEATH_RATE * Y;
+
+        // Independent annual risk ratio per cause (in DEATH_CAUSES order) for a
+        // given slice and sex mortality multiplier.
+        const rawRisks = (i: number, sexFactor: number): number[] => [
+            diseaseRiskBySlice[i] * Y * sexFactor,                 // Disease
+            BASE_DEATH_RATES[i] * this.drModifier * Y * sexFactor, // Hazards
+            floodRisk * sexFactor,                                 // Flood
+            (i === 3 ? Y / SLICE_WIDTH : 0) * sexFactor,           // Old Age
         ];
+
+        // ---- Step 2: draw the actual changes ----
+
+        // Births, and their sex split. Newborns enter slice 0 and face this
+        // year's slice-0 death risks.
+        const births = randomCount(childbearingWomen, perWomanBirthRate);
+        let femaleBirths = 0;
+        for (let i = 0; i < births; ++i) if (Math.random() < 0.48) ++femaleBirths;
+        const newborns = [femaleBirths, births - femaleBirths];
+        const expectedNewborns = [expectedBirths * 0.48, expectedBirths * 0.52];
+
+        const actualDeaths = new Array(nCauses).fill(0);
+        const expectedDeaths = new Array(nCauses).fill(0);
+        const standardDeaths = new Array(nCauses).fill(0);
+
+        const survivors: number[][] = [];
+        for (let i = 0; i < clan.slices.length; ++i) {
+            const rowSurvivors: number[] = [];
+            for (let g = 0; g < 2; ++g) {
+                const risks = rawRisks(i, SEX_FACTORS[g]);
+                const deathRates = redistributeRisks(risks);
+
+                const actualPop = clan.slices[i][g] + (i === 0 ? newborns[g] : 0);
+                const expectedPop = clan.slices[i][g] + (i === 0 ? expectedNewborns[g] : 0);
+
+                const counts = drawDeathsByCause(actualPop, deathRates);
+                let died = 0;
+                for (let c = 0; c < nCauses; ++c) {
+                    actualDeaths[c] += counts[c];
+                    expectedDeaths[c] += deathRates[c] * expectedPop;
+                    standardDeaths[c] += deathRates[c] * INITIAL_POPULATION_RATIOS[i][g];
+                    died += counts[c];
+                }
+                rowSurvivors.push(actualPop - died);
+            }
+            survivors.push(rowSurvivors);
+        }
+
+        // ---- Step 3: aging transitions and new slices ----
+
+        // Each year a fraction of survivors ages into the next slice. The oldest
+        // slice has no aging-out here; leaving it is modeled as old-age death.
+        const agingFraction = Math.min(1, Y / SLICE_WIDTH);
+        const agedOut: number[][] = [];
+        for (let i = 0; i < 4; ++i) {
+            agedOut.push([
+                i < 3 ? randomCount(survivors[i][0], agingFraction) : 0,
+                i < 3 ? randomCount(survivors[i][1], agingFraction) : 0,
+            ]);
+        }
+
+        this.newSlices.length = 0;
+        for (let i = 0; i < 4; ++i) {
+            const row: number[] = [];
+            for (let g = 0; g < 2; ++g) {
+                const inflow = i > 0 ? agedOut[i - 1][g] : 0;
+                row.push(survivors[i][g] - agedOut[i][g] + inflow);
+            }
+            this.newSlices.push(row);
+        }
+
+        // ---- Assemble items ----
+        const rate = (v: number) => prevSize > 0 ? v / prevSize : 0;
+
+        const birthsItem = new PopulationChangeItem(
+            'Births',
+            this.brModifier,
+            INITIAL_POPULATION_RATIOS[1][0] * perWomanBirthRate,
+            rate(expectedBirths),
+            rate(births),
+            births,
+        );
+
+        const causeMods = [1, this.drModifier, this.floodLevel.damageFactor, 1];
+        const deathItems = DEATH_CAUSES.map((name, c) => new PopulationChangeItem(
+            name,
+            causeMods[c],
+            -standardDeaths[c],
+            -rate(expectedDeaths[c]),
+            -rate(actualDeaths[c]),
+            -actualDeaths[c],
+        ));
 
         return new PopulationChange(
             this.yearsElapsed,
             this.clan,
             this.diseaseLoad,
-            items,
+            [birthsItem, ...deathItems],
             this.newSlices,
             this.brModifiers,
             this.brModifier,
@@ -253,184 +437,6 @@ export class PopulationChangeBuilder {
 
     get floodLevel() {
         return this.clan.settlement.floodLevel;
-    }
-
-    calculateBirths() {
-        const pmbr = this.brModifier * BASE_BIRTH_RATE * this.yearsElapsed;
-        const eb = 0.5 * (this.clan.slices[0][0] + this.clan.slices[1][0]) * pmbr;
-        const intEb = Math.floor(eb);
-        const fracEb = eb - intEb;
-        this.births = intEb + (Math.random() < fracEb ? 1 : 0);
-        if (!isFinite(this.births)) debugger;
-        if (this.births > 1000) {
-            debugger;
-            throw new Error("Too many births for simple model");
-        }
-        for (let i = 0; i < this.births; ++i) {
-            if (Math.random() < 0.48) ++this.femaleBirths;
-        }
-        this.maleBirths = this.births - this.femaleBirths;
-        if (isNaN(this.femaleBirths) || isNaN(this.maleBirths)) {
-            debugger;
-        }
-        const initPop = this.initialPopulation;
-        return new PopulationChangeItem(
-            'Births',
-            this.brModifier,
-            INITIAL_POPULATION_RATIOS[1][0] * pmbr,
-            initPop > 0 ? eb / initPop : 0,
-            initPop > 0 ? this.births / initPop : 0,
-            this.births,
-        );
-    }
-
-    calculateDisease() {
-        // Childhood diseases: a terrible source of tragedy through prehistory
-        // and prehistory until effective infection control in modern times.
-        // TODO - Make nutrition affect disease.
-        // Fold in a term for other hazards.
-        const mortality = this.diseaseLoad.value + 0.2;
-        const expectedDisease = mortality * this.births;
-        this.diseaseDeaths = Math.floor(expectedDisease) + (Math.random() < (expectedDisease % 1) ? 1 : 0);
-        if (!isFinite(this.diseaseDeaths)) debugger;
-        const initPop = this.initialPopulation;
-        const diseaseDeathRate = initPop > 0 ? this.diseaseDeaths / initPop : 0;
-        const expectedFemaleDisease = mortality * this.femaleBirths;
-        this.femaleDiseaseDeaths = Math.min(this.diseaseDeaths, Math.floor(expectedFemaleDisease) + (Math.random() < (expectedFemaleDisease % 1) ? 1 : 0));
-        this.maleDiseaseDeaths = this.diseaseDeaths - this.femaleDiseaseDeaths;
-        return new PopulationChangeItem(
-            'Disease',
-            1,
-            -diseaseDeathRate,
-            -diseaseDeathRate,
-            -diseaseDeathRate,
-            -this.diseaseDeaths,
-        );
-    }
-
-    calculateHazards() {
-        const drFactor = this.drModifier;
-
-        const sources = [];
-        if (this.floodLevel.damageFactor >= 0.1) {
-            sources.push({
-                name: 'Flood',
-                deaths: 0, ed: 0, sedr: 0,
-                mod: this.floodLevel.damageFactor,
-                drFun: () => this.floodLevel.damageFactor * FLOOD_BASE_DEATH_RATE * this.yearsElapsed,
-            });
-        }
-        sources.push({
-            name: 'Hazards',
-            deaths: 0, ed: 0, sedr: 0,
-            mod: drFactor,
-            drFun: (i: number) => BASE_DEATH_RATES[i] * drFactor * this.yearsElapsed,
-        });
-
-        const newborns = [
-            this.femaleBirths - this.femaleDiseaseDeaths,
-            this.maleBirths - this.maleDiseaseDeaths,
-        ];
-
-        const survivors: number[][] = [];
-
-        // Calculate hazard deaths for all 4 age slices (0..3)
-        for (let i = 0; i < this.clan.slices.length; ++i) {
-            const femaleDRs = [];
-            let femaleDR = 0;
-            for (const source of sources) {
-                const dr = source.drFun(i);
-                femaleDRs.push(dr);
-                femaleDR += dr;
-            }
-
-            const initialF = this.clan.slices[i][0] + (i === 0 ? newborns[0] : 0);
-            const initialM = this.clan.slices[i][1] + (i === 0 ? newborns[1] : 0);
-
-            let [fSurvivors, mSurvivors] = [0, 0];
-            for (let j = 0; j < initialF; ++j) {
-                let cumFemaleDR = 0;
-                let survived = true;
-                for (let k = 0; k < femaleDRs.length; ++k) {
-                    cumFemaleDR += femaleDRs[k];
-                    if (Math.random() < cumFemaleDR) {
-                        survived = false;
-                        ++sources[k].deaths;
-                        break;
-                    }
-                }
-                if (survived) ++fSurvivors;
-            }
-
-            for (let j = 0; j < initialM; ++j) {
-                let cumMaleDR = 0;
-                let survived = true;
-                for (let k = 0; k < femaleDRs.length; ++k) {
-                    cumMaleDR += 1.1 * femaleDRs[k];
-                    if (Math.random() < cumMaleDR) {
-                        survived = false;
-                        ++sources[k].deaths;
-                        break;
-                    }
-                }
-                if (survived) ++mSurvivors;
-            }
-
-            survivors.push([fSurvivors, mSurvivors]);
-
-            // Expected values
-            for (const [k, source] of sources.entries()) {
-                source.ed += femaleDRs[k] * initialF + femaleDRs[k] * 1.1 * initialM;
-                source.sedr += femaleDRs[k] * INITIAL_POPULATION_RATIOS[i][0] + femaleDRs[k] * 1.1 * BASE_DEATH_RATES[i];
-            }
-        }
-
-        // Aging transitions (1/SLICE_WIDTH per year of slice survivors age out into next category)
-        const agingFraction = Math.min(1, this.yearsElapsed / SLICE_WIDTH);
-        const agingOut: number[][] = [];
-        for (let i = 0; i < 4; ++i) {
-            const expF = survivors[i][0] * agingFraction;
-            const outF = Math.floor(expF) + (Math.random() < (expF % 1) ? 1 : 0);
-            const expM = survivors[i][1] * agingFraction;
-            const outM = Math.floor(expM) + (Math.random() < (expM % 1) ? 1 : 0);
-            agingOut.push([Math.min(survivors[i][0], outF), Math.min(survivors[i][1], outM)]);
-        }
-
-        // Old age deaths (elders aging out of slice 3 expire)
-        const last = sources[sources.length - 1]!;
-        const oldAgeDeaths = agingOut[3][0] + agingOut[3][1];
-        last.deaths += oldAgeDeaths;
-        last.ed += agingFraction * (survivors[3][0] + 1.1 * survivors[3][1]);
-        last.sedr += agingFraction * (INITIAL_POPULATION_RATIOS[3][0] + 1.1 * BASE_DEATH_RATES[3]);
-
-        // Construct new slices
-        this.newSlices.length = 0;
-        this.newSlices.push([
-            survivors[0][0] - agingOut[0][0],
-            survivors[0][1] - agingOut[0][1],
-        ]);
-        this.newSlices.push([
-            (survivors[1][0] - agingOut[1][0]) + agingOut[0][0],
-            (survivors[1][1] - agingOut[1][1]) + agingOut[0][1],
-        ]);
-        this.newSlices.push([
-            (survivors[2][0] - agingOut[2][0]) + agingOut[1][0],
-            (survivors[2][1] - agingOut[2][1]) + agingOut[1][1],
-        ]);
-        this.newSlices.push([
-            (survivors[3][0] - agingOut[3][0]) + agingOut[2][0],
-            (survivors[3][1] - agingOut[3][1]) + agingOut[2][1],
-        ]);
-
-        const initPop = this.initialPopulation;
-        return sources.map(source =>
-            new PopulationChangeItem(
-                source.name,
-                source.mod,
-                -source.sedr,
-                initPop > 0 ? -source.ed / initPop : 0,
-                initPop > 0 ? -source.deaths / initPop : 0,
-                -source.deaths));
     }
 
     static empty(clan: Clan) {
