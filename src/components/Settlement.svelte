@@ -12,6 +12,7 @@
     import SettlementMutualAid from "./SettlementMutualAid.svelte";
     import SettlementMarriages from "./SettlementMarriages.svelte";
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
+    import SettlementEcon from "./SettlementEcon.svelte";
     import SettlementQoL from "./SettlementQoL.svelte";
 
     let { settlement } = $props();
@@ -20,6 +21,7 @@
         { label: "Overview", snippet: overviewTab },
         { label: "QoL", snippet: qolTab },
         { label: "Comparison", snippet: comparisonTab },
+        { label: "Econ", snippet: econTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Marriages", snippet: marriagesTab },
         { label: "Redistribution", snippet: redistributionTab },
@@ -34,56 +36,59 @@
 </script>
 
 {#snippet comparisonTab()}
-    <SettlementComparison settlement={settlement} />
+    <SettlementComparison {settlement} />
 {/snippet}
 
 {#snippet migrationTab()}
-    <SettlementMigrationDetails settlement={settlement} />
+    <SettlementMigrationDetails {settlement} />
 {/snippet}
 
 {#snippet overviewTab()}
-    <SettlementOverview settlement={settlement} />
+    <SettlementOverview {settlement} />
+{/snippet}
+
+{#snippet econTab()}
+    <SettlementEcon {settlement} />
 {/snippet}
 
 {#snippet qolTab()}
-    <SettlementQoL settlement={settlement} />
+    <SettlementQoL {settlement} />
 {/snippet}
 
 {#snippet demographicsTab()}
-    <SettlementDemographics settlement={settlement} />
+    <SettlementDemographics {settlement} />
 {/snippet}
 
 {#snippet tradeTab()}
-    <SettlementTrade settlement={settlement} />
+    <SettlementTrade {settlement} />
 {/snippet}
 
-
 {#snippet productivityTab()}
-    <SettlementProductivity settlement={settlement} />
+    <SettlementProductivity {settlement} />
 {/snippet}
 
 {#snippet relationshipsTab()}
-    <SettlementRelationships settlement={settlement} />
+    <SettlementRelationships {settlement} />
 {/snippet}
 
 {#snippet marriagesTab()}
-    <SettlementMarriages settlement={settlement} />
+    <SettlementMarriages {settlement} />
 {/snippet}
 
 {#snippet redistributionTab()}
-    <SettlementRedistribution settlement={settlement} />
+    <SettlementRedistribution {settlement} />
 {/snippet}
 
 {#snippet mutualAidTab()}
-    <SettlementMutualAid settlement={settlement} />
+    <SettlementMutualAid {settlement} />
 {/snippet}
 
 {#snippet relationshipsGraphTab()}
-    <SettlementRelationshipsGraph settlement={settlement} />
+    <SettlementRelationshipsGraph {settlement} />
 {/snippet}
 
 {#snippet relationshipsGraph2Tab()}
-    <SettlementRelationshipsGraph2 settlement={settlement} />
+    <SettlementRelationshipsGraph2 {settlement} />
 {/snippet}
 
-<TabbedView tabs={tabs} /> 
+<TabbedView {tabs} />

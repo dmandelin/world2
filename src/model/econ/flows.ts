@@ -34,11 +34,35 @@ export abstract class GoodFlows {
 }
 
 export class Distribution extends GoodFlows {
+    // Amounts produced this turn, i.e. the pool available to distribute.
+    // Snapshotted from the clan's production when the Distribution is created.
+    readonly produced = new Map<TradeGood, number>();
     readonly toConsumption = new Map<TradeGood, number>();
     readonly toStock = new Map<TradeGood, number>();
     readonly toWaste = new Map<TradeGood, number>();
     readonly toDonations: DirectFlowRecord[] = [];
     readonly toGifts: DirectFlowRecord[] = [];
+
+    constructor(clan: Clan) {
+        super(clan);
+        for (const [good, amount] of clan.production?.totals() ?? []) {
+            this.produced.set(good, amount);
+        }
+    }
+
+    totalProduced(good: TradeGood): number {
+        return this.produced.get(good) ?? 0;
+    }
+
+    // Amount of a good produced this turn that has not yet been distributed
+    // to any destination (consumption, stock, waste, gifts, or aid).
+    undistributed(good: TradeGood): number {
+        return Math.max(0, this.totalProduced(good)
+            - this.totalToConsumption(good)
+            - this.totalToStock(good)
+            - this.totalToWaste(good)
+            - this.totalToDonated(good));
+    }
 
     addConsumption(good: TradeGood, amount: number): void {
         if (amount <= 0) return;

@@ -382,8 +382,9 @@ export class World implements NoteTaker {
         for (const clan of allClans) {
             let targetAdditionalFood = Math.max(0, clan.population - clan.consumption.totalFood);
 
-            // Consume out of production (Fish first, Cereals second)
-            const availFish = clan.production.forGood(TradeGoods.Fish);
+            // Consume out of production not yet distributed elsewhere
+            // (Fish first, Cereals second).
+            const availFish = clan.distribution.undistributed(TradeGoods.Fish);
             const fishToConsume = Math.min(availFish, targetAdditionalFood);
             if (fishToConsume > 0) {
                 clan.distribution.addConsumption(TradeGoods.Fish, fishToConsume);
@@ -391,7 +392,7 @@ export class World implements NoteTaker {
                 targetAdditionalFood -= fishToConsume;
             }
 
-            const availCereals = clan.production.forGood(TradeGoods.Cereals);
+            const availCereals = clan.distribution.undistributed(TradeGoods.Cereals);
             const cerealsToConsume = Math.min(availCereals, targetAdditionalFood);
             if (cerealsToConsume > 0) {
                 clan.distribution.addConsumption(TradeGoods.Cereals, cerealsToConsume);
@@ -424,9 +425,7 @@ export class World implements NoteTaker {
 
         // Step 4: Any remaining Cereals from production sent to stock
         for (const clan of allClans) {
-            const prodCereals = clan.production.forGood(TradeGoods.Cereals);
-            const usedCereals = clan.distribution.totalToConsumption(TradeGoods.Cereals) + clan.distribution.totalToDonated(TradeGoods.Cereals);
-            const remainingCereals = Math.max(0, prodCereals - usedCereals);
+            const remainingCereals = clan.distribution.undistributed(TradeGoods.Cereals);
             if (remainingCereals > 0) {
                 clan.distribution.addStock(TradeGoods.Cereals, remainingCereals);
             }
@@ -435,12 +434,9 @@ export class World implements NoteTaker {
         // Step 4b: Any remaining goods other than Cereals (e.g. surplus Fish,
         // which can't be stored or gifted) are wasted.
         for (const clan of allClans) {
-            for (const [good, produced] of clan.production.totals().entries()) {
+            for (const good of clan.distribution.produced.keys()) {
                 if (good === TradeGoods.Cereals) continue;
-                const used = clan.distribution.totalToConsumption(good)
-                    + clan.distribution.totalToStock(good)
-                    + clan.distribution.totalToDonated(good);
-                const remaining = Math.max(0, produced - used);
+                const remaining = clan.distribution.undistributed(good);
                 if (remaining > 0) {
                     clan.distribution.addWaste(good, remaining);
                 }

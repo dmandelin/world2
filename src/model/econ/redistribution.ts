@@ -88,8 +88,8 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         initialFoodMap.set(clan.uuid, { food, perCapita, stock, stockPerCapita });
 
         const prodCereals = clan.production.forGood(TradeGoods.Cereals);
-        const prodCerealsUsed = clan.distribution.totalToConsumption(TradeGoods.Cereals) + clan.distribution.totalToDonated(TradeGoods.Cereals);
-        const availSurplusProd = Math.max(0, prodCereals - prodCerealsUsed);
+        const prodCerealsUsed = prodCereals - clan.distribution.undistributed(TradeGoods.Cereals);
+        const availSurplusProd = clan.distribution.undistributed(TradeGoods.Cereals);
 
         const stockOutflowCereals = clan.stockOutflow.totalOutflow(TradeGoods.Cereals);
         const availStock = Math.max(0, stock - stockOutflowCereals);
