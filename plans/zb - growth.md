@@ -711,6 +711,7 @@ Detailed list of first parts:
                     *   Make residence matter again in here somewhere
                     *   Consider if alignment of others should go into QoL or if that comes in via interactions
                     *   Consider if respect should affect stress
+                    *   Have knowledge for respect and such be more than a multiplier - consider what facts are easier or harder to know
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement

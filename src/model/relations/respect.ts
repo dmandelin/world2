@@ -31,8 +31,8 @@ export class Respect {
             RespectItem.forGenerosity(subject, object),
             RespectItem.forSkills(subject, object),
             RespectItem.forPiety(subject, object),
-            RespectItem.forStress(subject, object),
-            RespectItem.forStandardOfLiving(subject, object),
+            RespectItem.forSocialQoL(subject, object),
+            RespectItem.forMaterialQoL(subject, object),
             RespectItem.forRandom(subject, object),
 
             // TODO - Add size component?
@@ -66,21 +66,23 @@ export class RespectItem {
         return this.baseValue * this.modifier;
     }
 
-    static forStress(subject: Clan, object: Clan): RespectItem {
+    static forSocialQoL(subject: Clan, object: Clan): RespectItem {
+        const objectSocial = object.qol.valueFrom("social") - (object.qol.m.get("Respect")?.value ?? 0);
+        const subjectSocial = subject.qol.valueFrom("social") - (subject.qol.m.get("Respect")?.value ?? 0);
         return new RespectItem(
-            'Stress',
-            object.stress.value - subject.stress.value,
+            'Social QoL',
+            objectSocial - subjectSocial,
             0.1,
-            `Stress`
+            `Social QoL`
         );
     }
 
-    static forStandardOfLiving(subject: Clan, object: Clan): RespectItem {
+    static forMaterialQoL(subject: Clan, object: Clan): RespectItem {
         return new RespectItem(
-            'Standard of Living',
-            object.qol.value - subject.qol.value,
+            'Material QoL',
+            object.qol.valueFrom("material") - subject.qol.valueFrom("material"),
             0.2,
-            `Standard of Living`
+            `Material QoL`
         );
     }
 
