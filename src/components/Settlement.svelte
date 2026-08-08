@@ -13,11 +13,13 @@
     import SettlementMutualAid from "./SettlementMutualAid.svelte";
     import SettlementMarriages from "./SettlementMarriages.svelte";
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
+    import SettlementQoL from "./SettlementQoL.svelte";
 
     let { settlement } = $props();
 
     const tabs = [
         { label: "Overview", snippet: overviewTab },
+        { label: "QoL", snippet: qolTab },
         { label: "Comparison", snippet: comparisonTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Marriages", snippet: marriagesTab },
@@ -43,6 +45,10 @@
 
 {#snippet overviewTab()}
     <SettlementOverview settlement={settlement} />
+{/snippet}
+
+{#snippet qolTab()}
+    <SettlementQoL settlement={settlement} />
 {/snippet}
 
 {#snippet demographicsTab()}
