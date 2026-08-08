@@ -2451,6 +2451,7 @@
         padding: 0.25rem;
         border-radius: 4px;
         align-items: center;
+        margin-bottom: 0.75rem;
     }
     .lens-btn {
         all: unset;
