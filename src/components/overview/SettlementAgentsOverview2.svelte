@@ -240,17 +240,17 @@
                 cellClass: "ra",
                 value: (c) =>
                     Math.sqrt(
-                        (c.lastPopulationChange?.brModifier ?? 1) *
+                        (c.lastPopulationChange?.brModifier ?? 1) /
                             (c.lastPopulationChange?.drModifier ?? 1),
                     ),
                 format: spct,
+                tooltipSnippet: healthTooltip,
                 deltaValue: (c) =>
                     Math.sqrt(
-                        (c.lastPopulationChange?.brModifier ?? 1) *
+                        (c.lastPopulationChange?.brModifier ?? 1) /
                             (c.lastPopulationChange?.drModifier ?? 1),
                     ),
                 deltaFormat: pct,
-                timelineKey: "health",
                 scaler: new DefaultScaler(),
                 topics: ["demographics"],
             },
@@ -1621,6 +1621,46 @@
             1,
         )}
     </div>
+{/snippet}
+
+{#snippet healthTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2
+        table={new IterableTable(
+            Array.from(
+                new Set([
+                    ...(cs.e.lastPopulationChange?.brModifiers ?? []).map(
+                        (m) => m.source,
+                    ),
+                    ...(cs.e.lastPopulationChange?.drModifiers ?? []).map(
+                        (m) => m.source,
+                    ),
+                ]),
+            ),
+            (source) => source,
+            [
+                {
+                    data: "BR",
+                    label: "BR",
+                    valueFn: (source) =>
+                        cs.e.lastPopulationChange?.brModifiers.find(
+                            (m) => m.source === source,
+                        )?.value,
+                    formatFn: (v: number | undefined) =>
+                        v !== undefined ? spct(v, 0) : "-",
+                },
+                {
+                    data: "DR",
+                    label: "DR",
+                    valueFn: (source) =>
+                        cs.e.lastPopulationChange?.drModifiers.find(
+                            (m) => m.source === source,
+                        )?.value,
+                    formatFn: (v: number | undefined) =>
+                        v !== undefined ? spct(v, 0) : "-",
+                },
+            ],
+        )}
+    />
 {/snippet}
 
 {#snippet brModifierTooltip(cs: ClanLastTurnSnapshots)}
