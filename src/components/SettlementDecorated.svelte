@@ -162,7 +162,8 @@
                     style="padding-bottom: 4px;"
                 />{signed(settlement.cluster.averageHappiness, 0)}
             </h4>
-            <h1 style="white-space: nowrap;">
+            <div class="name-row">
+                <h1 style="white-space: nowrap;">
                 {settlement.name} |
                 <img
                     src="stat-population-256.png"
@@ -199,7 +200,21 @@
                     height="40"
                     style="padding-bottom: 8px;"
                 />{signed(settlement.averageHappiness, 0)}
-            </h1>
+                </h1>
+                <ButtonPanel
+                    config={{
+                        buttons: settlement.cluster.settlements.map(
+                            (s: SettlementDTO) => ({
+                                label: `${s.name}<br>${s.population}`,
+                                data: s,
+                            }),
+                        ),
+                    }}
+                    onSelected={(_, data) => {
+                        onSelect(data.uuid);
+                    }}
+                />
+            </div>
             <div>
                 {groupSedentismDescription(settlement.residenceFraction)}
                 ({pct(settlement.residenceFraction)} resident) &centerdot;
@@ -225,20 +240,6 @@
             <div>
                 {pct(settlement.farmingRatio)} farming
             </div>
-
-            <ButtonPanel
-                config={{
-                    buttons: settlement.cluster.settlements.map(
-                        (s: SettlementDTO) => ({
-                            label: `${s.name}<br>${s.population}`,
-                            data: s,
-                        }),
-                    ),
-                }}
-                onSelected={(_, data) => {
-                    onSelect(data.uuid);
-                }}
-            />
         </div>
     </div>
 
@@ -251,6 +252,18 @@
     }
 
     h1 {
+        margin: 0;
+    }
+
+    .name-row {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* Keep the settlement-select buttons compact on the name line. */
+    .name-row :global(.panel) {
         margin: 0;
     }
 
