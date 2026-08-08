@@ -105,6 +105,7 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         donor: Clan;
         alignment: number;
         weight: number;
+        normalizedShare: number;
         requestedAbs: number;
         requestedPerCapita: number;
     }

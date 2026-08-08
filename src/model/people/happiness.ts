@@ -54,7 +54,7 @@ export abstract class HappinessItem<T> {
         return this.expectedAppeal_;
     }
 
-    get expectedAppealFloor(): number|undefined {
+    get expectedAppealFloor(): number | undefined {
         return undefined;
     }
 
@@ -64,7 +64,7 @@ export abstract class HappinessItem<T> {
         this.expectedAppeal_ += error >= 0
             ? 0.5 * error
             : 0.1 * error;
-        
+
         // There can be a floor. Starving is never considered acceptable.
         const floor = this.expectedAppealFloor;
         if (floor !== undefined) {
@@ -107,12 +107,12 @@ export class FoodQuantityHappinessItem extends NumericHappinessItem {
         return true;
     }
 
-    get expectedAppealFloor(): number|undefined {
+    get expectedAppealFloor(): number | undefined {
         return this.appealOf(0.75);
     }
 
     appealOf(perCapitaSubsistence: number): number {
-            return FoodQuantityHappinessItem.appealOf(perCapitaSubsistence);
+        return FoodQuantityHappinessItem.appealOf(perCapitaSubsistence);
     }
 
     static appealOf(perCapitaSubsistence: number): number {
@@ -129,10 +129,10 @@ export class FoodQuantityHappinessItem extends NumericHappinessItem {
     }
 }
 
-export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, fishRatio: number}> {
+export class FoodQualityHappinessItem extends HappinessItem<{ quantity: number, fishRatio: number }> {
     constructor(
         expectedAppeal: number = 0,
-        state: {quantity: number, fishRatio: number} = {quantity: 0, fishRatio: 0},
+        state: { quantity: number, fishRatio: number } = { quantity: 0, fishRatio: 0 },
     ) {
         super(expectedAppeal, state);
     }
@@ -151,7 +151,7 @@ export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, f
         return true;
     }
 
-    appealOf(state: {quantity: number, fishRatio: number}): number {
+    appealOf(state: { quantity: number, fishRatio: number }): number {
         return FoodQualityHappinessItem.appealOf(state);
     }
 
@@ -159,7 +159,7 @@ export class FoodQualityHappinessItem extends HappinessItem<{quantity: number, f
         return quantity >= 1 ? 1 : 2 ** (10 * (quantity - 1));
     }
 
-    static appealOf({quantity, fishRatio}: {quantity: number, fishRatio: number}): number {
+    static appealOf({ quantity, fishRatio }: { quantity: number, fishRatio: number }): number {
         // People only care about quality if there's enough quantity.
         return FoodQualityHappinessItem.careOf(quantity) * foodVarietyAppeal(fishRatio);
     }
@@ -226,7 +226,7 @@ class ShelterHappinessItem extends NumericHappinessItem {
 
 class FloodHappinessItem extends NumericHappinessItem {
     get label(): string {
-        return 'Flood';
+        return 'Flood Damage';
     }
 
     get stateDisplay(): string {
@@ -275,7 +275,7 @@ class SocietyHappinessItem extends NumericHappinessItem {
     appealOf(value: number): number {
         return value;
     }
-    
+
     updateState(clan: Clan): void {
         this.subitems.length = 0;
         for (const [other, connections] of connectionsOf(clan)) {
@@ -343,8 +343,8 @@ class RitualHappinessItem extends NumericHappinessItem {
     }
 
     updateState(clan: Clan): void {
-       // this.state_ = clan.settlement.clans.rites.appeal;
-       this.state_ = 10; // TODO - Placeholder
+        // this.state_ = clan.settlement.clans.rites.appeal;
+        this.state_ = 10; // TODO - Placeholder
     }
 
     clone(): RitualHappinessItem {
@@ -413,11 +413,11 @@ export class LeisureHappinessItem extends NumericHappinessItem {
 export class HappinessCalc {
     readonly items: Map<string, HappinessItem<any>> = new Map();
 
-    constructor(readonly clan: Clan) {}
+    constructor(readonly clan: Clan) { }
 
     private initialize(): void {
         this.add(
-            new FoodQuantityHappinessItem(), 
+            new FoodQuantityHappinessItem(),
             new FoodQualityHappinessItem(),
             new ShelterHappinessItem(),
             new FloodHappinessItem(),
@@ -475,23 +475,23 @@ export class HappinessCalc {
         return sumFun(this.items.values(), item => item.isSocial ? item.appeal : 0);
     }
 
-    getSocietyItem(): SocietyHappinessItem|undefined {
-        return this.items.get('Society') as SocietyHappinessItem|undefined;
+    getSocietyItem(): SocietyHappinessItem | undefined {
+        return this.items.get('Society') as SocietyHappinessItem | undefined;
     }
 
     get value(): number {
         return sumFun(this.items.values(), item => item.value);
     }
 
-    get(label: string): HappinessItem<any>|undefined {
+    get(label: string): HappinessItem<any> | undefined {
         return this.items.get(label);
     }
 
-    getAppeal(label: string): number|undefined {
+    getAppeal(label: string): number | undefined {
         return this.items.get(label)?.appeal;
     }
 
-    getAppealNonNull(label: string, stateOverride: number|undefined = undefined): number {
+    getAppealNonNull(label: string, stateOverride: number | undefined = undefined): number {
         const item = this.items.get(label);
         if (!item) return 0;
 
@@ -508,7 +508,7 @@ export class HappinessCalcItem {
         readonly label: string,
         readonly expectation: number,
         readonly appeal: number,
-    ) {}
+    ) { }
 
     get value(): number {
         return this.appeal - this.expectation;

@@ -26,7 +26,8 @@ export class QualityOfLife {
         const itemFuns = [
             QualityOfLife.fromLeisure,
             QualityOfLife.fromFoodQuantity,
-            QualityOfLife.fromFoodQuality
+            QualityOfLife.fromFoodQuality,
+            QualityOfLife.fromFlood,
         ];
         const m = new Map<string, QualityOfLifeItem>();
         for (const itemFun of itemFuns) {
@@ -56,6 +57,13 @@ export class QualityOfLife {
         const value = foodVarietyAppeal(consumption.fishRatio);
         return new QualityOfLifeItem(
             "Food quality", "food", value, `${pct(consumption.fishRatio)} fish`);
+    }
+
+    static fromFlood(consumption: Consumption): QualityOfLifeItem {
+        const damageFactor = consumption.clan?.settlement?.floodLevel?.damageFactor ?? 0;
+        const value = -damageFactor * 20;
+        return new QualityOfLifeItem(
+            "Flood damage", "flood", value, `${pct(damageFactor)} damage`);
     }
 }
 
