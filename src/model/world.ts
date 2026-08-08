@@ -340,6 +340,7 @@ export class World implements NoteTaker {
 
                 const sizeBefore = settlement.effectiveResidentPopulation;
                 for (const clan of settlement.clans) clan.advancePopulation();
+                removeAll(settlement.clans, c => c.population === 0);
 
                 // Tell height.
                 settlement.growTell(sizeBefore);
