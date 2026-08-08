@@ -230,19 +230,6 @@
                 topics: ["demographics"],
             },
             {
-                label: "&nbsp;Next support ratio",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => safeDiv(c.population, c.workers),
-                format: (v) => v.toFixed(1),
-                tooltipSnippet: nextSupportRatioTooltip,
-                deltaValue: (c) => safeDiv(c.population, c.workers),
-                deltaFormat: (v) => v.toFixed(1),
-                timelineKey: "supportRatio",
-                scaler: new DefaultScaler(),
-                topics: ["demographics", "productivity"],
-            },
-            {
                 label: "Birth rate modifier",
                 class: "actual",
                 cellClass: "rap",
@@ -277,7 +264,7 @@
                 deltaFormat: (v) => v.toFixed(1),
                 timelineKey: "supportRatio",
                 scaler: new DefaultScaler(),
-                topics: ["demographics"],
+                topics: ["support_ratio:detail"],
             },
         ]);
 
@@ -1485,7 +1472,13 @@
     let selectedLens = $state<string>("All");
     const lenses: Record<string, string[]> = {
         All: ["*"],
-        Econ: ["production", "productivity", "food:detail", "skills"],
+        Econ: [
+            "production",
+            "productivity",
+            "food:detail",
+            "skills",
+            "support_ratio:detail",
+        ],
         Productivity: ["productivity"],
     };
 
