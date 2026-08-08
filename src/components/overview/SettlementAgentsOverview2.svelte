@@ -53,6 +53,7 @@
         type MarriageDecisions,
     } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
+    import type { Respect } from "../../model/relations/respect";
     import LineGraph from "../LineGraph.svelte";
     import {
         PopulationScaler,
@@ -210,13 +211,19 @@
         return 0;
     }
 
-    function getMarriageInterestItemValue(
-        world: WorldDTO,
+    // Accessor for a directed opinion (respect or marriage appeal) between two clans.
+    type OpinionToward = (
+        observer: ClanDTO,
+        target: ClanDTO,
+    ) => Respect | undefined;
+
+    function getOpinionItemValue(
+        toward: OpinionToward,
         observer: ClanDTO,
         target: ClanDTO,
         label: string,
     ): number {
-        const r = world.marriageInterestToward(observer, target);
+        const r = toward(observer, target);
         if (!r) return 0;
         const infoMultiplier = Math.max(0, Math.min(1, r.informationValue));
         const item = r.items.find((i) => i.label === label);
@@ -324,7 +331,7 @@
                 topics: ["welfare"],
             },
             {
-                label: "Respect",
+                label: "Appeal",
                 class: "actual",
                 cellClass: "rap",
                 value: (c) => c.marriageAppealAverage,
@@ -333,6 +340,19 @@
                 deltaValue: (c) => c.marriageAppealAverage,
                 deltaFormat: (v) => signed(v, 0),
                 timelineKey: "marriageAppealAverage",
+                scaler: new ZeroCenteredScaler(),
+                topics: ["perceptions"],
+            },
+            {
+                label: "Respect",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.respectAverage,
+                format: (v) => signed(v, 0),
+                tooltipSnippet: respectTooltip,
+                deltaValue: (c) => c.respectAverage,
+                deltaFormat: (v) => signed(v, 0),
+                timelineKey: "respectAverage",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["perceptions"],
             },
@@ -1407,13 +1427,15 @@
 
     function clanRespectTooltipTable(
         clan: ClanDTO,
+        toward: OpinionToward,
+        valueLabel: string,
     ): Table<RespectRowData, any, any> {
         const otherClans = clan.settlement.clans.filter(
             (c) => c.uuid !== clan.uuid,
         );
 
         const sampleR = otherClans
-            .map((c) => clan.world.marriageInterestToward(c, clan))
+            .map((c) => toward(c, clan))
             .find((r) => r && r.items.length > 0);
 
         const itemLabels = sampleR
@@ -1443,8 +1465,11 @@
                 label: "Previous Value",
             },
             {
-                data: { label: "Smoothed Respect", type: "smoothed" as const },
-                label: "Smoothed Respect",
+                data: {
+                    label: `Smoothed ${valueLabel}`,
+                    type: "smoothed" as const,
+                },
+                label: `Smoothed ${valueLabel}`,
                 bold: true,
             },
             {
@@ -1460,33 +1485,22 @@
             valueFn: (row: RespectRowData) => {
                 if (row.type === "item") {
                     return populationAverage(otherClans, (c) =>
-                        getMarriageInterestItemValue(
-                            clan.world,
-                            c,
-                            clan,
-                            row.itemLabel!,
-                        ),
+                        getOpinionItemValue(toward, c, clan, row.itemLabel!),
                     );
                 } else if (row.type === "total") {
                     return populationAverage(
                         otherClans,
-                        (c) =>
-                            clan.world.marriageInterestToward(c, clan)
-                                ?.currentItemsTotal ?? 0,
+                        (c) => toward(c, clan)?.currentItemsTotal ?? 0,
                     );
                 } else if (row.type === "previous") {
                     return populationAverage(
                         otherClans,
-                        (c) =>
-                            clan.world.marriageInterestToward(c, clan)
-                                ?.previousValue ?? 0,
+                        (c) => toward(c, clan)?.previousValue ?? 0,
                     );
                 } else if (row.type === "smoothed") {
                     return populationAverage(
                         otherClans,
-                        (c) =>
-                            clan.world.marriageInterestToward(c, clan)?.value ??
-                            0,
+                        (c) => toward(c, clan)?.value ?? 0,
                     );
                 } else {
                     return sumFun(otherClans, (c) => c.population);
@@ -1505,13 +1519,10 @@
                 data: otherClan,
                 label: otherClan.name,
                 valueFn: (row: RespectRowData) => {
-                    const r = clan.world.marriageInterestToward(
-                        otherClan,
-                        clan,
-                    );
+                    const r = toward(otherClan, clan);
                     if (row.type === "item") {
-                        return getMarriageInterestItemValue(
-                            clan.world,
+                        return getOpinionItemValue(
+                            toward,
                             otherClan,
                             clan,
                             row.itemLabel!,
@@ -1826,7 +1837,30 @@
 {/snippet}
 
 {#snippet marriageAppealTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2 table={clanRespectTooltipTable(cs.e)}></TableView2>
+    <TableView2
+        table={clanRespectTooltipTable(
+            cs.e,
+            (observer, target) =>
+                cs.e.world.marriageInterestToward(observer, target),
+            "Appeal",
+        )}
+    ></TableView2>
+    <div
+        style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
+    >
+        Retention ratio: 90% (Smoothed Appeal = 10% Current Judgments + 90%
+        Previous Value).
+    </div>
+{/snippet}
+
+{#snippet respectTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2
+        table={clanRespectTooltipTable(
+            cs.e,
+            (observer, target) => cs.e.world.respectToward(observer, target),
+            "Respect",
+        )}
+    ></TableView2>
     <div
         style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
     >

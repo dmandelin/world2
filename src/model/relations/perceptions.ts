@@ -13,24 +13,30 @@ export class Perceptions {
     readonly information = new ClanInformation();
     readonly alignment = new Alignment();
     readonly respect = new Respect();
+    readonly marriageAppeal = new Respect();
 
     get marriageInterest(): Respect {
-        return this.respect;
+        return this.marriageAppeal;
     }
 
     constructor(
         information: ClanInformation = new ClanInformation(),
         alignment: Alignment = new Alignment(),
         respect: Respect = new Respect(),
+        marriageAppeal: Respect = new Respect(),
     ) {
         this.information = information;
         this.alignment = alignment;
         this.respect = respect;
+        this.marriageAppeal = marriageAppeal;
     }
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[], conflict?: Conflict): void {
         this.information.updateFor(subject, object, connections, interactions);
-        this.respect.updateFor(subject, object, this.information.value);
+        // Respect excludes material QoL; marriage appeal includes everything.
+        // Each keeps its own independent random component.
+        this.respect.updateFor(subject, object, this.information.value, false);
+        this.marriageAppeal.updateFor(subject, object, this.information.value, true);
         this.alignment.updateFor(subject, object, connections, interactions, conflict, this.respect);
     }
 
@@ -38,7 +44,8 @@ export class Perceptions {
         return new Perceptions(
             this.information.clone(),
             this.alignment.clone(),
-            this.respect.clone()
+            this.respect.clone(),
+            this.marriageAppeal.clone()
         );
     }
 }

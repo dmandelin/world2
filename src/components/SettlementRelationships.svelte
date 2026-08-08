@@ -19,6 +19,7 @@
     let stressMode: "stress" | "mutual aid" | "conflict" = $state("stress");
     let interactionMode: "interactions" | "information" =
         $state("interactions");
+    let opinionMode: "respect" | "marriage appeal" = $state("respect");
 
     function buildRelationshipsTable<CellValue>(
         valueFn: (rowClan: ClanDTO, colClan: ClanDTO) => CellValue,
@@ -95,8 +96,14 @@
         );
     }
 
-    function respectCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
-        const r = world.respectToward(rowClan, colClan);
+    function opinionToward(rowClan: ClanDTO, colClan: ClanDTO) {
+        return opinionMode === "respect"
+            ? world.respectToward(rowClan, colClan)
+            : world.marriageInterestToward(rowClan, colClan);
+    }
+
+    function opinionCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
+        const r = opinionToward(rowClan, colClan);
         if (!r) return 0;
         return r.value;
     }
@@ -233,8 +240,8 @@
     {/if}
 {/snippet}
 
-{#snippet respectCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
-    {@const r = world.respectToward(subject, object)}
+{#snippet opinionCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+    {@const r = opinionToward(subject, object)}
     {#if r}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
             <TableView2
@@ -390,14 +397,24 @@
         ></TableView2>
     </div>
     <div>
-        <h3>Respect</h3>
-        <TableView2
-            table={buildRelationshipsTable(
-                respectCellValue,
-                unsignedFormat(2),
-                respectCellTooltip,
-            )}
-        ></TableView2>
+        <div
+            style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 0.5rem;"
+        >
+            <h3 style="margin: 0;">Opinion</h3>
+            <select bind:value={opinionMode} class="opinion-select">
+                <option value="respect">Respect</option>
+                <option value="marriage appeal">Marriage Appeal</option>
+            </select>
+        </div>
+        {#key opinionMode}
+            <TableView2
+                table={buildRelationshipsTable(
+                    opinionCellValue,
+                    unsignedFormat(2),
+                    opinionCellTooltip,
+                )}
+            ></TableView2>
+        {/key}
     </div>
 </div>
 
@@ -407,6 +424,16 @@
         grid-template-columns: repeat(2, max-content);
         gap: 1.5rem 2rem;
         align-items: start;
+    }
+
+    .opinion-select {
+        font-size: 0.9rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        color: #333;
+        cursor: pointer;
     }
 
     .stress-button-group {

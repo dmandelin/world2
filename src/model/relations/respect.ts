@@ -25,14 +25,14 @@ export class Respect {
         return this.value_;
     }
 
-    updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
+    updateFor(subject: Clan, object: Clan, informationValue: number = 1, includeMaterialQoL: boolean = true): void {
         this.informationValue_ = informationValue;
         this.items_ = [
             RespectItem.forGenerosity(subject, object),
             RespectItem.forSkills(subject, object),
             RespectItem.forPiety(subject, object),
             RespectItem.forSocialQoL(subject, object),
-            RespectItem.forMaterialQoL(subject, object),
+            ...(includeMaterialQoL ? [RespectItem.forMaterialQoL(subject, object)] : []),
             RespectItem.forRandom(subject, object),
 
             // TODO - Add size component?

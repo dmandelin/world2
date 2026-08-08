@@ -187,6 +187,15 @@ export class ClanDTO {
             this.marriageAppealAverage
         );
     }
+
+    get respectAverage(): number {
+        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
+        if (otherClans.length === 0) return 0;
+        return populationAverage(
+            otherClans,
+            c => this.world.respectToward(c, this)?.value ?? 0
+        );
+    }
 }
 
 export class SettlementDTO {
