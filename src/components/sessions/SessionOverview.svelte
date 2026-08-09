@@ -17,7 +17,12 @@
 </script>
 
 <div class="overview">
-    <h2>{session.name}</h2>
+    <div class="title-row">
+        <h2>{session.name}</h2>
+        <a class="anova-link" href="/analysis?session={session.id}">
+            ANOVA →
+        </a>
+    </div>
 
     <table class="meta">
         <tbody>
@@ -63,6 +68,12 @@
                         {stream.entityCount.toLocaleString()} entities ·
                         {rangeLabel(stream.yearRange)}
                     </span>
+                    <a
+                        class="anova-link small"
+                        href="/analysis?session={session.id}&entity={stream.entityType}"
+                    >
+                        ANOVA →
+                    </a>
                 </div>
                 <div class="fields">
                     {#each ["year", "uuid", ...stream.fields] as field}
@@ -81,6 +92,37 @@
 
     h2 {
         margin-top: 0;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .anova-link {
+        flex: none;
+        padding: 0.2rem 0.6rem;
+        border: 2px solid #62531d;
+        border-radius: 4px;
+        background-color: #f0ebd1;
+        color: #2c250d;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .anova-link.small {
+        margin-left: auto;
+        padding: 0.05rem 0.4rem;
+        font-size: 0.75rem;
+        font-weight: normal;
+    }
+
+    .anova-link:hover {
+        background-color: #e6dfba;
     }
 
     table.meta {
