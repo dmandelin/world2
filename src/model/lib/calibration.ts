@@ -2,7 +2,7 @@ import { Annals } from "../annals";
 import { SettlementCluster } from "../people/cluster";
 import { Clan } from "../people/people";
 import { Settlement } from "../people/settlement";
-import { world } from "../world";
+import { world } from "../worldinstance";
 
 // Population is roughly constant with this birth rate.
 // At 1.15x, grows 7% per turn (0.35%/y, 30x/M)

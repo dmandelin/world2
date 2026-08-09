@@ -1,4 +1,4 @@
-import { world as _world } from '../../model/world';
+import { world as _world } from '../../model/worldinstance';
 
 export type Uuidable = string | { uuid: string } | undefined;
 

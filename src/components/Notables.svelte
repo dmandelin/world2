@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
-    import { world } from '../model/world';
+    import { world } from '../model/worldinstance';
 
     let biggestSettlement = $state(world.allSettlements[0]);
     let biggestClan = $state(world.allClans[0]);

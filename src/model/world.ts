@@ -26,6 +26,37 @@ import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
 import { FoodGiftsResult, shareFoodGifts } from "./econ/gifts";
+import { SnapshotRecorder } from "./data/recorder";
+import type { RecordingSession } from "./data/sessions";
+
+// Sites used when generating a world. The first three are the historical
+// starting configuration; beyond that we place sites at random.
+const SITES: readonly (readonly [string, number, number])[] = [
+    ['Eridu', 382, 378],
+    ['Ur', 425, 325],
+    ['Uruk', 200, 287],
+    ['Larsa', 345, 305],
+    ['Lagash', 470, 265],
+    ['Umma', 400, 235],
+    ['Shuruppak', 350, 215],
+    ['Nippur', 300, 185],
+    ['Adab', 335, 165],
+    ['Isin', 258, 220],
+    ['Bad-tibira', 393, 340],
+    ['Kish', 248, 130],
+];
+
+export type WorldOptions = {
+    // Number of settlements to start with (one per cluster).
+    settlementCount?: number;
+    // Number of clans in each starting settlement.
+    clansPerSettlement?: number;
+    // If set, entity snapshots are recorded into this session.
+    session?: RecordingSession;
+    // Skip UI-facing bookkeeping (DTO snapshots, watcher notification).
+    // Used for batch data generation, where nothing is rendering.
+    headless?: boolean;
+};
 
 export class World implements NoteTaker {
     readonly year = new Year();
@@ -50,11 +81,10 @@ export class World implements NoteTaker {
     readonly interactions = new InteractionGraph();
     readonly conflicts = new Conflicts(this);
     readonly perceptions = new PerceptionsGraph();
-    readonly clusters = new SettlementsBuilder(this).createClusters([
-        ['Eridu', 382, 378, 5],
-        ['Ur', 425, 325, 5],
-        ['Uruk', 200, 287, 5],
-    ]);
+    readonly clusters: SettlementCluster[];
+
+    readonly headless: boolean;
+    readonly recorder: SnapshotRecorder | undefined;
 
     readonly watchers = new Set<(world: World) => void>();
 
@@ -68,7 +98,16 @@ export class World implements NoteTaker {
 
     dto: WorldDTO | undefined;
 
-    constructor() {
+    constructor(options: WorldOptions = {}) {
+        this.headless = options.headless ?? false;
+        this.recorder = options.session
+            ? new SnapshotRecorder(options.session)
+            : undefined;
+
+        const settlementCount = options.settlementCount ?? 3;
+        const clansPerSettlement = options.clansPerSettlement ?? 5;
+        this.clusters = new SettlementsBuilder(this).createClusters(
+            siteSpecs(settlementCount, clansPerSettlement));
     }
 
     addNote(shortLabel: string, message: string, tooltip?: string, entities?: NoteEntity[]) {
@@ -91,12 +130,17 @@ export class World implements NoteTaker {
     }
 
     initialize() {
-        setExemplarSettlementUUID(this.clusters[0].settlements[0].uuid);
-        setExemplarClanUID(this.clusters[0].settlements[0].clans[0].uuid);
+        if (!this.headless) {
+            setExemplarSettlementUUID(this.clusters[0].settlements[0].uuid);
+            setExemplarClanUID(this.clusters[0].settlements[0].clans[0].uuid);
+        }
 
         log('World >>> Initialize')
 
         this.initializeTradeGoods();
+
+        // Snapshot the starting state before anything advances.
+        this.recorder?.record(this);
 
         // After this function, we should be able to show in the UI:
         // - End of turn state and intermediate values for the start year
@@ -128,18 +172,24 @@ export class World implements NoteTaker {
     }
 
     initializeTradeGoods() {
-        let e: Settlement, u: Settlement;
         const clayFigurineSource = new OffMapTradePartner(
             'Northern artisans', [TradeGoods.ClayFigurines]);
 
-        this.initializeTrade(
-            this.allSettlements.find(s => s.name === 'Eridu')!,
-            [TradeGoods.Cereals, TradeGoods.Fish],
-            clayFigurineSource);
-        this.initializeTrade(
-            this.allSettlements.find(s => s.name === 'Ur')!,
-            [TradeGoods.Cereals, TradeGoods.ReedProducts],
-            clayFigurineSource);
+        // The first two settlements get the starting trade goods. With the
+        // default configuration those are Eridu and Ur.
+        const settlements = this.allSettlements;
+        if (settlements[0]) {
+            this.initializeTrade(
+                settlements[0],
+                [TradeGoods.Cereals, TradeGoods.Fish],
+                clayFigurineSource);
+        }
+        if (settlements[1]) {
+            this.initializeTrade(
+                settlements[1],
+                [TradeGoods.Cereals, TradeGoods.ReedProducts],
+                clayFigurineSource);
+        }
     }
 
     initializeTrade(settlement: Settlement, localTradeGoods: TradeGood[], partner: OffMapTradePartner) {
@@ -147,6 +197,7 @@ export class World implements NoteTaker {
             settlement.localTradeGoods.add(t);
         }
 
+        if (!settlement.clans.length) return;
         const clan = chooseFrom(settlement.clans);
         const relationship = clan.addTradeRelationship(partner);
         relationship.addExchange(clan, [...clan.tradeGoods][0], partner.tradeGoods[0]);
@@ -247,11 +298,17 @@ export class World implements NoteTaker {
     advanceFromUserPlanningView(ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick)) {
         log('World >>> Advance from user planning view');
         for (const clan of this.allClans) clan.clearNotifications();
-        console.log('Cleared notifications for all clans');
+        log('Cleared notifications for all clans');
         this.runTurn(false, ticks);
         log('World <<< Advance from user planning view');
         this.refreshAlerts();
         this.notify();
+    }
+
+    // Advance without any UI-facing bookkeeping. Used for batch runs.
+    advanceHeadless(ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick)) {
+        for (const clan of this.allClans) clan.clearNotifications();
+        this.runTurn(false, ticks);
     }
 
     // ----------------------------------------------------------------
@@ -264,7 +321,7 @@ export class World implements NoteTaker {
         // Split and merge at the start so that new clans plan.
         if (!priming) {
             for (const clan of [...this.allClans]) clan.splitIfNeeded();
-            console.log("Did splits")
+            log("Did splits")
         }
         // TODO - Bring back
         //this.clans.merge();
@@ -301,7 +358,9 @@ export class World implements NoteTaker {
     private advanceState() {
         log('World >>> Advance');
 
-        this.beginningOfTurnSnapshot_ = new WorldDTO(this);
+        if (!this.headless) {
+            this.beginningOfTurnSnapshot_ = new WorldDTO(this);
+        }
 
         // Nature decides.
         const floodLevel = randomFloodLevel();
@@ -373,8 +432,13 @@ export class World implements NoteTaker {
         // Update perceptions based on the end-of-turn state.
         updatePerceptions(this);
 
-        this.previousEndOfTurnSnapshot_ = this.endOfTurnSnapshot_;
-        this.endOfTurnSnapshot_ = new WorldDTO(this);
+        if (!this.headless) {
+            this.previousEndOfTurnSnapshot_ = this.endOfTurnSnapshot_;
+            this.endOfTurnSnapshot_ = new WorldDTO(this);
+        }
+
+        // Snapshot end-of-turn state for analysis.
+        this.recorder?.record(this);
 
         log('World <<< Advance');
     }
@@ -608,11 +672,35 @@ export class World implements NoteTaker {
     }
 
     notify() {
+        if (this.headless) return;
+
         this.dto = new WorldDTO(this);
 
         for (const watcher of this.watchers)
             watcher(this);
     }
+}
+
+// Build the site/clan-count specs for a world of the requested size.
+function siteSpecs(
+    settlementCount: number,
+    clansPerSettlement: number,
+): [string, number, number, number][] {
+    const specs: [string, number, number, number][] = [];
+    for (let i = 0; i < settlementCount; i++) {
+        if (i < SITES.length) {
+            const [name, x, y] = SITES[i];
+            specs.push([name, x, y, clansPerSettlement]);
+        } else {
+            specs.push([
+                `Site ${i + 1}`,
+                Math.round(150 + Math.random() * 350),
+                Math.round(100 + Math.random() * 300),
+                clansPerSettlement,
+            ]);
+        }
+    }
+    return specs;
 }
 
 class SettlementsBuilder {
@@ -645,6 +733,3 @@ class SettlementsBuilder {
             this.createCluster(name, x, y, clanCount));
     }
 }
-
-export const world = new World();
-world.initialize();

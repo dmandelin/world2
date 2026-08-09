@@ -1,4 +1,5 @@
 import { Annals } from "../annals";
+import { log } from "../lib/debug";
 import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
 import { EffortAllocation } from "../decisions/effort";
@@ -19,6 +20,7 @@ import { type TradeGood, TradeGoods, type TradePartner, TradeRelationship } from
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
+import type { Year } from "../records/year";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { Stress } from "./stress";
 import { Distribution, StockOutflow, Consumption } from "../econ/flows";
@@ -78,6 +80,9 @@ export interface GoodsReceiver {
 export class Clan implements TradePartner {
     readonly uuid = crypto.randomUUID();
 
+    // Year the clan came into being, for "years in existence" reporting.
+    readonly foundedYear: Year;
+
     static minDesiredSize = 10;
     static maxDesiredSize = 60;
 
@@ -134,6 +139,7 @@ export class Clan implements TradePartner {
         public color: string,
         public population: number,
     ) {
+        this.foundedYear = world.year.clone();
         this.world.clanMap.set(this.uuid, this);
         this.world.timeline.register(this.uuid, this.name);
 
@@ -501,7 +507,7 @@ export class Clan implements TradePartner {
 
         this.notifications.push(new ClanNotification('s', `Split off clan ${newClan.name} (${newClan.population})`));
         newClan.notifications.push(new ClanNotification('n', `Split off from clan ${this.name} (${this.population})`));
-        console.log('notifs now', this.notifications, newClan.notifications);
+        log('notifs now', this.notifications, newClan.notifications);
 
         return newClan;
     }

@@ -1,11 +1,17 @@
 import type { SettlementDTO } from "../records/dtos";
 
-const enabled = true;
+let enabled = true;
 
 // Logging
 
 export function loggingEnabled(): boolean {
     return enabled;
+}
+
+// Batch runs (e.g. data generation) turn logging off: console output for
+// hundreds of turns is both slow and useless.
+export function setLoggingEnabled(value: boolean) {
+    enabled = value;
 }
 
 export function log(...args: any[]) {
@@ -33,7 +39,7 @@ export function isExemplarClan(clan: { uuid: string }): boolean {
 
 // Log exemplar settlement snapshots.
 export function logExperiment1(
-    beginningOfTurnSnapshot?: SettlementDTO, 
+    beginningOfTurnSnapshot?: SettlementDTO,
     endOfTurnSnapshot?: SettlementDTO) {
     if (!enabled) return;
     
