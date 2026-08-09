@@ -37,11 +37,13 @@
         }
     }
 
-    // Cell values: base rate (risk ratio), actual rate, actual number.
+    // Per clan: base risk ratio (this cause alone), risk rate (after accounting
+    // for competing risks), actual rate, actual change in people.
     function clanCell(clan: ClanDTO, row: RowDef) {
         const item = itemFor(clan, row);
         return {
-            base: item?.expectedRate ?? 0,
+            base: item?.riskRate ?? 0,
+            risk: item?.expectedRate ?? 0,
             actualRate: item?.actualRate ?? 0,
             number: item?.actual ?? 0,
         };
@@ -50,17 +52,20 @@
     // Settlement aggregate: population-weighted rates and summed counts.
     function aggregateCell(row: RowDef) {
         let prevSize = 0,
-            expCount = 0,
+            baseSum = 0,
+            riskSum = 0,
             actCount = 0;
         for (const clan of clans) {
             const pc = clan.lastPopulationChange;
             const item = itemFor(clan, row);
             prevSize += pc.previousSize;
-            expCount += (item?.expectedRate ?? 0) * pc.previousSize;
+            baseSum += (item?.riskRate ?? 0) * pc.previousSize;
+            riskSum += (item?.expectedRate ?? 0) * pc.previousSize;
             actCount += item?.actual ?? 0;
         }
         return {
-            base: prevSize > 0 ? expCount / prevSize : 0,
+            base: prevSize > 0 ? baseSum / prevSize : 0,
+            risk: prevSize > 0 ? riskSum / prevSize : 0,
             actualRate: prevSize > 0 ? actCount / prevSize : 0,
             number: actCount,
         };
@@ -85,30 +90,32 @@
 
 <div class="demographics">
     <p class="caption">
-        Rates are per thousand people per year. <strong>Base</strong> is the
-        expected rate (risk ratio), <strong>Act</strong> the realized rate, and
-        <strong>#</strong> the actual number of people. Disease load: {(
-            diseaseLoad * 1000
-        ).toFixed()}.
+        Rates are per thousand people per year. <strong>Base</strong> is the risk
+        ratio for that cause alone; <strong>Risk</strong> is the rate after
+        accounting for competing risks; <strong>Act</strong> is the realized rate
+        (people born or died / starting count); <strong>&#916;</strong> is the
+        actual change in people. Disease load: {(diseaseLoad * 1000).toFixed()}.
     </p>
     <div class="table-scroll">
         <table>
             <thead>
                 <tr>
                     <th rowspan="2" class="metric">Cause</th>
-                    <th colspan="3" class="group agg-group">Settlement</th>
+                    <th colspan="4" class="group agg-group">Settlement</th>
                     {#each clans as clan}
-                        <th colspan="3" class="group">{clan.name}</th>
+                        <th colspan="4" class="group">{clan.name}</th>
                     {/each}
                 </tr>
                 <tr>
-                    <th class="agg sub">Base</th>
+                    <th class="agg sub group-start">Base</th>
+                    <th class="agg sub">Risk</th>
                     <th class="agg sub">Act</th>
-                    <th class="agg sub">#</th>
+                    <th class="agg sub">&#916;</th>
                     {#each clans as _clan}
                         <th class="sub group-start">Base</th>
+                        <th class="sub">Risk</th>
                         <th class="sub">Act</th>
-                        <th class="sub">#</th>
+                        <th class="sub">&#916;</th>
                     {/each}
                 </tr>
             </thead>
@@ -121,13 +128,15 @@
                             row.kind === "totalChange"}
                     >
                         <td class="metric">{row.label}</td>
-                        <td class="agg">{fmtRate(agg.base, sgn)}</td>
+                        <td class="agg group-start">{fmtRate(agg.base, sgn)}</td>
+                        <td class="agg">{fmtRate(agg.risk, sgn)}</td>
                         <td class="agg">{fmtRate(agg.actualRate, sgn)}</td>
                         <td class="agg num">{fmtNum(agg.number, sgn)}</td>
                         {#each clans as clan}
                             {@const cell = clanCell(clan, row)}
                             <td class="group-start">{fmtRate(cell.base, sgn)}</td
                             >
+                            <td>{fmtRate(cell.risk, sgn)}</td>
                             <td>{fmtRate(cell.actualRate, sgn)}</td>
                             <td class="num">{fmtNum(cell.number, sgn)}</td>
                         {/each}
@@ -144,7 +153,7 @@
     }
 
     .caption {
-        max-width: 48rem;
+        max-width: 52rem;
         margin: 0 0 0.75rem;
         font-size: 0.85rem;
         color: #4a5568;
@@ -183,8 +192,7 @@
     /* Divider before each column group (settlement + each clan). */
     .group,
     .group-start,
-    .agg-group,
-    th.agg.sub:first-of-type {
+    .agg-group {
         border-left: 2px solid #cbd5e0;
     }
 

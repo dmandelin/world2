@@ -31,8 +31,33 @@ const BASE_DEATH_RATES = [0.0125, 0.0175, 0.025, 0.05];
 
 const FLOOD_BASE_DEATH_RATE = 0.0025;
 
+// Global multiplier applied to every death rate (all causes, all slices). A
+// single knob for tuning overall population growth.
+export const DEATH_RATE_ADJUSTMENT_FACTOR = 0.88;
+
 // Causes of death, in the order used for per-cause death-rate arrays.
-export const DEATH_CAUSES = ['Disease', 'Hazards', 'Flood', 'Old Age'] as const;
+export const DEATH_CAUSES = ['Disease', 'Hazards', 'Flood', 'Old Age', 'Starvation'] as const;
+
+// Starvation risk thresholds [safe, fatal] on per-capita food consumption
+// (1 = full subsistence). Below `safe` starvation risk climbs from 0; at or
+// below `fatal` it is certain. The youngest and oldest slices are more
+// vulnerable (higher thresholds) than the two middle slices.
+const STARVATION_THRESHOLDS = [
+    [0.8, 0.4], // slice 0 (youngest)
+    [0.6, 0.3], // slice 1
+    [0.6, 0.3], // slice 2
+    [1.0, 0.5], // slice 3 (oldest)
+];
+
+// Convex, monotonically decreasing starvation risk ratio in per-capita food
+// consumption: 0 with zero slope at `safe`, rising to 1 at `fatal` and staying
+// 1 below it. The squared ramp gives the required increasing-toward-0 derivative.
+function starvationRisk(consumption: number, safe: number, fatal: number): number {
+    if (consumption >= safe) return 0;
+    if (consumption <= fatal) return 1;
+    const t = (safe - consumption) / (safe - fatal);
+    return t * t;
+}
 
 // Cumulative probability of dying of disease across a full 20-year age slice.
 // Childhood (slice 0) risk scales with disease load between the min and max;
@@ -86,6 +111,9 @@ export class PopulationChangeItem {
         readonly name: string,
         readonly mod: number,
         readonly standardRate: number,
+        // Independent risk ratio of this cause alone (per capita, this period).
+        readonly riskRate: number,
+        // Expected rate after accounting for competing risks (redistributed).
         readonly expectedRate: number,
         readonly actualRate: number,
         readonly actual: number,
@@ -167,10 +195,12 @@ export class PopulationChange {
 
     get total(): PopulationChangeItem {
         let sedr = 0;
+        let rr = 0;
         let ed = 0;
         let actual = 0;
         for (const item of this.items) {
             sedr += item.standardRate;
+            rr += item.riskRate;
             ed += item.expectedRate;
             actual += item.actual;
         }
@@ -178,6 +208,7 @@ export class PopulationChange {
             'Total',
             1,
             sedr,
+            this.previousSize > 0 ? rr / this.previousSize : 0,
             this.previousSize > 0 ? ed / this.previousSize : 0,
             this.previousSize > 0 ? actual / this.previousSize : 0,
             actual
@@ -195,11 +226,17 @@ export class PopulationChange {
 
     get totalDeathsItem(): PopulationChangeItem {
         const deaths = this.deathItems;
+        // The individual causes' alone-risks don't add (competing risks), so the
+        // Base column shows the aggregate risk ratio 1-∏(1-rᵢ). Since the
+        // redistributed per-cause rates already sum to that aggregate, the sum of
+        // expectedRate is exactly it.
+        const aggregate = sumFun(deaths, i => i.expectedRate);
         return new PopulationChangeItem(
             'Total Deaths',
             1,
             sumFun(deaths, i => i.standardRate),
-            sumFun(deaths, i => i.expectedRate),
+            aggregate,
+            aggregate,
             sumFun(deaths, i => i.actualRate),
             sumFun(deaths, i => i.actual),
         );
@@ -212,6 +249,7 @@ export class PopulationChange {
             'Total Change',
             1,
             (b?.standardRate ?? 0) + d.standardRate,
+            (b?.riskRate ?? 0) + d.riskRate,
             (b?.expectedRate ?? 0) + d.expectedRate,
             (b?.actualRate ?? 0) + d.actualRate,
             (b?.actual ?? 0) + d.actual,
@@ -323,13 +361,22 @@ export class PopulationChangeBuilder {
 
         const floodRisk = this.floodLevel.damageFactor * FLOOD_BASE_DEATH_RATE * Y;
 
+        const consumption = Number.isFinite(clan.consumption.perCapitaFood)
+            ? clan.consumption.perCapitaFood : 1;
+
         // Independent annual risk ratio per cause (in DEATH_CAUSES order) for a
-        // given slice and sex mortality multiplier.
+        // given slice and sex mortality multiplier. Every cause is scaled by the
+        // global DEATH_RATE_ADJUSTMENT_FACTOR tuning knob.
+        const A = DEATH_RATE_ADJUSTMENT_FACTOR;
         const rawRisks = (i: number, sexFactor: number): number[] => [
-            diseaseRiskBySlice[i] * Y * sexFactor,                 // Disease
-            BASE_DEATH_RATES[i] * this.drModifier * Y * sexFactor, // Hazards
-            floodRisk * sexFactor,                                 // Flood
-            (i === 3 ? Y / SLICE_WIDTH : 0) * sexFactor,           // Old Age
+            diseaseRiskBySlice[i] * Y * sexFactor * A,                 // Disease
+            BASE_DEATH_RATES[i] * this.drModifier * Y * sexFactor * A, // Hazards
+            floodRisk * sexFactor * A,                                 // Flood
+            (i === 3 ? Y / SLICE_WIDTH : 0) * sexFactor * A,           // Old Age
+            // No adjustment here because we want risk 1.0 at some point.
+            Math.min(1, starvationRisk(                                // Starvation
+                consumption, STARVATION_THRESHOLDS[i][0], STARVATION_THRESHOLDS[i][1]
+            ) * sexFactor),
         ];
 
         // ---- Step 2: draw the actual changes ----
@@ -343,7 +390,8 @@ export class PopulationChangeBuilder {
         const expectedNewborns = [expectedBirths * 0.48, expectedBirths * 0.52];
 
         const actualDeaths = new Array(nCauses).fill(0);
-        const expectedDeaths = new Array(nCauses).fill(0);
+        const expectedDeaths = new Array(nCauses).fill(0);   // after competing risks
+        const independentDeaths = new Array(nCauses).fill(0); // each cause alone
         const standardDeaths = new Array(nCauses).fill(0);
 
         const survivors: number[][] = [];
@@ -361,6 +409,7 @@ export class PopulationChangeBuilder {
                 for (let c = 0; c < nCauses; ++c) {
                     actualDeaths[c] += counts[c];
                     expectedDeaths[c] += deathRates[c] * expectedPop;
+                    independentDeaths[c] += risks[c] * expectedPop;
                     standardDeaths[c] += deathRates[c] * INITIAL_POPULATION_RATIOS[i][g];
                     died += counts[c];
                 }
@@ -395,20 +444,23 @@ export class PopulationChangeBuilder {
         // ---- Assemble items ----
         const rate = (v: number) => prevSize > 0 ? v / prevSize : 0;
 
+        // Births are not a competing risk, so the alone and adjusted rates match.
         const birthsItem = new PopulationChangeItem(
             'Births',
             this.brModifier,
             INITIAL_POPULATION_RATIOS[1][0] * perWomanBirthRate,
             rate(expectedBirths),
+            rate(expectedBirths),
             rate(births),
             births,
         );
 
-        const causeMods = [1, this.drModifier, this.floodLevel.damageFactor, 1];
+        const causeMods = [1, this.drModifier, this.floodLevel.damageFactor, 1, consumption];
         const deathItems = DEATH_CAUSES.map((name, c) => new PopulationChangeItem(
             name,
             causeMods[c],
             -standardDeaths[c],
+            -rate(independentDeaths[c]),
             -rate(expectedDeaths[c]),
             -rate(actualDeaths[c]),
             -actualDeaths[c],

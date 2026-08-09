@@ -702,13 +702,14 @@ Detailed list of first parts:
                     *   Transport costs on aid
                     *   Transport costs on gifts
 
-                    *   Bigger impact for large shortfalls of consumption
+                    x   Bigger impact for large shortfalls of consumption so that there is such a thing as dire need
+                    *   Alert system to show us when clans need help they're not getting
+                    *   Make sure clans are giving help in case of dire need
+
                     *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis via gifts
                     *   Don't have birth rate mega boost for settlement, implement early weaning model instead
 
                     *   *** Think harder about what alignment and respect really mean and how they relate to all this
-
-                    *   Make sure clans are giving help in case of dire need
 
                     *   Possible third-party reactions on refusal to give
                         *   For food aid

@@ -7,16 +7,25 @@ import type { Process } from './process';
 import type { SkillDef } from '../people/skills';
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from '../relations/mutualaid';
 
-// Map of process to skills that affect productivity and the
-// weight of that skill.
-const processSkills: Map<Process, [SkillDef, number][]> = new Map([
-    [Processes.Agriculture, [
-        [SkillDefs.Agriculture, 2],
-        [SkillDefs.LocalEcology, 2]]],
-    [Processes.Fishing, [
-        [SkillDefs.Fishing, 2],
-        [SkillDefs.LocalEcology, 2]]],
-]);
+// Map of process to skills that affect productivity and the weight of that
+// skill. Built lazily on first use rather than at module-evaluation time: a
+// top-level reference to the imported `Processes` can hit its temporal dead
+// zone under circular-import (re)initialization order (notably Vite HMR).
+let processSkills: Map<Process, [SkillDef, number][]> | undefined;
+
+function getProcessSkills(): Map<Process, [SkillDef, number][]> {
+    if (!processSkills) {
+        processSkills = new Map([
+            [Processes.Agriculture, [
+                [SkillDefs.Agriculture, 2],
+                [SkillDefs.LocalEcology, 2]]],
+            [Processes.Fishing, [
+                [SkillDefs.Fishing, 2],
+                [SkillDefs.LocalEcology, 2]]],
+        ]);
+    }
+    return processSkills;
+}
 
 export class Productivity {
     // TODO - Make land quality matter
@@ -57,7 +66,7 @@ export class ProductivityItem {
     }
 
     static *fromSkills(clan: Clan, process: Process) {
-        for (const [skill, skillFactor] of processSkills.get(process) ?? []) {
+        for (const [skill, skillFactor] of getProcessSkills().get(process) ?? []) {
             const skillValue = clan.skills.v(skill);
             yield ProductivityItem.forStat(skill.name, skillValue, skillFactor);
         }
