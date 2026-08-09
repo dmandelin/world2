@@ -725,6 +725,8 @@ Detailed list of first parts:
                     *   Bring back disease load effect
                     *   Make residence matter again in here somewhere
                     *   Consider if alignment of others should go into QoL or if that comes in via interactions
+
+                    *   Give clans the option to be strong reciprocators or not
     *   +Save first in crisis
         *   Implies we have some way of detecting a crisis
             *   ~general food shortfall in settlement
