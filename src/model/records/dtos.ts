@@ -14,6 +14,7 @@ import type { HousingDecision } from "../decisions/housingdecision";
 import type { MigrationCalc, NewSettlementDecisionReport, PlannedSettlement } from "../people/migration";
 import type { MarriageDecisions } from "../relations/marriage";
 import type { Note } from "../records/notifications";
+import type { Alert, AlertKindId } from "../records/alerts";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
 import type { Distribution, StockOutflow } from "../econ/flows";
@@ -323,6 +324,7 @@ export class WorldDTO {
     readonly timeline: Timeline<TimePoint>;
     readonly trends: TrendDTO[];
     readonly notes: Note[];
+    readonly alerts: Alert[];
 
     readonly beginningOfTurnSnapshot: WorldDTO;
     readonly endOfTurnSnapshot: WorldDTO;
@@ -344,6 +346,7 @@ export class WorldDTO {
         this.timeline = world.timeline;
         this.trends = world.trends.map(t => t.asDTO);
         this.notes = [...world.notes];
+        this.alerts = [...world.alerts.all];
 
         this.beginningOfTurnSnapshot = world.beginningOfTurnSnapshot!;
         this.endOfTurnSnapshot = world.endOfTurnSnapshot!;
@@ -422,6 +425,12 @@ export class WorldDTO {
 
     advanceFromPlanningView(ticks?: number) {
         this.world.advanceFromUserPlanningView(ticks);
+    }
+
+    // Dismiss all alerts of a kind (e.g. when the player right-clicks a badge).
+    dismissAlertKind(kind: AlertKindId) {
+        this.world.alerts.dismissKind(kind);
+        this.world.notify();
     }
 }
 

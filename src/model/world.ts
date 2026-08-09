@@ -14,6 +14,7 @@ import { marry, MarriageDecisions } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
+import { Alerts, updateWorldAlerts, type AlertSpec } from "./records/alerts";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { randomFloodLevel } from "./environment/flood";
 import { Settlement } from "./people/settlement";
@@ -37,6 +38,12 @@ export class World implements NoteTaker {
     // This has to be initialized before the clans because we pass it to them.
     readonly annals = new Annals(this);
     readonly notes: Note[] = [];
+    readonly alerts = new Alerts();
+
+    // New villages founded during the most recent turn, used to raise
+    // foundation alerts (the planned settlements themselves are consumed and
+    // cleared during migration).
+    lastFoundations: { settlement: Settlement, clans: Clan[] }[] = [];
 
     readonly clanMap = new Map<UUID, Clan>();
     readonly connections = new ConnectionGraph();
@@ -66,6 +73,17 @@ export class World implements NoteTaker {
 
     addNote(shortLabel: string, message: string, tooltip?: string, entities?: NoteEntity[]) {
         this.notes.push(new Note(this.year.toString(), shortLabel, message, tooltip, entities));
+    }
+
+    // Raise an alert badge for the current turn. See records/alerts.ts.
+    addAlert(spec: AlertSpec) {
+        this.alerts.add(spec, this.year.value);
+    }
+
+    // Expire stale alerts and recompute state-derived ones for the current turn.
+    private refreshAlerts() {
+        this.alerts.pruneExpired(this.year.value);
+        updateWorldAlerts(this);
     }
 
     clansFromPairID(pairID: string): [Clan, Clan] {
@@ -105,6 +123,7 @@ export class World implements NoteTaker {
             }
         }
         log('World <<< Initialize')
+        this.refreshAlerts();
         this.notify();
     }
 
@@ -231,6 +250,7 @@ export class World implements NoteTaker {
         console.log('Cleared notifications for all clans');
         this.runTurn(false, ticks);
         log('World <<< Advance from user planning view');
+        this.refreshAlerts();
         this.notify();
     }
 

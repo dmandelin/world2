@@ -351,6 +351,7 @@ export function migrate(world: World) {
     }
 
     // Execute group new-settlement migrations from planned settlements
+    world.lastFoundations = [];
     for (const planned of world.plannedSettlements) {
         if (planned.clans.length === 0) continue;
 
@@ -360,6 +361,7 @@ export function migrate(world: World) {
         for (const clan of planned.clans) {
             clan.moveTo(newSettlement);
         }
+        world.lastFoundations.push({ settlement: newSettlement, clans: [...planned.clans] });
 
         const clanNames = planned.clans.map(c => c.name).join(', ');
         world.addNote(

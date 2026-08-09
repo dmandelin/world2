@@ -1,4 +1,6 @@
 <script lang="ts">
+    import AlertBadges from "./AlertBadges.svelte";
+
     let { world } = $props();
 
     function advance(years?: number) {
@@ -13,6 +15,7 @@
         <button class="sub-advance" onclick={() => advance(10)}>+10</button>
         <button class="sub-advance" onclick={() => advance(20)}>+20</button>
     </div>
+    <AlertBadges {world} />
 </div>
 
 <style>
