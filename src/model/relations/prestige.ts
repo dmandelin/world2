@@ -6,8 +6,14 @@ import { getRespect } from "./respect";
 
 // Clan A's prestige view of clan B (B's prestige to A) combines how aligned
 // A is with B (liking/support) and how much A respects B (capability/power).
+// The geometric-style blend keeps the sign of alignment while dampening the
+// growth of the product (respect is always >= 0).
 export function getPrestige(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
-    return getAlignment(subject, object) * getRespect(subject, object);
+    const alignment = getAlignment(subject, object);
+    // Respect runs 0-100; rescale to 0-1 so it blends on the same scale as
+    // alignment (which is -1 to 1).
+    const respect = getRespect(subject, object) / 100;
+    return Math.sign(alignment) * Math.sqrt(Math.abs(alignment) * respect);
 }
 
 // Population-weighted prestige granted to `object` by clans in `scope`.

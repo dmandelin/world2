@@ -714,21 +714,22 @@ Detailed list of first parts:
                         *   Implement new model described in zc
                             x   Rework alignment
                             x   Rework respect
-                            *   Rework prestige
+                            x   Rework prestige
                             *   Rework consumers
                                 *   Alignment
-                                    *   Trust
-                                    *   Food gifts
-                                    *   Emergency aid
-                                    *   Migration eligibility
+                                    *   Trust -- handle when we overhaul these relationships
+                                    x   Emergency aid - OK
+                                    x   Migration eligibility - OK
                                     *   Happiness -- need to finish removing
-                                *   Respect
-                                    *   QoL
-                                    *   Housing decision
+                                *   Prestige should now instead influence:
+                                    *   Food gifts
                                     *   Population birth/death rates
+                                    *   Housing decision
+                                    *   QoL
+                                    *   Emergency aid in crisis
                             *   Deal better with conflict in respect -- think about what power
                                 means in this context or needs to be made to mean
-                            *   Account for information
+                            *   *** Account for information
                             *   Relatedness penalty if too much power
                             *   Power penalty if too much relatedness
                             *   See if we need anything about norms
