@@ -141,7 +141,7 @@
             const z = stdDev > 1e-6 ? (val - mean) / stdDev : 0;
             const color = getZScoreColor(z);
             const zStr = z >= 0 ? `+${z.toFixed(2)}` : z.toFixed(2);
-            const title = `Rank #${rank} (Prestige: ${signed(val, 2)}, Z-Score: ${zStr})`;
+            const title = `Rank #${rank} (Prestige: ${signed(val, 0)}, Z-Score: ${zStr})`;
 
             resultMap.set(cs.c.uuid, {
                 rank,
@@ -367,7 +367,7 @@
                 class: "actual",
                 cellClass: "rap",
                 value: (c) => c.respectAverage,
-                format: (v) => signed(v, 0),
+                format: (v) => unsigned(v, 0),
                 tooltipSnippet: respectTooltip,
                 deltaValue: (c) => c.respectAverage,
                 deltaFormat: (v) => signed(v, 0),
@@ -380,10 +380,10 @@
                 class: "actual",
                 cellClass: "rap",
                 value: (c) => c.prestigeAverage,
-                format: (v) => signed(v, 1),
+                format: (v) => signed(v, 0),
                 tooltipSnippet: prestigeTooltip,
                 deltaValue: (c) => c.prestigeAverage,
-                deltaFormat: (v) => signed(v, 1),
+                deltaFormat: (v) => signed(v, 0),
                 timelineKey: "averagePrestige",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["perceptions"],

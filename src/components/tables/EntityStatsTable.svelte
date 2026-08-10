@@ -80,7 +80,7 @@
 
         // Group 3: Prestige
         groups.push([
-            { label: "Avg Prestige", value: (c) => c.prestigeAverage, format: (v) => signed(v, 2) },
+            { label: "Avg Prestige", value: (c) => c.prestigeAverage, format: (v) => signed(v, 0) },
         ]);
 
         // Group 4: Food

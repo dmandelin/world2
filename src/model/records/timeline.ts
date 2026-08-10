@@ -158,7 +158,7 @@ export class ClanTimePoint {
         this.foodTransferred = (foodTaken - foodGiven) / (clan.population || 1);
         this.food = clan.consumption.perCapitaFood;
         this.foodStorage = clan.stock ? clan.stock.perCapitaFoodStock(clan.population) : 0;
-        this.averagePrestige = getLocalPrestige(clan);
+        this.averagePrestige = 100 * getLocalPrestige(clan);
         this.happiness = clan.happinessValue;
         
         const helpValue = getHelpReceivedValueFromMutualAid(world, clan);

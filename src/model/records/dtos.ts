@@ -171,9 +171,10 @@ export class ClanDTO {
         return this.lastPopulationChange.previousSize;
     }
 
-    // Population-weighted prestige other clans grant this one (alignment * respect).
+    // Population-weighted prestige other clans grant this one (alignment *
+    // respect). Scaled by 100 for display, matching the Favor/alignment scale.
     get prestigeAverage(): number {
-        return getLocalPrestige(this);
+        return 100 * getLocalPrestige(this);
     }
 
     get respectAverage(): number {
@@ -414,9 +415,10 @@ export class WorldDTO {
         return this.perceptions.get(clan.uuid, other.uuid)?.respect;
     }
 
-    // Prestige clan grants other (alignment * respect). Also the marriage appeal.
+    // Prestige clan grants other (alignment * respect), scaled by 100 for
+    // display. Also the marriage appeal.
     prestigeToward(clan: ClanDTO, other: ClanDTO): number {
-        return getPrestige(clan, other);
+        return 100 * getPrestige(clan, other);
     }
 
     informationToward(clan: ClanDTO, other: ClanDTO): ClanInformation | undefined {
