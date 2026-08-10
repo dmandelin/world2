@@ -33,10 +33,10 @@ export class Perceptions {
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[], conflict?: Conflict): void {
         this.information.updateFor(subject, object, connections, interactions);
-        // Respect excludes material QoL; marriage appeal includes everything.
-        // Each keeps its own independent random component.
-        this.respect.updateFor(subject, object, this.information.value, false);
-        this.marriageAppeal.updateFor(subject, object, this.information.value, true);
+        // Respect and marriage appeal share the same components; each keeps its
+        // own independent random component.
+        this.respect.updateFor(subject, object, this.information.value);
+        this.marriageAppeal.updateFor(subject, object, this.information.value);
         this.alignment.updateFor(subject, object, connections, interactions, conflict);
     }
 

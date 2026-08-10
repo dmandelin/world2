@@ -4,6 +4,10 @@ import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
 
+// Respect measures how powerful and capable one clan thinks
+// another is. It's an absolute assessment, not relative to
+// the subject.
+
 export class Respect {
     private items_: RespectItem[] = [];
     private informationValue_: number = 0;
@@ -25,15 +29,17 @@ export class Respect {
         return this.value_;
     }
 
-    updateFor(subject: Clan, object: Clan, informationValue: number = 1, includeMaterialQoL: boolean = true): void {
+    updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
         this.informationValue_ = informationValue;
         this.items_ = [
             RespectItem.forGenerosity(subject, object),
             RespectItem.forSkills(subject, object),
-            ...(includeMaterialQoL ? [RespectItem.forMaterialQoL(subject, object)] : []),
+            RespectItem.forMaterialQoL(subject, object),
+            RespectItem.forConversationQoL(subject, object),
+            RespectItem.forConflictQoL(subject, object),
+            RespectItem.forPopulation(subject, object),
             RespectItem.forRandom(subject, object),
 
-            // TODO - Add size component?
             // TODO - Add seniority component, depending on culture?
             // TODO - Add "beauty" component?
         ];
@@ -73,15 +79,46 @@ export class RespectItem {
         );
     }
 
+    static forConversationQoL(subject: Clan, object: Clan): RespectItem {
+        const objectValue = object.qol.m.get("Conversation")?.value ?? 0;
+        return new RespectItem(
+            'Conversation QoL',
+            objectValue,
+            0.1,
+            `Conversation QoL`
+        );
+    }
+
+    static forConflictQoL(subject: Clan, object: Clan): RespectItem {
+        const objectValue = object.qol.m.get("Conflict")?.value ?? 0;
+        return new RespectItem(
+            'Conflict QoL',
+            objectValue,
+            0.1,
+            `Conflict QoL`
+        );
+    }
+
+    // Respect for clan size: 0 at population 10, +10 per doubling above that
+    // (and -10 per halving below).
+    static forPopulation(subject: Clan, object: Clan): RespectItem {
+        const pop = object.population;
+        const doublings = pop > 0 ? Math.log2(pop / 10) : 0;
+        return new RespectItem(
+            'Population',
+            doublings,
+            10,
+            `Population ${pop}`
+        );
+    }
+
     static forSkills(subject: Clan, object: Clan): RespectItem {
         const skillDefs = Object.values(SkillDefs);
         const totalObjectSkill = sumFun(skillDefs, s => object.skills.v(s));
         const avgObjectSkill = totalObjectSkill / (skillDefs.length || 1);
-        const totalSubjectSkill = sumFun(skillDefs, s => subject.skills.v(s));
-        const avgSubjectSkill = totalSubjectSkill / (skillDefs.length || 1);
         return new RespectItem(
             'Skills',
-            (avgObjectSkill - avgSubjectSkill) / 10,
+            (avgObjectSkill - 50) / 10,
             1,
             `Skills`
         );

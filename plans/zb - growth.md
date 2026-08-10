@@ -713,10 +713,10 @@ Detailed list of first parts:
                     *   *** Think harder about what alignment and respect really mean and how they relate to all this
                         *   Implement new model described in zc
                             x   Rework alignment
-                            *   Rework respect
+                            x   Rework respect
                             *   Rework prestige
                             *   Rework consumers
-                        *   Implement prestige on top of this
+                            *   Account for information
                         *   Maybe Bellicosity should be based on how much they play hawk specifically
 
                     *   Possible third-party reactions on refusal to give

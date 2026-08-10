@@ -363,19 +363,6 @@
                 topics: ["perceptions"],
             },
             {
-                label: "Appeal",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => c.marriageAppealAverage,
-                format: (v) => signed(v, 0),
-                tooltipSnippet: marriageAppealTooltip,
-                deltaValue: (c) => c.marriageAppealAverage,
-                deltaFormat: (v) => signed(v, 0),
-                timelineKey: "marriageAppealAverage",
-                scaler: new ZeroCenteredScaler(),
-                topics: ["perceptions"],
-            },
-            {
                 label: "Respect",
                 class: "actual",
                 cellClass: "rap",
@@ -1476,6 +1463,9 @@
                   "Generosity",
                   "Skills",
                   "Material QoL",
+                  "Conversation QoL",
+                  "Conflict QoL",
+                  "Population",
                   "Random",
               ];
 
@@ -2004,23 +1994,6 @@
         style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
     >
         Retention ratio: 90% (Smoothed Favor = 10% Current Judgments + 90%
-        Previous Value).
-    </div>
-{/snippet}
-
-{#snippet marriageAppealTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2
-        table={clanRespectTooltipTable(
-            cs.e,
-            (observer, target) =>
-                cs.e.world.marriageInterestToward(observer, target),
-            "Appeal",
-        )}
-    ></TableView2>
-    <div
-        style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
-    >
-        Retention ratio: 90% (Smoothed Appeal = 10% Current Judgments + 90%
         Previous Value).
     </div>
 {/snippet}
