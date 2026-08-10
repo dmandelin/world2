@@ -448,16 +448,6 @@
         align-items: start;
     }
 
-    .opinion-select {
-        font-size: 0.9rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        border: 1px solid #ccc;
-        background-color: #fff;
-        color: #333;
-        cursor: pointer;
-    }
-
     .stress-button-group {
         display: inline-flex;
         gap: 0.25rem;

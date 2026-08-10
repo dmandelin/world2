@@ -2012,8 +2012,8 @@
 {/snippet}
 
 {#snippet prestigeTooltip(cs: ClanLastTurnSnapshots)}
-    {@const world = settlement.world}
     {@const clan = cs.e}
+    {@const world = clan.world}
     {@const raters = clan.settlement.clans.filter((c) => c.uuid !== clan.uuid)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <strong>Prestige (Alignment &times; Respect)</strong>

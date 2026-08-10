@@ -726,6 +726,8 @@ Detailed list of first parts:
                                     *   QoL
                                     *   Housing decision
                                     *   Population birth/death rates
+                            *   Deal better with conflict in respect -- think about what power
+                                means in this context or needs to be made to mean
                             *   Account for information
                             *   Relatedness penalty if too much power
                             *   Power penalty if too much relatedness

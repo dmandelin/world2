@@ -70,12 +70,20 @@ export class RespectItem {
         return this.baseValue * this.modifier;
     }
 
+    // QoL below this baseline is "minimal" and grants no respect (never a penalty).
+    static readonly QOL_BASELINE = -10;
+    // Skill below this baseline is "minimal" and grants no respect.
+    static readonly SKILL_BASELINE = 30;
+    // Population below this baseline grants no respect.
+    static readonly POP_BASELINE = 10;
+
     static forMaterialQoL(subject: Clan, object: Clan): RespectItem {
+        const objectValue = object.qol.valueFrom("material");
         return new RespectItem(
             'Material QoL',
-            object.qol.valueFrom("material") - subject.qol.valueFrom("material"),
-            0.2,
-            `Material QoL`
+            Math.max(0, objectValue - RespectItem.QOL_BASELINE),
+            0.1,
+            `Material QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE})`
         );
     }
 
@@ -83,9 +91,9 @@ export class RespectItem {
         const objectValue = object.qol.m.get("Conversation")?.value ?? 0;
         return new RespectItem(
             'Conversation QoL',
-            objectValue,
-            0.1,
-            `Conversation QoL`
+            Math.max(0, objectValue - RespectItem.QOL_BASELINE),
+            0.05,
+            `Conversation QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE})`
         );
     }
 
@@ -93,22 +101,21 @@ export class RespectItem {
         const objectValue = object.qol.m.get("Conflict")?.value ?? 0;
         return new RespectItem(
             'Conflict QoL',
-            objectValue,
-            0.1,
-            `Conflict QoL`
+            Math.max(0, objectValue - RespectItem.QOL_BASELINE),
+            0.05,
+            `Conflict QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE})`
         );
     }
 
-    // Respect for clan size: 0 at population 10, +10 per doubling above that
-    // (and -10 per halving below).
+    // Respect for clan size: 0 at or below population 10, +10 per doubling above.
     static forPopulation(subject: Clan, object: Clan): RespectItem {
         const pop = object.population;
-        const doublings = pop > 0 ? Math.log2(pop / 10) : 0;
+        const doublings = pop > 0 ? Math.log2(pop / RespectItem.POP_BASELINE) : 0;
         return new RespectItem(
             'Population',
-            doublings,
+            Math.max(0, doublings),
             10,
-            `Population ${pop}`
+            `Population ${pop} (base ${RespectItem.POP_BASELINE})`
         );
     }
 
@@ -118,9 +125,9 @@ export class RespectItem {
         const avgObjectSkill = totalObjectSkill / (skillDefs.length || 1);
         return new RespectItem(
             'Skills',
-            (avgObjectSkill - 50) / 10,
-            1,
-            `Skills`
+            Math.max(0, avgObjectSkill - RespectItem.SKILL_BASELINE),
+            0.05,
+            `Skills ${avgObjectSkill.toFixed(0)} (base ${RespectItem.SKILL_BASELINE})`
         );
     }
 
