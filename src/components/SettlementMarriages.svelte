@@ -41,18 +41,14 @@
         for (const clan of settlement.clans) {
             for (const other of world.clanMap.values()) {
                 if (inSettlement.has(other.uuid)) continue;
-                const mi1 = world.marriageInterestToward(clan, other);
-                const mi2 = world.marriageInterestToward(other, clan);
+                const p1 = world.prestigeToward(clan, other);
+                const p2 = world.prestigeToward(other, clan);
                 const conn = world.connections.getForType(
                     clan,
                     other,
                     MarriageConnection,
                 );
-                if (
-                    (mi1 && mi1.value !== 0) ||
-                    (mi2 && mi2.value !== 0) ||
-                    conn
-                ) {
+                if (p1 !== 0 || p2 !== 0 || conn) {
                     outSettlementClansMap.set(other.uuid, other);
                 }
             }
@@ -70,15 +66,23 @@
         return world.lastMarriageDecisions;
     }
 
+    // Prestige (= alignment * respect) that `subject` grants `object`, or null
+    // if subject has no perception of object. This is the marriage appeal.
+    function prestigeCell(subject: ClanDTO, object: ClanDTO): number | null {
+        if (subject.uuid === object.uuid) return null;
+        if (!world.respectToward(subject, object)) return null;
+        return world.prestigeToward(subject, object);
+    }
+
     function popAvgAppeal(targetClan: ClanDTO): number | null {
         let totalPop = 0;
         let weightedSum = 0;
         const clansList = buildClansList();
         for (const r of clansList) {
             if (r.uuid === targetClan.uuid) continue;
-            const mi = world.marriageInterestToward(r, targetClan);
-            if (mi) {
-                weightedSum += r.population * mi.value;
+            const val = prestigeCell(r, targetClan);
+            if (val !== null) {
+                weightedSum += r.population * val;
                 totalPop += r.population;
             }
         }
@@ -167,10 +171,7 @@
         rowClan: ClanDTO,
         colClan: ClanDTO,
     ): number | null {
-        if (rowClan.uuid === colClan.uuid) return null;
-        const mi = world.marriageInterestToward(rowClan, colClan);
-        if (!mi) return null;
-        return mi.value;
+        return prestigeCell(rowClan, colClan);
     }
 
     function marriageInterestFormat(
@@ -218,8 +219,7 @@
             if (row.uuid === colClan.uuid) continue;
             const weight = recentMarriageFraction(row, colClan);
             if (weight && weight > 0) {
-                const mi = world.marriageInterestToward(colClan, row);
-                const appeal = mi ? mi.value : 0;
+                const appeal = world.prestigeToward(colClan, row);
                 weightedSum += weight * appeal;
                 sumWeights += weight;
             }
@@ -253,8 +253,7 @@
             if (row.uuid === colClan.uuid) continue;
             const weight = legacyMarriageFraction(row, colClan);
             if (weight && weight > 0) {
-                const mi = world.marriageInterestToward(colClan, row);
-                const appeal = mi ? mi.value : 0;
+                const appeal = world.prestigeToward(colClan, row);
                 weightedSum += weight * appeal;
                 sumWeights += weight;
             }
@@ -395,57 +394,31 @@
     subject: ClanDTO,
     object: ClanDTO,
 )}
-    {@const mi = world.marriageInterestToward(subject, object)}
-    {#if mi && value !== null}
+    {@const align = world.alignmentToward(subject, object)}
+    {@const resp = world.respectToward(subject, object)}
+    {#if resp && value !== null}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
-            <TableView2
-                table={new IterableTable(mi.items, (i) => i.label, [
-                    {
-                        data: "Value",
-                        label: "Value",
-                        valueFn: (i) => i.value,
-                        formatFn: (i: number) => signed(i, 1),
-                    },
-                    {
-                        data: "Mod",
-                        label: "Mod",
-                        valueFn: (i) => i.modifier,
-                        formatFn: (i: number) => unsigned(i, 2),
-                    },
-                    {
-                        data: "Base",
-                        label: "Base",
-                        valueFn: (i) => i.baseValue,
-                        formatFn: (i: number) => signed(i, 1),
-                    },
-                    {
-                        data: "Explanation",
-                        label: "Explanation",
-                        valueFn: (i) => i.explanation,
-                    },
-                ])}
-            ></TableView2>
+            <strong>Marriage Appeal ({subject.name} → {object.name})</strong>
+            <p style="margin: 0.25rem 0; color: #666;">
+                Prestige = Alignment × Respect.
+            </p>
             <div
-                style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;"
+                style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"
             >
-                <div
-                    style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"
-                >
-                    <span>Previous Value:</span>
-                    <strong>{signed(mi.previousValue, 1)}</strong>
-                </div>
-                <div
-                    style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"
-                >
-                    <span>Current Items Total:</span>
-                    <strong>{signed(mi.currentItemsTotal, 1)}</strong>
-                </div>
-                <div
-                    style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;"
-                >
-                    <span>Current Value:</span>
-                    <strong>{signed(mi.value, 1)}</strong>
-                </div>
+                <span>Alignment:</span>
+                <strong>{signed(align?.value ?? 0, 2)}</strong>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;"
+            >
+                <span>Respect:</span>
+                <strong>{signed(resp.value, 1)}</strong>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px solid #ccc; padding-top: 0.25rem;"
+            >
+                <span>Prestige:</span>
+                <strong>{signed(value, 1)}</strong>
             </div>
         </div>
     {/if}
@@ -468,8 +441,8 @@
         rowClan,
     )}
     {@const totalMarriages = rowToColMarriages + colToRowMarriages}
-    {@const miRowToCol = world.marriageInterestToward(rowClan, colClan)}
-    {@const miColToRow = world.marriageInterestToward(colClan, rowClan)}
+    {@const prestigeRowToCol = world.prestigeToward(rowClan, colClan)}
+    {@const prestigeColToRow = world.prestigeToward(colClan, rowClan)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <strong>Recent Marriages: {colClan.name} & {rowClan.name}</strong>
         <ul
@@ -493,15 +466,11 @@
             />
             <li>
                 • Marriage Appeal ({rowClan.name} → {colClan.name}):
-                <strong
-                    >{miRowToCol ? signed(miRowToCol.value, 1) : "N/A"}</strong
-                >
+                <strong>{signed(prestigeRowToCol, 1)}</strong>
             </li>
             <li>
                 • Marriage Appeal ({colClan.name} → {rowClan.name}):
-                <strong
-                    >{miColToRow ? signed(miColToRow.value, 1) : "N/A"}</strong
-                >
+                <strong>{signed(prestigeColToRow, 1)}</strong>
             </li>
         </ul>
     </div>
@@ -513,8 +482,8 @@
     colClan: ClanDTO,
 )}
     {@const recentFrac = recentMarriageFraction(rowClan, colClan)}
-    {@const miRowToCol = world.marriageInterestToward(rowClan, colClan)}
-    {@const miColToRow = world.marriageInterestToward(colClan, rowClan)}
+    {@const prestigeRowToCol = world.prestigeToward(rowClan, colClan)}
+    {@const prestigeColToRow = world.prestigeToward(colClan, rowClan)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <strong>Marriage Legacy: {colClan.name} & {rowClan.name}</strong>
         <ul
@@ -535,15 +504,11 @@
             />
             <li>
                 • Marriage Appeal ({rowClan.name} → {colClan.name}):
-                <strong
-                    >{miRowToCol ? signed(miRowToCol.value, 1) : "N/A"}</strong
-                >
+                <strong>{signed(prestigeRowToCol, 1)}</strong>
             </li>
             <li>
                 • Marriage Appeal ({colClan.name} → {rowClan.name}):
-                <strong
-                    >{miColToRow ? signed(miColToRow.value, 1) : "N/A"}</strong
-                >
+                <strong>{signed(prestigeColToRow, 1)}</strong>
             </li>
         </ul>
     </div>

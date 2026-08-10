@@ -19,7 +19,7 @@
     let stressMode: "stress" | "mutual aid" | "conflict" = $state("stress");
     let interactionMode: "interactions" | "information" =
         $state("interactions");
-    let opinionMode: "respect" | "marriage appeal" = $state("respect");
+    let opinionMode: "respect" = $state("respect");
 
     function buildRelationshipsTable<CellValue>(
         valueFn: (rowClan: ClanDTO, colClan: ClanDTO) => CellValue,
@@ -97,9 +97,7 @@
     }
 
     function opinionToward(rowClan: ClanDTO, colClan: ClanDTO) {
-        return opinionMode === "respect"
-            ? world.respectToward(rowClan, colClan)
-            : world.marriageInterestToward(rowClan, colClan);
+        return world.respectToward(rowClan, colClan);
     }
 
     function opinionCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -428,11 +426,7 @@
         <div
             style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 0.5rem;"
         >
-            <h3 style="margin: 0;">Opinion</h3>
-            <select bind:value={opinionMode} class="opinion-select">
-                <option value="respect">Respect</option>
-                <option value="marriage appeal">Marriage Appeal</option>
-            </select>
+            <h3 style="margin: 0;">Opinion (Respect)</h3>
         </div>
         {#key opinionMode}
             <TableView2

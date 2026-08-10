@@ -13,30 +13,20 @@ export class Perceptions {
     readonly information = new ClanInformation();
     readonly alignment = new Alignment();
     readonly respect = new Respect();
-    readonly marriageAppeal = new Respect();
-
-    get marriageInterest(): Respect {
-        return this.marriageAppeal;
-    }
 
     constructor(
         information: ClanInformation = new ClanInformation(),
         alignment: Alignment = new Alignment(),
         respect: Respect = new Respect(),
-        marriageAppeal: Respect = new Respect(),
     ) {
         this.information = information;
         this.alignment = alignment;
         this.respect = respect;
-        this.marriageAppeal = marriageAppeal;
     }
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[], conflict?: Conflict): void {
         this.information.updateFor(subject, object, connections, interactions);
-        // Respect and marriage appeal share the same components; each keeps its
-        // own independent random component.
         this.respect.updateFor(subject, object, this.information.value);
-        this.marriageAppeal.updateFor(subject, object, this.information.value);
         this.alignment.updateFor(subject, object, connections, interactions, conflict);
     }
 
@@ -45,7 +35,6 @@ export class Perceptions {
             this.information.clone(),
             this.alignment.clone(),
             this.respect.clone(),
-            this.marriageAppeal.clone()
         );
     }
 }

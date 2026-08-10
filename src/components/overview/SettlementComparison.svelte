@@ -10,7 +10,6 @@
         { key: "activityHelp", label: "Activity: Help" },
         { key: "activityLeisure", label: "Activity: Leisure" },
         { key: "activityProduction", label: "Activity: Production" },
-        { key: "marriageAppealAverage", label: "Avg Marriage Appeal" },
         { key: "avgPartnerAppeal", label: "Avg Partner Appeal" },
         { key: "avgWeddingAppeal", label: "Avg Wedding Appeal" },
         { key: "brModifier", label: "Birth Rate Modifier" },
@@ -21,7 +20,6 @@
         { key: "food", label: "Food Consumed" },
         { key: "foodStorage", label: "Food Storage" },
         { key: "appeal", label: "Happiness" },
-        { key: "marriageAppealStdDev", label: "Marriage Appeal SD" },
         { key: "subsistenceAppeal", label: "Material Welfare" },
         { key: "population", label: "Population" },
         { key: "averagePrestige", label: "Prestige" },
@@ -41,7 +39,7 @@
         { key: "workers", label: "Workers" },
     ];
 
-    let selectedMetricKey = $state<keyof ClanTimePoint>("marriageAppealAverage");
+    let selectedMetricKey = $state<keyof ClanTimePoint>("averagePrestige");
     let mode = $state<"order" | "values">("order");
     let smoothing = $state<"exact" | "smoothed">("exact");
 

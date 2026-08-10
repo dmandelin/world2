@@ -3,6 +3,7 @@ import { weightedRandInt } from "../lib/distributions";
 import type { World } from "../world";
 import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
+import { getPrestige } from "./prestige";
 
 export class MarriageDecisions {
     constructor(
@@ -11,8 +12,9 @@ export class MarriageDecisions {
     ) { }
 }
 
+// Marriage appeal is a clan's prestige in the eyes of the proposing clan.
 function getMarriageAppeal(world: World, subject: Clan, object: Clan): number {
-    return world.perceptions.get(subject.uuid, object.uuid)?.marriageInterest?.value ?? 0;
+    return getPrestige(subject, object);
 }
 
 class ClanMarriageState {

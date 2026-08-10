@@ -25,7 +25,7 @@
         if (others.length === 0) return 0;
         return populationAverage(
             others,
-            c => world.marriageInterestToward(partner, c)?.value ?? 0
+            c => world.prestigeToward(partner, c)
         );
     }
 
@@ -46,14 +46,14 @@
             if (other.uuid === clan.uuid) continue;
             const marriages = getPairingCount(decisions, clan, other) + getPairingCount(decisions, other, clan);
             if (marriages > 0) {
-                const map1 = world.marriageInterestToward(other, clan);
-                const map2 = world.marriageInterestToward(clan, other);
+                const hasTheirView = world.respectToward(other, clan) !== undefined;
+                const hasOurView = world.respectToward(clan, other) !== undefined;
                 partnerList.push({
                     clan: other,
                     marriages,
-                    theirAppealToUs: map1 ? map1.value : null,
+                    theirAppealToUs: hasTheirView ? world.prestigeToward(other, clan) : null,
                     theirAppealToOthers: getAvgAppealToOthers(other, world),
-                    ourAppealToThem: map2 ? map2.value : null,
+                    ourAppealToThem: hasOurView ? world.prestigeToward(clan, other) : null,
                 });
             }
         }

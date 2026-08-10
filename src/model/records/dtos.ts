@@ -1,4 +1,4 @@
-import { populationAverage, populationStdDev } from "../lib/modelbasics";
+import { populationAverage } from "../lib/modelbasics";
 import { sortedByKey, sumFun } from "../lib/basics";
 import { TradeGood } from "../trade";
 import type { Clan, ClanNotification } from "../people/people";
@@ -32,6 +32,7 @@ import { BasicInteraction } from "../relations/basicinteraction";
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
+import { getPrestige, getLocalPrestige } from "../relations/prestige";
 import type { ClanInformation } from "../relations/information";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
@@ -170,23 +171,9 @@ export class ClanDTO {
         return this.lastPopulationChange.previousSize;
     }
 
-    get marriageAppealAverage(): number {
-        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
-        if (otherClans.length === 0) return 0;
-        return populationAverage(
-            otherClans,
-            c => this.world.marriageInterestToward(c, this)?.value ?? 0
-        );
-    }
-
-    get marriageAppealStdDev(): number {
-        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
-        if (otherClans.length === 0) return 0;
-        return populationStdDev(
-            otherClans,
-            c => this.world.marriageInterestToward(c, this)?.value ?? 0,
-            this.marriageAppealAverage
-        );
+    // Population-weighted prestige other clans grant this one (alignment * respect).
+    get prestigeAverage(): number {
+        return getLocalPrestige(this);
     }
 
     get respectAverage(): number {
@@ -427,8 +414,9 @@ export class WorldDTO {
         return this.perceptions.get(clan.uuid, other.uuid)?.respect;
     }
 
-    marriageInterestToward(clan: ClanDTO, other: ClanDTO): Respect | undefined {
-        return this.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
+    // Prestige clan grants other (alignment * respect). Also the marriage appeal.
+    prestigeToward(clan: ClanDTO, other: ClanDTO): number {
+        return getPrestige(clan, other);
     }
 
     informationToward(clan: ClanDTO, other: ClanDTO): ClanInformation | undefined {

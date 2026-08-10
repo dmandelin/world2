@@ -19,32 +19,22 @@
         });
     });
 
-    let itemLabels = $derived.by(() => {
-        const world = clan.world;
-        const labels = new Set<string>();
-        for (const c of columnClans) {
-            const mi = world.marriageInterestToward(c, clan);
-            if (mi) {
-                for (const item of mi.items) {
-                    labels.add(item.label);
-                }
-            }
-        }
-        return Array.from(labels);
-    });
+    // Prestige = alignment * respect, so the appeal breaks down into those
+    // two factors.
+    const itemLabels = ["Alignment", "Respect"];
 
     function getItemValue(observer: ClanDTO, label: string): number | null {
         const world = clan.world;
-        const mi = world.marriageInterestToward(observer, clan);
-        if (!mi) return null;
-        const item = mi.items.find((i) => i.label === label);
-        return item ? item.value : null;
+        if (label === "Alignment") {
+            return world.alignmentToward(observer, clan)?.value ?? null;
+        }
+        return world.respectToward(observer, clan)?.value ?? null;
     }
 
     function getTotalAppeal(observer: ClanDTO): number | null {
         const world = clan.world;
-        const mi = world.marriageInterestToward(observer, clan);
-        return mi ? mi.value : null;
+        if (!world.respectToward(observer, clan)) return null;
+        return world.prestigeToward(observer, clan);
     }
 
     function getItemSummary(label: string): number | null {
@@ -65,14 +55,14 @@
 </script>
 
 <div class="marriage-appeal-container">
-    <h3>Marriage Appeal to Others</h3>
+    <h3>Prestige to Others (Marriage Appeal)</h3>
     {#if columnClans.length === 0}
         <p class="no-data">No relevant clans in settlement or related by marriage.</p>
     {:else}
         <table class="appeal-table">
             <thead>
                 <tr>
-                    <th class="row-header-th">Appeal Item</th>
+                    <th class="row-header-th">Component</th>
                     {#each columnClans as c}
                         <th>
                             <EntityLink entity={c} />
@@ -101,7 +91,7 @@
                     </tr>
                 {/each}
                 <tr class="total-row">
-                    <td class="row-label total-label">Total Appeal</td>
+                    <td class="row-label total-label">Prestige</td>
                     {#each columnClans as c}
                         {@const totalVal = getTotalAppeal(c)}
                         <td class="value-td total-td">

@@ -1,8 +1,8 @@
 import { PopulationScaler, ZeroCenteredScaler, DefaultScaler, type YAxisScaler, type GraphData } from "../../components/linegraph";
 import type { ClanDTO } from "./dtos";
-import { getLocalPrestige } from "../relations/respect";
+import { getLocalPrestige, getPrestige } from "../relations/prestige";
 import { znan, safeDiv } from "../lib/basics";
-import { weightedAverage, populationAverage, populationStdDev } from "../lib/modelbasics";
+import { weightedAverage, populationAverage } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
 import type { World } from "../world";
 import type { Year } from "./year";
@@ -52,8 +52,6 @@ export class ClanTimePoint {
     readonly qol: number;
     readonly stress: number;
     readonly residenceFraction: number;
-    readonly marriageAppealAverage: number;
-    readonly marriageAppealStdDev: number;
     readonly respectAverage: number;
     readonly favorAverage: number;
     readonly avgWeddingAppeal: number;
@@ -99,20 +97,9 @@ export class ClanTimePoint {
         
         const otherClans = clan.settlement.clans.filter(c => c.uuid !== clan.uuid);
         if (otherClans.length === 0) {
-            this.marriageAppealAverage = 0;
-            this.marriageAppealStdDev = 0;
             this.respectAverage = 0;
             this.favorAverage = 0;
         } else {
-            this.marriageAppealAverage = populationAverage(
-                otherClans,
-                c => clan.world.perceptions.get(c.uuid, clan.uuid)?.marriageInterest?.value ?? 0
-            );
-            this.marriageAppealStdDev = populationStdDev(
-                otherClans,
-                c => clan.world.perceptions.get(c.uuid, clan.uuid)?.marriageInterest?.value ?? 0,
-                this.marriageAppealAverage
-            );
             this.respectAverage = populationAverage(
                 otherClans,
                 c => clan.world.perceptions.get(c.uuid, clan.uuid)?.respect?.value ?? 0
@@ -142,8 +129,7 @@ export class ClanTimePoint {
                     }
                 }
                 if (count > 0) {
-                    const mi = world.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
-                    const appeal = mi ? mi.value : 0;
+                    const appeal = getPrestige(clan, other);
                     weightedSum += count * appeal;
                     totalMarriages += count;
                 }
@@ -159,8 +145,7 @@ export class ClanTimePoint {
             if (other.uuid === clan.uuid) continue;
             const conn = world.connections.getForType(clan, other, MarriageConnection);
             if (conn && conn.relatedness > 0) {
-                const mi = world.perceptions.get(clan.uuid, other.uuid)?.marriageInterest;
-                const appeal = mi ? mi.value : 0;
+                const appeal = getPrestige(clan, other);
                 partnerWeightedSum += conn.relatedness * appeal;
                 partnerTotalWeight += conn.relatedness;
             }

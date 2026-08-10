@@ -2,7 +2,7 @@ import type { Clan } from "./people";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { clamp, productFun, sum, sumFun } from "../lib/basics";
 import { spct } from "../lib/format";
-import { getLocalPrestige } from "../relations/respect";
+import { getLocalPrestige, getPrestige } from "../relations/prestige";
 import { zScore } from "../lib/modelbasics";
 import { getMarriageDecisions } from "../relations/marriage";
 
@@ -147,8 +147,7 @@ function getAvgAppealToBrides(clan: Clan): number {
         const brideClan = wifeSet.clan;
         const bridesToThisClan = wifeSet.marriedTo.get(clan) ?? 0;
         if (bridesToThisClan > 0) {
-            const mi = clan.world.perceptions.get(brideClan.uuid, clan.uuid)?.marriageInterest;
-            const appeal = mi ? mi.value : 0;
+            const appeal = getPrestige(brideClan, clan);
             weightedSum += bridesToThisClan * appeal;
             totalBrides += bridesToThisClan;
         }

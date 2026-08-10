@@ -97,7 +97,7 @@
         return `rgb(${r}, ${g}, ${b})`;
     }
 
-    let marriageAppealRankings = $derived.by(() => {
+    let prestigeRankings = $derived.by(() => {
         if (!csnaps || csnaps.length === 0)
             return new Map<
                 string,
@@ -105,14 +105,14 @@
             >();
 
         const n = csnaps.length;
-        const values = csnaps.map((cs) => cs.e.marriageAppealAverage);
+        const values = csnaps.map((cs) => cs.e.prestigeAverage);
         const mean = values.reduce((a, b) => a + b, 0) / (n || 1);
         const variance =
             values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n || 1);
         const stdDev = Math.sqrt(variance);
 
         const sorted = [...csnaps].sort(
-            (a, b) => b.e.marriageAppealAverage - a.e.marriageAppealAverage,
+            (a, b) => b.e.prestigeAverage - a.e.prestigeAverage,
         );
 
         const rankMap = new Map<string, number>();
@@ -120,8 +120,8 @@
             if (
                 idx > 0 &&
                 Math.abs(
-                    cs.e.marriageAppealAverage -
-                        sorted[idx - 1].e.marriageAppealAverage,
+                    cs.e.prestigeAverage -
+                        sorted[idx - 1].e.prestigeAverage,
                 ) < 1e-6
             ) {
                 rankMap.set(cs.c.uuid, rankMap.get(sorted[idx - 1].c.uuid)!);
@@ -136,12 +136,12 @@
         >();
 
         for (const cs of csnaps) {
-            const val = cs.e.marriageAppealAverage;
+            const val = cs.e.prestigeAverage;
             const rank = rankMap.get(cs.c.uuid) ?? 1;
             const z = stdDev > 1e-6 ? (val - mean) / stdDev : 0;
             const color = getZScoreColor(z);
             const zStr = z >= 0 ? `+${z.toFixed(2)}` : z.toFixed(2);
-            const title = `Rank #${rank} (Marriage Appeal: ${signed(val, 2)}, Z-Score: ${zStr})`;
+            const title = `Rank #${rank} (Prestige: ${signed(val, 2)}, Z-Score: ${zStr})`;
 
             resultMap.set(cs.c.uuid, {
                 rank,
@@ -372,6 +372,19 @@
                 deltaValue: (c) => c.respectAverage,
                 deltaFormat: (v) => signed(v, 0),
                 timelineKey: "respectAverage",
+                scaler: new ZeroCenteredScaler(),
+                topics: ["perceptions"],
+            },
+            {
+                label: "Prestige",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.prestigeAverage,
+                format: (v) => signed(v, 1),
+                tooltipSnippet: prestigeTooltip,
+                deltaValue: (c) => c.prestigeAverage,
+                deltaFormat: (v) => signed(v, 1),
+                timelineKey: "averagePrestige",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["perceptions"],
             },
@@ -1998,6 +2011,51 @@
     </div>
 {/snippet}
 
+{#snippet prestigeTooltip(cs: ClanLastTurnSnapshots)}
+    {@const world = settlement.world}
+    {@const clan = cs.e}
+    {@const raters = clan.settlement.clans.filter((c) => c.uuid !== clan.uuid)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
+        <strong>Prestige (Alignment &times; Respect)</strong>
+        <p style="margin: 0.25rem 0; color: #666;">
+            Population-weighted prestige other clans grant {clan.name}.
+        </p>
+        <table style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">From</th>
+                    <th style="text-align: right;">Align</th>
+                    <th style="text-align: right;">Respect</th>
+                    <th style="text-align: right;">Prestige</th>
+                    <th style="text-align: right;">Pop</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each raters as r}
+                    {@const a = world.alignmentToward(r, clan)?.value ?? 0}
+                    {@const rp = world.respectToward(r, clan)?.value ?? 0}
+                    <tr>
+                        <td style="text-align: left;">{r.name}</td>
+                        <td style="text-align: right;">{signed(a, 2)}</td>
+                        <td style="text-align: right;">{signed(rp, 1)}</td>
+                        <td style="text-align: right;"
+                            >{signed(world.prestigeToward(r, clan), 1)}</td
+                        >
+                        <td style="text-align: right;">{r.population}</td>
+                    </tr>
+                {/each}
+                <tr style="border-top: 1px solid #ccc; font-weight: bold;">
+                    <td style="text-align: left;">Weighted avg</td>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: right;">{signed(clan.prestigeAverage, 1)}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{/snippet}
+
 {#snippet respectTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2
         table={clanRespectTooltipTable(
@@ -2327,11 +2385,11 @@
                 {#if clan.uuid !== other.uuid}
                     {@const count = getPairingCount(decisions, clan, other)}
                     {#if count > 0}
-                        {@const mi = world.marriageInterestToward(clan, other)}
+                        {@const prestige = world.prestigeToward(clan, other)}
                         <li>
                             • With {other.name}: {count} marriage{count > 1
                                 ? "s"
-                                : ""} (Appeal: {mi ? signed(mi.value, 1) : "0"})
+                                : ""} (Appeal: {signed(prestige, 1)})
                         </li>
                     {/if}
                 {/if}
@@ -2360,10 +2418,10 @@
                         MarriageConnection,
                     )}
                     {#if conn && conn.relatedness > 0}
-                        {@const mi = world.marriageInterestToward(clan, other)}
+                        {@const prestige = world.prestigeToward(clan, other)}
                         <li>
                             • With {other.name}: {pct(conn.relatedness)} related
-                            (Appeal: {mi ? signed(mi.value, 1) : "0"})
+                            (Appeal: {signed(prestige, 1)})
                         </li>
                     {/if}
                 {/if}
@@ -2427,7 +2485,7 @@
             <tr>
                 <td></td>
                 {#each csnaps as cs}
-                    {@const rank = marriageAppealRankings.get(cs.c.uuid)}
+                    {@const rank = prestigeRankings.get(cs.c.uuid)}
                     <td class="clan-header" colspan="2">
                         <div
                             style="display: flex; flex-direction: column; align-items: center; justify-content: center;"

@@ -78,10 +78,9 @@
             { label: "Residence", value: (c) => c.residenceLevel.fractionInSettlement, format: pct },
         ]);
 
-        // Group 3: Marriage Appeal
+        // Group 3: Prestige
         groups.push([
-            { label: "Avg Marriage Appeal", value: (c) => c.marriageAppealAverage, format: (v) => signed(v, 2) },
-            { label: "Marriage Appeal SD", value: (c) => c.marriageAppealStdDev, format: (v) => v.toFixed(2) },
+            { label: "Avg Prestige", value: (c) => c.prestigeAverage, format: (v) => signed(v, 2) },
         ]);
 
         // Group 4: Food

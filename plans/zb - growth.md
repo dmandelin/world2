@@ -716,7 +716,20 @@ Detailed list of first parts:
                             x   Rework respect
                             *   Rework prestige
                             *   Rework consumers
+                                *   Alignment
+                                    *   Trust
+                                    *   Food gifts
+                                    *   Emergency aid
+                                    *   Migration eligibility
+                                    *   Happiness -- need to finish removing
+                                *   Respect
+                                    *   QoL
+                                    *   Housing decision
+                                    *   Population birth/death rates
                             *   Account for information
+                            *   Relatedness penalty if too much power
+                            *   Power penalty if too much relatedness
+                            *   See if we need anything about norms
                         *   Maybe Bellicosity should be based on how much they play hawk specifically
 
                     *   Possible third-party reactions on refusal to give
