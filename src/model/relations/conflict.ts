@@ -201,6 +201,22 @@ export class Conflict {
             : this.totalOf(r => r.c2Payoff);
     }
 
+    // Number of iterations in which `aggressor` played hawk (against the
+    // other clan in this conflict), regardless of the other clan's play.
+    hawkCountBy(aggressor: HasOrIsUUID): number {
+        const isC1 = this.uuid1 === uuidOf(aggressor);
+        let total = 0;
+        for (let c1Strategy = 0; c1Strategy < 2; ++c1Strategy) {
+            for (let c2Strategy = 0; c2Strategy < 2; ++c2Strategy) {
+                const strategy = isC1 ? c1Strategy : c2Strategy;
+                if (strategy === HAWK) {
+                    total += this.results[c1Strategy][c2Strategy].count;
+                }
+            }
+        }
+        return total;
+    }
+
     conflictItem(subject: HasOrIsUUID): GenericItem {
         const conflictPayoff = this.value(subject);
         return new GenericItem(

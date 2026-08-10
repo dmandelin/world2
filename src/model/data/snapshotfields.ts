@@ -94,7 +94,7 @@ export const CLAN_FIELDS: readonly FieldSpec<Clan>[] = [
 
     // How other clans see this one.
     { name: 'respectFromOthers', get: c => averageToward(c, p => p.respect.value) },
-    { name: 'alignmentFromOthers', get: c => averageToward(c, p => p.alignment.value) },
+    { name: 'favorFromOthers', get: c => 100 * averageToward(c, p => p.alignment.value) },
     { name: 'marriageAppealFromOthers', get: c => averageToward(c, p => p.marriageAppeal.value) },
 
     // Food transfers, absolute amounts for the turn just ended.

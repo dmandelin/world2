@@ -54,6 +54,7 @@
     } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import type { Respect } from "../../model/relations/respect";
+    import type { Alignment } from "../../model/relations/alignment";
     import LineGraph from "../LineGraph.svelte";
     import {
         PopulationScaler,
@@ -230,6 +231,24 @@
         return item ? item.value * infoMultiplier : 0;
     }
 
+    // Accessor for directed alignment ("Favor") between two clans.
+    type AlignmentToward = (
+        observer: ClanDTO,
+        target: ClanDTO,
+    ) => Alignment | undefined;
+
+    function getAlignmentItemValue(
+        toward: AlignmentToward,
+        observer: ClanDTO,
+        target: ClanDTO,
+        label: string,
+    ): number {
+        const a = toward(observer, target);
+        if (!a) return 0;
+        const item = a.items.find((i) => i.label === label);
+        return item ? item.value : 0;
+    }
+
     let rowGroups = $derived.by<RowDef[][]>(() => {
         const groups: RowDef[][] = [];
 
@@ -329,6 +348,19 @@
                 timelineKey: "qol",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["welfare"],
+            },
+            {
+                label: "Favor",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.favorAverage,
+                format: (v) => signed(v, 0),
+                tooltipSnippet: favorTooltip,
+                deltaValue: (c) => c.favorAverage,
+                deltaFormat: (v) => signed(v, 0),
+                timelineKey: "favorAverage",
+                scaler: new ZeroCenteredScaler(),
+                topics: ["perceptions"],
             },
             {
                 label: "Appeal",
@@ -1443,8 +1475,6 @@
             : [
                   "Generosity",
                   "Skills",
-                  "Piety",
-                  "Social QoL",
                   "Material QoL",
                   "Random",
               ];
@@ -1533,6 +1563,132 @@
                         return r?.previousValue ?? 0;
                     } else if (row.type === "smoothed") {
                         return r?.value ?? 0;
+                    } else {
+                        return otherClan.population;
+                    }
+                },
+                formatFn: (v: number, row: RespectRowData) => {
+                    if (row.type === "population") {
+                        return v.toFixed(0);
+                    }
+                    return signed(v, 1);
+                },
+            }));
+
+        return {
+            columns: [totalColumn, ...clanColumns],
+            rows,
+            rowHeaderLabel: "Item",
+        };
+    }
+
+    // Favor breakdown: alignment is in [-1, 1] but the Favor stat is shown
+    // scaled by 100, so scale every value here to match.
+    function clanFavorTooltipTable(
+        clan: ClanDTO,
+        toward: AlignmentToward,
+        valueLabel: string,
+    ): Table<RespectRowData, any, any> {
+        const SCALE = 100;
+        const otherClans = clan.settlement.clans.filter(
+            (c) => c.uuid !== clan.uuid,
+        );
+
+        const sampleA = otherClans
+            .map((c) => toward(c, clan))
+            .find((a) => a && a.items.length > 0);
+
+        const itemLabels = sampleA
+            ? sampleA.items.map((i) => i.label)
+            : ["Gifts", "Generosity", "Piety", "Sociability", "Conflict"];
+
+        const rows: TableRow<RespectRowData, any>[] = [
+            ...itemLabels.map((label) => ({
+                data: { label, type: "item" as const, itemLabel: label },
+                label,
+            })),
+            {
+                data: { label: "Current Judgments", type: "total" as const },
+                label: "Current Judgments",
+                divider: true,
+                bold: true,
+            },
+            {
+                data: { label: "Previous Value", type: "previous" as const },
+                label: "Previous Value",
+            },
+            {
+                data: {
+                    label: `Smoothed ${valueLabel}`,
+                    type: "smoothed" as const,
+                },
+                label: `Smoothed ${valueLabel}`,
+                bold: true,
+            },
+            {
+                data: { label: "Population", type: "population" as const },
+                label: "Population",
+                class: "gray-row",
+            },
+        ];
+
+        const totalColumn: TableColumn<RespectRowData, any, number> = {
+            data: "total",
+            label: "Total",
+            valueFn: (row: RespectRowData) => {
+                if (row.type === "item") {
+                    return SCALE * populationAverage(otherClans, (c) =>
+                        getAlignmentItemValue(toward, c, clan, row.itemLabel!),
+                    );
+                } else if (row.type === "total") {
+                    return SCALE * populationAverage(
+                        otherClans,
+                        (c) => toward(c, clan)?.currentItemsTotal ?? 0,
+                    );
+                } else if (row.type === "previous") {
+                    return SCALE * populationAverage(
+                        otherClans,
+                        (c) => toward(c, clan)?.previousValue ?? 0,
+                    );
+                } else if (row.type === "smoothed") {
+                    return SCALE * populationAverage(
+                        otherClans,
+                        (c) => toward(c, clan)?.value ?? 0,
+                    );
+                } else {
+                    return sumFun(otherClans, (c) => c.population);
+                }
+            },
+            formatFn: (v: number, row: RespectRowData) => {
+                if (row.type === "population") {
+                    return v.toFixed(0);
+                }
+                return signed(v, 1);
+            },
+        };
+
+        const clanColumns: TableColumn<RespectRowData, ClanDTO, number>[] =
+            otherClans.map((otherClan) => ({
+                data: otherClan,
+                label: otherClan.name,
+                valueFn: (row: RespectRowData) => {
+                    const a = toward(otherClan, clan);
+                    if (row.type === "item") {
+                        return (
+                            SCALE *
+                            getAlignmentItemValue(
+                                toward,
+                                otherClan,
+                                clan,
+                                row.itemLabel!,
+                            )
+                        );
+                    } else if (row.type === "total") {
+                        return SCALE * (a?.currentItemsTotal ?? 0);
+                    } else if (row.type === "previous") {
+                        return SCALE * (a?.previousValue ?? 0);
+                    } else if (row.type === "smoothed") {
+                        return SCALE * (a?.value ?? 0);
                     } else {
                         return otherClan.population;
                     }
@@ -1834,6 +1990,22 @@
 
 {#snippet happinessTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanHappinessTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet favorTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2
+        table={clanFavorTooltipTable(
+            cs.e,
+            (observer, target) => cs.e.world.alignmentToward(observer, target),
+            "Favor",
+        )}
+    ></TableView2>
+    <div
+        style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
+    >
+        Retention ratio: 90% (Smoothed Favor = 10% Current Judgments + 90%
+        Previous Value).
+    </div>
 {/snippet}
 
 {#snippet marriageAppealTooltip(cs: ClanLastTurnSnapshots)}

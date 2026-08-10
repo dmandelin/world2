@@ -37,7 +37,7 @@ export class Perceptions {
         // Each keeps its own independent random component.
         this.respect.updateFor(subject, object, this.information.value, false);
         this.marriageAppeal.updateFor(subject, object, this.information.value, true);
-        this.alignment.updateFor(subject, object, connections, interactions, conflict, this.respect);
+        this.alignment.updateFor(subject, object, connections, interactions, conflict);
     }
 
     clone(): Perceptions {

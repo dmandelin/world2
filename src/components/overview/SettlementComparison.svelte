@@ -15,6 +15,7 @@
         { key: "avgWeddingAppeal", label: "Avg Wedding Appeal" },
         { key: "brModifier", label: "Birth Rate Modifier" },
         { key: "drModifier", label: "Death Rate Modifier" },
+        { key: "favorAverage", label: "Favor" },
         { key: "foodProduced", label: "Food Produced" },
         { key: "foodTransferred", label: "Food Transferred" },
         { key: "food", label: "Food Consumed" },

@@ -30,8 +30,6 @@ export class Respect {
         this.items_ = [
             RespectItem.forGenerosity(subject, object),
             RespectItem.forSkills(subject, object),
-            RespectItem.forPiety(subject, object),
-            RespectItem.forSocialQoL(subject, object),
             ...(includeMaterialQoL ? [RespectItem.forMaterialQoL(subject, object)] : []),
             RespectItem.forRandom(subject, object),
 
@@ -66,17 +64,6 @@ export class RespectItem {
         return this.baseValue * this.modifier;
     }
 
-    static forSocialQoL(subject: Clan, object: Clan): RespectItem {
-        const objectSocial = object.qol.valueFrom("social") - (object.qol.m.get("Respect")?.value ?? 0);
-        const subjectSocial = subject.qol.valueFrom("social") - (subject.qol.m.get("Respect")?.value ?? 0);
-        return new RespectItem(
-            'Social QoL',
-            objectSocial - subjectSocial,
-            0.1,
-            `Social QoL`
-        );
-    }
-
     static forMaterialQoL(subject: Clan, object: Clan): RespectItem {
         return new RespectItem(
             'Material QoL',
@@ -107,17 +94,6 @@ export class RespectItem {
             foodAidGiven,
             2,
             `Generosity`
-        );
-    }
-
-    static forPiety(subject: Clan, object: Clan): RespectItem {
-        const objectPiety = object.traits ? object.traits.piety : 50;
-        const subjectPiety = subject.traits ? subject.traits.piety : 50;
-        return new RespectItem(
-            'Piety',
-            (objectPiety - subjectPiety) / 5,
-            1,
-            'Piety'
         );
     }
 

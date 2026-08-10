@@ -197,6 +197,18 @@ export class ClanDTO {
             c => this.world.respectToward(c, this)?.value ?? 0
         );
     }
+
+    // Population-weighted alignment other clans feel toward this one: how
+    // well liked/supported the clan is ("Favor"). Alignment is in [-1, 1];
+    // scaled by 100 for a readable integer stat.
+    get favorAverage(): number {
+        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
+        if (otherClans.length === 0) return 0;
+        return 100 * populationAverage(
+            otherClans,
+            c => this.world.alignmentToward(c, this)?.value ?? 0
+        );
+    }
 }
 
 export class SettlementDTO {

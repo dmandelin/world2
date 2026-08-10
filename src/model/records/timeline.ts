@@ -55,6 +55,7 @@ export class ClanTimePoint {
     readonly marriageAppealAverage: number;
     readonly marriageAppealStdDev: number;
     readonly respectAverage: number;
+    readonly favorAverage: number;
     readonly avgWeddingAppeal: number;
     readonly avgPartnerAppeal: number;
     readonly foodProduced: number;
@@ -101,6 +102,7 @@ export class ClanTimePoint {
             this.marriageAppealAverage = 0;
             this.marriageAppealStdDev = 0;
             this.respectAverage = 0;
+            this.favorAverage = 0;
         } else {
             this.marriageAppealAverage = populationAverage(
                 otherClans,
@@ -114,6 +116,10 @@ export class ClanTimePoint {
             this.respectAverage = populationAverage(
                 otherClans,
                 c => clan.world.perceptions.get(c.uuid, clan.uuid)?.respect?.value ?? 0
+            );
+            this.favorAverage = 100 * populationAverage(
+                otherClans,
+                c => clan.world.perceptions.get(c.uuid, clan.uuid)?.alignment?.value ?? 0
             );
         }
 

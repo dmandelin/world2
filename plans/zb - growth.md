@@ -709,7 +709,15 @@ Detailed list of first parts:
                     *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis via gifts
                     *   Don't have birth rate mega boost for settlement, implement early weaning model instead
 
+
                     *   *** Think harder about what alignment and respect really mean and how they relate to all this
+                        *   Implement new model described in zc
+                            x   Rework alignment
+                            *   Rework respect
+                            *   Rework prestige
+                            *   Rework consumers
+                        *   Implement prestige on top of this
+                        *   Maybe Bellicosity should be based on how much they play hawk specifically
 
                     *   Possible third-party reactions on refusal to give
                         *   For food aid
@@ -718,6 +726,8 @@ Detailed list of first parts:
                         arguments over who has/needs what
                     *   Variable aid alignment threshold
                     *   Variable aid food threshold
+
+                    *   Clean up mutual aid at some point
 
                     *   Have knowledge for respect and such be more than a multiplier - consider what facts are easier or harder to know
                     *   Give clans something else to do in case of another clan having low piety scores, like trying to teach them or something

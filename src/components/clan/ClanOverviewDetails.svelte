@@ -11,7 +11,7 @@
         NeighborConnection,
         type Connection,
     } from "../../model/relations/connection";
-    import { pct, signed } from "../../model/lib/format";
+    import { pct, signed, unsigned } from "../../model/lib/format";
     import { sortedByKey } from "../../model/lib/basics";
 
     let { clan }: { clan: ClanDTO } = $props();
@@ -106,50 +106,62 @@
     <EntityLink entity={other} />
 {/snippet}
 
-{#snippet ourAlignmentTooltip(val: number, subject: ClanDTO)}
-    {@const a = world.alignmentToward(clan, subject)}
+{#snippet alignmentDetail(a: ReturnType<typeof world.alignmentToward>)}
     {#if a}
-        <TableView2
-            table={new IterableTable(a.items, (i) => i.label, [
-                {
-                    data: "Value",
-                    label: "Value",
-                    valueFn: (i) => i.value,
-                    formatFn: (i: number) => signed(i, 2),
-                },
-                {
-                    data: "Explanation",
-                    label: "Explanation",
-                    valueFn: (i) => i.explanation,
-                },
-            ])}
-        ></TableView2>
+        <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+            <TableView2
+                table={new IterableTable(a.items, (i) => i.label, [
+                    {
+                        data: "Value",
+                        label: "Value",
+                        valueFn: (i) => i.value,
+                        formatFn: (i: number) => signed(i, 2),
+                    },
+                    {
+                        data: "Mod",
+                        label: "Mod",
+                        valueFn: (i) => i.modifier,
+                        formatFn: (i: number) => unsigned(i, 2),
+                    },
+                    {
+                        data: "Base",
+                        label: "Base",
+                        valueFn: (i) => i.baseValue,
+                        formatFn: (i: number) => signed(i, 2),
+                    },
+                    {
+                        data: "Explanation",
+                        label: "Explanation",
+                        valueFn: (i) => i.explanation,
+                    },
+                ])}
+            ></TableView2>
+            <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Previous Value:</span>
+                    <strong>{signed(a.previousValue, 2)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Current Items Total:</span>
+                    <strong>{signed(a.currentItemsTotal, 2)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
+                    <span>Current Value:</span>
+                    <strong>{signed(a.value, 2)}</strong>
+                </div>
+            </div>
+        </div>
     {:else}
         <div>No alignment items</div>
     {/if}
 {/snippet}
 
+{#snippet ourAlignmentTooltip(val: number, subject: ClanDTO)}
+    {@render alignmentDetail(world.alignmentToward(clan, subject))}
+{/snippet}
+
 {#snippet theirAlignmentTooltip(val: number, subject: ClanDTO)}
-    {@const a = world.alignmentToward(subject, clan)}
-    {#if a}
-        <TableView2
-            table={new IterableTable(a.items, (i) => i.label, [
-                {
-                    data: "Value",
-                    label: "Value",
-                    valueFn: (i) => i.value,
-                    formatFn: (i: number) => signed(i, 2),
-                },
-                {
-                    data: "Explanation",
-                    label: "Explanation",
-                    valueFn: (i) => i.explanation,
-                },
-            ])}
-        ></TableView2>
-    {:else}
-        <div>No alignment items</div>
-    {/if}
+    {@render alignmentDetail(world.alignmentToward(subject, clan))}
 {/snippet}
 
 <div class="clan-overview-details">
