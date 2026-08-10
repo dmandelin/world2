@@ -722,11 +722,12 @@ Detailed list of first parts:
                                     x   Migration eligibility - OK
                                     *   Happiness -- need to finish removing
                                 *   Prestige should now instead influence:
-                                    *   Food gifts
-                                    *   Population birth/death rates
-                                    *   Housing decision
-                                    *   QoL
+                                    x   Food gifts
+                                    x   Population birth/death rates
+                                    x   Housing decision
+                                    x   QoL
                                     *   Emergency aid in crisis
+                                    *   Consider using relative prestige for birth/death rates
                             *   Deal better with conflict in respect -- think about what power
                                 means in this context or needs to be made to mean
                             *   *** Account for information

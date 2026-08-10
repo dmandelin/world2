@@ -32,3 +32,18 @@ export function getLocalPrestige(clan: Clan | ClanDTO): number {
     if (raters.length === 0) return 0;
     return getPrestigeInScope(clan, raters);
 }
+
+// Population-weighted average of local prestige across a set of clans.
+export function averageLocalPrestige(scope: (Clan | ClanDTO)[]): number {
+    return weightedAverage(
+        scope,
+        clan => getLocalPrestige(clan),
+        clan => clan.population);
+}
+
+// A clan's local prestige relative to its settlement's pop-weighted average.
+export function getRelativeLocalPrestige(clan: Clan | ClanDTO): number {
+    const settlement = clan.settlement;
+    if (!settlement) return 0;
+    return getLocalPrestige(clan) - averageLocalPrestige(settlement.clans);
+}

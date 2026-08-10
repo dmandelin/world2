@@ -1,6 +1,6 @@
 import type { Clan } from "../people/people";
 import { TradeGoods } from "../trade";
-import { getAlignment } from "../relations/alignment";
+import { getPrestige } from "../relations/prestige";
 import { connectedClans } from "../relations/connection";
 
 export interface FoodGiftRecord {
@@ -8,7 +8,7 @@ export interface FoodGiftRecord {
     donorName: string;
     recipientUuid: string;
     recipientName: string;
-    alignment: number;
+    prestige: number;
     factor: number; // 0.2 (local), 0.05 (cluster), 0.01 (other)
     totalFoodProd: number;
     scaleFactor: number; // 1.0 if uncapped, < 1.0 if donor gifts were scaled down
@@ -49,7 +49,7 @@ export class FoodGiftsResult {
 interface RawGiftEntry {
     donor: Clan;
     recipient: Clan;
-    alignment: number;
+    prestige: number;
     factor: number;
     totalFoodProd: number;
     rawGiftAbs: number;
@@ -68,8 +68,8 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
 
         for (const recipient of connectedClans(donor)) {
             if (recipient.uuid === donor.uuid || recipient.population <= 0) continue;
-            const alignment = getAlignment(donor, recipient);
-            if (alignment <= 0) continue;
+            const prestige = getPrestige(donor, recipient);
+            if (prestige <= 0) continue;
 
             let factor = 0.01;
             if (
@@ -86,7 +86,7 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
                 factor = 0.05;
             }
 
-            const rawGiftAbs = factor * alignment * totalFoodProd;
+            const rawGiftAbs = factor * prestige * totalFoodProd;
             if (rawGiftAbs <= 0) continue;
 
             let entries = rawGiftsByDonor.get(donor.uuid);
@@ -94,7 +94,7 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
                 entries = [];
                 rawGiftsByDonor.set(donor.uuid, entries);
             }
-            entries.push({ donor, recipient, alignment, factor, totalFoodProd, rawGiftAbs });
+            entries.push({ donor, recipient, prestige, factor, totalFoodProd, rawGiftAbs });
         }
     }
 
@@ -123,7 +123,7 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
                 donorName: donor.name,
                 recipientUuid: entry.recipient.uuid,
                 recipientName: entry.recipient.name,
-                alignment: entry.alignment,
+                prestige: entry.prestige,
                 factor: entry.factor,
                 totalFoodProd: entry.totalFoodProd,
                 scaleFactor,

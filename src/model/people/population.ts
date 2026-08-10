@@ -304,7 +304,7 @@ export class PopulationChangeBuilder {
         this.brModifiers.push(new PopulationChangeModifier(
             'Settlement', resFrac, mobilityBrModifier));
 
-        const prestigeVal = safeVal(getLocalPrestige(this.clan), 0);
+        const prestigeVal = safeVal(100 * getLocalPrestige(this.clan), 0);
         const prestigeBrModifier = 1 + 0.003 * prestigeVal;
         this.brModifiers.push(new PopulationChangeModifier(
             'Prestige', prestigeVal, prestigeBrModifier));
@@ -312,7 +312,7 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Prestige', prestigeVal, prestigeDrModifier));
 
-        const socialQoL = this.clan.qol.valueFrom("social") - (this.clan.qol.m.get("Respect")?.value ?? 0);
+        const socialQoL = this.clan.qol.valueFrom("social") - (this.clan.qol.m.get("Prestige")?.value ?? 0);
         const socialQoLBrModifier = 1 + 0.005 * -socialQoL;
         this.brModifiers.push(new PopulationChangeModifier(
             'Society', -socialQoL, socialQoLBrModifier));

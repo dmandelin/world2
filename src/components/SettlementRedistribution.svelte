@@ -477,8 +477,8 @@
                 style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
             >
                 <li>
-                    • Donor Alignment: <strong
-                        >{signed(gift.alignment, 2)}</strong
+                    • Donor Prestige: <strong
+                        >{signed(gift.prestige, 2)}</strong
                     >
                 </li>
                 <li>
@@ -506,7 +506,7 @@
                     style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
                 />
                 <li>
-                    • <em>Formula:</em> Factor (F) &times; Alignment (A) &times; Total Food Production (P){#if gift.scaleFactor < 1.0} &times; Scale{/if}
+                    • <em>Formula:</em> Factor (F) &times; Prestige (A) &times; Total Food Production (P){#if gift.scaleFactor < 1.0} &times; Scale{/if}
                 </li>
                 <li>
                     • Gift Amount: <strong
