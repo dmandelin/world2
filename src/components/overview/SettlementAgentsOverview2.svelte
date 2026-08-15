@@ -42,6 +42,7 @@
         type ClanLastTurnSnapshots,
     } from "../../model/records/dtos";
     import type { Process } from "../../model/econ/process";
+    import type { Activity } from "../../model/decisions/effort";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     import { get } from "svelte/store";
     import {
@@ -185,6 +186,18 @@
         tooltipSnippet?: Snippet<[ClanLastTurnSnapshots, any]>;
         context?: any;
 
+        // Settlement summary column. How to roll the clan values up:
+        //   "avg" (default) population-weighted average of the clan values
+        //   "geomean" population-weighted geometric mean, for multiplicative
+        //     modifiers, where an even split of x2 and x0.5 should read as x1
+        //   "sum" total of the clan values (already settlement-scale amounts)
+        //   "none" leave the cell blank
+        settlementAgg?: "avg" | "geomean" | "sum" | "none";
+        settlementTooltipSnippet?: Snippet<[ClanLastTurnSnapshots[], any]>;
+
+        // For rows drawn by renderSnippet rather than a value function.
+        settlementRenderSnippet?: Snippet<[ClanLastTurnSnapshots[]]>;
+
         // Delta definition
         deltaValue?: (c: ClanDTO) => number;
         deltaFormat?: (v: number) => string;
@@ -193,6 +206,212 @@
 
         timelineKey?: keyof ClanTimePoint;
         scaler?: YAxisScaler;
+    }
+
+    let settlementClans = $derived(csnaps.map((cs) => cs.e));
+    let settlementPopulation = $derived(
+        sumFun(settlementClans, (c) => c.population),
+    );
+    let settlementWorkers = $derived(sumFun(settlementClans, (c) => c.workers));
+
+    // Age/sex slices of every clan added up, for the settlement-wide pyramid.
+    let settlementSlices = $derived.by(() => {
+        const total: number[][] = [];
+        for (const clan of settlementClans) {
+            clan.slices.forEach((slice, i) => {
+                if (!total[i]) total[i] = slice.map(() => 0);
+                slice.forEach((v, j) => (total[i][j] += v));
+            });
+        }
+        return total;
+    });
+
+    // Population-weighted average of clan effort shares. The inputs each sum to
+    // 1 over the activities (or processes) a clan is engaged in, so the result
+    // does too, and activities only some clans pursue count as zero elsewhere.
+    function averageEffortAllocation(
+        clans: ClanDTO[],
+        pick: (c: ClanDTO) => ReadonlyMap<Activity | Process, number>,
+    ): ReadonlyMap<Activity | Process, number> {
+        const totals = new Map<Activity | Process, number>();
+        const totalPopulation = sumFun(clans, (c) => c.population);
+        for (const clan of clans) {
+            for (const [aop, share] of pick(clan)) {
+                totals.set(
+                    aop,
+                    (totals.get(aop) ?? 0) + share * clan.population,
+                );
+            }
+        }
+        if (totalPopulation > 0) {
+            for (const [aop, total] of totals) {
+                totals.set(aop, total / totalPopulation);
+            }
+        }
+        return totals;
+    }
+
+    // Stands in for a clan where ClanEffortMiniBar only needs total effort, so
+    // its tooltips can report settlement-wide effort behind each share.
+    function effortProxy(clans: ClanDTO[]): ClanDTO {
+        return {
+            effort: sumFun(clans, (c) => c.effort),
+        } as unknown as ClanDTO;
+    }
+
+    // Weighted geometric mean, ignoring non-positive values (a modifier of 0 or
+    // less has no meaningful log). Returns 1 if nothing usable is left.
+    function weightedGeomean(
+        items: { value: number; weight: number }[],
+    ): number {
+        let logSum = 0;
+        let weight = 0;
+        for (const item of items) {
+            if (!(item.value > 0) || !Number.isFinite(item.value)) continue;
+            logSum += Math.log(item.value) * item.weight;
+            weight += item.weight;
+        }
+        return weight > 0 ? Math.exp(logSum / weight) : 1;
+    }
+
+    function settlementValue(row: RowDef): number | undefined {
+        if (row.settlementAgg === "none" || !row.value) return undefined;
+        const value = (c: ClanDTO) => Number(row.value!(c)) || 0;
+        switch (row.settlementAgg) {
+            case "sum":
+                return sumFun(settlementClans, value);
+            case "geomean":
+                return weightedGeomean(
+                    settlementClans.map((c) => ({
+                        value: value(c),
+                        weight: c.population,
+                    })),
+                );
+            default:
+                return populationAverage(settlementClans, value);
+        }
+    }
+
+    // Row of a table produced by mergePopWeighted: the merged cell values plus
+    // one of the original per-clan rows, so the original formatters still work.
+    interface MergedRowData {
+        label: string;
+        sample: any;
+        values: any[];
+    }
+
+    // Combines the same tooltip table built for several clans into one table
+    // where every numeric cell is the population-weighted average across those
+    // clans. Rows are matched by label; a clan missing a row counts as the
+    // identity (zero when averaging, one for a multiplicative modifier), but a
+    // clan with no rows at all (e.g. it doesn't run the process) is left out of
+    // the weighting entirely. Non-numeric cells show through only when every
+    // clan agrees on them.
+    function mergePopWeighted(
+        inputs: { table: Table<any, any, any>; weight: number }[],
+        columnIndices?: number[],
+        mode: "avg" | "geomean" = "avg",
+    ): Table<any, any, any> {
+        const included = inputs.filter((i) => i.table.rows.length > 0);
+        const template = included[0]?.table;
+        if (!template) return { columns: [] as any, rows: [] };
+
+        const totalWeight = sumFun(included, (i) => i.weight);
+        const colIndices =
+            columnIndices ?? template.columns.map((_: any, i: number) => i);
+
+        // Row labels in order of first appearance, with a representative row.
+        const samples = new Map<string, TableRow<any, any>>();
+        for (const { table } of included) {
+            for (const r of table.rows) {
+                if (!samples.has(r.label)) samples.set(r.label, r);
+            }
+        }
+
+        const rows: TableRow<MergedRowData, any>[] = [...samples].map(
+            ([label, sampleRow]) => {
+                const values = colIndices.map((ci) => {
+                    const numbers: { value: number; weight: number }[] = [];
+                    let anyNumber = false;
+                    let text: string | undefined;
+                    let sameText = true;
+                    for (const { table, weight } of included) {
+                        const r = table.rows.find((rr) => rr.label === label);
+                        const col = table.columns[ci];
+                        const v =
+                            r && col
+                                ? r.valueFn
+                                    ? r.valueFn(col.data)
+                                    : col.valueFn(r.data)
+                                : undefined;
+                        if (typeof v === "number" && Number.isFinite(v)) {
+                            anyNumber = true;
+                            numbers.push({ value: v, weight });
+                        } else {
+                            // Missing here means "this clan was unaffected".
+                            numbers.push({
+                                value: mode === "geomean" ? 1 : 0,
+                                weight,
+                            });
+                            if (typeof v === "string") {
+                                if (text === undefined) text = v;
+                                else if (text !== v) sameText = false;
+                            }
+                        }
+                    }
+                    if (!anyNumber) return sameText ? (text ?? "") : "";
+                    if (mode === "geomean") return weightedGeomean(numbers);
+                    return totalWeight > 0
+                        ? sumFun(numbers, (n) => n.value * n.weight) /
+                              totalWeight
+                        : 0;
+                });
+                return {
+                    data: { label, sample: sampleRow.data, values },
+                    label,
+                    isHeader: sampleRow.isHeader,
+                    bold: sampleRow.bold,
+                    divider: sampleRow.divider,
+                    class: sampleRow.class,
+                };
+            },
+        );
+
+        const columns = colIndices.map((ci, i) => {
+            const col = template.columns[ci];
+            return {
+                data: col.data,
+                label: col.label,
+                class: col.class,
+                valueFn: (row: MergedRowData) => row.values[i],
+                formatFn: (v: any, row?: MergedRowData) =>
+                    typeof v === "number" && col.formatFn
+                        ? col.formatFn(v, row?.sample, col.data)
+                        : String(v ?? ""),
+            };
+        });
+
+        return {
+            columns: columns as any,
+            rows,
+            rowHeaderLabel: template.rowHeaderLabel,
+        };
+    }
+
+    function mergedClanTable(
+        css: ClanLastTurnSnapshots[],
+        tableFn: (clan: ClanDTO) => Table<any, any, any>,
+        columnIndices?: number[],
+        mode: "avg" | "geomean" = "avg",
+    ): Table<any, any, any> {
+        return mergePopWeighted(
+            css.map((cs) => ({
+                table: tableFn(cs.e),
+                weight: cs.e.population,
+            })),
+            columnIndices,
+            mode,
+        );
     }
 
     function getPairingCount(
@@ -260,6 +479,8 @@
                 cellClass: "rap",
                 value: (c) => c.population,
                 tooltipSnippet: peopleTooltip,
+                settlementAgg: "sum",
+                settlementTooltipSnippet: settlementPeopleTooltip,
                 customDeltaSnippet: peopleDeltaCell,
                 topics: ["demographics"],
             },
@@ -274,6 +495,8 @@
                     ),
                 format: spct,
                 tooltipSnippet: healthTooltip,
+                settlementAgg: "geomean",
+                settlementTooltipSnippet: settlementHealthTooltip,
                 deltaValue: (c) =>
                     Math.sqrt(
                         (c.lastPopulationChange?.brModifier ?? 1) /
@@ -302,6 +525,8 @@
                 value: (c) => c.lastPopulationChange.brModifier,
                 format: spct,
                 tooltipSnippet: brModifierTooltip,
+                settlementAgg: "geomean",
+                settlementTooltipSnippet: settlementBrModifierTooltip,
                 deltaValue: (c) => c.lastPopulationChange.brModifier,
                 deltaFormat: pct,
                 timelineKey: "brModifier",
@@ -315,6 +540,8 @@
                 value: (c) => c.lastPopulationChange.drModifier,
                 format: spct,
                 tooltipSnippet: drModifierTooltip,
+                settlementAgg: "geomean",
+                settlementTooltipSnippet: settlementDrModifierTooltip,
                 deltaValue: (c) => c.lastPopulationChange.drModifier,
                 deltaFormat: pct,
                 timelineKey: "drModifier",
@@ -343,6 +570,7 @@
                 value: (c) => c.qol.value,
                 format: signed,
                 tooltipSnippet: qolTooltip,
+                settlementTooltipSnippet: settlementQolTooltip,
                 deltaValue: (c) => c.qol.value,
                 deltaFormat: signed,
                 timelineKey: "qol",
@@ -356,6 +584,7 @@
                 value: (c) => c.favorAverage,
                 format: (v) => signed(v, 0),
                 tooltipSnippet: favorTooltip,
+                settlementTooltipSnippet: settlementFavorTooltip,
                 deltaValue: (c) => c.favorAverage,
                 deltaFormat: (v) => signed(v, 0),
                 timelineKey: "favorAverage",
@@ -369,6 +598,7 @@
                 value: (c) => c.respectAverage,
                 format: (v) => unsigned(v, 0),
                 tooltipSnippet: respectTooltip,
+                settlementTooltipSnippet: settlementRespectTooltip,
                 deltaValue: (c) => c.respectAverage,
                 deltaFormat: (v) => signed(v, 0),
                 timelineKey: "respectAverage",
@@ -454,6 +684,7 @@
                 },
                 format: spct,
                 tooltipSnippet: helpProductivityModifierTooltip,
+                settlementAgg: "geomean",
                 deltaValue: (c) => {
                     const world = settlement.world;
                     const helpValue = getHelpReceivedValueFromMutualAid(
@@ -494,6 +725,7 @@
                         : 0,
                 format: fmt2,
                 tooltipSnippet: foodProducedTooltip,
+                settlementTooltipSnippet: settlementFoodProducedTooltip,
                 deltaValue: (c) =>
                     c.distribution
                         ? c.distribution.totalFoodFromProduction /
@@ -561,6 +793,7 @@
                 value: (c) => (c.consumption ? c.consumption.perCapitaFood : 0),
                 format: fmt2,
                 tooltipSnippet: foodTooltip,
+                settlementTooltipSnippet: settlementFoodTooltip,
                 deltaValue: (c) =>
                     c.consumption ? c.consumption.perCapitaFood : 0,
                 deltaFormat: fmt2,
@@ -680,6 +913,7 @@
                 value: (c) => c.stock.perCapitaFoodStock(c.population),
                 format: fmt2,
                 tooltipSnippet: foodStockTooltip,
+                settlementTooltipSnippet: settlementFoodStockTooltip,
                 deltaValue: (c) => c.stock.perCapitaFoodStock(c.population),
                 deltaFormat: fmt2,
                 timelineKey: "foodStorage",
@@ -694,24 +928,28 @@
                 label: "Activities",
                 colspan: 2,
                 renderSnippet: activitiesRender,
+                settlementRenderSnippet: settlementActivitiesRender,
                 topics: ["production"],
             },
             {
                 label: "(Previous)",
                 colspan: 2,
                 renderSnippet: activitiesPrevRender,
+                settlementRenderSnippet: settlementActivitiesPrevRender,
                 topics: ["production"],
             },
             {
                 label: "Processes",
                 colspan: 2,
                 renderSnippet: processesRender,
+                settlementRenderSnippet: settlementProcessesRender,
                 topics: ["production"],
             },
             {
                 label: "(Previous)",
                 colspan: 2,
                 renderSnippet: processesPrevRender,
+                settlementRenderSnippet: settlementProcessesPrevRender,
                 topics: ["production"],
             },
         ]);
@@ -732,6 +970,7 @@
                     value: (c) =>
                         c.production.getForProcess(process, "amount") ?? 0,
                     format: (v) => v.toFixed(0),
+                    settlementAgg: "sum",
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "amount") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
@@ -745,6 +984,7 @@
                     value: (c) =>
                         c.production.getForProcess(process, "land") ?? 0,
                     format: (v) => v.toFixed(0),
+                    settlementAgg: "sum",
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "land") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
@@ -758,6 +998,7 @@
                     value: (c) =>
                         c.production.getForProcess(process, "labor") ?? 0,
                     format: (v) => v.toFixed(0),
+                    settlementAgg: "sum",
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "labor") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
@@ -777,6 +1018,8 @@
                     format: spct,
                     tooltipSnippet: processProductivityTooltip,
                     context: process,
+                    settlementAgg: "geomean",
+                    settlementTooltipSnippet: settlementProcessProductivityTooltip,
                     deltaValue: (c) =>
                         c.production.getForProcess(
                             process,
@@ -793,6 +1036,7 @@
                     useTooltip: true,
                     value: (c) => netLaborProductivity(c, process),
                     format: spct,
+                    settlementAgg: "geomean",
                     deltaValue: (c) => netLaborProductivity(c, process),
                     deltaFormat: (v) => v.toFixed(2),
                     topics: ["production", "productivity"],
@@ -1845,6 +2089,66 @@
         );
     }
 
+    function clanHealthTooltipTable(clan: ClanDTO) {
+        return new IterableTable(
+            Array.from(
+                new Set([
+                    ...(clan.lastPopulationChange?.brModifiers ?? []).map(
+                        (m) => m.source,
+                    ),
+                    ...(clan.lastPopulationChange?.drModifiers ?? []).map(
+                        (m) => m.source,
+                    ),
+                ]),
+            ),
+            (source) => source,
+            [
+                {
+                    data: "BR",
+                    label: "BR",
+                    valueFn: (source) =>
+                        clan.lastPopulationChange?.brModifiers.find(
+                            (m) => m.source === source,
+                        )?.value,
+                    formatFn: (v: number | undefined) =>
+                        v !== undefined ? spct(v, 0) : "-",
+                },
+                {
+                    data: "DR",
+                    label: "DR",
+                    valueFn: (source) =>
+                        clan.lastPopulationChange?.drModifiers.find(
+                            (m) => m.source === source,
+                        )?.value,
+                    formatFn: (v: number | undefined) =>
+                        v !== undefined ? spct(v, 0) : "-",
+                },
+            ],
+        );
+    }
+
+    function clanRateModifierTooltipTable(clan: ClanDTO, rate: "br" | "dr") {
+        const modifiers =
+            rate === "br"
+                ? clan.lastPopulationChange.brModifiers
+                : clan.lastPopulationChange.drModifiers;
+        return new IterableTable(modifiers, (item) => item.source, [
+            {
+                data: "State",
+                label: "",
+                valueFn: (item) => item.inputValue,
+                formatFn: (v: number | string) =>
+                    typeof v === "number" ? v.toFixed(2) : v,
+            },
+            {
+                data: "Value",
+                label: "",
+                valueFn: (item) => item.value,
+                formatFn: (v: number) => spct(v, 0),
+            },
+        ]);
+    }
+
     function productivityModifierTooltipTable(clan: ClanDTO, process: Process) {
         return new IterableTable(
             clan.production.forProcess(process)?.productivity.items ?? [],
@@ -2083,6 +2387,115 @@
     </div>
 {/snippet}
 
+{#snippet settlementPeopleTooltip(css: ClanLastTurnSnapshots[])}
+    <PopulationPyramid
+        clan={{ slices: settlementSlices, population: settlementPopulation }}
+    />
+    <hr />
+    <div>Workers: {unsigned(settlementWorkers)}</div>
+    <div>
+        Population Per Worker: {safeDiv(
+            settlementPopulation,
+            settlementWorkers,
+        ).toFixed(1)}
+    </div>
+{/snippet}
+
+{#snippet settlementHealthTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2
+        table={mergedClanTable(
+            css,
+            clanHealthTooltipTable,
+            undefined,
+            "geomean",
+        )}
+    />
+{/snippet}
+
+{#snippet settlementBrModifierTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2
+        table={mergedClanTable(
+            css,
+            (clan) => clanRateModifierTooltipTable(clan, "br"),
+            undefined,
+            "geomean",
+        )}
+    />
+{/snippet}
+
+{#snippet settlementDrModifierTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2
+        table={mergedClanTable(
+            css,
+            (clan) => clanRateModifierTooltipTable(clan, "dr"),
+            undefined,
+            "geomean",
+        )}
+    />
+{/snippet}
+
+{#snippet settlementProcessProductivityTooltip(
+    css: ClanLastTurnSnapshots[],
+    process: Process,
+)}
+    <TableView2
+        table={mergedClanTable(
+            css,
+            (clan) => productivityModifierTooltipTable(clan, process),
+            [0],
+            "geomean",
+        )}
+    />
+{/snippet}
+
+{#snippet settlementQolTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2 table={mergedClanTable(css, clanQolTooltipTable, [0])} />
+{/snippet}
+
+{#snippet settlementFavorTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2
+        table={mergedClanTable(
+            css,
+            (clan) =>
+                clanFavorTooltipTable(
+                    clan,
+                    (observer, target) =>
+                        clan.world.alignmentToward(observer, target),
+                    "Favor",
+                ),
+            [0],
+        )}
+    />
+{/snippet}
+
+{#snippet settlementRespectTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2
+        table={mergedClanTable(
+            css,
+            (clan) =>
+                clanRespectTooltipTable(
+                    clan,
+                    (observer, target) =>
+                        clan.world.respectToward(observer, target),
+                    "Respect",
+                ),
+            [0],
+        )}
+    />
+{/snippet}
+
+{#snippet settlementFoodProducedTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2 table={mergedClanTable(css, clanFoodProductionTooltipTable)} />
+{/snippet}
+
+{#snippet settlementFoodTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2 table={mergedClanTable(css, clanSustenanceTooltipTable)} />
+{/snippet}
+
+{#snippet settlementFoodStockTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2 table={mergedClanTable(css, clanFoodStockTooltipTable)} />
+{/snippet}
+
 {#snippet peopleDeltaTooltip(cs: ClanLastTurnSnapshots)}
     <PopulationChange clan={cs.e} />
     <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;" />
@@ -2122,91 +2535,15 @@
 {/snippet}
 
 {#snippet healthTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2
-        table={new IterableTable(
-            Array.from(
-                new Set([
-                    ...(cs.e.lastPopulationChange?.brModifiers ?? []).map(
-                        (m) => m.source,
-                    ),
-                    ...(cs.e.lastPopulationChange?.drModifiers ?? []).map(
-                        (m) => m.source,
-                    ),
-                ]),
-            ),
-            (source) => source,
-            [
-                {
-                    data: "BR",
-                    label: "BR",
-                    valueFn: (source) =>
-                        cs.e.lastPopulationChange?.brModifiers.find(
-                            (m) => m.source === source,
-                        )?.value,
-                    formatFn: (v: number | undefined) =>
-                        v !== undefined ? spct(v, 0) : "-",
-                },
-                {
-                    data: "DR",
-                    label: "DR",
-                    valueFn: (source) =>
-                        cs.e.lastPopulationChange?.drModifiers.find(
-                            (m) => m.source === source,
-                        )?.value,
-                    formatFn: (v: number | undefined) =>
-                        v !== undefined ? spct(v, 0) : "-",
-                },
-            ],
-        )}
-    />
+    <TableView2 table={clanHealthTooltipTable(cs.e)} />
 {/snippet}
 
 {#snippet brModifierTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2
-        table={new IterableTable(
-            cs.e.lastPopulationChange.brModifiers,
-            (item) => item.source,
-            [
-                {
-                    data: "State",
-                    label: "",
-                    valueFn: (item) => item.inputValue,
-                    formatFn: (v: number | string) =>
-                        typeof v === "number" ? v.toFixed(2) : v,
-                },
-                {
-                    data: "Value",
-                    label: "",
-                    valueFn: (item) => item.value,
-                    formatFn: (v: number) => spct(v, 0),
-                },
-            ],
-        )}
-    />
+    <TableView2 table={clanRateModifierTooltipTable(cs.e, "br")} />
 {/snippet}
 
 {#snippet drModifierTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2
-        table={new IterableTable(
-            cs.e.lastPopulationChange.drModifiers,
-            (item) => item.source,
-            [
-                {
-                    data: "State",
-                    label: "",
-                    valueFn: (item) => item.inputValue,
-                    formatFn: (v: number | string) =>
-                        typeof v === "number" ? v.toFixed(2) : v,
-                },
-                {
-                    data: "Value",
-                    label: "",
-                    valueFn: (item) => item.value,
-                    formatFn: (v: number) => spct(v, 0),
-                },
-            ],
-        )}
-    />
+    <TableView2 table={clanRateModifierTooltipTable(cs.e, "dr")} />
 {/snippet}
 
 {#snippet stressValueRender(cs: ClanLastTurnSnapshots)}
@@ -2289,6 +2626,42 @@
             clan={cs.p}
             m={cs.p.effortAllocation.pm}
         />{/if}
+{/snippet}
+
+{#snippet settlementActivitiesRender(css: ClanLastTurnSnapshots[])}
+    {@const clans = css.map((cs) => cs.e)}
+    <ClanEffortMiniBar
+        clan={effortProxy(clans)}
+        m={averageEffortAllocation(clans, (c) => c.effortAllocation.m)}
+    />
+{/snippet}
+
+{#snippet settlementActivitiesPrevRender(css: ClanLastTurnSnapshots[])}
+    {@const clans = css.filter((cs) => cs.p).map((cs) => cs.p!)}
+    {#if clans.length}
+        <ClanEffortMiniBar
+            clan={effortProxy(clans)}
+            m={averageEffortAllocation(clans, (c) => c.effortAllocation.m)}
+        />
+    {/if}
+{/snippet}
+
+{#snippet settlementProcessesRender(css: ClanLastTurnSnapshots[])}
+    {@const clans = css.map((cs) => cs.e)}
+    <ClanEffortMiniBar
+        clan={effortProxy(clans)}
+        m={averageEffortAllocation(clans, (c) => c.effortAllocation.pm)}
+    />
+{/snippet}
+
+{#snippet settlementProcessesPrevRender(css: ClanLastTurnSnapshots[])}
+    {@const clans = css.filter((cs) => cs.p).map((cs) => cs.p!)}
+    {#if clans.length}
+        <ClanEffortMiniBar
+            clan={effortProxy(clans)}
+            m={averageEffortAllocation(clans, (c) => c.effortAllocation.pm)}
+        />
+    {/if}
 {/snippet}
 
 {#snippet residenceTooltip(cs: ClanLastTurnSnapshots)}
@@ -2484,6 +2857,7 @@
         <thead>
             <tr>
                 <td></td>
+                <td class="clan-header settlement-col">{settlement.name}</td>
                 {#each csnaps as cs}
                     {@const rank = prestigeRankings.get(cs.c.uuid)}
                     <td class="clan-header" colspan="2">
@@ -2522,14 +2896,14 @@
                     {#if row.isBreak}
                         <tr
                             ><td
-                                colspan={1 + csnaps.length * 2}
+                                colspan={2 + csnaps.length * 2}
                                 style="height: 0.5em"
                             ></td></tr
                         >
                     {:else}
                         <tr class={row.class ?? ""}>
                             {#if row.isHeader}
-                                <td colspan={1 + csnaps.length * 2}
+                                <td colspan={2 + csnaps.length * 2}
                                     >{row.label}</td
                                 >
                             {:else}
@@ -2540,6 +2914,35 @@
                                         >
                                     {:else}
                                         {@html row.label}
+                                    {/if}
+                                </td>
+                                {@const sval = settlementValue(row)}
+                                <td class="settlement-col ra">
+                                    {#if row.settlementRenderSnippet}
+                                        {@render row.settlementRenderSnippet(
+                                            csnaps,
+                                        )}
+                                    {:else if sval !== undefined}
+                                        {#if row.settlementTooltipSnippet}
+                                            <Tooltip>
+                                                {row.format
+                                                    ? row.format(sval)
+                                                    : sval}
+                                                <div
+                                                    slot="tooltip"
+                                                    style="text-align: left; color: initial;"
+                                                >
+                                                    {@render row.settlementTooltipSnippet(
+                                                        csnaps,
+                                                        row.context,
+                                                    )}
+                                                </div>
+                                            </Tooltip>
+                                        {:else}
+                                            {row.format
+                                                ? row.format(sval)
+                                                : sval}
+                                        {/if}
                                     {/if}
                                 </td>
                                 {#each csnaps as cs}
@@ -2638,6 +3041,23 @@
     .clan-header {
         text-align: center;
         font-weight: bold;
+    }
+
+    td.settlement-col {
+        border-right: 1px solid #d3c4ad;
+        padding-right: 1.25em;
+    }
+
+    /* Clan names sit at the bottom of a column holding the prestige rank badge,
+       centered in a row as tall as the migration icon beside them. Bottom-align
+       to clear the badge, then pad by the slack that icon leaves below. */
+    td.settlement-col.clan-header {
+        vertical-align: bottom;
+        padding-bottom: 3.6px;
+    }
+
+    td.settlement-col + td {
+        padding-left: 1.25em;
     }
 
     .row-label {
