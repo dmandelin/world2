@@ -565,7 +565,7 @@ Rough growth sequence:
 We'll need to firm up the model for each step.
 
 x   Local food exchange with status rise for givers
-    *   Need "piety" trait to influence how much they want to
+    x   Need "piety" trait to influence how much they want to
         grow and give
 *   Clan self rituals and authority
 *   Clan ritual provision to other clans
@@ -604,7 +604,6 @@ Detailed list of first parts:
         *   (P2) Variable trust strategies
         *   (P2) Mutual aid partial defectors
     *   Mutual aid
-        x   Have clans prefer more trusted clans
         *   (P2) Differential ability to help
         *   Don't have a fixed, massive trust boost -
             if interactions are minimal, so should be trust
@@ -613,9 +612,6 @@ Detailed list of first parts:
         *   Have gossip more effective if more aligned
         *   (P2) Differential ability to collect information
     *   Add any new similarity factors to alignment
-*   Other key fixes
-    *   Bigger death rate in case of very low yield
-        *   Some kind of famine notification
 *   Other random ideas
     *   Stress and conflict costs for different relationship
         types, esp more conflict over differential goods in
@@ -624,11 +620,6 @@ Detailed list of first parts:
             is; equality can have more conflict and stress but
             that's not necessarily true in all cases
 *   "Status"
-    x   Base on generosity/holiness
-    x   +Marriage appeal
-    x   Show marriage appeal rankings in the UI
-    *   Starvation
-        *   Bigger impact from really low food levels
     *   More complexity around sharing
         *   General thoughts
             *   Current issues
@@ -691,18 +682,9 @@ Detailed list of first parts:
                             be negatively judged for an action we allow,
                             and flag those for later. Also note any cases where we automatically constrain behavior to norms for later further consideration
                 *   Items
-                    x   Do the basic idea
-                    x   Add gift layer
-                    x   Deal with recursion around QoL and stress
-                        and with stress generally
-                    x   Less generosity credit for gifts to friends
-
-                    x   Clean up issues with tuning and visualization
-                    x   Fix apparent bugs in consumption values
                     *   Transport costs on aid
                     *   Transport costs on gifts
 
-                    x   Bigger impact for large shortfalls of consumption so that there is such a thing as dire need
                     *   Alert system to show us when clans need help they're not getting
                     *   Make sure clans are giving help in case of dire need
 
@@ -712,20 +694,11 @@ Detailed list of first parts:
 
                     *   *** Think harder about what alignment and respect really mean and how they relate to all this
                         *   Implement new model described in zc
-                            x   Rework alignment
-                            x   Rework respect
-                            x   Rework prestige
-                            *   Rework consumers
+                            *   Finish reworking consumers
                                 *   Alignment
                                     *   Trust -- handle when we overhaul these relationships
-                                    x   Emergency aid - OK
-                                    x   Migration eligibility - OK
                                     *   Happiness -- need to finish removing
-                                *   Prestige should now instead influence:
-                                    x   Food gifts
-                                    x   Population birth/death rates
-                                    x   Housing decision
-                                    x   QoL
+                                *   Prestige should also influence:
                                     *   Emergency aid in crisis
                                     *   Consider using relative prestige for birth/death rates
                             *   Deal better with conflict in respect -- think about what power
@@ -759,11 +732,8 @@ Detailed list of first parts:
             *   ~general food shortfall in settlement
             *   display in UI
             *   also have mechanics for alignment/rituals
-        x   Alignment impact of respect
         *   Verify that alignment counts when not everyone can
             be helped
-    x   Piety trait
-    x   Option to work harder
     *   Initial "headman" concept
         *   Don't use the name "headman" in the code, always
             use "settlementHead" or "headOfSettlement" or
@@ -824,7 +794,6 @@ Detailed list of first parts:
         *   More complex conflict resolution.
     *   "Headman" to soft-lead festivals
     *   "Headman" for ditching/planting
-    x   Fix issue with clans getting too related by marriage
     *   Option to give gifts
     *   Start adding identity
         *   Has something to do with affinity, but also with the
@@ -845,15 +814,12 @@ Detailed list of first parts:
     production
 *   Breakpoints for multi-year advance on founding new
     settlements or major crises
-x   Marriage appeal - mostly should be there
-    x   Verify uses the right piece from "status"
 *   Oratory skill
 *   Effect of traits on alignment (probably need affinity concept)
 *   Have some internal evolution of traits -- try to estimate
     level of pressure from outside.
 *   Food security and help
     *   Standard food redistribution
-        x   Prevent starvation
         *   Alter status and affiliation - we have some effect but
             this seems to depend on norms
     *   Crop failure model (though we might be able to get
