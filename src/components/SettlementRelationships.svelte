@@ -11,7 +11,10 @@
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import type { Snippet } from "svelte";
     import ConflictDetailsTable from "./tables/ConflictDetailsTable.svelte";
-    import { BasicInteraction } from "../model/relations/basicinteraction";
+    import {
+        BASIC_INTERACTION_FIXED_COST,
+        BasicInteraction,
+    } from "../model/relations/basicinteraction";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
@@ -52,7 +55,8 @@
         colClan: ClanDTO,
     ): number {
         const att = world.attentionTo(rowClan, colClan);
-        return att / colClan.population;
+        if (att <= BASIC_INTERACTION_FIXED_COST) return 0;
+        return (att - BASIC_INTERACTION_FIXED_COST) / colClan.population;
     }
 
     function informationCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -114,7 +118,8 @@
 )}
     {@const att = world.attentionTo(subject, object)}
     {#if att}
-        {unsigned(att)} attention / {object.population} population
+        ({unsigned(att)} attention - {BASIC_INTERACTION_FIXED_COST} fixed cost) /
+        {object.population} population = {unsigned(value, 2)} relative attention
     {/if}
 {/snippet}
 
