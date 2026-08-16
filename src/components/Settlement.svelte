@@ -1,5 +1,6 @@
 <script>
     import SettlementDemographics from "./SettlementDemographics.svelte";
+    import SettlementInformation from "./SettlementInformation.svelte";
     import SettlementOverview from "./overview/SettlementOverview.svelte";
     import SettlementTrade from "./SettlementTrade.svelte";
     import TabbedView from "./TabbedView.svelte";
@@ -20,6 +21,7 @@
     const tabs = [
         { label: "Overview", snippet: overviewTab },
         { label: "Demographics", snippet: demographicsTab },
+        { label: "Information", snippet: informationTab },
         { label: "QoL", snippet: qolTab },
         { label: "Comparison", snippet: comparisonTab },
         { label: "Econ", snippet: econTab },
@@ -57,6 +59,10 @@
 
 {#snippet demographicsTab()}
     <SettlementDemographics {settlement} />
+{/snippet}
+
+{#snippet informationTab()}
+    <SettlementInformation {settlement} />
 {/snippet}
 
 {#snippet tradeTab()}

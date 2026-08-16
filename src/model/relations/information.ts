@@ -335,3 +335,37 @@ export class ClanInformation {
         return ci;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Recording events.
+// ---------------------------------------------------------------------------
+
+// File an event both parties were party to into both their ledgers. They saw
+// the same thing, so they get the very same entry object: that keeps the
+// footprint down, and lets views recognize two clans' reports of one event by
+// identity rather than by comparing fields.
+export function recordDirectEvent(a: Clan, b: Clan, entry: MemoryEntry): void {
+    const perceptions = a.world.perceptions;
+    perceptions.getOrCreate(a, b).information.memory.add(entry);
+    perceptions.getOrCreate(b, a).information.memory.add(entry);
+}
+
+// Remember a gift of food aid. Both donor and recipient know about it
+// firsthand.
+export function recordFoodAid(donor: Clan, recipient: Clan, amount: number): void {
+    if (amount <= 0) return;
+    // Aid looms as large as it mattered to the recipient: a day's food per
+    // head is unforgettable, a token is barely worth mentioning.
+    const perCapita = amount / Math.max(1, recipient.population);
+    recordDirectEvent(donor, recipient, new MemoryEntry(
+        MemoryEventDefs.Aid,
+        donor.world.year.value,
+        donor.uuid,
+        recipient.uuid,
+        amount,
+        clamp(perCapita, 0, 1),
+        0,
+        undefined,
+        `${amount.toFixed(1)} food (${perCapita.toFixed(2)}/person)`,
+    ));
+}

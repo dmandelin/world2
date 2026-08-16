@@ -1,3 +1,9 @@
+// Format a bare year number, for data (such as remembered events) that stores
+// years as numbers rather than as Year objects.
+export function formatYear(value: number): string {
+    return value < 0 ? `${-value} BC` : `${value} AD`;
+}
+
 export class Year {
     // Negative is BC, positive is AD, zero is unused.
     // We account for priming turns.
@@ -29,7 +35,7 @@ export class Year {
     }
 
     toString() {
-        return this.value_ < 0 ? `${-this.value_} BC` : `${this.value_} AD`;
+        return formatYear(this.value_);
     }
 
     add(years: number): Year {

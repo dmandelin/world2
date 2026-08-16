@@ -1,0 +1,367 @@
+<script lang="ts">
+    import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
+    import type { MemoryEntry } from "../model/relations/information";
+    import { formatYear } from "../model/records/year";
+    import { sortedByKey } from "../model/lib/basics";
+    import { pct, unsigned } from "../model/lib/format";
+
+    let { settlement }: { settlement: SettlementDTO } = $props();
+    let world = $derived(settlement.world);
+    let now = $derived(world.yearValue);
+
+    let subject: ClanDTO | undefined = $state(undefined);
+    let object: ClanDTO | undefined = $state(undefined);
+
+    // Selections survive a turn advance, but the DTOs don't, so re-resolve
+    // them by uuid against the current snapshot.
+    function resolve(clan: ClanDTO | undefined): ClanDTO | undefined {
+        return clan ? world.clanMap.get(clan.uuid) : undefined;
+    }
+    let subj = $derived(resolve(subject));
+    let obj = $derived(resolve(object));
+
+    const inSettlement = $derived(new Set(settlement.clans.map((c) => c.uuid)));
+
+    // Grid axes: everyone in the settlement, plus any outside clan a
+    // settlement clan has a ledger with (aid can cross settlements).
+    let axisClans = $derived.by(() => {
+        const outside = new Map<string, ClanDTO>();
+        for (const clan of settlement.clans) {
+            for (const [other] of world.memoriesFor(clan)) {
+                if (!inSettlement.has(other.uuid)) outside.set(other.uuid, other);
+            }
+        }
+        return [
+            ...sortedByKey(settlement.clans, (c) => c.name),
+            ...sortedByKey([...outside.values()], (c) => c.name),
+        ];
+    });
+
+    function eventCount(row: ClanDTO, col: ClanDTO): number {
+        if (row.uuid === col.uuid) return -1;
+        return world.memoryToward(row, col)?.entries.length ?? 0;
+    }
+
+    function toggleSubject(clan: ClanDTO) {
+        subject = subject?.uuid === clan.uuid ? undefined : clan;
+    }
+
+    function toggleObject(clan: ClanDTO) {
+        object = object?.uuid === clan.uuid ? undefined : clan;
+    }
+
+    function selectCell(row: ClanDTO, col: ClanDTO) {
+        if (subject?.uuid === row.uuid && object?.uuid === col.uuid) {
+            subject = undefined;
+            object = undefined;
+        } else {
+            subject = row;
+            object = col;
+        }
+    }
+
+    // A row of the listing. `knownBy` is empty except in the object-only view,
+    // where reports of one event by several clans are coalesced into one row.
+    type Row = {
+        entry: MemoryEntry;
+        about: ClanDTO | undefined;
+        knownBy: ClanDTO[];
+    };
+
+    function byYearDesc(rows: Row[]): Row[] {
+        return rows.sort((a, b) => b.entry.year - a.entry.year);
+    }
+
+    let rows = $derived.by((): Row[] => {
+        if (subj && obj) {
+            const memory = world.memoryToward(subj, obj);
+            if (!memory) return [];
+            return byYearDesc(
+                memory.entries.map((entry) => ({
+                    entry,
+                    about: obj,
+                    knownBy: [],
+                })),
+            );
+        }
+
+        if (subj) {
+            const out: Row[] = [];
+            for (const [other, memory] of world.memoriesFor(subj)) {
+                for (const entry of memory.entries) {
+                    out.push({ entry, about: other, knownBy: [] });
+                }
+            }
+            return byYearDesc(out);
+        }
+
+        if (obj) {
+            return byYearDesc(
+                world
+                    .eventsInvolving(obj)
+                    .map(({ entry, knownBy }) => ({
+                        entry,
+                        about: undefined,
+                        knownBy,
+                    })),
+            );
+        }
+
+        return [];
+    });
+
+    function clanName(uuid: string): string {
+        return world.clanMap.get(uuid)?.name ?? "?";
+    }
+
+    function description(entry: MemoryEntry): string {
+        const target = entry.target ? ` → ${clanName(entry.target)}` : "";
+        return `${clanName(entry.actor)}${target}`;
+    }
+
+    let listingTitle = $derived.by(() => {
+        if (subj && obj) return `What ${subj.name} knows about ${obj.name}`;
+        if (subj) return `Everything ${subj.name} knows`;
+        if (obj) return `Everything anyone knows about ${obj.name}`;
+        return "";
+    });
+</script>
+
+<div style="padding: 1rem 2rem;">
+    <div
+        style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 0.5rem;"
+    >
+        <h3 style="margin: 0;">Information</h3>
+        {#if subj || obj}
+            <button
+                type="button"
+                class="clear-btn"
+                onclick={() => {
+                    subject = undefined;
+                    object = undefined;
+                }}>Clear selection</button
+            >
+        {/if}
+    </div>
+
+    <p style="font-size: 0.9rem; color: #666; margin: 0 0 1rem 0;">
+        Events each clan (row) remembers about another (column). Click a cell
+        for one pair, a row header for everything that clan knows, or a column
+        header for everything known about that clan. Clans from outside this
+        settlement are marked with an asterisk (*).
+    </p>
+
+    <div class="table-container">
+        <table class="grid">
+            <thead>
+                <tr>
+                    <th class="corner">knows about →</th>
+                    {#each axisClans as col}
+                        <th
+                            class="colhead {obj?.uuid === col.uuid
+                                ? 'sel'
+                                : ''} {inSettlement.has(col.uuid)
+                                ? ''
+                                : 'outside'}"
+                            onclick={() => toggleObject(col)}
+                            title="Everything known about {col.name}"
+                        >
+                            {col.name}{inSettlement.has(col.uuid) ? "" : " *"}
+                        </th>
+                    {/each}
+                </tr>
+            </thead>
+            <tbody>
+                {#each axisClans as row}
+                    <tr>
+                        <th
+                            class="rowhead {subj?.uuid === row.uuid
+                                ? 'sel'
+                                : ''} {inSettlement.has(row.uuid)
+                                ? ''
+                                : 'outside'}"
+                            onclick={() => toggleSubject(row)}
+                            title="Everything {row.name} knows"
+                        >
+                            {row.name}{inSettlement.has(row.uuid) ? "" : " *"}
+                        </th>
+                        {#each axisClans as col}
+                            {@const n = eventCount(row, col)}
+                            {#if n < 0}
+                                <td class="self"></td>
+                            {:else}
+                                <td
+                                    class="cell {subj?.uuid === row.uuid &&
+                                    obj?.uuid === col.uuid
+                                        ? 'sel'
+                                        : ''} {n === 0 ? 'empty' : ''}"
+                                    onclick={() => selectCell(row, col)}
+                                    title="{row.name} remembers {n} event{n ===
+                                    1
+                                        ? ''
+                                        : 's'} about {col.name}"
+                                >
+                                    {n === 0 ? "" : n}
+                                </td>
+                            {/if}
+                        {/each}
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+
+    {#if subj || obj}
+        <h4 style="margin: 1.5rem 0 0.5rem 0;">
+            {listingTitle}
+            <span style="font-weight: normal; color: #666;"
+                >({rows.length} event{rows.length === 1 ? "" : "s"})</span
+            >
+        </h4>
+        {#if rows.length === 0}
+            <p style="font-size: 0.9rem; color: #666;">Nothing remembered.</p>
+        {:else}
+            <div class="table-container">
+                <table class="events">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Age</th>
+                            <th>Kind</th>
+                            <th>Event</th>
+                            {#if subj && !obj}<th>About</th>{/if}
+                            {#if obj && !subj}<th>Known by</th>{/if}
+                            <th class="num">Amount</th>
+                            <th class="num">Weight</th>
+                            <th class="num">Salience</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each rows as row}
+                            {@const e = row.entry}
+                            <tr>
+                                <td>{formatYear(e.year)}</td>
+                                <td>{now - e.year}</td>
+                                <td>{e.def.label}</td>
+                                <td>{description(e)}{e.explanation ? `: ${e.explanation}` : ""}</td>
+                                {#if subj && !obj}
+                                    <td>{row.about?.name ?? "?"}</td>
+                                {/if}
+                                {#if obj && !subj}
+                                    <td
+                                        title={row.knownBy
+                                            .map((c) => c.name)
+                                            .join(", ")}
+                                    >
+                                        {row.knownBy.length}: {row.knownBy
+                                            .map((c) => c.name)
+                                            .join(", ")}
+                                    </td>
+                                {/if}
+                                <td class="num">{unsigned(e.magnitude, 1)}</td>
+                                <td
+                                    class="num"
+                                    title="Decayed to {pct(e.freshness(now))} of the original impression"
+                                    >{unsigned(e.weight(now), 2)}</td
+                                >
+                                <td class="num">{unsigned(e.salience, 2)}</td>
+                                <td>
+                                    {#if e.hops === 0}
+                                        firsthand
+                                    {:else}
+                                        {e.hops} link{e.hops === 1 ? "" : "s"}{e.via
+                                            ? ` (via ${clanName(e.via)})`
+                                            : ""}
+                                    {/if}
+                                </td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+        {/if}
+    {/if}
+</div>
+
+<style>
+    .table-container {
+        overflow-x: auto;
+        max-width: 100%;
+        width: fit-content;
+        border: 1px solid #e2d9c8;
+        border-radius: 6px;
+        background-color: #faf6ea;
+    }
+    table {
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .grid th,
+    .grid td {
+        border: 1px solid #e2d9c8;
+        padding: 0.2rem 0.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .grid .corner {
+        font-weight: normal;
+        font-style: italic;
+        color: #666;
+        text-align: right;
+    }
+    .grid .colhead,
+    .grid .rowhead {
+        cursor: pointer;
+        background-color: #f3edd8;
+    }
+    .grid .rowhead {
+        text-align: left;
+    }
+    .grid .colhead:hover,
+    .grid .rowhead:hover,
+    .grid .cell:hover {
+        background-color: #e8dfc4;
+    }
+    .grid .outside {
+        color: #8a7a5f;
+    }
+    .grid .cell {
+        cursor: pointer;
+    }
+    .grid .cell.empty {
+        color: #b3a78e;
+    }
+    .grid .self {
+        background-color: #efe9d8;
+    }
+    .grid .sel {
+        background-color: #d8c9a0;
+        font-weight: bold;
+    }
+    .events th,
+    .events td {
+        border-bottom: 1px solid #e2d9c8;
+        padding: 0.2rem 0.6rem;
+        text-align: left;
+        white-space: nowrap;
+    }
+    .events th {
+        background-color: #f3edd8;
+    }
+    .events .num {
+        text-align: right;
+    }
+    .clear-btn {
+        all: unset;
+        font-size: 0.85rem;
+        padding: 0.2rem 0.6rem;
+        cursor: pointer;
+        border-radius: 3px;
+        background-color: #f3edd8;
+        color: #333;
+    }
+    .clear-btn:hover {
+        background-color: #e8dfc4;
+    }
+</style>

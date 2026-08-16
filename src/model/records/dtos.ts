@@ -33,7 +33,7 @@ import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
 import { getPrestige, getLocalPrestige } from "../relations/prestige";
-import type { ClanInformation } from "../relations/information";
+import type { ClanInformation, Memory, MemoryEntry } from "../relations/information";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
@@ -309,6 +309,8 @@ import type { FoodRedistributionResult } from "../econ/redistribution";
 
 export class WorldDTO {
     readonly year: string;
+    // Numeric form of the year, for computing ages of remembered events.
+    readonly yearValue: number;
     readonly clanMap: ReadonlyMap<UUID, ClanDTO>;
     readonly clusters: ClusterDTO[];
     readonly plannedSettlements: PlannedSettlementDTO[];
@@ -332,6 +334,7 @@ export class WorldDTO {
 
     constructor(private readonly world: World) {
         this.year = this.world.year.toString();
+        this.yearValue = this.world.year.value;
         this.lastMarriageDecisions = world.lastMarriageDecisions;
         this.lastFoodRedistribution = world.lastFoodRedistribution;
         this.lastFoodGifts = world.lastFoodGifts;
@@ -423,6 +426,57 @@ export class WorldDTO {
 
     informationToward(clan: ClanDTO, other: ClanDTO): ClanInformation | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.information;
+    }
+
+    memoryToward(clan: ClanDTO, other: ClanDTO): Memory | undefined {
+        return this.perceptions.get(clan.uuid, other.uuid)?.information.memory;
+    }
+
+    // Every ledger this clan keeps, by the clan it's about.
+    *memoriesFor(clan: ClanDTO): Iterable<[ClanDTO, Memory]> {
+        for (const [other, perceptions] of this.perceptions.getFor(clan.uuid)) {
+            const otherClan = this.clanMap.get(other);
+            if (otherClan) yield [otherClan, perceptions.information.memory];
+        }
+    }
+
+    // Every ledger anyone keeps about this clan, by the clan keeping it. The
+    // perceptions graph already indexes by object, so this doesn't scan.
+    *memoriesRegarding(clan: ClanDTO): Iterable<[ClanDTO, Memory]> {
+        for (const [subject, perceptions] of this.perceptions.getRegarding(clan.uuid)) {
+            const subjectClan = this.clanMap.get(subject);
+            if (subjectClan) yield [subjectClan, perceptions.information.memory];
+        }
+    }
+
+    // Every remembered event this clan was party to, paired with the clans
+    // that know of it.
+    //
+    // An event involving a clan is only ever filed in a ledger where that clan
+    // is the subject or the object, so the perceptions graph's two indexes
+    // between them cover all of them without a scan. Everyone party to an
+    // event shares one entry object, so identity coalesces the copies.
+    eventsInvolving(clan: ClanDTO): { entry: MemoryEntry, knownBy: ClanDTO[] }[] {
+        const knowers = new Map<MemoryEntry, Set<ClanDTO>>();
+        const collect = (knower: ClanDTO, memory: Memory) => {
+            for (const entry of memory.entries) {
+                if (entry.actor !== clan.uuid && entry.target !== clan.uuid) continue;
+                let set = knowers.get(entry);
+                if (!set) knowers.set(entry, set = new Set());
+                set.add(knower);
+            }
+        };
+        for (const [subject, memory] of this.memoriesRegarding(clan)) {
+            collect(subject, memory);
+        }
+        // The clan's own ledgers, which hold its copy of events it took part in.
+        for (const [, memory] of this.memoriesFor(clan)) {
+            collect(clan, memory);
+        }
+        return [...knowers].map(([entry, set]) => ({
+            entry,
+            knownBy: sortedByKey([...set], c => c.name),
+        }));
     }
 
     advanceFromPlanningView(ticks?: number) {

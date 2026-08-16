@@ -4,6 +4,7 @@ import { getAlignment } from "../relations/alignment";
 import { sumFun } from "../lib/basics";
 import { connectedClans } from "../relations/connection";
 import { getRelativeAttention } from "../relations/basicinteraction";
+import { recordFoodAid } from "../relations/information";
 
 export const AID_ALIGNMENT_THRESHOLD = -0.5;
 export const AID_FOOD_THRESHOLD = 0.8;
@@ -268,6 +269,7 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
                 }
 
                 req.requester.consumption.addDonation(donor, TradeGoods.Cereals, amount, 0);
+                recordFoodAid(donor, req.requester, amount);
 
                 const prevRec = totalReceivedByRequester.get(req.requester.uuid) ?? 0;
                 totalReceivedByRequester.set(req.requester.uuid, prevRec + amount);
