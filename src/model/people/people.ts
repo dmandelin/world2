@@ -22,6 +22,7 @@ import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
 import type { Year } from "../records/year";
 import { connectedClans, KinConnection } from "../relations/connection";
+import { divideInformationOnSplit } from "../relations/information";
 import { Stress } from "./stress";
 import { Distribution, StockOutflow, Consumption } from "../econ/flows";
 import { Stock } from "../econ/stock";
@@ -494,7 +495,10 @@ export class Clan implements TradePartner {
             KinConnection,
             () => new KinConnection(this.uuid, newClan.uuid)
         )
-        // TODO - Inherit relationships from the parent clan if applicable.
+        // Both clans are made of people who knew the neighbors, so divide what
+        // the undivided clan knew rather than letting the new one start blank.
+        divideInformationOnSplit(this, newClan);
+        // TODO - Inherit the rest of the relationships from the parent clan.
 
         // Plan for the new clan, since it didn't get a chance to during the main
         // planning phase. We don't need to update productivity because that happens

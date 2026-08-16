@@ -41,15 +41,18 @@ export class MemoryEventDef {
         // kind with high reach still travels no further than its small
         // instances deserve.
         readonly newsReach: number,
+        // Salience at or above which an event is unforgettable: when a clan
+        // splits, both successors carry it off, however the people divided.
+        readonly unforgettableSalience: number,
     ) { }
 }
 
 // Starter set; more will be added as event sources are moved over to the
 // ledger (rituals, construction, ...).
 export const MemoryEventDefs = {
-    Gift: new MemoryEventDef('gift', 'Gift', 10, 2),
-    Aid: new MemoryEventDef('aid', 'Aid', 20, 5),
-    Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 7),
+    Gift: new MemoryEventDef('gift', 'Gift', 10, 2, 0.25),
+    Aid: new MemoryEventDef('aid', 'Aid', 20, 5, 0.25),
+    Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 7, 0.2),
 };
 
 // One event is one event, however many clans end up holding a copy of it and
@@ -152,6 +155,10 @@ export class Memory {
             e => e.freshness(year) >= Memory.FORGET_THRESHOLD);
     }
 
+    keepOnly(predicate: (entry: MemoryEntry) => boolean): void {
+        this.entries_ = this.entries_.filter(predicate);
+    }
+
     clone(): Memory {
         const m = new Memory();
         // Entries are immutable, so sharing them is fine.
@@ -199,6 +206,11 @@ export type ObservationSpec = {
     // understanding that they have been neighbors for some time by then.
     seedStdev: number;
     seedConfidence: number;
+    // What a split costs each successor's impressions. The people are the
+    // same, but the ones who knew best may have gone the other way, so both
+    // sides come away with a blurrier idea, held less firmly.
+    splitStdev: number;
+    splitConfidenceFactor: number;
     // Range the quantity can take. Observers never perceive a value outside
     // it, however badly they misjudge, so blurred looks are held to it.
     min?: number;
@@ -217,6 +229,8 @@ export class ObservationDef {
     readonly staleHalfLife: number;
     readonly seedStdev: number;
     readonly seedConfidence: number;
+    readonly splitStdev: number;
+    readonly splitConfidenceFactor: number;
     readonly min: number;
     readonly max: number;
 
@@ -237,6 +251,8 @@ export class ObservationDef {
         this.staleHalfLife = spec.staleHalfLife;
         this.seedStdev = spec.seedStdev;
         this.seedConfidence = spec.seedConfidence;
+        this.splitStdev = spec.splitStdev;
+        this.splitConfidenceFactor = spec.splitConfidenceFactor;
         this.min = spec.min ?? -Infinity;
         this.max = spec.max ?? Infinity;
     }
@@ -302,6 +318,8 @@ export const ObservationDefs = {
         // assurance, but short of what a lifetime of close attention gives.
         seedStdev: 7,
         seedConfidence: 0.8,
+        splitStdev: 7,
+        splitConfidenceFactor: 0.6,
         min: 0,
         max: 100,
     }),
@@ -440,6 +458,18 @@ export class Observation {
         this.hops_ = 0;
     }
 
+    // Blur this impression as a clan coming out of a split holds it. The
+    // belief is the one the undivided clan had, but the members who knew it
+    // best may have gone the other way.
+    degradeForSplit(year: number): void {
+        if (this.confidence_ <= 0) return;
+        this.value_ = this.def.perceivable(
+            this.value_ + normal(0, this.def.splitStdev));
+        this.confidence_ *= this.def.splitConfidenceFactor;
+        this.lastUpdated_ = year;
+        this.fadedThrough_ = year;
+    }
+
     // Let an estimate we haven't refreshed go stale. Safe to call every turn:
     // decay is charged only for years not already charged for.
     fade(year: number): void {
@@ -511,6 +541,21 @@ export class Observations {
 
     fade(year: number): void {
         for (const o of this.m_.values()) o.fade(year);
+    }
+
+    degradeForSplit(year: number): void {
+        for (const o of this.m_.values()) o.degradeForSplit(year);
+    }
+
+    // Take on another set of impressions as a clan coming out of a split
+    // inherits them, blurred. Anything already held is replaced: a successor
+    // has no impressions of its own yet.
+    inheritDegraded(other: Observations, year: number): void {
+        for (const [key, o] of other.m_) {
+            const copy = o.clone();
+            copy.degradeForSplit(year);
+            this.m_.set(key, copy);
+        }
     }
 
     beginTurn(): void {
@@ -725,6 +770,85 @@ export function updateObservations(world: World): void {
     }
     passAlongObservations(world, year);
     observeDirectly(world, year);
+}
+
+// ---------------------------------------------------------------------------
+// Dividing what a clan knows when it splits.
+// ---------------------------------------------------------------------------
+
+// Share of the undivided clan's lesser memories a successor carries off. The
+// stories went wherever the people who told them went, so a group is unlikely
+// to keep much less than its size in them, and may well keep nearly all: the
+// same tale is usually known to more than one household.
+function splitKeepFraction(share: number): number {
+    const floor = share / 2;
+    return floor + Math.random() * (1 - floor);
+}
+
+function keptOnSplit(entry: MemoryEntry, keepFraction: number): boolean {
+    // Everyone who lived through the big things remembers them.
+    return entry.salience >= entry.def.unforgettableSalience
+        || Math.random() < keepFraction;
+}
+
+// Hand down what an undivided clan knew to the two clans it becomes.
+//
+// Both successors are made of people who knew the neighbors, so neither
+// starts over: they divide the parent's ledgers and each keep a blurred copy
+// of its impressions. The neighbors, for their part, knew these people too, so
+// their impressions of the parent carry over to the new clan.
+//
+// Note what is deliberately not inherited: the neighbors' *ledgers*. An event
+// happened between a neighbor and the undivided clan, and the parent still
+// stands as the party to it. Copying those entries onto the new clan as well
+// would have the neighbor counting the same aid twice.
+export function divideInformationOnSplit(parent: Clan, child: Clan): void {
+    const world = parent.world;
+    const year = world.year.value;
+    const total = parent.population + child.population;
+    const parentKeep = splitKeepFraction(total > 0 ? parent.population / total : 0.5);
+    const childKeep = splitKeepFraction(total > 0 ? child.population / total : 0.5);
+
+    // Snapshot before touching anything, since we add to the graph as we go.
+    const parentLedgers = [...world.perceptions.getFor(parent)]
+        .filter(([about]) => about !== child.uuid)
+        .map(([about, perceptions]) => [about, perceptions.information] as const);
+
+    for (const [about, information] of parentLedgers) {
+        const childInfo = world.perceptions.getOrCreate(child, about).information;
+
+        // Each side rolls for the lesser memories separately, so a story can
+        // go to both, to one, or be lost with the household that held it.
+        // Entries are immutable, so the two ledgers share whatever both kept.
+        for (const entry of information.memory.entries) {
+            if (keptOnSplit(entry, childKeep)) childInfo.memory.add(entry);
+        }
+        information.memory.keepOnly(entry => keptOnSplit(entry, parentKeep));
+
+        childInfo.observations.inheritDegraded(information.observations, year);
+        information.observations.degradeForSplit(year);
+    }
+
+    // The neighbors' side: they knew these people, so what they thought of the
+    // undivided clan is what they now think of the new one, allowing that the
+    // part that broke away may not be quite like the whole. Their impression
+    // of the parent stands as it is, since the parent is still itself.
+    const neighbors = [...world.perceptions.getRegarding(parent)]
+        .filter(([subject]) => subject !== child.uuid);
+    for (const [subject, perceptions] of neighbors) {
+        world.perceptions.getOrCreate(subject, child).information.observations
+            .inheritDegraded(perceptions.information.observations, year);
+    }
+
+    // Parent and child were one clan a moment ago and have no illusions about
+    // each other, whatever else they have lost.
+    for (const [subject, object] of [[parent, child], [child, parent]] as const) {
+        const observations =
+            world.perceptions.getOrCreate(subject, object).information.observations;
+        for (const def of ALL_OBSERVATION_DEFS) {
+            observations.seed(def, def.valueFn(object), def.seedConfidence, year);
+        }
+    }
 }
 
 // Clans don't meet as strangers when the world opens: they have been
