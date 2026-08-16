@@ -33,7 +33,8 @@ import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
 import { getPrestige, getLocalPrestige } from "../relations/prestige";
-import type { ClanInformation, Memory, MemoryEntry } from "../relations/information";
+import { ALL_OBSERVATION_DEFS } from "../relations/information";
+import type { ClanInformation, Memory, MemoryEntry, Observation, Observations } from "../relations/information";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
@@ -307,6 +308,15 @@ export class PlannedSettlementDTO {
 
 import type { FoodRedistributionResult } from "../econ/redistribution";
 
+// What one clan believes about one of another's qualities, next to the truth
+// of it, so that views can show how far off the impression is.
+export type Impression = {
+    subject: ClanDTO;
+    object: ClanDTO;
+    observation: Observation;
+    trueValue: number;
+};
+
 // One event, with every clan that knows of it and the version each holds.
 export type EventKnowledge = {
     // The best-informed copy, standing for the event itself.
@@ -437,6 +447,27 @@ export class WorldDTO {
 
     memoryToward(clan: ClanDTO, other: ClanDTO): Memory | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.information.memory;
+    }
+
+    observationsToward(clan: ClanDTO, other: ClanDTO): Observations | undefined {
+        return this.perceptions.get(clan.uuid, other.uuid)?.information.observations;
+    }
+
+    // Every impression held about the given pairing of clans, one per tracked
+    // quantity, skipping ones nobody has formed an impression of yet.
+    impressions(subject: ClanDTO, object: ClanDTO): Impression[] {
+        const observations = this.observationsToward(subject, object);
+        if (!observations) return [];
+        const out: Impression[] = [];
+        for (const def of ALL_OBSERVATION_DEFS) {
+            const observation = observations.get(def);
+            if (!observation) continue;
+            out.push({
+                subject, object, observation,
+                trueValue: def.valueFn(object.ref),
+            });
+        }
+        return out;
     }
 
     // Every ledger this clan keeps, by the clan it's about.

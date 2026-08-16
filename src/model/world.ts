@@ -23,7 +23,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
-import { propagateNews } from "./relations/information";
+import { propagateNews, seedObservations, updateObservations } from "./relations/information";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
 import { FoodGiftsResult, shareFoodGifts } from "./econ/gifts";
@@ -142,6 +142,13 @@ export class World implements NoteTaker {
 
         // Snapshot the starting state before anything advances.
         this.recorder?.record(this);
+
+        // Establish who deals with whom, then let the clans start out already
+        // knowing each other, as neighbors of long standing would.
+        this.planConnections();
+        updateBasicInteractions(this);
+        updatePerceptions(this);
+        seedObservations(this);
 
         // After this function, we should be able to show in the UI:
         // - End of turn state and intermediate values for the start year
@@ -333,9 +340,11 @@ export class World implements NoteTaker {
         updateMutualAidInteractions(this);
         // Update perceptions here so they can influence the rest of planning.
         updatePerceptions(this);
-        // Pass along last turn's news, now that this turn's interactions are
-        // set, so that what clans have heard can inform their planning.
+        // Pass along last turn's news and take a fresh look at each other, now
+        // that this turn's interactions are set, so that what clans have heard
+        // and noticed can inform their planning.
         propagateNews(this);
+        updateObservations(this);
 
         this.planMutualHelp();
 

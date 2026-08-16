@@ -1,9 +1,13 @@
 <script lang="ts">
-    import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
+    import type { ClanDTO, Impression, SettlementDTO } from "../model/records/dtos";
     import type { MemoryEntry } from "../model/relations/information";
     import { formatYear } from "../model/records/year";
     import { sortedByKey } from "../model/lib/basics";
-    import { pct, unsigned } from "../model/lib/format";
+    import { pct, signed, unsigned } from "../model/lib/format";
+    import type {
+        Observation,
+        ObservationUpdate,
+    } from "../model/relations/information";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
@@ -42,12 +46,16 @@
         return world.memoryToward(row, col)?.entries.length ?? 0;
     }
 
+    // A clan is never both sides of a pairing, so picking one side drops the
+    // other if they'd collide.
     function toggleSubject(clan: ClanDTO) {
         subject = subject?.uuid === clan.uuid ? undefined : clan;
+        if (subject && object?.uuid === subject.uuid) object = undefined;
     }
 
     function toggleObject(clan: ClanDTO) {
         object = object?.uuid === clan.uuid ? undefined : clan;
+        if (object && subject?.uuid === object.uuid) subject = undefined;
     }
 
     function selectCell(row: ClanDTO, col: ClanDTO) {
@@ -119,6 +127,48 @@
         return `${clanName(entry.actor)}${target}`;
     }
 
+    // One line per report that came in this turn, for the Heard tooltip.
+    function reportDetail(u: ObservationUpdate): string {
+        const teller = u.source ? clanName(u.source) : "own eyes";
+        const shift = u.valueAfter - u.valueBefore;
+        return (
+            `${teller}: said ${unsigned(u.reported, 1)}` +
+            ` (weight ${unsigned(u.weight, 3)}, agreement ${signed(u.agreement, 2)})` +
+            ` → belief ${unsigned(u.valueBefore, 1)} ${signed(shift, 1)}` +
+            `, confidence ${pct(u.confidenceBefore)} ${signed(u.confidenceAfter - u.confidenceBefore, 3)}`
+        );
+    }
+
+    function reportsTooltip(o: Observation): string {
+        const heard = o.reportsHeard;
+        if (heard.length === 0) return "Nothing heard from anyone this turn.";
+        return heard.map(reportDetail).join("\n");
+    }
+
+    function heardSummary(o: Observation): string {
+        const heard = o.reportsHeard;
+        if (heard.length === 0) return "—";
+        const mean =
+            heard.reduce((sum, u) => sum + u.reported, 0) / heard.length;
+        return `${heard.length} @ ${unsigned(mean, 1)}`;
+    }
+
+    // Net movement of the belief across everything taken in this turn.
+    function turnShift(o: Observation): number | undefined {
+        if (o.updates.length === 0) return undefined;
+        return (
+            o.updates[o.updates.length - 1].valueAfter - o.updates[0].valueBefore
+        );
+    }
+
+    function turnConfidenceShift(o: Observation): number | undefined {
+        if (o.updates.length === 0) return undefined;
+        return (
+            o.updates[o.updates.length - 1].confidenceAfter -
+            o.updates[0].confidenceBefore
+        );
+    }
+
     function hopsLabel(hops: number): string {
         if (hops === 0) return "firsthand";
         return `${hops} link${hops === 1 ? "" : "s"}`;
@@ -147,6 +197,23 @@
     function knowerLabel(k: { clan: ClanDTO; entry: MemoryEntry }): string {
         return `${k.clan.name} (${hopsLabel(k.entry.hops)})`;
     }
+
+    // Impressions to list, following the same subject/object selection as the
+    // events below them.
+    let impressions = $derived.by((): Impression[] => {
+        if (subj && obj) return world.impressions(subj, obj);
+        if (subj) {
+            return axisClans
+                .filter((c) => c.uuid !== subj!.uuid)
+                .flatMap((c) => world.impressions(subj!, c));
+        }
+        if (obj) {
+            return axisClans
+                .filter((c) => c.uuid !== obj!.uuid)
+                .flatMap((c) => world.impressions(c, obj!));
+        }
+        return [];
+    });
 
     let listingTitle = $derived.by(() => {
         if (subj && obj) return `What ${subj.name} knows about ${obj.name}`;
@@ -241,6 +308,91 @@
     </div>
 
     {#if subj || obj}
+        <h4 style="margin: 1.5rem 0 0.5rem 0;">Impressions</h4>
+        {#if impressions.length === 0}
+            <p style="font-size: 0.9rem; color: #666;">
+                No impressions formed yet.
+            </p>
+        {:else}
+            <div class="table-container">
+                <table class="events impressions">
+                    <thead>
+                        <tr>
+                            {#if !subj}<th>Held by</th>{/if}
+                            {#if !obj}<th>About</th>{/if}
+                            <th>Quality</th>
+                            <th class="num">Saw</th>
+                            <th class="num">Heard</th>
+                            <th class="num">Thinks</th>
+                            <th class="num">Moved</th>
+                            <th class="num">Confidence</th>
+                            <th class="num">Actually</th>
+                            <th class="num">Off by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each impressions as im}
+                            {@const o = im.observation}
+                            {@const own = o.ownLook}
+                            {@const shift = turnShift(o)}
+                            {@const confShift = turnConfidenceShift(o)}
+                            <tr>
+                                {#if !subj}<td>{im.subject.name}</td>{/if}
+                                {#if !obj}<td>{im.object.name}</td>{/if}
+                                <td>{o.def.label}</td>
+                                <td
+                                    class="num"
+                                    title={own
+                                        ? reportDetail(own)
+                                        : "No direct look this turn."}
+                                    >{own ? unsigned(own.reported, 1) : "—"}</td
+                                >
+                                <td
+                                    class="num {o.reportsHeard.length
+                                        ? 'heard'
+                                        : ''}"
+                                    title={reportsTooltip(o)}
+                                    >{heardSummary(o)}</td
+                                >
+                                <td
+                                    class="num"
+                                    title="Running belief {unsigned(
+                                        o.value,
+                                        1,
+                                    )}, pulled toward the prior of {o.def
+                                        .prior} by less-than-full confidence"
+                                    >{unsigned(o.estimate, 1)}</td
+                                >
+                                <td class="num"
+                                    >{shift === undefined
+                                        ? "—"
+                                        : signed(shift, 1)}</td
+                                >
+                                <td class="num">
+                                    {pct(o.confidence)}
+                                    {#if confShift !== undefined && Math.abs(confShift) >= 0.0005}
+                                        <span
+                                            class={confShift < 0
+                                                ? "conf-down"
+                                                : "conf-up"}
+                                            >{signed(confShift * 100, 1)}</span
+                                        >
+                                    {/if}
+                                </td>
+                                <td class="num">{unsigned(im.trueValue, 0)}</td>
+                                <td class="num"
+                                    >{unsigned(
+                                        Math.abs(o.estimate - im.trueValue),
+                                        1,
+                                    )}</td
+                                >
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+        {/if}
+
         <h4 style="margin: 1.5rem 0 0.5rem 0;">
             {listingTitle}
             <span style="font-weight: normal; color: #666;"
@@ -374,6 +526,19 @@
     }
     .events .num {
         text-align: right;
+    }
+    /* Cells whose tooltip has the reports behind them. */
+    .events .heard {
+        cursor: help;
+        text-decoration: underline dotted #a89772;
+    }
+    .conf-up {
+        color: #2f6b2f;
+        font-size: 0.85em;
+    }
+    .conf-down {
+        color: #b30000;
+        font-size: 0.85em;
     }
     .clear-btn {
         all: unset;

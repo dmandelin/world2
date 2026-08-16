@@ -4,6 +4,7 @@ import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
 import { pct } from "../lib/format";
+import { normal } from "../lib/distributions";
 import type { UUID } from "../records/basicdata";
 import type { World } from "../world";
 
@@ -163,30 +164,183 @@ export class Memory {
 // Observations: state tracking.
 // ---------------------------------------------------------------------------
 
+// How an impression of one quantity forms and spreads. The estimate is a
+// running average of yearly impressions, so two numbers set the accuracy: how
+// blurred a single year's look is, and how much of it is folded in. A look of
+// spread S folded in at weight w settles at an error of S·√(w/(2-w)), which is
+// how a clan can start out with only a rough idea and sharpen it over years of
+// acquaintance without ever seeing more clearly in one year than it should.
+export type ObservationSpec = {
+    // Value assumed about a clan we know nothing about.
+    prior: number;
+    // Spread of a single year's impression at full attention. Less attention
+    // blurs it further, as the square of the shortfall.
+    lookStdev: number;
+    // How much a year's impression at full attention moves the estimate, and
+    // so also how fast confidence builds.
+    lookWeight: number;
+    // Attention below which the quantity goes unremarked entirely, unless the
+    // value itself is conspicuous.
+    attentionThreshold: number;
+    // A value this high gets noticed however little attention is being paid.
+    conspicuousAbove: number;
+    // Share of the attention paid to a clan that gets spent discussing this
+    // quality of it. At 1, even an unremarkable value comes up about as often
+    // as the clan is attended to at all; qualities that simply don't come up
+    // in conversation get less.
+    chatter: number;
+    // How far from the prior a value has to be to be worth mentioning for its
+    // own sake. At this far it starts travelling on its own merits; at twice
+    // this far it travels regardless of who is being discussed.
+    notableDeviation: number;
+    // Years for confidence in an unrefreshed estimate to halve.
+    staleHalfLife: number;
+    // What clans already know of each other when the world opens, on the
+    // understanding that they have been neighbors for some time by then.
+    seedStdev: number;
+    seedConfidence: number;
+    // Range the quantity can take. Observers never perceive a value outside
+    // it, however badly they misjudge, so blurred looks are held to it.
+    min?: number;
+    max?: number;
+};
+
 // A quantity clans form impressions of about each other.
 export class ObservationDef {
+    readonly prior: number;
+    readonly lookStdev: number;
+    readonly lookWeight: number;
+    readonly attentionThreshold: number;
+    readonly conspicuousAbove: number;
+    readonly chatter: number;
+    readonly notableDeviation: number;
+    readonly staleHalfLife: number;
+    readonly seedStdev: number;
+    readonly seedConfidence: number;
+    readonly min: number;
+    readonly max: number;
+
     constructor(
         readonly key: string,
         readonly label: string,
-        // Value assumed about a clan we know nothing about.
-        readonly prior: number,
-        // How readily an impression forms from a given amount of contact, and
-        // how readily news of it travels a link.
-        readonly salience: number,
-        // Years for confidence in an unrefreshed estimate to halve.
-        readonly staleHalfLife: number,
-    ) { }
+        // The truth of the matter, which observers only ever see blurred.
+        readonly valueFn: (clan: Clan) => number,
+        spec: ObservationSpec,
+    ) {
+        this.prior = spec.prior;
+        this.lookStdev = spec.lookStdev;
+        this.lookWeight = spec.lookWeight;
+        this.attentionThreshold = spec.attentionThreshold;
+        this.conspicuousAbove = spec.conspicuousAbove;
+        this.chatter = spec.chatter;
+        this.notableDeviation = spec.notableDeviation;
+        this.staleHalfLife = spec.staleHalfLife;
+        this.seedStdev = spec.seedStdev;
+        this.seedConfidence = spec.seedConfidence;
+        this.min = spec.min ?? -Infinity;
+        this.max = spec.max ?? Infinity;
+    }
+
+    // A blurred value as it would actually be perceived: nobody reads a clan's
+    // piety as 121, however poor a look they got.
+    perceivable(value: number): number {
+        return clamp(value, this.min, this.max);
+    }
+
+    // Spread of a year's impression at this much attention.
+    lookStdevAt(attention: number): number {
+        return this.lookStdev / (attention * attention);
+    }
+
+    // Whether the quantity registers at all at this much attention.
+    registers(attention: number, trueValue: number): boolean {
+        return attention >= this.attentionThreshold
+            || trueValue >= this.conspicuousAbove;
+    }
+
+    // Chance that a clan's impression of this quality comes up in a
+    // conversation and gets passed along.
+    //
+    // Two ways it can surface. A quality of a clan one deals with regularly
+    // comes up simply because that clan is on one's mind, at a rate set by how
+    // much attention it gets and how interesting the quality is to talk about.
+    // Separately, a value far enough from the ordinary is worth mentioning for
+    // its own sake, whoever it is about — which is what lets a striking fact
+    // travel even from someone who has since lost touch with the subject.
+    transmissionChance(attentionToSubject: number, value: number): number {
+        const routine = clamp(this.chatter * attentionToSubject, 0, 1);
+        const striking = clamp(
+            (Math.abs(value - this.prior) - this.notableDeviation)
+            / this.notableDeviation,
+            0, 1);
+        return 1 - (1 - routine) * (1 - striking);
+    }
 }
 
-// Starter set. Skills will need one def per skill, and QoL one per component;
-// those get added as each is moved over to observations.
+// Only piety so far. Population, skills, and QoL follow the same shape and
+// get added as each is moved over to observations.
 export const ObservationDefs = {
-    Population: new ObservationDef('population', 'Population', 0, 1, 40),
-    Sociability: new ObservationDef('sociability', 'Sociability', 0, 1, 20),
-    Piety: new ObservationDef('piety', 'Piety', 50, 0.3, 30),
-    Intellect: new ObservationDef('intellect', 'Intellect', 50, 0.2, 30),
-    MaterialQoL: new ObservationDef('materialQoL', 'Material QoL', 0, 0.3, 15),
+    Piety: new ObservationDef('piety', 'Piety', clan => clan.traits.piety, {
+        prior: 50,
+        // A year of close acquaintance places a clan's piety to within about
+        // 15, and averaging those years settles at about 5.
+        lookStdev: 15,
+        lookWeight: 0.2,
+        // Below a fifth of one's attention a clan's devotions go unremarked,
+        // unless they are conspicuous enough to be impossible to miss.
+        attentionThreshold: 0.2,
+        conspicuousAbove: 80,
+        // People take a lively interest in their neighbors' devotions, so even
+        // unremarkable piety comes up about as often as the neighbor does.
+        // Qualities that matter less locally will want less than this.
+        chatter: 1,
+        // The notably devout or notably slack get talked about on their own
+        // account.
+        notableDeviation: 15,
+        staleHalfLife: 30,
+        // Years of being neighbors already: a fair idea, held with some
+        // assurance, but short of what a lifetime of close attention gives.
+        seedStdev: 7,
+        seedConfidence: 0.8,
+        min: 0,
+        max: 100,
+    }),
 };
+
+export const ALL_OBSERVATION_DEFS: readonly ObservationDef[] =
+    Object.values(ObservationDefs);
+
+// What a report at second hand is worth next to seeing for oneself, at equal
+// attention.
+export const HEARSAY_WEIGHT = 0.5;
+
+// How far off a report can land before it stops counting as corroboration,
+// measured in the spreads we'd expect a report of its kind to have. Inside one
+// spread a report is broadly confirming; past two it starts to look like the
+// other clan is talking about someone else.
+export const AGREEMENT_TOLERANCE_SPREADS = 2;
+
+// One piece of evidence as it landed: what was reported, how it squared with
+// what was already believed, and what it did to the estimate. Kept for the
+// current turn only, so that a view can show how an impression got where it is.
+export class ObservationUpdate {
+    constructor(
+        // Clan whose report this was, or undefined for the observer's own eyes.
+        readonly source: UUID | undefined,
+        readonly hops: number,
+        readonly reported: number,
+        readonly weight: number,
+        // How well it squared with what was already believed: 1 dead on, 0
+        // neither here nor there, -1 flatly contradictory.
+        readonly agreement: number,
+        readonly valueBefore: number,
+        readonly valueAfter: number,
+        readonly confidenceBefore: number,
+        readonly confidenceAfter: number,
+    ) { }
+
+    get isFirsthand(): boolean { return this.source === undefined; }
+}
 
 // A running estimate of one quantity, with how sure we are of it.
 export class Observation {
@@ -198,6 +352,7 @@ export class Observation {
     // every turn costs the same as fading once over the same span.
     private fadedThrough_: number | undefined;
     private hops_ = 0;
+    private updates_: ObservationUpdate[] = [];
 
     constructor(readonly def: ObservationDef) {
         this.value_ = def.prior;
@@ -210,6 +365,16 @@ export class Observation {
     get lastUpdated(): number | undefined { return this.lastUpdated_; }
     // Links crossed by the evidence behind the current estimate.
     get hops(): number { return this.hops_; }
+    // Everything that came in this turn, in the order it was taken in.
+    get updates(): readonly ObservationUpdate[] { return this.updates_; }
+
+    get ownLook(): ObservationUpdate | undefined {
+        return this.updates_.find(u => u.isFirsthand);
+    }
+
+    get reportsHeard(): ObservationUpdate[] {
+        return this.updates_.filter(u => !u.isFirsthand);
+    }
 
     // The estimate to actually act on: what we believe, pulled back toward
     // the prior by however unsure we are.
@@ -218,18 +383,61 @@ export class Observation {
             + (1 - this.confidence_) * this.def.prior;
     }
 
+    // Forget last turn's provenance, so a view never shows stale workings.
+    beginTurn(): void {
+        if (this.updates_.length) this.updates_ = [];
+    }
+
     // Fold in new evidence. `weight` in [0, 1] is how far to move toward the
     // reported value: it stands in for both how good a look we got and how
-    // much we trust the teller. This is the seam where conflicting reports
-    // get integrated, so it will grow more sophisticated.
-    observe(value: number, weight: number, year: number, hops: number = 0): void {
+    // much we trust the teller. `spread` is how far off a report like this one
+    // is expected to land, which is what says whether a difference from what
+    // we already believed is ordinary noise or a real disagreement.
+    observe(
+        reported: number,
+        weight: number,
+        year: number,
+        hops: number,
+        spread: number,
+        source?: UUID,
+    ): void {
         const w = clamp(weight, 0, 1);
         if (w <= 0) return;
-        this.value_ = (1 - w) * this.value_ + w * value;
-        this.confidence_ = this.confidence_ + (1 - this.confidence_) * w;
+
+        const valueBefore = this.value_;
+        const confidenceBefore = this.confidence_;
+
+        // With nothing yet believed there is nothing to square the report
+        // against, so a first report is taken at face value.
+        const agreement = this.confidence_ <= 0 ? 1 : clamp(
+            1 - Math.abs(reported - this.value_)
+                / (AGREEMENT_TOLERANCE_SPREADS * Math.max(spread, 1e-6)),
+            -1, 1);
+
+        this.value_ = (1 - w) * this.value_ + w * reported;
+        // Corroboration firms up a judgment; a report that doesn't square with
+        // what we thought shakes it, in proportion to how much we credit the
+        // report and how far off it was.
+        this.confidence_ += agreement >= 0
+            ? (1 - this.confidence_) * w * agreement
+            : this.confidence_ * w * agreement;
+
         this.lastUpdated_ = year;
         this.fadedThrough_ = year;
         this.hops_ = hops;
+        this.updates_.push(new ObservationUpdate(
+            source, hops, reported, w, agreement,
+            valueBefore, this.value_, confidenceBefore, this.confidence_));
+    }
+
+    // Plant a starting impression for clans taken to be already acquainted.
+    // Not evidence anyone gathered, so it leaves no provenance behind.
+    seed(value: number, confidence: number, year: number): void {
+        this.value_ = value;
+        this.confidence_ = clamp(confidence, 0, 1);
+        this.lastUpdated_ = year;
+        this.fadedThrough_ = year;
+        this.hops_ = 0;
     }
 
     // Let an estimate we haven't refreshed go stale. Safe to call every turn:
@@ -250,6 +458,8 @@ export class Observation {
         o.lastUpdated_ = this.lastUpdated_;
         o.fadedThrough_ = this.fadedThrough_;
         o.hops_ = this.hops_;
+        // Updates are immutable, so sharing them is fine.
+        o.updates_ = this.updates_;
         return o;
     }
 }
@@ -283,12 +493,28 @@ export class Observations {
         return this.m_.get(def.key)?.confidence ?? 0;
     }
 
-    observe(def: ObservationDef, value: number, weight: number, year: number, hops: number = 0): void {
-        this.getOrCreate(def).observe(value, weight, year, hops);
+    observe(
+        def: ObservationDef,
+        reported: number,
+        weight: number,
+        year: number,
+        hops: number,
+        spread: number,
+        source?: UUID,
+    ): void {
+        this.getOrCreate(def).observe(reported, weight, year, hops, spread, source);
+    }
+
+    seed(def: ObservationDef, value: number, confidence: number, year: number): void {
+        this.getOrCreate(def).seed(value, confidence, year);
     }
 
     fade(year: number): void {
         for (const o of this.m_.values()) o.fade(year);
+    }
+
+    beginTurn(): void {
+        for (const o of this.m_.values()) o.beginTurn();
     }
 
     clone(): Observations {
@@ -479,5 +705,152 @@ function fileHeardEvent(world: World, hearer: Clan, entry: MemoryEntry): void {
         if (!about || about === hearer.uuid) continue;
         const perceptions = world.perceptions.get(hearer, about);
         perceptions?.information.memory.add(entry);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Forming impressions.
+// ---------------------------------------------------------------------------
+
+// Take a year's look at everyone we deal with, and pass along what's worth
+// remarking on. Hearsay goes first so that a clan's own eyes have the last
+// word, both on the estimate and on how far off the evidence behind it came
+// from.
+export function updateObservations(world: World): void {
+    const year = world.year.value;
+    for (const clan of world.allClans) {
+        for (const [, perceptions] of world.perceptions.getFor(clan)) {
+            perceptions.information.observations.beginTurn();
+        }
+    }
+    passAlongObservations(world, year);
+    observeDirectly(world, year);
+}
+
+// Clans don't meet as strangers when the world opens: they have been
+// neighbors long enough to have each other's measure. Without this the game
+// would start with everyone guessing the prior about everyone else and spend
+// its first decades catching up to what they already ought to know.
+export function seedObservations(world: World): void {
+    const year = world.year.value;
+    for (const subject of world.allClans) {
+        for (const [objectID, perceptions] of world.perceptions.getFor(subject)) {
+            const object = world.clanMap.get(objectID);
+            if (!object) continue;
+            for (const def of ALL_OBSERVATION_DEFS) {
+                perceptions.information.observations.seed(
+                    def,
+                    def.perceivable(def.valueFn(object) + normal(0, def.seedStdev)),
+                    def.seedConfidence,
+                    year);
+            }
+        }
+    }
+}
+
+function observeDirectly(world: World, year: number): void {
+    for (const subject of world.allClans) {
+        for (const [objectID, perceptions] of world.perceptions.getFor(subject)) {
+            const object = world.clanMap.get(objectID);
+            if (!object) continue;
+            const attention = clamp(getRelativeAttention(subject, object), 0, 1);
+            if (attention <= 0) continue;
+
+            for (const def of ALL_OBSERVATION_DEFS) {
+                const trueValue = def.valueFn(object);
+                if (!def.registers(attention, trueValue)) continue;
+                const spread = def.lookStdevAt(attention);
+                perceptions.information.observations.observe(
+                    def,
+                    def.perceivable(trueValue + normal(0, spread)),
+                    def.lookWeight * attention,
+                    year,
+                    0,
+                    spread);
+            }
+        }
+    }
+}
+
+// Something one clan could tell another, and how likely it is to come up.
+type Tellable = {
+    def: ObservationDef,
+    held: Observation,
+    about: UUID,
+    // Chance per conversation that this particular subject comes up, which
+    // depends on the teller and the clan discussed but not on who is
+    // listening.
+    chance: number,
+};
+
+// Clans tell each other what they've noticed, one link. Only firsthand
+// impressions get retold; whether one comes up at all depends on how much the
+// teller deals with the clan in question and how striking the value is.
+function passAlongObservations(world: World, year: number): void {
+    const tellable = new Map<UUID, Tellable[]>();
+    for (const teller of world.allClans) {
+        const items: Tellable[] = [];
+        for (const [aboutID, perceptions] of world.perceptions.getFor(teller)) {
+            const about = world.clanMap.get(aboutID);
+            if (!about) continue;
+            const attentionToSubject =
+                clamp(getRelativeAttention(teller, about), 0, 1);
+            for (const def of ALL_OBSERVATION_DEFS) {
+                const held = perceptions.information.observations.get(def);
+                if (!held || held.hops !== 0 || held.confidence <= 0) continue;
+                const chance = def.transmissionChance(attentionToSubject, held.estimate);
+                if (chance <= 0) continue;
+                items.push({ def, held, about: aboutID, chance });
+            }
+        }
+        if (items.length) tellable.set(teller.uuid, items);
+    }
+    if (!tellable.size) return;
+
+    // Collect first and apply afterward, so that what gets around doesn't
+    // depend on the order clans happen to come up in, and so that a teller
+    // reports what it believed at the start of the turn.
+    const reports: {
+        observations: Observations,
+        def: ObservationDef,
+        value: number,
+        weight: number,
+        spread: number,
+        teller: UUID,
+    }[] = [];
+
+    for (const hearer of world.allClans) {
+        for (const [tellerID] of world.perceptions.getFor(hearer)) {
+            const items = tellable.get(tellerID);
+            if (!items) continue;
+            const teller = world.clanMap.get(tellerID);
+            if (!teller) continue;
+            const attention = clamp(getRelativeAttention(hearer, teller), 0, 1);
+            if (attention <= 0) continue;
+
+            for (const { def, held, about, chance } of items) {
+                // Nobody needs to be told about themselves, and a hearer with
+                // no relationship to the subject has nowhere to file it.
+                if (about === hearer.uuid) continue;
+                const hearerPerceptions = world.perceptions.get(hearer, about);
+                if (!hearerPerceptions) continue;
+                if (Math.random() >= chance) continue;
+
+                // How far off a retold value lands: one look's worth of
+                // garbling, plus however unsure the teller was to start.
+                reports.push({
+                    observations: hearerPerceptions.information.observations,
+                    def,
+                    value: def.perceivable(held.estimate + normal(0, def.lookStdev)),
+                    weight: def.lookWeight * attention * held.confidence * HEARSAY_WEIGHT,
+                    spread: def.lookStdev * (2 - held.confidence),
+                    teller: tellerID,
+                });
+            }
+        }
+    }
+
+    for (const r of reports) {
+        r.observations.observe(r.def, r.value, r.weight, year, 1, r.spread, r.teller);
     }
 }
