@@ -133,11 +133,11 @@ x   Introduce information concept for a clan to know stuff about
     x   State
 *   Move direct info to ledger
     *   Gifts
-    *   Aid
+    x   Aid
     *   Conflicts
     *   (Construction)
 *   Move indirect event info to ledger
-    *   Aid
+    x   Aid
     *   Conflicts
     *   (Gifts)
     *   (Rituals)
@@ -150,3 +150,11 @@ x   Introduce information concept for a clan to know stuff about
     *   Skills
     *   QoL
     *   (Signals/displays)
+*   Followups
+    *   Somehow deal with the fact that a clan is not
+        literally going to remember 53 separate instances
+        of food aid
+    *   Get correct cutoffs and final forgetting deadlines
+        In part to control size
+    *   Have clans keep memory for a while if temporarily
+        disconnected

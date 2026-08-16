@@ -23,6 +23,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
+import { propagateNews } from "./relations/information";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
 import { FoodGiftsResult, shareFoodGifts } from "./econ/gifts";
@@ -332,6 +333,9 @@ export class World implements NoteTaker {
         updateMutualAidInteractions(this);
         // Update perceptions here so they can influence the rest of planning.
         updatePerceptions(this);
+        // Pass along last turn's news, now that this turn's interactions are
+        // set, so that what clans have heard can inform their planning.
+        propagateNews(this);
 
         this.planMutualHelp();
 

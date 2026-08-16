@@ -307,6 +307,13 @@ export class PlannedSettlementDTO {
 
 import type { FoodRedistributionResult } from "../econ/redistribution";
 
+// One event, with every clan that knows of it and the version each holds.
+export type EventKnowledge = {
+    // The best-informed copy, standing for the event itself.
+    entry: MemoryEntry;
+    knownBy: { clan: ClanDTO, entry: MemoryEntry }[];
+};
+
 export class WorldDTO {
     readonly year: string;
     // Numeric form of the year, for computing ages of remembered events.
@@ -454,16 +461,24 @@ export class WorldDTO {
     //
     // An event involving a clan is only ever filed in a ledger where that clan
     // is the subject or the object, so the perceptions graph's two indexes
-    // between them cover all of them without a scan. Everyone party to an
-    // event shares one entry object, so identity coalesces the copies.
-    eventsInvolving(clan: ClanDTO): { entry: MemoryEntry, knownBy: ClanDTO[] }[] {
-        const knowers = new Map<MemoryEntry, Set<ClanDTO>>();
+    // between them cover all of them without a scan. Copies of one event are
+    // coalesced by event id; the copy shown is the best-informed one, since
+    // the copies differ in how far they travelled to get where they are.
+    eventsInvolving(clan: ClanDTO): EventKnowledge[] {
+        const events = new Map<number, { entry: MemoryEntry, knownBy: Map<ClanDTO, MemoryEntry> }>();
         const collect = (knower: ClanDTO, memory: Memory) => {
             for (const entry of memory.entries) {
                 if (entry.actor !== clan.uuid && entry.target !== clan.uuid) continue;
-                let set = knowers.get(entry);
-                if (!set) knowers.set(entry, set = new Set());
-                set.add(knower);
+                const event = events.get(entry.eventId);
+                if (!event) {
+                    events.set(entry.eventId, { entry, knownBy: new Map([[knower, entry]]) });
+                    continue;
+                }
+                // A knower can hold one event in two ledgers, one per party;
+                // either copy will do, but prefer the better-informed one.
+                const held = event.knownBy.get(knower);
+                if (!held || entry.hops < held.hops) event.knownBy.set(knower, entry);
+                if (entry.hops < event.entry.hops) event.entry = entry;
             }
         };
         for (const [subject, memory] of this.memoriesRegarding(clan)) {
@@ -473,9 +488,11 @@ export class WorldDTO {
         for (const [, memory] of this.memoriesFor(clan)) {
             collect(clan, memory);
         }
-        return [...knowers].map(([entry, set]) => ({
+        return [...events.values()].map(({ entry, knownBy }) => ({
             entry,
-            knownBy: sortedByKey([...set], c => c.name),
+            knownBy: sortedByKey(
+                [...knownBy].map(([clan, entry]) => ({ clan, entry })),
+                k => k.clan.name),
         }));
     }
 

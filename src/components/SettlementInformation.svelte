@@ -65,7 +65,7 @@
     type Row = {
         entry: MemoryEntry;
         about: ClanDTO | undefined;
-        knownBy: ClanDTO[];
+        knownBy: { clan: ClanDTO; entry: MemoryEntry }[];
     };
 
     function byYearDesc(rows: Row[]): Row[] {
@@ -117,6 +117,35 @@
     function description(entry: MemoryEntry): string {
         const target = entry.target ? ` → ${clanName(entry.target)}` : "";
         return `${clanName(entry.actor)}${target}`;
+    }
+
+    function hopsLabel(hops: number): string {
+        if (hops === 0) return "firsthand";
+        return `${hops} link${hops === 1 ? "" : "s"}`;
+    }
+
+    function source(entry: MemoryEntry): string {
+        if (entry.hops === 0) return "firsthand";
+        return `${hopsLabel(entry.hops)}${entry.via ? ` (via ${clanName(entry.via)})` : ""}`;
+    }
+
+    // How the news is spread across the clans that have it, since the
+    // coalesced row stands for copies at different removes.
+    function sourceSpread(row: Row): string {
+        const byHops = new Map<number, number>();
+        for (const k of row.knownBy) {
+            byHops.set(k.entry.hops, (byHops.get(k.entry.hops) ?? 0) + 1);
+        }
+        return [...byHops]
+            .sort((a, b) => a[0] - b[0])
+            .map(([hops, n]) =>
+                hops === 0 ? `${n} firsthand` : `${n} at ${hopsLabel(hops)}`,
+            )
+            .join(", ");
+    }
+
+    function knowerLabel(k: { clan: ClanDTO; entry: MemoryEntry }): string {
+        return `${k.clan.name} (${hopsLabel(k.entry.hops)})`;
     }
 
     let listingTitle = $derived.by(() => {
@@ -251,11 +280,11 @@
                                 {#if obj && !subj}
                                     <td
                                         title={row.knownBy
-                                            .map((c) => c.name)
+                                            .map(knowerLabel)
                                             .join(", ")}
                                     >
                                         {row.knownBy.length}: {row.knownBy
-                                            .map((c) => c.name)
+                                            .map((k) => k.clan.name)
                                             .join(", ")}
                                     </td>
                                 {/if}
@@ -267,13 +296,7 @@
                                 >
                                 <td class="num">{unsigned(e.salience, 2)}</td>
                                 <td>
-                                    {#if e.hops === 0}
-                                        firsthand
-                                    {:else}
-                                        {e.hops} link{e.hops === 1 ? "" : "s"}{e.via
-                                            ? ` (via ${clanName(e.via)})`
-                                            : ""}
-                                    {/if}
+                                    {obj && !subj ? sourceSpread(row) : source(e)}
                                 </td>
                             </tr>
                         {/each}

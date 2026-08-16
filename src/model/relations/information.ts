@@ -2,9 +2,10 @@ import { clamp, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
-import { BasicInteraction } from "./basicinteraction";
+import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
 import { pct } from "../lib/format";
 import type { UUID } from "../records/basicdata";
+import type { World } from "../world";
 
 // What one clan knows about another comes in two flavors:
 //
@@ -33,19 +34,28 @@ export class MemoryEventDef {
         readonly label: string,
         // Years for a remembered event's weight to halve.
         readonly halfLife: number,
-        // Baseline tendency for news of this kind to be passed along a link.
-        // Scaled per-event by how big the event was.
-        readonly salience: number,
+        // How far news of this kind carries beyond the base rate set by
+        // attention. See MemoryEntry.transmissionChance for what the number
+        // means; it is multiplied by the individual event's salience, so a
+        // kind with high reach still travels no further than its small
+        // instances deserve.
+        readonly newsReach: number,
     ) { }
 }
 
 // Starter set; more will be added as event sources are moved over to the
 // ledger (rituals, construction, ...).
 export const MemoryEventDefs = {
-    Gift: new MemoryEventDef('gift', 'Gift', 10, 0.2),
-    Aid: new MemoryEventDef('aid', 'Aid', 20, 0.5),
-    Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 0.7),
+    Gift: new MemoryEventDef('gift', 'Gift', 10, 2),
+    Aid: new MemoryEventDef('aid', 'Aid', 20, 5),
+    Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 7),
 };
+
+// One event is one event, however many clans end up holding a copy of it and
+// however garbled those copies get. Copies share an id so that views (and,
+// later, clans integrating conflicting reports) can tell one event told twice
+// from two events.
+let nextEventId = 1;
 
 // One remembered event. Immutable: what a clan believes about an event it has
 // already filed away doesn't change, it only fades.
@@ -61,8 +71,10 @@ export class MemoryEntry {
         readonly target: UUID | undefined,
         // Size of the event in its own natural units (e.g. food given).
         readonly magnitude: number,
-        // How striking the event was, roughly 0-1. Set by whatever recorded
-        // the event, since only it knows what counts as big for its kind.
+        // How striking the event was, on a scale where 1 is "a big deal of
+        // its kind". Set by whatever recorded the event, since only it knows
+        // what counts as big for its kind, and not capped: a truly enormous
+        // event should be able to say so.
         readonly salience: number,
         // Links the news crossed to get here. 0 means witnessed or
         // experienced directly.
@@ -70,6 +82,8 @@ export class MemoryEntry {
         // Clan we heard it from, if we didn't see it ourselves.
         readonly via: UUID | undefined,
         readonly explanation: string = '',
+        // Shared by every copy of the same underlying event.
+        readonly eventId: number = nextEventId++,
     ) { }
 
     // Fraction of the original impression still remaining in the given year.
@@ -83,10 +97,28 @@ export class MemoryEntry {
         return this.magnitude * this.freshness(year);
     }
 
-    // How likely this is to come up and be passed along now. Used when we
-    // start transmitting news over links.
-    newsworthiness(year: number): number {
-        return this.def.salience * this.salience * this.freshness(year);
+    // Chance that a clan paying this much attention to someone who knows of
+    // this event picks it up from them.
+    //
+    // The shape is 1 - (1 - attention)^(1 + reach), which gives us what we
+    // want at both ends. For a forgettable event reach is ~0 and the chance is
+    // just the attention: half an eye on a neighbor means half their small
+    // news. As the event gets bigger the exponent climbs and the chance runs
+    // to 1, so a clan that gives away two days' food per head is talked about
+    // even by those barely paying attention. Full attention hears everything,
+    // and no attention hears nothing, at any size.
+    transmissionChance(attention: number): number {
+        if (attention <= 0) return 0;
+        if (attention >= 1) return 1;
+        const reach = this.def.newsReach * Math.max(0, this.salience);
+        return 1 - Math.pow(1 - attention, 1 + reach);
+    }
+
+    // This event as the hearer files it: same event, one more link away.
+    retold(via: UUID): MemoryEntry {
+        return new MemoryEntry(
+            this.def, this.year, this.actor, this.target, this.magnitude,
+            this.salience, this.hops + 1, via, this.explanation, this.eventId);
     }
 }
 
@@ -355,7 +387,7 @@ export function recordDirectEvent(a: Clan, b: Clan, entry: MemoryEntry): void {
 export function recordFoodAid(donor: Clan, recipient: Clan, amount: number): void {
     if (amount <= 0) return;
     // Aid looms as large as it mattered to the recipient: a day's food per
-    // head is unforgettable, a token is barely worth mentioning.
+    // head is a big deal, a token is barely worth mentioning.
     const perCapita = amount / Math.max(1, recipient.population);
     recordDirectEvent(donor, recipient, new MemoryEntry(
         MemoryEventDefs.Aid,
@@ -363,9 +395,89 @@ export function recordFoodAid(donor: Clan, recipient: Clan, amount: number): voi
         donor.uuid,
         recipient.uuid,
         amount,
-        clamp(perCapita, 0, 1),
+        perCapita,
         0,
         undefined,
         `${amount.toFixed(1)} food (${perCapita.toFixed(2)}/person)`,
     ));
+}
+
+// ---------------------------------------------------------------------------
+// Passing news along.
+// ---------------------------------------------------------------------------
+
+// How long an event stays news. Events get their chance to spread on the turn
+// after they happen and are old hat after that, which is what keeps one round
+// of gossip per event rather than an endless trickle of stale trivia.
+export const NEWS_WINDOW_YEARS = 1;
+
+// Spread news one link. A clan that took part in an event tells the clans it
+// interacts with, in proportion to how closely they interact and how big the
+// event was; only firsthand accounts are retold, so news currently reaches at
+// most the neighbors of a participant.
+export function propagateNews(world: World): void {
+    const now = world.year.value;
+
+    // What each clan can currently pass on: its own firsthand accounts, while
+    // they are still news. Gathered once, since each is offered to several
+    // hearers.
+    const tellable = new Map<UUID, MemoryEntry[]>();
+    for (const teller of world.allClans) {
+        const fresh: MemoryEntry[] = [];
+        for (const [, perceptions] of world.perceptions.getFor(teller)) {
+            for (const entry of perceptions.information.memory.entries) {
+                if (entry.hops !== 0) continue;
+                if (now - entry.year > NEWS_WINDOW_YEARS) continue;
+                fresh.push(entry);
+            }
+        }
+        if (fresh.length) tellable.set(teller.uuid, fresh);
+    }
+    if (!tellable.size) return;
+
+    // Collect first and file afterward, so that who hears what doesn't depend
+    // on the order clans happen to come up in.
+    const heard: { hearer: Clan, entry: MemoryEntry, teller: UUID }[] = [];
+    for (const hearer of world.allClans) {
+        // Everything the hearer already has, by event rather than by copy: it
+        // shouldn't be told twice by two tellers, or told about its own doings.
+        const known = new Set<number>();
+        for (const [, perceptions] of world.perceptions.getFor(hearer)) {
+            for (const entry of perceptions.information.memory.entries) {
+                known.add(entry.eventId);
+            }
+        }
+
+        for (const [tellerID] of world.perceptions.getFor(hearer)) {
+            const news = tellable.get(tellerID);
+            if (!news) continue;
+            const teller = world.clanMap.get(tellerID);
+            if (!teller) continue;
+            const attention = getRelativeAttention(hearer, teller);
+            if (attention <= 0) continue;
+
+            for (const entry of news) {
+                if (known.has(entry.eventId)) continue;
+                if (Math.random() >= entry.transmissionChance(attention)) continue;
+                known.add(entry.eventId);
+                heard.push({ hearer, entry, teller: tellerID });
+            }
+        }
+    }
+
+    for (const { hearer, entry, teller } of heard) {
+        fileHeardEvent(world, hearer, entry.retold(teller));
+    }
+}
+
+// File news the hearer picked up. It says something about everyone involved,
+// so it goes in the hearer's ledger on each party it already has one for. A
+// clan with no relationship to either party has nowhere to put it and loses
+// the news, which is a limitation of keying ledgers to live connections.
+function fileHeardEvent(world: World, hearer: Clan, entry: MemoryEntry): void {
+    for (const about of [entry.actor, entry.target]) {
+        if (!about || about === hearer.uuid) continue;
+        const perceptions = world.perceptions.get(hearer, about);
+        perceptions?.information.memory.add(entry);
+    }
 }
