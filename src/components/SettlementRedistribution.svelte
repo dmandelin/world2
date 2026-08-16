@@ -8,9 +8,10 @@
     import { sortedByKey } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
-    import type {
-        FoodAidBidRecord,
-        FoodRedistributionResult,
+    import {
+        AID_BUDGET_FOOD_THRESHOLD,
+        type FoodAidBidRecord,
+        type FoodRedistributionResult,
     } from "../model/econ/redistribution";
     import type {
         FoodGiftRecord,
@@ -589,17 +590,17 @@
                     > ({rpct(summary.prodCerealsUsedPerCapita)} / capita)
                 </li>
                 <li>
-                    • Surplus Production: <strong
-                        >{unsigned(summary.surplusProd, 1)}</strong
-                    > ({rpct(summary.availSurplusProdPerCapita)} / capita)
+                    • Food before aid: <strong
+                        >{unsigned(summary.initialFood, 1)}</strong
+                    > ({rpct(summary.initialFoodPerCapita)} / capita)
                 </li>
                 <hr
                     style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
                 />
                 <li>
-                    • Half Cereal Stock: <strong
-                        >{unsigned(summary.halfStock, 1)}</strong
-                    > ({rpct(summary.halfStock / summary.population)} / capita)
+                    • Food retained ({rpct(AID_BUDGET_FOOD_THRESHOLD)} / capita): <strong
+                        >{unsigned(summary.initialFood - summary.aidBudget, 1)}</strong
+                    > ({rpct((summary.initialFood - summary.aidBudget) / summary.population)} / capita)
                 </li>
                 <hr
                     style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"

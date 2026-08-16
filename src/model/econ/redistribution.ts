@@ -5,7 +5,8 @@ import { sumFun } from "../lib/basics";
 import { connectedClans } from "../relations/connection";
 
 export const AID_ALIGNMENT_THRESHOLD = -0.5;
-export const AID_FOOD_THRESHOLD = 0.9;
+export const AID_FOOD_THRESHOLD = 0.8;
+export const AID_BUDGET_FOOD_THRESHOLD = 0.8;
 
 export interface FoodAidBidRecord {
     requesterUuid: string;
@@ -95,7 +96,9 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         const availStock = Math.max(0, stock - stockOutflowCereals);
         const halfStock = availStock / 2;
 
-        const budget = availSurplusProd + halfStock;
+        // A clan retains enough food for this threshold and can use any
+        // remaining food for aid.
+        const budget = Math.max(0, food - AID_BUDGET_FOOD_THRESHOLD * pop);
         donorBudgets.set(clan.uuid, { prodCereals, prodCerealsUsed, surplusProd: availSurplusProd, halfStock, budget });
     }
 

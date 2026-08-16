@@ -643,9 +643,11 @@ Detailed list of first parts:
                     granary, but we should probably do ritual leadership
                     first
         *   Items
-            *   Have a standard aid level other than 100%
-            *   Have fixed attention cost per clan
+            x   Have a standard aid level other than 100%
+            x   Have fixed attention cost per clan
             *   Scale aid by relative attention
+            *   (P3) Supra-clan granary
+            *   (P3) Variable aid policies
 *   Precursors
     *   The new trust model:
         *   Add trust as a decision factor for sending help
@@ -673,6 +675,7 @@ Detailed list of first parts:
         *   Not entirely sure how much empirical grounding there
             is; equality can have more conflict and stress but
             that's not necessarily true in all cases
+    *   Help with brideprices?
 *   "Status"
     *   More complexity around sharing
         *   General thoughts
