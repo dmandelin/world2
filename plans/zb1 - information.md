@@ -127,10 +127,10 @@ Synthesizing that:
 
 Items:
 
-*   Introduce information concept for a clan to know stuff about
+x   Introduce information concept for a clan to know stuff about
     another clan
-    *   Ledger
-    *   State
+    x   Ledger
+    x   State
 *   Move direct info to ledger
     *   Gifts
     *   Aid
