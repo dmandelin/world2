@@ -3,7 +3,7 @@
     import { sortedByKey, sumFun } from "../model/lib/basics";
     import { IterableTable } from "./tables/tables2";
     import type { Table, TableRow } from "./tables/tables2";
-    import DataTable2 from "./tables/TableView2.svelte";
+    import TableView2 from "./tables/TableView2.svelte";
     import Tooltip from "./Tooltip.svelte";
     import LineGraph from "./LineGraph.svelte";
     import { DefaultScaler } from "./linegraph";
@@ -127,11 +127,11 @@
             </p>
             <h4>Imitation Sources</h4>
             {#if imitationTable}
-                <DataTable2 table={imitationTable} />
+                <TableView2 table={imitationTable} />
             {/if}
             <h4>Skill Changes</h4>
             {#if changeSourcesTable}
-                <DataTable2 table={changeSourcesTable} />
+                <TableView2 table={changeSourcesTable} />
             {/if}
             {#if timelineKey}
                 <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;" />

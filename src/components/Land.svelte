@@ -1,6 +1,7 @@
 <script lang="ts">
     import { maxbyWithValue, safeDiv } from "../model/lib/basics";
-    import DataTable from "./DataTable.svelte";
+    import TableView2 from "./tables/TableView2.svelte";
+    import type { Table } from "./tables/tables2";
     import LineGraph from "./LineGraph.svelte";
     import type { ClanDTO, WorldDTO } from "../model/records/dtos";
     import { PopulationScaler, ZeroCenteredScaler } from "./linegraph";
@@ -11,6 +12,18 @@
 
     let activeTab = $state<"Overview" | "Areas" | "Settlements" | "Clans">("Areas");
     const tabs: ("Overview" | "Areas" | "Settlements" | "Clans")[] = ["Overview", "Areas", "Settlements", "Clans"];
+
+    // world.stats is a headerless list of [label, value] pairs, so the table
+    // hides its header and takes the value from the second element.
+    let statsTable: Table<string[], string, [string]> = $derived({
+        hideHeader: true,
+        columns: [{
+            data: 'Value',
+            label: 'Value',
+            valueFn: (row: string[]) => row[1],
+        }],
+        rows: world.stats.map(row => ({ data: row, label: row[0] })),
+    });
 
     let popData = $derived.by(() => {
         return {
@@ -149,7 +162,7 @@
             <div style="display: flex; gap: 2em; margin-top: 1rem;">
                 <div>
                     <h4>Statistics</h4>
-                    <DataTable rows={world.stats} />
+                    <TableView2 table={statsTable} />
                 </div>
 
                 <div>
