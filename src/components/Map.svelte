@@ -367,6 +367,13 @@ ${settlement.cluster.population} \
             𒋃
         </a>
         <a
+            href="/tuning"
+            class="map-tuning-link"
+            title="balaĝ - Tuning"
+        >
+            𒁄
+        </a>
+        <a
             href="https://github.com/dmandelin/world2/blob/main/README.md"
             target="_blank"
             rel="noopener"
@@ -629,12 +636,40 @@ ${settlement.cluster.population} \
             transform 0.1s;
     }
 
-    .map-stats-link:hover {
+    .map-stats-link:hover,
+    .map-tuning-link:hover {
         background-color: #f0ebd1;
     }
 
-    .map-stats-link:active {
+    .map-stats-link:active,
+    .map-tuning-link:active {
         transform: scale(0.95);
+    }
+
+    /* Directly below the statistics link. */
+    .map-tuning-link {
+        position: absolute;
+        top: 80px;
+        left: 8px;
+        z-index: 10;
+        box-sizing: border-box;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(249, 246, 235, 0.9);
+        border: 2px solid #62531d;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #62531d;
+        font-size: 1rem;
+        line-height: 1;
+        text-decoration: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition:
+            background-color 0.2s,
+            transform 0.1s;
     }
 
     .what-is-this-link {

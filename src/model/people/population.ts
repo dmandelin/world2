@@ -5,6 +5,10 @@ import { spct } from "../lib/format";
 import { getLocalPrestige, getPrestige } from "../relations/prestige";
 import { zScore } from "../lib/modelbasics";
 import { getMarriageDecisions } from "../relations/marriage";
+// Base birth rate (per childbearing-age woman per year, with standard
+// nutrition, minimal shelter and no migration) and the global death-rate
+// multiplier are tunable, so read them from the shared knobs at call time.
+import { tuning } from "../tuning";
 
 function foodVarietyHealthFactor(fishRatio: number): number {
     const p = 1 - fishRatio;
@@ -20,20 +24,10 @@ export const INITIAL_POPULATION_RATIOS = [
 
 export const SLICE_WIDTH = 20;
 
-// Per year, for childbearing-age women with:
-// - standard nutrition
-// - minimal shelter
-// - no migration
-const BASE_BIRTH_RATE = 0.25;
-
 // Per year by age tier.
 const BASE_DEATH_RATES = [0.0125, 0.0175, 0.025, 0.05];
 
 const FLOOD_BASE_DEATH_RATE = 0.0025;
-
-// Global multiplier applied to every death rate (all causes, all slices). A
-// single knob for tuning overall population growth.
-export const DEATH_RATE_ADJUSTMENT_FACTOR = 0.88;
 
 // Causes of death, in the order used for per-cause death-rate arrays.
 export const DEATH_CAUSES = ['Disease', 'Hazards', 'Flood', 'Old Age', 'Starvation'] as const;
@@ -345,7 +339,7 @@ export class PopulationChangeBuilder {
         // ---- Step 1: expected rates ----
 
         // Birth rate uses exactly the 20-40 slice (index 1) women, not an average.
-        const perWomanBirthRate = this.brModifier * BASE_BIRTH_RATE * Y;
+        const perWomanBirthRate = this.brModifier * tuning.baseBirthRate * Y;
         const childbearingWomen = clan.slices[1][0];
         const expectedBirths = childbearingWomen * perWomanBirthRate;
 
@@ -365,8 +359,8 @@ export class PopulationChangeBuilder {
 
         // Independent annual risk ratio per cause (in DEATH_CAUSES order) for a
         // given slice and sex mortality multiplier. Every cause is scaled by the
-        // global DEATH_RATE_ADJUSTMENT_FACTOR tuning knob.
-        const A = DEATH_RATE_ADJUSTMENT_FACTOR;
+        // global death-rate adjustment tuning knob.
+        const A = tuning.deathRateAdjustmentFactor;
         const rawRisks = (i: number, sexFactor: number): number[] => [
             diseaseRiskBySlice[i] * Y * sexFactor * A,                 // Disease
             BASE_DEATH_RATES[i] * this.drModifier * Y * sexFactor * A, // Hazards
