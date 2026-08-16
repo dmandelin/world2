@@ -434,6 +434,11 @@
                     >
                 </li>
                 <li>
+                    • Mutual Relative Attention: <strong
+                        >{pct(bid.mutualRelativeAttention, 1)}</strong
+                    >
+                </li>
+                <li>
                     • Request Weight: <strong
                         >{unsigned(bid.weight, 1)}</strong
                     >
@@ -446,6 +451,19 @@
                 <hr
                     style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
                 />
+                <li>
+                    • Aid Eligibility Cap: <strong
+                        >{unsigned(bid.eligibleAidBudgetAbs, 1)}</strong
+                    > ({pct(bid.mutualRelativeAttention, 1)} of {unsigned(
+                        bid.eligibleAidBudgetAbs / bid.mutualRelativeAttention,
+                        1,
+                    )} donor budget)
+                </li>
+                <li>
+                    • Aid Requested Before Attention Cap: <strong
+                        >{unsigned(bid.unconstrainedRequestedAbs, 1)}</strong
+                    >
+                </li>
                 <li>
                     • Absolute Aid Requested: <strong
                         >{unsigned(bid.requestedAbs, 1)}</strong

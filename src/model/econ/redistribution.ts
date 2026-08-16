@@ -3,6 +3,7 @@ import { TradeGoods } from "../trade";
 import { getAlignment } from "../relations/alignment";
 import { sumFun } from "../lib/basics";
 import { connectedClans } from "../relations/connection";
+import { getRelativeAttention } from "../relations/basicinteraction";
 
 export const AID_ALIGNMENT_THRESHOLD = -0.5;
 export const AID_FOOD_THRESHOLD = 0.8;
@@ -14,8 +15,11 @@ export interface FoodAidBidRecord {
     donorUuid: string;
     donorName: string;
     alignment: number;
+    mutualRelativeAttention: number;
     weight: number;
     normalizedShare: number;
+    unconstrainedRequestedAbs: number;
+    eligibleAidBudgetAbs: number;
     requestedAbs: number;
     receivedAbs: number;
     requestedPerCapita: number; // In per capita of receiving clan
@@ -107,8 +111,11 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         requester: Clan;
         donor: Clan;
         alignment: number;
+        mutualRelativeAttention: number;
         weight: number;
         normalizedShare: number;
+        unconstrainedRequestedAbs: number;
+        eligibleAidBudgetAbs: number;
         requestedAbs: number;
         requestedPerCapita: number;
     }
@@ -125,7 +132,12 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         totalRequestedByRequester.set(requester.uuid, totalNeeded);
 
         // Find candidate donors with budget > 0 and alignment > AID_ALIGNMENT_THRESHOLD
-        const candidateDonors: { donor: Clan; alignment: number; weight: number }[] = [];
+        const candidateDonors: {
+            donor: Clan;
+            alignment: number;
+            mutualRelativeAttention: number;
+            weight: number;
+        }[] = [];
         let sumWeight = 0;
 
         for (const donor of connectedClans(requester)) {
@@ -134,9 +146,10 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
             if (donorBudget <= 0) continue;
 
             const alignment = getAlignment(donor, requester);
-            if (alignment > AID_ALIGNMENT_THRESHOLD) {
+            const mutualRelativeAttention = getRelativeAttention(donor, requester);
+            if (alignment > AID_ALIGNMENT_THRESHOLD && mutualRelativeAttention > 0) {
                 const weight = (1 + alignment) * donorBudget;
-                candidateDonors.push({ donor, alignment, weight });
+                candidateDonors.push({ donor, alignment, weight, mutualRelativeAttention });
                 sumWeight += weight;
             }
         }
@@ -144,14 +157,20 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         if (sumWeight > 0) {
             for (const cand of candidateDonors) {
                 const frac = cand.weight / sumWeight;
-                const requestedAbs = totalNeeded * frac;
+                const unconstrainedRequestedAbs = totalNeeded * frac;
+                const eligibleAidBudgetAbs =
+                    donorBudgets.get(cand.donor.uuid)!.budget * cand.mutualRelativeAttention;
+                const requestedAbs = Math.min(unconstrainedRequestedAbs, eligibleAidBudgetAbs);
                 const reqPerCapita = requestedAbs / (requester.population || 1);
                 const bid: BidRequest = {
                     requester,
                     donor: cand.donor,
                     alignment: cand.alignment,
+                    mutualRelativeAttention: cand.mutualRelativeAttention,
                     weight: cand.weight,
                     normalizedShare: frac,
+                    unconstrainedRequestedAbs,
+                    eligibleAidBudgetAbs,
                     requestedAbs,
                     requestedPerCapita: reqPerCapita,
                 };
@@ -260,8 +279,11 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
                 donorUuid: donor.uuid,
                 donorName: donor.name,
                 alignment: req.alignment,
+                mutualRelativeAttention: req.mutualRelativeAttention,
                 weight: req.weight,
                 normalizedShare: req.normalizedShare,
+                unconstrainedRequestedAbs: req.unconstrainedRequestedAbs,
+                eligibleAidBudgetAbs: req.eligibleAidBudgetAbs,
                 requestedAbs: req.requestedAbs,
                 receivedAbs: alloc.receivedAbs,
                 requestedPerCapita: req.requestedPerCapita,

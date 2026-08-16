@@ -593,6 +593,9 @@ to start building a more advanced granary as a further amenity.
 Detailed list of first parts:
 
 *   Current issues
+    *   Clan information and how that affects perceptions
+    *   Ritual help
+    *   (P2) Make redistribution more understandable
     *   Clans with bad shortages aren't getting enough help,
         because there is a fixed aid budget, so a clan with 101%
         will only give 1% to a clan with 60%.
@@ -645,7 +648,7 @@ Detailed list of first parts:
         *   Items
             x   Have a standard aid level other than 100%
             x   Have fixed attention cost per clan
-            *   Scale aid by relative attention
+            x   Scale aid by relative attention
             *   (P3) Supra-clan granary
             *   (P3) Variable aid policies
 *   Precursors
