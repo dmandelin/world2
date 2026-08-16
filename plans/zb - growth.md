@@ -592,6 +592,60 @@ to start building a more advanced granary as a further amenity.
 
 Detailed list of first parts:
 
+*   Current issues
+    *   Clans with bad shortages aren't getting enough help,
+        because there is a fixed aid budget, so a clan with 101%
+        will only give 1% to a clan with 60%.
+        *   Discussion
+            *   What we should have, apparently, is a target
+                survival level, and clans will ask or give if
+                below or above
+            *   It's unclear what that level should be, so we
+                could even let it float. But then we have to be
+                able to do something about disagreements
+            *   What are the conditions for giving aid? It is
+                apparently OK to asymmetrically transfer resources
+                indefinitely, but people have to be seen as part
+                of the community or some such. What would make
+                that true for us?
+                *   Sufficiently strong marriage or kin link
+                *   Local relationship as neighbors with expectation
+                    or history of such aid
+                *   What would make them *not* want to help?
+                    *   Severe norm violation
+                    *   Usually *not* conflict, but perhaps if
+                        really severe
+                    *   If there's no relationship, there might
+                        be a reluctance to help
+        *   Synthesis
+            *   We can have a "clan helping policy" that defines a
+                function mapping from alignment to willingness to
+                help or how much
+            *   But maybe other factors should matter too, like how
+                long the clans have known each other or their recent
+                track records
+            *   When clans have partial attention to each other,
+                that in part means they have relationships only
+                to some families in the other clan, so aid availability
+                scales accordingly.
+            *   There's a lot going on here and it's unclear what we
+                actually need to address now. Perhaps for now, key
+                points are:
+                *   Make clans willing to go lower than 100% to help
+                    others in need
+                *   Generally do have clans aid each other if they
+                    have an actual relationship
+                *   Do scale down possible aid by the interaction level,
+                    which means spending more attention means more
+                    possible help
+                    *   Implement per-clan cost of interaction
+                *   If anything, the next step might be a supra-clan
+                    granary, but we should probably do ritual leadership
+                    first
+        *   Items
+            *   Have a standard aid level other than 100%
+            *   Have fixed attention cost per clan
+            *   Scale aid by relative attention
 *   Precursors
     *   The new trust model:
         *   Add trust as a decision factor for sending help
