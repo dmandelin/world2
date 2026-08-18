@@ -160,7 +160,7 @@ x   Introduce information concept for a clan to know stuff about
         *   Subitems
             *   Aid
             *   Piety
-    *   Somehow deal with the fact that a clan is not
+    x   Somehow deal with the fact that a clan is not
         literally going to remember 53 separate instances
         of food aid
     x   Share out information on splits

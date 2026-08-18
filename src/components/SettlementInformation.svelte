@@ -74,6 +74,9 @@
         entry: MemoryEntry;
         about: ClanDTO | undefined;
         knownBy: { clan: ClanDTO; entry: MemoryEntry }[];
+        // False once the occasion has run together with the rest into a
+        // general impression, and can no longer be recounted on its own.
+        recountable: boolean;
     };
 
     function byYearDesc(rows: Row[]): Row[] {
@@ -81,14 +84,27 @@
     }
 
     let rows = $derived.by((): Row[] => {
+        // Working out which occasions a clan can still recount means sorting
+        // its whole ledger, and the object view asks the same question once
+        // per knower per event, so keep the answers for the pass.
+        const recountableCache = new Map<string, Set<number>>();
+        const recountable = (of: ClanDTO, about: ClanDTO): Set<number> => {
+            const key = `${of.uuid}|${about.uuid}`;
+            let ids = recountableCache.get(key);
+            if (!ids) recountableCache.set(key, ids = world.recountableIds(of, about));
+            return ids;
+        };
+
         if (subj && obj) {
             const memory = world.memoryToward(subj, obj);
             if (!memory) return [];
+            const kept = recountable(subj, obj);
             return byYearDesc(
                 memory.entries.map((entry) => ({
                     entry,
                     about: obj,
                     knownBy: [],
+                    recountable: kept.has(entry.eventId),
                 })),
             );
         }
@@ -96,8 +112,14 @@
         if (subj) {
             const out: Row[] = [];
             for (const [other, memory] of world.memoriesFor(subj)) {
+                const kept = recountable(subj, other);
                 for (const entry of memory.entries) {
-                    out.push({ entry, about: other, knownBy: [] });
+                    out.push({
+                        entry,
+                        about: other,
+                        knownBy: [],
+                        recountable: kept.has(entry.eventId),
+                    });
                 }
             }
             return byYearDesc(out);
@@ -111,6 +133,11 @@
                         entry,
                         about: undefined,
                         knownBy,
+                        // Recountable by anyone who still holds it as an
+                        // occasion rather than only as an impression.
+                        recountable: knownBy.some((k) =>
+                            recountable(k.clan, obj!).has(entry.eventId),
+                        ),
                     })),
             );
         }
@@ -130,10 +157,12 @@
     // One line per report that came in this turn, for the Heard tooltip.
     function reportDetail(u: ObservationUpdate): string {
         const teller = u.source ? clanName(u.source) : "own eyes";
+        const cred =
+            u.credence === undefined ? "" : `, credence ${unsigned(u.credence, 2)}`;
         const shift = u.valueAfter - u.valueBefore;
         return (
             `${teller}: said ${unsigned(u.reported, 1)}` +
-            ` (weight ${unsigned(u.weight, 3)}, agreement ${signed(u.agreement, 2)})` +
+            ` (weight ${unsigned(u.weight, 3)}, agreement ${signed(u.agreement, 2)}${cred})` +
             ` → belief ${unsigned(u.valueBefore, 1)} ${signed(shift, 1)}` +
             `, confidence ${pct(u.confidenceBefore)} ${signed(u.confidenceAfter - u.confidenceBefore, 3)}`
         );
@@ -166,6 +195,23 @@
         return (
             o.updates[o.updates.length - 1].confidenceAfter -
             o.updates[0].confidenceBefore
+        );
+    }
+
+    // Why the acted-on figure differs from the raw running belief, which
+    // depends on how the quality is estimated.
+    function thinksTooltip(o: Observation): string {
+        if (o.def.mode === "average") {
+            return (
+                `Running mean over ${unsigned(o.yearsSeen, 0)} years seen,` +
+                ` plus ${unsigned(o.def.priorYears, 2)} years of weight on the` +
+                ` prior of ${o.def.prior}. Acted on as it stands, since the` +
+                ` prior is already inside the mean.`
+            );
+        }
+        return (
+            `Running belief ${unsigned(o.value, 1)}, pulled toward the prior` +
+            ` of ${o.def.prior} by less-than-full confidence.`
         );
     }
 
@@ -354,13 +400,7 @@
                                     title={reportsTooltip(o)}
                                     >{heardSummary(o)}</td
                                 >
-                                <td
-                                    class="num"
-                                    title="Running belief {unsigned(
-                                        o.value,
-                                        1,
-                                    )}, pulled toward the prior of {o.def
-                                        .prior} by less-than-full confidence"
+                                <td class="num" title={thinksTooltip(o)}
                                     >{unsigned(o.estimate, 1)}</td
                                 >
                                 <td class="num"
@@ -379,12 +419,18 @@
                                         >
                                     {/if}
                                 </td>
-                                <td class="num">{unsigned(im.trueValue, 0)}</td>
                                 <td class="num"
-                                    >{unsigned(
-                                        Math.abs(o.estimate - im.trueValue),
-                                        1,
-                                    )}</td
+                                    >{im.trueValue === undefined
+                                        ? "—"
+                                        : unsigned(im.trueValue, 0)}</td
+                                >
+                                <td class="num"
+                                    >{im.trueValue === undefined
+                                        ? "—"
+                                        : unsigned(
+                                              Math.abs(o.estimate - im.trueValue),
+                                              1,
+                                          )}</td
                                 >
                             </tr>
                         {/each}
@@ -426,7 +472,12 @@
                     <tbody>
                         {#each rows as row}
                             {@const e = row.entry}
-                            <tr>
+                            <tr
+                                class={row.recountable ? "" : "forgotten"}
+                                title={row.recountable
+                                    ? ""
+                                    : "No longer recounted on its own: folded into the general impression."}
+                            >
                                 <td>{formatYear(e.year)}</td>
                                 <td>{now - e.year}</td>
                                 <td>{e.def.label}</td>
@@ -532,6 +583,11 @@
     }
     .events .num {
         text-align: right;
+    }
+    /* Occasions that have run together into a general impression. */
+    .events tr.forgotten td {
+        color: #b3a78e;
+        font-style: italic;
     }
     /* Cells whose tooltip has the reports behind them. */
     .events .heard {

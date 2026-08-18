@@ -7,6 +7,7 @@ import { pct } from "../lib/format";
 import { normal } from "../lib/distributions";
 import type { UUID } from "../records/basicdata";
 import type { World } from "../world";
+import { getPrestige } from "./prestige";
 
 // What one clan knows about another comes in two flavors:
 //
@@ -119,6 +120,12 @@ export const MemoryEventDefs = {
     Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 7, 0.2, FoodSizeBands),
 };
 
+// Memorability at which an occasion sticks whatever else has happened since.
+// On the food scales that is Large-when-hungry, Notable-when-desperate, and
+// anything above: the years a clan would still be telling its grandchildren
+// about. Everything below competes for the few slots that remain.
+export const UNFORGETTABLE_MEMORABILITY = 0.19;
+
 // One event is one event, however many clans end up holding a copy of it and
 // however garbled those copies get. Copies share an id so that views (and,
 // later, clans integrating conflicting reports) can tell one event told twice
@@ -187,6 +194,24 @@ export class MemoryEntry {
         this.via = spec.via;
         this.explanation = spec.explanation ?? '';
         this.eventId = spec.eventId ?? nextEventId++;
+    }
+
+    // How much this stands out among things worth recounting: how big it was,
+    // weighted by how badly it was wanted. A token gift in a comfortable year
+    // is nothing; a large one in a desperate year is a story.
+    get memorability(): number {
+        return this.size.weight * (this.need?.weight ?? 1);
+    }
+
+    // Striking enough to stick on its own account, whatever else happened.
+    get isUnforgettable(): boolean {
+        return this.memorability >= UNFORGETTABLE_MEMORABILITY;
+    }
+
+    // How this compares with other occasions right now, which is what decides
+    // which few are still told as occasions.
+    standing(year: number): number {
+        return this.memorability * this.freshness(year);
     }
 
     // How the clan would describe it, from what it actually kept.
@@ -277,6 +302,37 @@ export class Memory {
         this.entries_ = this.entries_.filter(predicate);
     }
 
+    // How many occasions of one kind a clan can still recount. Everything
+    // else has run together into a general sense of how that neighbor has
+    // behaved, which is what the generosity impression is.
+    static readonly RECOUNTABLE = 3;
+
+    // The occasions still told as occasions: the few that stand out most,
+    // plus any that were striking enough to stick on their own account.
+    //
+    // This is derived rather than stored, so it costs nothing to keep the
+    // rest of the ledger around, and a memory that slips out of the top few
+    // can come back if a fresher one fades faster.
+    rememberedIds(year: number): Set<number> {
+        const kept = new Set<number>();
+        const byKind = new Map<MemoryEventDef, MemoryEntry[]>();
+        for (const entry of this.entries_) {
+            if (entry.isUnforgettable) {
+                kept.add(entry.eventId);
+                continue;
+            }
+            const list = byKind.get(entry.def);
+            if (list) list.push(entry); else byKind.set(entry.def, [entry]);
+        }
+        for (const list of byKind.values()) {
+            list.sort((a, b) => b.standing(year) - a.standing(year));
+            for (const entry of list.slice(0, Memory.RECOUNTABLE)) {
+                kept.add(entry.eventId);
+            }
+        }
+        return kept;
+    }
+
     clone(): Memory {
         const m = new Memory();
         // Entries are immutable, so sharing them is fine.
@@ -295,7 +351,36 @@ export class Memory {
 // spread S folded in at weight w settles at an error of S·√(w/(2-w)), which is
 // how a clan can start out with only a rough idea and sharpen it over years of
 // acquaintance without ever seeing more clearly in one year than it should.
+// How an estimate settles as evidence comes in.
+//
+// 'impression' suits a quality you can simply look at. Each year's look moves
+// the estimate a fixed fraction, set by how much attention you are paying, so
+// a clear idea takes years of watching to build.
+//
+// 'average' suits a quality you infer by adding up deeds. It keeps a running
+// mean of what has actually been seen, and because the mean is over a count
+// that starts near zero, the first year seen already carries most of the
+// estimate and later years refine it. That is the difference between judging
+// how devout someone is and judging how freely they give: you cannot see
+// generosity, you can only tot up what they did.
+export type ObservationMode = 'impression' | 'average';
+
 export type ObservationSpec = {
+    mode: ObservationMode;
+    // The real value, where there is one an observer could be checked
+    // against. A quality inferred from deeds has no such figure: what the
+    // observer counted is all there is, so views showing "how far off" leave
+    // it blank rather than inventing a truth.
+    truthFn?: (clan: Clan) => number;
+    // 'average' only: weight of the prior, counted in years of evidence. At
+    // 1/3, the first year seen already carries three quarters of the estimate
+    // and five years carry 94% of it, which is what keeps a running mean from
+    // creeping out of a midpoint anchor.
+    priorYears?: number;
+    // 'average' only: floor on how little a fresh year can move the estimate,
+    // so that it never settles so hard it stops tracking a clan whose habits
+    // change. 0.1 leaves an effective window of about ten years.
+    minAlpha?: number;
     // Value assumed about a clan we know nothing about.
     prior: number;
     // Spread of a single year's impression at full attention. Less attention
@@ -337,6 +422,10 @@ export type ObservationSpec = {
 
 // A quantity clans form impressions of about each other.
 export class ObservationDef {
+    readonly mode: ObservationMode;
+    readonly truthFn: ((clan: Clan) => number) | undefined;
+    readonly priorYears: number;
+    readonly minAlpha: number;
     readonly prior: number;
     readonly lookStdev: number;
     readonly lookWeight: number;
@@ -355,10 +444,18 @@ export class ObservationDef {
     constructor(
         readonly key: string,
         readonly label: string,
-        // The truth of the matter, which observers only ever see blurred.
-        readonly valueFn: (clan: Clan) => number,
+        // What the observer would make of the object this year. For a quality
+        // that simply is what it is, the subject is ignored and the observer
+        // adds its own blur. For one inferred from deeds, this is already the
+        // observer's partial view, since it is read off what that observer
+        // happens to know.
+        readonly valueFn: (subject: Clan, object: Clan) => number,
         spec: ObservationSpec,
     ) {
+        this.mode = spec.mode;
+        this.truthFn = spec.truthFn;
+        this.priorYears = spec.priorYears ?? 1 / 3;
+        this.minAlpha = spec.minAlpha ?? 0.1;
         this.prior = spec.prior;
         this.lookStdev = spec.lookStdev;
         this.lookWeight = spec.lookWeight;
@@ -381,9 +478,20 @@ export class ObservationDef {
         return clamp(value, this.min, this.max);
     }
 
-    // Spread of a year's impression at this much attention.
+    // Spread of a year's impression at this much attention. An averaged
+    // quality is read off the observer's own ledger rather than eyeballed, so
+    // its error is the ledger's partiality, not a blur we add on top.
     lookStdevAt(attention: number): number {
-        return this.lookStdev / (attention * attention);
+        return this.mode === 'average'
+            ? this.lookStdev
+            : this.lookStdev / (attention * attention);
+    }
+
+    // How far a fresh year's evidence moves an averaged estimate that already
+    // rests on `yearsSeen` years. Falls as 1/n so that the estimate is a
+    // running mean, with a floor so it keeps tracking.
+    averageAlpha(yearsSeen: number): number {
+        return Math.max(this.minAlpha, 1 / (this.priorYears + yearsSeen + 1));
     }
 
     // Whether the quantity registers at all at this much attention.
@@ -413,8 +521,46 @@ export class ObservationDef {
 
 // Only piety so far. Population, skills, and QoL follow the same shape and
 // get added as each is moved over to observations.
+// A kindness done to you weighs a little more than the same kindness done to
+// someone else. Only a little: what a clan gives away is what makes it
+// generous, whoever happens to receive it.
+export const AID_TO_SELF_WEIGHT = 1.5;
+
+// Generosity is reported on a 0-100 scale like the traits, so a year's giving
+// in recipient-rations is scaled up to sit in a readable range.
+export const GENEROSITY_SCALE = 100;
+
+// A clan already taken to be an old acquaintance has, in effect, been
+// watching for this many years, so the first fresh year refines its judgment
+// rather than overwriting it.
+export const SEEDED_YEARS_SEEN = 5;
+
+// What one clan saw another give over the last year, counting only what it
+// knows about. This is read straight off the observer's own ledger, so two
+// clans watching the same neighbor can honestly reach different conclusions:
+// they saw different things.
+//
+// Aid is recorded during the advance phase and observations are formed at the
+// start of the next turn, so the year just completed is one year back.
+export function aidSeenGiven(subject: Clan, object: Clan): number {
+    const memory = subject.world.perceptions
+        .get(subject, object)?.information.memory;
+    if (!memory) return 0;
+    const of = subject.world.year.value - subject.world.yearsPerTurn;
+    let total = 0;
+    for (const entry of memory.entries) {
+        if (entry.def !== MemoryEventDefs.Aid) continue;
+        if (entry.actor !== object.uuid || entry.year !== of) continue;
+        total += entry.size.weight
+            * (entry.target === subject.uuid ? AID_TO_SELF_WEIGHT : 1);
+    }
+    return GENEROSITY_SCALE * total;
+}
+
 export const ObservationDefs = {
-    Piety: new ObservationDef('piety', 'Piety', clan => clan.traits.piety, {
+    Piety: new ObservationDef('piety', 'Piety', (_, clan) => clan.traits.piety, {
+        mode: 'impression',
+        truthFn: clan => clan.traits.piety,
         prior: 50,
         // A year of close acquaintance places a clan's piety to within about
         // 15, and averaging those years settles at about 5.
@@ -441,6 +587,34 @@ export const ObservationDefs = {
         min: 0,
         max: 100,
     }),
+
+    Generosity: new ObservationDef('generosity', 'Generosity', aidSeenGiven, {
+        // Judged by adding up deeds, not by looking: a clan that gave freely
+        // last year is already thought generous, and later years refine that
+        // rather than slowly talking it round from a midpoint.
+        mode: 'average',
+        priorYears: 1 / 3,
+        minAlpha: 0.1,
+        // Knowing nothing, assume nothing given.
+        prior: 0,
+        // Not a blur we add: the observer's figure is exactly what its own
+        // ledger holds. This is how far apart two observers' figures can
+        // reasonably land, which is what says whether a report disagrees.
+        lookStdev: 8,
+        lookWeight: 0.2,
+        // You need barely any dealings with a clan to notice whether it gives.
+        attentionThreshold: 0.1,
+        conspicuousAbove: Infinity,
+        // Who gave and who did not is the substance of village talk.
+        chatter: 1,
+        notableDeviation: 10,
+        staleHalfLife: 20,
+        seedStdev: 5,
+        seedConfidence: 0.8,
+        splitStdev: 5,
+        splitConfidenceFactor: 0.6,
+        min: 0,
+    }),
 };
 
 export const ALL_OBSERVATION_DEFS: readonly ObservationDef[] =
@@ -449,6 +623,22 @@ export const ALL_OBSERVATION_DEFS: readonly ObservationDef[] =
 // What a report at second hand is worth next to seeing for oneself, at equal
 // attention.
 export const HEARSAY_WEIGHT = 0.5;
+
+// How much weight a clan puts on another's word, from the standing it grants
+// the teller. The same report lands differently depending on who carries it:
+// a clan held in regard is taken at more than its word, one held in contempt
+// at rather less. Prestige combines liking and respect and could run to ±1 in
+// principle but sits much nearer zero in practice, so it is amplified before
+// being read as a multiplier.
+export const PRESTIGE_CREDENCE_FACTOR = 4;
+export const MIN_CREDENCE = 0.25;
+export const MAX_CREDENCE = 2.5;
+
+export function credence(hearer: Clan, teller: Clan): number {
+    return clamp(
+        1 + PRESTIGE_CREDENCE_FACTOR * getPrestige(hearer, teller),
+        MIN_CREDENCE, MAX_CREDENCE);
+}
 
 // How far off a report can land before it stops counting as corroboration,
 // measured in the spreads we'd expect a report of its kind to have. Inside one
@@ -473,6 +663,9 @@ export class ObservationUpdate {
         readonly valueAfter: number,
         readonly confidenceBefore: number,
         readonly confidenceAfter: number,
+        // How much the hearer credited the teller, from the standing it
+        // grants them. Undefined for what a clan saw itself.
+        readonly credence?: number,
     ) { }
 
     get isFirsthand(): boolean { return this.source === undefined; }
@@ -489,10 +682,15 @@ export class Observation {
     private fadedThrough_: number | undefined;
     private hops_ = 0;
     private updates_: ObservationUpdate[] = [];
+    // Years of firsthand evidence behind an averaged estimate, which is what
+    // decides how much a fresh year still moves it.
+    private yearsSeen_ = 0;
 
     constructor(readonly def: ObservationDef) {
         this.value_ = def.prior;
     }
+
+    get yearsSeen(): number { return this.yearsSeen_; }
 
     // Raw estimate, meaningful only to the extent confidence is high.
     get value(): number { return this.value_; }
@@ -512,10 +710,17 @@ export class Observation {
         return this.updates_.filter(u => !u.isFirsthand);
     }
 
-    // The estimate to actually act on: what we believe, pulled back toward
-    // the prior by however unsure we are.
+    // The estimate to actually act on.
+    //
+    // An impression is pulled back toward the prior by however unsure we are,
+    // since a vague sense of someone's piety should not be acted on as though
+    // it were certain. An average needs no such correction: it starts at the
+    // prior and the prior's weight is already carried inside the running mean,
+    // so shrinking it again would anchor it twice and undo the fast start.
     get estimate(): number {
-        return this.confidence_ * this.value_
+        return this.def.mode === 'average'
+            ? this.value_
+            : this.confidence_ * this.value_
             + (1 - this.confidence_) * this.def.prior;
     }
 
@@ -536,6 +741,7 @@ export class Observation {
         hops: number,
         spread: number,
         source?: UUID,
+        credence?: number,
     ): void {
         const w = clamp(weight, 0, 1);
         if (w <= 0) return;
@@ -563,7 +769,21 @@ export class Observation {
         this.hops_ = hops;
         this.updates_.push(new ObservationUpdate(
             source, hops, reported, w, agreement,
-            valueBefore, this.value_, confidenceBefore, this.confidence_));
+            valueBefore, this.value_, confidenceBefore, this.confidence_,
+            credence));
+    }
+
+    // Fold in a year of one's own watching of an averaged quality. The weight
+    // is not ours to choose: it falls out of how many years already stand
+    // behind the estimate, which is what makes this a running mean.
+    observeYear(reported: number, year: number, spread: number): void {
+        const alpha = this.def.averageAlpha(this.yearsSeen_);
+        this.observe(reported, alpha, year, 0, spread);
+        this.yearsSeen_ += 1;
+        // Confidence tracks how much of the estimate rests on real evidence
+        // rather than on the prior it started from.
+        this.confidence_ = this.yearsSeen_
+            / (this.def.priorYears + this.yearsSeen_);
     }
 
     // Plant a starting impression for clans taken to be already acquainted.
@@ -571,6 +791,11 @@ export class Observation {
     seed(value: number, confidence: number, year: number): void {
         this.value_ = value;
         this.confidence_ = clamp(confidence, 0, 1);
+        // An assumed acquaintance has effectively been watching for a while,
+        // so a fresh year should refine the estimate rather than overwrite it.
+        if (this.def.mode === 'average' && this.yearsSeen_ === 0) {
+            this.yearsSeen_ = SEEDED_YEARS_SEEN;
+        }
         this.lastUpdated_ = year;
         this.fadedThrough_ = year;
         this.hops_ = 0;
@@ -606,6 +831,7 @@ export class Observation {
         o.lastUpdated_ = this.lastUpdated_;
         o.fadedThrough_ = this.fadedThrough_;
         o.hops_ = this.hops_;
+        o.yearsSeen_ = this.yearsSeen_;
         // Updates are immutable, so sharing them is fine.
         o.updates_ = this.updates_;
         return o;
@@ -649,12 +875,18 @@ export class Observations {
         hops: number,
         spread: number,
         source?: UUID,
+        credence?: number,
     ): void {
-        this.getOrCreate(def).observe(reported, weight, year, hops, spread, source);
+        this.getOrCreate(def).observe(
+            reported, weight, year, hops, spread, source, credence);
     }
 
     seed(def: ObservationDef, value: number, confidence: number, year: number): void {
         this.getOrCreate(def).seed(value, confidence, year);
+    }
+
+    observeYear(def: ObservationDef, reported: number, year: number, spread: number): void {
+        this.getOrCreate(def).observeYear(reported, year, spread);
     }
 
     fade(year: number): void {
@@ -969,7 +1201,7 @@ export function divideInformationOnSplit(parent: Clan, child: Clan): void {
         const observations =
             world.perceptions.getOrCreate(subject, object).information.observations;
         for (const def of ALL_OBSERVATION_DEFS) {
-            observations.seed(def, def.valueFn(object), def.seedConfidence, year);
+            observations.seed(def, def.valueFn(subject, object), def.seedConfidence, year);
         }
     }
 }
@@ -987,7 +1219,7 @@ export function seedObservations(world: World): void {
             for (const def of ALL_OBSERVATION_DEFS) {
                 perceptions.information.observations.seed(
                     def,
-                    def.perceivable(def.valueFn(object) + normal(0, def.seedStdev)),
+                    def.perceivable(def.valueFn(subject, object) + normal(0, def.seedStdev)),
                     def.seedConfidence,
                     year);
             }
@@ -1004,16 +1236,24 @@ function observeDirectly(world: World, year: number): void {
             if (attention <= 0) continue;
 
             for (const def of ALL_OBSERVATION_DEFS) {
-                const trueValue = def.valueFn(object);
-                if (!def.registers(attention, trueValue)) continue;
+                const seen = def.valueFn(subject, object);
+                if (!def.registers(attention, seen)) continue;
                 const spread = def.lookStdevAt(attention);
-                perceptions.information.observations.observe(
-                    def,
-                    def.perceivable(trueValue + normal(0, spread)),
-                    def.lookWeight * attention,
-                    year,
-                    0,
-                    spread);
+                const observations = perceptions.information.observations;
+                if (def.mode === 'average') {
+                    // Already the observer's own partial count, so nothing to
+                    // blur; how much it moves the estimate is set by how many
+                    // years already stand behind it.
+                    observations.observeYear(def, def.perceivable(seen), year, spread);
+                } else {
+                    observations.observe(
+                        def,
+                        def.perceivable(seen + normal(0, spread)),
+                        def.lookWeight * attention,
+                        year,
+                        0,
+                        spread);
+                }
             }
         }
     }
@@ -1064,6 +1304,7 @@ function passAlongObservations(world: World, year: number): void {
         weight: number,
         spread: number,
         teller: UUID,
+        credence: number,
     }[] = [];
 
     for (const hearer of world.allClans) {
@@ -1084,20 +1325,27 @@ function passAlongObservations(world: World, year: number): void {
                 if (Math.random() >= chance) continue;
 
                 // How far off a retold value lands: one look's worth of
-                // garbling, plus however unsure the teller was to start.
+                // garbling, plus however unsure the teller was to start. How
+                // much of it is taken on board depends on how closely the two
+                // deal with each other, how sure the teller was, and what the
+                // hearer thinks of the teller.
+                const cred = credence(hearer, teller);
                 reports.push({
                     observations: hearerPerceptions.information.observations,
                     def,
                     value: def.perceivable(held.estimate + normal(0, def.lookStdev)),
-                    weight: def.lookWeight * attention * held.confidence * HEARSAY_WEIGHT,
+                    weight: def.lookWeight * attention * held.confidence
+                        * HEARSAY_WEIGHT * cred,
                     spread: def.lookStdev * (2 - held.confidence),
                     teller: tellerID,
+                    credence: cred,
                 });
             }
         }
     }
 
     for (const r of reports) {
-        r.observations.observe(r.def, r.value, r.weight, year, 1, r.spread, r.teller);
+        r.observations.observe(
+            r.def, r.value, r.weight, year, 1, r.spread, r.teller, r.credence);
     }
 }

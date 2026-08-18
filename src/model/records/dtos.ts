@@ -33,7 +33,7 @@ import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
 import { getPrestige, getLocalPrestige } from "../relations/prestige";
-import { ALL_OBSERVATION_DEFS } from "../relations/information";
+import { ALL_OBSERVATION_DEFS, ObservationDefs } from "../relations/information";
 import type { ClanInformation, Memory, MemoryEntry, Observation, Observations } from "../relations/information";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
@@ -187,6 +187,36 @@ export class ClanDTO {
         );
     }
 
+    // Population-weighted average of what other clans make of this one's
+    // generosity: how freely it is thought to give. Unlike Favor and Respect
+    // this is an impression built from deeds, so clans that have seen little
+    // of it contribute an impression close to the prior of nothing given.
+    get generosityAverage(): number {
+        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
+        if (otherClans.length === 0) return 0;
+        return populationAverage(
+            otherClans,
+            c => this.world.observationsToward(c, this)
+                ?.estimate(ObservationDefs.Generosity) ?? 0
+        );
+    }
+
+    // What each other clan makes of this one's generosity, with the weight it
+    // carries in the average above.
+    get generosityViews(): { clan: ClanDTO, estimate: number, confidence: number, weight: number }[] {
+        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
+        const totalPop = sumFun(otherClans, c => c.population);
+        return otherClans.map(clan => {
+            const observations = this.world.observationsToward(clan, this);
+            return {
+                clan,
+                estimate: observations?.estimate(ObservationDefs.Generosity) ?? 0,
+                confidence: observations?.confidence(ObservationDefs.Generosity) ?? 0,
+                weight: totalPop > 0 ? clan.population / totalPop : 0,
+            };
+        });
+    }
+
     // Population-weighted alignment other clans feel toward this one: how
     // well liked/supported the clan is ("Favor"). Alignment is in [-1, 1];
     // scaled by 100 for a readable integer stat.
@@ -314,7 +344,9 @@ export type Impression = {
     subject: ClanDTO;
     object: ClanDTO;
     observation: Observation;
-    trueValue: number;
+    // Absent for qualities with no figure an observer could be checked
+    // against, such as ones inferred from deeds.
+    trueValue: number | undefined;
 };
 
 // One event, with every clan that knows of it and the version each holds.
@@ -449,6 +481,14 @@ export class WorldDTO {
         return this.perceptions.get(clan.uuid, other.uuid)?.information.memory;
     }
 
+    // Event ids the subject can still recount as occasions, as against the
+    // ones that have run together into a general impression. Views show the
+    // rest greyed rather than hiding them, so the whole ledger stays legible.
+    recountableIds(clan: ClanDTO, other: ClanDTO): Set<number> {
+        return this.memoryToward(clan, other)?.rememberedIds(this.yearValue)
+            ?? new Set();
+    }
+
     observationsToward(clan: ClanDTO, other: ClanDTO): Observations | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.information.observations;
     }
@@ -464,7 +504,7 @@ export class WorldDTO {
             if (!observation) continue;
             out.push({
                 subject, object, observation,
-                trueValue: def.valueFn(object.ref),
+                trueValue: def.truthFn?.(object.ref),
             });
         }
         return out;

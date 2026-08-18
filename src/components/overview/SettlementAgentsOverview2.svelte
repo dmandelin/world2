@@ -564,6 +564,18 @@
         // Group 2: Welfare (Happiness, Social Welfare, Material Welfare, QoL, Stress, Mutual Aid, Help Modifier)
         groups.push([
             {
+                label: "Generosity",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.generosityAverage,
+                format: (v) => unsigned(v, 1),
+                tooltipSnippet: generosityTooltip,
+                deltaValue: (c) => c.generosityAverage,
+                deltaFormat: (v) => unsigned(v, 1),
+                scaler: new DefaultScaler(),
+                topics: ["perceptions"],
+            },
+            {
                 label: "QoL",
                 class: "actual",
                 cellClass: "rap",
@@ -2559,6 +2571,44 @@
 
 {#snippet stressTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanStressTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet generosityTooltip(cs: ClanLastTurnSnapshots)}
+    {@const views = cs.e.generosityViews}
+    <div style="font-size: 0.9em; padding: 0.25rem; max-width: 240px;">
+        <div style="margin-bottom: 0.35rem;">
+            How freely <b>{cs.e.name}</b> is thought to give, from the aid each
+            neighbor has seen it hand out. Weighted by population.
+        </div>
+        <TableView2
+            table={new IterableTable(views, (v) => v.clan.name, [
+                {
+                    data: "Thinks",
+                    label: "Thinks",
+                    valueFn: (v) => v.estimate,
+                    formatFn: (x: number) => unsigned(x, 1),
+                },
+                {
+                    data: "Confidence",
+                    label: "Conf",
+                    valueFn: (v) => v.confidence,
+                    formatFn: (x: number) => pct(x),
+                },
+                {
+                    data: "Weight",
+                    label: "Weight",
+                    valueFn: (v) => v.weight,
+                    formatFn: (x: number) => pct(x),
+                },
+            ])}
+        ></TableView2>
+        <div
+            style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #ccc; padding-top: 0.25rem;"
+        >
+            <span>Weighted average:</span>
+            <strong>{unsigned(cs.e.generosityAverage, 1)}</strong>
+        </div>
+    </div>
 {/snippet}
 
 {#snippet qolTooltip(cs: ClanLastTurnSnapshots)}

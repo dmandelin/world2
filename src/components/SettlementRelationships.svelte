@@ -1,6 +1,12 @@
 <script lang="ts">
+    import {
+        ObservationDefs,
+        AID_TO_SELF_WEIGHT,
+        PRESTIGE_CREDENCE_FACTOR,
+    } from "../model/relations/information";
     import { CrossTab, IterableTable } from "./tables/tables2";
     import {
+        pct,
         signed,
         signedFormat,
         unsigned,
@@ -62,6 +68,15 @@
     function informationCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
         const info = world.informationToward(rowClan, colClan);
         return info ? info.value : 0;
+    }
+
+    // What the row clan makes of how freely the column clan gives.
+    function generosityCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
+        return (
+            world
+                .observationsToward(rowClan, colClan)
+                ?.estimate(ObservationDefs.Generosity) ?? 0
+        );
     }
 
     function alignmentCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -271,6 +286,97 @@
     {/if}
 {/snippet}
 
+{#snippet generosityCellTooltip(
+    value: number,
+    subject: ClanDTO,
+    object: ClanDTO,
+)}
+    {@const o = world
+        .observationsToward(subject, object)
+        ?.get(ObservationDefs.Generosity)}
+    {#if o}
+        {@const own = o.ownLook}
+        {@const heard = o.reportsHeard}
+        <div style="font-size: 0.9em; padding: 0.25rem; max-width: 260px;">
+            <div
+                style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;"
+            >
+                {subject.name} on {object.name}'s generosity
+            </div>
+            <div style="color: #6e5b47;">
+                Mean over {unsigned(o.yearsSeen, 0)} years seen, plus {unsigned(
+                    o.def.priorYears,
+                    2,
+                )} years on the prior of {o.def.prior}.
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.35rem;">
+                <span
+                    >Saw last year <span style="color: #6e5b47;"
+                        >(self {unsigned(AID_TO_SELF_WEIGHT, 1)}x)</span
+                    >:</span
+                >
+                <strong>{own ? unsigned(own.reported, 1) : "nothing"}</strong>
+            </div>
+            {#if heard.length}
+                <div
+                    style="border-top: 1px dashed #ccc; padding-top: 0.25rem; margin-top: 0.25rem;"
+                >
+                    <div style="font-weight: bold; margin-bottom: 0.2rem;">
+                        Heard this year:
+                    </div>
+                    <TableView2
+                        table={new IterableTable(
+                            heard,
+                            (u) =>
+                                world.clanMap.get(u.source ?? "")?.name ?? "?",
+                            [
+                                {
+                                    data: "Said",
+                                    label: "Said",
+                                    valueFn: (u) => u.reported,
+                                    formatFn: (x: number) => unsigned(x, 1),
+                                },
+                                {
+                                    data: "Credence",
+                                    label: "Credence",
+                                    valueFn: (u) => u.credence ?? 1,
+                                    formatFn: (x: number) => unsigned(x, 2),
+                                },
+                                {
+                                    data: "Weight",
+                                    label: "Weight",
+                                    valueFn: (u) => u.weight,
+                                    formatFn: (x: number) => unsigned(x, 3),
+                                },
+                            ],
+                        )}
+                    ></TableView2>
+                    <div
+                        style="font-size: 0.85em; color: #6e5b47; font-style: italic; margin-top: 0.15rem;"
+                    >
+                        Credence is 1 + {PRESTIGE_CREDENCE_FACTOR} x the prestige
+                        {subject.name} grants the teller.
+                    </div>
+                </div>
+            {/if}
+            <div
+                style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #ccc; padding-top: 0.25rem;"
+            >
+                <span>Thinks:</span>
+                <strong>{unsigned(o.estimate, 1)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Confidence:</span>
+                <strong>{pct(o.confidence)}</strong>
+            </div>
+        </div>
+    {:else}
+        <div style="font-size: 0.9em; padding: 0.25rem;">
+            {subject.name} has formed no view of {object.name}'s generosity.
+        </div>
+    {/if}
+{/snippet}
+
 {#snippet opinionCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
     {@const r = opinionToward(subject, object)}
     {#if r}
@@ -424,6 +530,16 @@
                 alignmentCellValue,
                 unsignedFormat(2),
                 alignmentCellTooltip,
+            )}
+        ></TableView2>
+    </div>
+    <div>
+        <h3>Generosity</h3>
+        <TableView2
+            table={buildRelationshipsTable(
+                generosityCellValue,
+                unsignedFormat(1),
+                generosityCellTooltip,
             )}
         ></TableView2>
     </div>
