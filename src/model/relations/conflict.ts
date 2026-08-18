@@ -2,6 +2,7 @@ import type { Clan } from "../people/people";
 import { GenericItem, uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
 import type { World } from "../world";
 import { unsigned } from "../lib/format";
+import { recordConflict } from "./information";
 
 // How many iterations of the simple conflict game to apply per
 // turn for any pair of clans.
@@ -45,6 +46,11 @@ export class Conflicts {
                     if (c1 > c2) continue;
                     const conflict = this.g.getOrCreate(c1.uuid, c2.uuid);
                     conflict.advance();
+                    // Both sides remember who reached for force.
+                    recordConflict(
+                        c1, c2, conflict.hawkCountBy(c1), ITERATIONS_PER_TURN);
+                    recordConflict(
+                        c2, c1, conflict.hawkCountBy(c2), ITERATIONS_PER_TURN);
                 }
             }
         }

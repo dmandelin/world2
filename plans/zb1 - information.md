@@ -134,17 +134,18 @@ x   Introduce information concept for a clan to know stuff about
 *   Move direct info to ledger
     x   Gifts
     x   Aid
-    *   Conflicts
+    x   Conflicts
     *   (Construction)
 *   Move indirect event info to ledger
     x   Aid
-    *   Conflicts
+    x   Conflicts
     x   (Gifts)
     *   (Rituals)
     *   (Construction)
 *   Move direct state info to state tracking
     *   Population
 *   Move direct+indirect state info to state tracking
+    *   Do some simplified version for scaling
     *   Sociability
     *   Traits
         x   Piety
@@ -153,6 +154,11 @@ x   Introduce information concept for a clan to know stuff about
     *   QoL
     *   (Signals/displays)
 *   Followups
+    *   Scale down conflict activity to simplify and speed up
+    *   Apply a blanket 7 or so total remembered long-term events
+    *   Add hidden-from-each-other generosity and bellicosity
+        stats
+    *   Assessment scatter plots
     *   Let information spread 2 links
         *   For this to mean much of anything we need
             some cross-settlement links so check for

@@ -90,6 +90,34 @@ export const NeedBands = new BandScale('need', [
     new Band(3, 'comfortable', 'Comfortable', 1.00, 0.5),
 ]);
 
+// Fraction of its original impression below which an occasion has faded past
+// being carried at all. Module-level rather than on Memory, since the event
+// definitions are built at load time and would hit the class before it is
+// initialized.
+export const FORGET_THRESHOLD = 0.01;
+
+// Memorability at which a transfer of food sticks whatever else has happened
+// since: Large-when-hungry, Notable-when-desperate, and anything above, the
+// years a clan would still be telling its grandchildren about. Everything
+// below competes for the few slots that remain.
+export const UNFORGETTABLE_FOOD_MEMORABILITY = 0.19;
+
+// How long a clan carries an occasion it no longer recounts, unless its kind
+// says otherwise. Long enough that a recent run of behavior is still on the
+// books, short enough that the ledger stays something a clan could plausibly
+// hold. Occasions still recounted are exempt and can outlive it by decades.
+export const DEFAULT_PURGE_YEARS = 10;
+
+// How bad a quarrel got, by how many times a clan reached for force in a
+// year's dealings. Weights are representative counts, so a sum of weights
+// stays comparable to a count of real hawk plays.
+export const HawkCountBands = new BandScale('conflict', [
+    new Band(0, 'friction', 'Friction', 0, 1),
+    new Band(1, 'quarrel', 'Quarrel', 2, 2),
+    new Band(2, 'feud', 'Feud', 3, 3),
+    new Band(3, 'fighting', 'Open fighting', 4, 4.5),
+]);
+
 // A kind of event clans remember about each other. The definition carries the
 // parameters that govern how the event fades and how well news of it travels;
 // individual events carry their own size.
@@ -113,12 +141,16 @@ export type MemoryEventSpec = {
     // way: last year's gifts are common knowledge and the ones before that
     // have run together.
     recallYears?: number;
+    // Memorability at which an occasion sticks whatever else has happened
+    // since. Per kind, because memorability is measured on each kind's own
+    // scale: food weights run in hundredths, hawk plays in whole numbers.
+    unforgettableMemorability: number;
     // How long an occasion nobody recounts any more is still carried at all.
     // Past this it is gone from the ledger, not merely faded: whatever it
     // contributed lives on only in the impressions it helped form. Occasions
     // still being recounted are exempt, so a rescue told for generations is
     // never swept up by this.
-    purgeYears: number;
+    purgeYears?: number;
 };
 
 // A kind of event clans remember about each other. The definition carries the
@@ -129,8 +161,13 @@ export class MemoryEventDef {
     readonly newsReach: number;
     readonly unforgettableSalience: number;
     readonly sizeBands: BandScale;
+    readonly unforgettableMemorability: number;
     readonly recallYears: number | undefined;
     readonly purgeYears: number;
+    // Soonest age at which any entry of this kind could need dropping,
+    // whether by fading or by its span running out. Lets a ledger with
+    // nothing due skip the work of deciding what is still recounted.
+    readonly expiryYears: number;
 
     constructor(
         readonly key: string,
@@ -141,8 +178,13 @@ export class MemoryEventDef {
         this.newsReach = spec.newsReach;
         this.unforgettableSalience = spec.unforgettableSalience;
         this.sizeBands = spec.sizeBands;
+        this.unforgettableMemorability = spec.unforgettableMemorability;
         this.recallYears = spec.recallYears;
-        this.purgeYears = spec.purgeYears;
+        this.purgeYears = spec.purgeYears ?? DEFAULT_PURGE_YEARS;
+        // Age past which an occasion has faded below the point of being
+        // carried at all, from the half-life.
+        const staleYears = this.halfLife * Math.log2(1 / FORGET_THRESHOLD);
+        this.expiryYears = Math.min(staleYears, this.purgeYears);
     }
 }
 
@@ -157,6 +199,9 @@ export const MemoryEventDefs = {
         newsReach: 2,
         unforgettableSalience: 0.07,
         sizeBands: FoodSizeBands,
+        // Never reached on the food scale, and moot anyway: gifts are
+        // recounted by recency, not by standing.
+        unforgettableMemorability: UNFORGETTABLE_FOOD_MEMORABILITY,
         recallYears: 3,
         purgeYears: 5,
     }),
@@ -165,22 +210,23 @@ export const MemoryEventDefs = {
         newsReach: 5,
         unforgettableSalience: 0.07,
         sizeBands: FoodSizeBands,
-        purgeYears: 50,
+        unforgettableMemorability: UNFORGETTABLE_FOOD_MEMORABILITY,
     }),
+    // Quarrels are remembered like aid: a few stand out and are recounted for
+    // a lifetime, the rest run together into a sense of how touchy a
+    // neighbor is. A year in which a clan reached for force at every turn is
+    // not forgotten.
     Conflict: new MemoryEventDef('conflict', 'Conflict', {
         halfLife: 20,
-        newsReach: 7,
-        unforgettableSalience: 0.2,
-        sizeBands: FoodSizeBands,
-        purgeYears: 50,
+        newsReach: 2,
+        unforgettableSalience: 0.8,
+        sizeBands: HawkCountBands,
+        // Only a year of open fighting sticks on its own account. Ordinary
+        // friction and quarrels compete for the few slots like anything else,
+        // so a clan recounts its three worst run-ins and no more.
+        unforgettableMemorability: 4,
     }),
 };
-
-// Memorability at which an occasion sticks whatever else has happened since.
-// On the food scales that is Large-when-hungry, Notable-when-desperate, and
-// anything above: the years a clan would still be telling its grandchildren
-// about. Everything below competes for the few slots that remain.
-export const UNFORGETTABLE_MEMORABILITY = 0.19;
 
 // One event is one event, however many clans end up holding a copy of it and
 // however garbled those copies get. Copies share an id so that views (and,
@@ -267,7 +313,7 @@ export class MemoryEntry {
 
     // Striking enough to stick on its own account, whatever else happened.
     get isUnforgettable(): boolean {
-        return this.memorability >= UNFORGETTABLE_MEMORABILITY;
+        return this.memorability >= this.def.unforgettableMemorability;
     }
 
     // How this compares with other occasions right now, which is what decides
@@ -353,22 +399,6 @@ export class Memory {
         return sumFun(this.entriesOf(def), e => e.weight(year));
     }
 
-    // Drop entries that have faded past usefulness, so the ledger doesn't
-    // grow without bound.
-    static readonly FORGET_THRESHOLD = 0.01;
-
-    // Drop what is no longer carried: occasions faded past usefulness, and
-    // occasions nobody recounts any more that are past their kind's span.
-    // Anything still being recounted stays however old it is.
-    forget(year: number): void {
-        const recounted = this.rememberedIds(year);
-        this.entries_ = this.entries_.filter(entry => {
-            if (entry.freshness(year) < Memory.FORGET_THRESHOLD) return false;
-            if (recounted.has(entry.eventId)) return true;
-            return year - entry.year <= entry.def.purgeYears;
-        });
-    }
-
     keepOnly(predicate: (entry: MemoryEntry) => boolean): void {
         this.entries_ = this.entries_.filter(predicate);
     }
@@ -386,7 +416,10 @@ export class Memory {
     // can come back if a fresher one fades faster.
     rememberedIds(year: number): Set<number> {
         const kept = new Set<number>();
-        const byKind = new Map<MemoryEventDef, MemoryEntry[]>();
+        // The few best per kind, found by selection rather than by sorting the
+        // whole ledger: this runs for every pair every turn, and ledgers run
+        // to hundreds of entries.
+        const best = new Map<MemoryEventDef, { id: number, standing: number }[]>();
         for (const entry of this.entries_) {
             // Everyday exchange is recounted while it is recent and then
             // simply isn't, however big any one instance was.
@@ -399,16 +432,43 @@ export class Memory {
                 kept.add(entry.eventId);
                 continue;
             }
-            const list = byKind.get(entry.def);
-            if (list) list.push(entry); else byKind.set(entry.def, [entry]);
-        }
-        for (const list of byKind.values()) {
-            list.sort((a, b) => b.standing(year) - a.standing(year));
-            for (const entry of list.slice(0, Memory.RECOUNTABLE)) {
-                kept.add(entry.eventId);
+            let top = best.get(entry.def);
+            if (!top) best.set(entry.def, top = []);
+            const standing = entry.standing(year);
+            if (top.length < Memory.RECOUNTABLE) {
+                top.push({ id: entry.eventId, standing });
+            } else if (standing > top[0].standing) {
+                top[0] = { id: entry.eventId, standing };
+            } else {
+                continue;
             }
+            // Keep the weakest first so the check above is a single compare.
+            top.sort((a, b) => a.standing - b.standing);
+        }
+        for (const top of best.values()) {
+            for (const t of top) kept.add(t.id);
         }
         return kept;
+    }
+
+    // Drop what is no longer carried: occasions faded past usefulness, and
+    // occasions nobody recounts any more that are past their kind's span.
+    // Anything still being recounted stays however old it is.
+    forget(year: number): void {
+        // Most turns nothing has come due, and working out what is still
+        // recounted costs a pass over the whole ledger, so check first.
+        let due = false;
+        for (const entry of this.entries_) {
+            if (year - entry.year > entry.def.expiryYears) { due = true; break; }
+        }
+        if (!due) return;
+
+        const recounted = this.rememberedIds(year);
+        this.entries_ = this.entries_.filter(entry => {
+            if (entry.freshness(year) < FORGET_THRESHOLD) return false;
+            if (recounted.has(entry.eventId)) return true;
+            return year - entry.year <= entry.def.purgeYears;
+        });
     }
 
     clone(): Memory {
@@ -643,6 +703,28 @@ export function givingSeen(subject: Clan, object: Clan): number {
     return GENEROSITY_SCALE * total;
 }
 
+// Bellicosity is reported as hawk plays a year, which is already a readable
+// number, so it needs no scaling up the way giving does.
+export const BELLICOSITY_SCALE = 1;
+
+// How often one clan saw another reach for force over the last year, counting
+// only what it knows about. Being on the receiving end weighs a little more
+// than hearing that someone else was.
+export function aggressionSeen(subject: Clan, object: Clan): number {
+    const memory = subject.world.perceptions
+        .get(subject, object)?.information.memory;
+    if (!memory) return 0;
+    const of = subject.world.year.value - subject.world.yearsPerTurn;
+    let total = 0;
+    for (const entry of memory.entries) {
+        if (entry.def !== MemoryEventDefs.Conflict) continue;
+        if (entry.actor !== object.uuid || entry.year !== of) continue;
+        total += entry.size.weight
+            * (entry.target === subject.uuid ? AID_TO_SELF_WEIGHT : 1);
+    }
+    return BELLICOSITY_SCALE * total;
+}
+
 export const ObservationDefs = {
     Piety: new ObservationDef('piety', 'Piety', (_, clan) => clan.traits.piety, {
         mode: 'impression',
@@ -698,6 +780,33 @@ export const ObservationDefs = {
         seedStdev: 5,
         seedConfidence: 0.8,
         splitStdev: 5,
+        splitConfidenceFactor: 0.6,
+        min: 0,
+    }),
+
+    Bellicosity: new ObservationDef('bellicosity', 'Bellicosity', aggressionSeen, {
+        // Like generosity, judged by adding up deeds rather than by looking:
+        // a clan that came out swinging last year is already thought
+        // quarrelsome, and later years refine that.
+        mode: 'average',
+        priorYears: 1 / 3,
+        minAlpha: 0.1,
+        // Knowing nothing, assume nobody starts fights.
+        prior: 0,
+        // How far apart two observers' counts can reasonably land.
+        lookStdev: 2,
+        lookWeight: 0.2,
+        // A quarrel is hard to miss even between clans that barely deal with
+        // each other.
+        attentionThreshold: 0.1,
+        conspicuousAbove: Infinity,
+        // Who picked a fight with whom is the other half of village talk.
+        chatter: 1,
+        notableDeviation: 3,
+        staleHalfLife: 20,
+        seedStdev: 1.5,
+        seedConfidence: 0.8,
+        splitStdev: 1.5,
         splitConfidenceFactor: 0.6,
         min: 0,
     }),
@@ -1140,6 +1249,30 @@ export function areKin(a: Clan, b: Clan): boolean {
     if (connections.getForType(a, b, KinConnection)) return true;
     const marriage = connections.getForType(a, b, MarriageConnection);
     return !!marriage && marriage.relatedness > 0;
+}
+
+// Remember a year's quarrelling. `hawkPlays` is how many times the aggressor
+// reached for force out of `encounters` occasions of friction; a clan that
+// never did so leaves nothing to remember.
+export function recordConflict(
+    aggressor: Clan,
+    victim: Clan,
+    hawkPlays: number,
+    encounters: number,
+): void {
+    if (hawkPlays <= 0) return;
+    recordDirectEvent(aggressor, victim, new MemoryEntry({
+        def: MemoryEventDefs.Conflict,
+        year: aggressor.world.year.value,
+        actor: aggressor.uuid,
+        target: victim.uuid,
+        magnitude: hawkPlays,
+        size: MemoryEventDefs.Conflict.sizeBands.classify(hawkPlays),
+        // How much of the year's friction it took by force, which is what
+        // says whether this was an ordinary bad patch or a year of open
+        // fighting.
+        salience: encounters > 0 ? hawkPlays / encounters : 0,
+    }));
 }
 
 // ---------------------------------------------------------------------------

@@ -34,6 +34,7 @@ import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
 import { getPrestige, getLocalPrestige } from "../relations/prestige";
 import { ALL_OBSERVATION_DEFS, ObservationDefs } from "../relations/information";
+import type { ObservationDef } from "../relations/information";
 import type { ClanInformation, Memory, MemoryEntry, Observation, Observations } from "../relations/information";
 import { splitPairID, type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
@@ -187,34 +188,41 @@ export class ClanDTO {
         );
     }
 
-    // Population-weighted average of what other clans make of this one's
-    // generosity: how freely it is thought to give. Unlike Favor and Respect
-    // this is an impression built from deeds, so clans that have seen little
-    // of it contribute an impression close to the prior of nothing given.
-    get generosityAverage(): number {
+    // Population-weighted average of what other clans make of some quality
+    // of this one. Unlike Favor and Respect these are impressions built from
+    // deeds, so clans that have seen little contribute something close to the
+    // prior rather than nothing at all.
+    impressionAverage(def: ObservationDef): number {
         const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
         if (otherClans.length === 0) return 0;
         return populationAverage(
             otherClans,
-            c => this.world.observationsToward(c, this)
-                ?.estimate(ObservationDefs.Generosity) ?? 0
+            c => this.world.observationsToward(c, this)?.estimate(def) ?? def.prior
         );
     }
 
-    // What each other clan makes of this one's generosity, with the weight it
-    // carries in the average above.
-    get generosityViews(): { clan: ClanDTO, estimate: number, confidence: number, weight: number }[] {
+    // What each other clan makes of that quality, with the weight it carries
+    // in the average above.
+    impressionViews(def: ObservationDef): ImpressionView[] {
         const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
         const totalPop = sumFun(otherClans, c => c.population);
         return otherClans.map(clan => {
             const observations = this.world.observationsToward(clan, this);
             return {
                 clan,
-                estimate: observations?.estimate(ObservationDefs.Generosity) ?? 0,
-                confidence: observations?.confidence(ObservationDefs.Generosity) ?? 0,
+                estimate: observations?.estimate(def) ?? def.prior,
+                confidence: observations?.confidence(def) ?? 0,
                 weight: totalPop > 0 ? clan.population / totalPop : 0,
             };
         });
+    }
+
+    get generosityAverage(): number {
+        return this.impressionAverage(ObservationDefs.Generosity);
+    }
+
+    get bellicosityAverage(): number {
+        return this.impressionAverage(ObservationDefs.Bellicosity);
     }
 
     // Population-weighted alignment other clans feel toward this one: how
@@ -347,6 +355,15 @@ export type Impression = {
     // Absent for qualities with no figure an observer could be checked
     // against, such as ones inferred from deeds.
     trueValue: number | undefined;
+};
+
+// One clan's view of a quality of another, with the weight it carries in the
+// settlement-wide average.
+export type ImpressionView = {
+    clan: ClanDTO;
+    estimate: number;
+    confidence: number;
+    weight: number;
 };
 
 // One event, with every clan that knows of it and the version each holds.

@@ -3,6 +3,7 @@
         ObservationDefs,
         AID_TO_SELF_WEIGHT,
         PRESTIGE_CREDENCE_FACTOR,
+        type ObservationDef,
     } from "../model/relations/information";
     import { CrossTab, IterableTable } from "./tables/tables2";
     import {
@@ -70,13 +71,13 @@
         return info ? info.value : 0;
     }
 
-    // What the row clan makes of how freely the column clan gives.
-    function generosityCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
-        return (
-            world
-                .observationsToward(rowClan, colClan)
-                ?.estimate(ObservationDefs.Generosity) ?? 0
-        );
+    // What the row clan makes of some quality of the column clan.
+    function impressionCellValue(
+        def: ObservationDef,
+    ): (rowClan: ClanDTO, colClan: ClanDTO) => number {
+        return (rowClan, colClan) =>
+            world.observationsToward(rowClan, colClan)?.estimate(def) ??
+            def.prior;
     }
 
     function alignmentCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -286,14 +287,13 @@
     {/if}
 {/snippet}
 
-{#snippet generosityCellTooltip(
-    value: number,
+{#snippet impressionCellTooltip(
+    def: ObservationDef,
     subject: ClanDTO,
     object: ClanDTO,
+    unit: string,
 )}
-    {@const o = world
-        .observationsToward(subject, object)
-        ?.get(ObservationDefs.Generosity)}
+    {@const o = world.observationsToward(subject, object)?.get(def)}
     {#if o}
         {@const own = o.ownLook}
         {@const heard = o.reportsHeard}
@@ -301,7 +301,7 @@
             <div
                 style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;"
             >
-                {subject.name} on {object.name}'s generosity
+                {subject.name} on {object.name}'s {def.label.toLowerCase()}
             </div>
             <div style="color: #6e5b47;">
                 Mean over {unsigned(o.yearsSeen, 0)} years seen, plus {unsigned(
@@ -309,13 +309,18 @@
                     2,
                 )} years on the prior of {o.def.prior}.
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 0.35rem;">
+            <div
+                style="display: flex; justify-content: space-between; margin-top: 0.35rem;"
+            >
                 <span
                     >Saw last year <span style="color: #6e5b47;"
                         >(self {unsigned(AID_TO_SELF_WEIGHT, 1)}x)</span
                     >:</span
                 >
                 <strong>{own ? unsigned(own.reported, 1) : "nothing"}</strong>
+            </div>
+            <div style="font-size: 0.85em; color: #6e5b47; font-style: italic;">
+                {unit}
             </div>
             {#if heard.length}
                 <div
@@ -372,9 +377,35 @@
         </div>
     {:else}
         <div style="font-size: 0.9em; padding: 0.25rem;">
-            {subject.name} has formed no view of {object.name}'s generosity.
+            {subject.name} has formed no view of {object.name}'s {def.label.toLowerCase()}.
         </div>
     {/if}
+{/snippet}
+
+{#snippet generosityCellTooltip(
+    value: number,
+    subject: ClanDTO,
+    object: ClanDTO,
+)}
+    {@render impressionCellTooltip(
+        ObservationDefs.Generosity,
+        subject,
+        object,
+        "Aid and gifts given away, in recipient rations x100. Gifts within the family do not count.",
+    )}
+{/snippet}
+
+{#snippet bellicosityCellTooltip(
+    value: number,
+    subject: ClanDTO,
+    object: ClanDTO,
+)}
+    {@render impressionCellTooltip(
+        ObservationDefs.Bellicosity,
+        subject,
+        object,
+        "Times reached for force, per year.",
+    )}
 {/snippet}
 
 {#snippet opinionCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
@@ -524,22 +555,32 @@
         {/if}
     </div>
     <div>
+        <h3>Generosity</h3>
+        <TableView2
+            table={buildRelationshipsTable(
+                impressionCellValue(ObservationDefs.Generosity),
+                unsignedFormat(1),
+                generosityCellTooltip,
+            )}
+        ></TableView2>
+    </div>
+    <div>
+        <h3>Bellicosity</h3>
+        <TableView2
+            table={buildRelationshipsTable(
+                impressionCellValue(ObservationDefs.Bellicosity),
+                unsignedFormat(1),
+                bellicosityCellTooltip,
+            )}
+        ></TableView2>
+    </div>
+    <div>
         <h3>Alignment</h3>
         <TableView2
             table={buildRelationshipsTable(
                 alignmentCellValue,
                 unsignedFormat(2),
                 alignmentCellTooltip,
-            )}
-        ></TableView2>
-    </div>
-    <div>
-        <h3>Generosity</h3>
-        <TableView2
-            table={buildRelationshipsTable(
-                generosityCellValue,
-                unsignedFormat(1),
-                generosityCellTooltip,
             )}
         ></TableView2>
     </div>

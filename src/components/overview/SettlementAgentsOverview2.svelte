@@ -41,6 +41,10 @@
         type WorldDTO,
         type ClanLastTurnSnapshots,
     } from "../../model/records/dtos";
+    import {
+        ObservationDefs,
+        type ObservationDef,
+    } from "../../model/relations/information";
     import type { Process } from "../../model/econ/process";
     import type { Activity } from "../../model/decisions/effort";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
@@ -571,6 +575,18 @@
                 format: (v) => unsigned(v, 1),
                 tooltipSnippet: generosityTooltip,
                 deltaValue: (c) => c.generosityAverage,
+                deltaFormat: (v) => unsigned(v, 1),
+                scaler: new DefaultScaler(),
+                topics: ["perceptions"],
+            },
+            {
+                label: "Bellicosity",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.bellicosityAverage,
+                format: (v) => unsigned(v, 1),
+                tooltipSnippet: bellicosityTooltip,
+                deltaValue: (c) => c.bellicosityAverage,
                 deltaFormat: (v) => unsigned(v, 1),
                 scaler: new DefaultScaler(),
                 topics: ["perceptions"],
@@ -2573,13 +2589,14 @@
     <TableView2 table={clanStressTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet generosityTooltip(cs: ClanLastTurnSnapshots)}
-    {@const views = cs.e.generosityViews}
+{#snippet impressionTooltip(
+    clan: ClanDTO,
+    def: ObservationDef,
+    blurb: string,
+)}
+    {@const views = clan.impressionViews(def)}
     <div style="font-size: 0.9em; padding: 0.25rem; max-width: 240px;">
-        <div style="margin-bottom: 0.35rem;">
-            How freely <b>{cs.e.name}</b> is thought to give, from the aid each
-            neighbor has seen it hand out. Weighted by population.
-        </div>
+        <div style="margin-bottom: 0.35rem;">{blurb}</div>
         <TableView2
             table={new IterableTable(views, (v) => v.clan.name, [
                 {
@@ -2606,9 +2623,25 @@
             style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #ccc; padding-top: 0.25rem;"
         >
             <span>Weighted average:</span>
-            <strong>{unsigned(cs.e.generosityAverage, 1)}</strong>
+            <strong>{unsigned(clan.impressionAverage(def), 1)}</strong>
         </div>
     </div>
+{/snippet}
+
+{#snippet generosityTooltip(cs: ClanLastTurnSnapshots)}
+    {@render impressionTooltip(
+        cs.e,
+        ObservationDefs.Generosity,
+        `How freely ${cs.e.name} is thought to give, from the aid and gifts each neighbor has seen it hand out. Weighted by population.`,
+    )}
+{/snippet}
+
+{#snippet bellicosityTooltip(cs: ClanLastTurnSnapshots)}
+    {@render impressionTooltip(
+        cs.e,
+        ObservationDefs.Bellicosity,
+        `How quarrelsome ${cs.e.name} is thought to be, from the times each neighbor has seen it reach for force. Weighted by population.`,
+    )}
 {/snippet}
 
 {#snippet qolTooltip(cs: ClanLastTurnSnapshots)}
