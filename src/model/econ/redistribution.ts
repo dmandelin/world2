@@ -269,7 +269,8 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
                 }
 
                 req.requester.consumption.addDonation(donor, TradeGoods.Cereals, amount, 0);
-                recordFoodAid(donor, req.requester, amount);
+                recordFoodAid(donor, req.requester, amount,
+                    initialFoodMap.get(req.requester.uuid)!.perCapita);
 
                 const prevRec = totalReceivedByRequester.get(req.requester.uuid) ?? 0;
                 totalReceivedByRequester.set(req.requester.uuid, prevRec + amount);

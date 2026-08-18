@@ -410,9 +410,14 @@
                             <th>Age</th>
                             <th>Kind</th>
                             <th>Event</th>
+                            <th>Remembered as</th>
                             {#if subj && !obj}<th>About</th>{/if}
                             {#if obj && !subj}<th>Known by</th>{/if}
-                            <th class="num">Amount</th>
+                            <th
+                                class="num"
+                                title="What really happened. The clan itself has only the bands under Remembered as."
+                                >Amount</th
+                            >
                             <th class="num">Weight</th>
                             <th class="num">Salience</th>
                             <th>Source</th>
@@ -426,6 +431,7 @@
                                 <td>{now - e.year}</td>
                                 <td>{e.def.label}</td>
                                 <td>{description(e)}{e.explanation ? `: ${e.explanation}` : ""}</td>
+                                <td>{e.description}</td>
                                 {#if subj && !obj}
                                     <td>{row.about?.name ?? "?"}</td>
                                 {/if}

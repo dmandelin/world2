@@ -163,10 +163,13 @@ x   Introduce information concept for a clan to know stuff about
     *   Somehow deal with the fact that a clan is not
         literally going to remember 53 separate instances
         of food aid
-    *   Share out information on splits
+    x   Share out information on splits
     *   Have a way for super-notable information to get
         transmitted after the fact
     *   Get correct cutoffs and final forgetting deadlines
         In part to control size
     *   Have clans keep memory for a while if temporarily
         disconnected
+*   Actual impact of the information on judgments
+    *   Alignment
+    *   Respect

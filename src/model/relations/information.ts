@@ -26,6 +26,68 @@ import type { World } from "../world";
 // Memory: the event ledger.
 // ---------------------------------------------------------------------------
 
+// Clans have no writing and no way to measure, so they do not remember that a
+// neighbor handed over 4.1 units of food in a particular year. They remember
+// that it was a large gift and that they were hungry at the time. Bands are
+// that memory: a short ordered scale of the kind a clan could actually carry
+// in its head and retell to someone else.
+export class Band {
+    constructor(
+        // Position on the scale, for rules that compare one band to another.
+        readonly index: number,
+        readonly key: string,
+        readonly label: string,
+        // Lowest measured value falling in this band.
+        readonly floor: number,
+        // What a value in this band counts for when the memory is weighed,
+        // standing in for the amount nobody actually remembers.
+        readonly weight: number,
+    ) { }
+}
+
+// An ordered set of bands, ascending by floor.
+export class BandScale {
+    constructor(readonly name: string, readonly bands: readonly Band[]) { }
+
+    classify(value: number): Band {
+        let found = this.bands[0];
+        for (const band of this.bands) {
+            if (value < band.floor) break;
+            found = band;
+        }
+        return found;
+    }
+}
+
+// How big a gift of food felt, by what it came to per head of the clan
+// receiving it, in food units where 1 is one person's ration for a year.
+//
+// The scale looks cramped against that unit, and it has to be: a donor may
+// only give away its surplus above a 0.8 ration, a requester asks only for
+// enough to reach 0.8, and that request is split across every willing donor.
+// A single transfer therefore tops out near 0.15 per head, so these bands are
+// set against the range aid actually occupies rather than against the unit.
+// Weights are band midpoints in the same units, which keeps a sum of weights
+// comparable to a sum of real amounts.
+export const FoodSizeBands = new BandScale('size', [
+    new Band(0, 'token', 'Token', 0, 0.005),
+    new Band(1, 'small', 'Small', 0.01, 0.02),
+    new Band(2, 'notable', 'Notable', 0.03, 0.05),
+    new Band(3, 'large', 'Large', 0.07, 0.095),
+    new Band(4, 'enormous', 'Enormous', 0.12, 0.16),
+]);
+
+// How badly help was needed, by what the receiving clan had to eat per head
+// before it arrived. Clans start asking for aid below 0.8, so anything at or
+// above that was not really want. Weights run the other way from the scale:
+// the same gift means far more to the desperate.
+export const NeedBands = new BandScale('need', [
+    new Band(0, 'desperate', 'Desperate', 0, 4),
+    new Band(1, 'hungry', 'Hungry', 0.60, 2),
+    new Band(2, 'short', 'Short', 0.80, 1),
+    new Band(3, 'comfortable', 'Comfortable', 1.00, 0.5),
+]);
+
 // A kind of event clans remember about each other. The definition carries the
 // parameters that govern how the event fades and how well news of it travels;
 // individual events carry their own size.
@@ -44,15 +106,17 @@ export class MemoryEventDef {
         // Salience at or above which an event is unforgettable: when a clan
         // splits, both successors carry it off, however the people divided.
         readonly unforgettableSalience: number,
+        // Scale on which an event of this kind is remembered as big or small.
+        readonly sizeBands: BandScale,
     ) { }
 }
 
 // Starter set; more will be added as event sources are moved over to the
 // ledger (rituals, construction, ...).
 export const MemoryEventDefs = {
-    Gift: new MemoryEventDef('gift', 'Gift', 10, 2, 0.25),
-    Aid: new MemoryEventDef('aid', 'Aid', 20, 5, 0.25),
-    Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 7, 0.2),
+    Gift: new MemoryEventDef('gift', 'Gift', 10, 2, 0.07, FoodSizeBands),
+    Aid: new MemoryEventDef('aid', 'Aid', 20, 5, 0.07, FoodSizeBands),
+    Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 7, 0.2, FoodSizeBands),
 };
 
 // One event is one event, however many clans end up holding a copy of it and
@@ -61,34 +125,76 @@ export const MemoryEventDefs = {
 // from two events.
 let nextEventId = 1;
 
+export type MemoryEntrySpec = {
+    def: MemoryEventDef;
+    // Year the event happened (as believed by the rememberer).
+    year: number;
+    // Clan that acted. Usually the object of these perceptions, but for news
+    // heard about it may be a third party.
+    actor: UUID;
+    // Clan acted upon, if any.
+    target?: UUID;
+    // The true size of the event in its own natural units. This is our
+    // bookkeeping, not the clan's: nothing a clan does should read it.
+    magnitude: number;
+    // How big the event felt, which is what the clan actually retains.
+    size: Band;
+    // How badly it was needed, where that means anything.
+    need?: Band;
+    // How striking the event was, on a scale where 1 is "a big deal of its
+    // kind". Not capped: a truly enormous event should be able to say so.
+    salience: number;
+    // Links the news crossed to get here. 0 means witnessed or experienced
+    // directly.
+    hops?: number;
+    // Clan we heard it from, if we didn't see it ourselves.
+    via?: UUID;
+    explanation?: string;
+    // Shared by every copy of the same underlying event.
+    eventId?: number;
+};
+
 // One remembered event. Immutable: what a clan believes about an event it has
 // already filed away doesn't change, it only fades.
+//
+// Note the split between `magnitude` and `size`. The former is what really
+// happened and is kept so we can check our own work; the latter is what the
+// clan came away with. Rules about how clans behave belong on the bands.
 export class MemoryEntry {
-    constructor(
-        readonly def: MemoryEventDef,
-        // Year the event happened (as believed by the rememberer).
-        readonly year: number,
-        // Clan that acted. Usually the object of these perceptions, but for
-        // news heard about it may be a third party.
-        readonly actor: UUID,
-        // Clan acted upon, if any.
-        readonly target: UUID | undefined,
-        // Size of the event in its own natural units (e.g. food given).
-        readonly magnitude: number,
-        // How striking the event was, on a scale where 1 is "a big deal of
-        // its kind". Set by whatever recorded the event, since only it knows
-        // what counts as big for its kind, and not capped: a truly enormous
-        // event should be able to say so.
-        readonly salience: number,
-        // Links the news crossed to get here. 0 means witnessed or
-        // experienced directly.
-        readonly hops: number,
-        // Clan we heard it from, if we didn't see it ourselves.
-        readonly via: UUID | undefined,
-        readonly explanation: string = '',
-        // Shared by every copy of the same underlying event.
-        readonly eventId: number = nextEventId++,
-    ) { }
+    readonly def: MemoryEventDef;
+    readonly year: number;
+    readonly actor: UUID;
+    readonly target: UUID | undefined;
+    readonly magnitude: number;
+    readonly size: Band;
+    readonly need: Band | undefined;
+    readonly salience: number;
+    readonly hops: number;
+    readonly via: UUID | undefined;
+    readonly explanation: string;
+    readonly eventId: number;
+
+    constructor(spec: MemoryEntrySpec) {
+        this.def = spec.def;
+        this.year = spec.year;
+        this.actor = spec.actor;
+        this.target = spec.target;
+        this.magnitude = spec.magnitude;
+        this.size = spec.size;
+        this.need = spec.need;
+        this.salience = spec.salience;
+        this.hops = spec.hops ?? 0;
+        this.via = spec.via;
+        this.explanation = spec.explanation ?? '';
+        this.eventId = spec.eventId ?? nextEventId++;
+    }
+
+    // How the clan would describe it, from what it actually kept.
+    get description(): string {
+        return this.need
+            ? `${this.size.label}, when ${this.need.label.toLowerCase()}`
+            : this.size.label;
+    }
 
     // Fraction of the original impression still remaining in the given year.
     freshness(year: number): number {
@@ -118,11 +224,23 @@ export class MemoryEntry {
         return 1 - Math.pow(1 - attention, 1 + reach);
     }
 
-    // This event as the hearer files it: same event, one more link away.
+    // This event as the hearer files it: same event, one more link away. What
+    // gets passed on is the coarse account, which is all the teller had.
     retold(via: UUID): MemoryEntry {
-        return new MemoryEntry(
-            this.def, this.year, this.actor, this.target, this.magnitude,
-            this.salience, this.hops + 1, via, this.explanation, this.eventId);
+        return new MemoryEntry({
+            def: this.def,
+            year: this.year,
+            actor: this.actor,
+            target: this.target,
+            magnitude: this.magnitude,
+            size: this.size,
+            need: this.need,
+            salience: this.salience,
+            hops: this.hops + 1,
+            via,
+            explanation: this.explanation,
+            eventId: this.eventId,
+        });
     }
 }
 
@@ -654,23 +772,28 @@ export function recordDirectEvent(a: Clan, b: Clan, entry: MemoryEntry): void {
 }
 
 // Remember a gift of food aid. Both donor and recipient know about it
-// firsthand.
-export function recordFoodAid(donor: Clan, recipient: Clan, amount: number): void {
+// firsthand. `recipientFoodPerCapita` is what the recipient had to eat before
+// the help arrived, which is what decides how much the help meant.
+export function recordFoodAid(
+    donor: Clan,
+    recipient: Clan,
+    amount: number,
+    recipientFoodPerCapita: number,
+): void {
     if (amount <= 0) return;
-    // Aid looms as large as it mattered to the recipient: a day's food per
-    // head is a big deal, a token is barely worth mentioning.
+    // Aid looms as large as it mattered to the recipient, so size is measured
+    // against a year's ration for one of its members.
     const perCapita = amount / Math.max(1, recipient.population);
-    recordDirectEvent(donor, recipient, new MemoryEntry(
-        MemoryEventDefs.Aid,
-        donor.world.year.value,
-        donor.uuid,
-        recipient.uuid,
-        amount,
-        perCapita,
-        0,
-        undefined,
-        `${amount.toFixed(1)} food (${perCapita.toFixed(2)}/person)`,
-    ));
+    recordDirectEvent(donor, recipient, new MemoryEntry({
+        def: MemoryEventDefs.Aid,
+        year: donor.world.year.value,
+        actor: donor.uuid,
+        target: recipient.uuid,
+        magnitude: amount,
+        size: MemoryEventDefs.Aid.sizeBands.classify(perCapita),
+        need: NeedBands.classify(recipientFoodPerCapita),
+        salience: perCapita,
+    }));
 }
 
 // ---------------------------------------------------------------------------
