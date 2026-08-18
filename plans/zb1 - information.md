@@ -132,14 +132,14 @@ x   Introduce information concept for a clan to know stuff about
     x   Ledger
     x   State
 *   Move direct info to ledger
-    *   Gifts
+    x   Gifts
     x   Aid
     *   Conflicts
     *   (Construction)
 *   Move indirect event info to ledger
     x   Aid
     *   Conflicts
-    *   (Gifts)
+    x   (Gifts)
     *   (Rituals)
     *   (Construction)
 *   Move direct state info to state tracking

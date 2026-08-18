@@ -2,6 +2,7 @@ import type { Clan } from "../people/people";
 import { TradeGoods } from "../trade";
 import { getPrestige } from "../relations/prestige";
 import { connectedClans } from "../relations/connection";
+import { recordFoodGift } from "../relations/information";
 
 export interface FoodGiftRecord {
     donorUuid: string;
@@ -114,6 +115,7 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
 
             donor.distribution.addGift(entry.recipient, TradeGoods.Cereals, giftAbs);
             entry.recipient.consumption.addGift(donor, TradeGoods.Cereals, giftAbs);
+            recordFoodGift(donor, entry.recipient, giftAbs);
 
             const recPop = entry.recipient.population || 1;
             const donorPop = donor.population || 1;

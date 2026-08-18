@@ -41,9 +41,34 @@
         ];
     });
 
+    // Recountable and total counts for every pair on the grid, worked out
+    // once per render: each answer costs a sort of the whole ledger, and the
+    // grid asks for all of them.
+    let ledgerCounts = $derived.by(() => {
+        const counts = new Map<string, { recountable: number; total: number }>();
+        for (const row of axisClans) {
+            for (const col of axisClans) {
+                if (row.uuid === col.uuid) continue;
+                const memory = world.memoryToward(row, col);
+                if (!memory) continue;
+                counts.set(`${row.uuid}|${col.uuid}`, {
+                    recountable: world.recountableIds(row, col).size,
+                    total: memory.entries.length,
+                });
+            }
+        }
+        return counts;
+    });
+
+    function countsFor(row: ClanDTO, col: ClanDTO) {
+        return ledgerCounts.get(`${row.uuid}|${col.uuid}`);
+    }
+
+    // What the grid shows: occasions the clan can still recount, not the
+    // whole ledger. The rest have run together into its impressions.
     function eventCount(row: ClanDTO, col: ClanDTO): number {
         if (row.uuid === col.uuid) return -1;
-        return world.memoryToward(row, col)?.entries.length ?? 0;
+        return countsFor(row, col)?.recountable ?? 0;
     }
 
     // A clan is never both sides of a pairing, so picking one side drops the
@@ -287,7 +312,8 @@
     </div>
 
     <p style="font-size: 0.9rem; color: #666; margin: 0 0 1rem 0;">
-        Events each clan (row) remembers about another (column). Click a cell
+        Occasions each clan (row) can still recount about another (column);
+        the rest have run together into its impressions. Click a cell
         for one pair, a row header for everything that clan knows, or a column
         header for everything known about that clan. Clans from outside this
         settlement are marked with an asterisk (*).
@@ -338,10 +364,13 @@
                                         ? 'sel'
                                         : ''} {n === 0 ? 'empty' : ''}"
                                     onclick={() => selectCell(row, col)}
-                                    title="{row.name} remembers {n} event{n ===
+                                    title="{row.name} can still recount {n} occasion{n ===
                                     1
                                         ? ''
-                                        : 's'} about {col.name}"
+                                        : 's'} about {col.name}, out of {countsFor(
+                                        row,
+                                        col,
+                                    )?.total ?? 0} still carried"
                                 >
                                     {n === 0 ? "" : n}
                                 </td>

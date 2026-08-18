@@ -1,6 +1,7 @@
 import { clamp, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { Connection } from "./connection";
+import { KinConnection, MarriageConnection } from "./connection";
 import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
 import { pct } from "../lib/format";
@@ -92,32 +93,87 @@ export const NeedBands = new BandScale('need', [
 // A kind of event clans remember about each other. The definition carries the
 // parameters that govern how the event fades and how well news of it travels;
 // individual events carry their own size.
+export type MemoryEventSpec = {
+    // Years for a remembered event's weight to halve.
+    halfLife: number;
+    // How far news of this kind carries beyond the base rate set by
+    // attention. See MemoryEntry.transmissionChance for what the number
+    // means; it is multiplied by the individual event's salience, so a kind
+    // with high reach still travels no further than its small instances
+    // deserve.
+    newsReach: number;
+    // Salience at or above which an event is unforgettable: when a clan
+    // splits, both successors carry it off, however the people divided.
+    unforgettableSalience: number;
+    // Scale on which an event of this kind is remembered as big or small.
+    sizeBands: BandScale;
+    // If set, occasions of this kind are recounted only while they are this
+    // recent, however striking, instead of competing for the few slots kept
+    // for the kinds worth recounting at all. Everyday exchange works this
+    // way: last year's gifts are common knowledge and the ones before that
+    // have run together.
+    recallYears?: number;
+    // How long an occasion nobody recounts any more is still carried at all.
+    // Past this it is gone from the ledger, not merely faded: whatever it
+    // contributed lives on only in the impressions it helped form. Occasions
+    // still being recounted are exempt, so a rescue told for generations is
+    // never swept up by this.
+    purgeYears: number;
+};
+
+// A kind of event clans remember about each other. The definition carries the
+// parameters that govern how the event fades and how well news of it travels;
+// individual events carry their own size.
 export class MemoryEventDef {
+    readonly halfLife: number;
+    readonly newsReach: number;
+    readonly unforgettableSalience: number;
+    readonly sizeBands: BandScale;
+    readonly recallYears: number | undefined;
+    readonly purgeYears: number;
+
     constructor(
         readonly key: string,
         readonly label: string,
-        // Years for a remembered event's weight to halve.
-        readonly halfLife: number,
-        // How far news of this kind carries beyond the base rate set by
-        // attention. See MemoryEntry.transmissionChance for what the number
-        // means; it is multiplied by the individual event's salience, so a
-        // kind with high reach still travels no further than its small
-        // instances deserve.
-        readonly newsReach: number,
-        // Salience at or above which an event is unforgettable: when a clan
-        // splits, both successors carry it off, however the people divided.
-        readonly unforgettableSalience: number,
-        // Scale on which an event of this kind is remembered as big or small.
-        readonly sizeBands: BandScale,
-    ) { }
+        spec: MemoryEventSpec,
+    ) {
+        this.halfLife = spec.halfLife;
+        this.newsReach = spec.newsReach;
+        this.unforgettableSalience = spec.unforgettableSalience;
+        this.sizeBands = spec.sizeBands;
+        this.recallYears = spec.recallYears;
+        this.purgeYears = spec.purgeYears;
+    }
 }
 
 // Starter set; more will be added as event sources are moved over to the
 // ledger (rituals, construction, ...).
 export const MemoryEventDefs = {
-    Gift: new MemoryEventDef('gift', 'Gift', 10, 2, 0.07, FoodSizeBands),
-    Aid: new MemoryEventDef('aid', 'Aid', 20, 5, 0.07, FoodSizeBands),
-    Conflict: new MemoryEventDef('conflict', 'Conflict', 20, 7, 0.2, FoodSizeBands),
+    // Gifts are routine and soon indistinguishable from each other, so they
+    // fade faster than aid, are recounted only while recent, and are dropped
+    // altogether not long after.
+    Gift: new MemoryEventDef('gift', 'Gift', {
+        halfLife: 5,
+        newsReach: 2,
+        unforgettableSalience: 0.07,
+        sizeBands: FoodSizeBands,
+        recallYears: 3,
+        purgeYears: 5,
+    }),
+    Aid: new MemoryEventDef('aid', 'Aid', {
+        halfLife: 20,
+        newsReach: 5,
+        unforgettableSalience: 0.07,
+        sizeBands: FoodSizeBands,
+        purgeYears: 50,
+    }),
+    Conflict: new MemoryEventDef('conflict', 'Conflict', {
+        halfLife: 20,
+        newsReach: 7,
+        unforgettableSalience: 0.2,
+        sizeBands: FoodSizeBands,
+        purgeYears: 50,
+    }),
 };
 
 // Memorability at which an occasion sticks whatever else has happened since.
@@ -148,6 +204,10 @@ export type MemoryEntrySpec = {
     size: Band;
     // How badly it was needed, where that means anything.
     need?: Band;
+    // Whether this passed between kin or between clans that have married.
+    // Giving inside the family is what family is for, so it says nothing
+    // about whether a clan is open-handed with anyone else.
+    withinKin?: boolean;
     // How striking the event was, on a scale where 1 is "a big deal of its
     // kind". Not capped: a truly enormous event should be able to say so.
     salience: number;
@@ -175,6 +235,7 @@ export class MemoryEntry {
     readonly magnitude: number;
     readonly size: Band;
     readonly need: Band | undefined;
+    readonly withinKin: boolean;
     readonly salience: number;
     readonly hops: number;
     readonly via: UUID | undefined;
@@ -189,6 +250,7 @@ export class MemoryEntry {
         this.magnitude = spec.magnitude;
         this.size = spec.size;
         this.need = spec.need;
+        this.withinKin = spec.withinKin ?? false;
         this.salience = spec.salience;
         this.hops = spec.hops ?? 0;
         this.via = spec.via;
@@ -216,9 +278,10 @@ export class MemoryEntry {
 
     // How the clan would describe it, from what it actually kept.
     get description(): string {
+        const kin = this.withinKin ? ', within the family' : '';
         return this.need
-            ? `${this.size.label}, when ${this.need.label.toLowerCase()}`
-            : this.size.label;
+            ? `${this.size.label}, when ${this.need.label.toLowerCase()}${kin}`
+            : `${this.size.label}${kin}`;
     }
 
     // Fraction of the original impression still remaining in the given year.
@@ -260,6 +323,7 @@ export class MemoryEntry {
             magnitude: this.magnitude,
             size: this.size,
             need: this.need,
+            withinKin: this.withinKin,
             salience: this.salience,
             hops: this.hops + 1,
             via,
@@ -293,9 +357,16 @@ export class Memory {
     // grow without bound.
     static readonly FORGET_THRESHOLD = 0.01;
 
+    // Drop what is no longer carried: occasions faded past usefulness, and
+    // occasions nobody recounts any more that are past their kind's span.
+    // Anything still being recounted stays however old it is.
     forget(year: number): void {
-        this.entries_ = this.entries_.filter(
-            e => e.freshness(year) >= Memory.FORGET_THRESHOLD);
+        const recounted = this.rememberedIds(year);
+        this.entries_ = this.entries_.filter(entry => {
+            if (entry.freshness(year) < Memory.FORGET_THRESHOLD) return false;
+            if (recounted.has(entry.eventId)) return true;
+            return year - entry.year <= entry.def.purgeYears;
+        });
     }
 
     keepOnly(predicate: (entry: MemoryEntry) => boolean): void {
@@ -317,6 +388,13 @@ export class Memory {
         const kept = new Set<number>();
         const byKind = new Map<MemoryEventDef, MemoryEntry[]>();
         for (const entry of this.entries_) {
+            // Everyday exchange is recounted while it is recent and then
+            // simply isn't, however big any one instance was.
+            const window = entry.def.recallYears;
+            if (window !== undefined) {
+                if (year - entry.year <= window) kept.add(entry.eventId);
+                continue;
+            }
             if (entry.isUnforgettable) {
                 kept.add(entry.eventId);
                 continue;
@@ -535,22 +613,30 @@ export const GENEROSITY_SCALE = 100;
 // rather than overwriting it.
 export const SEEDED_YEARS_SEEN = 5;
 
-// What one clan saw another give over the last year, counting only what it
-// knows about. This is read straight off the observer's own ledger, so two
+// What one clan saw another give away over the last year, counting only what
+// it knows about. This is read straight off the observer's own ledger, so two
 // clans watching the same neighbor can honestly reach different conclusions:
 // they saw different things.
 //
-// Aid is recorded during the advance phase and observations are formed at the
-// start of the next turn, so the year just completed is one year back.
-export function aidSeenGiven(subject: Clan, object: Clan): number {
+// Giving within the family does not count. A clan that keeps its kin and its
+// in-laws supplied is doing what a clan is for; open-handedness means giving
+// where there is no such claim on you. Aid is exempt from that rule, since
+// pulling anyone through a bad year is generous whoever they are.
+//
+// Transfers are recorded during the advance phase and observations are formed
+// at the start of the next turn, so the year just completed is one year back.
+export function givingSeen(subject: Clan, object: Clan): number {
     const memory = subject.world.perceptions
         .get(subject, object)?.information.memory;
     if (!memory) return 0;
     const of = subject.world.year.value - subject.world.yearsPerTurn;
     let total = 0;
     for (const entry of memory.entries) {
-        if (entry.def !== MemoryEventDefs.Aid) continue;
+        if (entry.def !== MemoryEventDefs.Aid && entry.def !== MemoryEventDefs.Gift) {
+            continue;
+        }
         if (entry.actor !== object.uuid || entry.year !== of) continue;
+        if (entry.withinKin && entry.def === MemoryEventDefs.Gift) continue;
         total += entry.size.weight
             * (entry.target === subject.uuid ? AID_TO_SELF_WEIGHT : 1);
     }
@@ -588,7 +674,7 @@ export const ObservationDefs = {
         max: 100,
     }),
 
-    Generosity: new ObservationDef('generosity', 'Generosity', aidSeenGiven, {
+    Generosity: new ObservationDef('generosity', 'Generosity', givingSeen, {
         // Judged by adding up deeds, not by looking: a clan that gave freely
         // last year is already thought generous, and later years refine that
         // rather than slowly talking it round from a midpoint.
@@ -1026,6 +1112,34 @@ export function recordFoodAid(
         need: NeedBands.classify(recipientFoodPerCapita),
         salience: perCapita,
     }));
+}
+
+// Remember a gift of food. Unlike aid, a gift answers no particular want, so
+// there is no need to record: what it says is simply that the giver had
+// something to spare and chose this neighbor.
+export function recordFoodGift(donor: Clan, recipient: Clan, amount: number): void {
+    if (amount <= 0) return;
+    const perCapita = amount / Math.max(1, recipient.population);
+    recordDirectEvent(donor, recipient, new MemoryEntry({
+        def: MemoryEventDefs.Gift,
+        year: donor.world.year.value,
+        actor: donor.uuid,
+        target: recipient.uuid,
+        magnitude: amount,
+        size: MemoryEventDefs.Gift.sizeBands.classify(perCapita),
+        withinKin: areKin(donor, recipient),
+        salience: perCapita,
+    }));
+}
+
+// Whether two clans count as one another's own people: descended from one
+// clan, or joined by marriage. What passes between such clans is the ordinary
+// traffic of a family and says nothing about open-handedness at large.
+export function areKin(a: Clan, b: Clan): boolean {
+    const connections = a.world.connections;
+    if (connections.getForType(a, b, KinConnection)) return true;
+    const marriage = connections.getForType(a, b, MarriageConnection);
+    return !!marriage && marriage.relatedness > 0;
 }
 
 // ---------------------------------------------------------------------------
