@@ -158,7 +158,7 @@ x   Introduce information concept for a clan to know stuff about
     *   Apply a blanket 7 or so total remembered long-term events
     x   Add hidden-from-each-other generosity and bellicosity
         stats
-    *   Assessment scatter plots
+    x   Assessment scatter plots
     *   Let information spread 2 links
         *   For this to mean much of anything we need
             some cross-settlement links so check for
