@@ -11,16 +11,73 @@ function randomTraitStat(): number {
     return clamp(Math.round(normal(50, 12)), 0, 100);
 }
 
+// Giving: a direct +/- modifier to the per-capita food threshold a clan
+// keeps for itself before its surplus becomes available as aid (see
+// AID_BUDGET_FOOD_THRESHOLD in redistribution.ts). Positive means the clan
+// is willing to keep less for itself, i.e. more generous.
+export const GIVING_MIN = -0.05;
+export const GIVING_MAX = 0.05;
+// Soft outer bound: drift can carry a clan past its starting range, but not
+// without limit.
+const GIVING_DRIFT_LIMIT = 0.15;
+
+// Aggression: this clan's own probability of playing hawk in a conflict
+// iteration (see Conflict.advance/iterate in conflict.ts).
+export const AGGRESSION_MIN = 0.15;
+export const AGGRESSION_MAX = 0.25;
+
+// Per-year drift stddev for Giving and Aggression, chosen so that after 75
+// years of independent yearly steps (a random walk), the accumulated drift
+// has a stddev of ~0.043 -- most of a starting half-range (0.05), enough
+// that a clan's disposition can shift substantially, or even flip sign,
+// over a few generations.
+const GIVING_DRIFT_STDDEV = 0.005;
+const AGGRESSION_DRIFT_STDDEV = 0.005;
+
+function randomGiving(): number {
+    return GIVING_MIN + Math.random() * (GIVING_MAX - GIVING_MIN);
+}
+
+function randomAggression(): number {
+    return AGGRESSION_MIN + Math.random() * (AGGRESSION_MAX - AGGRESSION_MIN);
+}
+
 export class ClanTraits {
     private numeric: Record<string, number>;
     bitmap: number;
+    private giving_: number;
+    private aggression_: number;
 
-    constructor(numeric?: Partial<Record<NumericTrait, number>>, bitmap: number = 0) {
+    constructor(
+        numeric?: Partial<Record<NumericTrait, number>>,
+        bitmap: number = 0,
+        giving?: number,
+        aggression?: number,
+    ) {
         this.numeric = {
             piety: numeric?.piety ?? randomTraitStat(),
             intellect: numeric?.intellect ?? randomTraitStat(),
         };
         this.bitmap = bitmap;
+        this.giving_ = giving ?? randomGiving();
+        this.aggression_ = aggression ?? randomAggression();
+    }
+
+    get giving(): number {
+        return this.giving_;
+    }
+
+    set giving(val: number) {
+        this.giving_ = clamp(val, -GIVING_DRIFT_LIMIT, GIVING_DRIFT_LIMIT);
+    }
+
+    // A probability, so it must stay in [0, 1].
+    get aggression(): number {
+        return this.aggression_;
+    }
+
+    set aggression(val: number) {
+        this.aggression_ = clamp(val, 0, 1);
     }
 
     get piety(): number {
@@ -60,7 +117,7 @@ export class ClanTraits {
     }
 
     clone(): ClanTraits {
-        return new ClanTraits({ ...this.numeric }, this.bitmap);
+        return new ClanTraits({ ...this.numeric }, this.bitmap, this.giving_, this.aggression_);
     }
 
     cloneWithSplitBump(): ClanTraits {
@@ -74,6 +131,8 @@ export class ClanTraits {
                 copy.setBoolean(i, !copy.hasBoolean(i));
             }
         }
+        copy.giving = copy.giving + normal(0, GIVING_DRIFT_STDDEV);
+        copy.aggression = copy.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         return copy;
     }
 
@@ -88,5 +147,8 @@ export class ClanTraits {
                 this.setBoolean(i, !this.hasBoolean(i));
             }
         }
+
+        this.giving = this.giving + normal(0, GIVING_DRIFT_STDDEV);
+        this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
     }
 }

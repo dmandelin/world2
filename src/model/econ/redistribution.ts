@@ -102,8 +102,10 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         const halfStock = availStock / 2;
 
         // A clan retains enough food for this threshold and can use any
-        // remaining food for aid.
-        const budget = Math.max(0, food - AID_BUDGET_FOOD_THRESHOLD * pop);
+        // remaining food for aid. Giving is a +/- modifier to that
+        // threshold: more giving means keeping less for itself.
+        const ownThreshold = AID_BUDGET_FOOD_THRESHOLD - clan.traits.giving;
+        const budget = Math.max(0, food - ownThreshold * pop);
         donorBudgets.set(clan.uuid, { prodCereals, prodCerealsUsed, surplusProd: availSurplusProd, halfStock, budget });
     }
 

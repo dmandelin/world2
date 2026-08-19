@@ -1159,6 +1159,30 @@
                 scaler: new DefaultScaler(),
                 topics: ["traits"],
             },
+            {
+                label: "Giving",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.traits.giving,
+                format: (v) => signed(v, 3),
+                deltaValue: (c) => c.traits.giving,
+                deltaFormat: (v) => signed(v, 3),
+                timelineKey: "traitGiving",
+                scaler: new ZeroCenteredScaler(),
+                topics: ["traits"],
+            },
+            {
+                label: "Aggression",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.traits.aggression,
+                format: (v) => v.toFixed(3),
+                deltaValue: (c) => c.traits.aggression,
+                deltaFormat: (v) => signed(v, 3),
+                timelineKey: "traitAggression",
+                scaler: new DefaultScaler(),
+                topics: ["traits"],
+            },
         ]);
 
         return groups;

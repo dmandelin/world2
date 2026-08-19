@@ -8,9 +8,6 @@ import { recordConflict } from "./information";
 // turn for any pair of clans.
 const ITERATIONS_PER_TURN = 5;
 
-// Probability of playing hawk in one iteration.
-const HAWK_PROBABILITY = 0.2;
-
 // Wrapper around ConflictGraph adding higher-level behaviors.
 export class Conflicts {
     private readonly g;
@@ -45,7 +42,7 @@ export class Conflicts {
                     if (c1 === c2) continue;
                     if (c1 > c2) continue;
                     const conflict = this.g.getOrCreate(c1.uuid, c2.uuid);
-                    conflict.advance();
+                    conflict.advance(c1.traits.aggression, c2.traits.aggression);
                     // Both sides remember who reached for force.
                     recordConflict(
                         c1, c2, conflict.hawkCountBy(c1), ITERATIONS_PER_TURN);
@@ -246,11 +243,12 @@ export class Conflict {
         return total;
     }
 
-    advance() {
+    // `c1HawkProbability`/`c2HawkProbability` are each clan's own
+    // Aggression trait: their probability of playing hawk in an iteration.
+    advance(c1HawkProbability: number, c2HawkProbability: number) {
         // Model conflicts between the two clans for a turn as
-        // an iterated hawk-dove game.
-        // For now, strategies are simple: fixed probability
-        // of hawk.
+        // an iterated hawk-dove game. Each side's strategy is a simple
+        // per-clan probability of hawk (their Aggression trait).
 
         for (const rr of this.results) {
             for (const r of rr) {
@@ -259,13 +257,13 @@ export class Conflict {
         }
 
         for (let i = 0; i < ITERATIONS_PER_TURN; ++i) {
-            this.iterate()
+            this.iterate(c1HawkProbability, c2HawkProbability)
         }
     }
 
-    private iterate() {
-        const c1Strategy = Math.random() < HAWK_PROBABILITY ? HAWK : DOVE;
-        const c2Strategy = Math.random() < HAWK_PROBABILITY ? HAWK : DOVE;
+    private iterate(c1HawkProbability: number, c2HawkProbability: number) {
+        const c1Strategy = Math.random() < c1HawkProbability ? HAWK : DOVE;
+        const c2Strategy = Math.random() < c2HawkProbability ? HAWK : DOVE;
         const r = this.results[c1Strategy][c2Strategy];
         if (c1Strategy == DOVE && c2Strategy == DOVE) {
             r.apply(R, R);

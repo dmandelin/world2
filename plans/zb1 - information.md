@@ -156,7 +156,7 @@ x   Introduce information concept for a clan to know stuff about
 *   Followups
     *   Scale down conflict activity to simplify and speed up
     *   Apply a blanket 7 or so total remembered long-term events
-    *   Add hidden-from-each-other generosity and bellicosity
+    x   Add hidden-from-each-other generosity and bellicosity
         stats
     *   Assessment scatter plots
     *   Let information spread 2 links
