@@ -5,8 +5,8 @@ import { GenericItem } from "../records/basicdata";
 import type { ClanDTO } from "../records/dtos";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
-import type { Conflict } from "./conflict";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
+import { ObservationDefs, type ObservationDef } from "./information";
 
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
@@ -35,8 +35,7 @@ export class Alignment {
         subject: Clan,
         object: Clan,
         connections: Connection[],
-        interactions: Interaction[],
-        conflict?: Conflict): void {
+        interactions: Interaction[]): void {
 
         this.items_ = [
             ...connections.map(connection =>
@@ -50,7 +49,7 @@ export class Alignment {
             AlignmentItem.forGenerosity(subject, object),
             AlignmentItem.forPiety(subject, object),
             AlignmentItem.forSociability(subject, object),
-            AlignmentItem.forConflict(subject, object, conflict),
+            AlignmentItem.forConflict(subject, object),
         ];
         this.previousValue_ = this.value_;
         const currentTotal = this.currentItemsTotal;
@@ -66,23 +65,11 @@ export class Alignment {
     }
 }
 
-// Total food (gifts + aid) that `subject` received from `object` this turn.
-function foodReceivedFrom(subject: Clan, object: Clan): number {
-    const consumption = subject.consumption;
-    if (!consumption) return 0;
-    let sum = 0;
-    for (const r of consumption.fromGifts) {
-        if (r.good.isSubsistence && r.clan?.uuid === object.uuid) sum += r.amount;
-    }
-    for (const r of consumption.fromDonations) {
-        if (r.good.isSubsistence && r.clan?.uuid === object.uuid) sum += r.amount;
-    }
-    return sum;
-}
-
-// A clan's food income this turn, used to normalize gift/aid amounts.
-function foodIncome(clan: Clan): number {
-    return clan.production?.totalFood() ?? 0;
+// Subject's own directed belief about object on some tracked quality,
+// falling back to the quality's prior if nothing has been observed yet.
+function observedEstimate(subject: Clan, object: Clan, def: ObservationDef): number {
+    const observations = subject.world.perceptions.get(subject.uuid, object.uuid)?.information.observations;
+    return observations?.estimate(def) ?? def.prior;
 }
 
 export class AlignmentItem {
@@ -103,44 +90,43 @@ export class AlignmentItem {
         return new AlignmentItem(item.label, item.value, 1, item.explanation);
     }
 
-    // Gifts and aid the object gave to us this turn, relative to our income.
+    // The personal side of generosity: gifts and aid felt as aimed at us
+    // weigh in again here, on top of the general reputation below.
     static forGifts(subject: Clan, object: Clan): AlignmentItem {
-        const received = foodReceivedFrom(subject, object);
-        const income = foodIncome(subject);
-        const ratio = income > 0 ? received / income : 0;
+        const estimate = observedEstimate(subject, object, ObservationDefs.Generosity);
         return new AlignmentItem(
             'Gifts',
-            ratio,
-            1,
-            `Received ${received.toFixed(1)} / income ${income.toFixed(1)}`
+            estimate,
+            0.015,
+            `Generosity estimate ${estimate.toFixed(1)}`
         );
     }
 
-    // How generous the object is overall: aid it donated relative to its income.
+    // How generous we believe the object is overall, from what we've seen
+    // (or heard) it give away. The biggest positive component of alignment.
     static forGenerosity(subject: Clan, object: Clan): AlignmentItem {
-        const aidGiven = (object.distribution ? object.distribution.totalFoodAidGiven : 0)
-            + (object.stockOutflow ? object.stockOutflow.totalFoodAidGiven : 0);
-        const income = foodIncome(object);
-        const ratio = income > 0 ? aidGiven / income : 0;
+        const estimate = observedEstimate(subject, object, ObservationDefs.Generosity);
         return new AlignmentItem(
             'Generosity',
-            ratio,
-            0.1,
-            `Aid given ${aidGiven.toFixed(1)} / income ${income.toFixed(1)}`
+            estimate,
+            0.025,
+            `Generosity estimate ${estimate.toFixed(1)}`
         );
     }
 
     static forPiety(subject: Clan, object: Clan): AlignmentItem {
-        const objectPiety = object.traits ? object.traits.piety : 50;
+        const estimate = observedEstimate(subject, object, ObservationDefs.Piety);
         return new AlignmentItem(
             'Piety',
-            objectPiety - 50,
+            estimate - 50,
             1 / 200,
-            `Piety ${objectPiety.toFixed(0)} vs 50`
+            `Piety estimate ${estimate.toFixed(0)} vs 50`
         );
     }
 
-    // Attention devoted to the relationship via basic interactions.
+    // Attention devoted to the relationship via basic interactions. A direct
+    // assessment: how much we deal with them is not something we could be
+    // mistaken about.
     static forSociability(subject: Clan, object: Clan): AlignmentItem {
         const relativeAttention = getRelativeAttention(subject, object);
         return new AlignmentItem(
@@ -151,14 +137,15 @@ export class AlignmentItem {
         );
     }
 
-    // How aggressive the object was toward us: penalty per hawk play.
-    static forConflict(subject: Clan, object: Clan, conflict?: Conflict): AlignmentItem {
-        const hawkCount = conflict ? conflict.hawkCountBy(object) : 0;
+    // How aggressive we believe the object has been toward us, from what
+    // we've seen (or heard) of its quarrels. The biggest negative component.
+    static forConflict(subject: Clan, object: Clan): AlignmentItem {
+        const estimate = observedEstimate(subject, object, ObservationDefs.Bellicosity);
         return new AlignmentItem(
             'Conflict',
-            hawkCount,
-            -0.2,
-            `Hawk plays against us: ${hawkCount}`
+            estimate,
+            -0.08,
+            `Bellicosity estimate ${estimate.toFixed(1)}`
         );
     }
 }

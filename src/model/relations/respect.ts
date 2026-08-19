@@ -1,5 +1,6 @@
-import { sumFun } from "../lib/basics";
+import { clamp, sumFun } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
+import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
@@ -20,9 +21,10 @@ export class Respect {
     get informationValue(): number { return this.informationValue_; }
     get previousValue(): number { return this.previousValue_; }
 
+    // Items already carry information-scaling in their own modifiers (see
+    // updateFor), so this is a plain sum.
     get currentItemsTotal(): number {
-        const infoMultiplier = Math.max(0, Math.min(1, this.informationValue_));
-        return sumFun(this.items_, i => i.value) * infoMultiplier;
+        return sumFun(this.items_, i => i.value);
     }
 
     get value(): number {
@@ -31,13 +33,24 @@ export class Respect {
 
     updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
         this.informationValue_ = informationValue;
+
+        // None of these stats are read off tracked observations yet (only
+        // Piety, Generosity, and Bellicosity have made that move so far), so
+        // for now we read the object's true values and simply discount them
+        // by how well the subject actually knows the object: linearly for
+        // trait-like stats, and by the square root for QoL, which degrades
+        // more gently since a rough sense of someone's circumstances doesn't
+        // need as much acquaintance as a fair read of their character.
+        const infoScale = clamp(informationValue, 0, 1);
+        const qolInfoScale = Math.sqrt(infoScale);
+
         this.items_ = [
-            RespectItem.forGenerosity(subject, object),
-            RespectItem.forSkills(subject, object),
-            RespectItem.forMaterialQoL(subject, object),
-            RespectItem.forConversationQoL(subject, object),
-            RespectItem.forConflictQoL(subject, object),
-            RespectItem.forPopulation(subject, object),
+            RespectItem.forGenerosity(subject, object, infoScale),
+            RespectItem.forSkills(subject, object, infoScale),
+            RespectItem.forMaterialQoL(subject, object, qolInfoScale),
+            RespectItem.forConversationQoL(subject, object, qolInfoScale),
+            RespectItem.forConflictQoL(subject, object, qolInfoScale),
+            RespectItem.forPopulation(subject, object, infoScale),
             RespectItem.forRandom(subject, object),
 
             // TODO - Add seniority component, depending on culture?
@@ -77,72 +90,73 @@ export class RespectItem {
     // Population below this baseline grants no respect.
     static readonly POP_BASELINE = 10;
 
-    static forMaterialQoL(subject: Clan, object: Clan): RespectItem {
+    static forMaterialQoL(subject: Clan, object: Clan, infoScale: number): RespectItem {
         const objectValue = object.qol.valueFrom("material");
         return new RespectItem(
             'Material QoL',
             Math.max(0, objectValue - RespectItem.QOL_BASELINE),
-            0.1,
-            `Material QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE})`
+            0.1 * infoScale,
+            `Material QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE}, info ${pct(infoScale)})`
         );
     }
 
-    static forConversationQoL(subject: Clan, object: Clan): RespectItem {
+    static forConversationQoL(subject: Clan, object: Clan, infoScale: number): RespectItem {
         const objectValue = object.qol.m.get("Conversation")?.value ?? 0;
         return new RespectItem(
             'Conversation QoL',
             Math.max(0, objectValue - RespectItem.QOL_BASELINE),
-            0.05,
-            `Conversation QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE})`
+            0.05 * infoScale,
+            `Conversation QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE}, info ${pct(infoScale)})`
         );
     }
 
-    static forConflictQoL(subject: Clan, object: Clan): RespectItem {
+    static forConflictQoL(subject: Clan, object: Clan, infoScale: number): RespectItem {
         const objectValue = object.qol.m.get("Conflict")?.value ?? 0;
         return new RespectItem(
             'Conflict QoL',
             Math.max(0, objectValue - RespectItem.QOL_BASELINE),
-            0.05,
-            `Conflict QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE})`
+            0.05 * infoScale,
+            `Conflict QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE}, info ${pct(infoScale)})`
         );
     }
 
     // Respect for clan size: 0 at or below population 10, +10 per doubling above.
-    static forPopulation(subject: Clan, object: Clan): RespectItem {
+    static forPopulation(subject: Clan, object: Clan, infoScale: number): RespectItem {
         const pop = object.population;
         const doublings = pop > 0 ? Math.log2(pop / RespectItem.POP_BASELINE) : 0;
         return new RespectItem(
             'Population',
             Math.max(0, doublings),
-            10,
-            `Population ${pop} (base ${RespectItem.POP_BASELINE})`
+            10 * infoScale,
+            `Population ${pop} (base ${RespectItem.POP_BASELINE}, info ${pct(infoScale)})`
         );
     }
 
-    static forSkills(subject: Clan, object: Clan): RespectItem {
+    static forSkills(subject: Clan, object: Clan, infoScale: number): RespectItem {
         const skillDefs = Object.values(SkillDefs);
         const totalObjectSkill = sumFun(skillDefs, s => object.skills.v(s));
         const avgObjectSkill = totalObjectSkill / (skillDefs.length || 1);
         return new RespectItem(
             'Skills',
             Math.max(0, avgObjectSkill - RespectItem.SKILL_BASELINE),
-            0.05,
-            `Skills ${avgObjectSkill.toFixed(0)} (base ${RespectItem.SKILL_BASELINE})`
+            0.05 * infoScale,
+            `Skills ${avgObjectSkill.toFixed(0)} (base ${RespectItem.SKILL_BASELINE}, info ${pct(infoScale)})`
         );
     }
 
-    static forGenerosity(subject: Clan, object: Clan): RespectItem {
+    static forGenerosity(subject: Clan, object: Clan, infoScale: number): RespectItem {
         const foodAidGiven = (object.distribution ? object.distribution.totalFoodAidGiven : 0) + (object.stockOutflow ? object.stockOutflow.totalFoodAidGiven : 0);
         return new RespectItem(
             'Generosity',
             foodAidGiven,
-            2,
-            `Generosity`
+            2 * infoScale,
+            `Generosity (info ${pct(infoScale)})`
         );
     }
 
     static forRandom(subject: Clan, object: Clan): RespectItem {
-        // Small random value in range [0, 2]
+        // Small random value in range [0, 2]. Not information-scaled: even a
+        // stranger makes some snap judgment.
         const randVal = Math.random() * 2;
         return new RespectItem(
             'Random',

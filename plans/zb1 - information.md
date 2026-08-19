@@ -177,5 +177,5 @@ x   Introduce information concept for a clan to know stuff about
     *   Have clans keep memory for a while if temporarily
         disconnected
 *   Actual impact of the information on judgments
-    *   Alignment
-    *   Respect
+    x   First pass
+    *   Then clean up in detail

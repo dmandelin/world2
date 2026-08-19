@@ -449,9 +449,9 @@
     ): number {
         const r = toward(observer, target);
         if (!r) return 0;
-        const infoMultiplier = Math.max(0, Math.min(1, r.informationValue));
+        // Items already carry information-scaling in their own modifiers.
         const item = r.items.find((i) => i.label === label);
-        return item ? item.value * infoMultiplier : 0;
+        return item ? item.value : 0;
     }
 
     // Accessor for directed alignment ("Favor") between two clans.

@@ -4,7 +4,6 @@ import { Connection, ConnectionGraph } from "./connection";
 import { Respect } from "./respect";
 import type { Clan } from "../people/people";
 import type { Interaction } from "./interaction";
-import type { Conflict } from "./conflict";
 import type { World } from "../world";
 import { uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
 
@@ -24,10 +23,10 @@ export class Perceptions {
         this.respect = respect;
     }
 
-    updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[], conflict?: Conflict): void {
+    updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
         this.information.updateFor(subject, object, connections, interactions);
         this.respect.updateFor(subject, object, this.information.value);
-        this.alignment.updateFor(subject, object, connections, interactions, conflict);
+        this.alignment.updateFor(subject, object, connections, interactions);
     }
 
     clone(): Perceptions {
@@ -121,9 +120,8 @@ export function updatePerceptions(world: World): void {
         const [c1, c2] = world.clansFromPairID(pairID);
         const interactions = world.interactions.get(c1, c2);
         const perceptions = world.perceptions.getOrCreate(c1.uuid, c2.uuid);
-        const conflict = world.conflicts.get(c1, c2);
-        perceptions.updateFor(c1, c2, connections, interactions, conflict);
+        perceptions.updateFor(c1, c2, connections, interactions);
         const perceptions2 = world.perceptions.getOrCreate(c2.uuid, c1.uuid);
-        perceptions2.updateFor(c2, c1, connections, interactions, conflict);
+        perceptions2.updateFor(c2, c1, connections, interactions);
     }
 }
