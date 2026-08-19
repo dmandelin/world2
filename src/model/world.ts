@@ -23,7 +23,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
-import { propagateNews, seedObservations, updateObservations } from "./relations/information";
+import { propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
 import { FoodGiftsResult, shareFoodGifts } from "./econ/gifts";
@@ -148,6 +148,7 @@ export class World implements NoteTaker {
         this.planConnections();
         updateBasicInteractions(this);
         updatePerceptions(this);
+        seedInformationLevels(this);
         seedObservations(this);
 
         // After this function, we should be able to show in the UI:
@@ -340,6 +341,9 @@ export class World implements NoteTaker {
         updateMutualAidInteractions(this);
         // Update perceptions here so they can influence the rest of planning.
         updatePerceptions(this);
+        // How much each clan knows about each other, which depends on this
+        // turn's dealings and on what those dealings let them pass along.
+        updateInformationLevels(this);
         // Pass along last turn's news and take a fresh look at each other, now
         // that this turn's interactions are set, so that what clans have heard
         // and noticed can inform their planning.

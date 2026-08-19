@@ -1128,6 +1128,20 @@ export class ClanInformationItem {
 }
 
 // Everything one clan knows about another.
+// How much of everything there is to know about a neighbor a clan can reach
+// by dealing with that neighbor alone. Half: you learn a great deal about
+// people you see constantly, but the rest of what is known about them is
+// known by other people, and the only way to it is to ask around.
+export const MAX_DIRECT_INFORMATION = 0.5;
+
+// Share of what a clan knows about a third party that passes to someone it
+// deals with fully. Less, in proportion, to someone it deals with less.
+export const INFORMATION_SPREAD_SHARE = 0.2;
+
+// How fast the level closes on what present dealings would support. Knowing
+// someone is a matter of years, not of one good conversation.
+export const INFORMATION_ADAPT_RATE = 0.2;
+
 export class ClanInformation {
     constructor(
         // Events, remembered and fading.
@@ -1137,11 +1151,18 @@ export class ClanInformation {
     ) { }
 
     // How much of the object clan the subject actually sees, from ongoing
-    // direct interaction. This is the channel: it governs what gets noticed
-    // firsthand and how much news flows over the link. It is recomputed each
-    // turn rather than accumulated, since it describes the present
+    // direct interaction. Recomputed each turn: it describes the present
     // relationship, not anything remembered.
     private contactItems_: ClanInformationItem[] = [];
+
+    // How much the subject knows about the object overall, from 0 (a name and
+    // nothing else) to 1 (as much as anyone knows). This accumulates, since
+    // knowing a neighbor is the work of years and does not vanish because one
+    // year's dealings were thin.
+    private level_ = 0;
+    private directTarget_ = 0;
+    // Fraction of what direct dealings miss that hearsay also fails to cover.
+    private unknownAfterHearsay_ = 1;
 
     get items(): readonly ClanInformationItem[] { return this.contactItems_; }
 
@@ -1149,10 +1170,42 @@ export class ClanInformation {
         return sumFun(this.contactItems_, item => item.value);
     }
 
-    // Legacy name for the contact level, still used as a blanket multiplier on
-    // respect and on skill imitation. Those move to observations later.
+    get level(): number { return this.level_; }
+    // What present dealings alone would support.
+    get directTarget(): number { return this.directTarget_; }
+    // What asking around adds on top of that.
+    get heardTarget(): number { return this.target - this.directTarget_; }
+    // Where the level is heading, given both. Sources cover overlapping
+    // ground rather than adding up, so they are combined by what each leaves
+    // unknown: several informants tell you much of the same thing, and no
+    // amount of asking quite gets you to certainty.
+    get target(): number {
+        return clamp(1 - (1 - this.directTarget_) * this.unknownAfterHearsay_, 0, 1);
+    }
+
+    // The information level, under the name the older consumers know it by:
+    // it still scales respect and skill imitation.
     get value(): number {
-        return this.contact;
+        return this.level_;
+    }
+
+    setTargets(direct: number, unknownAfterHearsay: number): void {
+        this.directTarget_ = direct;
+        this.unknownAfterHearsay_ = unknownAfterHearsay;
+    }
+
+    // Move toward the target. `rate` of 1 adopts it outright, which is what
+    // seeding a world of long-standing neighbors wants.
+    approachTarget(rate: number = INFORMATION_ADAPT_RATE): void {
+        this.level_ += (this.target - this.level_) * rate;
+    }
+
+    // Override the level directly, rather than letting it climb toward a
+    // target. Used to divide a clan's understanding of a third party between
+    // its successors when the clan splits, so a new clan doesn't start out
+    // knowing its old neighbors as strangers.
+    setLevelForSplit(level: number): void {
+        this.level_ = clamp(level, 0, 1);
     }
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
@@ -1180,8 +1233,61 @@ export class ClanInformation {
             this.observations.clone(),
         );
         ci.contactItems_ = [...this.contactItems_];
+        ci.level_ = this.level_;
+        ci.directTarget_ = this.directTarget_;
+        ci.unknownAfterHearsay_ = this.unknownAfterHearsay_;
         return ci;
     }
+}
+
+// Work out how much each clan knows about each other clan, and move the
+// levels toward it.
+//
+// Dealing with a neighbor directly gets you at most halfway; the rest comes
+// from the people you deal with passing on what they know. A clan that talks
+// to nobody but its closest neighbor therefore stays half-informed about it
+// and knows next to nothing about anyone else, while a clan at the center of
+// village life ends up knowing nearly everything about nearly everyone.
+export function updateInformationLevels(world: World, rate?: number): void {
+    // Read every level before changing any, so that what a clan passes on is
+    // what it knew at the start of the turn rather than part-way through.
+    const pending: { information: ClanInformation, direct: number, unknown: number }[] = [];
+
+    for (const subject of world.allClans) {
+        const links = [...world.perceptions.getFor(subject)];
+        for (const [objectID, perceptions] of links) {
+            const information = perceptions.information;
+            const direct = MAX_DIRECT_INFORMATION * clamp(information.contact, 0, 1);
+
+            // Each informant covers a share of what is left, so what nobody
+            // covers is the product of what each of them misses.
+            let unknown = 1;
+            for (const [tellerID, tellerLink] of links) {
+                if (tellerID === objectID) continue;
+                const teller = world.clanMap.get(tellerID);
+                if (!teller) continue;
+                const closeness = clamp(tellerLink.information.contact, 0, 1);
+                if (closeness <= 0) continue;
+                const tellerKnows =
+                    world.perceptions.get(teller, objectID)?.information.level ?? 0;
+                unknown *= 1 - INFORMATION_SPREAD_SHARE * closeness * tellerKnows;
+            }
+
+            pending.push({ information, direct, unknown });
+        }
+    }
+
+    for (const p of pending) {
+        p.information.setTargets(p.direct, p.unknown);
+        p.information.approachTarget(rate);
+    }
+}
+
+// Settle the levels for a world whose clans have been neighbors for years.
+// Run repeatedly because what each clan hears depends on what its neighbors
+// already know, so the levels have to find each other.
+export function seedInformationLevels(world: World): void {
+    for (let i = 0; i < 12; ++i) updateInformationLevels(world, 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -1387,6 +1493,16 @@ function splitKeepFraction(share: number): number {
     return floor + Math.random() * (1 - floor);
 }
 
+// Share of the undivided clan's understanding of a third party that one
+// successor carries off, rolled independently per successor and per third
+// party. Floored at 0.5 so the two successors' shares never total less than
+// the whole (nothing about a third party is ever entirely lost), and average
+// 1.4 combined (both sides remember much of the same thing, so there's
+// overlap rather than a clean division).
+function splitInformationLevelShare(): number {
+    return 0.5 + Math.random() * 0.4;
+}
+
 function keptOnSplit(entry: MemoryEntry, keepFraction: number): boolean {
     // Everyone who lived through the big things remembers them.
     return entry.salience >= entry.def.unforgettableSalience
@@ -1429,6 +1545,12 @@ export function divideInformationOnSplit(parent: Clan, child: Clan): void {
 
         childInfo.observations.inheritDegraded(information.observations, year);
         information.observations.degradeForSplit(year);
+
+        // Divide how well the undivided clan understood this third party.
+        // Both successors carry off a share, rolled independently.
+        const priorLevel = information.level;
+        information.setLevelForSplit(priorLevel * splitInformationLevelShare());
+        childInfo.setLevelForSplit(priorLevel * splitInformationLevelShare());
     }
 
     // The neighbors' side: they knew these people, so what they thought of the

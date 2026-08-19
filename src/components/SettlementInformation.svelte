@@ -4,6 +4,7 @@
     import { formatYear } from "../model/records/year";
     import { sortedByKey } from "../model/lib/basics";
     import { pct, signed, unsigned } from "../model/lib/format";
+    import { MAX_DIRECT_INFORMATION } from "../model/relations/information";
     import type {
         Observation,
         ObservationUpdate,
@@ -62,6 +63,34 @@
 
     function countsFor(row: ClanDTO, col: ClanDTO) {
         return ledgerCounts.get(`${row.uuid}|${col.uuid}`);
+    }
+
+    // How much the row clan knows about the column clan overall: what its own
+    // dealings support, plus what it picks up from everyone else it deals
+    // with. Dealings alone cap out at half.
+    function informationLevel(row: ClanDTO, col: ClanDTO): number | null {
+        if (row.uuid === col.uuid) return null;
+        return world.informationToward(row, col)?.level ?? null;
+    }
+
+    function informationTooltip(row: ClanDTO, col: ClanDTO): string {
+        const info = world.informationToward(row, col);
+        if (!info) return `${row.name} has no dealings with ${col.name}.`;
+        return [
+            `${row.name} on ${col.name}: knows ${pct(info.level)}`,
+            `From own dealings: ${pct(info.directTarget)}` +
+                ` (interaction ${pct(info.contact)} of a possible` +
+                ` ${pct(MAX_DIRECT_INFORMATION)})`,
+            `From asking around: ${pct(info.heardTarget)}`,
+            `Heading for: ${pct(info.target)}`,
+        ].join("\n");
+    }
+
+    // Shade from bare acquaintance to knowing everything worth knowing.
+    function informationShade(level: number | null): string {
+        if (level === null) return "";
+        const t = Math.max(0, Math.min(1, level));
+        return `background-color: rgba(120, 96, 48, ${(0.06 + 0.5 * t).toFixed(3)})`;
     }
 
     // What the grid shows: occasions the clan can still recount, not the
@@ -382,6 +411,59 @@
         </table>
     </div>
 
+    <h4 style="margin: 1.5rem 0 0.5rem 0;">Information level</h4>
+    <p style="font-size: 0.9rem; color: #666; margin: 0 0 0.5rem 0;">
+        How much each clan (row) knows about another (column), from 0 to
+        everything worth knowing. Dealing with a clan directly gets you at most
+        {pct(MAX_DIRECT_INFORMATION)}; the rest comes from what the clans you
+        deal with pass on, so a clan has to be part of village life to be well
+        informed. Hover for the breakdown.
+    </p>
+    <div class="table-container">
+        <table class="grid">
+            <thead>
+                <tr>
+                    <th class="corner">knows about →</th>
+                    {#each axisClans as col}
+                        <th class="colhead-plain {inSettlement.has(col.uuid)
+                                ? ''
+                                : 'outside'}"
+                            >{col.name}{inSettlement.has(col.uuid)
+                                ? ""
+                                : " *"}</th
+                        >
+                    {/each}
+                </tr>
+            </thead>
+            <tbody>
+                {#each axisClans as row}
+                    <tr>
+                        <th class="rowhead-plain {inSettlement.has(row.uuid)
+                                ? ''
+                                : 'outside'}"
+                            >{row.name}{inSettlement.has(row.uuid)
+                                ? ""
+                                : " *"}</th
+                        >
+                        {#each axisClans as col}
+                            {@const level = informationLevel(row, col)}
+                            {#if level === null}
+                                <td class="self"></td>
+                            {:else}
+                                <td
+                                    class="cell"
+                                    style={informationShade(level)}
+                                    title={informationTooltip(row, col)}
+                                    >{pct(level)}</td
+                                >
+                            {/if}
+                        {/each}
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+
     {#if subj || obj}
         <h4 style="margin: 1.5rem 0 0.5rem 0;">Impressions</h4>
         {#if impressions.length === 0}
@@ -572,9 +654,17 @@
         text-align: right;
     }
     .grid .colhead,
+    .grid .rowhead,
+    .grid .colhead-plain,
+    .grid .rowhead-plain {
+        background-color: #f3edd8;
+    }
+    .grid .colhead,
     .grid .rowhead {
         cursor: pointer;
-        background-color: #f3edd8;
+    }
+    .grid .rowhead-plain {
+        text-align: left;
     }
     .grid .rowhead {
         text-align: left;
