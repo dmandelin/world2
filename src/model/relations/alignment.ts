@@ -97,7 +97,7 @@ export class AlignmentItem {
         return new AlignmentItem(
             'Gifts',
             estimate,
-            0.015,
+            0.02,
             `Generosity estimate ${estimate.toFixed(1)}`
         );
     }
@@ -109,7 +109,7 @@ export class AlignmentItem {
         return new AlignmentItem(
             'Generosity',
             estimate,
-            0.025,
+            0.035,
             `Generosity estimate ${estimate.toFixed(1)}`
         );
     }
@@ -144,7 +144,7 @@ export class AlignmentItem {
         return new AlignmentItem(
             'Conflict',
             estimate,
-            -0.08,
+            -0.04,
             `Bellicosity estimate ${estimate.toFixed(1)}`
         );
     }
