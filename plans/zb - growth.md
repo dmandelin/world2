@@ -592,63 +592,58 @@ to start building a more advanced granary as a further amenity.
 
 Detailed list of first parts:
 
+*   Ritual help
+    *   Concept: Clans have their own ancestor rites, but they have
+        other ritual concerns such as help with disease, attacking
+        or defending via sorcery, interpreting dreams. There are also
+        collective concerns such as local crises, separately treated
+        below. With these general rituals, clans may do them themselves,
+        but if the need is important, or they don't succeed with their
+        own resources, they may look to help from another clan.
+        *   The most basic stakes would be stress, but in terms of
+            what our model does, rituals could also help win or mitigate
+            a conflict, resolve medical issues, resolve crop issues
+            (e.g., divine correct time to plant), affect resuts of
+            various skills, increase birth rates, increase marriage
+            rates, and so on. We'll have to simplify to start, but
+            early on we should allow for multiple possible effects, in
+            part so that later we can show them being disaggregated.
+    *   Holiness: We'll add a holiness perception.
+        *   Influenced by:
+            *   Any things to do with the success or prosperity of the
+                clan (items from alignment and respect)
+            *   Traits and habits of holiness (perceived piety should
+                count more here than for general respect), also ritual
+                skill
+            *   (P2) Symbols, items, and buildings
+            *   Ritual outcomes - holiness goes up or down per results
+                for the affected people
+        *   Clans will particularly look to clans with high holiness
+            for ritual help
+        *   Holiness increases alignment (a little, at this point) and 
+            respect (more)
+    *   Gifts: Clans would be expected to give gifts in exchange for
+        ritual help
+        *   Food or labor are the main things available now
+        *   (P2) Option to not give
+    *   Asking for help and results
+        *   One clan can ask another for ritual help
+        *   Rituals could be intended to influence:
+            *   The natural world only
+            *   Interactions between humans and nature
+            *   Interactions between humans
+        *   Ritual skill will have more influence on outcomes the more
+            the ritual is intended to influence humans
+            *   For now we could assume a mix
+        *   Outcome will be a random result that can be positive or negative
+            *   Let's see if we can do without neutral for now
+            *   If positive, holiness perception of clan will rise
+                If negative, holiness will fall
+*   Clan rituals
+*   Local crises
+
 *   Current issues
-    *   Clan information and how that affects perceptions
-    *   Ritual help
-    *   (P2) Make redistribution more understandable
-    *   Clans with bad shortages aren't getting enough help,
-        because there is a fixed aid budget, so a clan with 101%
-        will only give 1% to a clan with 60%.
-        *   Discussion
-            *   What we should have, apparently, is a target
-                survival level, and clans will ask or give if
-                below or above
-            *   It's unclear what that level should be, so we
-                could even let it float. But then we have to be
-                able to do something about disagreements
-            *   What are the conditions for giving aid? It is
-                apparently OK to asymmetrically transfer resources
-                indefinitely, but people have to be seen as part
-                of the community or some such. What would make
-                that true for us?
-                *   Sufficiently strong marriage or kin link
-                *   Local relationship as neighbors with expectation
-                    or history of such aid
-                *   What would make them *not* want to help?
-                    *   Severe norm violation
-                    *   Usually *not* conflict, but perhaps if
-                        really severe
-                    *   If there's no relationship, there might
-                        be a reluctance to help
-        *   Synthesis
-            *   We can have a "clan helping policy" that defines a
-                function mapping from alignment to willingness to
-                help or how much
-            *   But maybe other factors should matter too, like how
-                long the clans have known each other or their recent
-                track records
-            *   When clans have partial attention to each other,
-                that in part means they have relationships only
-                to some families in the other clan, so aid availability
-                scales accordingly.
-            *   There's a lot going on here and it's unclear what we
-                actually need to address now. Perhaps for now, key
-                points are:
-                *   Make clans willing to go lower than 100% to help
-                    others in need
-                *   Generally do have clans aid each other if they
-                    have an actual relationship
-                *   Do scale down possible aid by the interaction level,
-                    which means spending more attention means more
-                    possible help
-                    *   Implement per-clan cost of interaction
-                *   If anything, the next step might be a supra-clan
-                    granary, but we should probably do ritual leadership
-                    first
-        *   Items
-            x   Have a standard aid level other than 100%
-            x   Have fixed attention cost per clan
-            x   Scale aid by relative attention
+    x   (P2) Refinements on food aid
             *   (P3) Supra-clan granary
             *   (P3) Variable aid policies
 *   Precursors
@@ -745,29 +740,12 @@ Detailed list of first parts:
                     *   Transport costs on aid
                     *   Transport costs on gifts
 
-                    *   Alert system to show us when clans need help they're not getting
-                    *   Make sure clans are giving help in case of dire need
-
                     *   Do something else in case of alignments differing: probably shouldn't create permanent transfer on that basis via gifts
                     *   Don't have birth rate mega boost for settlement, implement early weaning model instead
 
-
-                    *   *** Think harder about what alignment and respect really mean and how they relate to all this
-                        *   Implement new model described in zc
-                            *   Finish reworking consumers
-                                *   Alignment
-                                    *   Trust -- handle when we overhaul these relationships
-                                    *   Happiness -- need to finish removing
-                                *   Prestige should also influence:
-                                    *   Emergency aid in crisis
-                                    *   Consider using relative prestige for birth/death rates
-                            *   Deal better with conflict in respect -- think about what power
-                                means in this context or needs to be made to mean
-                            *   *** Account for information
-                            *   Relatedness penalty if too much power
-                            *   Power penalty if too much relatedness
-                            *   See if we need anything about norms
-                        *   Maybe Bellicosity should be based on how much they play hawk specifically
+                    *   Relatedness penalty if too much power
+                    *   Power penalty if too much relatedness
+                    *   See if we need anything about norms
 
                     *   Possible third-party reactions on refusal to give
                         *   For food aid
@@ -775,11 +753,9 @@ Detailed list of first parts:
                     *   Stress/conflict cost for mutual aid relating to
                         arguments over who has/needs what
                     *   Variable aid alignment threshold
-                    *   Variable aid food threshold
 
                     *   Clean up mutual aid at some point
 
-                    *   Have knowledge for respect and such be more than a multiplier - consider what facts are easier or harder to know
                     *   Give clans something else to do in case of another clan having low piety scores, like trying to teach them or something
 
                     *   Bring back disease load effect
@@ -890,3 +866,9 @@ Detailed list of first parts:
 *   Clan ritual provisions
 *   Village leadership structure
 *   Ritual leadership structure
+*   More random ideas
+    *   Better move alerts
+    *   Norms for food aid
+    *   Alignment to influence how far clans will extend help
+    *   Marriage to influence traits and skills
+    *   Marriage to influence other relationships?
