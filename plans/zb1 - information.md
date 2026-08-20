@@ -145,13 +145,12 @@ x   Introduce information concept for a clan to know stuff about
 *   Move direct state info to state tracking
     *   Population
 *   Move direct+indirect state info to state tracking
-    *   Do some simplified version for scaling
-    *   Sociability
-    *   Traits
+    x   Do some simplified version for scaling
+    x   Sociability
+    x   Traits
         x   Piety
-        *   Intellect
-    *   Skills
-    *   QoL
+    x   Skills
+    x   QoL
     *   (Signals/displays)
 *   Followups
     *   Scale down conflict activity to simplify and speed up
