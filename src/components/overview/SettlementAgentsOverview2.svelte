@@ -58,7 +58,7 @@
         type MarriageDecisions,
     } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
-    import type { Respect } from "../../model/relations/respect";
+    import type { Opinion } from "../../model/relations/opinion";
     import type { Alignment } from "../../model/relations/alignment";
     import LineGraph from "../LineGraph.svelte";
     import {
@@ -435,11 +435,12 @@
         return 0;
     }
 
-    // Accessor for a directed opinion (respect or marriage appeal) between two clans.
+    // Accessor for a directed opinion (respect, holiness, or marriage appeal)
+    // between two clans.
     type OpinionToward = (
         observer: ClanDTO,
         target: ClanDTO,
-    ) => Respect | undefined;
+    ) => Opinion | undefined;
 
     function getOpinionItemValue(
         toward: OpinionToward,
@@ -630,6 +631,23 @@
                 deltaValue: (c) => c.respectAverage,
                 deltaFormat: (v) => signed(v, 0),
                 timelineKey: "respectAverage",
+                scaler: new ZeroCenteredScaler(),
+                topics: ["perceptions"],
+            },
+            {
+                label: "&nbsp;Holiness",
+                labelTooltip:
+                    "How close to the gods and ancestors other clans think " +
+                    "this one stands. Same scale as Respect.",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.holinessAverage,
+                format: (v) => unsigned(v, 0),
+                tooltipSnippet: holinessTooltip,
+                settlementTooltipSnippet: settlementHolinessTooltip,
+                deltaValue: (c) => c.holinessAverage,
+                deltaFormat: (v) => signed(v, 0),
+                timelineKey: "holinessAverage",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["perceptions"],
             },
@@ -1747,6 +1765,15 @@
         );
     }
 
+    // Shown when no clan has an opinion with items yet, so the breakdown still
+    // has rows.
+    const HOLINESS_ITEM_LABELS = [
+        "Piety",
+        "Ritual Skill",
+        "Generosity",
+        "Material QoL",
+    ];
+
     interface RespectRowData {
         label: string;
         type: "item" | "total" | "previous" | "smoothed" | "population";
@@ -1757,6 +1784,15 @@
         clan: ClanDTO,
         toward: OpinionToward,
         valueLabel: string,
+        defaultItemLabels: string[] = [
+            "Generosity",
+            "Skills",
+            "Material QoL",
+            "Conversation QoL",
+            "Conflict QoL",
+            "Population",
+            "Random",
+        ],
     ): Table<RespectRowData, any, any> {
         const otherClans = clan.settlement.clans.filter(
             (c) => c.uuid !== clan.uuid,
@@ -1768,15 +1804,7 @@
 
         const itemLabels = sampleR
             ? sampleR.items.map((i) => i.label)
-            : [
-                  "Generosity",
-                  "Skills",
-                  "Material QoL",
-                  "Conversation QoL",
-                  "Conflict QoL",
-                  "Population",
-                  "Random",
-              ];
+            : defaultItemLabels;
 
         const rows: TableRow<RespectRowData, any>[] = [
             ...itemLabels.map((label) => ({
@@ -2428,6 +2456,23 @@
     </div>
 {/snippet}
 
+{#snippet holinessTooltip(cs: ClanLastTurnSnapshots)}
+    <TableView2
+        table={clanRespectTooltipTable(
+            cs.e,
+            (observer, target) => cs.e.world.holinessToward(observer, target),
+            "Holiness",
+            HOLINESS_ITEM_LABELS,
+        )}
+    ></TableView2>
+    <div
+        style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
+    >
+        Retention ratio: 90% (Smoothed Holiness = 10% Current Judgments + 90%
+        Previous Value).
+    </div>
+{/snippet}
+
 {#snippet peopleTooltip(cs: ClanLastTurnSnapshots)}
     <PopulationPyramid clan={cs.e} />
     <hr />
@@ -2530,6 +2575,23 @@
                     (observer, target) =>
                         clan.world.respectToward(observer, target),
                     "Respect",
+                ),
+            [0],
+        )}
+    />
+{/snippet}
+
+{#snippet settlementHolinessTooltip(css: ClanLastTurnSnapshots[])}
+    <TableView2
+        table={mergedClanTable(
+            css,
+            (clan) =>
+                clanRespectTooltipTable(
+                    clan,
+                    (observer, target) =>
+                        clan.world.holinessToward(observer, target),
+                    "Holiness",
+                    HOLINESS_ITEM_LABELS,
                 ),
             [0],
         )}

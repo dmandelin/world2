@@ -22,6 +22,7 @@
         BASIC_INTERACTION_FIXED_COST,
         BasicInteraction,
     } from "../model/relations/basicinteraction";
+    import type { Opinion } from "../model/relations/opinion";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
@@ -29,7 +30,7 @@
     let stressMode: "stress" | "mutual aid" | "conflict" = $state("stress");
     let interactionMode: "interactions" | "information" =
         $state("interactions");
-    let opinionMode: "respect" = $state("respect");
+    let opinionMode: "respect" | "holiness" = $state("respect");
 
     function buildRelationshipsTable<CellValue>(
         valueFn: (rowClan: ClanDTO, colClan: ClanDTO) => CellValue,
@@ -116,8 +117,13 @@
         );
     }
 
-    function opinionToward(rowClan: ClanDTO, colClan: ClanDTO) {
-        return world.respectToward(rowClan, colClan);
+    function opinionToward(
+        rowClan: ClanDTO,
+        colClan: ClanDTO,
+    ): Opinion | undefined {
+        return opinionMode === "holiness"
+            ? world.holinessToward(rowClan, colClan)
+            : world.respectToward(rowClan, colClan);
     }
 
     function opinionCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -588,7 +594,23 @@
         <div
             style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 0.5rem;"
         >
-            <h3 style="margin: 0;">Opinion (Respect)</h3>
+            <h3 style="margin: 0;">Opinion</h3>
+            <div class="stress-button-group">
+                <button
+                    type="button"
+                    class="stress-btn {opinionMode === 'respect'
+                        ? 'active'
+                        : ''}"
+                    onclick={() => (opinionMode = "respect")}>Respect</button
+                >
+                <button
+                    type="button"
+                    class="stress-btn {opinionMode === 'holiness'
+                        ? 'active'
+                        : ''}"
+                    onclick={() => (opinionMode = "holiness")}>Holiness</button
+                >
+            </div>
         </div>
         {#key opinionMode}
             <TableView2

@@ -4,12 +4,13 @@ import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
+import type { Opinion, OpinionItem } from "./opinion";
 
 // Respect measures how powerful and capable one clan thinks
 // another is. It's an absolute assessment, not relative to
 // the subject.
 
-export class Respect {
+export class Respect implements Opinion {
     private items_: RespectItem[] = [];
     private informationValue_: number = 0;
     private previousValue_: number = 0;
@@ -71,7 +72,7 @@ export class Respect {
     }
 }
 
-export class RespectItem {
+export class RespectItem implements OpinionItem {
     constructor(
         readonly label: string,
         readonly baseValue: number,

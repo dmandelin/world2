@@ -32,6 +32,7 @@ import { BasicInteraction } from "../relations/basicinteraction";
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
+import type { Holiness } from "../relations/holiness";
 import { getPrestige, getLocalPrestige } from "../relations/prestige";
 import { ALL_OBSERVATION_DEFS, ObservationDefs } from "../relations/information";
 import type { ObservationDef } from "../relations/information";
@@ -185,6 +186,17 @@ export class ClanDTO {
         return populationAverage(
             otherClans,
             c => this.world.respectToward(c, this)?.value ?? 0
+        );
+    }
+
+    // Population-weighted holiness other clans grant this one. Same scale as
+    // Respect.
+    get holinessAverage(): number {
+        const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
+        if (otherClans.length === 0) return 0;
+        return populationAverage(
+            otherClans,
+            c => this.world.holinessToward(c, this)?.value ?? 0
         );
     }
 
@@ -482,6 +494,10 @@ export class WorldDTO {
 
     respectToward(clan: ClanDTO, other: ClanDTO): Respect | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.respect;
+    }
+
+    holinessToward(clan: ClanDTO, other: ClanDTO): Holiness | undefined {
+        return this.perceptions.get(clan.uuid, other.uuid)?.holiness;
     }
 
     // Prestige clan grants other (alignment * respect), scaled by 100 for

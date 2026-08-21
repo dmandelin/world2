@@ -1718,3 +1718,10 @@ function passAlongObservations(world: World, year: number): void {
             r.def, r.value, r.weight, year, 1, r.spread, r.teller, r.credence);
     }
 }
+
+// Subject's own directed belief about object on some tracked quality,
+// falling back to the quality's prior if nothing has been observed yet.
+export function observedEstimate(subject: Clan, object: Clan, def: ObservationDef): number {
+    const observations = subject.world.perceptions.get(subject.uuid, object.uuid)?.information.observations;
+    return observations?.estimate(def) ?? def.prior;
+}

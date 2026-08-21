@@ -108,6 +108,14 @@
         }
     }
 
+    class HolinessDisplayOption extends RelationshipDisplayOption {
+        *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
+            for (const [other, p] of world.perceptions.getFor(clan.uuid)) {
+                yield [world.clanMap.get(other)!, '-', p.holiness.value / 2, alignmentColorInterpolator(p.holiness.value)];
+            }
+        }
+    }
+
     class BasicInteractionDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
             for (const [other, interaction] of world.interactionsForType(clan, BasicInteraction)) {
@@ -331,6 +339,7 @@
     <ButtonPanel config={{buttons: [
         { label: "A", tooltip: "Alignment", data: new AlignmentDisplayOption() },
         { label: "R", tooltip: "Respect", data: new RespectDisplayOption() },
+        { label: "H", tooltip: "Holiness", data: new HolinessDisplayOption() },
         { label: "I-S", tooltip: "Social interaction", data: new BasicInteractionDisplayOption() },
         { label: "I-H", tooltip: "Mutual help", data: new MutualHelpDisplayOption() },
         { label: "C-M", tooltip: "Marriage relationships", data: new MarriageRelationshipDisplayOption() },

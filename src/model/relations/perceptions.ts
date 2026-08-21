@@ -2,6 +2,7 @@ import { Alignment } from "./alignment";
 import { ClanInformation } from "./information";
 import { Connection, ConnectionGraph } from "./connection";
 import { Respect } from "./respect";
+import { Holiness } from "./holiness";
 import type { Clan } from "../people/people";
 import type { Interaction } from "./interaction";
 import type { World } from "../world";
@@ -12,20 +13,24 @@ export class Perceptions {
     readonly information = new ClanInformation();
     readonly alignment = new Alignment();
     readonly respect = new Respect();
+    readonly holiness = new Holiness();
 
     constructor(
         information: ClanInformation = new ClanInformation(),
         alignment: Alignment = new Alignment(),
         respect: Respect = new Respect(),
+        holiness: Holiness = new Holiness(),
     ) {
         this.information = information;
         this.alignment = alignment;
         this.respect = respect;
+        this.holiness = holiness;
     }
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
         this.information.updateFor(subject, object, connections, interactions);
         this.respect.updateFor(subject, object, this.information.value);
+        this.holiness.updateFor(subject, object, this.information.value);
         this.alignment.updateFor(subject, object, connections, interactions);
     }
 
@@ -34,6 +39,7 @@ export class Perceptions {
             this.information.clone(),
             this.alignment.clone(),
             this.respect.clone(),
+            this.holiness.clone(),
         );
     }
 }

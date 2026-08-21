@@ -6,7 +6,7 @@ import type { ClanDTO } from "../records/dtos";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
-import { ObservationDefs, type ObservationDef } from "./information";
+import { ObservationDefs, observedEstimate } from "./information";
 
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
@@ -63,13 +63,6 @@ export class Alignment {
         a.value_ = this.value_;
         return a;
     }
-}
-
-// Subject's own directed belief about object on some tracked quality,
-// falling back to the quality's prior if nothing has been observed yet.
-function observedEstimate(subject: Clan, object: Clan, def: ObservationDef): number {
-    const observations = subject.world.perceptions.get(subject.uuid, object.uuid)?.information.observations;
-    return observations?.estimate(def) ?? def.prior;
 }
 
 export class AlignmentItem {

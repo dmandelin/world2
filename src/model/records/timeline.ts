@@ -53,6 +53,7 @@ export class ClanTimePoint {
     readonly stress: number;
     readonly residenceFraction: number;
     readonly respectAverage: number;
+    readonly holinessAverage: number;
     readonly favorAverage: number;
     readonly avgWeddingAppeal: number;
     readonly avgPartnerAppeal: number;
@@ -100,11 +101,16 @@ export class ClanTimePoint {
         const otherClans = clan.settlement.clans.filter(c => c.uuid !== clan.uuid);
         if (otherClans.length === 0) {
             this.respectAverage = 0;
+            this.holinessAverage = 0;
             this.favorAverage = 0;
         } else {
             this.respectAverage = populationAverage(
                 otherClans,
                 c => clan.world.perceptions.get(c.uuid, clan.uuid)?.respect?.value ?? 0
+            );
+            this.holinessAverage = populationAverage(
+                otherClans,
+                c => clan.world.perceptions.get(c.uuid, clan.uuid)?.holiness?.value ?? 0
             );
             this.favorAverage = 100 * populationAverage(
                 otherClans,

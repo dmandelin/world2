@@ -609,10 +609,10 @@ Detailed list of first parts:
             early on we should allow for multiple possible effects, in
             part so that later we can show them being disaggregated.
     *   Holiness: We'll add a holiness perception.
-        *   Influenced by:
-            *   Any things to do with the success or prosperity of the
+        x   Influenced by:
+            x   Any things to do with the success or prosperity of the
                 clan (items from alignment and respect)
-            *   Traits and habits of holiness (perceived piety should
+            x   Traits and habits of holiness (perceived piety should
                 count more here than for general respect), also ritual
                 skill
             *   (P2) Symbols, items, and buildings
