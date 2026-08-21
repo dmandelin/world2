@@ -592,6 +592,29 @@ to start building a more advanced granary as a further amenity.
 
 Detailed list of first parts:
 
+*   Got this clicking on a notification entity:
+
+batch.js:335 Uncaught TypeError: Cannot read properties of undefined (reading 'uuid')
+
+	in <unknown>
+	in TabbedView.svelte
+	in ClanDetails.svelte
+	in +page.svelte
+	in +layout.svelte
+	in root.svelte
+	in undefined
+
+    at ClanOverviewDetails.svelte:24:27
+    at update_reaction (runtime.js:256:16)
+    at execute_derived (deriveds.js:369:12)
+    at update_derived (deriveds.js:393:14)
+    at Module.get (runtime.js:679:4)
+    at ClanOverviewDetails.svelte:33:24
+    at Array.filter (<anonymous>)
+    at ClanOverviewDetails.svelte:31:35
+    at update_reaction (runtime.js:256:16)
+    at execute_derived (deriveds.js:369:12)
+
 *   Ritual help
     *   Concept: Clans have their own ancestor rites, but they have
         other ritual concerns such as help with disease, attacking
@@ -642,12 +665,15 @@ Detailed list of first parts:
                 If negative, holiness will fall
     x   Make relative holiness easier to understand
     *   Debug and visualize softmax selection, seems bugged
+        Could just be that clans have different views
+        But visualizing will help either way
     *   Have amount of rituals done influence ritual skill development
     *   Retune alignment
     *   Some sort of UI showing holiest clans known in different areas
+        Maybe notion of reach?
     *   Make sure stress impacts demographics
 *   Clan rituals
-*   Local crises
+*   Local crises and bigger rituals
 
 *   Current issues
     x   (P2) Refinements on food aid
