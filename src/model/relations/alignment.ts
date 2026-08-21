@@ -1,5 +1,5 @@
 import { clamp, sumFun } from "../lib/basics";
-import { pct } from "../lib/format";
+import { pct, signed } from "../lib/format";
 import type { Clan } from "../people/people";
 import { GenericItem } from "../records/basicdata";
 import type { ClanDTO } from "../records/dtos";
@@ -7,6 +7,8 @@ import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
 import { ObservationDefs, observedEstimate } from "./information";
+import { DecayingCredit } from "./credit";
+import type { RitualEvent } from "../rituals";
 
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
@@ -16,6 +18,10 @@ export class Alignment {
     private items_: AlignmentItem[] = [];
     private previousValue_: number = 0;
     private value_: number = 0;
+    // Standing goodwill from rites one clan said for the other, one running
+    // total per kind of rite since they fade at different rates. Booked once,
+    // where the rite is settled, and only decays after.
+    private ritualBonds_ = new Map<string, DecayingCredit>();
 
     static readonly ALPHA = 0.1;
 
@@ -29,6 +35,44 @@ export class Alignment {
 
     get value(): number {
         return this.value_;
+    }
+
+    private ritualBond(key: string, halfLife: number): DecayingCredit {
+        let bond = this.ritualBonds_.get(key);
+        if (!bond) {
+            bond = new DecayingCredit(halfLife);
+            this.ritualBonds_.set(key, bond);
+        }
+        return bond;
+    }
+
+    // Book what a rite did for the standing between these two. Called once,
+    // where the ritual is settled.
+    creditRitual(event: RitualEvent, amount: number): void {
+        this.ritualBond(event.def.key, event.def.holinessHalfLife)
+            .add(amount, event.year);
+    }
+
+    // Total goodwill still standing from past rites, after fading.
+    ritualBondValue(year: number): number {
+        let total = 0;
+        for (const bond of this.ritualBonds_.values()) {
+            bond.decayTo(year);
+            total += bond.value;
+        }
+        return total;
+    }
+
+    // Years since the most recent rite between these two, if any.
+    yearsSinceRitual(year: number): number | undefined {
+        let best: number | undefined;
+        for (const bond of this.ritualBonds_.values()) {
+            const since = bond.yearsSince(year);
+            if (since !== undefined && (best === undefined || since < best)) {
+                best = since;
+            }
+        }
+        return best;
     }
 
     updateFor(
@@ -50,6 +94,7 @@ export class Alignment {
             AlignmentItem.forPiety(subject, object),
             AlignmentItem.forSociability(subject, object),
             AlignmentItem.forConflict(subject, object),
+            AlignmentItem.forRitualHelp(this, subject.world.year.value),
         ];
         this.previousValue_ = this.value_;
         const currentTotal = this.currentItemsTotal;
@@ -70,6 +115,9 @@ export class Alignment {
         a.items_ = [...this.items_];
         a.previousValue_ = this.previousValue_;
         a.value_ = this.value_;
+        for (const [key, bond] of this.ritualBonds_) {
+            a.ritualBonds_.set(key, bond.clone());
+        }
         return a;
     }
 }
@@ -136,6 +184,23 @@ export class AlignmentItem {
             relativeAttention,
             0.1,
             `Attention ${pct(relativeAttention)}`
+        );
+    }
+
+    // Rites the two clans have said for one another. Standing rather than
+    // momentary: a neighbor who saw a clan's member through a mortal illness
+    // is thought well of for a long time after, and the debt fades slowly.
+    static forRitualHelp(alignment: Alignment, year: number): AlignmentItem {
+        const value = alignment.ritualBondValue(year);
+        const since = alignment.yearsSinceRitual(year);
+        return new AlignmentItem(
+            'Ritual Help',
+            value,
+            1,
+            since === undefined
+                ? 'no rites between us'
+                : `${signed(100 * value, 1)} Favor standing, last rite `
+                    + `${since === 0 ? 'this year' : `${since} y ago`}`
         );
     }
 

@@ -109,6 +109,8 @@ export class Clan implements TradePartner {
 
     // Troubles this clan faced this turn, and how the rites for them went.
     ritualEvents: RitualEvent[] = [];
+    // Rites this clan said this turn, for itself or for a neighbor.
+    ritualsPerformed: RitualEvent[] = [];
     // Deaths a ritual result adds (positive) or averts (negative) this turn,
     // applied when the year's population change is drawn.
     pendingDeathAdjustment: number = 0;
@@ -284,6 +286,13 @@ export class Clan implements TradePartner {
         return sumFun(
             this.world.conflicts.entriesForClan(this),
             ([_, conflict]) => conflict.value(this));
+    }
+
+    // The social side of the year's ritual favors: standing gained by saying
+    // the words for a neighbor, and given up by having to ask.
+    ritualHelpPayoff(): number {
+        return sumFun(this.ritualsPerformed, e => e.stressTransfer)
+            - sumFun(this.ritualEvents, e => e.stressTransfer);
     }
 
     updateStress() {

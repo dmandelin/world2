@@ -23,7 +23,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
-import { chargeRitualFoodCosts, runRituals, type RitualEvent } from "./rituals";
+import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
 import { propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
@@ -485,9 +485,9 @@ export class World implements NoteTaker {
             }
         }
 
-        // The year's offerings come off the top, before anything is eaten,
-        // stored, or given away.
-        for (const clan of allClans) chargeRitualFoodCosts(clan);
+        // The year's offerings and ritual fees come off the top, before
+        // anything is eaten, stored, or given away.
+        settleRitualEconomy(this);
 
         // Run food gift sharing before arranging consumption!
         this.lastFoodGifts = shareFoodGifts(allClans);

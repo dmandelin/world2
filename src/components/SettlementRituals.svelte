@@ -48,7 +48,10 @@
                     <td class="icon {event.success ? 'good' : 'bad'}"
                         >{event.def.icon}</td
                     >
-                    <td>{event.performer.name}</td>
+                    <td>
+                        {event.performer.name}
+                        {#if event.wasAsked}<span class="quiet">asked</span>{/if}
+                    </td>
                     <td>{event.beneficiary.name}</td>
                     <td>
                         <Tooltip>
@@ -64,11 +67,7 @@
                     <td class={event.success ? "good" : "bad"}
                         >{event.resultLabel}</td
                     >
-                    <td class="num"
-                        >{event.def.spreadsAsNews
-                            ? event.heardBy.length
-                            : "—"}</td
-                    >
+                    <td class="num">{event.heardBy.length}</td>
                 </tr>
             {/each}
         </tbody>
@@ -83,6 +82,7 @@
             <th>Occasion</th>
             <th>Stake</th>
             <th class="num">Offering</th>
+            <th class="num">Fee if asked</th>
             <th class="num">Chance range</th>
             <th class="num">Expected/yr</th>
         </tr>
@@ -101,6 +101,11 @@
                     >{def.foodCostFraction > 0
                         ? pct(def.foodCostFraction)
                         : "—"}</td
+                >
+                <td class="num"
+                    >{def.askGiftFraction > 0
+                        ? pct(def.askGiftFraction)
+                        : "\u2014"}</td
                 >
                 <td class="num">{pct(range[0])}&ndash;{pct(range[1])}</td>
                 <td class="num">

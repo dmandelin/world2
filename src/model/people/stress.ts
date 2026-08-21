@@ -33,7 +33,12 @@ export class Stress {
                 'Mutual aid',
                 clan.mutualAidPayoff(),
                 'Mutual aid',
-            )
+            ),
+            new GenericItem(
+                'Ritual help',
+                clan.ritualHelpPayoff(),
+                'Rites said for neighbors, less rites had to be asked for',
+            ),
         ];
     }
 }

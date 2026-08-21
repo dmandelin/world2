@@ -618,17 +618,17 @@ Detailed list of first parts:
             *   (P2) Symbols, items, and buildings
             *   Ritual outcomes - holiness goes up or down per results
                 for the affected people
-        *   Clans will particularly look to clans with high holiness
+        x   Clans will particularly look to clans with high holiness
             for ritual help
-        *   Holiness increases alignment (a little, at this point)
+        x   Holiness increases alignment (a little, at this point)
         *   Do something with holiness and respect/prestige, but remember
             they overlap in definition so be careful
-    *   Gifts: Clans would be expected to give gifts in exchange for
+    x   Gifts: Clans would be expected to give gifts in exchange for
         ritual help
-        *   Food or labor are the main things available now
+        x   Food or labor are the main things available now
         *   (P2) Option to not give
-    *   Asking for help and results
-        *   One clan can ask another for ritual help
+    x   Asking for help and results
+        x   One clan can ask another for ritual help
         x   Rituals could be intended to influence:
             x   The natural world only
             x   Interactions between humans and nature
@@ -640,6 +640,7 @@ Detailed list of first parts:
             x   Let's see if we can do without neutral for now
             x   If positive, holiness perception of clan will rise
                 If negative, holiness will fall
+    *   Make relative holiness easier to understand
 *   Clan rituals
 *   Local crises
 

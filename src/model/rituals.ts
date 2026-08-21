@@ -1,10 +1,12 @@
-import { clamp, sumFun, weightedHarmonicMean } from "./lib/basics";
+import { chooseWeighted, clamp, sumFun, weightedHarmonicMean } from "./lib/basics";
 import { poisson } from "./lib/distributions";
 import { SkillDefs } from "./econ/econdefs";
 import { TradeGoods, type TradeGood } from "./trade";
 import type { Clan } from "./people/people";
 import type { World } from "./world";
 import type { UUID } from "./records/basicdata";
+import { getAlignment } from "./relations/alignment";
+import { getHoliness } from "./relations/holiness";
 
 // Clans keep up their own ancestral rites year in and year out, but some
 // years bring a trouble those cannot answer on their own: a member taken
@@ -85,9 +87,21 @@ export type RitualTypeSpec = {
     // dying member is remembered for a generation; a dream read rightly is
     // worth talking about for a season.
     holinessHalfLife: number;
-    // Whether the village hears about it. A life in the balance is everyone's
-    // news; a clan's own bad dreams are its own business.
-    spreadsAsNews: boolean;
+    // How readily news of a result gets around, as an exponent on how well a
+    // clan knows the officiant. A low power spreads news to nearly everyone
+    // acquainted; 1 spreads it in plain proportion to acquaintance.
+    newsInformationExponent: number;
+    // What a clan hands the neighbor it asks, as a share of the officiant's
+    // standard annual food consumption. Covers the offering and something over
+    // for the trouble.
+    askGiftFraction: number;
+    // The social side of asking: points of well-being the asker gives up and
+    // the officiant gains, for the imposition and the obligation.
+    askStressTransfer: number;
+    // What being helped, and helping, does to how the two clans regard each
+    // other. The clan that was helped feels it far more keenly.
+    alignmentBoostAsker: number;
+    alignmentBoostOfficiant: number;
 };
 
 export abstract class RitualTypeDef {
@@ -100,7 +114,11 @@ export abstract class RitualTypeDef {
     readonly successAtHighStat: number;
     readonly holinessSwing: number;
     readonly holinessHalfLife: number;
-    readonly spreadsAsNews: boolean;
+    readonly newsInformationExponent: number;
+    readonly askGiftFraction: number;
+    readonly askStressTransfer: number;
+    readonly alignmentBoostAsker: number;
+    readonly alignmentBoostOfficiant: number;
     // Logit slope per stat point, derived from successAtHighStat.
     readonly logitSlope: number;
 
@@ -114,7 +132,11 @@ export abstract class RitualTypeDef {
         this.successAtHighStat = spec.successAtHighStat;
         this.holinessSwing = spec.holinessSwing;
         this.holinessHalfLife = spec.holinessHalfLife;
-        this.spreadsAsNews = spec.spreadsAsNews;
+        this.newsInformationExponent = spec.newsInformationExponent;
+        this.askGiftFraction = spec.askGiftFraction;
+        this.askStressTransfer = spec.askStressTransfer;
+        this.alignmentBoostAsker = spec.alignmentBoostAsker;
+        this.alignmentBoostOfficiant = spec.alignmentBoostOfficiant;
         const p = spec.successAtHighStat;
         this.logitSlope = Math.log(p / (1 - p)) / RITUAL_STAT_SWING;
     }
@@ -190,7 +212,15 @@ export const RitualTypes = {
         // later.
         holinessSwing: 8,
         holinessHalfLife: 25,
-        spreadsAsNews: true,
+        // A life in the balance is everyone's news: even a slight
+        // acquaintance usually hears how it came out.
+        newsInformationExponent: 0.25,
+        askGiftFraction: 0.02,
+        askStressTransfer: 0.5,
+        // Alignment runs -1 to 1 and is shown as Favor x100, so these are
+        // +10 and +4 Favor at full strength.
+        alignmentBoostAsker: 0.10,
+        alignmentBoostOfficiant: 0.04,
     }),
 
     Omen: new OmenRitualDef({
@@ -207,11 +237,61 @@ export const RitualTypes = {
         // seasons.
         holinessSwing: 3,
         holinessHalfLife: 2,
-        spreadsAsNews: false,
+        // Talked about in plain proportion to how much the neighbors have to
+        // do with the clan: a small thing, not news in itself.
+        newsInformationExponent: 1,
+        // The rite costs the officiant nothing but its time, so nothing
+        // changes hands but the obligation.
+        askGiftFraction: 0,
+        askStressTransfer: 0.5,
+        alignmentBoostAsker: 0.02,
+        alignmentBoostOfficiant: 0.008,
     }),
 };
 
 export const ALL_RITUAL_TYPES: readonly RitualTypeDef[] = Object.values(RitualTypes);
+
+// ---------------------------------------------------------------------------
+// Who says the words.
+// ---------------------------------------------------------------------------
+
+// Holiness points that make a clan ten times the likelier choice. Clans are
+// not obliged to go to the holiest neighbor, but they lean that way hard.
+export const HOLINESS_PER_TENFOLD_PREFERENCE = 20;
+const HOLINESS_SOFTMAX_BETA = Math.LN10 / HOLINESS_PER_TENFOLD_PREFERENCE;
+
+// How holy the asker takes a possible officiant to be. A clan weighing itself
+// adds its Pride, the same flattery it applies to its own standing generally.
+export function officiantAppeal(asker: Clan, candidate: Clan): number {
+    return getHoliness(asker, candidate)
+        + (candidate === asker ? asker.traits.pride : 0);
+}
+
+// The neighbors a clan could ask, itself included. A clan that bears the
+// asker no goodwill would not say the words for it, so it is not on the list.
+export function officiantCandidates(asker: Clan): Clan[] {
+    const settlement = asker.settlement;
+    if (!settlement) return [asker];
+    // Self-alignment is 1, so the asker is always among its own options.
+    return settlement.clans.filter(
+        c => c.population > 0 && getAlignment(c, asker) > 0);
+}
+
+// Pick who to ask. Softmax on perceived holiness, so the holiest neighbor is
+// usually but not always the one asked.
+export function chooseOfficiant(asker: Clan): Clan {
+    const candidates = officiantCandidates(asker);
+    if (candidates.length <= 1) return candidates[0] ?? asker;
+    // Shift by the best on offer before exponentiating, which changes no
+    // ratio and keeps the weights in a sane range.
+    const appeals = candidates.map(c => officiantAppeal(asker, c));
+    const best = Math.max(...appeals);
+    const weighted = candidates.map((clan, i) => ({
+        clan,
+        weight: Math.exp(HOLINESS_SOFTMAX_BETA * (appeals[i] - best)),
+    }));
+    return chooseWeighted(weighted, w => w.weight).clan;
+}
 
 // ---------------------------------------------------------------------------
 // One ritual, performed and settled.
@@ -230,11 +310,16 @@ export class RitualEvent {
     // by spreadRitualNews.
     readonly heardBy: UUID[] = [];
 
+    // What the asker hands the officiant, sized to the officiant's own year's
+    // eating: enough to cover the offering and something over for the trouble.
+    readonly giftOwed: number;
+    giftPaid: number = 0;
+
     constructor(
         readonly def: RitualTypeDef,
         // Whose trouble it is.
         readonly beneficiary: Clan,
-        // Who says the words. Currently always the beneficiary itself.
+        // Who says the words: the beneficiary itself, or a neighbor it asked.
         readonly performer: Clan,
         readonly year: number,
     ) {
@@ -243,7 +328,19 @@ export class RitualEvent {
         this.successChance = def.successChance(this.stat);
         this.roll = Math.random();
         this.success = this.roll < this.successChance;
-        this.foodCostOwed = def.foodCost(beneficiary);
+        // Whoever says the words provides the offering, at their own scale.
+        this.foodCostOwed = def.foodCost(performer);
+        this.giftOwed = performer === beneficiary
+            ? 0 : def.askGiftFraction * performer.population;
+    }
+
+    // Whether this was a favor asked of a neighbor rather than a clan seeing
+    // to its own trouble.
+    get wasAsked(): boolean { return this.performer !== this.beneficiary; }
+
+    // Well-being the asker gives up and the officiant gains for the favor.
+    get stressTransfer(): number {
+        return this.wasAsked ? this.def.askStressTransfer : 0;
     }
 
     get beneficiaryID(): string { return this.beneficiary.uuid; }
@@ -275,6 +372,7 @@ export function runRituals(world: World): void {
     world.rituals = [];
     for (const clan of world.allClans) {
         clan.ritualEvents = [];
+        clan.ritualsPerformed = [];
         clan.pendingDeathAdjustment = 0;
     }
 
@@ -283,9 +381,13 @@ export function runRituals(world: World): void {
         for (const def of ALL_RITUAL_TYPES) {
             const count = poisson(Math.max(0, def.rateFor(clan)));
             for (let i = 0; i < count; ++i) {
-                // The clan sees to its own troubles, for now.
-                const event = new RitualEvent(def, clan, clan, year);
+                // A clan can say the words itself or ask a neighbor it takes
+                // to be holier. The candidates have already been filtered to
+                // those who would agree.
+                const performer = chooseOfficiant(clan);
+                const event = new RitualEvent(def, clan, performer, year);
                 clan.ritualEvents.push(event);
+                performer.ritualsPerformed.push(event);
                 world.rituals.push(event);
                 if (def === RitualTypes.Life) {
                     clan.pendingDeathAdjustment += event.success ? -1 : 1;
@@ -293,53 +395,87 @@ export function runRituals(world: World): void {
                 // Booked once, here, so that a result lands exactly once no
                 // matter how often perceptions are recomputed.
                 spreadRitualNews(world, event);
+                bindOverRitual(world, event);
             }
         }
     }
 }
 
-// How readily news of a rite gets around, as an exponent on how well the
-// hearer knows the officiant. A quarter power is very forgiving: a clan that
-// knows another only slightly still hears about a life in the balance most
-// years, while a clan that knows nothing of it hears nothing.
-export const RITUAL_NEWS_INFORMATION_EXPONENT = 0.25;
-
 // Who ends up knowing how a rite turned out, and therefore whose reading of
 // the officiant's holiness it moves. The clan it was said for was there; the
 // rest hear about it, or don't, according to how much they have to do with
-// the officiant in the first place.
+// the officiant in the first place, raised to the rite's news power.
 function spreadRitualNews(world: World, event: RitualEvent): void {
     world.perceptions.getOrCreate(event.beneficiary, event.performer)
         .holiness.creditRitual(event);
-    if (!event.def.spreadsAsNews) return;
 
     for (const [hearerID, perceptions]
         of world.perceptions.getRegarding(event.performer)) {
         if (hearerID === event.beneficiaryID) continue;
         const information = clamp(perceptions.information.value, 0, 1);
-        if (Math.random() >= Math.pow(information, RITUAL_NEWS_INFORMATION_EXPONENT)) {
-            continue;
-        }
+        const chance = Math.pow(information, event.def.newsInformationExponent);
+        if (Math.random() >= chance) continue;
         perceptions.holiness.creditRitual(event);
         event.heardBy.push(hearerID);
     }
 }
 
-// Take the year's offerings out of what the clan produced. Food already
-// spoken for elsewhere is not touched, so a clan with nothing to spare makes
-// a smaller offering rather than going hungry for it.
-export function chargeRitualFoodCosts(clan: Clan): void {
-    const goods: TradeGood[] = [TradeGoods.Fish, TradeGoods.Cereals];
-    for (const event of clan.ritualEvents) {
-        let owed = event.foodCostOwed;
-        if (owed <= 0) continue;
-        for (const good of goods) {
-            if (owed <= 1e-9) break;
-            const take = Math.min(clan.distribution.undistributed(good), owed);
-            if (take <= 0) continue;
-            clan.distribution.addRitual(good, take);
-            event.foodCostPaid += take;
-            owed -= take;
+// What being helped, and helping, does to how the two clans regard each
+// other. The clan that was helped feels it far more keenly than the one that
+// obliged. Nothing to book when a clan saw to its own trouble.
+function bindOverRitual(world: World, event: RitualEvent): void {
+    if (!event.wasAsked) return;
+    world.perceptions.getOrCreate(event.beneficiary, event.performer)
+        .alignment.creditRitual(event, event.def.alignmentBoostAsker);
+    world.perceptions.getOrCreate(event.performer, event.beneficiary)
+        .alignment.creditRitual(event, event.def.alignmentBoostOfficiant);
+}
+
+const FOOD_GOODS: TradeGood[] = [TradeGoods.Fish, TradeGoods.Cereals];
+
+// Draw food out of what a clan produced and has not yet spoken for. Returns
+// what it could actually find: a clan with nothing to spare gives less rather
+// than going hungry for it.
+function drawFood(
+    clan: Clan,
+    owed: number,
+    take: (good: TradeGood, amount: number) => void,
+): number {
+    let paid = 0;
+    for (const good of FOOD_GOODS) {
+        if (owed - paid <= 1e-9) break;
+        const amount = Math.min(clan.distribution.undistributed(good), owed - paid);
+        if (amount <= 0) continue;
+        take(good, amount);
+        paid += amount;
+    }
+    return paid;
+}
+
+// Settle what the year's rites cost and who pays. Whoever says the words
+// provides the offering; a clan that asked a neighbor to say them hands over
+// food first, covering that offering and something more for the trouble.
+export function settleRitualEconomy(world: World): void {
+    for (const event of world.rituals) {
+        // The fee first, so the officiant has it in hand for the offering.
+        if (event.giftOwed > 0) {
+            event.giftPaid = drawFood(
+                event.beneficiary, event.giftOwed, (good, amount) => {
+                    // Moved through the ordinary gift channel so the food
+                    // really changes hands, but deliberately not filed in the
+                    // ledgers as a gift: this is a fee for work done, not
+                    // open-handedness, and should not read as generosity.
+                    event.beneficiary.distribution.addGift(
+                        event.performer, good, amount);
+                    event.performer.consumption.addGift(
+                        event.beneficiary, good, amount);
+                });
+        }
+        if (event.foodCostOwed > 0) {
+            event.foodCostPaid = drawFood(
+                event.performer, event.foodCostOwed,
+                (good, amount) =>
+                    event.performer.distribution.addRitual(good, amount));
         }
     }
 }

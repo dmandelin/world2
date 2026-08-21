@@ -26,7 +26,14 @@
             </tr>
             <tr>
                 <th>Officiant</th>
-                <td>{event.performer.name}</td>
+                <td>
+                    {event.performer.name}
+                    {#if event.wasAsked}
+                        <span class="note">(asked)</span>
+                    {:else}
+                        <span class="note">(its own rite)</span>
+                    {/if}
+                </td>
             </tr>
             <tr>
                 <th>Stake</th>
@@ -36,13 +43,51 @@
                 <tr>
                     <th>Offering</th>
                     <td>
-                        {unsigned(event.foodCostPaid, 2)} food
+                        {unsigned(event.foodCostPaid, 2)} food from {event
+                            .performer.name}
                         {#if event.foodCostPaid < event.foodCostOwed - 1e-6}
                             <span class="note"
                                 >(of {unsigned(event.foodCostOwed, 2)}
                                 due; nothing more to spare)</span
                             >
                         {/if}
+                    </td>
+                </tr>
+            {/if}
+            {#if event.wasAsked}
+                {#if event.giftOwed > 0}
+                    <tr>
+                        <th>Fee</th>
+                        <td>
+                            {unsigned(event.giftPaid, 2)} food from {event
+                                .beneficiary.name}
+                            {#if event.giftPaid < event.giftOwed - 1e-6}
+                                <span class="note"
+                                    >(of {unsigned(event.giftOwed, 2)}
+                                    due; nothing more to spare)</span
+                                >
+                            {/if}
+                        </td>
+                    </tr>
+                {/if}
+                <tr>
+                    <th>Obligation</th>
+                    <td>
+                        {signed(-event.stressTransfer, 1)} QoL to {event
+                            .beneficiary.name}, {signed(
+                            event.stressTransfer,
+                            1,
+                        )} to {event.performer.name}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Favor</th>
+                    <td>
+                        {signed(100 * event.def.alignmentBoostAsker, 0)} from {event
+                            .beneficiary.name}, {signed(
+                            100 * event.def.alignmentBoostOfficiant,
+                            0,
+                        )} back
                     </td>
                 </tr>
             {/if}
@@ -109,11 +154,7 @@
             <tr>
                 <th>Word got round</th>
                 <td colspan="2">
-                    {#if !event.def.spreadsAsNews}
-                        <span class="note"
-                            >A clan's own dreams are its own business.</span
-                        >
-                    {:else if event.heardBy.length === 0}
+                    {#if event.heardBy.length === 0}
                         <span class="note">Nobody else heard.</span>
                     {:else}
                         {event.heardBy.length} other clan{event.heardBy

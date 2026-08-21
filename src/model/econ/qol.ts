@@ -35,6 +35,7 @@ export class QualityOfLife {
             QualityOfLife.fromConversation,
             QualityOfLife.fromConflict,
             QualityOfLife.fromPrestige,
+            QualityOfLife.fromRitualHelp,
             QualityOfLife.fromOmens,
         ];
         const m = new Map<string, QualityOfLifeItem>();
@@ -83,6 +84,15 @@ export class QualityOfLife {
         const value = consumption.clan ? 100 * getRelativeLocalPrestige(consumption.clan) : 0;
         return new QualityOfLifeItem(
             "Prestige", "social", value, `${value.toFixed(1)}`);
+    }
+
+    // Standing won by saying the words for a neighbor, or given up by having
+    // to ask one. The same quantity the Stress view shows, read the other way
+    // round.
+    static fromRitualHelp(consumption: Consumption): QualityOfLifeItem {
+        const value = consumption.clan?.ritualHelpPayoff() ?? 0;
+        return new QualityOfLifeItem(
+            "Ritual help", "social", value, `${value.toFixed(1)}`);
     }
 
     // How this year's portents came out. Each one that was read away leaves
