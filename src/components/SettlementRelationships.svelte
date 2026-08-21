@@ -18,6 +18,7 @@
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import type { Snippet } from "svelte";
     import ConflictDetailsTable from "./tables/ConflictDetailsTable.svelte";
+    import Tooltip from "./Tooltip.svelte";
     import {
         BASIC_INTERACTION_FIXED_COST,
         BasicInteraction,
@@ -32,11 +33,16 @@
         $state("interactions");
     let opinionMode: "respect" | "holiness" = $state("respect");
 
+    // `showDiagonal` turns on the cells where a clan appraises itself. Set for
+    // the tables where that means something -- what a clan knows of its own
+    // doings, how it rates its own conduct -- and left off for the ones about
+    // dealings between two clans, where a clan and itself has no answer.
     function buildRelationshipsTable<CellValue>(
         valueFn: (rowClan: ClanDTO, colClan: ClanDTO) => CellValue,
         formatFn: (value: CellValue, row?: ClanDTO, col?: ClanDTO) => string,
         cellTooltip: Snippet<[CellValue, ClanDTO, ClanDTO]>,
         html?: boolean,
+        showDiagonal: boolean = false,
     ): CrossTab<ClanDTO, CellValue> {
         const sortedClans: ClanDTO[] = sortedByKey(
             settlement.clans,
@@ -54,6 +60,7 @@
         if (html) {
             table.columns.forEach((col) => (col.html = true));
         }
+        table.showDiagonal = showDiagonal;
 
         return table;
     }
@@ -130,6 +137,14 @@
         const r = opinionToward(rowClan, colClan);
         if (!r) return 0;
         return r.value;
+    }
+
+    // What each clan makes of itself. Kept off the cross-tables' diagonals,
+    // which are about pairs, and shown on its own.
+    function selfImpression(clan: ClanDTO, def: ObservationDef): number {
+        return (
+            world.observationsToward(clan, clan)?.estimate(def) ?? def.prior
+        );
     }
 </script>
 
@@ -414,10 +429,9 @@
     )}
 {/snippet}
 
-{#snippet opinionCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
-    {@const r = opinionToward(subject, object)}
-    {#if r}
-        <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+{#snippet opinionBreakdown(r: Opinion)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+
             <TableView2
                 table={new IterableTable(r.items, (i) => i.label, [
                     {
@@ -445,22 +459,101 @@
                     },
                 ])}
             ></TableView2>
-            <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                    <span>Previous Value:</span>
-                    <strong>{signed(r.previousValue, 1)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                    <span>Current Items Total:</span>
-                    <strong>{signed(r.currentItemsTotal, 1)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
-                    <span>Current Value:</span>
-                    <strong>{signed(r.value, 1)}</strong>
-                </div>
+        <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <span>Previous Value:</span>
+                <strong>{signed(r.previousValue, 1)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <span>Current Items Total:</span>
+                <strong>{signed(r.currentItemsTotal, 1)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
+                <span>Current Value:</span>
+                <strong>{signed(r.value, 1)}</strong>
             </div>
         </div>
+    </div>
+{/snippet}
+
+{#snippet opinionCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+    {@const r = opinionToward(subject, object)}
+    {#if r}
+        {@render opinionBreakdown(r)}
     {/if}
+{/snippet}
+
+{#snippet selfRegardTable()}
+    <table class="self-regard">
+        <thead>
+            <tr>
+                <th>Clan</th>
+                <th class="num">Favor</th>
+                <th class="num">Respect</th>
+                <th class="num">Holiness</th>
+                <th class="num">Prestige</th>
+                <th class="num">Pride</th>
+                <th class="num">Generosity</th>
+                <th class="num">Bellicosity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {#each sortedByKey(settlement.clans, (c) => c.name) as clan}
+                {@const respect = world.respectToward(clan, clan)}
+                {@const holiness = world.holinessToward(clan, clan)}
+                {@const favor = world.alignmentToward(clan, clan)}
+                <tr>
+                    <td>{clan.name}</td>
+                    <td class="num">{signed(100 * (favor?.value ?? 0), 0)}</td>
+                    <td class="num">
+                        {#if respect}
+                            <Tooltip>
+                                <span class="linky"
+                                    >{unsigned(respect.value, 1)}</span
+                                >
+                                <div slot="tooltip" style="color: initial;">
+                                    {@render opinionBreakdown(respect)}
+                                </div>
+                            </Tooltip>
+                        {:else}&mdash;{/if}
+                    </td>
+                    <td class="num">
+                        {#if holiness}
+                            <Tooltip>
+                                <span class="linky"
+                                    >{unsigned(holiness.value, 1)}</span
+                                >
+                                <div slot="tooltip" style="color: initial;">
+                                    {@render opinionBreakdown(holiness)}
+                                </div>
+                            </Tooltip>
+                        {:else}&mdash;{/if}
+                    </td>
+                    <td class="num"
+                        >{signed(world.prestigeToward(clan, clan), 1)}</td
+                    >
+                    <td class="num">{signed(clan.traits.pride, 1)}</td>
+                    <td class="num"
+                        >{unsigned(
+                            selfImpression(clan, ObservationDefs.Generosity),
+                            1,
+                        )}</td
+                    >
+                    <td class="num"
+                        >{unsigned(
+                            selfImpression(clan, ObservationDefs.Bellicosity),
+                            1,
+                        )}</td
+                    >
+                </tr>
+            {/each}
+        </tbody>
+    </table>
+    <div class="caption">
+        A clan knows its own doings exactly and is entirely on its own side, so
+        Favor is always +100 and information is complete. Pride is what it adds
+        to the plain facts about itself.
+    </div>
 {/snippet}
 
 <div class="relationships-grid">
@@ -502,6 +595,8 @@
                     informationCellValue,
                     unsignedFormat(2),
                     informationCellTooltip,
+                    false,
+                    true,
                 )}
             ></TableView2>
         {/if}
@@ -567,6 +662,8 @@
                 impressionCellValue(ObservationDefs.Generosity),
                 unsignedFormat(1),
                 generosityCellTooltip,
+                false,
+                true,
             )}
         ></TableView2>
     </div>
@@ -577,6 +674,8 @@
                 impressionCellValue(ObservationDefs.Bellicosity),
                 unsignedFormat(1),
                 bellicosityCellTooltip,
+                false,
+                true,
             )}
         ></TableView2>
     </div>
@@ -587,6 +686,8 @@
                 alignmentCellValue,
                 unsignedFormat(2),
                 alignmentCellTooltip,
+                false,
+                true,
             )}
         ></TableView2>
     </div>
@@ -618,9 +719,15 @@
                     opinionCellValue,
                     unsignedFormat(2),
                     opinionCellTooltip,
+                    false,
+                    true,
                 )}
             ></TableView2>
         {/key}
+    </div>
+    <div>
+        <h3>Self-Regard</h3>
+        {@render selfRegardTable()}
     </div>
 </div>
 
@@ -658,5 +765,33 @@
         font-weight: bold;
         background-color: #fff;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    table.self-regard {
+        border-collapse: collapse;
+    }
+    table.self-regard th,
+    table.self-regard td {
+        padding: 0.1rem 0.6rem 0.1rem 0;
+        text-align: left;
+    }
+    table.self-regard th {
+        border-bottom: 1px solid #62531d;
+        white-space: nowrap;
+    }
+    table.self-regard .num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+    .linky {
+        border-bottom: 1px dotted #6e5b47;
+        cursor: help;
+    }
+    .caption {
+        max-width: 30rem;
+        margin-top: 0.4rem;
+        font-size: 0.85em;
+        color: #6e5b47;
+        font-style: italic;
     }
 </style>

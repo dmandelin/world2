@@ -1,6 +1,6 @@
 import { clamp, sumFun } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
-import { pct } from "../lib/format";
+import { pct, signed } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
@@ -52,7 +52,11 @@ export class Respect implements Opinion {
             RespectItem.forConversationQoL(subject, object, qolInfoScale),
             RespectItem.forConflictQoL(subject, object, qolInfoScale),
             RespectItem.forPopulation(subject, object, infoScale),
-            RespectItem.forRandom(subject, object),
+            // A clan appraising itself doesn't take a snap judgment of a
+            // stranger; it takes its own standing opinion of itself.
+            subject === object
+                ? RespectItem.forPride(object)
+                : RespectItem.forRandom(subject, object),
 
             // TODO - Add seniority component, depending on culture?
             // TODO - Add "beauty" component?
@@ -155,6 +159,18 @@ export class RespectItem implements OpinionItem {
         );
     }
 
+    // What a clan adds to the plain facts when the clan being appraised is
+    // itself. Mostly positive: few hold themselves cheap.
+    static forPride(clan: Clan): RespectItem {
+        const pride = clan.traits.pride;
+        return new RespectItem(
+            'Pride',
+            pride,
+            1,
+            `Pride ${signed(pride, 1)}`
+        );
+    }
+
     static forRandom(subject: Clan, object: Clan): RespectItem {
         // Small random value in range [0, 2]. Not information-scaled: even a
         // stranger makes some snap judgment.
@@ -183,5 +199,7 @@ export function getRespectInScope(object: Clan | ClanDTO, scope: (Clan | ClanDTO
 export function getLocalRespect(clan: Clan | ClanDTO): number {
     const settlement = clan.settlement;
     if (!settlement) return 0;
-    return getRespectInScope(clan, settlement.clans);
+    // What the neighbors think, not what the clan thinks of itself.
+    return getRespectInScope(
+        clan, settlement.clans.filter(c => c.uuid !== clan.uuid));
 }

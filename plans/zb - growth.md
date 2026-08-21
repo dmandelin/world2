@@ -620,24 +620,25 @@ Detailed list of first parts:
                 for the affected people
         *   Clans will particularly look to clans with high holiness
             for ritual help
-        *   Holiness increases alignment (a little, at this point) and 
-            respect (more)
+        *   Holiness increases alignment (a little, at this point)
+        *   Do something with holiness and respect/prestige, but remember
+            they overlap in definition so be careful
     *   Gifts: Clans would be expected to give gifts in exchange for
         ritual help
         *   Food or labor are the main things available now
         *   (P2) Option to not give
     *   Asking for help and results
         *   One clan can ask another for ritual help
-        *   Rituals could be intended to influence:
-            *   The natural world only
-            *   Interactions between humans and nature
-            *   Interactions between humans
-        *   Ritual skill will have more influence on outcomes the more
+        x   Rituals could be intended to influence:
+            x   The natural world only
+            x   Interactions between humans and nature
+            x   Interactions between humans
+        x   Ritual skill will have more influence on outcomes the more
             the ritual is intended to influence humans
-            *   For now we could assume a mix
-        *   Outcome will be a random result that can be positive or negative
-            *   Let's see if we can do without neutral for now
-            *   If positive, holiness perception of clan will rise
+            x   For now we could assume a mix
+        x   Outcome will be a random result that can be positive or negative
+            x   Let's see if we can do without neutral for now
+            x   If positive, holiness perception of clan will rise
                 If negative, holiness will fall
 *   Clan rituals
 *   Local crises
@@ -872,3 +873,5 @@ Detailed list of first parts:
     *   Alignment to influence how far clans will extend help
     *   Marriage to influence traits and skills
     *   Marriage to influence other relationships?
+    *   There should probably be some notion of holiness generating
+        prestige; or of multiple avenues generally

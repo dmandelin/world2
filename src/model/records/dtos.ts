@@ -22,6 +22,7 @@ import type { Stock } from "../econ/stock";
 import type { QualityOfLife } from "../econ/qol";
 import type { ResidenceLevel } from "../people/residence";
 import type { Rites } from "../rites";
+import type { RitualEvent } from "../rituals";
 import type { Settlement } from "../people/settlement";
 import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
@@ -122,6 +123,9 @@ export class ClanDTO {
 
     notifications: ClanNotification[];
 
+    // Troubles this clan faced this turn, and how the rites went.
+    ritualEvents: RitualEvent[];
+
     constructor(clan: Clan, readonly settlement: SettlementDTO) {
         this.year = settlement.world.year.toString();
         this.uuid = clan.uuid;
@@ -164,6 +168,7 @@ export class ClanDTO {
         this.traits = clan.traits.clone();
 
         this.notifications = [...clan.notifications];
+        this.ritualEvents = [...clan.ritualEvents];
     }
 
     get world(): WorldDTO {
@@ -395,6 +400,7 @@ export class WorldDTO {
     readonly lastMarriageDecisions?: MarriageDecisions;
     readonly lastFoodRedistribution?: FoodRedistributionResult;
     readonly lastFoodGifts?: FoodGiftsResult;
+    readonly rituals: RitualEvent[];
 
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
@@ -416,6 +422,7 @@ export class WorldDTO {
         this.lastMarriageDecisions = world.lastMarriageDecisions;
         this.lastFoodRedistribution = world.lastFoodRedistribution;
         this.lastFoodGifts = world.lastFoodGifts;
+        this.rituals = [...world.rituals];
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.plannedSettlements = world.plannedSettlements.map(p => new PlannedSettlementDTO(p));
@@ -498,6 +505,13 @@ export class WorldDTO {
 
     holinessToward(clan: ClanDTO, other: ClanDTO): Holiness | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.holiness;
+    }
+
+    // Rituals whose beneficiary lives in this settlement, most consequential
+    // first.
+    ritualsIn(settlement: SettlementDTO): RitualEvent[] {
+        const ids = new Set(settlement.clans.map(c => c.uuid));
+        return this.rituals.filter(r => ids.has(r.beneficiaryID));
     }
 
     // Prestige clan grants other (alignment * respect), scaled by 100 for

@@ -32,6 +32,11 @@ const FLOOD_BASE_DEATH_RATE = 0.0025;
 // Causes of death, in the order used for per-cause death-rate arrays.
 export const DEATH_CAUSES = ['Disease', 'Hazards', 'Flood', 'Old Age', 'Starvation'] as const;
 
+// Indices into DEATH_CAUSES for the two causes a rite might plausibly turn
+// aside: someone who fell ill, or who came to harm.
+export const DISEASE_CAUSE_INDEX = 0;
+export const HAZARDS_CAUSE_INDEX = 1;
+
 // Starvation risk thresholds [safe, fatal] on per-capita food consumption
 // (1 = full subsistence). Below `safe` starvation risk climbs from 0; at or
 // below `fatal` it is certain. The youngest and oldest slices are more
@@ -88,6 +93,43 @@ function drawDeathsByCause(n: number, deathRates: number[]): number[] {
         }
     }
     return counts;
+}
+
+// Move the year's drawn deaths by what the rituals settled. A rite that
+// carried takes one of the deaths from illness or mishap back; one that
+// failed adds a death to a slice with people left in it, counted as illness.
+// Nothing happens if there is no death to take back, or nobody left to lose.
+function applyRitualDeathAdjustment(
+    adjustment: number,
+    illnessDeaths: { slice: number, sex: number, cause: number }[],
+    survivors: number[][],
+    actualDeaths: number[],
+): void {
+    for (let n = adjustment; n < 0; ++n) {
+        if (!illnessDeaths.length) break;
+        const pick = Math.floor(Math.random() * illnessDeaths.length);
+        const [spared] = illnessDeaths.splice(pick, 1);
+        --actualDeaths[spared.cause];
+        ++survivors[spared.slice][spared.sex];
+    }
+
+    for (let n = adjustment; n > 0; --n) {
+        // Whoever it takes is drawn from the living in proportion to numbers.
+        let total = 0;
+        for (const row of survivors) total += row[0] + row[1];
+        if (total <= 0) break;
+        let target = Math.floor(Math.random() * total);
+        outer: for (let i = 0; i < survivors.length; ++i) {
+            for (let g = 0; g < 2; ++g) {
+                if (target < survivors[i][g]) {
+                    --survivors[i][g];
+                    ++actualDeaths[DISEASE_CAUSE_INDEX];
+                    break outer;
+                }
+                target -= survivors[i][g];
+            }
+        }
+    }
 }
 
 // Combine independent per-cause risk ratios into an overall probability of
@@ -233,6 +275,21 @@ export class PopulationChange {
             sumFun(deaths, i => i.actualRate),
             sumFun(deaths, i => i.actual),
         );
+    }
+
+    // Expected deaths this period from illness and mishap -- the two causes a
+    // clan could imagine a rite doing something about. Expected rather than
+    // actual, so the rate at which critical illnesses come up doesn't jump
+    // around with the year's die rolls.
+    get expectedIllnessDeaths(): number {
+        let rate = 0;
+        for (const item of this.items) {
+            if (item.name === 'Disease' || item.name === 'Hazards') {
+                // Death items carry negative rates.
+                rate -= item.expectedRate;
+            }
+        }
+        return rate * this.previousSize;
     }
 
     get totalChangeItem(): PopulationChangeItem {
@@ -382,6 +439,10 @@ export class PopulationChangeBuilder {
         const newborns = [femaleBirths, births - femaleBirths];
         const expectedNewborns = [expectedBirths * 0.48, expectedBirths * 0.52];
 
+        // One entry per death from illness or mishap, so a ritual result can
+        // reach back and spare a particular one of them.
+        const illnessDeaths: { slice: number, sex: number, cause: number }[] = [];
+
         const actualDeaths = new Array(nCauses).fill(0);
         const expectedDeaths = new Array(nCauses).fill(0);   // after competing risks
         const independentDeaths = new Array(nCauses).fill(0); // each cause alone
@@ -401,6 +462,11 @@ export class PopulationChangeBuilder {
                 let died = 0;
                 for (let c = 0; c < nCauses; ++c) {
                     actualDeaths[c] += counts[c];
+                    if (c === DISEASE_CAUSE_INDEX || c === HAZARDS_CAUSE_INDEX) {
+                        for (let k = 0; k < counts[c]; ++k) {
+                            illnessDeaths.push({ slice: i, sex: g, cause: c });
+                        }
+                    }
                     expectedDeaths[c] += deathRates[c] * expectedPop;
                     independentDeaths[c] += risks[c] * expectedPop;
                     standardDeaths[c] += deathRates[c] * INITIAL_POPULATION_RATIOS[i][g];
@@ -410,6 +476,14 @@ export class PopulationChangeBuilder {
             }
             survivors.push(rowSurvivors);
         }
+
+        // ---- Step 2b: what the year's rituals settled ----
+        //
+        // A rite said over a critical illness either carries or it doesn't,
+        // and the stake is one life. Applied to the drawn deaths rather than
+        // to the rates, so the life saved or lost is a particular one.
+        applyRitualDeathAdjustment(
+            clan.pendingDeathAdjustment, illnessDeaths, survivors, actualDeaths);
 
         // ---- Step 3: aging transitions and new slices ----
 

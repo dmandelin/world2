@@ -59,6 +59,8 @@
     } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import type { Opinion } from "../../model/relations/opinion";
+    import type { RitualEvent } from "../../model/rituals";
+    import RitualDetails from "../RitualDetails.svelte";
     import type { Alignment } from "../../model/relations/alignment";
     import LineGraph from "../LineGraph.svelte";
     import {
@@ -665,6 +667,18 @@
                 topics: ["perceptions"],
             },
             {
+                label: "Events",
+                labelTooltip:
+                    "Troubles this year that called for a rite: " +
+                    "☥ a life in the balance, ☾ an ill-omened sign. " +
+                    "Green carried, red did not.",
+                colspan: 2,
+                class: "actual",
+                renderSnippet: eventsRender,
+                settlementRenderSnippet: settlementEventsRender,
+                topics: ["welfare", "perceptions"],
+            },
+            {
                 label: "Mutual Aid",
                 class: "actual",
                 cellClass: "rap",
@@ -820,6 +834,17 @@
                 },
                 format: fmt2,
                 tooltipSnippet: fromStockTooltip,
+                topics: ["food:detail"],
+            },
+            {
+                label: "&nbsp;&nbsp;Ritual",
+                labelTooltip: "Food given over to this year's rites.",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    -(c.distribution?.totalFoodToRitual ?? 0) /
+                    (c.population || 1),
+                format: fmt2,
                 topics: ["food:detail"],
             },
             {
@@ -1765,6 +1790,21 @@
         );
     }
 
+    // The clan's own breakdown can carry items the neighbors' does not --
+    // Pride in place of Random, a single Self item for Favor -- so the row set
+    // is the union, in rater order with the self-only items after.
+    function withSelfItemLabels(
+        labels: string[],
+        selfItems: readonly { label: string }[] | undefined,
+    ): string[] {
+        if (!selfItems) return labels;
+        const result = [...labels];
+        for (const item of selfItems) {
+            if (!result.includes(item.label)) result.push(item.label);
+        }
+        return result;
+    }
+
     // Shown when no clan has an opinion with items yet, so the breakdown still
     // has rows.
     const HOLINESS_ITEM_LABELS = [
@@ -1802,9 +1842,10 @@
             .map((c) => toward(c, clan))
             .find((r) => r && r.items.length > 0);
 
-        const itemLabels = sampleR
-            ? sampleR.items.map((i) => i.label)
-            : defaultItemLabels;
+        const itemLabels = withSelfItemLabels(
+            sampleR ? sampleR.items.map((i) => i.label) : defaultItemLabels,
+            toward(clan, clan)?.items,
+        );
 
         const rows: TableRow<RespectRowData, any>[] = [
             ...itemLabels.map((label) => ({
@@ -1871,10 +1912,17 @@
             },
         };
 
+        // The clan itself last, after the neighbors whose views the Total
+        // averages. Its own opinion is shown but not counted in that average.
+        const raterColumns = [...otherClans, clan];
+
         const clanColumns: TableColumn<RespectRowData, ClanDTO, number>[] =
-            otherClans.map((otherClan) => ({
+            raterColumns.map((otherClan) => ({
                 data: otherClan,
-                label: otherClan.name,
+                label:
+                    otherClan.uuid === clan.uuid
+                        ? `${otherClan.name} (self)`
+                        : otherClan.name,
                 valueFn: (row: RespectRowData) => {
                     const r = toward(otherClan, clan);
                     if (row.type === "item") {
@@ -1925,9 +1973,12 @@
             .map((c) => toward(c, clan))
             .find((a) => a && a.items.length > 0);
 
-        const itemLabels = sampleA
-            ? sampleA.items.map((i) => i.label)
-            : ["Gifts", "Generosity", "Piety", "Sociability", "Conflict"];
+        const itemLabels = withSelfItemLabels(
+            sampleA
+                ? sampleA.items.map((i) => i.label)
+                : ["Gifts", "Generosity", "Piety", "Sociability", "Conflict"],
+            toward(clan, clan)?.items,
+        );
 
         const rows: TableRow<RespectRowData, any>[] = [
             ...itemLabels.map((label) => ({
@@ -1994,10 +2045,17 @@
             },
         };
 
+        // The clan itself last, after the neighbors whose views the Total
+        // averages. Its own view is shown but not counted in that average.
+        const raterColumns = [...otherClans, clan];
+
         const clanColumns: TableColumn<RespectRowData, ClanDTO, number>[] =
-            otherClans.map((otherClan) => ({
+            raterColumns.map((otherClan) => ({
                 data: otherClan,
-                label: otherClan.name,
+                label:
+                    otherClan.uuid === clan.uuid
+                        ? `${otherClan.name} (self)`
+                        : otherClan.name,
                 valueFn: (row: RespectRowData) => {
                     const a = toward(otherClan, clan);
                     if (row.type === "item") {
@@ -2435,6 +2493,19 @@
                     <td style="text-align: right;">{signed(clan.prestigeAverage, 1)}</td>
                     <td></td>
                 </tr>
+                {#each [clan] as self}
+                    {@const selfA = world.alignmentToward(self, self)?.value ?? 0}
+                    {@const selfR = world.respectToward(self, self)?.value ?? 0}
+                    <tr style="border-top: 1px dashed #ccc; color: #6e5b47;">
+                        <td style="text-align: left;">{self.name} (self)</td>
+                        <td style="text-align: right;">{signed(selfA, 2)}</td>
+                        <td style="text-align: right;">{signed(selfR, 1)}</td>
+                        <td style="text-align: right;"
+                            >{signed(world.prestigeToward(self, self), 1)}</td
+                        >
+                        <td style="text-align: right;">{self.population}</td>
+                    </tr>
+                {/each}
             </tbody>
         </table>
     </div>
@@ -2776,6 +2847,31 @@
     <h4>Society Detail</h4>
     <TableView2 table={clanSocietyHappinessDetailTooltipTable(cs.e)}
     ></TableView2>
+{/snippet}
+
+{#snippet ritualIcons(events: RitualEvent[])}
+    {#if events.length === 0}
+        <span class="event-none">&mdash;</span>
+    {:else}
+        {#each events as event}
+            <Tooltip>
+                <span class="event-icon {event.success ? 'good' : 'bad'}"
+                    >{event.def.icon}</span
+                >
+                <div slot="tooltip" style="color: initial;">
+                    <RitualDetails {event} />
+                </div>
+            </Tooltip>
+        {/each}
+    {/if}
+{/snippet}
+
+{#snippet eventsRender(cs: ClanLastTurnSnapshots)}
+    {@render ritualIcons(cs.e.ritualEvents)}
+{/snippet}
+
+{#snippet settlementEventsRender(css: ClanLastTurnSnapshots[])}
+    {@render ritualIcons(css.flatMap((cs) => cs.e.ritualEvents))}
 {/snippet}
 
 {#snippet activitiesRender(cs: ClanLastTurnSnapshots)}
@@ -3227,6 +3323,22 @@
 
     td.settlement-col + td {
         padding-left: 1.25em;
+    }
+
+    .event-icon {
+        font-size: 1.25em;
+        line-height: 1;
+        padding: 0 0.1em;
+        cursor: help;
+    }
+    .event-none {
+        color: #b9ab8a;
+    }
+    .good {
+        color: #15803d;
+    }
+    .bad {
+        color: #b91c1c;
     }
 
     .row-label {

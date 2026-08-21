@@ -42,17 +42,29 @@ function randomAggression(): number {
     return AGGRESSION_MIN + Math.random() * (AGGRESSION_MAX - AGGRESSION_MIN);
 }
 
+// Pride: how much better than the plain facts a clan thinks of itself, in
+// points of self-respect. Skewed positive, because most clans flatter
+// themselves a little and only a few hold themselves cheap.
+export const PRIDE_MIN = -5;
+export const PRIDE_MAX = 10;
+
+function randomPride(): number {
+    return PRIDE_MIN + Math.random() * (PRIDE_MAX - PRIDE_MIN);
+}
+
 export class ClanTraits {
     private numeric: Record<string, number>;
     bitmap: number;
     private giving_: number;
     private aggression_: number;
+    private pride_: number;
 
     constructor(
         numeric?: Partial<Record<NumericTrait, number>>,
         bitmap: number = 0,
         giving?: number,
         aggression?: number,
+        pride?: number,
     ) {
         this.numeric = {
             piety: numeric?.piety ?? randomTraitStat(),
@@ -61,6 +73,17 @@ export class ClanTraits {
         this.bitmap = bitmap;
         this.giving_ = giving ?? randomGiving();
         this.aggression_ = aggression ?? randomAggression();
+        this.pride_ = pride ?? randomPride();
+    }
+
+    // Not clamped to the starting range: like Giving and Aggression, a clan's
+    // opinion of itself can drift past where it began.
+    get pride(): number {
+        return this.pride_;
+    }
+
+    set pride(val: number) {
+        this.pride_ = clamp(val, 3 * PRIDE_MIN, 3 * PRIDE_MAX);
     }
 
     get giving(): number {
@@ -117,7 +140,8 @@ export class ClanTraits {
     }
 
     clone(): ClanTraits {
-        return new ClanTraits({ ...this.numeric }, this.bitmap, this.giving_, this.aggression_);
+        return new ClanTraits(
+            { ...this.numeric }, this.bitmap, this.giving_, this.aggression_, this.pride_);
     }
 
     cloneWithSplitBump(): ClanTraits {

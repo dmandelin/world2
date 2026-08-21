@@ -56,6 +56,15 @@ export class Alignment {
         this.value_ = Alignment.ALPHA * currentTotal + (1 - Alignment.ALPHA) * this.previousValue_;
     }
 
+    // A clan is entirely on its own side. Held at the top of the range
+    // outright rather than smoothed toward it: this is not an opinion that
+    // has to be arrived at.
+    updateForSelf(subject: Clan): void {
+        this.items_ = [new AlignmentItem('Self', 1, 1, 'A clan is its own')];
+        this.previousValue_ = this.value_;
+        this.value_ = 1;
+    }
+
     clone(): Alignment {
         const a = new Alignment();
         a.items_ = [...this.items_];

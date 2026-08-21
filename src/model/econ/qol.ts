@@ -3,6 +3,7 @@ import { pct } from "../lib/format";
 import type { Consumption } from "./consumption";
 import { getRelativeLocalPrestige } from "../relations/prestige";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
+import { omenQolEffect } from "../rituals";
 
 const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 2, 1, 0);
 
@@ -34,6 +35,7 @@ export class QualityOfLife {
             QualityOfLife.fromConversation,
             QualityOfLife.fromConflict,
             QualityOfLife.fromPrestige,
+            QualityOfLife.fromOmens,
         ];
         const m = new Map<string, QualityOfLifeItem>();
         for (const itemFun of itemFuns) {
@@ -81,6 +83,19 @@ export class QualityOfLife {
         const value = consumption.clan ? 100 * getRelativeLocalPrestige(consumption.clan) : 0;
         return new QualityOfLifeItem(
             "Prestige", "social", value, `${value.toFixed(1)}`);
+    }
+
+    // How this year's portents came out. Each one that was read away leaves
+    // the clan a point better off than it was, each one that was not, a point
+    // worse; a year without signs is simply zero.
+    static fromOmens(consumption: Consumption): QualityOfLifeItem {
+        const clan = consumption.clan;
+        const value = clan ? omenQolEffect(clan) : 0;
+        const count = clan
+            ? clan.ritualEvents.filter(e => e.def.key === 'omen').length : 0;
+        return new QualityOfLifeItem(
+            "Omens", "omens", value,
+            count ? `${count} portent${count === 1 ? '' : 's'}` : 'no portents');
     }
 
     static fromLeisure(consumption: Consumption): QualityOfLifeItem {

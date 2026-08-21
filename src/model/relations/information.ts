@@ -1208,6 +1208,22 @@ export class ClanInformation {
         this.level_ = clamp(level, 0, 1);
     }
 
+    // A clan's information about itself: complete, by definition. Its ledger
+    // of its own deeds still fades the same way, since what matters is what
+    // the clan has been doing lately, not everything it ever did.
+    updateForSelf(subject: Clan): void {
+        this.contactItems_ = [
+            new ClanInformationItem('Self', 1, 'a clan knows its own doings'),
+        ];
+        this.level_ = 1;
+        this.directTarget_ = 1;
+        this.unknownAfterHearsay_ = 0;
+
+        const year = subject.world.year.value;
+        this.memory.forget(year);
+        this.observations.fade(year);
+    }
+
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
         this.contactItems_ = [];
         for (const interaction of interactions) {
@@ -1302,6 +1318,10 @@ export function recordDirectEvent(a: Clan, b: Clan, entry: MemoryEntry): void {
     const perceptions = a.world.perceptions;
     perceptions.getOrCreate(a, b).information.memory.add(entry);
     perceptions.getOrCreate(b, a).information.memory.add(entry);
+    // The actor also remembers what it did, in its own ledger about itself,
+    // which is how a clan comes by a view of its own generosity and temper.
+    const actor = a.world.clanMap.get(entry.actor);
+    if (actor) perceptions.getOrCreate(actor, actor).information.memory.add(entry);
 }
 
 // Remember a gift of food aid. Both donor and recipient know about it
@@ -1475,9 +1495,31 @@ export function updateObservations(world: World): void {
         for (const [, perceptions] of world.perceptions.getFor(clan)) {
             perceptions.information.observations.beginTurn();
         }
+        world.perceptions.get(clan, clan)?.information.observations.beginTurn();
     }
     passAlongObservations(world, year);
     observeDirectly(world, year);
+    observeSelf(world, year);
+}
+
+// What a clan makes of its own conduct. It saw all of it, with nothing missed
+// and nothing to mishear, so each quality is fed the plain figure at full
+// weight -- but through the same machinery as everyone else's, so a clan's
+// view of its own giving is still last year's giving and not this instant's.
+function observeSelf(world: World, year: number): void {
+    for (const clan of world.allClans) {
+        const observations =
+            world.perceptions.get(clan, clan)?.information.observations;
+        if (!observations) continue;
+        for (const def of ALL_OBSERVATION_DEFS) {
+            const seen = def.perceivable(def.valueFn(clan, clan));
+            if (def.mode === 'average') {
+                observations.observeYear(def, seen, year, def.lookStdev);
+            } else {
+                observations.observe(def, seen, 1, year, 0, def.lookStdev);
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1582,6 +1624,15 @@ export function divideInformationOnSplit(parent: Clan, child: Clan): void {
 export function seedObservations(world: World): void {
     const year = world.year.value;
     for (const subject of world.allClans) {
+        // A clan is under no illusions about itself, so its self-view starts
+        // at the truth, held with full assurance.
+        const self = world.perceptions.get(subject, subject);
+        if (self) {
+            for (const def of ALL_OBSERVATION_DEFS) {
+                self.information.observations.seed(
+                    def, def.perceivable(def.valueFn(subject, subject)), 1, year);
+            }
+        }
         for (const [objectID, perceptions] of world.perceptions.getFor(subject)) {
             const object = world.clanMap.get(objectID);
             if (!object) continue;

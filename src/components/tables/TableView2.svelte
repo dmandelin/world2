@@ -132,7 +132,7 @@
                                     column.data,
                                 )}
                         >
-                            {#if table.isCrossTable && row.data && column.data && (typeof row.data === 'object' && typeof column.data === 'object' && 'uuid' in row.data && 'uuid' in column.data ? row.data.uuid === column.data.uuid : row.data === column.data)}
+                            {#if table.isCrossTable && !table.showDiagonal && row.data && column.data && (typeof row.data === 'object' && typeof column.data === 'object' && 'uuid' in row.data && 'uuid' in column.data ? row.data.uuid === column.data.uuid : row.data === column.data)}
                                 &nbsp;
                             {:else if column.tooltip}
                                 {@render cellHTML(row, column)}

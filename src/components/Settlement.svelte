@@ -16,6 +16,7 @@
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
     import SettlementEcon from "./SettlementEcon.svelte";
     import SettlementQoL from "./SettlementQoL.svelte";
+    import SettlementRituals from "./SettlementRituals.svelte";
 
     let { settlement } = $props();
 
@@ -29,6 +30,7 @@
         { label: "Econ", snippet: econTab },
         { label: "Relationships", snippet: relationshipsTab },
         { label: "Marriages", snippet: marriagesTab },
+        { label: "Rituals", snippet: ritualsTab },
         { label: "Redistribution", snippet: redistributionTab },
         { label: "Mutual Aid", snippet: mutualAidTab },
         { label: "Graph", snippet: relationshipsGraphTab },
@@ -85,6 +87,10 @@
 
 {#snippet marriagesTab()}
     <SettlementMarriages {settlement} />
+{/snippet}
+
+{#snippet ritualsTab()}
+    <SettlementRituals {settlement} />
 {/snippet}
 
 {#snippet redistributionTab()}

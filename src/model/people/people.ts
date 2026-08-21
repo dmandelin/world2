@@ -15,6 +15,7 @@ import { Processes, SkillDefs } from "../econ/econdefs";
 import { QualityOfLife } from "../econ/qol";
 import { ResidenceLevel } from "./residence";
 import { Rites } from "../rites";
+import type { RitualEvent } from "../rituals";
 import { type FloodLevel, FloodLevels } from "../environment/flood";
 import { type TradeGood, TradeGoods, type TradePartner, TradeRelationship } from "../trade";
 import type { Settlement } from "./settlement";
@@ -105,6 +106,12 @@ export class Clan implements TradePartner {
 
     readonly rites: Rites; // TODO - remove if not used
     ritualGoodsUsage: 'Private' | 'Communal' = 'Private';
+
+    // Troubles this clan faced this turn, and how the rites for them went.
+    ritualEvents: RitualEvent[] = [];
+    // Deaths a ritual result adds (positive) or averts (negative) this turn,
+    // applied when the year's population change is drawn.
+    pendingDeathAdjustment: number = 0;
 
     housingDecision: HousingDecision | undefined;
     housing = HousingTypes.Huts;

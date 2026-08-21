@@ -13,7 +13,8 @@
         material: true,
         social: true,
         natural: true,
-        personal: true
+        personal: true,
+        omens: true
     });
 
     const categories = [
@@ -36,6 +37,11 @@
             tag: "personal",
             label: "Personal",
             items: ["Leisure"]
+        },
+        {
+            tag: "omens",
+            label: "Omens",
+            items: ["Omens"]
         }
     ] as const;
 
@@ -45,7 +51,8 @@
             material: true,
             social: true,
             natural: true,
-            personal: true
+            personal: true,
+            omens: true
         };
     }
 
@@ -55,7 +62,8 @@
             material: false,
             social: false,
             natural: false,
-            personal: false
+            personal: false,
+            omens: false
         };
     }
 

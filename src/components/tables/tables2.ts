@@ -124,6 +124,11 @@ export interface CrossTable<RowColData, CellData> {
     rowHeaderLabel?: string;
 
     isCrossTable: true;
+
+    // Cross-table diagonals are blank by default, since a cell there would
+    // ask what a thing is to itself. Set for tables where that question has
+    // an answer -- what a clan makes of its own conduct, for instance.
+    showDiagonal?: boolean;
 }
 
 // Table from a single record with
@@ -246,6 +251,7 @@ export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, Ce
     columns: TableColumn<RowColData, any, any>[];
     rows: TableRow<RowColData, RowColData>[];
     readonly isCrossTable = true;
+    showDiagonal = false;
 
     constructor(       
         data: Iterable<RowColData>,

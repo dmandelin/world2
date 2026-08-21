@@ -23,6 +23,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
+import { chargeRitualFoodCosts, runRituals, type RitualEvent } from "./rituals";
 import { propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
@@ -96,6 +97,9 @@ export class World implements NoteTaker {
     lastMarriageDecisions?: MarriageDecisions;
     lastFoodRedistribution?: FoodRedistributionResult;
     lastFoodGifts?: FoodGiftsResult;
+
+    // Rituals performed this turn, across the whole world.
+    rituals: RitualEvent[] = [];
 
     dto: WorldDTO | undefined;
 
@@ -419,6 +423,11 @@ export class World implements NoteTaker {
             }
         }
 
+        // Troubles that call for a rite, and how the rites went. Settled
+        // before the economy, which charges for them, and before the year's
+        // deaths and quality of life, which they bear on.
+        runRituals(this);
+
         this.advanceEconomy();
 
         // Advance perceptions and learnings.
@@ -475,6 +484,10 @@ export class World implements NoteTaker {
                 }
             }
         }
+
+        // The year's offerings come off the top, before anything is eaten,
+        // stored, or given away.
+        for (const clan of allClans) chargeRitualFoodCosts(clan);
 
         // Run food gift sharing before arranging consumption!
         this.lastFoodGifts = shareFoodGifts(allClans);

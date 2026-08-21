@@ -6,6 +6,7 @@ import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
 import { ObservationDefs, observedEstimate } from "./information";
 import type { Opinion, OpinionItem } from "./opinion";
+import { ritualHolinessEffect } from "../rituals";
 
 // Holiness measures how close to the gods and ancestors one clan
 // thinks another stands: whom you would ask to say the words when
@@ -57,9 +58,8 @@ export class Holiness implements Opinion {
             HolinessItem.forRitualSkill(subject, object, infoScale),
             HolinessItem.forGenerosity(subject, object),
             HolinessItem.forMaterialQoL(subject, object, qolInfoScale),
+            HolinessItem.forRitualOutcomes(subject, object),
 
-            // TODO - Ritual outcomes: holiness should rise and fall with how
-            // rituals this clan led turned out for the people affected.
             // TODO - Symbols, items, and buildings.
         ];
         this.previousValue_ = this.value_;
@@ -131,6 +131,20 @@ export class HolinessItem implements OpinionItem {
         );
     }
 
+    // How this year's rites went, for the clan they were said over. Nothing
+    // shows where a clan stands with the ancestors like asking them for
+    // something and being answered -- or not. Firsthand only: a rite said for
+    // someone else is not evidence to us.
+    static forRitualOutcomes(subject: Clan, object: Clan): HolinessItem {
+        const effect = ritualHolinessEffect(subject, object);
+        return new HolinessItem(
+            'Ritual Outcomes',
+            effect,
+            1,
+            effect === 0 ? 'no rites for us this year' : `rites said for us this year`
+        );
+    }
+
     // Prospering is taken as a sign of favor from above.
     static forMaterialQoL(subject: Clan, object: Clan, infoScale: number): HolinessItem {
         const objectValue = object.qol.valueFrom("material");
@@ -158,5 +172,7 @@ export function getHolinessInScope(object: Clan | ClanDTO, scope: (Clan | ClanDT
 export function getLocalHoliness(clan: Clan | ClanDTO): number {
     const settlement = clan.settlement;
     if (!settlement) return 0;
-    return getHolinessInScope(clan, settlement.clans);
+    // What the neighbors think, not what the clan thinks of itself.
+    return getHolinessInScope(
+        clan, settlement.clans.filter(c => c.uuid !== clan.uuid));
 }
