@@ -217,10 +217,14 @@ export const RitualTypes = {
         newsInformationExponent: 0.25,
         askGiftFraction: 0.02,
         askStressTransfer: 0.5,
-        // Alignment runs -1 to 1 and is shown as Favor x100, so these are
-        // +10 and +4 Favor at full strength.
-        alignmentBoostAsker: 0.10,
-        alignmentBoostOfficiant: 0.04,
+        // Alignment runs -1 to 1 and is shown as Favor x100. These are the
+        // marks a single rite leaves; because they stand and fade at the same
+        // 25-year half-life as the holiness credit, a standing arrangement
+        // between two clans settles around +8 Favor from the asker and +3
+        // back, which is a strong tie without crowding out everything else
+        // alignment weighs.
+        alignmentBoostAsker: 0.015,
+        alignmentBoostOfficiant: 0.006,
     }),
 
     Omen: new OmenRitualDef({
@@ -244,8 +248,8 @@ export const RitualTypes = {
         // changes hands but the obligation.
         askGiftFraction: 0,
         askStressTransfer: 0.5,
-        alignmentBoostAsker: 0.02,
-        alignmentBoostOfficiant: 0.008,
+        alignmentBoostAsker: 0.003,
+        alignmentBoostOfficiant: 0.0012,
     }),
 };
 

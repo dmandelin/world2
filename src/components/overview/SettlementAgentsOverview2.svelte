@@ -48,6 +48,8 @@
     import type { Process } from "../../model/econ/process";
     import type { Activity } from "../../model/decisions/effort";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
+    import RankBadge from "../RankBadge.svelte";
+    import { rankBadges } from "../rankbadge";
     import { get } from "svelte/store";
     import {
         connectionsOf,
@@ -84,80 +86,14 @@
 
     let csnaps = $derived(getClanLastTurnSnapshots(settlement));
 
-    function getZScoreColor(z: number): string {
-        const clampedZ = Math.max(-2, Math.min(2, z));
-        const t = clampedZ / 2; // -1 to +1
-
-        let r: number, g: number, b: number;
-        if (t >= 0) {
-            // Neutral gray (107, 114, 128) -> Blue (37, 99, 235)
-            r = Math.round(107 + (37 - 107) * t);
-            g = Math.round(114 + (99 - 114) * t);
-            b = Math.round(128 + (235 - 128) * t);
-        } else {
-            // Neutral gray (107, 114, 128) -> Red (220, 38, 38)
-            const absT = -t;
-            r = Math.round(107 + (220 - 107) * absT);
-            g = Math.round(114 + (38 - 114) * absT);
-            b = Math.round(128 + (38 - 128) * absT);
-        }
-        return `rgb(${r}, ${g}, ${b})`;
-    }
-
     let prestigeRankings = $derived.by(() => {
-        if (!csnaps || csnaps.length === 0)
-            return new Map<
-                string,
-                { rank: number; title: string; color: string }
-            >();
-
-        const n = csnaps.length;
-        const values = csnaps.map((cs) => cs.e.prestigeAverage);
-        const mean = values.reduce((a, b) => a + b, 0) / (n || 1);
-        const variance =
-            values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n || 1);
-        const stdDev = Math.sqrt(variance);
-
-        const sorted = [...csnaps].sort(
-            (a, b) => b.e.prestigeAverage - a.e.prestigeAverage,
+        return rankBadges(
+            csnaps ?? [],
+            (cs) => cs.c.uuid,
+            (cs) => cs.e.prestigeAverage,
+            (rank, value, zStr) =>
+                `Rank #${rank} (Prestige: ${signed(value, 0)}, Z-Score: ${zStr})`,
         );
-
-        const rankMap = new Map<string, number>();
-        sorted.forEach((cs, idx) => {
-            if (
-                idx > 0 &&
-                Math.abs(
-                    cs.e.prestigeAverage -
-                        sorted[idx - 1].e.prestigeAverage,
-                ) < 1e-6
-            ) {
-                rankMap.set(cs.c.uuid, rankMap.get(sorted[idx - 1].c.uuid)!);
-            } else {
-                rankMap.set(cs.c.uuid, idx + 1);
-            }
-        });
-
-        const resultMap = new Map<
-            string,
-            { rank: number; title: string; color: string }
-        >();
-
-        for (const cs of csnaps) {
-            const val = cs.e.prestigeAverage;
-            const rank = rankMap.get(cs.c.uuid) ?? 1;
-            const z = stdDev > 1e-6 ? (val - mean) / stdDev : 0;
-            const color = getZScoreColor(z);
-            const zStr = z >= 0 ? `+${z.toFixed(2)}` : z.toFixed(2);
-            const title = `Rank #${rank} (Prestige: ${signed(val, 0)}, Z-Score: ${zStr})`;
-
-            resultMap.set(cs.c.uuid, {
-                rank,
-                title,
-                color,
-            });
-        }
-
-        return resultMap;
     });
 
     let relevantProcesses = $derived.by(() =>
@@ -3131,13 +3067,9 @@
                             style="display: flex; flex-direction: column; align-items: center; justify-content: center;"
                         >
                             {#if rank}
-                                <SimpleTooltip tip={rank.title}>
-                                    <div
-                                        style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background-color: {rank.color}; color: #ffffff; font-weight: bold; font-size: 0.75rem; line-height: 1; margin-bottom: 3px; cursor: default; box-shadow: 0 1px 2px rgba(0,0,0,0.15);"
-                                    >
-                                        {rank.rank}
-                                    </div>
-                                </SimpleTooltip>
+                                <div style="margin-bottom: 3px;">
+                                    <RankBadge badge={rank} />
+                                </div>
                             {/if}
                             <div
                                 style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 0.2em;"

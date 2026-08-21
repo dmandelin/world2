@@ -640,7 +640,12 @@ Detailed list of first parts:
             x   Let's see if we can do without neutral for now
             x   If positive, holiness perception of clan will rise
                 If negative, holiness will fall
-    *   Make relative holiness easier to understand
+    x   Make relative holiness easier to understand
+    *   Debug and visualize softmax selection, seems bugged
+    *   Have amount of rituals done influence ritual skill development
+    *   Retune alignment
+    *   Some sort of UI showing holiest clans known in different areas
+    *   Make sure stress impacts demographics
 *   Clan rituals
 *   Local crises
 

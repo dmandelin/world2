@@ -83,11 +83,14 @@
                 <tr>
                     <th>Favor</th>
                     <td>
-                        {signed(100 * event.def.alignmentBoostAsker, 0)} from {event
-                            .beneficiary.name}, {signed(
+                        {signed(100 * event.def.alignmentBoostAsker, 1)} Favor from
+                        {event.beneficiary.name}, {signed(
                             100 * event.def.alignmentBoostOfficiant,
-                            0,
+                            1,
                         )} back
+                        <div class="note">
+                            Stands and fades with the rite.
+                        </div>
                     </td>
                 </tr>
             {/if}

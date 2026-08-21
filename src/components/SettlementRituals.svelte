@@ -1,13 +1,17 @@
 <script lang="ts">
-    import type { SettlementDTO } from "../model/records/dtos";
+    import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import type { RitualEvent } from "../model/rituals";
-    import { ALL_RITUAL_TYPES } from "../model/rituals";
-    import { pct, unsigned } from "../model/lib/format";
+    import { ALL_RITUAL_TYPES, officiantAppeal } from "../model/rituals";
+    import { pct, signed, unsigned } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
+    import { populationAverage } from "../model/lib/modelbasics";
+    import { rankBadges } from "./rankbadge";
+    import RankBadge from "./RankBadge.svelte";
     import Tooltip from "./Tooltip.svelte";
     import RitualDetails from "./RitualDetails.svelte";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
+    let world = $derived(settlement.world);
 
     // Life first, then by officiant, so the year's serious business reads at
     // the top.
@@ -18,7 +22,119 @@
                 `${e.def.foodCostFraction > 0 ? 0 : 1}|${e.performer.name}`,
         ),
     );
+
+    let clans = $derived(sortedByKey(settlement.clans, (c: ClanDTO) => c.name));
+
+    // Everyone but the clan itself: holiness here means what the neighbors
+    // make of it, so its own view is shown on its own row rather than folded
+    // into the average.
+    function raters(clan: ClanDTO): ClanDTO[] {
+        return settlement.clans.filter((c) => c.uuid !== clan.uuid);
+    }
+
+    // Population-weighted average of one holiness component across raters.
+    function itemAverage(clan: ClanDTO, label: string): number {
+        return populationAverage(raters(clan), (rater) => {
+            const h = world.holinessToward(rater, clan);
+            return h?.items.find((i) => i.label === label)?.value ?? 0;
+        });
+    }
+
+    function judgmentsAverage(clan: ClanDTO): number {
+        return populationAverage(
+            raters(clan),
+            (rater) => world.holinessToward(rater, clan)?.currentItemsTotal ?? 0,
+        );
+    }
+
+    // The component rows, taken from whatever holiness assessment the
+    // settlement actually has, so new components show up without editing this.
+    let itemLabels = $derived.by(() => {
+        for (const clan of clans) {
+            for (const rater of raters(clan)) {
+                const h = world.holinessToward(rater, clan);
+                if (h && h.items.length) return h.items.map((i) => i.label);
+            }
+        }
+        return [];
+    });
+
+    let holinessRanks = $derived(
+        rankBadges(
+            clans,
+            (c: ClanDTO) => c.uuid,
+            (c: ClanDTO) => c.holinessAverage,
+            (rank, value, zStr) =>
+                `Rank #${rank} (Holiness: ${unsigned(value, 1)}, Z-Score: ${zStr})`,
+        ),
+    );
 </script>
+
+<h3>Holiness</h3>
+{#if clans.length}
+    <table class="rituals holiness">
+        <thead>
+            <tr>
+                <th></th>
+                {#each clans as clan}
+                    {@const badge = holinessRanks.get(clan.uuid)}
+                    <th class="num">
+                        <div class="clan-head">
+                            {#if badge}<RankBadge {badge} />{/if}
+                            <span>{clan.name}</span>
+                        </div>
+                    </th>
+                {/each}
+            </tr>
+        </thead>
+        <tbody>
+            {#each itemLabels as label}
+                <tr>
+                    <th class="rowlabel">{label}</th>
+                    {#each clans as clan}
+                        <td class="num">{signed(itemAverage(clan, label), 1)}</td>
+                    {/each}
+                </tr>
+            {/each}
+            <tr class="divider">
+                <th class="rowlabel">Current judgments</th>
+                {#each clans as clan}
+                    <td class="num">{signed(judgmentsAverage(clan), 1)}</td>
+                {/each}
+            </tr>
+            <tr class="total">
+                <th class="rowlabel">Holiness</th>
+                {#each clans as clan}
+                    <td class="num">{unsigned(clan.holinessAverage, 1)}</td>
+                {/each}
+            </tr>
+            <tr>
+                <th class="rowlabel">Its own view</th>
+                {#each clans as clan}
+                    <td class="num"
+                        >{unsigned(
+                            world.holinessToward(clan, clan)?.value ?? 0,
+                            1,
+                        )}</td
+                    >
+                {/each}
+            </tr>
+            <tr>
+                <th class="rowlabel">Weighs itself at</th>
+                {#each clans as clan}
+                    <td class="num"
+                        >{unsigned(officiantAppeal(clan.ref, clan.ref), 1)}</td
+                    >
+                {/each}
+            </tr>
+        </tbody>
+    </table>
+    <div class="quiet caption">
+        What the settlement's other clans make of each clan, population
+        weighted, and how it stands with itself. A clan weighing up who to ask
+        uses its own view, adding its Pride when it considers itself.
+    </div>
+{/if}
 
 <h3>Rituals This Year</h3>
 
@@ -153,6 +269,31 @@
     }
     .icon {
         font-size: 1.2em;
+    }
+    table.holiness th.rowlabel {
+        border-bottom: none;
+        font-weight: normal;
+        text-align: left;
+        padding-right: 1.2rem;
+    }
+    table.holiness .clan-head {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+    table.holiness tr.divider td,
+    table.holiness tr.divider th {
+        border-top: 1px solid #ccc;
+    }
+    table.holiness tr.total td,
+    table.holiness tr.total th {
+        font-weight: bold;
+        border-top: 1px solid #62531d;
+    }
+    .caption {
+        max-width: 34rem;
+        margin-top: 0.4rem;
     }
     .linky {
         border-bottom: 1px dotted #6e5b47;

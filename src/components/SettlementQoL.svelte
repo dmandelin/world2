@@ -26,7 +26,7 @@
         {
             tag: "social",
             label: "Social",
-            items: ["Conversation", "Conflict", "Prestige"]
+            items: ["Conversation", "Conflict", "Prestige", "Ritual help"]
         },
         {
             tag: "natural",
