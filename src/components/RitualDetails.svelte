@@ -100,6 +100,10 @@
                         to how {event.beneficiary.name} sees {event.performer
                             .name}
                     {/if}
+                    <div class="note">
+                        Stands and fades by half every {event.def
+                            .holinessHalfLife} years.
+                    </div>
                 </td>
             </tr>
         </tbody>

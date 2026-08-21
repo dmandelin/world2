@@ -875,3 +875,4 @@ Detailed list of first parts:
     *   Marriage to influence other relationships?
     *   There should probably be some notion of holiness generating
         prestige; or of multiple avenues generally
+    *   Tales growing in the telling of ritual success?

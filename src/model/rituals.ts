@@ -77,9 +77,13 @@ export type RitualTypeSpec = {
     // at the midpoint is always 50%, and the curve is logistic, so this one
     // number fixes how much the officiant's quality is worth.
     successAtHighStat: number;
-    // How much a result moves the beneficiary's view of the officiant's
-    // holiness, on the 0-100 holiness scale, for the turn it happened.
+    // How much a fresh result moves the beneficiary's view of the officiant's
+    // holiness, on the 0-100 holiness scale.
     holinessSwing: number;
+    // Years for that credit to fade to half. What the ancestors did about a
+    // dying member is remembered for a generation; a dream read rightly is
+    // worth talking about for a season.
+    holinessHalfLife: number;
 };
 
 export abstract class RitualTypeDef {
@@ -91,6 +95,7 @@ export abstract class RitualTypeDef {
     readonly foodCostFraction: number;
     readonly successAtHighStat: number;
     readonly holinessSwing: number;
+    readonly holinessHalfLife: number;
     // Logit slope per stat point, derived from successAtHighStat.
     readonly logitSlope: number;
 
@@ -103,6 +108,7 @@ export abstract class RitualTypeDef {
         this.foodCostFraction = spec.foodCostFraction;
         this.successAtHighStat = spec.successAtHighStat;
         this.holinessSwing = spec.holinessSwing;
+        this.holinessHalfLife = spec.holinessHalfLife;
         const p = spec.successAtHighStat;
         this.logitSlope = Math.log(p / (1 - p)) / RITUAL_STAT_SWING;
     }
@@ -173,7 +179,11 @@ export const RitualTypes = {
         // The ancestors are not much moved either way when a life is asked
         // for, so even a fine officiant gains little ground.
         successAtHighStat: 0.58,
-        holinessSwing: 25,
+        // A life asked for and granted is the strongest evidence a clan ever
+        // gets about where it stands, and it is still being told a generation
+        // later.
+        holinessSwing: 8,
+        holinessHalfLife: 25,
     }),
 
     Omen: new OmenRitualDef({
@@ -186,7 +196,10 @@ export const RitualTypes = {
         foodCostFraction: 0,
         // Reading a sign rightly is a matter of skill, and it shows.
         successAtHighStat: 0.66,
-        holinessSwing: 8,
+        // A sign read rightly counts for much less, and is stale within a few
+        // seasons.
+        holinessSwing: 3,
+        holinessHalfLife: 2,
     }),
 };
 
@@ -233,7 +246,8 @@ export class RitualEvent {
     }
 
     // Points of holiness the beneficiary credits (or debits) the officiant
-    // with this turn.
+    // with when the result comes in. The credit stands afterward and fades at
+    // the ritual type's half-life; see RitualCredit in holiness.ts.
     get holinessEffect(): number {
         return (this.success ? 1 : -1) * this.def.holinessSwing;
     }
@@ -265,6 +279,10 @@ export function runRituals(world: World): void {
                 if (def === RitualTypes.Life) {
                     clan.pendingDeathAdjustment += event.success ? -1 : 1;
                 }
+                // Booked once, here, so that a result lands exactly once no
+                // matter how often perceptions are recomputed.
+                world.perceptions.getOrCreate(clan, clan)
+                    .holiness.creditRitual(event);
             }
         }
     }
@@ -294,14 +312,4 @@ export function omenQolEffect(clan: Clan): number {
     return sumFun(
         clan.ritualEvents.filter(e => e.def === RitualTypes.Omen),
         e => e.success ? OMEN_QOL_STAKE : -OMEN_QOL_STAKE);
-}
-
-// What the year's rituals do to `subject`'s view of `object`'s holiness: only
-// rites `object` performed on `subject`'s behalf count, so a clan's own rites
-// move only its opinion of itself until clans start asking each other.
-export function ritualHolinessEffect(subject: Clan, object: Clan): number {
-    return sumFun(
-        object.world.rituals.filter(
-            e => e.performer === object && e.beneficiary === subject),
-        e => e.holinessEffect);
 }

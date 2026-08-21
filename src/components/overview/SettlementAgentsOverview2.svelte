@@ -59,7 +59,7 @@
     } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import type { Opinion } from "../../model/relations/opinion";
-    import type { RitualEvent } from "../../model/rituals";
+    import { ALL_RITUAL_TYPES, type RitualEvent } from "../../model/rituals";
     import RitualDetails from "../RitualDetails.svelte";
     import type { Alignment } from "../../model/relations/alignment";
     import LineGraph from "../LineGraph.svelte";
@@ -672,9 +672,9 @@
                     "Troubles this year that called for a rite: " +
                     "☥ a life in the balance, ☾ an ill-omened sign. " +
                     "Green carried, red did not.",
-                colspan: 2,
                 class: "actual",
-                renderSnippet: eventsRender,
+                cellClass: "rap",
+                renderValueSnippet: eventsRender,
                 settlementRenderSnippet: settlementEventsRender,
                 topics: ["welfare", "perceptions"],
             },
@@ -1812,6 +1812,7 @@
         "Ritual Skill",
         "Generosity",
         "Material QoL",
+        ...ALL_RITUAL_TYPES.map((def) => `Rites: ${def.label}`),
     ];
 
     interface RespectRowData {
@@ -3325,10 +3326,15 @@
         padding-left: 1.25em;
     }
 
+    .event-icon,
+    .event-none {
+        display: inline-block;
+        width: 1.1em;
+        text-align: center;
+        line-height: 1;
+    }
     .event-icon {
         font-size: 1.25em;
-        line-height: 1;
-        padding: 0 0.1em;
         cursor: help;
     }
     .event-none {

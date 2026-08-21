@@ -1,12 +1,12 @@
 import { clamp, sumFun } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
-import { pct } from "../lib/format";
+import { pct, signed } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
 import { ObservationDefs, observedEstimate } from "./information";
 import type { Opinion, OpinionItem } from "./opinion";
-import { ritualHolinessEffect } from "../rituals";
+import { ALL_RITUAL_TYPES, type RitualEvent, type RitualTypeDef } from "../rituals";
 
 // Holiness measures how close to the gods and ancestors one clan
 // thinks another stands: whom you would ask to say the words when
@@ -21,11 +21,61 @@ import { ritualHolinessEffect } from "../rituals";
 // alignment, and ritual skill, which barely registers in the average of
 // skills Respect uses, is a major component on its own.
 
+// What one clan's rites, of one kind, have earned the officiant in the eyes
+// of the clan they were said for. A result is booked once, when it comes in,
+// and then stands and fades: a life granted is still spoken of a generation
+// later, a dream read rightly for a season or two.
+export class RitualCredit {
+    private value_ = 0;
+    // Year the decay has already been charged through, so that decaying more
+    // than once in a year costs nothing.
+    private throughYear_: number | undefined;
+    private lastResultYear_: number | undefined;
+
+    constructor(readonly def: RitualTypeDef) { }
+
+    get value(): number { return this.value_; }
+    get lastResultYear(): number | undefined { return this.lastResultYear_; }
+
+    yearsSince(year: number): number | undefined {
+        return this.lastResultYear_ === undefined
+            ? undefined : year - this.lastResultYear_;
+    }
+
+    decayTo(year: number): void {
+        if (this.throughYear_ === undefined) {
+            this.throughYear_ = year;
+            return;
+        }
+        const age = year - this.throughYear_;
+        if (age <= 0) return;
+        this.value_ *= Math.pow(0.5, age / this.def.holinessHalfLife);
+        this.throughYear_ = year;
+    }
+
+    add(amount: number, year: number): void {
+        this.decayTo(year);
+        this.value_ += amount;
+        this.lastResultYear_ = year;
+    }
+
+    clone(): RitualCredit {
+        const c = new RitualCredit(this.def);
+        c.value_ = this.value_;
+        c.throughYear_ = this.throughYear_;
+        c.lastResultYear_ = this.lastResultYear_;
+        return c;
+    }
+}
+
 export class Holiness implements Opinion {
     private items_: HolinessItem[] = [];
     private informationValue_: number = 0;
     private previousValue_: number = 0;
     private value_: number = 0;
+    // Standing credit from past rites, one running total per kind of rite,
+    // since they fade at very different rates.
+    private ritualCredits_ = new Map<string, RitualCredit>();
 
     static readonly ALPHA = 0.1;
 
@@ -43,6 +93,20 @@ export class Holiness implements Opinion {
         return this.value_;
     }
 
+    ritualCredit(def: RitualTypeDef): RitualCredit {
+        let credit = this.ritualCredits_.get(def.key);
+        if (!credit) {
+            credit = new RitualCredit(def);
+            this.ritualCredits_.set(def.key, credit);
+        }
+        return credit;
+    }
+
+    // Book a result. Called once, where the ritual is settled.
+    creditRitual(event: RitualEvent): void {
+        this.ritualCredit(event.def).add(event.holinessEffect, event.year);
+    }
+
     updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
         this.informationValue_ = informationValue;
 
@@ -53,12 +117,19 @@ export class Holiness implements Opinion {
         const infoScale = clamp(informationValue, 0, 1);
         const qolInfoScale = Math.sqrt(infoScale);
 
+        // Let what past rites earned fade before it is read off.
+        const year = subject.world.year.value;
+        for (const credit of this.ritualCredits_.values()) credit.decayTo(year);
+
         this.items_ = [
             HolinessItem.forPiety(subject, object),
             HolinessItem.forRitualSkill(subject, object, infoScale),
             HolinessItem.forGenerosity(subject, object),
             HolinessItem.forMaterialQoL(subject, object, qolInfoScale),
-            HolinessItem.forRitualOutcomes(subject, object),
+            // One item per kind of rite, always present so that breakdowns
+            // line up across clans even when a clan has had no rites.
+            ...ALL_RITUAL_TYPES.map(def => HolinessItem.forRitualOutcomes(
+                this.ritualCredit(def), subject.world.year.value)),
 
             // TODO - Symbols, items, and buildings.
         ];
@@ -73,6 +144,9 @@ export class Holiness implements Opinion {
         h.informationValue_ = this.informationValue_;
         h.previousValue_ = this.previousValue_;
         h.value_ = this.value_;
+        for (const [key, credit] of this.ritualCredits_) {
+            h.ritualCredits_.set(key, credit.clone());
+        }
         return h;
     }
 }
@@ -131,17 +205,23 @@ export class HolinessItem implements OpinionItem {
         );
     }
 
-    // How this year's rites went, for the clan they were said over. Nothing
+    // What rites of one kind, said for us, have earned the officiant. Nothing
     // shows where a clan stands with the ancestors like asking them for
     // something and being answered -- or not. Firsthand only: a rite said for
-    // someone else is not evidence to us.
-    static forRitualOutcomes(subject: Clan, object: Clan): HolinessItem {
-        const effect = ritualHolinessEffect(subject, object);
+    // someone else is not evidence to us. The credit stands and fades rather
+    // than counting only in the year it happened, so a run of answered prayers
+    // makes a lasting reputation.
+    static forRitualOutcomes(credit: RitualCredit, year: number): HolinessItem {
+        const since = credit.yearsSince(year);
         return new HolinessItem(
-            'Ritual Outcomes',
-            effect,
+            `Rites: ${credit.def.label}`,
+            credit.value,
             1,
-            effect === 0 ? 'no rites for us this year' : `rites said for us this year`
+            since === undefined
+                ? 'no rites of this kind for us'
+                : `${signed(credit.value, 1)} standing from rites, last `
+                    + `${since === 0 ? 'this year' : `${since} y ago`}`
+                    + `, half-life ${credit.def.holinessHalfLife} y`
         );
     }
 
