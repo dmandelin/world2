@@ -106,6 +106,24 @@
                     </div>
                 </td>
             </tr>
+            <tr>
+                <th>Word got round</th>
+                <td colspan="2">
+                    {#if !event.def.spreadsAsNews}
+                        <span class="note"
+                            >A clan's own dreams are its own business.</span
+                        >
+                    {:else if event.heardBy.length === 0}
+                        <span class="note">Nobody else heard.</span>
+                    {:else}
+                        {event.heardBy.length} other clan{event.heardBy
+                            .length === 1
+                            ? ""
+                            : "s"} heard, and credit {event.performer.name} the
+                        same
+                    {/if}
+                </td>
+            </tr>
         </tbody>
     </table>
 </div>

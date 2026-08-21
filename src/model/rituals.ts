@@ -1,9 +1,10 @@
-import { sumFun, weightedHarmonicMean } from "./lib/basics";
+import { clamp, sumFun, weightedHarmonicMean } from "./lib/basics";
 import { poisson } from "./lib/distributions";
 import { SkillDefs } from "./econ/econdefs";
 import { TradeGoods, type TradeGood } from "./trade";
 import type { Clan } from "./people/people";
 import type { World } from "./world";
+import type { UUID } from "./records/basicdata";
 
 // Clans keep up their own ancestral rites year in and year out, but some
 // years bring a trouble those cannot answer on their own: a member taken
@@ -84,6 +85,9 @@ export type RitualTypeSpec = {
     // dying member is remembered for a generation; a dream read rightly is
     // worth talking about for a season.
     holinessHalfLife: number;
+    // Whether the village hears about it. A life in the balance is everyone's
+    // news; a clan's own bad dreams are its own business.
+    spreadsAsNews: boolean;
 };
 
 export abstract class RitualTypeDef {
@@ -96,6 +100,7 @@ export abstract class RitualTypeDef {
     readonly successAtHighStat: number;
     readonly holinessSwing: number;
     readonly holinessHalfLife: number;
+    readonly spreadsAsNews: boolean;
     // Logit slope per stat point, derived from successAtHighStat.
     readonly logitSlope: number;
 
@@ -109,6 +114,7 @@ export abstract class RitualTypeDef {
         this.successAtHighStat = spec.successAtHighStat;
         this.holinessSwing = spec.holinessSwing;
         this.holinessHalfLife = spec.holinessHalfLife;
+        this.spreadsAsNews = spec.spreadsAsNews;
         const p = spec.successAtHighStat;
         this.logitSlope = Math.log(p / (1 - p)) / RITUAL_STAT_SWING;
     }
@@ -184,6 +190,7 @@ export const RitualTypes = {
         // later.
         holinessSwing: 8,
         holinessHalfLife: 25,
+        spreadsAsNews: true,
     }),
 
     Omen: new OmenRitualDef({
@@ -200,6 +207,7 @@ export const RitualTypes = {
         // seasons.
         holinessSwing: 3,
         holinessHalfLife: 2,
+        spreadsAsNews: false,
     }),
 };
 
@@ -218,6 +226,9 @@ export class RitualEvent {
     readonly foodCostOwed: number;
     // What the clan could actually spare; a hungry clan gives less.
     foodCostPaid: number = 0;
+    // Clans that heard about it, besides the one it was said for. Filled in
+    // by spreadRitualNews.
+    readonly heardBy: UUID[] = [];
 
     constructor(
         readonly def: RitualTypeDef,
@@ -281,10 +292,36 @@ export function runRituals(world: World): void {
                 }
                 // Booked once, here, so that a result lands exactly once no
                 // matter how often perceptions are recomputed.
-                world.perceptions.getOrCreate(clan, clan)
-                    .holiness.creditRitual(event);
+                spreadRitualNews(world, event);
             }
         }
+    }
+}
+
+// How readily news of a rite gets around, as an exponent on how well the
+// hearer knows the officiant. A quarter power is very forgiving: a clan that
+// knows another only slightly still hears about a life in the balance most
+// years, while a clan that knows nothing of it hears nothing.
+export const RITUAL_NEWS_INFORMATION_EXPONENT = 0.25;
+
+// Who ends up knowing how a rite turned out, and therefore whose reading of
+// the officiant's holiness it moves. The clan it was said for was there; the
+// rest hear about it, or don't, according to how much they have to do with
+// the officiant in the first place.
+function spreadRitualNews(world: World, event: RitualEvent): void {
+    world.perceptions.getOrCreate(event.beneficiary, event.performer)
+        .holiness.creditRitual(event);
+    if (!event.def.spreadsAsNews) return;
+
+    for (const [hearerID, perceptions]
+        of world.perceptions.getRegarding(event.performer)) {
+        if (hearerID === event.beneficiaryID) continue;
+        const information = clamp(perceptions.information.value, 0, 1);
+        if (Math.random() >= Math.pow(information, RITUAL_NEWS_INFORMATION_EXPONENT)) {
+            continue;
+        }
+        perceptions.holiness.creditRitual(event);
+        event.heardBy.push(hearerID);
     }
 }
 

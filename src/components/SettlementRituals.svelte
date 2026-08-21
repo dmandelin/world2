@@ -39,6 +39,7 @@
                 <th class="num">Chance</th>
                 <th class="num">Roll</th>
                 <th>Result</th>
+                <th class="num">Heard by</th>
             </tr>
         </thead>
         <tbody>
@@ -62,6 +63,11 @@
                     <td class="num">{pct(event.roll)}</td>
                     <td class={event.success ? "good" : "bad"}
                         >{event.resultLabel}</td
+                    >
+                    <td class="num"
+                        >{event.def.spreadsAsNews
+                            ? event.heardBy.length
+                            : "—"}</td
                     >
                 </tr>
             {/each}
