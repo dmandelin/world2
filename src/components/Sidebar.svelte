@@ -36,15 +36,15 @@
         margin-bottom: 6px;
         font-size: 20px;
 
-        background-color: bisque;
-        border: 2px solid #62531d;
+        background-color: #4f6b45;
+        border: 2px solid #33472c;
         border-radius: 5px;
-        color: #62531d;
+        color: #f3edd8;
         cursor: pointer;
     }
 
     #advance:hover, .sub-advance:hover {
-        background-color: #f7e4c2;
+        background-color: #5f7d54;
     }
 
     .sub-advance-buttons {
@@ -59,10 +59,10 @@
         height: 28px;
         font-size: 13px;
         font-weight: bold;
-        background-color: bisque;
-        border: 1.5px solid #62531d;
+        background-color: #4f6b45;
+        border: 1.5px solid #33472c;
         border-radius: 4px;
-        color: #62531d;
+        color: #f3edd8;
         cursor: pointer;
     }
 </style>
