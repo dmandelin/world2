@@ -639,7 +639,7 @@ batch.js:335 Uncaught TypeError: Cannot read properties of undefined (reading 'u
                 count more here than for general respect), also ritual
                 skill
             *   (P2) Symbols, items, and buildings
-            *   Ritual outcomes - holiness goes up or down per results
+            x   Ritual outcomes - holiness goes up or down per results
                 for the affected people
         x   Clans will particularly look to clans with high holiness
             for ritual help
