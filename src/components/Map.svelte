@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ButtonPanel from "./ButtonPanel.svelte";
+    import AlertBadges from "./AlertBadges.svelte";
     import NotificationBar from "./NotificationBar.svelte";
 
     import { onDestroy, onMount } from "svelte";
@@ -7,11 +7,9 @@
     import { world } from "../model/worldinstance";
     import type { SettlementCluster } from "../model/people/cluster";
     import { Settlement } from "../model/people/settlement";
-    import TrendsPanel from "./TrendsPanel.svelte";
     import { weightedAverage } from "../model/lib/modelbasics";
 
     let { onSelect } = $props();
-    let selectedLens = $state("Pop");
     let isBig = $state(false);
 
     let canvas: HTMLCanvasElement | null = null;
@@ -206,14 +204,9 @@
         context!.fillStyle = "#333";
         context!.font = "12px sans-serif";
 
-        let label = "";
-        if (selectedLens === "Pop") {
-            label = `${settlement.population} | \
+        const label = `${settlement.population} | \
 ${settlement.cluster.population} \
 (${signed(settlement.cluster.lastPopulationChange)})`;
-        } else if (selectedLens === "Rit") {
-            label = `${signed(settlement.clans.rites.appeal)}`;
-        }
         fillTextCentered(label, x, y + yo);
     }
 
@@ -481,31 +474,27 @@ ${settlement.cluster.population} \
         </div>
     {/if}
 
-    <div
-        style="display: flex; justify-content: space-between; flex-wrap: wrap;"
-    >
-        <ButtonPanel
-            config={{
-                buttons: [{ label: "Pop" }, { label: "Rit" }],
-            }}
-            onSelected={(label) => {
-                selectedLens = label;
-                draw();
-            }}
-        />
-        <TrendsPanel
-            config={{
-                trends: worldDTO.trends,
-            }}
-        />
+    <div class="map-alerts">
+        <AlertBadges world={worldDTO} orientation="horizontal" />
     </div>
     <NotificationBar notes={worldDTO.notes} />
 </div>
 
 <style>
+    /* Same rhythm as the gaps between the other bordered blocks. */
+    .map-alerts {
+        margin-top: var(--clay-gap);
+        margin-bottom: var(--clay-gap);
+    }
+
     canvas {
         display: block;
-        border: 4px solid #62531d;
+        /* Its inline width is the column width, so keep the border inside it;
+           otherwise the canvas juts past its column and the gap to the next
+           block measures short. */
+        box-sizing: border-box;
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
     }
 
     .map-tooltip {
@@ -514,8 +503,8 @@ ${settlement.cluster.population} \
         background-color: #f9f6eb;
         opacity: 0.95;
         z-index: 100;
-        border: 2px solid #62531d;
-        border-radius: 4px;
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
         font-size: 0.825rem;
         color: #2c1e05;
         font-family: sans-serif;
@@ -592,8 +581,8 @@ ${settlement.cluster.population} \
         align-items: center;
         justify-content: center;
         background-color: rgba(249, 246, 235, 0.9);
-        border: 2px solid #62531d;
-        border-radius: 4px;
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
         cursor: pointer;
         color: #62531d;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -623,8 +612,8 @@ ${settlement.cluster.population} \
         align-items: center;
         justify-content: center;
         background-color: rgba(249, 246, 235, 0.9);
-        border: 2px solid #62531d;
-        border-radius: 4px;
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
         cursor: pointer;
         color: #62531d;
         font-size: 1rem;
@@ -659,8 +648,8 @@ ${settlement.cluster.population} \
         align-items: center;
         justify-content: center;
         background-color: rgba(249, 246, 235, 0.9);
-        border: 2px solid #62531d;
-        border-radius: 4px;
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
         cursor: pointer;
         color: #62531d;
         font-size: 1rem;
@@ -678,8 +667,8 @@ ${settlement.cluster.population} \
         left: 44px;
         z-index: 10;
         background-color: rgba(249, 246, 235, 0.9);
-        border: 2px solid #62531d;
-        border-radius: 4px;
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
         padding: 0 10px;
         height: 28px;
         display: flex;

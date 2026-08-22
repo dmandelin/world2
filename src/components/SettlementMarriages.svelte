@@ -602,11 +602,10 @@
     {/if}
 {/snippet}
 
-<div style="padding: 1rem 2rem;">
+<div>
     <div
         style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 1rem;"
     >
-        <h3 style="margin: 0;">Marriages</h3>
         <div class="stress-button-group">
             <button
                 type="button"

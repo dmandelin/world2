@@ -13,7 +13,7 @@
     } from "../components/state/uistate.svelte";
 </script>
 
-<div style="display: flex; gap: 1rem">
+<div style="display: flex; gap: var(--clay-gap)">
     <Map onSelect={selectSettlement} />
     <div style="flex: 1; min-width: 0;">
         {#if uiState().selectedClan}

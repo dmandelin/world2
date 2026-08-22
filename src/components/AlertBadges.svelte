@@ -4,7 +4,18 @@
 
     // `world` is the WorldDTO snapshot; it carries the current alerts plus the
     // dismissAlertKind callback back into the model.
-    let { world }: { world: { alerts: Alert[]; dismissAlertKind: (k: AlertKindId) => void } } = $props();
+    let {
+        world,
+        orientation = 'vertical',
+        filter,
+    }: {
+        world: { alerts: Alert[]; dismissAlertKind: (k: AlertKindId) => void },
+        orientation?: 'vertical' | 'horizontal',
+        // Optional narrowing, e.g. to just one settlement's alerts. Note that
+        // dismissing still clears the whole kind, since that is what the model
+        // exposes.
+        filter?: (alert: Alert) => boolean,
+    } = $props();
 
     interface AlertGroup {
         kind: AlertKindId;
@@ -16,6 +27,7 @@
     let groups = $derived.by(() => {
         const byKind = new Map<AlertKindId, Alert[]>();
         for (const a of world.alerts ?? []) {
+            if (filter && !filter(a)) continue;
             if (!byKind.has(a.kind)) byKind.set(a.kind, []);
             byKind.get(a.kind)!.push(a);
         }
@@ -56,7 +68,7 @@
             onclick={() => (openKind = null)}
         ></div>
     {/if}
-    <div class="alert-badges">
+    <div class="alert-badges" class:horizontal={orientation === 'horizontal'}>
         {#each groups as group (group.kind)}
             <div class="alert-badge-wrap">
                 <button
@@ -124,6 +136,14 @@
         margin-top: 12px;
     }
 
+    .alert-badges.horizontal {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        margin-top: 0;
+    }
+
     .alert-backdrop {
         position: fixed;
         inset: 0;
@@ -135,17 +155,21 @@
         position: relative;
     }
 
-    /* Clay-token badge: earthy, round, Ancient-Near-East feel. */
+    /* Clay-tablet badge: the same pressed-clay edge as every other component,
+       with the alert kind's accent kept as an inner ring so the colour coding
+       survives losing the coloured border. */
     .alert-badge {
         position: relative;
         width: 46px;
         height: 46px;
         padding: 0;
-        border-radius: 50%;
-        border: 2px solid var(--accent);
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
         background:
             radial-gradient(circle at 35% 30%, #fbf1d8 0%, #ecdcb4 55%, #d9c493 100%);
-        box-shadow: 0 2px 4px rgba(44, 37, 13, 0.35), inset 0 0 6px rgba(160, 140, 90, 0.35);
+        box-shadow:
+            inset 0 0 0 2px var(--accent),
+            0 2px 4px rgba(44, 37, 13, 0.35), inset 0 0 6px rgba(160, 140, 90, 0.35);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -155,11 +179,15 @@
 
     .alert-badge:hover {
         transform: translateY(-1px) scale(1.04);
-        box-shadow: 0 3px 7px rgba(44, 37, 13, 0.45), inset 0 0 6px rgba(160, 140, 90, 0.35);
+        box-shadow:
+            inset 0 0 0 2px var(--accent),
+            0 3px 7px rgba(44, 37, 13, 0.45), inset 0 0 6px rgba(160, 140, 90, 0.35);
     }
 
     .alert-badge.open {
-        box-shadow: 0 0 0 3px rgba(123, 52, 30, 0.25), 0 3px 7px rgba(44, 37, 13, 0.45);
+        box-shadow:
+            inset 0 0 0 2px var(--accent),
+            0 0 0 3px rgba(123, 52, 30, 0.25), 0 3px 7px rgba(44, 37, 13, 0.45);
     }
 
     .alert-badge .icon {
@@ -176,7 +204,6 @@
         height: 18px;
         padding: 0 4px;
         box-sizing: border-box;
-        border-radius: 9px;
         background: var(--accent);
         color: #fbf1d8;
         font-size: 11px;
@@ -184,6 +211,14 @@
         line-height: 18px;
         text-align: center;
         border: 1px solid #fbf1d8;
+    }
+
+    /* A horizontal strip isn't pinned to the screen edge, so the popup drops
+       below the badge instead of reaching left into the page. */
+    .alert-badges.horizontal .alert-popup {
+        top: calc(100% + 8px);
+        left: 0;
+        right: auto;
     }
 
     /* Popup opens to the left of the badge (badges sit at the screen's edge). */
@@ -194,8 +229,8 @@
         z-index: 95;
         width: 240px;
         background: #f9f6eb;
-        border: 2px solid #a08c5a;
-        border-radius: 6px;
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
         box-shadow: 0 6px 16px rgba(44, 37, 13, 0.35);
         padding: 8px 10px;
         color: #2c250d;
@@ -248,7 +283,6 @@
         width: 100%;
         padding: 4px 6px;
         border: none;
-        border-radius: 4px;
         background: transparent;
         text-align: left;
         font: inherit;

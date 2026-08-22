@@ -606,7 +606,7 @@
                 label: "Events",
                 labelTooltip:
                     "Troubles this year that called for a rite: " +
-                    "☥ a life in the balance, ☾ an ill-omened sign. " +
+                    "✴ a life in the balance, ☾ an ill-omened sign. " +
                     "Green carried, red did not.",
                 class: "actual",
                 cellClass: "rap",

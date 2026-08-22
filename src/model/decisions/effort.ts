@@ -1,5 +1,6 @@
 import { economicResult } from "../econ/economy";
 import { Processes } from "../econ/econdefs";
+import { safeDiv } from "../lib/basics";
 import { isExemplarClan } from "../lib/debug";
 import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
@@ -95,7 +96,8 @@ export class EffortAllocation {
     farmingRatio(): number {
         const farmingEffort = this.getForProcess(Processes.Agriculture);
         const fishingEffort = this.getForProcess(Processes.Fishing);
-        return farmingEffort / (farmingEffort + fishingEffort);
+        // A clan with no production effort at all has no ratio to report.
+        return safeDiv(farmingEffort, farmingEffort + fishingEffort);
     }
 
     clone(): EffortAllocation {

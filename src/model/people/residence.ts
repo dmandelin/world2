@@ -142,7 +142,7 @@ export class ResidenceLevel {
 
 export function groupSedentismDescription(sedentismFraction: number): string {
     if (sedentismFraction < 0.25) {
-        return 'Cereal Fields';
+        return 'Harvest Camp';
     } else if (sedentismFraction < 0.5) {
         return 'Farming Camp';
     } else if (sedentismFraction < 0.75) {

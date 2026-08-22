@@ -199,7 +199,7 @@ export const RitualTypes = {
     Life: new LifeRitualDef({
         key: 'life',
         label: 'Critical Illness',
-        icon: '☥', // ankh: a life in the balance
+        icon: '✴', // eight-pointed star of Inanna: a life in the balance
         description: 'A member taken suddenly ill or badly hurt.',
         stakeLabel: '1 life',
         // A major rite: something has to be given up for it.

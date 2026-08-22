@@ -119,7 +119,6 @@
 </script>
 
 <div class="scatter-panel">
-    <h3 style="margin: 0 0 0.5rem 0;">Traits</h3>
     <p style="font-size: 0.9rem; color: #666; margin: 0 0 1rem 0;">
         Each dot is a clan, plotted by the two stats below: Generosity and
         Bellicosity are what other clans have come to think of it; Giving and
@@ -261,7 +260,8 @@
 
 <style>
     .scatter-panel {
-        padding: 1rem 2rem;
+        /* Gutter is owned by the tab container, so panels don't set their own. */
+        padding: 0;
     }
     .controls {
         display: flex;

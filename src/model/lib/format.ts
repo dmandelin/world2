@@ -74,15 +74,15 @@ export function dcr(r: number) {
   return Math.round(r * 1000);
 }
 
+// Height of a tell, as a bare measurement, or '' when there's effectively
+// none yet. Callers supply the word "tell" so they can decorate it.
 export function formatTellHeight(meters: number) {
   const inches = meters * 39.37;
   if (inches < 1) {
-    return ' ';
-  } if (inches < 6) {
-    return`${inches.toFixed()} in debris accumulation`;
+    return '';
   } else if (inches < 24) {
-    return `${inches.toFixed()} in tell`;
-  } else return `${(inches / 12).toFixed()} ft tell`;
+    return `${inches.toFixed()} in`;
+  } else return `${(inches / 12).toFixed()} ft`;
 }
 
 export function stressColor(value: number): string {

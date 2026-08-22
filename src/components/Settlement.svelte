@@ -17,27 +17,33 @@
     import SettlementEcon from "./SettlementEcon.svelte";
     import SettlementQoL from "./SettlementQoL.svelte";
     import SettlementRituals from "./SettlementRituals.svelte";
+    import SettlementWaters from "./SettlementWaters.svelte";
 
     let { settlement } = $props();
 
+    // Grouped: the settlement itself, then everything about how clans relate
+    // to each other, then the relationship graphs.
     const tabs = [
-        { label: "Overview", snippet: overviewTab },
-        { label: "Demographics", snippet: demographicsTab },
-        { label: "Information", snippet: informationTab },
-        { label: "Traits", snippet: traitsTab },
-        { label: "QoL", snippet: qolTab },
-        { label: "Comparison", snippet: comparisonTab },
-        { label: "Econ", snippet: econTab },
-        { label: "Relationships", snippet: relationshipsTab },
-        { label: "Marriages", snippet: marriagesTab },
-        { label: "Rituals", snippet: ritualsTab },
-        { label: "Redistribution", snippet: redistributionTab },
-        { label: "Mutual Aid", snippet: mutualAidTab },
-        { label: "Graph", snippet: relationshipsGraphTab },
-        { label: "Graph2", snippet: relationshipsGraph2Tab },
-        { label: "Productivity", snippet: productivityTab },
-        { label: "Migration", snippet: migrationTab },
-        { label: "Trade", snippet: tradeTab },
+        { label: "Clans", icon: "🏵️", snippet: clansTab, group: "settlement" },
+        { label: "Demographics", icon: "👥", snippet: demographicsTab, group: "settlement" },
+        { label: "Information", icon: "👁️", snippet: informationTab, group: "settlement" },
+        { label: "QoL", icon: "😊", snippet: qolTab, group: "settlement" },
+        { label: "Econ", icon: "📊", snippet: econTab, group: "settlement" },
+        { label: "Productivity", icon: "⚒️", snippet: productivityTab, group: "settlement" },
+        { label: "Trade", icon: "🏺", snippet: tradeTab, group: "settlement" },
+        { label: "Migration", icon: "🚶", snippet: migrationTab, group: "settlement" },
+        { label: "Rituals", icon: "✴", snippet: ritualsTab, group: "settlement" },
+        { label: "The Waters", icon: "🌊", snippet: watersTab, group: "settlement" },
+
+        { label: "Relationships", icon: "🤝", snippet: relationshipsTab, group: "relations" },
+        { label: "Marriages", icon: "💍", snippet: marriagesTab, group: "relations" },
+        { label: "Redistribution", icon: "🍲", snippet: redistributionTab, group: "relations" },
+        { label: "Mutual Aid", icon: "🤲", snippet: mutualAidTab, group: "relations" },
+
+        { label: "Scatter Plot", icon: "📈", snippet: scatterPlotTab, group: "graphs" },
+        { label: "Comparison", icon: "⚖️", snippet: comparisonTab, group: "graphs" },
+        { label: "Graph", icon: "🕸️", snippet: relationshipsGraphTab, group: "graphs" },
+        { label: "Graph2", icon: "🌐", snippet: relationshipsGraph2Tab, group: "graphs" },
     ];
 </script>
 
@@ -49,7 +55,7 @@
     <SettlementMigrationDetails {settlement} />
 {/snippet}
 
-{#snippet overviewTab()}
+{#snippet clansTab()}
     <SettlementOverview {settlement} />
 {/snippet}
 
@@ -69,7 +75,7 @@
     <SettlementInformation {settlement} />
 {/snippet}
 
-{#snippet traitsTab()}
+{#snippet scatterPlotTab()}
     <SettlementTraits {settlement} />
 {/snippet}
 
@@ -93,6 +99,10 @@
     <SettlementRituals {settlement} />
 {/snippet}
 
+{#snippet watersTab()}
+    <SettlementWaters {settlement} />
+{/snippet}
+
 {#snippet redistributionTab()}
     <SettlementRedistribution {settlement} />
 {/snippet}
@@ -109,4 +119,4 @@
     <SettlementRelationshipsGraph2 {settlement} />
 {/snippet}
 
-<TabbedView {tabs} />
+<TabbedView {tabs} orientation="vertical" />

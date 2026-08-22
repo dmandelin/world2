@@ -1,6 +1,4 @@
 <script lang="ts">
-    import AlertBadges from "./AlertBadges.svelte";
-
     let { world } = $props();
 
     function advance(years?: number) {
@@ -9,19 +7,21 @@
 </script>
 
 <div class="sidebar">
-    <button id="advance" onclick={() => advance()}>{world.year} ▶</button>
+    <button id="advance" class="clay-edge" onclick={() => advance()}
+        >{world.year} ▶</button
+    >
     <div class="sub-advance-buttons">
-        <button class="sub-advance" onclick={() => advance(5)}>+5</button>
-        <button class="sub-advance" onclick={() => advance(10)}>+10</button>
-        <button class="sub-advance" onclick={() => advance(20)}>+20</button>
+        <button class="sub-advance clay-edge" onclick={() => advance(5)}>+5</button>
+        <button class="sub-advance clay-edge" onclick={() => advance(10)}>+10</button>
+        <button class="sub-advance clay-edge" onclick={() => advance(20)}>+20</button>
     </div>
-    <AlertBadges {world} />
 </div>
 
 <style>
     .sidebar {
         position: fixed;
-        top: 1em;
+        /* Level with the map and the folder tab, which start at the body inset. */
+        top: 8px;
         right: 1em;
         background-color: transparent;
         z-index: 100;
@@ -37,8 +37,6 @@
         font-size: 20px;
 
         background-color: #4f6b45;
-        border: 2px solid #33472c;
-        border-radius: 5px;
         color: #f3edd8;
         cursor: pointer;
     }
@@ -60,8 +58,6 @@
         font-size: 13px;
         font-weight: bold;
         background-color: #4f6b45;
-        border: 1.5px solid #33472c;
-        border-radius: 4px;
         color: #f3edd8;
         cursor: pointer;
     }

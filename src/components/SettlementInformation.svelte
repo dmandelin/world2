@@ -323,11 +323,10 @@
     });
 </script>
 
-<div style="padding: 1rem 2rem;">
+<div>
     <div
         style="display: flex; flex-direction: row; align-items: center; gap: 1rem; margin-bottom: 0.5rem;"
     >
-        <h3 style="margin: 0;">Information</h3>
         {#if subj || obj}
             <button
                 type="button"

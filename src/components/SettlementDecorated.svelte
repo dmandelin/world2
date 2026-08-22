@@ -1,14 +1,10 @@
 <script lang="ts">
-    import { formatTellHeight, pct } from "../model/lib/format";
+    import type { Alert } from "../model/records/alerts";
     import { SettlementDTO } from "../model/records/dtos";
-    import {
-        groupSedentismDescription,
-        groupSedentismImage,
-    } from "../model/people/residence";
-    import { TwoDArrayTable } from "./tables/tables2";
-    import TableView2 from "./tables/TableView2.svelte";
+    import AlertBadges from "./AlertBadges.svelte";
     import Settlement from "./Settlement.svelte";
-    import Tooltip from "./Tooltip.svelte";
+    import SettlementTellArt from "./overview/SettlementTellArt.svelte";
+    import SettlementVitals from "./overview/SettlementVitals.svelte";
     import EntityLink from "./state/EntityLink.svelte";
 
     let {
@@ -17,83 +13,44 @@
     }: { settlement: SettlementDTO; onSelect: (uuid: string) => void } =
         $props();
 
-    let ditchTooltipTable = $derived(
-        new TwoDArrayTable(settlement.ditchTooltip),
+    // Alerts don't record a settlement, so match on the settlement itself plus
+    // the clans living in it.
+    let localUuids = $derived(
+        new Set([settlement.uuid, ...settlement.clans.map((c) => c.uuid)]),
+    );
+    let isLocalAlert = $derived(
+        (alert: Alert) => !!alert.entity && localUuids.has(alert.entity.uuid),
     );
 </script>
 
 <div id="top">
     <div class="header-row">
-        <div>
-            <img
-                style="display: block"
-                src={groupSedentismImage(settlement.residenceFraction)}
-                alt="Residents"
-                width="150"
-                height="100"
-            />
-            <div class="sm">
-                Last flood level:
-                <Tooltip>
-                    {settlement.floodLevel.name}
-                    <div slot="tooltip">
-                        River shift probability: {pct(
-                            settlement.floodLevel.riverShiftProbability(),
-                        )}
+        <div class="main-col clay-edge">
+            <SettlementTellArt {settlement} />
+            <div class="name-col">
+                <div class="name-row">
+                    <h1 style="white-space: nowrap;">
+                    {settlement.name} |
+                    <img
+                        src="stat-population-256.png"
+                        alt="Population"
+                        width="40"
+                        height="40"
+                        style="padding-bottom: 4px;"
+                    />{settlement.population}
+                    </h1>
+                    <div class="header-alerts">
+                        <AlertBadges
+                            world={settlement.world}
+                            orientation="horizontal"
+                            filter={isLocalAlert}
+                        />
                     </div>
-                </Tooltip>
-            </div>
-            <div class="sm">
-                <Tooltip>
-                    {#if settlement.ditchingLevel}
-                        Ditch: {pct(settlement.ditchQuality)}
-                    {:else}
-                        No ditch
-                    {/if}
-                    <div slot="tooltip">
-                        <TableView2 table={ditchTooltipTable} />
-                    </div>
-                </Tooltip>
+                </div>
+                <SettlementVitals {settlement} />
             </div>
         </div>
-        <div class="main-col">
-            <h1 style="white-space: nowrap;">
-            {settlement.name} |
-            <img
-                src="stat-population-256.png"
-                alt="Population"
-                width="40"
-                height="40"
-                style="padding-bottom: 4px;"
-            />{settlement.population}
-            </h1>
-            <div>
-                {groupSedentismDescription(settlement.residenceFraction)}
-                ({pct(settlement.residenceFraction)} resident) &centerdot;
-                {#if settlement.refoundedAfterRiverShift}
-                    <b>Refounded after river shift!</b>
-                {:else if settlement.residenceFraction > 0.5}
-                    {#if settlement.yearsInPlace >= 100}
-                        Settled &ndash; {formatTellHeight(
-                            settlement.tellHeightInMeters,
-                        )}
-                        <span style="color:grey"
-                            >(founded {settlement.yearsInPlace} years ago)</span
-                        >
-                    {:else if settlement.yearsInPlace >= 20}
-                        {settlement.yearsInPlace} years in place
-                    {:else}
-                        New settlement
-                    {/if}
-                {:else}
-                    Mobile communities
-                {/if}
-            </div>
-            <div>
-                {pct(settlement.farmingRatio)} farming
-            </div>
-        </div>
-        <div class="region-panel">
+        <div class="region-panel clay-edge">
             <div class="cluster-info">
                 <EntityLink entity={settlement.cluster} /> Region ·
                 <img
@@ -108,6 +65,7 @@
                 {#each settlement.cluster.settlements as s (s.uuid)}
                     <button
                         type="button"
+                        class="clay-edge"
                         class:active={s.uuid === settlement.uuid}
                         onclick={() => onSelect(s.uuid)}
                     >
@@ -119,12 +77,15 @@
         </div>
     </div>
 
-    <Settlement {settlement} />
+    <div class="folder-body clay-edge">
+        <Settlement {settlement} />
+    </div>
 </div>
 
 <style>
+    /* The page flex gap already separates this column from the map. */
     #top {
-        margin-left: 1rem;
+        margin-left: 0;
     }
 
     h1 {
@@ -133,24 +94,74 @@
 
     .header-row {
         display: flex;
-        gap: 1rem;
-        margin-top: 0.25rem;
+        gap: var(--clay-gap);
         align-items: flex-start;
     }
 
+    /* Manila-folder effect: .main-col is the tab and .folder-body the folder.
+       The tab drops its bottom border and overlaps the body's top edge, so the
+       two outlines read as one continuous shape. The tab runs flush to the
+       folder's left edge, so their left borders form one line; the region panel
+       sits outside the shape, beside the tab and above the body line. */
     .main-col {
         flex: 1;
         min-width: 0;
+        align-self: stretch;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+
+        position: relative;
+        z-index: 1;
+        margin-bottom: calc(-1 * var(--clay-edge-width));
+        padding: var(--clay-pad);
+        background-color: #fdfbf2;
+        border-bottom: none;
+    }
+
+    /* Single owner of the gutter around all tab content, so every panel opens
+       the same distance from the folder edge. */
+    .folder-body {
+        padding: var(--clay-pad);
+        background-color: #fdfbf2;
+    }
+
+    .name-col {
+        min-width: 0;
+    }
+
+    /* Badges sit past the population count, centred on it. */
+    .name-row {
+        display: flex;
+        align-items: center;
+        gap: 1.5em;
+    }
+
+    /* Three-quarter size here, where the badges are a secondary readout rather
+       than the map's primary one. `zoom` (not `transform`) so the shrunk box is
+       what the flex row lays out against. */
+    .header-alerts {
+        --shrink: 0.6;
+        zoom: var(--shrink);
+        position: relative;
+        /* The h1's line box runs taller than its text because the population
+           icon stretches it, so centring on the box sits visibly low. Lift to
+           the text's optical centre, divided by the zoom since that scales
+           this offset as well. */
+        top: calc(-1.5px / var(--shrink));
     }
 
     .region-panel {
         flex: 0 0 auto;
         width: 296px;
-        margin-right: 220px;
-        padding: 0.4rem;
+        /* The header row's bottom edge is the folder's fold line, so without
+           this the panel's border lands flush on the folder's top border. */
+        margin-bottom: var(--clay-gap);
+        /* Clear the fixed sidebar (150px wide, 1em from the right, against a
+           body inset 8px) and leave one standard gap beside it. */
+        margin-right: calc(158px + var(--clay-gap));
+        padding: var(--clay-pad);
         background-color: #f3edd8;
-        border: 1px solid #cbb98b;
-        border-radius: 8px;
     }
 
     .cluster-info {
@@ -179,8 +190,6 @@
         min-width: 0;
         height: 2.4rem;
         padding: 0.15rem 0.1rem;
-        border: 1px solid #b8a86a;
-        border-radius: 5px;
         background-color: #fffaf0;
         color: #2c250d;
         font-size: 0.72rem;
@@ -215,9 +224,5 @@
 
     img {
         vertical-align: middle;
-    }
-
-    .sm {
-        font-size: smaller;
     }
 </style>
