@@ -829,7 +829,7 @@ batch.js:335 Uncaught TypeError: Cannot read properties of undefined (reading 'u
         *   For now, if two clans nominate a headman, make
             there be no headman.
         *   If there is a headman, show gold "🗣" in the UI above
-            the clan name of the headman in SettlementAgentsOverview2.
+            the clan name of the headman in ClansOverview.
         *   If there is no headman but two clans nominated a
             headman, show gray "🗣" with strikethrough above the
             clan name

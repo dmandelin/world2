@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { SettlementDTO } from "../../model/records/dtos";
-    import SettlementAgentsOverview2 from "./SettlementAgentsOverview2.svelte";
+    import ClansOverview from "./ClansOverview.svelte";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 </script>
 
 <div style="display: flex; gap: 8em;">
     <div>
-        <SettlementAgentsOverview2 {settlement} />
+        <ClansOverview {settlement} />
     </div>
 </div>
