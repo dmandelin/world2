@@ -145,9 +145,9 @@
 
     .region-panel {
         flex: 0 0 auto;
-        width: 230px;
+        width: 296px;
         margin-right: 220px;
-        padding: 0.5rem 0.5rem;
+        padding: 0.4rem;
         background-color: #f3edd8;
         border: 1px solid #cbb98b;
         border-radius: 8px;
@@ -164,8 +164,8 @@
     .settlement-buttons {
         display: grid;
         grid-template-columns: repeat(6, 1fr);
-        gap: 0.3rem;
-        max-height: calc(2 * 2.2rem + 0.3rem);
+        gap: 0.2rem;
+        max-height: calc(2 * 2.4rem + 0.2rem);
         overflow-y: auto;
     }
 
@@ -177,13 +177,13 @@
         justify-content: center;
         width: 100%;
         min-width: 0;
-        height: 2.2rem;
-        padding: 0.15rem 0.15rem;
+        height: 2.4rem;
+        padding: 0.15rem 0.1rem;
         border: 1px solid #b8a86a;
         border-radius: 5px;
         background-color: #fffaf0;
         color: #2c250d;
-        font-size: 0.7rem;
+        font-size: 0.72rem;
         line-height: 1.15;
         text-align: center;
         cursor: pointer;
