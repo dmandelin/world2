@@ -3,6 +3,7 @@
     import { SettlementDTO } from "../model/records/dtos";
     import AlertBadges from "./AlertBadges.svelte";
     import Settlement from "./Settlement.svelte";
+    import FloodPictogram from "./widgets/FloodPictogram.svelte";
     import SettlementTellArt from "./overview/SettlementTellArt.svelte";
     import SettlementVitals from "./overview/SettlementVitals.svelte";
     import EntityLink from "./state/EntityLink.svelte";
@@ -26,7 +27,10 @@
 <div id="top">
     <div class="header-row">
         <div class="main-col clay-edge">
-            <SettlementTellArt {settlement} />
+            <div class="icon-col">
+                <SettlementTellArt {settlement} />
+                <FloodPictogram floodLevel={settlement.floodLevel} />
+            </div>
             <div class="name-col">
                 <div class="name-row">
                     <h1 style="white-space: nowrap;">
@@ -124,6 +128,16 @@
     .folder-body {
         padding: var(--clay-pad);
         background-color: #fdfbf2;
+    }
+
+    /* The settlement's own portrait: the tell it stands on, and below it
+       how the waters ran this year. */
+    .icon-col {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.15rem;
     }
 
     .name-col {

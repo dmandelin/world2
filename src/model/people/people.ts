@@ -16,7 +16,6 @@ import { QualityOfLife } from "../econ/qol";
 import { ResidenceLevel } from "./residence";
 import { Rites } from "../rites";
 import type { RitualEvent } from "../rituals";
-import { type FloodLevel, FloodLevels } from "../environment/flood";
 import { type TradeGood, TradeGoods, type TradePartner, TradeRelationship } from "../trade";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
@@ -119,7 +118,6 @@ export class Clan implements TradePartner {
     housing = HousingTypes.Huts;
 
     isDitching = false;
-    biggestFloodSeen: FloodLevel = FloodLevels.Normal;
 
     effortAllocation: EffortAllocation;
     helpAllocation: HelpAllocation = new HelpAllocation();

@@ -320,6 +320,7 @@ export class ClusterDTO {
     readonly name: string;
     readonly settlements: SettlementDTO[];
     readonly population: number;
+    readonly floodLevel: FloodLevel;
     readonly averageAppeal: number;
     readonly averageHappiness: number;
     readonly diseaseLoad: DiseaseLoadCalc;
@@ -329,6 +330,7 @@ export class ClusterDTO {
         this.name = cluster.name;
         this.settlements = cluster.settlements.map(s => new SettlementDTO(s, this, world));
         this.population = cluster.population;
+        this.floodLevel = cluster.floodLevel;
         this.averageAppeal = cluster.appeal;
         this.averageHappiness = cluster.happiness;
         this.diseaseLoad = cluster.diseaseLoad;

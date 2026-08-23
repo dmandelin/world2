@@ -2,6 +2,7 @@ import { isExemplarClan } from "../lib/debug";
 import { shuffled, sumFun } from "../lib/basics";
 import { DitchMaintenanceCalc } from "../infrastructure";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
+import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
 import type { TradeGood } from "../trade";
@@ -25,6 +26,9 @@ export class Settlement {
     readonly localTradeGoods = new Set<TradeGood>();
     newSettlementDecisionReport: NewSettlementDecisionReport | undefined = undefined;
 
+    // Environment.
+    private floodLevel_: FloodLevel = FloodLevels.Moderate;
+
     // Infrastructure.
     ditchingLevel = 0;
     ditchQuality = 0.3;
@@ -41,6 +45,9 @@ export class Settlement {
         readonly parent?: Settlement) {
 
         this.foundationYear = world.year.clone();
+
+        // Until the next flood, a new settlement sees what its cluster sees.
+        this.floodLevel_ = cluster.floodLevel;
 
         cluster.settlements.push(this);
         if (this.parent) {
@@ -95,8 +102,12 @@ export class Settlement {
         return weightedAverage(this.clans, clan => clan.happinessValue, clan => clan.population);
     }
 
-    get floodLevel() {
-        return this.cluster.floodLevel;
+    get floodLevel(): FloodLevel {
+        return this.floodLevel_;
+    }
+
+    updateFloodLevel(level: FloodLevel): void {
+        this.floodLevel_ = level;
     }
 
     maintain() {

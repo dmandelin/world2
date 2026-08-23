@@ -16,7 +16,7 @@ import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
 import { Alerts, updateWorldAlerts, type AlertSpec } from "./records/alerts";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
-import { randomFloodLevel } from "./environment/flood";
+import { updateFloodLevels } from "./environment/flood";
 import { Settlement } from "./people/settlement";
 import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
@@ -384,10 +384,7 @@ export class World implements NoteTaker {
         }
 
         // Nature decides.
-        const floodLevel = randomFloodLevel();
-        for (const cluster of this.clusters) {
-            cluster.updateFloodLevel(floodLevel);
-        }
+        updateFloodLevels(this.clusters);
 
         // Advance for cross-cluster events.
         this.conflicts.advance();

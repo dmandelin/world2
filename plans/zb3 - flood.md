@@ -8,21 +8,21 @@ Rework floods as follows:
 # New Flooding Levels
 
 *   There are "normal" flooding levels and exceptional flooding levels
-*   Effects of flooding can in general vary by things like type of
+x   Effects of flooding can in general vary by things like type of
     housing, type of land being used, etc. so the design should allow
     for that later.
-*   5 normal flooding levels: scant, low, moderate, high, abundant
-    *   Effects:
-        *   For farming alluvium without ditching, output is highest
+x   5 normal flooding levels: scant, low, moderate, high, abundant
+    x   Effects:
+        x   For farming alluvium without ditching, output is highest
             at moderate, maybe around 2/3 at scant or abundant
-    *   To generate per-settlement flood levels:
-        *   Start with base mapwide flow: 
-            *   scant and abundant: 10% probability each
-            *   low and high: 20% each
-            *   moderate: 40% probability
-        *   For each settlement cluster, give a 15% each chance of
+    x   To generate per-settlement flood levels:
+        x   Start with base mapwide flow: 
+            x   scant and abundant: 10% probability each
+            x   low and high: 20% each
+            x   moderate: 40% probability
+        x   For each settlement cluster, give a 15% each chance of
             one step higher or lower
-        *   For each settlement in a cluster, give a 5% chance of
+        x   For each settlement in a cluster, give a 5% chance of
             another step higher or lower
 *   Extreme flooding levels
     *   20-year flood
@@ -65,9 +65,9 @@ Implementing damages:
 
 # New UI
 
-*   Show a pictogram of "normal" flood level below the settlement
+x   Show a pictogram of "normal" flood level below the settlement
     icon in the settlement view
-*   In the cluster UI that shows a table of settlements, and the
+x   In the cluster UI that shows a table of settlements, and the
     Land UI panels that show settlement or cluster tables, add a
     "Flood" row at the top. 
 

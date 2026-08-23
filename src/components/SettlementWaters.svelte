@@ -4,6 +4,7 @@
     import { TwoDArrayTable } from "./tables/tables2";
     import TableView2 from "./tables/TableView2.svelte";
     import Tooltip from "./Tooltip.svelte";
+    import FloodPictogram from "./widgets/FloodPictogram.svelte";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
@@ -15,13 +16,29 @@
 <div class="waters">
     <div class="facts">
         <div class="fact">
-            <span class="k">Last flood level</span>
+            <span class="k">This year's flood</span>
+            <span class="v flood-value">
+                <FloodPictogram
+                    floodLevel={settlement.floodLevel}
+                    width={48}
+                    caption={false}
+                />
+                {settlement.floodLevel.name}
+            </span>
+        </div>
+        <div class="fact">
+            <span class="k">Across the region</span>
+            <span class="v">{settlement.cluster.floodLevel.name}</span>
+        </div>
+        <div class="fact">
+            <span class="k">River shift</span>
             <Tooltip>
-                <span class="v">{settlement.floodLevel.name}</span>
+                <span class="v"
+                    >{pct(settlement.floodLevel.riverShiftProbability(), 1)}</span
+                >
                 <div slot="tooltip">
-                    River shift probability: {pct(
-                        settlement.floodLevel.riverShiftProbability(),
-                    )}
+                    Chance per year that the river moves and the settlement
+                    has to be refounded.
                 </div>
             </Tooltip>
         </div>
@@ -64,6 +81,12 @@
 
     .v {
         font-size: 1.1rem;
+    }
+
+    .flood-value {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
     }
 
     h3 {

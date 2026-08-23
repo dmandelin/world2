@@ -1,126 +1,161 @@
-import { poisson } from "../lib/distributions";
-import type { Settlement } from "../people/settlement";
+import { clamp } from "../lib/basics";
+import { plusOrMinus, weightedRandInt } from "../lib/distributions";
+import type { SettlementCluster } from "../people/cluster";
 
-// Flood control and permanent settlements
+// Flooding.
 //
-// Flooding causes settlements to move for two reasons:
-// - Shifting currents change which areas are naturally
-//   flooded and thus arable. Small-scale ditching enables
-//   more permanent fields.
-// - Major flooding can dry up an entire area or inundate
-//   a settlement. Resisting these effects requires larger
-//   flood control systems.
+// The rivers rise every year, and how far they rise decides what the year
+// is worth. There are two kinds of flood:
 //
-// The aim is to have a progression something like this:
-// - At first, settlements shift every few years to where
-//   the really fertile fields are.
-//   - (P2) High productivity for fresh soils and low
-//     preperation labor
-// - Over 3-12 turns (75-300 years), irrigation skill rises
-//   high enough to avoid small shifts for 100+ years at a
-//   time.
-// - There's still flood damage to settlements, and major
-//   moves every some centuries, motivating continued
-//   development
-// - 500-1000 years after start (25-50 turns), irrigation
-//   skill is high enough to resist most floods, but there
-//   should be some risk over a millennium.
+// - "Normal" levels, from scant to abundant, which every settlement gets
+//   one of every year. They set farm output and the odds of the river
+//   shifting its bed. That's what this file models today.
+// - Extreme floods (20-, 100-, and 500-year), which strike on top of the
+//   normal level and destroy crops, housing, and people. Not yet modeled.
 //
-// To change:
-// - Update the model to have 100-year and 500-year floods:
-//   x 100-year: significant losses
-//   it, forcing a move.
-//
-// High natural flooding has high variation, which is bad, but high productivity,
-// which is good. Ditching allows high productivity with low variation.
-// Ditching requires a lot of labor, so it's a trade-off.
+// Flooding is good in moderation and bad at either extreme: too little
+// water and the fields go dry, too much and the crop drowns. Ditching
+// trades labor for a flatter response to the same water, which is the
+// long-run reason to build it.
+
+// What is being flooded. The same water helps or hurts depending on what
+// it lands on, so effects are looked up by land type rather than being
+// properties of the flood alone. Housing types will join this later.
+export type LandType = 'alluvium';
+
+// How a flood level pays off on one land type, from no flood control up
+// to full flood control.
+export class FloodAgricultureEffect {
+    constructor(
+        // Yield factor with no ditching at all.
+        readonly unditched: number,
+        // Yield factor with ditches in perfect repair.
+        readonly ditched: number,
+    ) {}
+
+    // Yield factor at a given quality of flood control (0-1).
+    at(ditchQuality: number): number {
+        return this.unditched + (this.ditched - this.unditched) * ditchQuality;
+    }
+}
 
 export class FloodLevel {
     constructor(
+        // Position in the scale, 0 (scant) through 4 (abundant).
         readonly index: number,
         readonly name: string,
         readonly description: string,
-        readonly baseAgriculturalProductivity: number,
-        readonly maxAgriculturalProductivity: number,
+        private readonly agriculture: Record<LandType, FloodAgricultureEffect>,
+        // Expected river shifts per year at this level.
         readonly expectedRiverShifts: number,
+        // Share of built value lost to water damage in a year at this level.
+        // Extreme floods will add their own damage on top of this.
         readonly damageFactor: number,
-        readonly qolModifier: number,
     ) {}
 
-
-    static max(a: FloodLevel, b: FloodLevel): FloodLevel {
-        return a.index > b.index ? a : b;
+    agricultureOn(land: LandType = 'alluvium'): FloodAgricultureEffect {
+        return this.agriculture[land];
     }
 
     riverShiftProbability(yearsElapsed: number = 1): number {
         return 1 - (1 - this.expectedRiverShifts) ** yearsElapsed;
     }
+
+    static max(a: FloodLevel, b: FloodLevel): FloodLevel {
+        return a.index > b.index ? a : b;
+    }
 }
 
+// Unditched alluvium yields most at a moderate flood and about two thirds
+// of that at either extreme. Ditching flattens the curve: it holds water
+// back in a scant year and carries it off in an abundant one, so its worst
+// years are much better than the unditched worst years even though its
+// best year is only somewhat better.
 export const FloodLevels = {
-    Lower: new FloodLevel(
+    Scant: new FloodLevel(
         0,
-        'Lower',
-        'Floods have been relatively low in recent years',
-        0.8,
-        1.1,
-        0.005,
-        0.02,
-        2,
+        'Scant',
+        'The rivers barely rose; much of the land stayed dry',
+        { alluvium: new FloodAgricultureEffect(0.67, 0.90) },
+        0.002,
+        0.00,
     ),
-    Normal: new FloodLevel(
+    Low: new FloodLevel(
         1,
-        'Normal',
-        'Floods have been normal in recent years',
-        1.0,
-        1.2,
+        'Low',
+        'The rivers rose less than usual',
+        { alluvium: new FloodAgricultureEffect(0.88, 1.05) },
+        0.005,
         0.01,
-        0.03,
-        0,
     ),
-    Higher: new FloodLevel(
+    Moderate: new FloodLevel(
         2,
-        'Higher',
-        'Floods have been relatively high in recent years',
-        0.65,
-        1.0,
+        'Moderate',
+        'The rivers rose about as they usually do',
+        { alluvium: new FloodAgricultureEffect(1.00, 1.15) },
+        0.010,
+        0.02,
+    ),
+    High: new FloodLevel(
+        3,
+        'High',
+        'The rivers rose more than usual',
+        { alluvium: new FloodAgricultureEffect(0.88, 1.10) },
         0.015,
         0.04,
-        -2,
     ),
-    Major: new FloodLevel(
-        3,
-        'Major',
-        'There was a major flood event in recent years!',
-        0.6,
-        1.2,
-        0.02,
-        0.2,
-        -10,
-    ),
-    Extreme: new FloodLevel(
+    Abundant: new FloodLevel(
         4,
-        'Extreme',
-        'There was an extreme flood event in recent years!',
-        0.5,
-        1.3,
-        0.05,
-        1,
-        -20,
+        'Abundant',
+        'The rivers spilled far across the fields',
+        { alluvium: new FloodAgricultureEffect(0.67, 0.95) },
+        0.020,
+        0.07,
     ),
 };
 
-export function randomFloodLevel(): FloodLevel {
-    const roll = Math.random();
-    if (roll < 0.25) {
-        return FloodLevels.Lower;
-    } else if (roll < 0.65) {
-        return FloodLevels.Normal;
-    } else if (roll < 0.8) {
-        return FloodLevels.Higher;
-    } else if (roll < 0.96) {
-        return FloodLevels.Major;
-    } else {
-        return FloodLevels.Extreme;
+// In index order, so that a level can be stepped up or down.
+export const FLOOD_LEVELS: readonly FloodLevel[] = [
+    FloodLevels.Scant,
+    FloodLevels.Low,
+    FloodLevels.Moderate,
+    FloodLevels.High,
+    FloodLevels.Abundant,
+];
+
+// Probability of each level in the year's map-wide flow.
+const BASE_LEVEL_WEIGHTS = [0.10, 0.20, 0.40, 0.20, 0.10];
+
+// Chance for a cluster to sit one step off the map-wide level, and for a
+// settlement to sit one step off its cluster's. Each is the chance of a
+// step in one direction, so the chance of landing off-level is twice this.
+const CLUSTER_STEP_PROBABILITY = 0.15;
+const SETTLEMENT_STEP_PROBABILITY = 0.05;
+
+export function floodLevelByIndex(index: number): FloodLevel {
+    return FLOOD_LEVELS[clamp(Math.round(index), 0, FLOOD_LEVELS.length - 1)];
+}
+
+// This year's flow for the map as a whole, before local variation.
+export function randomBaseFloodLevel(): FloodLevel {
+    return FLOOD_LEVELS[weightedRandInt(FLOOD_LEVELS, l => BASE_LEVEL_WEIGHTS[l.index])];
+}
+
+// One local draw: usually the level it was handed, sometimes a step off it.
+function steppedFrom(level: FloodLevel, stepProbability: number): FloodLevel {
+    return floodLevelByIndex(level.index + plusOrMinus(stepProbability));
+}
+
+// Set this year's flood level everywhere: one map-wide flow, varied by
+// cluster, then varied again by settlement.
+export function updateFloodLevels(clusters: Iterable<SettlementCluster>): void {
+    const baseLevel = randomBaseFloodLevel();
+    for (const cluster of clusters) {
+        const clusterLevel = steppedFrom(baseLevel, CLUSTER_STEP_PROBABILITY);
+        cluster.updateFloodLevel(clusterLevel);
+        for (const settlement of cluster.settlements) {
+            settlement.updateFloodLevel(
+                steppedFrom(clusterLevel, SETTLEMENT_STEP_PROBABILITY));
+        }
     }
 }

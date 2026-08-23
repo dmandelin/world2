@@ -91,9 +91,9 @@ export class ProductivityItem {
         floodLevel = floodLevel ?? clan.settlement.floodLevel;
 
         const ditchQuality = clan.settlement.ditchQuality;
-        const baseProductivity = floodLevel.baseAgriculturalProductivity;
-        const maxProductivity = floodLevel.maxAgriculturalProductivity;
-        const productivity = (1 - ditchQuality) * baseProductivity + ditchQuality * maxProductivity;
+        const effect = floodLevel.agricultureOn('alluvium');
+        const baseProductivity = effect.unditched;
+        const productivity = effect.at(ditchQuality);
         const differentialProductivity = baseProductivity > 0 ? productivity / baseProductivity : 1;
 
         // For now we'll assume migrations are neutral, because although they

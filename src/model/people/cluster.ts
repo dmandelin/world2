@@ -13,7 +13,7 @@ export class SettlementCluster {
     readonly placer_ = new SettlementPlacer(this);
     readonly settlements: Settlement[] = [];
 
-    private floodLevel_: FloodLevel = FloodLevels.Normal;
+    private floodLevel_: FloodLevel = FloodLevels.Moderate;
 
     diseaseLoad: DiseaseLoadCalc = new DiseaseLoadCalc(this, this.buildLaborMaps());
 

@@ -4,6 +4,7 @@
     import type { ClanDTO } from "../../model/records/dtos";
     import { MutualAidInteraction, clanHelpDemand, getHelpReceivedValueFromMutualAid, getHelpProductivityModifier } from "../../model/relations/mutualaid";
     import { pct, signed, spct, unsigned } from "../../model/lib/format";
+    import { floodLevelByIndex, type FloodLevel } from "../../model/environment/flood";
     import { populationAverage } from "../../model/lib/modelbasics";
     import { safeDiv, sortedByKey } from "../../model/lib/basics";
     import EntityLink from "../state/EntityLink.svelte";
@@ -22,6 +23,46 @@
         format: (v: number) => string;
         isHeader?: boolean;
         isSum?: boolean;
+        // For rows whose value belongs to the column's place rather than to
+        // its clans, such as the weather over it.
+        colValue?: (col: EntityColumnSpec) => string;
+    }
+
+    // How the year's flood fell over the settlements a column covers. A
+    // column spanning one settlement has one level; a cluster or the world
+    // may have several, so weight them by the people living under them.
+    type FloodSummary = {
+        level: FloodLevel;
+        mixed: boolean;
+        parts: { level: FloodLevel; settlements: number; population: number }[];
+    };
+
+    function floodSummary(col: EntityColumnSpec): FloodSummary | undefined {
+        const byLevel = new Map<FloodLevel, { settlements: Set<string>; population: number }>();
+        let weighted = 0;
+        let population = 0;
+        for (const clan of col.clans) {
+            const level = clan.settlement.floodLevel;
+            let part = byLevel.get(level);
+            if (!part) byLevel.set(level, part = { settlements: new Set(), population: 0 });
+            part.settlements.add(clan.settlement.uuid);
+            part.population += clan.population;
+            weighted += level.index * clan.population;
+            population += clan.population;
+        }
+        if (byLevel.size === 0 || population === 0) return undefined;
+
+        const parts = sortedByKey(byLevel.entries(), ([level]) => level.index)
+            .map(([level, part]) => ({
+                level,
+                settlements: part.settlements.size,
+                population: part.population,
+            }));
+        return {
+            level: floodLevelByIndex(weighted / population),
+            mixed: byLevel.size > 1,
+            parts,
+        };
     }
 
     let { columns }: { columns: EntityColumnSpec[] } = $props();
@@ -35,6 +76,20 @@
 
     let rowGroups = $derived.by<RowDef[][]>(() => {
         const groups: RowDef[][] = [];
+
+        // Group 0: Environment. The flood decides the year, so it leads.
+        groups.push([
+            {
+                label: "Flood",
+                value: () => 0,
+                format: () => "",
+                colValue: (col) => {
+                    const summary = floodSummary(col);
+                    if (!summary) return "-";
+                    return summary.mixed ? `${summary.level.name}*` : summary.level.name;
+                },
+            },
+        ]);
 
         // Group 1: Demographics
         groups.push([
@@ -153,6 +208,8 @@
             label: row.label,
             isHeader: row.isHeader,
             class: row.isHeader ? "header-row" : "",
+            valueFn: row.colValue ? (col: EntityColumnSpec) => row.colValue!(col) : undefined,
+            tooltip: row.colValue ? floodTooltip : undefined,
         }));
 
         return {
@@ -161,6 +218,26 @@
         };
     });
 </script>
+
+{#snippet floodTooltip(_value: any, _row: RowDef, col: EntityColumnSpec)}
+    {@const summary = floodSummary(col)}
+    {#if summary}
+        <div><strong>{summary.level.name} flood</strong></div>
+        <div>{summary.level.description}</div>
+        {#if summary.mixed}
+            <div class="tip-note">
+                {#each summary.parts as part}
+                    <div>
+                        {part.level.name}: {part.settlements} settlement{part.settlements === 1 ? "" : "s"}
+                        &centerdot; pop {part.population.toFixed(0)}
+                    </div>
+                {/each}
+            </div>
+        {/if}
+    {:else}
+        <div>No settlements.</div>
+    {/if}
+{/snippet}
 
 {#snippet columnHeader(col: EntityColumnSpec)}
     <div class="col-header-inner">
@@ -202,6 +279,12 @@
         font-weight: normal;
         font-size: 0.85em;
         color: #555;
+    }
+
+    .tip-note {
+        margin-top: 0.35rem;
+        padding-top: 0.3rem;
+        border-top: 1px solid #ddd2ab;
     }
 
     .pop-sub {
