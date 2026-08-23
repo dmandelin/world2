@@ -1,5 +1,10 @@
 Rework floods as follows:
 
+# General Instructions
+
+*   Keep flood-related code collected in flood.ts
+*   Replace any and all existing flood code when creating the new
+
 # New Flooding Levels
 
 *   There are "normal" flooding levels and exceptional flooding levels
@@ -51,12 +56,28 @@ Rework floods as follows:
             *   lose 20+2d60% (max 100%) of crops
             *   -higher of 2 d10s flood damage QoL
             *   2d5% risk of death due to flood (apply in population
-                model as a cause of death like the others)
-        
+                model as a cause of death like the others)     
+
+Implementing damages:
+
+*   Crop losses should be a new Distribution item (also in UI)
+*   Flood damage QoL should be its own QoL item, as now
 
 # New UI
 
+*   Show a pictogram of "normal" flood level below the settlement
+    icon in the settlement view
+*   In the cluster UI that shows a table of settlements, and the
+    Land UI panels that show settlement or cluster tables, add a
+    "Flood" row at the top. 
+
+*   Use special pictorial icons for extreme floods. The tooltip
+    should show total damage and impacts, including how many
+    clans were affected.
+*   Map lens for extreme floods
+
 # Deferred: Don't implement now
 
+*   Map lens for flood levels
 *   Flood control systems
 *   Disease impact of flood levels
