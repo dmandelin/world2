@@ -95,6 +95,10 @@ export interface TableRow<RowData, ColData> {
     // If set, get the value for this cell from the row instead of the column.
     valueFn?: (col: ColData) => any;
 
+    // If set, cells in this row render with this snippet instead of
+    // text/HTML. Takes precedence over the column's snippet.
+    cellSnippet?: Snippet<[any, RowData, ColData]>;
+
     // If set, format the cell value using this function.
     formatFn?: (value: any, col: ColData) => string;
 

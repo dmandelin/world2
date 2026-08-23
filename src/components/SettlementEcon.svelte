@@ -83,6 +83,7 @@
             d.totalToConsumption(good) +
             d.totalToStock(good) +
             d.totalToWaste(good) +
+            d.totalToFlood(good) +
             d.totalToRitual(good) +
             d.totalToDonated(good)
         );
@@ -112,6 +113,7 @@
             { key: "d-cons", label: "→ Consumption", order: 0, fish: d.totalToConsumption(Fish), cereals: d.totalToConsumption(Cereals) },
             { key: "d-stock", label: "→ Stock", order: 1, fish: d.totalToStock(Fish), cereals: d.totalToStock(Cereals) },
             { key: "d-waste", label: "→ Waste", order: 2, fish: d.totalToWaste(Fish), cereals: d.totalToWaste(Cereals) },
+            { key: "d-flood", label: "→ Flood", order: 2.4, fish: d.totalToFlood(Fish), cereals: d.totalToFlood(Cereals) },
             { key: "d-ritual", label: "→ Ritual", order: 2.5, fish: d.totalToRitual(Fish), cereals: d.totalToRitual(Cereals) },
         ];
         for (const g of groupByPartner(d.toDonations)) {

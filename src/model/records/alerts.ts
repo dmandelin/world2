@@ -1,7 +1,10 @@
 import type { NoteEntity } from "./notifications";
 import type { World } from "../world";
 import { populationAverage } from "../lib/modelbasics";
+import { arrayMapAdd, sumFun } from "../lib/basics";
 import { pct } from "../lib/format";
+import type { ClanFloodImpact } from "../environment/flood";
+import type { Settlement } from "../people/settlement";
 
 // ----------------------------------------------------------------------------
 // Alert kinds
@@ -20,7 +23,10 @@ export type AlertKindId =
     | 'malnourishment'
     | 'starvation'
     | 'strife'
-    | 'foundation';
+    | 'foundation'
+    | 'flood20'
+    | 'flood100'
+    | 'flood500';
 
 // Presentation for a kind of alert.
 export interface AlertKindDef {
@@ -60,6 +66,26 @@ export const ALERT_KINDS: Record<AlertKindId, AlertKindDef> = {
         icon: '🏘️',
         color: '#2f7d5b',
         description: 'A new village is being founded.',
+    },
+    // One badge per severity of extreme flood, so a once-in-a-lifetime
+    // flood does not look like a once-in-five-centuries one.
+    flood20: {
+        title: '20-year flood',
+        icon: '🌊',
+        color: '#2b6cb0',
+        description: 'The rivers broke out over a region.',
+    },
+    flood100: {
+        title: '100-year flood',
+        icon: '🏚️',
+        color: '#2c5282',
+        description: 'The rivers broke out over half the land.',
+    },
+    flood500: {
+        title: '500-year flood',
+        icon: '🆘',
+        color: '#742a2a',
+        description: 'The rivers broke out over the whole land.',
     },
 };
 
@@ -186,6 +212,27 @@ export function updateWorldAlerts(world: World): void {
                 kind: 'strife',
                 entity: settlement,
                 detail: `social quality of life ${socialQol.toFixed(1)}`,
+            });
+        }
+    }
+
+    // Extreme floods: one row per settlement caught, so the badge below the
+    // map counts places flooded and each settlement shows its own.
+    for (const flood of world.extremeFloods) {
+        if (flood.clansAffected === 0) continue;
+        const bySettlement = new Map<Settlement, ClanFloodImpact[]>();
+        for (const impact of flood.impacts) {
+            arrayMapAdd(bySettlement, impact.clan.settlement, impact);
+        }
+        for (const [settlement, impacts] of bySettlement) {
+            const crops = sumFun(impacts, i => i.cropLoss) / impacts.length;
+            const clans = impacts.length === 1
+                ? '1 clan' : `${impacts.length} clans`;
+            world.addAlert({
+                kind: flood.kind.key,
+                id: `${flood.kind.key}:${flood.areaName}:${settlement.uuid}`,
+                entity: settlement,
+                detail: `${clans} hit · ${pct(crops)} of their crop lost`,
             });
         }
     }

@@ -16,7 +16,7 @@ import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
 import { Alerts, updateWorldAlerts, type AlertSpec } from "./records/alerts";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
-import { updateFloodLevels } from "./environment/flood";
+import { applyFloodCropLosses, ExtremeFlood, noteExtremeFloods, updateExtremeFloods, updateFloodLevels } from "./environment/flood";
 import { Settlement } from "./people/settlement";
 import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
@@ -100,6 +100,9 @@ export class World implements NoteTaker {
 
     // Rituals performed this turn, across the whole world.
     rituals: RitualEvent[] = [];
+
+    // Extreme floods that struck this turn, across the whole world.
+    extremeFloods: ExtremeFlood[] = [];
 
     dto: WorldDTO | undefined;
 
@@ -385,6 +388,7 @@ export class World implements NoteTaker {
 
         // Nature decides.
         updateFloodLevels(this.clusters);
+        this.extremeFloods = updateExtremeFloods(this.clusters, this.allClans);
 
         // Advance for cross-cluster events.
         this.conflicts.advance();
@@ -449,6 +453,10 @@ export class World implements NoteTaker {
             removeAll(cl.settlements, s => s.population === 0);
         }
 
+        // Now that the drownings are drawn, the year's floods can be written
+        // up with what they actually cost.
+        noteExtremeFloods(this, this.extremeFloods);
+
         // Advance the year.
         this.year.advance(this.yearsPerTick);
 
@@ -481,6 +489,10 @@ export class World implements NoteTaker {
                 }
             }
         }
+
+        // Whatever the flood took, it took in the field, before anyone
+        // could eat it, store it, offer it, or give it away.
+        applyFloodCropLosses(allClans);
 
         // The year's offerings and ritual fees come off the top, before
         // anything is eaten, stored, or given away.

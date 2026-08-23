@@ -230,17 +230,20 @@ class FloodHappinessItem extends NumericHappinessItem {
     }
 
     get stateDisplay(): string {
-        return pct(this.state_);
+        return this.state_.toFixed(1);
     }
 
     stateLabel = 'Damage';
 
-    appealOf(damageFactor: number): number {
-        return -damageFactor * 20;
+    appealOf(damage: number): number {
+        return -damage;
     }
 
+    // Quality-of-life points lost: the year's water damage plus whatever an
+    // extreme flood took on top of it.
     updateState(clan: Clan): void {
-        this.state_ = clan.settlement.floodLevel.damageFactor;
+        this.state_ = clan.settlement.floodLevel.damageFactor * 20
+                    + clan.floodDamage.qolDamage;
     }
 
     clone(): FloodHappinessItem {

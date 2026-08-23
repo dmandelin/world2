@@ -8,9 +8,31 @@
     import type { SettlementCluster } from "../model/people/cluster";
     import { Settlement } from "../model/people/settlement";
     import { weightedAverage } from "../model/lib/modelbasics";
+    import { MAP_HEIGHT, MAP_WIDTH, type ExtremeFlood } from "../model/environment/flood";
 
     let { onSelect } = $props();
     let isBig = $state(false);
+
+    // How much of the year's water to wash over the base map. "extreme"
+    // shows only the floods that broke out; "all" adds a heat map of the
+    // ordinary flood level everywhere.
+    type Lens = "extreme" | "all" | "none";
+    const LENS_ORDER: Lens[] = ["extreme", "all", "none"];
+    const LENS_LABELS: Record<Lens, string> = {
+        extreme: "big",
+        all: "all",
+        none: "off",
+    };
+    const LENS_TITLES: Record<Lens, string> = {
+        extreme: "Flood lens: this year's extreme floods only. Click for all floods.",
+        all: "Flood lens: extreme floods over a heat map of the year's flood level. Click to turn off.",
+        none: "Flood lens: off. Click to show extreme floods.",
+    };
+    let lens = $state<Lens>("extreme");
+
+    function cycleLens() {
+        lens = LENS_ORDER[(LENS_ORDER.indexOf(lens) + 1) % LENS_ORDER.length];
+    }
 
     let canvas: HTMLCanvasElement | null = null;
     let context: CanvasRenderingContext2D | null = null;
@@ -67,8 +89,164 @@
             context!.fill();
         }
 
+        // Under the rivers, so the channels stay legible through the wash.
+        if (lens === "all") drawFloodLevels();
         drawRivers();
+        if (lens !== "none") drawFloodAreas();
         drawPeople();
+        if (lens !== "none") drawFloodMarks();
+    }
+
+    // --- Normal flood level lens -------------------------------------------
+    //
+    // A soft blob of color per settlement, dry ochre through deep water, by
+    // this year's level there. Settlements in a cluster sit close together,
+    // so their blobs run into one another and the cluster reads as one patch
+    // of country, shading where neighbors disagree.
+
+    // Dry to wet, with enough color at both ends to read against parchment.
+    // The step from straw to water at moderate marks the level the fields
+    // actually want.
+    const FLOOD_LEVEL_COLORS = [
+        [196, 140, 52], // scant: parched
+        [208, 184, 112], // low: straw
+        [118, 170, 190], // moderate
+        [56, 122, 172], // high
+        [22, 70, 118], // abundant: deep water
+    ];
+
+    // Wide enough that neighbors in a cluster overlap, since a cluster's
+    // settlements share their water.
+    const FLOOD_LEVEL_RADIUS = 52;
+
+    function drawFloodLevels() {
+        context!.save();
+        for (const settlement of world.allSettlements) {
+            if (settlement.abandoned) continue;
+            const [r, g, b] = FLOOD_LEVEL_COLORS[settlement.floodLevel.index];
+            const x = settlement.x;
+            const y = settlement.y;
+            const gradient = context!.createRadialGradient(
+                x, y, 0, x, y, FLOOD_LEVEL_RADIUS);
+            // Flat-ish in the middle, falling off only near the rim, so the
+            // blob reads as a patch of country rather than a dot.
+            gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.75)`);
+            gradient.addColorStop(0.45, `rgba(${r}, ${g}, ${b}, 0.6)`);
+            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+            context!.fillStyle = gradient;
+            context!.beginPath();
+            context!.arc(x, y, FLOOD_LEVEL_RADIUS, 0, 2 * Math.PI);
+            context!.fill();
+        }
+        context!.restore();
+    }
+
+    // --- Extreme flood lens -------------------------------------------------
+    //
+    // The area each of this year's floods covered, washed over the map, with
+    // a ring on every settlement the water actually reached.
+
+    // Water for the wash, and the warm accent from the flood icons for the
+    // outline and the rings, which have to stay legible over the blue of the
+    // flood-level heat map underneath.
+    const FLOOD_LENS_WASH = {
+        flood20: "#2b6cb0",
+        flood100: "#2c5282",
+        flood500: "#1a365d",
+    } as const;
+
+    const FLOOD_LENS_ACCENT = {
+        flood20: "#b7791f",
+        flood100: "#c05621",
+        flood500: "#742a2a",
+    } as const;
+
+    // The stretch a flood covered, inset a little so an edge that runs along
+    // the map border still shows.
+    function floodAreaPath(area: ExtremeFlood["area"]): Path2D {
+        const path = new Path2D();
+        const [i, w, h] = [3, MAP_WIDTH - 3, MAP_HEIGHT - 3];
+        if (area.kind === "map") {
+            path.rect(i, i, w - i, h - i);
+        } else if (area.kind === "half") {
+            if (area.half === "upriver") {
+                path.moveTo(i, i);
+                path.lineTo(w, i);
+                path.lineTo(i, h);
+            } else {
+                path.moveTo(w, i);
+                path.lineTo(w, h);
+                path.lineTo(i, h);
+            }
+            path.closePath();
+        } else {
+            const cluster = area.cluster;
+            let radius = 30;
+            for (const s of cluster.settlements) {
+                radius = Math.max(
+                    radius,
+                    Math.hypot(s.x - cluster.x, s.y - cluster.y) + 22,
+                );
+            }
+            path.arc(cluster.x, cluster.y, radius, 0, 2 * Math.PI);
+        }
+        return path;
+    }
+
+    function drawFloodAreas() {
+        for (const flood of world.extremeFloods) {
+            if (flood.clansAffected === 0) continue;
+            const path = floodAreaPath(flood.area);
+
+            context!.save();
+            // A harder flood washes darker, so severity reads off the map.
+            context!.globalAlpha = 0.1 + 0.25 * flood.impact;
+            context!.fillStyle = FLOOD_LENS_WASH[flood.kind.key];
+            context!.fill(path);
+
+            // Pale under-stroke first, so the dashes hold their own wherever
+            // the wash beneath them is dark.
+            context!.globalAlpha = 0.75;
+            context!.lineWidth = 4;
+            context!.strokeStyle = "#fdfbf2";
+            context!.stroke(path);
+
+            context!.globalAlpha = 1;
+            context!.lineWidth = 2;
+            context!.strokeStyle = FLOOD_LENS_ACCENT[flood.kind.key];
+            context!.setLineDash([6, 4]);
+            context!.stroke(path);
+            context!.setLineDash([]);
+            context!.restore();
+        }
+    }
+
+    function drawFloodMarks() {
+        const scaleMultiplier = isBig ? 1 : 2;
+        for (const settlement of world.allSettlements) {
+            const impacts = settlement.clans.flatMap((c) => c.floodDamage.impacts);
+            if (impacts.length === 0) continue;
+
+            // Ring size tracks how much of the crop went; color, the worst
+            // flood that reached here.
+            const loss =
+                impacts.reduce((t, i) => t + i.cropLoss, 0) / impacts.length;
+            const worst = impacts.reduce((a, b) =>
+                a.flood.kind.returnPeriod >= b.flood.kind.returnPeriod ? a : b,
+            );
+            const radius = (5 + 7 * loss) * scaleMultiplier;
+
+            context!.save();
+            context!.beginPath();
+            context!.arc(settlement.x, settlement.y, radius, 0, 2 * Math.PI);
+            context!.lineWidth = 4 * scaleMultiplier;
+            context!.strokeStyle = "rgba(253, 251, 242, 0.8)";
+            context!.stroke();
+            context!.lineWidth = 2 * scaleMultiplier;
+            context!.strokeStyle = FLOOD_LENS_ACCENT[worst.flood.kind.key];
+            context!.stroke();
+            context!.restore();
+        }
     }
 
     function drawRivers() {
@@ -304,7 +482,7 @@ ${settlement.cluster.population} \
     });
 
     $effect(() => {
-        if (isBig !== undefined && canvas && context) {
+        if (isBig !== undefined && lens !== undefined && canvas && context) {
             draw();
         }
     });
@@ -351,6 +529,17 @@ ${settlement.cluster.population} \
                     <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
                 </svg>
             {/if}
+        </button>
+        <button
+            type="button"
+            class="map-lens-toggle"
+            class:active={lens !== "none"}
+            class:full={lens === "all"}
+            onclick={cycleLens}
+            title={LENS_TITLES[lens]}
+        >
+            <span class="lens-glyph">&#x1F30A;</span>
+            <span class="lens-label">{LENS_LABELS[lens]}</span>
         </button>
         <a
             href="/sessions"
@@ -434,6 +623,15 @@ ${settlement.cluster.population} \
                     >{signed(qol, 1)}</span
                 >
             </div>
+            <div class="tooltip-row">
+                <span class="label">Flood:</span>
+                <span class="value">{hoveredSettlement.floodLevel.name}</span>
+            </div>
+            {#each hoveredSettlement.extremeFloods as flood, i (i)}
+                <div class="tooltip-row">
+                    <span class="value flood-alert">{flood.kind.name}!</span>
+                </div>
+            {/each}
         </div>
     {/if}
 
@@ -553,6 +751,11 @@ ${settlement.cluster.population} \
         color: #e53e3e;
     }
 
+    .flood-alert {
+        color: #2b6cb0;
+        font-weight: bold;
+    }
+
     .planned-tag {
         color: #d69e2e;
         font-size: 0.75rem;
@@ -599,9 +802,70 @@ ${settlement.cluster.population} \
         transform: scale(0.95);
     }
 
-    .map-stats-link {
+    /* Below the size toggle; the statistics and tuning links follow it. */
+    .map-lens-toggle {
         position: absolute;
         top: 44px;
+        left: 8px;
+        z-index: 10;
+        box-sizing: border-box;
+        width: 28px;
+        /* Taller than the other controls: it has three states, so it names
+           the one it is in rather than making the player hover to find out. */
+        height: 38px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+        color: #62531d;
+        background-color: rgba(249, 246, 235, 0.9);
+        border: var(--clay-edge-width) solid var(--clay-edge-color);
+        border-image: var(--clay-edge-source) var(--clay-edge-slice) repeat;
+        cursor: pointer;
+        font-size: 0.95rem;
+        line-height: 1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition:
+            background-color 0.2s,
+            transform 0.1s;
+    }
+
+    .map-lens-toggle:hover {
+        background-color: #f0ebd1;
+    }
+
+    .map-lens-toggle:active {
+        transform: scale(0.95);
+    }
+
+    .map-lens-toggle.active {
+        background-color: #cfe3ef;
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.15),
+            inset 0 0 0 2px #2b6cb0;
+    }
+
+    .map-lens-toggle.full {
+        background-color: #a9cfe4;
+    }
+
+    .lens-glyph {
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+
+    .lens-label {
+        font-size: 0.5rem;
+        line-height: 1;
+        font-variant: small-caps;
+        letter-spacing: 0.04em;
+    }
+
+    .map-stats-link {
+        position: absolute;
+        top: 90px;
         left: 8px;
         z-index: 10;
         /* Match the size toggle, which is a button and so border-box. */
@@ -638,7 +902,7 @@ ${settlement.cluster.population} \
     /* Directly below the statistics link. */
     .map-tuning-link {
         position: absolute;
-        top: 80px;
+        top: 126px;
         left: 8px;
         z-index: 10;
         box-sizing: border-box;

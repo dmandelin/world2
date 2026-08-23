@@ -409,7 +409,10 @@ export class PopulationChangeBuilder {
         const diseaseRiskBySlice = diseaseCumBySlice.map(
             cum => 1 - Math.pow(1 - cum, 1 / SLICE_WIDTH));
 
-        const floodRisk = this.floodLevel.damageFactor * FLOOD_BASE_DEATH_RATE * Y;
+        // Background risk from the year's water level, plus the sharp risk
+        // of an extreme flood, which is a probability for the year already.
+        const floodRisk = this.floodLevel.damageFactor * FLOOD_BASE_DEATH_RATE * Y
+                        + clan.floodDamage.extremeDeathRisk;
 
         const consumption = Number.isFinite(clan.consumption.perCapitaFood)
             ? clan.consumption.perCapitaFood : 1;
@@ -522,7 +525,13 @@ export class PopulationChangeBuilder {
             births,
         );
 
-        const causeMods = [1, this.drModifier, this.floodLevel.damageFactor, 1, consumption];
+        const causeMods = [
+            1,
+            this.drModifier,
+            this.floodLevel.damageFactor + clan.floodDamage.extremeDeathRisk,
+            1,
+            consumption,
+        ];
         const deathItems = DEATH_CAUSES.map((name, c) => new PopulationChangeItem(
             name,
             causeMods[c],

@@ -17,6 +17,7 @@ import { ResidenceLevel } from "./residence";
 import { Rites } from "../rites";
 import type { RitualEvent } from "../rituals";
 import { type TradeGood, TradeGoods, type TradePartner, TradeRelationship } from "../trade";
+import { ClanFloodDamage } from "../environment/flood";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
@@ -105,6 +106,9 @@ export class Clan implements TradePartner {
 
     readonly rites: Rites; // TODO - remove if not used
     ritualGoodsUsage: 'Private' | 'Communal' = 'Private';
+
+    // What this year's extreme floods, if any, did to this clan.
+    floodDamage: ClanFloodDamage = new ClanFloodDamage(this);
 
     // Troubles this clan faced this turn, and how the rites for them went.
     ritualEvents: RitualEvent[] = [];
@@ -409,6 +413,10 @@ export class Clan implements TradePartner {
     advancePopulation(noEffect: boolean = false, yearsElapsed: number = this.world.yearsPerTick) {
         this.lastPopulationChange = new PopulationChangeBuilder(this, yearsElapsed).build();
         if (!noEffect) {
+            // Hand the year's drowning deaths back to the floods that caused
+            // them, so each can report what it cost.
+            this.floodDamage.deaths = -(this.lastPopulationChange.items
+                .find(i => i.name === 'Flood')?.actual ?? 0);
             for (let i = 0; i < this.slices.length; ++i) {
                 this.slices[i][0] = this.lastPopulationChange.newSlices[i][0];
                 this.slices[i][1] = this.lastPopulationChange.newSlices[i][1];

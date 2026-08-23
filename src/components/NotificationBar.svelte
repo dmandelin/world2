@@ -10,6 +10,7 @@
           case '✨': return { icon: '✨', color: '#b7791f', tag: 'Founding' };
           case '↔': return { icon: '↔️', color: '#2b6cb0', tag: 'Migration' };
           case 'H': return { icon: '🏠', color: '#6b46c1', tag: 'Housing' };
+          case '🌊': return { icon: '🌊', color: '#2b6cb0', tag: 'Flood' };
           default: return { icon: '📝', color: '#718096', tag: 'Event' };
       }
   }

@@ -33,7 +33,9 @@
 </script>
 
 {#snippet cellHTML(row: TableRow<any, any>, column: TableColumn<any, any, any>)}
-    {#if column.cellSnippet}
+    {#if row.cellSnippet}
+        {@render row.cellSnippet(cellValue(row, column), row.data, column.data)}
+    {:else if column.cellSnippet}
         {@render column.cellSnippet(cellValue(row, column), row.data, column.data)}
     {:else if column.imgsrc}
         {#if cellValue(row, column)}

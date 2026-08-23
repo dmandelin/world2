@@ -99,13 +99,16 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
         }
     }
 
-    // Pass 2: cap total gifts per donor at 80% of cereal production, then apply
+    // Pass 2: cap total gifts per donor at 80% of the cereal it still has,
+    // then apply. Measured against what is left undistributed rather than
+    // against gross production, since a flood may already have taken part
+    // of the crop out of the granary's reach.
     const giftsGivenMap = new Map<string, number>();
     const giftsReceivedMap = new Map<string, number>();
 
     for (const [donorUuid, entries] of rawGiftsByDonor) {
         const donor = entries[0].donor;
-        const cerealProd = donor.production.forGood(TradeGoods.Cereals);
+        const cerealProd = donor.distribution.undistributed(TradeGoods.Cereals);
         const cap = cerealProd * 0.8;
         const rawTotal = entries.reduce((sum, e) => sum + e.rawGiftAbs, 0);
         const scaleFactor = rawTotal > cap && cap > 0 ? cap / rawTotal : 1.0;

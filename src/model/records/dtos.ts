@@ -7,7 +7,7 @@ import type { ClanSkills } from "../people/clanskills";
 import type { Consumption } from "../econ/consumption";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
 import type { EffortAllocation } from "../decisions/effort";
-import type { FloodLevel } from "../environment/flood";
+import type { ClanFloodDamage, ExtremeFlood, FloodLevel } from "../environment/flood";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
@@ -123,6 +123,9 @@ export class ClanDTO {
 
     notifications: ClanNotification[];
 
+    // What this year's extreme floods, if any, did to this clan.
+    floodDamage: ClanFloodDamage;
+
     // Troubles this clan faced this turn, and how the rites went.
     ritualEvents: RitualEvent[];
 
@@ -169,6 +172,7 @@ export class ClanDTO {
 
         this.notifications = [...clan.notifications];
         this.ritualEvents = [...clan.ritualEvents];
+        this.floodDamage = clan.floodDamage;
     }
 
     get world(): WorldDTO {
@@ -308,6 +312,11 @@ export class SettlementDTO {
         this.timeline = settlement.timeline;
     }
 
+    // The extreme floods that caught any clan living here this year.
+    get extremeFloods(): ExtremeFlood[] {
+        return [...new Set(this.clans.flatMap(c => c.floodDamage.floods))];
+    }
+
     get farmingRatio(): number {
         return populationAverage(
             this.clans,
@@ -342,6 +351,11 @@ export class ClusterDTO {
 
     get clans() {
         return this.settlements.flatMap(s => s.clans);
+    }
+
+    // The extreme floods that caught anyone in this cluster this year.
+    get extremeFloods(): ExtremeFlood[] {
+        return [...new Set(this.settlements.flatMap(s => s.extremeFloods))];
     }
 }
 
@@ -403,6 +417,8 @@ export class WorldDTO {
     readonly lastFoodRedistribution?: FoodRedistributionResult;
     readonly lastFoodGifts?: FoodGiftsResult;
     readonly rituals: RitualEvent[];
+    // Extreme floods that struck this year, worldwide.
+    readonly extremeFloods: ExtremeFlood[];
 
     readonly connections: ConnectionGraph;
     readonly interactions: InteractionGraph;
@@ -425,6 +441,7 @@ export class WorldDTO {
         this.lastFoodRedistribution = world.lastFoodRedistribution;
         this.lastFoodGifts = world.lastFoodGifts;
         this.rituals = [...world.rituals];
+        this.extremeFloods = [...world.extremeFloods];
         this.clusters = this.world.clusters.map(cl => new ClusterDTO(cl, this));
         this.clanMap = new Map(this.clusters.flatMap(cl => cl.settlements.flatMap(s => s.clans.map(clan => [clan.uuid, clan] as [UUID, ClanDTO]))));
         this.plannedSettlements = world.plannedSettlements.map(p => new PlannedSettlementDTO(p));

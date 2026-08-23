@@ -4,7 +4,8 @@
     import type { ClanDTO } from "../../model/records/dtos";
     import { MutualAidInteraction, clanHelpDemand, getHelpReceivedValueFromMutualAid, getHelpProductivityModifier } from "../../model/relations/mutualaid";
     import { pct, signed, spct, unsigned } from "../../model/lib/format";
-    import { floodLevelByIndex, type FloodLevel } from "../../model/environment/flood";
+    import { floodLevelByIndex, type ExtremeFlood, type FloodLevel } from "../../model/environment/flood";
+    import ExtremeFloodIcon from "../widgets/ExtremeFloodIcon.svelte";
     import { populationAverage } from "../../model/lib/modelbasics";
     import { safeDiv, sortedByKey } from "../../model/lib/basics";
     import EntityLink from "../state/EntityLink.svelte";
@@ -35,6 +36,8 @@
         level: FloodLevel;
         mixed: boolean;
         parts: { level: FloodLevel; settlements: number; population: number }[];
+        // Extreme floods that caught anyone under this column this year.
+        extremes: ExtremeFlood[];
     };
 
     function floodSummary(col: EntityColumnSpec): FloodSummary | undefined {
@@ -58,10 +61,12 @@
                 settlements: part.settlements.size,
                 population: part.population,
             }));
+        const extremes = [...new Set(col.clans.flatMap(c => c.floodDamage.floods))];
         return {
             level: floodLevelByIndex(weighted / population),
             mixed: byLevel.size > 1,
             parts,
+            extremes,
         };
     }
 
@@ -209,6 +214,7 @@
             isHeader: row.isHeader,
             class: row.isHeader ? "header-row" : "",
             valueFn: row.colValue ? (col: EntityColumnSpec) => row.colValue!(col) : undefined,
+            cellSnippet: row.colValue ? floodCell : undefined,
             tooltip: row.colValue ? floodTooltip : undefined,
         }));
 
@@ -218,6 +224,16 @@
         };
     });
 </script>
+
+{#snippet floodCell(value: string, _row: RowDef, col: EntityColumnSpec)}
+    {@const summary = floodSummary(col)}
+    <span class="flood-cell">
+        {value}
+        {#each summary?.extremes ?? [] as flood, i (i)}
+            <ExtremeFloodIcon {flood} size={16} tooltip={false} />
+        {/each}
+    </span>
+{/snippet}
 
 {#snippet floodTooltip(_value: any, _row: RowDef, col: EntityColumnSpec)}
     {@const summary = floodSummary(col)}
@@ -234,6 +250,19 @@
                 {/each}
             </div>
         {/if}
+        {#each summary.extremes as flood, i (i)}
+            <div class="tip-note">
+                <div><strong>{flood.kind.name}</strong> over {flood.areaName}</div>
+                <div>
+                    {flood.clansAffected} clan{flood.clansAffected === 1 ? "" : "s"} caught
+                    &centerdot; {flood.cropsLost.toFixed(0)} of grain lost
+                    &centerdot; {flood.qolDamage.toFixed(1)} quality of life each
+                </div>
+                {#if flood.deaths >= 0.5}
+                    <div>{flood.deaths.toFixed(0)} drowned</div>
+                {/if}
+            </div>
+        {/each}
     {:else}
         <div>No settlements.</div>
     {/if}
@@ -279,6 +308,13 @@
         font-weight: normal;
         font-size: 0.85em;
         color: #555;
+    }
+
+    .flood-cell {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.25rem;
     }
 
     .tip-note {

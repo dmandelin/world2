@@ -733,6 +733,17 @@
                 topics: ["food", "food:detail"],
             },
             {
+                label: "&nbsp;&nbsp;Flood loss",
+                labelTooltip: "Standing crop taken by this year's floods.",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    -(c.distribution?.totalFoodToFlood ?? 0) /
+                    (c.population || 1),
+                format: fmt2,
+                topics: ["food", "food:detail"],
+            },
+            {
                 label: "&nbsp;&nbsp;Gifts",
                 class: "actual",
                 cellClass: "ra",

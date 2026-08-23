@@ -3,6 +3,7 @@
     import { SettlementDTO } from "../model/records/dtos";
     import AlertBadges from "./AlertBadges.svelte";
     import Settlement from "./Settlement.svelte";
+    import ExtremeFloodIcon from "./widgets/ExtremeFloodIcon.svelte";
     import FloodPictogram from "./widgets/FloodPictogram.svelte";
     import SettlementTellArt from "./overview/SettlementTellArt.svelte";
     import SettlementVitals from "./overview/SettlementVitals.svelte";
@@ -30,6 +31,13 @@
             <div class="icon-col">
                 <SettlementTellArt {settlement} />
                 <FloodPictogram floodLevel={settlement.floodLevel} />
+                {#if settlement.extremeFloods.length}
+                    <div class="flood-icons">
+                        {#each settlement.extremeFloods as flood, i (i)}
+                            <ExtremeFloodIcon {flood} />
+                        {/each}
+                    </div>
+                {/if}
             </div>
             <div class="name-col">
                 <div class="name-row">
@@ -138,6 +146,15 @@
         flex-direction: column;
         align-items: center;
         gap: 0.15rem;
+    }
+
+    /* Usually one icon; a year that draws two floods wraps them. */
+    .flood-icons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.15rem;
+        margin-top: 0.1rem;
     }
 
     .name-col {

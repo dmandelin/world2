@@ -60,10 +60,14 @@ export class QualityOfLife {
     }
 
     static fromFlood(consumption: Consumption): QualityOfLifeItem {
-        const damageFactor = consumption.clan?.settlement?.floodLevel?.damageFactor ?? 0;
-        const value = -damageFactor * 20;
-        return new QualityOfLifeItem(
-            "Flood damage", "natural", value, `${pct(damageFactor)} damage`);
+        const clan = consumption.clan;
+        const damageFactor = clan?.settlement?.floodLevel?.damageFactor ?? 0;
+        const extreme = clan?.floodDamage?.qolDamage ?? 0;
+        const value = -damageFactor * 20 - extreme;
+        const note = extreme > 0
+            ? `${pct(damageFactor)} damage, ${extreme.toFixed(0)} from flooding`
+            : `${pct(damageFactor)} damage`;
+        return new QualityOfLifeItem("Flood damage", "natural", value, note);
     }
 
     static fromConversation(consumption: Consumption): QualityOfLifeItem {
