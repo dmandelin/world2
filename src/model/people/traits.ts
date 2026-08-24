@@ -52,12 +52,40 @@ function randomPride(): number {
     return PRIDE_MIN + Math.random() * (PRIDE_MAX - PRIDE_MIN);
 }
 
+// Ditching dispositions. Under an "At Will" organization nobody is told
+// what to do about the ditches, so what gets dug comes down to what each
+// clan is willing to put in, what it thinks everyone else owes, and how
+// much it cares who pulled their weight.
+
+// Willingness: the share of its own effort a clan puts into the ditches.
+export const DITCHING_EFFORT_MIN = 0.0;
+export const DITCHING_EFFORT_MAX = 0.12;
+
+// Expectation: the share it thinks each clan ought to be putting in.
+export const DITCHING_EXPECTATION_MIN = 0.00;
+export const DITCHING_EXPECTATION_MAX = 0.10;
+
+// Admiration: how much a neighbor's standing rises, per point of effort
+// above what this clan expected of it. Alignment runs -1 to 1, so a clan
+// digging ten points past expectation earns between +0.05 and +0.30.
+export const DITCHING_ADMIRATION_MIN = -0.005;
+export const DITCHING_ADMIRATION_MAX = 0.030;
+
+const DITCHING_EFFORT_DRIFT_STDDEV = 0.004;
+
+function randomInRange(min: number, max: number): number {
+    return min + Math.random() * (max - min);
+}
+
 export class ClanTraits {
     private numeric: Record<string, number>;
     bitmap: number;
     private giving_: number;
     private aggression_: number;
     private pride_: number;
+    private ditchingEffort_: number;
+    private ditchingExpectation_: number;
+    private ditchingAdmiration_: number;
 
     constructor(
         numeric?: Partial<Record<NumericTrait, number>>,
@@ -65,6 +93,9 @@ export class ClanTraits {
         giving?: number,
         aggression?: number,
         pride?: number,
+        ditchingEffort?: number,
+        ditchingExpectation?: number,
+        ditchingAdmiration?: number,
     ) {
         this.numeric = {
             piety: numeric?.piety ?? randomTraitStat(),
@@ -74,6 +105,31 @@ export class ClanTraits {
         this.giving_ = giving ?? randomGiving();
         this.aggression_ = aggression ?? randomAggression();
         this.pride_ = pride ?? randomPride();
+        this.ditchingEffort_ = ditchingEffort
+            ?? randomInRange(DITCHING_EFFORT_MIN, DITCHING_EFFORT_MAX);
+        this.ditchingExpectation_ = ditchingExpectation
+            ?? randomInRange(DITCHING_EXPECTATION_MIN, DITCHING_EXPECTATION_MAX);
+        this.ditchingAdmiration_ = ditchingAdmiration
+            ?? randomInRange(DITCHING_ADMIRATION_MIN, DITCHING_ADMIRATION_MAX);
+    }
+
+    // Share of its own effort this clan is willing to spend on the ditches.
+    get ditchingEffort(): number {
+        return this.ditchingEffort_;
+    }
+
+    set ditchingEffort(val: number) {
+        this.ditchingEffort_ = clamp(val, 0, 0.35);
+    }
+
+    // Share it thinks every clan ought to be spending.
+    get ditchingExpectation(): number {
+        return this.ditchingExpectation_;
+    }
+
+    // Alignment gained per point of effort a neighbor spends past that.
+    get ditchingAdmiration(): number {
+        return this.ditchingAdmiration_;
     }
 
     // Not clamped to the starting range: like Giving and Aggression, a clan's
@@ -141,7 +197,8 @@ export class ClanTraits {
 
     clone(): ClanTraits {
         return new ClanTraits(
-            { ...this.numeric }, this.bitmap, this.giving_, this.aggression_, this.pride_);
+            { ...this.numeric }, this.bitmap, this.giving_, this.aggression_, this.pride_,
+            this.ditchingEffort_, this.ditchingExpectation_, this.ditchingAdmiration_);
     }
 
     cloneWithSplitBump(): ClanTraits {
@@ -157,6 +214,7 @@ export class ClanTraits {
         }
         copy.giving = copy.giving + normal(0, GIVING_DRIFT_STDDEV);
         copy.aggression = copy.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
+        copy.ditchingEffort = copy.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
         return copy;
     }
 
@@ -174,5 +232,6 @@ export class ClanTraits {
 
         this.giving = this.giving + normal(0, GIVING_DRIFT_STDDEV);
         this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
+        this.ditchingEffort = this.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
     }
 }

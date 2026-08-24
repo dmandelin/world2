@@ -135,7 +135,8 @@
     /* The tooltip shell is nowrap; let the explanation wrap. */
     .tip {
         white-space: normal;
-        max-width: 22rem;
+        width: max-content;
+        max-width: 46rem;
     }
 
     .tip-line {

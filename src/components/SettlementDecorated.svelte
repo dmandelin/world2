@@ -4,6 +4,7 @@
     import AlertBadges from "./AlertBadges.svelte";
     import Settlement from "./Settlement.svelte";
     import ExtremeFloodIcon from "./widgets/ExtremeFloodIcon.svelte";
+    import DitchGauge from "./widgets/DitchGauge.svelte";
     import FloodPictogram from "./widgets/FloodPictogram.svelte";
     import SettlementTellArt from "./overview/SettlementTellArt.svelte";
     import SettlementVitals from "./overview/SettlementVitals.svelte";
@@ -31,6 +32,7 @@
             <div class="icon-col">
                 <SettlementTellArt {settlement} />
                 <FloodPictogram floodLevel={settlement.floodLevel} />
+                <DitchGauge {settlement} />
                 {#if settlement.extremeFloods.length}
                     <div class="flood-icons">
                         {#each settlement.extremeFloods as flood, i (i)}

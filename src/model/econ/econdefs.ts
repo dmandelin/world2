@@ -20,7 +20,7 @@ export const SkillDefs = {
         (clan: Clan): number => clan.production.effortForProcesses(Processes.Agriculture),
     ),
     Irrigation: new SkillDef(3, 'Irrigation', 'skill-irrigation-256.png', '#3b82f6',
-        (clan: Clan): number => clan.isDitching ? 0.1 * clan.production.effortForProcesses(Processes.Agriculture) : 0,
+        (clan: Clan): number => clan.ditchingLabor,
     ),
     Construction: new SkillDef(4, 'Construction', 'skill-construction-256.png', '#8b5cf6',
         (clan: Clan): number => 0),

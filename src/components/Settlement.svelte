@@ -11,6 +11,7 @@
     import SettlementMigrationDetails from "./overview/SettlementMigrationDetails.svelte";
     import SettlementComparison from "./overview/SettlementComparison.svelte";
     import SettlementProductivity from "./SettlementProductivity.svelte";
+    import SettlementInfrastructure from "./SettlementInfrastructure.svelte";
     import SettlementMutualAid from "./SettlementMutualAid.svelte";
     import SettlementMarriages from "./SettlementMarriages.svelte";
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
@@ -30,6 +31,7 @@
         { label: "QoL", icon: "😊", snippet: qolTab, group: "settlement" },
         { label: "Econ", icon: "📊", snippet: econTab, group: "settlement" },
         { label: "Productivity", icon: "⚒️", snippet: productivityTab, group: "settlement" },
+        { label: "Infrastructure", icon: "🛠️", snippet: infrastructureTab, group: "settlement" },
         { label: "Trade", icon: "🏺", snippet: tradeTab, group: "settlement" },
         { label: "Migration", icon: "🚶", snippet: migrationTab, group: "settlement" },
         { label: "Rituals", icon: "✴", snippet: ritualsTab, group: "settlement" },
@@ -53,6 +55,10 @@
 
 {#snippet migrationTab()}
     <SettlementMigrationDetails {settlement} />
+{/snippet}
+
+{#snippet infrastructureTab()}
+    <SettlementInfrastructure {settlement} />
 {/snippet}
 
 {#snippet clansTab()}

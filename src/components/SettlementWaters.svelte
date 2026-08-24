@@ -1,17 +1,12 @@
 <script lang="ts">
     import { pct } from "../model/lib/format";
     import type { SettlementDTO } from "../model/records/dtos";
-    import { TwoDArrayTable } from "./tables/tables2";
-    import TableView2 from "./tables/TableView2.svelte";
     import Tooltip from "./Tooltip.svelte";
     import FloodPictogram from "./widgets/FloodPictogram.svelte";
     import ExtremeFloodIcon from "./widgets/ExtremeFloodIcon.svelte";
+    import DitchGauge from "./widgets/DitchGauge.svelte";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
-
-    let ditchTooltipTable = $derived(
-        new TwoDArrayTable(settlement.ditchTooltip),
-    );
 </script>
 
 <div class="waters">
@@ -44,13 +39,9 @@
             </Tooltip>
         </div>
         <div class="fact">
-            <span class="k">Ditch</span>
+            <span class="k">Ditch vs flood</span>
             <span class="v">
-                {#if settlement.ditchingLevel}
-                    {pct(settlement.ditchQuality)}
-                {:else}
-                    None
-                {/if}
+                <DitchGauge {settlement} />
             </span>
         </div>
     </div>
@@ -81,10 +72,11 @@
         </div>
     {/if}
 
-    {#if settlement.ditchingLevel}
-        <h3>Ditch Maintenance</h3>
-        <TableView2 table={ditchTooltipTable} />
-    {/if}
+    <h3>The Ditches</h3>
+    <p class="method">
+        <strong>{settlement.ditchingMethod.name}</strong>
+        &centerdot; {settlement.ditchingMethod.description}
+    </p>
 </div>
 
 <style>
@@ -137,6 +129,13 @@
     .flood-detail {
         font-size: 0.85rem;
         color: #6b5f3a;
+    }
+
+    .method {
+        margin: 0 0 1rem;
+        font-size: 0.85rem;
+        color: #6b5f3a;
+        max-width: 40rem;
     }
 
     h3 {

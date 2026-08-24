@@ -90,10 +90,14 @@ export class ProductivityItem {
         if (process !== Processes.Agriculture) return;
         floodLevel = floodLevel ?? clan.settlement.floodLevel;
 
-        const ditchQuality = clan.settlement.ditchQuality;
+        const settlement = clan.settlement;
         const effect = floodLevel.agricultureOn('alluvium');
         const baseProductivity = effect.unditched;
-        const productivity = effect.at(ditchQuality);
+        // What the ditches are worth against this year's water: nothing if
+        // they are too shallow for it, more than a full share if the crew
+        // that dug them knew their work.
+        const ditchEffect = settlement.ditchEffect;
+        const productivity = effect.at(ditchEffect);
         const differentialProductivity = baseProductivity > 0 ? productivity / baseProductivity : 1;
 
         // For now we'll assume migrations are neutral, because although they
@@ -108,7 +112,9 @@ export class ProductivityItem {
         yield new ProductivityItem(
             'Flood control',
             differentialProductivity,
-            pct(ditchQuality));
+            settlement.ditch?.building
+                ? `ditch ${settlement.ditchRating.toFixed(0)} vs flood ${settlement.floodRating.toFixed(0)}`
+                : 'no ditch');
 
         // Random component: agricultural yields are somewhat random.
         const v = 1 + 0.3 * (Math.random() + Math.random());

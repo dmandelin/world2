@@ -29,6 +29,7 @@
         `M0 ${look.waterY} q3 -2 6 0 t6 0 t6 0 t6 0 L24 24 L0 24 Z`,
     );
     let deaths = $derived(flood.deaths);
+    let helped = $derived(flood.clansHelpedByDitches);
 </script>
 
 {#snippet icon()}
@@ -67,6 +68,7 @@
         <div class="tip-head">{flood.kind.name}</div>
         <div class="tip-line">
             Struck {flood.areaName} &centerdot; {pct(flood.impact)} of it caught
+            &centerdot; pushing at {flood.rating.toFixed(0)}
         </div>
         <div class="tip-note">
             <div>
@@ -84,6 +86,18 @@
             {#if deaths >= 0.5}
                 <div class="tip-alert">{deaths.toFixed(0)} drowned</div>
             {/if}
+            <div>
+                {#if helped > 0}
+                    Ditches took the edge off for {helped} of them, halving what
+                    the water cost those clans in quality of life. Water like this
+                    is far too deep for ditches to hold, but one rating better than
+                    {(flood.rating / 2).toFixed(0)} still drains enough to matter.
+                {:else}
+                    No ditches deep enough to help: against a flood pushing at {flood.rating.toFixed(
+                        0,
+                    )} it would take a rating better than {(flood.rating / 2).toFixed(0)}.
+                {/if}
+            </div>
         </div>
     </div>
 </Tooltip>
@@ -109,7 +123,8 @@
     /* The tooltip shell is nowrap; let the detail lines wrap. */
     .tip {
         white-space: normal;
-        max-width: 24rem;
+        width: max-content;
+        max-width: 46rem;
     }
 
     .tip-head {

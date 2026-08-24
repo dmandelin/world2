@@ -138,12 +138,19 @@ export class EffortAllocation {
         const fCare = Math.min(1, 0.25 * this.clan.children / this.clan.effort);
         const fHelp = this.clan.helpAllocation.total;
         const fLeisure = Math.max(0.15, this.get(Activities.Leisure));
-        const reserved = fCare + fHelp + fLeisure;
+        // Work on the ditches is nobody's assignment: each clan gives what
+        // it is willing to give, and the rest of the year is arranged
+        // around it.
+        const fDitching = Math.min(
+            Math.max(0, 1 - fCare - fHelp - fLeisure),
+            this.clan.ditchingWillingness);
+        const reserved = fCare + fHelp + fLeisure + fDitching;
         const fProduction = Math.max(0, 1 - reserved);
 
         this.m_.set(Activities.Care, fCare);
         this.m_.set(Activities.Help, fHelp);
         this.m_.set(Activities.Leisure, fLeisure);
+        this.m_.set(Activities.Ditching, fDitching);
         this.m_.set(Activities.Production, fProduction);
 
         if (isExemplarClan(this.clan)) {
@@ -224,6 +231,12 @@ export class Activities {
         sortKey: 1,
         shortName: 'P',
         color: '#3b82f6',
+    };
+    static readonly Ditching: Activity = {
+        name: 'Ditching',
+        sortKey: 5,
+        shortName: 'D',
+        color: '#0891b2',
     };
 }
 

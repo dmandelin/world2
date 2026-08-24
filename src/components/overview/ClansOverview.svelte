@@ -741,7 +741,7 @@
                     -(c.distribution?.totalFoodToFlood ?? 0) /
                     (c.population || 1),
                 format: fmt2,
-                topics: ["food", "food:detail"],
+                topics: ["food:detail"],
             },
             {
                 label: "&nbsp;&nbsp;Gifts",

@@ -84,44 +84,48 @@ x   Map lens for flood levels (moved out of Deferred): one button
 Clans in a settlement have the option of building and maintaining
 a ditch around their fields to better regulate water flow.
 
-*   Who works on the ditches
-    *   Clans can choose the amount they work on the ditches in
+x   Who works on the ditches
+    x   Clans can choose the amount they work on the ditches in
         % of effort
-    *   Clans have these variable behaviors and judgments:
-        *   Clans can have a expectation for the % of effort
+    x   Clans have these variable behaviors and judgments:
+        x   Clans can have a expectation for the % of effort
             performed by each clan
-        *   Clans can admire other clans that contribute more than
+        x   Clans can admire other clans that contribute more than
             expected by (actual effort - expected effort) * coeff,
             with the coefficient being variable per clan. This is
             specifically an affect on *alignment*.
-    *   Variable behavior traits are initialized randomly.
+    x   Variable behavior traits are initialized randomly.
         Show them in the UI.
-*   Ditching organization methods
-    *   Ditching will always proceed under a named *organizational method*
+x   Ditching organization methods
+    x   Ditching will always proceed under a named *organizational method*
         which structures the work and determines its coordination
         and characteristics.
-    *   The initial organization will be "At Will", meaning anyone who
+    x   The initial organization will be "At Will", meaning anyone who
         wants to work on the ditches works on them when they want to.
-*   At Will ditching maintenance
-    *   Let's scale things so that building a normal, fully effective
+x   At Will ditching maintenance
+    x   Let's scale things so that building a normal, fully effective
         ditch for a settlement of 150 takes 10% of overall effort,
         and the per capita cost is inverse square with the population.
-    *   The amount effort done compared to effort required determines
+    x   The amount effort done compared to effort required determines
         the depth of the ditch: square it to get the "effective relative
         depth", and multiply by 100 for normal display.
-    *   Different skill levels
-        *   For now we're folding this into effective depth, since in
+    x   Different skill levels (REPLACED during implementation: the flaw
+        and monitoring model below was dropped in favor of a flat penalty
+        of 1 rating point per worker-turn of effort past what the
+        organizational method can hold together -- 5 for At Will. Skill
+        now enters only through the productivity factor further down.)
+        x   For now we're folding this into effective depth, since in
             some sense flaws and depth are just things that create a
             failure chance.
-        *   At small enough scale, more skilled workers can fix most
+        x   At small enough scale, more skilled workers can fix most
             of the mistakes of others.
-        *   Modeling this for now:
-            *   Each point of effort introduces potential flaws that
+        x   Modeling this for now:
+            x   Each point of effort introduces potential flaws that
                 lower the effective depth of the ditch. This penalty
                 by itself lowers the ditch effective depth (maybe
                 we should just call it "rating") by 5 at skill 50,
                 10 at skill 0, 0 at skill 100.
-            *   Each clan can catch flaws introduced by another clan,
+            x   Each clan can catch flaws introduced by another clan,
                 helping reduce errors. Up to 5 units of effort can
                 be monitored in this way, using a skill level that's
                 the average of skill levels weighted by clan pop *
@@ -131,40 +135,61 @@ a ditch around their fields to better regulate water flow.
                 This monitoring happens automatically. If there are
                 more than 5 units of effort, scale down the flaw
                 penalty reduction proportionally.
-*   Effects of basic ditching
-    *   Normal floods
-        *   Take the flood rating to be a value based on the flood
+x   Effects of basic ditching
+    x   Normal floods
+        x   Take the flood rating to be a value based on the flood
             level: 20 * (normal flood level + 1) - 10 + d10 - d10
-        *   If the ditch rating is greater than or equal to the flood
-            rating, then the ditch has full effect. Otherwise, do an
-            exponential where 1 point below has 0.9 times the effect,
-            but 20 points below there is 0 effect.
-        *   Baseline effect of ditching at skill level 50 is to change
+        x   AMENDED during implementation: no minimum depth. The ditch
+            gets min(1, ditch rating / flood rating) of the effect, so a
+            ditch built for half the water does half the good. (Was: full
+            effect at or above the flood rating, exponential falloff below.)
+        x   Baseline effect of ditching at skill level 50 is to change
             crop yields for the 5 levels to be: 80%, 90%, 100%, 110%, 120%
             (change the unditched yields to 60%, 75%, 90%, 75%, 60%)
-        *   Multiply productivity difference by a factor that depends on
-            skill, giving about half the productivity bonus at skill 25
-            and about 1.5x the productivity bonus at skill 100
-    *   Extreme floods
-        *   These small ditches won't do too much about extreme
+        x   AMENDED during implementation: skill factor is
+            2^((skill - 50)/15), clamped to a maximum of 2. So 1x at
+            skill 50, 2x at 65 and above, 0.5x at 35, and never quite
+            zero. (Was: half the bonus at skill 25, 1.5x at skill 100,
+            which hit zero at skill 12.5 and left a long dead zone.)
+        x   Clans start with irrigation skill uniform on 10-30 plus the
+            lowest of 3 d20: mean near 25, with the occasional clan
+            that has a real hand for it.
+    x   Extreme floods
+        x   These small ditches won't do too much about extreme
             floods, but we'll give them a chance of helping a bit
             in the defense
-        *   Depth is automatically too deep - no test there
-        *   Test failure chance 
+        x   Big-flood ratings: 125 + d25 - d25, 150 + d25 - d25,
+            200 + d50 - d50. If the ditch rating is above half the
+            big-flood rating, the QoL loss is reduced by 50%.
 
-*   UI
-    *   Show ditch rating and flood rating near the flood icon
-    *   Add Infrastructure panel with button below productivity showing
+x   UI
+    x   Show ditch rating and flood rating near the flood icon
+    x   Add Infrastructure panel with button below productivity showing
         clans in columns with their related behavioral traits, skills,
         effort level, contribution to ditch, and the resulting overall
         rating and expected effect vs flood levels
-    *   Tooltip for flood icon should show whether ditch held and resulting
+    x   Tooltip for flood icon should show whether ditch held and resulting
         effects
-        *   Ideally also show this upfront in simple form or maybe pictorially
+        x   Ideally also show this upfront in simple form or maybe pictorially
+
+*   *** Fix up ditching math
+    *   Effect of skill doesn't look right
+    *   Effect of ditch might not be right either
+    *   Get a better sense of how ditch depth and quality
+        intersect with flood level
 
 # Deferred: Don't implement now
 
 *   Infrastructure carry-over between years
 *   Make sure we have something with river avulsions
-
+*   Norms for infra work
+*   Leadership for infra work
+*   Inspection as an option
+*   Some kind of flaw factor penalizing low-quality
+    unsupervised work
+*   Some kind of ditch total failure mode
+*   Add some kind of coordination requirement to get
+    the ditch actually finished
+*   Piety impact on labor levels and norm enforcement
+*   Intelligence impact on decisions and norms
 *   Disease impact of flood levels

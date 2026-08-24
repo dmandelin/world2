@@ -89,6 +89,7 @@ export class Alignment {
             ...interactions
                 .filter(interaction => !(interaction instanceof BasicInteraction))
                 .map(interaction => AlignmentItem.from(interaction.alignmentItem(subject, object))),
+            AlignmentItem.forDitching(subject, object),
             AlignmentItem.forGifts(subject, object),
             AlignmentItem.forGenerosity(subject, object),
             AlignmentItem.forPiety(subject, object),
@@ -138,6 +139,28 @@ export class AlignmentItem {
     // already fully baked (modifier 1).
     static from(item: GenericItem): AlignmentItem {
         return new AlignmentItem(item.label, item.value, 1, item.explanation);
+    }
+
+    // Work on the common ditches. Every clan holds its own idea of what a
+    // neighbor owes the ditches, and thinks the better of one that digs past
+    // it -- and the worse of one that leaves the work to everybody else. How
+    // much it matters is a disposition, so some clans keep close count and
+    // others barely notice. Only within a settlement: clans elsewhere dig
+    // ditches this one neither uses nor sees.
+    static forDitching(subject: Clan, object: Clan): AlignmentItem {
+        if (subject.settlement !== object.settlement) {
+            return new AlignmentItem('Ditching', 0, 0, 'not our ditches');
+        }
+        const expected = subject.traits.ditchingExpectation;
+        const actual = object.ditchingEffortShare;
+        // In points of effort, so the disposition reads per point.
+        const surplus = 100 * (actual - expected);
+        return new AlignmentItem(
+            'Ditching',
+            surplus,
+            subject.traits.ditchingAdmiration,
+            `${pct(actual)} of effort on the ditches vs ${pct(expected)} expected`,
+        );
     }
 
     // The personal side of generosity: gifts and aid felt as aimed at us

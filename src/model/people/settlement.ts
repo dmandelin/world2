@@ -1,6 +1,6 @@
 import { isExemplarClan } from "../lib/debug";
 import { shuffled, sumFun } from "../lib/basics";
-import { DitchMaintenanceCalc } from "../infrastructure";
+import { DitchCalc, DitchingMethod, DitchingMethods } from "../infrastructure";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
 import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
@@ -28,11 +28,13 @@ export class Settlement {
 
     // Environment.
     private floodLevel_: FloodLevel = FloodLevels.Moderate;
+    // How hard this year's water pushes against the ditches, on the same
+    // scale as a ditch's rating.
+    private floodRating_: number = 0;
 
     // Infrastructure.
-    ditchingLevel = 0;
-    ditchQuality = 0.3;
-    maintenanceCalc: DitchMaintenanceCalc | undefined;
+    ditchingMethod: DitchingMethod = DitchingMethods.AtWill;
+    ditch: DitchCalc | undefined;
 
     readonly timeline = new Timeline<SettlementTimePoint>();
 
@@ -48,6 +50,7 @@ export class Settlement {
 
         // Until the next flood, a new settlement sees what its cluster sees.
         this.floodLevel_ = cluster.floodLevel;
+        this.floodRating_ = cluster.floodLevel.randomRating();
 
         cluster.settlements.push(this);
         if (this.parent) {
@@ -106,14 +109,31 @@ export class Settlement {
         return this.floodLevel_;
     }
 
+    get floodRating(): number {
+        return this.floodRating_;
+    }
+
     updateFloodLevel(level: FloodLevel): void {
         this.floodLevel_ = level;
+        this.floodRating_ = level.randomRating();
+    }
+
+    // What the ditches around the fields are worth this year, and how much
+    // of a full-strength ditch's benefit they deliver against the water.
+    get ditchRating(): number {
+        return this.ditch?.rating ?? 0;
+    }
+
+    get ditchEffect(): number {
+        return this.ditch?.effectAgainst(this.floodRating_) ?? 0;
+    }
+
+    get ditchHolds(): boolean {
+        return !!this.ditch?.holdsAgainst(this.floodRating_);
     }
 
     maintain() {
-        this.maintenanceCalc = new DitchMaintenanceCalc(this);
-        this.ditchingLevel = this.maintenanceCalc.items.length ? 1 : 0;
-        this.ditchQuality = this.maintenanceCalc.quality;
+        this.ditch = new DitchCalc(this);
     }
 
     growTell(previousEffectiveResidentPopulation: number) {

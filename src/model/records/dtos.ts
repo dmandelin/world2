@@ -8,6 +8,7 @@ import type { Consumption } from "../econ/consumption";
 import type { DiseaseLoadCalc } from "../environment/pathogens";
 import type { EffortAllocation } from "../decisions/effort";
 import type { ClanFloodDamage, ExtremeFlood, FloodLevel } from "../environment/flood";
+import type { DitchCalc, DitchingMethod } from "../infrastructure";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
@@ -106,7 +107,9 @@ export class ClanDTO {
     stress: Stress;
     qol: QualityOfLife;
 
-    isDitching: boolean;
+    // What this clan put into the settlement's ditches this year.
+    ditchingEffortShare: number;
+    ditchingLabor: number;
     effortAllocation: EffortAllocation;
     workers: number;
     seniority: number;
@@ -154,7 +157,8 @@ export class ClanDTO {
         this.stress = clan.stress.clone();
         this.qol = clan.qol;
 
-        this.isDitching = clan.isDitching;
+        this.ditchingEffortShare = clan.ditchingEffortShare;
+        this.ditchingLabor = clan.ditchingLabor;
         this.effortAllocation = clan.effortAllocation.clone();
         this.seniority = clan.seniority;
         this.population = clan.population;
@@ -275,10 +279,10 @@ export class SettlementDTO {
     readonly clans: ClanDTO[];
     readonly localTradeGoods: TradeGood[];
 
-    readonly ditchingLevel: number;
-    readonly ditchQuality: number;
-    readonly ditchTooltip: string[][];
+    readonly ditchingMethod: DitchingMethod;
+    readonly ditch: DitchCalc | undefined;
     readonly floodLevel: FloodLevel;
+    readonly floodRating: number;
     readonly refoundedAfterRiverShift: boolean;
     readonly newSettlementDecisionReport: NewSettlementDecisionReport | undefined;
 
@@ -302,14 +306,26 @@ export class SettlementDTO {
 
         this.localTradeGoods = [...settlement.localTradeGoods];
 
-        this.ditchingLevel = settlement.ditchingLevel;
-        this.ditchQuality = settlement.ditchQuality;
-        this.ditchTooltip = settlement.maintenanceCalc?.tooltip ?? [];
+        this.ditchingMethod = settlement.ditchingMethod;
+        this.ditch = settlement.ditch;
         this.floodLevel = settlement.floodLevel;
+        this.floodRating = settlement.floodRating;
         this.refoundedAfterRiverShift = settlement.refoundedAfterRiverShift;
         this.newSettlementDecisionReport = settlement.newSettlementDecisionReport;
 
         this.timeline = settlement.timeline;
+    }
+
+    get ditchRating(): number {
+        return this.ditch?.rating ?? 0;
+    }
+
+    get ditchEffect(): number {
+        return this.ditch?.effectAgainst(this.floodRating) ?? 0;
+    }
+
+    get ditchHolds(): boolean {
+        return !!this.ditch?.holdsAgainst(this.floodRating);
     }
 
     // The extreme floods that caught any clan living here this year.

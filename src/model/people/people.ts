@@ -2,7 +2,7 @@ import { Annals } from "../annals";
 import { log } from "../lib/debug";
 import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
-import { EffortAllocation } from "../decisions/effort";
+import { Activities, EffortAllocation } from "../decisions/effort";
 import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
 import { HousingDecision } from "../decisions/housingdecision";
@@ -121,7 +121,20 @@ export class Clan implements TradePartner {
     housingDecision: HousingDecision | undefined;
     housing = HousingTypes.Huts;
 
-    isDitching = false;
+    // What this clan is willing to put into the ditches, and what it
+    // actually did. Under "At Will" these are the same; a later
+    // organizational method may separate them.
+    get ditchingWillingness(): number {
+        return this.traits.ditchingEffort;
+    }
+
+    get ditchingEffortShare(): number {
+        return this.effortAllocation.get(Activities.Ditching);
+    }
+
+    get ditchingLabor(): number {
+        return this.ditchingEffortShare * this.effort;
+    }
 
     effortAllocation: EffortAllocation;
     helpAllocation: HelpAllocation = new HelpAllocation();
@@ -378,8 +391,9 @@ export class Clan implements TradePartner {
     }
 
     planMaintenance() {
-        // This is a current maintenance activity and for now everyone does it.
-        this.isDitching = true;
+        // Under "At Will" there is nothing to plan: each clan works on the
+        // ditches as much as it cares to, and that willingness is a trait.
+        // Organizational methods that assign the work will decide it here.
     }
 
     planHousing() {

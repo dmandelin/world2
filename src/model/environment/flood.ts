@@ -32,13 +32,15 @@ export class FloodAgricultureEffect {
     constructor(
         // Yield factor with no ditching at all.
         readonly unditched: number,
-        // Yield factor with ditches in perfect repair.
+        // Yield factor behind a sound ditch dug by a crew of middling skill.
         readonly ditched: number,
     ) {}
 
-    // Yield factor at a given quality of flood control (0-1).
-    at(ditchQuality: number): number {
-        return this.unditched + (this.ditched - this.unditched) * ditchQuality;
+    // Yield factor for a given strength of flood control, where 0 is no
+    // working ditch and 1 is a sound one dug by a crew of middling skill.
+    // Skilled crews run past 1 and do better still.
+    at(ditchEffect: number): number {
+        return this.unditched + (this.ditched - this.unditched) * ditchEffect;
     }
 }
 
@@ -64,22 +66,29 @@ export class FloodLevel {
         return 1 - (1 - this.expectedRiverShifts) ** yearsElapsed;
     }
 
+    // How hard the water pushes against the ditches in a given year: a
+    // figure on the same scale as a ditch's rating, rising twenty points a
+    // level and varying by a few points either way from year to year.
+    randomRating(): number {
+        return 20 * (this.index + 1) - 10 + dice(1, 10, 0) - dice(1, 10, 0);
+    }
+
     static max(a: FloodLevel, b: FloodLevel): FloodLevel {
         return a.index > b.index ? a : b;
     }
 }
 
-// Unditched alluvium yields most at a moderate flood and about two thirds
-// of that at either extreme. Ditching flattens the curve: it holds water
-// back in a scant year and carries it off in an abundant one, so its worst
-// years are much better than the unditched worst years even though its
-// best year is only somewhat better.
+// Unditched alluvium yields most at a moderate flood and falls away at
+// either extreme. Behind a working ditch the curve turns the other way
+// round: water held back in a scant year and carried off in an abundant one
+// means the more water there is, the better the year, and an abundant flood
+// becomes the best year of all rather than the worst.
 export const FloodLevels = {
     Scant: new FloodLevel(
         0,
         'Scant',
         'The rivers barely rose; much of the land stayed dry',
-        { alluvium: new FloodAgricultureEffect(0.67, 0.90) },
+        { alluvium: new FloodAgricultureEffect(0.60, 0.80) },
         0.002,
         0.00,
     ),
@@ -87,7 +96,7 @@ export const FloodLevels = {
         1,
         'Low',
         'The rivers rose less than usual',
-        { alluvium: new FloodAgricultureEffect(0.88, 1.05) },
+        { alluvium: new FloodAgricultureEffect(0.75, 0.90) },
         0.005,
         0.01,
     ),
@@ -95,7 +104,7 @@ export const FloodLevels = {
         2,
         'Moderate',
         'The rivers rose about as they usually do',
-        { alluvium: new FloodAgricultureEffect(1.00, 1.15) },
+        { alluvium: new FloodAgricultureEffect(0.90, 1.00) },
         0.010,
         0.02,
     ),
@@ -103,7 +112,7 @@ export const FloodLevels = {
         3,
         'High',
         'The rivers rose more than usual',
-        { alluvium: new FloodAgricultureEffect(0.88, 1.10) },
+        { alluvium: new FloodAgricultureEffect(0.75, 1.10) },
         0.015,
         0.04,
     ),
@@ -111,7 +120,7 @@ export const FloodLevels = {
         4,
         'Abundant',
         'The rivers spilled far across the fields',
-        { alluvium: new FloodAgricultureEffect(0.67, 0.95) },
+        { alluvium: new FloodAgricultureEffect(0.60, 1.20) },
         0.020,
         0.07,
     ),
@@ -205,6 +214,9 @@ export class ExtremeFloodKind {
         readonly qolDamage: () => number,
         // Chance a caught clan's people die in the water.
         readonly deathRisk: () => number,
+        // How hard the water pushes, on a ditch's rating scale. Far past
+        // anything a ditch around the fields can simply hold back.
+        readonly rating: () => number,
     ) {}
 
     // How hard this particular flood came down, and so what share of the
@@ -222,18 +234,21 @@ export const ExtremeFloodKinds = {
         () => Math.min(dice(1, 60, 0), dice(1, 60, 0)) / 100,
         () => Math.min(dice(1, 10, 0), dice(1, 10, 0)),
         () => 0,
+        () => 125 + dice(1, 25, 0) - dice(1, 25, 0),
     ),
     HundredYear: new ExtremeFloodKind(
         'flood100', '100-year flood', 100, 0.01, 0.3, 0.6,
         () => Math.min(1, (30 + dice(1, 100, 0)) / 100),
         () => dice(1, 10, 0),
         () => 0.01,
+        () => 150 + dice(1, 25, 0) - dice(1, 25, 0),
     ),
     FiveHundredYear: new ExtremeFloodKind(
         'flood500', '500-year flood', 500, 0.002, 0.4, 0.8,
         () => Math.min(1, (20 + dice(2, 60, 0)) / 100),
         () => Math.max(dice(1, 10, 0), dice(1, 10, 0)),
         () => dice(2, 5, 0) / 100,
+        () => 200 + dice(1, 50, 0) - dice(1, 50, 0),
     ),
 };
 
@@ -255,6 +270,10 @@ export class ClanFloodImpact {
         readonly cropLoss: number,
         readonly qolDamage: number,
         readonly deathRisk: number,
+        // Whether the settlement's ditch was deep enough to take the edge
+        // off. It cannot hold water like this back, but it can carry some
+        // of it away and spare the people the worst of the ruin.
+        readonly ditchHelped: boolean,
     ) {}
 }
 
@@ -274,6 +293,8 @@ export class ExtremeFlood {
         // 0-1: how much of its area this one really caught.
         readonly impact: number,
         readonly area: FloodArea,
+        // How hard this one pushed, on a ditch's rating scale.
+        readonly rating: number,
     ) {}
 
     // Where it struck, for display.
@@ -299,17 +320,30 @@ export class ExtremeFlood {
         }
     }
 
+    // A ditch this far behind the water cannot hold it, but one better than
+    // half its rating still drains and diverts enough to halve the misery.
+    helpsAgainst(ditchRating: number): boolean {
+        return ditchRating > this.rating / 2;
+    }
+
     // Roll every clan in the path, and record the ones it caught.
     strike(clans: Iterable<Clan>): void {
         for (const clan of clans) {
             if (!this.covers(clan)) continue;
             if (Math.random() >= this.impact) continue;
+            const ditchHelped = this.helpsAgainst(clan.settlement.ditchRating);
+            const qolDamage = this.kind.qolDamage() * (ditchHelped ? 0.5 : 1);
             const item = new ClanFloodImpact(
-                this, clan, this.kind.cropLoss(), this.kind.qolDamage(),
-                this.kind.deathRisk());
+                this, clan, this.kind.cropLoss(), qolDamage,
+                this.kind.deathRisk(), ditchHelped);
             this.impacts.push(item);
             clan.floodDamage.add(item);
         }
+    }
+
+    // How many of the clans it caught had a ditch that took the edge off.
+    get clansHelpedByDitches(): number {
+        return this.impacts.filter(i => i.ditchHelped).length;
     }
 
     get clansAffected(): number {
@@ -425,7 +459,7 @@ export function updateExtremeFloods(
     for (const cluster of clusters) {
         if (Math.random() < k20.annualProbability) {
             floods.push(new ExtremeFlood(
-                k20, k20.randomImpact(), { kind: 'cluster', cluster }));
+                k20, k20.randomImpact(), { kind: 'cluster', cluster }, k20.rating()));
         }
     }
 
@@ -434,7 +468,7 @@ export function updateExtremeFloods(
     for (const half of ['upriver', 'downriver'] as MapHalf[]) {
         if (Math.random() < k100.annualProbability) {
             floods.push(new ExtremeFlood(
-                k100, k100.randomImpact(), { kind: 'half', half }));
+                k100, k100.randomImpact(), { kind: 'half', half }, k100.rating()));
         }
     }
 
@@ -442,7 +476,7 @@ export function updateExtremeFloods(
     const k500 = ExtremeFloodKinds.FiveHundredYear;
     if (Math.random() < k500.annualProbability) {
         floods.push(new ExtremeFlood(
-            k500, k500.randomImpact(), { kind: 'map' }));
+            k500, k500.randomImpact(), { kind: 'map' }, k500.rating()));
     }
 
     for (const flood of floods) flood.strike(clans);

@@ -386,9 +386,9 @@ export class World implements NoteTaker {
             this.beginningOfTurnSnapshot_ = new WorldDTO(this);
         }
 
-        // Nature decides.
+        // Nature decides how high the rivers run. What breaks out on top of
+        // that waits until the ditches for the year are dug, below.
         updateFloodLevels(this.clusters);
-        this.extremeFloods = updateExtremeFloods(this.clusters, this.allClans);
 
         // Advance for cross-cluster events.
         this.conflicts.advance();
@@ -423,6 +423,9 @@ export class World implements NoteTaker {
                 settlement.maintain();
             }
         }
+
+        // Now that this year's ditches stand, see what breaks out over them.
+        this.extremeFloods = updateExtremeFloods(this.clusters, this.allClans);
 
         // Troubles that call for a rite, and how the rites went. Settled
         // before the economy, which charges for them, and before the year's
