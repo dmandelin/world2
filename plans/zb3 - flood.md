@@ -172,29 +172,36 @@ x   UI
         effects
         x   Ideally also show this upfront in simple form or maybe pictorially
 
-*   *** Fix up ditching math
-    *   Effect of skill doesn't look right
-    *   Effect of ditch might not be right either
-    *   Get a better sense of how ditch depth and quality
-        intersect with flood level
+x   Make sure irrigation skill can increase over time
+    x   Necessary for related productivity increase
 
 # Deferred: Don't implement now
 
-*   Make sure key effects are there
-    *   productivity
-    *   alignment
-
-*   Make sure irrigation skill can increase over time
-*   Infrastructure carry-over between years
-*   Make sure we have something with river avulsions
-*   Norms for infra work
 *   Leadership for infra work
-*   Inspection as an option
-*   Some kind of flaw factor penalizing low-quality
-    unsupervised work
-*   Some kind of ditch total failure mode
+    *   Introduces another leadership category
+        (Add ritual leaders first though)
+
+*   Make sure we have something with river avulsions   
+    *   Important to our residence/permanence model
+
+*   More on skill differentials
+    *   Does low skill increase the chance of flaws?
+    *   Can inspections or leadership help?
+    *   Bring back imitation learning
+    *   (Looking ahead) tech step for canal irrigation
+
 *   Add some kind of coordination requirement to get
     the ditch actually finished
+    *   Logically there would be a coordination
+        problem here
+
 *   Piety impact on labor levels and norm enforcement
 *   Intelligence impact on decisions and norms
+
+*   Infrastructure carry-over between years
+    *   Logically some could take longer to build
+    
 *   Disease impact of flood levels
+
+*   Get a better sense of how ditch depth and quality
+    intersect with flood level

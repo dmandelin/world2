@@ -28,6 +28,17 @@ export class SkillDef implements Tagged {
         readonly getEffort: (clan: Clan) => number = () => 0,
         readonly resetsOnMove: boolean = false,
         readonly clanSkill: boolean = false,
+        // How hard this skill is to get and to keep, with 1 as ordinary.
+        // A harder skill is picked up more slowly, and its tradition is
+        // harder to pass on intact, so it also decays faster. The factor is
+        // split evenly across the two sides -- learning goes as
+        // 1/sqrt(difficulty) and error as sqrt(difficulty) -- so the ceiling
+        // falls with difficulty itself:
+        //     ceiling = 50 * focusFactor * intellectFactor / difficulty
+        // reached with a time constant of 200 / sqrt(difficulty) years.
+        // Turning this one number down raises the ceiling and stretches the
+        // climb toward it together.
+        readonly difficulty: number = 1,
     ) { }
 }
 

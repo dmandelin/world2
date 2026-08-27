@@ -117,7 +117,11 @@ export class ClanSkillChange {
         readonly skill: ClanSkill,
     ) {
         // Base per-year rates
-        const lossFactor = 0.005 * this.elapsedYears;
+        // A harder tradition takes more damage in the passing on. Half the
+        // difficulty falls here and half on the learning below, so the two
+        // together move the ceiling by the difficulty itself.
+        const lossFactor =
+            0.005 * this.elapsedYears * Math.sqrt(skillDef.difficulty);
 
         // Maintaining traditions
         this.initialValue = skill.value;
@@ -213,7 +217,8 @@ export class ClanSkillChange {
         //        but still allow some. However, this has a big impact on
         //        tuning so must be done carefully.
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
-        const observationRate = 0.25 * this.elapsedYears * this.focusFactor * clanSkillFactor * this.intellectFactor;
+        const observationRate = 0.25 * this.elapsedYears * this.focusFactor
+            * clanSkillFactor * this.intellectFactor / Math.sqrt(skillDef.difficulty);
         const expectedDeltaFromObservation = observationRate;
         const deltaFromObservation = stochasticRound(expectedDeltaFromObservation);
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));

@@ -231,9 +231,14 @@
             {
                 label: "Worth this year",
                 value: pct(settlement.ditchEffect),
-                note: `Of a full ditch: ${pct(ditch.depthCreditAgainst(settlement.floodRating))} `
-                    + `for depth, times ${pct(ditchSkillFactor(ditch.skill))} for the `
-                    + `crew's skill`,
+                note: `Of a full ditch: `
+                    + `${pct(ditch.depthCreditAgainst(settlement.floodRating))} for `
+                    + `depth, times ${pct(ditchSkillFactor(ditch.skill))} for the `
+                    + `crew's skill`
+                    + (ditch.cappedAgainst(settlement.floodRating)
+                        ? `, held at 100% -- a ditch can do no more than all the `
+                          + `good a ditch can do`
+                        : ``),
             },
         ];
     });

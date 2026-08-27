@@ -93,9 +93,8 @@ export class ProductivityItem {
         const settlement = clan.settlement;
         const effect = floodLevel.agricultureOn('alluvium');
         const baseProductivity = effect.unditched;
-        // What the ditches are worth against this year's water: nothing if
-        // they are too shallow for it, more than a full share if the crew
-        // that dug them knew their work.
+        // What the ditches are worth against this year's water: their share
+        // of it if they are too shallow, and at most a whole ditch's worth.
         const ditchEffect = settlement.ditchEffect;
         const productivity = effect.at(ditchEffect);
         const differentialProductivity = baseProductivity > 0 ? productivity / baseProductivity : 1;

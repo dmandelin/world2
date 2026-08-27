@@ -104,6 +104,12 @@ export function ditchDepthCredit(rating: number, floodRating: number): number {
 const SKILL_FACTOR_DOUBLING = 15;
 const MAX_SKILL_FACTOR = 2;
 
+// However deep the ditch and however good the crew, a ditch can do no more
+// than all the good a ditch can do. Skill past that point makes up for a
+// ditch too shallow for the year's water rather than adding on top of one
+// that is deep enough.
+const MAX_DITCH_EFFECT = 1;
+
 export function ditchSkillFactor(skill: number): number {
     return Math.min(MAX_SKILL_FACTOR, 2 ** ((skill - 50) / SKILL_FACTOR_DOUBLING));
 }
@@ -213,10 +219,18 @@ export class DitchCalc {
     }
 
     // How much of a full-strength ditch this one amounts to against a flood
-    // of the given rating, counting both depth and the crew's skill. 1 is a
-    // sound ditch dug by a middling crew; skilled crews go past that.
+    // of the given rating, counting both depth and the crew's skill, and
+    // capped at a whole one.
     effectAgainst(floodRating: number): number {
-        return this.depthCreditAgainst(floodRating) * ditchSkillFactor(this.skill);
+        return Math.min(MAX_DITCH_EFFECT,
+            this.depthCreditAgainst(floodRating) * ditchSkillFactor(this.skill));
+    }
+
+    // Whether depth and skill together came to more than a ditch can deliver,
+    // so that the cap is what is holding the figure down.
+    cappedAgainst(floodRating: number): boolean {
+        return this.depthCreditAgainst(floodRating) * ditchSkillFactor(this.skill)
+            > MAX_DITCH_EFFECT;
     }
 
     // The depth side of that on its own: what share of this year's water the
