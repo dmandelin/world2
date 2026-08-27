@@ -65,9 +65,10 @@
             </div>
             <div class="tip-note">
                 <div>
-                    {ditch.effort.toFixed(1)} effort ({pct(ditch.effortShare)} of
-                    everyone's year) around {ditch.land.toFixed(0)} of land; a full
-                    ditch here would take {ditch.requiredEffort.toFixed(1)}
+                    {ditch.rawEffort.toFixed(1)} worker-turns ({pct(ditch.effortShare)}
+                    of everyone's year), worth {ditch.effort.toFixed(1)} at digging,
+                    around {ditch.land.toFixed(0)} of land; a full ditch here would
+                    take {ditch.requiredEffort.toFixed(1)}
                 </div>
                 <div>
                     Digging alone rates {ditch.baseRating.toFixed(0)}{#if ditch.coordinationPenalty > 0}, less

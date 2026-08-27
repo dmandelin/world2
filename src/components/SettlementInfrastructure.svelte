@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { pct, unsigned } from "../model/lib/format";
+    import { pct, spct, unsigned } from "../model/lib/format";
     import { populationAverage } from "../model/lib/modelbasics";
     import { FLOOD_LEVELS } from "../model/environment/flood";
     import { ditchSkillFactor } from "../model/infrastructure";
@@ -25,8 +25,14 @@
         value: (clan: ClanDTO) => number;
         format: (v: number) => string;
         // What to show in the settlement-wide column: an average over the
-        // clans, or a total.
+        // clans, a total, or a figure of its own.
         aggregate?: "average" | "sum" | "none";
+        // For "none": the settlement-wide figure to show instead.
+        total?: () => number;
+        // Rule above this row, to mark off a step of the calculation.
+        divider?: boolean;
+        // Per-cell detail, e.g. the productivity items behind a factor.
+        cellTooltip?: boolean;
     }
 
     let clanRows = $derived.by<ClanRow[]>(() => [
@@ -67,18 +73,48 @@
             value: (c) => work(c)?.effortShare ?? 0,
             format: (v) => pct(v, 1),
             aggregate: "none",
+            total: () => ditch?.effortShare ?? 0,
+            divider: true,
         },
         {
-            label: "Work contributed",
-            tooltip: "That effort in working hands.",
+            label: "× Workers",
+            tooltip: "Hands the clan has to spend at all: its adults.",
+            value: (c) => work(c)?.workers ?? c.workers,
+            format: (v) => v.toFixed(0),
+            aggregate: "sum",
+        },
+        {
+            label: "= Worker-turns",
+            tooltip: "Share of effort times workers: the plain time spent digging.",
             value: (c) => work(c)?.labor ?? 0,
+            format: (v) => v.toFixed(1),
+            aggregate: "sum",
+        },
+        {
+            label: "× Productivity",
+            tooltip:
+                "How much ditch this clan moves per worker-turn, against a clan "
+                + "of middling irrigation skill. Hover a cell for the parts.",
+            value: (c) => work(c)?.productivity.tfp ?? 1,
+            format: (v) => spct(v),
+            aggregate: "none",
+            total: () => ditch?.productivity ?? 1,
+            cellTooltip: true,
+        },
+        {
+            label: "= Effort dug",
+            tooltip:
+                "Productivity-adjusted worker-turns. This is the effort the ditch "
+                + "depth is figured from.",
+            value: (c) => work(c)?.adjustedLabor ?? 0,
             format: (v) => v.toFixed(1),
             aggregate: "sum",
         },
         {
             label: "Share of the work",
             value: (c) =>
-                ditch && ditch.effort > 0 ? (work(c)?.labor ?? 0) / ditch.effort : 0,
+                ditch && ditch.effort > 0
+                    ? (work(c)?.adjustedLabor ?? 0) / ditch.effort : 0,
             format: (v) => pct(v),
             aggregate: "sum",
         },
@@ -94,7 +130,7 @@
                 valueFn: (row: ClanRow) => {
                     if (clans.length === 0) return "-";
                     if (row.aggregate === "none") {
-                        return row.format(ditch?.effortShare ?? 0);
+                        return row.format(row.total ? row.total() : 0);
                     }
                     if (row.aggregate === "sum") {
                         return row.format(
@@ -116,6 +152,8 @@
             data: row,
             label: row.label,
             headerTooltip: row.tooltip,
+            divider: row.divider,
+            tooltip: row.cellTooltip ? productivityTooltip : undefined,
         }));
 
         return { columns: columns as any, rows };
@@ -152,8 +190,15 @@
             },
             {
                 label: "Effort given",
+                value: ditch.rawEffort.toFixed(1),
+                note: `Worker-turns actually spent digging, `
+                    + `${pct(ditch.effortShare)} of everyone's year`,
+            },
+            {
+                label: "Effort dug",
                 value: ditch.effort.toFixed(1),
-                note: `${pct(ditch.effortShare)} of everyone's year`,
+                note: `Those worker-turns at ${spct(ditch.productivity)} productivity, `
+                    + `which is what the depth is figured from`,
             },
             {
                 label: "Rating from digging",
@@ -270,6 +315,23 @@
     import { SkillDefs } from "../model/econ/econdefs";
     const IRRIGATION = SkillDefs.Irrigation;
 </script>
+
+{#snippet productivityTooltip(_value: any, _row: ClanRow, clan: ClanDTO | null)}
+    {#if clan}
+        {@const p = work(clan)?.productivity}
+        <div><strong>{clan.name}</strong> at ditching</div>
+        {#if p}
+            {#each p.items as item, i (i)}
+                <div>{item.label}: {spct(item.value)} &centerdot; {item.explanation}</div>
+            {/each}
+            <div>Together: {spct(p.tfp)}</div>
+        {:else}
+            <div>Did no work on the ditches this year.</div>
+        {/if}
+    {:else}
+        <div>Everyone's worker-turns together, weighted by what each is worth.</div>
+    {/if}
+{/snippet}
 
 {#snippet settlementHeader()}
     <div class="col-header-inner">

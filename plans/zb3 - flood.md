@@ -180,6 +180,11 @@ x   UI
 
 # Deferred: Don't implement now
 
+*   Make sure key effects are there
+    *   productivity
+    *   alignment
+
+*   Make sure irrigation skill can increase over time
 *   Infrastructure carry-over between years
 *   Make sure we have something with river avulsions
 *   Norms for infra work

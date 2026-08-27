@@ -3,6 +3,7 @@ import type { Clan } from './people/people';
 import { sumFun } from './lib/basics';
 import { populationAverage } from './lib/modelbasics';
 import { Processes, SkillDefs } from './econ/econdefs';
+import { Productivity, ProductivityItem } from './econ/productivity';
 
 // Basic flood control: a ditch around the settlement's fields, dug and kept
 // up by whichever clans care to work on it.
@@ -12,6 +13,10 @@ import { Processes, SkillDefs } from './econ/econdefs';
 // pushes. There is no depth a ditch has to reach before it counts: a ditch
 // built for half the year's water does half the good, and one built for all
 // of it does all the good there is.
+//
+// A clan's hands do not all dig alike: its effort is adjusted by how well
+// it works a ditch before it counts toward the depth, the same way labor is
+// adjusted in any other process.
 //
 // Rating comes from two things pulling against each other:
 // - Effort put in. A ditch has to be dug the length of the fields and down
@@ -55,6 +60,20 @@ const REFERENCE_RATING = 100;
 // together.
 const PENALTY_PER_UNCOORDINATED_EFFORT = 1;
 
+// Weight on irrigation skill in how much ditch a clan's hands actually move,
+// matching the weight a process puts on its own primary skill.
+const DITCHING_SKILL_WEIGHT = 2;
+
+// How much ditch this clan digs per worker-turn, against a middling clan.
+export function ditchingProductivity(clan: Clan): Productivity {
+    return new Productivity([
+        ProductivityItem.forStat(
+            SkillDefs.Irrigation.name,
+            clan.skills.v(SkillDefs.Irrigation),
+            DITCHING_SKILL_WEIGHT),
+    ]);
+}
+
 // How deep a ditch a given effort digs around a given area of fields.
 export function ditchRatingFor(effort: number, land: number): number {
     if (effort <= 0 || land <= 0) return 0;
@@ -90,14 +109,23 @@ export function ditchSkillFactor(skill: number): number {
 }
 
 export class DitchWorkItem {
+    // What that labor is worth at digging, once the clan's productivity at
+    // the work is taken into account. This is what moves earth.
+    readonly adjustedLabor: number;
+
     constructor(
         readonly clan: Clan,
         // Share of this clan's own effort spent on the ditches.
         readonly effortShare: number,
-        // That share in effort units.
+        // Hands the clan has to spend at all.
+        readonly workers: number,
+        // That share of those hands, in worker-turns.
         readonly labor: number,
         readonly skill: number,
-    ) {}
+        readonly productivity: Productivity,
+    ) {
+        this.adjustedLabor = labor * productivity.tfp;
+    }
 }
 
 export class DitchCalc {
@@ -106,8 +134,10 @@ export class DitchCalc {
 
     // Fields the ditch has to run around.
     readonly land: number;
-    // What a full-strength ditch here would cost, and what was actually put in.
+    // What a full-strength ditch here would cost.
     readonly requiredEffort: number;
+    // Worker-turns actually spent, and what they were worth at digging.
+    readonly rawEffort: number;
     readonly effort: number;
 
     // Rating from the digging alone, before flaws.
@@ -128,8 +158,10 @@ export class DitchCalc {
             .map(clan => new DitchWorkItem(
                 clan,
                 clan.ditchingEffortShare,
+                clan.effort,
                 clan.ditchingEffortShare * clan.effort,
-                clan.skills.v(SkillDefs.Irrigation)))
+                clan.skills.v(SkillDefs.Irrigation),
+                ditchingProductivity(clan)))
             .filter(item => item.labor > 0);
 
         // The fields as they were last worked: the ditch is dug around the
@@ -138,16 +170,19 @@ export class DitchCalc {
             c => c.production.getForProcess(Processes.Agriculture, 'land') ?? 0);
 
         this.requiredEffort = ditchEffortFor(REFERENCE_RATING, this.land);
-        this.effort = sumFun(this.items, item => item.labor);
+        this.rawEffort = sumFun(this.items, item => item.labor);
+        this.effort = sumFun(this.items, item => item.adjustedLabor);
         this.baseRating = ditchRatingFor(this.effort, this.land);
 
         this.skill = populationAverage(
             this.items.map(item => item.clan), c => c.skills.v(SkillDefs.Irrigation));
 
         // Past what the arrangement can hold together, hands at the work get
-        // in one another's way and the ditch suffers for it.
+        // in one another's way and the ditch suffers for it. Counted in
+        // plain worker-turns: what has to be held together is people, not
+        // how good they are at it.
         this.uncoordinatedEffort =
-            Math.max(0, this.effort - this.method.coordinatedEffort);
+            Math.max(0, this.rawEffort - this.method.coordinatedEffort);
         this.coordinationPenalty =
             PENALTY_PER_UNCOORDINATED_EFFORT * this.uncoordinatedEffort;
 
@@ -165,10 +200,16 @@ export class DitchCalc {
         return this.items.find(item => item.clan.uuid === uuid);
     }
 
-    // Share of the settlement's whole effort that went into the ditches.
+    // Share of the settlement's whole year that went into the ditches.
     get effortShare(): number {
         const settlementEffort = sumFun(this.settlement.clans, c => c.effort);
-        return settlementEffort > 0 ? this.effort / settlementEffort : 0;
+        return settlementEffort > 0 ? this.rawEffort / settlementEffort : 0;
+    }
+
+    // How much the clans' skill at the work is worth overall, as a factor on
+    // the plain worker-turns they put in.
+    get productivity(): number {
+        return this.rawEffort > 0 ? this.effort / this.rawEffort : 1;
     }
 
     // How much of a full-strength ditch this one amounts to against a flood
