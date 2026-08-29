@@ -672,8 +672,8 @@ batch.js:335 Uncaught TypeError: Cannot read properties of undefined (reading 'u
     *   Some sort of UI showing holiest clans known in different areas
         Maybe notion of reach?
     *   Make sure stress impacts demographics
-*   Clan rituals
-*   Local crises and bigger rituals
+x   Clan rituals
+    x   Basic clan rituals in response to events
 
 *   Current issues
     x   (P2) Refinements on food aid
