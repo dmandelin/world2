@@ -31,7 +31,8 @@ export class Perceptions {
         this.information.updateFor(subject, object, connections, interactions);
         this.respect.updateFor(subject, object, this.information.value);
         this.holiness.updateFor(subject, object, this.information.value);
-        this.alignment.updateFor(subject, object, connections, interactions);
+        this.alignment.updateFor(
+            subject, object, connections, interactions, this.information.value);
     }
 
     // A clan appraising itself. Full information, unqualified goodwill, and

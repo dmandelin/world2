@@ -9,7 +9,7 @@ import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
 import { ObservationDefs, observedEstimate } from "./information";
 import { DecayingCredit } from "./credit";
 import type { RitualEvent } from "../rituals";
-import { feastAlignmentEffect, festivalAppeal } from "../festivals";
+import { feastAlignmentEffect, festivalAppeal, festivalGivingSeen } from "../festivals";
 
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
@@ -80,7 +80,11 @@ export class Alignment {
         subject: Clan,
         object: Clan,
         connections: Connection[],
-        interactions: Interaction[]): void {
+        interactions: Interaction[],
+        // How much of the object the subject actually sees, 0 to 1. Some
+        // items are judgments about conduct the subject may simply not have
+        // been in a position to notice.
+        informationValue: number = 1): void {
 
         this.items_ = [
             ...connections.map(connection =>
@@ -92,6 +96,7 @@ export class Alignment {
                 .map(interaction => AlignmentItem.from(interaction.alignmentItem(subject, object))),
             AlignmentItem.forDitching(subject, object),
             AlignmentItem.forFestivals(subject, object),
+            AlignmentItem.forFestivalGiving(subject, object, informationValue),
             AlignmentItem.forGifts(subject, object),
             AlignmentItem.forGenerosity(subject, object),
             AlignmentItem.forPiety(subject, object),
@@ -179,6 +184,33 @@ export class AlignmentItem {
             feastAlignmentEffect(subject, object),
             1,
             `Feast appeal ${festivalAppeal(subject).toFixed(2)}`,
+        );
+    }
+
+    // What a neighbor brought to the settlement's festivals, against what
+    // this clan thought it owed them. Nobody counts out the baskets
+    // beforehand, so this is a judgment rather than a reckoning -- and a
+    // judgment a clan can only make about neighbors it has some dealings
+    // with. What it has not seen, it does not hold against anyone: the
+    // shortfall it notices is scaled by how well it knows the clan at all.
+    static forFestivalGiving(
+        subject: Clan, object: Clan, informationValue: number): AlignmentItem {
+        if (subject.settlement !== object.settlement) {
+            return new AlignmentItem('Festival Giving', 0, 0, 'not our festivals');
+        }
+        const seen = festivalGivingSeen(object);
+        if (seen === undefined) {
+            return new AlignmentItem(
+                'Festival Giving', 0, 0, 'no festivals held yet');
+        }
+        const expected = subject.traits.festivalExpectation;
+        const information = clamp(informationValue, 0, 1);
+        return new AlignmentItem(
+            'Festival Giving',
+            information * (seen - expected),
+            subject.traits.festivalAdmiration,
+            `brought ${pct(seen)} of the standard vs ${pct(expected)} expected`
+                + `, seen at ${pct(information)}`,
         );
     }
 

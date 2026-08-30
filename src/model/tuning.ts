@@ -6,7 +6,8 @@
 // main-thread fallback shares this one with the live world, so callers there
 // must restore the previous values (see withTuning).
 
-import { FESTIVAL_TIME_COMPENSATION, Processes } from "./econ/econdefs";
+import { Processes } from "./econ/econdefs";
+import { FESTIVAL_TIME_COMPENSATION } from "./festivals";
 
 export type TuningParams = {
     // Annual births per childbearing-age woman, before modifiers.

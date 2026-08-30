@@ -51,6 +51,44 @@
 
     let clanRows = $derived.by<ClanRow[]>(() => [
         {
+            label: "Openhandedness",
+            tooltip:
+                "Disposition: what this clan means to bring, as a factor on "
+                + "the notional standard for a clan its size. Set at random "
+                + "when the clan forms and drifting slowly after.",
+            value: (c) => c.traits.festivalGiving,
+            format: (v) => pct(v),
+        },
+        {
+            label: "Expects of others",
+            tooltip:
+                "Disposition: the factor this clan thinks every clan ought to "
+                + "be bringing. It judges its neighbors against this.",
+            value: (c) => c.traits.festivalExpectation,
+            format: (v) => pct(v),
+        },
+        {
+            label: "Admires giving",
+            tooltip:
+                "Disposition: alignment this clan grants a neighbor per whole "
+                + "standard's worth brought past what it expected -- and takes "
+                + "away, per standard short. A few clans keep no count at all.",
+            value: (c) => c.traits.festivalAdmiration,
+            format: (v) => v.toFixed(3),
+        },
+        {
+            label: "Seen to bring",
+            tooltip:
+                "What the clan actually brought, in time and food together, "
+                + "against the plain standard for a clan its size. This is "
+                + "what the neighbors judge -- its own open-handedness, cut "
+                + "down by whatever its year would not stretch to.",
+            value: (c) => festivals?.givingSeenBy(c.uuid) ?? 0,
+            format: (v) => pct(v),
+            aggregate: "none",
+            total: () => festivals?.givingSeen ?? 0,
+        },
+        {
             label: "Ritual skill",
             tooltip:
                 "Kept up at the rite itself, which is the only place the "
@@ -62,8 +100,8 @@
             label: "Effort on festivals",
             tooltip:
                 "Share of this clan's own year that went to the settlement's "
-                + "festivals. Every clan gives the notional standard, which is "
-                + "5% for the feast and 5% for the rite.",
+                + "festivals. The notional standard is 5% for the feast and 5% "
+                + "for the rite, scaled by how open-handed the clan is.",
             value: (c) => part(feast, c)?.effortShare ?? c.festivalEffortShare,
             format: (v) => pct(v, 1),
             aggregate: "none",

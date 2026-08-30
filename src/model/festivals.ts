@@ -187,6 +187,17 @@ export class RitualAspectDef {
         this.luckSpread = spec.luckSpread;
     }
 
+    // What a clan of this size would bring at the plain standard, in
+    // worker-turns. This is the yardstick the neighbors read a clan's
+    // open-handedness against -- it goes with the hands the clan has, so
+    // bringing less than this is a choice rather than an accident of how
+    // many of its people are grown. Not to be confused with
+    // standardLaborForPopulation, which is what the festival asks of the
+    // settlement as a whole.
+    notionalLaborFor(clan: Clan): number {
+        return this.standardEffortShare * clan.effort;
+    }
+
     // What the notional standard asks for a settlement of this size, in
     // worker-turns. The festival's demands are set by how many people have
     // to be fed, housed for the day, and seen to take their part, so this
@@ -272,6 +283,22 @@ export function aspectEffortWeight(aspect: RitualAspectDef): number {
 export const STANDARD_FESTIVAL_EFFORT_SHARE =
     sumFun(ALL_RITUAL_ASPECTS, a => a.standardEffortShare);
 
+// Keeping the settlement's festivals used to be part of the Production
+// activity -- not named, but there, inside the share of the year a clan spent
+// working. Now that it is an activity of its own, that time has come out of
+// production, and the hours left in the fields have to bring in what the
+// larger share used to. So output per worker goes up by exactly what was
+// taken out: splitting the activity out of production is meant to name what
+// clans were already doing, not to make them poorer.
+//
+// This lives here rather than with the processes it scales because econdefs
+// sits in an import cycle with people and tuning, and a constant read across
+// that cycle at module-evaluation time lands in the temporal dead zone.
+const PRODUCTION_SHARE_BEFORE_FESTIVALS = 0.5;
+export const FESTIVAL_TIME_COMPENSATION =
+    PRODUCTION_SHARE_BEFORE_FESTIVALS
+    / (PRODUCTION_SHARE_BEFORE_FESTIVALS - STANDARD_FESTIVAL_EFFORT_SHARE);
+
 // And what it costs in food, as a share of the clan's year's eating. A clan
 // aims to bring in what it owes the fires along with what it eats itself, so
 // this is added to what it sets out to produce.
@@ -298,15 +325,26 @@ export class FestivalOperation {
 
     constructor(readonly clan: Clan) { }
 
-    // Share of its own year the clan means to give the festivals. Every clan
-    // does the notional standard for now; when clans start giving more or
-    // less than their neighbors, this is where that starts.
-    get willingness(): number {
-        return STANDARD_FESTIVAL_EFFORT_SHARE;
+    // How open-handed this clan means to be, as a factor on the notional
+    // standard. Nobody counts out the baskets beforehand, so what a clan
+    // brings is a matter of its own habit rather than of any rule.
+    get givingFactor(): number {
+        return this.clan.traits.festivalGiving;
     }
 
-    // What the clan owes each aspect in food, at the standard.
+    // Share of its own year the clan means to give the festivals.
+    get willingness(): number {
+        return STANDARD_FESTIVAL_EFFORT_SHARE * this.givingFactor;
+    }
+
+    // What the clan means to bring each aspect in food.
     foodOwed(aspect: RitualAspectDef): number {
+        return this.givingFactor * aspect.standardFoodFor(this.clan);
+    }
+
+    // What the plain standard would ask of a clan this size, whatever this
+    // one means to bring. The yardstick, not the offer.
+    notionalFood(aspect: RitualAspectDef): number {
         return aspect.standardFoodFor(this.clan);
     }
 
@@ -378,8 +416,12 @@ export class FestivalContribution {
         // hands; the festival asks by heads, so the two need not agree.
         readonly labor: number,
         readonly standardLabor: number,
+        // What the plain standard would ask of a clan this size in
+        // worker-turns, whatever this one meant to bring. The yardstick the
+        // neighbors read its open-handedness against.
+        readonly notionalLabor: number,
         // Food laid on for this aspect, and what the standard asks. Paid
-        // falls short of the standard when the larder does.
+        // falls short of what was meant when the larder does.
         readonly food: number,
         readonly standardFood: number,
         // How that food went: eaten at the festival, or given up on the
@@ -389,6 +431,20 @@ export class FestivalContribution {
     ) {
         this.timeRatio = safeDiv(labor, standardLabor, 0);
         this.foodRatio = safeDiv(food, standardFood, 0);
+    }
+
+    // What this clan was seen to bring, as a factor on the plain standard for
+    // a clan its size. This is what the neighbors judge: a clan's own
+    // open-handedness, cut down by whatever its year would not stretch to.
+    // Time and food count alike, since a festival needs both.
+    get givingSeen(): number {
+        return 0.5 * (safeDiv(this.labor, this.notionalLabor, 0)
+            + safeDiv(this.food, this.notionalFood, 0));
+    }
+
+    // The plain standard's food for a clan this size.
+    get notionalFood(): number {
+        return this.aspect.standardFoodFor(this.clan);
     }
 }
 
@@ -441,6 +497,7 @@ export class FestivalAspectCalc {
                 // The settlement's requirement, shared out by heads.
                 safeDiv(clan.population, population, 0)
                     * aspect.standardLaborForPopulation(population),
+                aspect.notionalLaborFor(clan),
                 clan.festivals.foodPaid(aspect),
                 aspect.standardFoodFor(clan),
                 clan.festivals.foodEaten(aspect),
@@ -467,6 +524,24 @@ export class FestivalAspectCalc {
     // What one clan brought, for the tables.
     forClan(uuid: string): FestivalContribution | undefined {
         return this.contributions.find(c => c.clan.uuid === uuid);
+    }
+
+    // What a settlement of these clans would bring to this aspect at the
+    // plain standard, in worker-turns and in food: the yardstick for how
+    // open-handed everyone was.
+    get notionalLabor(): number {
+        return sumFun(this.contributions, c => c.notionalLabor);
+    }
+
+    get notionalFood(): number {
+        return sumFun(this.contributions, c => c.notionalFood);
+    }
+
+    // What the settlement as a whole was seen to bring to this aspect,
+    // against that yardstick.
+    get givingSeen(): number {
+        return 0.5 * (safeDiv(this.labor, this.notionalLabor, 0)
+            + safeDiv(this.food, this.notionalFood, 0));
     }
 }
 
@@ -522,6 +597,33 @@ export class Festivals {
 
     get foodSacrificed(): number {
         return sumFun(this.calcs, c => c.foodSacrificed);
+    }
+
+    // How open-handed the settlement was seen to be as a whole, against the
+    // plain standard for clans of these sizes.
+    get givingSeen(): number {
+        const notionalLabor = sumFun(this.calcs, c => c.notionalLabor);
+        const notionalFood = sumFun(this.calcs, c => c.notionalFood);
+        const labor = sumFun(this.calcs, c => c.labor);
+        const food = sumFun(this.calcs, c => c.food);
+        return 0.5 * (safeDiv(labor, notionalLabor, 0)
+            + safeDiv(food, notionalFood, 0));
+    }
+
+    // How open-handed one clan was seen to be this year, across both
+    // aspects, as a factor on the plain standard for a clan its size.
+    // Undefined for a clan that was not here when the festivals were held.
+    givingSeenBy(uuid: string): number | undefined {
+        const parts = this.calcs
+            .map(c => c.forClan(uuid))
+            .filter((c): c is FestivalContribution => c !== undefined);
+        if (!parts.length) return undefined;
+        const labor = sumFun(parts, c => c.labor);
+        const notionalLabor = sumFun(parts, c => c.notionalLabor);
+        const food = sumFun(parts, c => c.food);
+        const notionalFood = sumFun(parts, c => c.notionalFood);
+        return 0.5 * (safeDiv(labor, notionalLabor, 0)
+            + safeDiv(food, notionalFood, 0));
     }
 }
 
@@ -593,6 +695,13 @@ export function festivalEffect(value: number): number {
 
 export function festivalsOf(clan: Clan): Festivals | undefined {
     return clan.settlement?.festivals;
+}
+
+// How open-handed a clan was seen to be at this year's festivals, as a
+// factor on the plain standard for a clan its size. Undefined when there has
+// been no festival to judge it by.
+export function festivalGivingSeen(clan: Clan): number | undefined {
+    return festivalsOf(clan)?.givingSeenBy(clan.uuid);
 }
 
 export function festivalAppeal(clan: Clan): number {

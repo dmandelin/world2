@@ -73,6 +73,36 @@ export const DITCHING_ADMIRATION_MAX = 0.030;
 
 const DITCHING_EFFORT_DRIFT_STDDEV = 0.004;
 
+// Festival dispositions. Every clan brings its part to the settlement's
+// festivals, but "its part" is a custom rather than a rule: nobody counts
+// out the baskets beforehand. So clans differ in how open-handed they are
+// about it, in what they think everyone else owes, and in how much they mind
+// who fell short.
+
+// Openhandedness: what this clan brings, as a factor on the notional
+// standard. A clan at 1.3 brings half again what a tight-fisted neighbor at
+// 0.7 does, in time and in food alike.
+export const FESTIVAL_GIVING_MIN = 0.7;
+export const FESTIVAL_GIVING_MAX = 1.3;
+
+// Expectation: the factor it thinks every clan ought to be bringing. Centered
+// on the standard and narrower than the spread of what clans actually give,
+// so most years somebody is over and somebody is under.
+export const FESTIVAL_EXPECTATION_MIN = 0.85;
+export const FESTIVAL_EXPECTATION_MAX = 1.15;
+
+// Admiration: alignment granted per whole standard's worth a neighbor brings
+// past what this clan expected of it -- and taken away, per standard short.
+// Alignment runs -1 to 1, so a neighbor a third over expectation earns
+// between a shade under nothing and +0.13. A few clans keep no count at all,
+// or think a show of open-handedness is putting on airs.
+export const FESTIVAL_ADMIRATION_MIN = -0.05;
+export const FESTIVAL_ADMIRATION_MAX = 0.40;
+
+// Per-year drift, on the same footing as the other dispositions: enough that
+// a clan's habits can shift over a few generations.
+const FESTIVAL_GIVING_DRIFT_STDDEV = 0.01;
+
 function randomInRange(min: number, max: number): number {
     return min + Math.random() * (max - min);
 }
@@ -86,6 +116,9 @@ export class ClanTraits {
     private ditchingEffort_: number;
     private ditchingExpectation_: number;
     private ditchingAdmiration_: number;
+    private festivalGiving_: number;
+    private festivalExpectation_: number;
+    private festivalAdmiration_: number;
 
     constructor(
         numeric?: Partial<Record<NumericTrait, number>>,
@@ -96,6 +129,9 @@ export class ClanTraits {
         ditchingEffort?: number,
         ditchingExpectation?: number,
         ditchingAdmiration?: number,
+        festivalGiving?: number,
+        festivalExpectation?: number,
+        festivalAdmiration?: number,
     ) {
         this.numeric = {
             piety: numeric?.piety ?? randomTraitStat(),
@@ -111,6 +147,32 @@ export class ClanTraits {
             ?? randomInRange(DITCHING_EXPECTATION_MIN, DITCHING_EXPECTATION_MAX);
         this.ditchingAdmiration_ = ditchingAdmiration
             ?? randomInRange(DITCHING_ADMIRATION_MIN, DITCHING_ADMIRATION_MAX);
+        this.festivalGiving_ = festivalGiving
+            ?? randomInRange(FESTIVAL_GIVING_MIN, FESTIVAL_GIVING_MAX);
+        this.festivalExpectation_ = festivalExpectation
+            ?? randomInRange(FESTIVAL_EXPECTATION_MIN, FESTIVAL_EXPECTATION_MAX);
+        this.festivalAdmiration_ = festivalAdmiration
+            ?? randomInRange(FESTIVAL_ADMIRATION_MIN, FESTIVAL_ADMIRATION_MAX);
+    }
+
+    // What this clan brings to the settlement's festivals, as a factor on
+    // what the notional standard asks of a clan its size.
+    get festivalGiving(): number {
+        return this.festivalGiving_;
+    }
+
+    set festivalGiving(val: number) {
+        this.festivalGiving_ = clamp(val, 0, 2);
+    }
+
+    // The factor it thinks every clan ought to be bringing.
+    get festivalExpectation(): number {
+        return this.festivalExpectation_;
+    }
+
+    // Alignment gained per standard's worth a neighbor brings past that.
+    get festivalAdmiration(): number {
+        return this.festivalAdmiration_;
     }
 
     // Share of its own effort this clan is willing to spend on the ditches.
@@ -198,7 +260,8 @@ export class ClanTraits {
     clone(): ClanTraits {
         return new ClanTraits(
             { ...this.numeric }, this.bitmap, this.giving_, this.aggression_, this.pride_,
-            this.ditchingEffort_, this.ditchingExpectation_, this.ditchingAdmiration_);
+            this.ditchingEffort_, this.ditchingExpectation_, this.ditchingAdmiration_,
+            this.festivalGiving_, this.festivalExpectation_, this.festivalAdmiration_);
     }
 
     cloneWithSplitBump(): ClanTraits {
@@ -215,6 +278,7 @@ export class ClanTraits {
         copy.giving = copy.giving + normal(0, GIVING_DRIFT_STDDEV);
         copy.aggression = copy.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         copy.ditchingEffort = copy.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
+        copy.festivalGiving = copy.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
         return copy;
     }
 
@@ -233,5 +297,6 @@ export class ClanTraits {
         this.giving = this.giving + normal(0, GIVING_DRIFT_STDDEV);
         this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         this.ditchingEffort = this.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
+        this.festivalGiving = this.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
     }
 }

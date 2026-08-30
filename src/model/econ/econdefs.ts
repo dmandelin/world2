@@ -1,7 +1,7 @@
 import { Process, ProcessLocation } from './process';
 import { TradeGoods } from '../trade';
 import { SkillDef } from '../people/skills';
-import { STANDARD_FESTIVAL_EFFORT_SHARE } from '../festivals';
+import { FESTIVAL_TIME_COMPENSATION } from '../festivals';
 import type { Clan } from '../people/people';
 
 export const SkillDefs = {
@@ -41,19 +41,7 @@ export const SkillDefs = {
         (clan: Clan): number => clan.festivalLabor),
 };
 
-// Keeping the settlement's festivals used to be part of the Production
-// activity -- not named, but there, inside the share of the year a clan spent
-// working. Now that it is an activity of its own, that time has come out of
-// production, and the hours left in the fields have to bring in what the
-// larger share used to. So output per worker goes up by exactly what was
-// taken out: splitting the activity out of production is meant to name what
-// clans were already doing, not to make them poorer.
-const PRODUCTION_SHARE_BEFORE_FESTIVALS = 0.5;
-export const FESTIVAL_TIME_COMPENSATION =
-    PRODUCTION_SHARE_BEFORE_FESTIVALS
-    / (PRODUCTION_SHARE_BEFORE_FESTIVALS - STANDARD_FESTIVAL_EFFORT_SHARE);
-
-// What a worker-year brought in before that adjustment.
+// What a worker-year brought in before the festival-time adjustment.
 const UNCOMPENSATED_OUTPUT_PER_WORKER = 3.5;
 export const BASE_OUTPUT_PER_WORKER =
     UNCOMPENSATED_OUTPUT_PER_WORKER * FESTIVAL_TIME_COMPENSATION;
