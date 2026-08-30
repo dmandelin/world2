@@ -6,7 +6,7 @@ import type { ClanDTO } from "../records/dtos";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
-import { DILIGENCE_SCALE, ObservationDefs, giftsReceived, observedEstimate } from "./information";
+import { DILIGENCE_SCALE, ObservationDefs, conflictsSuffered, giftsReceived, observedEstimate } from "./information";
 import { DecayingCredit } from "./credit";
 import type { RitualEvent } from "../rituals";
 import { feastAlignmentEffect, festivalAppeal, festivalGivingSeen } from "../festivals";
@@ -88,13 +88,16 @@ export class Alignment {
         informationValue: number = 1): void {
 
         this.items_ = [
-            ...connections.map(connection =>
-                AlignmentItem.from(connection.alignmentItem(subject, object))),
+            ...connections.map(connection => AlignmentItem.from(
+                connection.alignmentItem(subject, object),
+                'social', CONNECTION_WEIGHT)),
             // Basic-interaction attention is folded into the Sociability item
             // below, so only keep other interaction types (e.g. mutual aid).
             ...interactions
                 .filter(interaction => !(interaction instanceof BasicInteraction))
-                .map(interaction => AlignmentItem.from(interaction.alignmentItem(subject, object))),
+                .map(interaction => AlignmentItem.from(
+                    interaction.alignmentItem(subject, object),
+                    'direct', MUTUAL_AID_WEIGHT)),
             AlignmentItem.forDitching(subject, object),
             AlignmentItem.forFestivals(subject, object),
             AlignmentItem.forFestivalGiving(subject, object, informationValue),
@@ -102,6 +105,7 @@ export class Alignment {
             AlignmentItem.forGenerosity(subject, object),
             AlignmentItem.forPiety(subject, object),
             AlignmentItem.forSociability(subject, object),
+            AlignmentItem.forBellicosity(subject, object),
             AlignmentItem.forConflict(subject, object),
             AlignmentItem.forRitualHelp(this, subject.world.year.value),
         ];
@@ -114,7 +118,7 @@ export class Alignment {
     // outright rather than smoothed toward it: this is not an opinion that
     // has to be arrived at.
     updateForSelf(subject: Clan): void {
-        this.items_ = [new AlignmentItem('Self', 1, 1, 'A clan is its own')];
+        this.items_ = [new AlignmentItem('Self', 'social', 1, 1, 'A clan is its own')];
         this.previousValue_ = this.value_;
         this.value_ = 1;
     }
@@ -131,6 +135,78 @@ export class Alignment {
     }
 }
 
+// ---------------------------------------------------------------------------
+// The weights
+// ---------------------------------------------------------------------------
+//
+// Every coefficient that decides how much one consideration counts against
+// another, gathered here so that the balance can be read and changed in one
+// place instead of hunted through a dozen methods.
+//
+// What they are set against: neighbors in a village of about 150 should like
+// each other around +0.4 on average. Of that, everything but the two
+// quarrelling items comes to about +0.6, split in roughly equal thirds
+// between what the clans are to each other, what the neighbor is known for,
+// and what has actually passed between them; the quarrelling items take back
+// about -0.2.
+//
+// -- social ------------------------------------------------------------
+// Scale on the standing that comes with a relationship: kinship, marriage,
+// simple neighborhood. The connections report these on their own scale and
+// this brings them into proportion with everything else.
+export const CONNECTION_WEIGHT = 0.194;
+// Attention paid to the relationship, as a share of all this clan attends to.
+export const SOCIABILITY_WEIGHT = 0.124;
+// Goodwill left by a year of feasting together; see festivals.ts, which sets
+// the size of the effect, this being only its weight against other things.
+export const FESTIVAL_ALIGNMENT_WEIGHT = 0.886;
+
+// -- reputation --------------------------------------------------------
+// Per point of believed generosity, which is a running average of what the
+// neighbor gives away in a year, in hundredths of a ration per head.
+export const GENEROSITY_WEIGHT = 0.01508;
+// Per point of believed piety away from the middling 50.
+export const PIETY_WEIGHT = 0.0024;
+// Per point of effort on the ditches past what this clan expected. Scaled by
+// each clan's own admiration for digging, which is a disposition.
+export const DITCHING_ADMIRATION_WEIGHT = 0.728;
+// Per standard's worth brought to the festivals past expectation. Likewise
+// scaled by a disposition.
+export const FESTIVAL_ADMIRATION_WEIGHT = 0.60;
+// Per point of believed quarrelsomeness. Negative, and the smaller half of
+// what the two quarrelling items take back.
+export const BELLICOSITY_WEIGHT = -0.01224;
+
+// -- direct ------------------------------------------------------------
+// Per point of food this neighbor has actually handed us, standing and
+// fading. Accumulates over an acquaintance, so it wants a smaller coefficient
+// than a figure that is already an average.
+export const GIFTS_WEIGHT = 0.0045;
+// Practical help exchanged, as the mutual aid interaction scores it.
+export const MUTUAL_AID_WEIGHT = 0.775;
+// Rites said for one another. Already on the alignment scale where it is
+// booked, so this only sets its weight against the rest.
+export const RITUAL_HELP_WEIGHT = 2.26;
+// Per point of force this neighbor has actually used against us, standing and
+// fading. The larger half of what the quarrelling items take back: what was
+// done to you counts for more than what you hear was done to others.
+export const CONFLICT_WEIGHT = -0.0527;
+
+// Which sort of thing an alignment item is, which is how the weights are kept
+// in proportion to each other.
+//
+// - social: who the two clans are to each other, and how much they are in
+//   each other's company. Standing that comes of the relationship itself.
+// - reputation: what the neighbor is known for -- believed rather than seen,
+//   and so the part a clan can be wrong about.
+// - direct: what has actually passed between these two. What one has done for
+//   or to the other.
+//
+// A clan with few dealings has little direct and little social to go on, so
+// reputation is most of what it has; as an acquaintance thickens, what the
+// neighbor has actually done comes to matter most.
+export type AlignmentGroup = 'social' | 'reputation' | 'direct';
+
 // The type parameter is the explainer's argument. It appears in no member, so
 // every instantiation is the same type to anyone holding one; it exists only
 // to check, at the point of construction, that the explainer and the thing it
@@ -145,6 +221,7 @@ export class AlignmentItem<P = unknown> {
 
     constructor(
         readonly label: string,
+        readonly group: AlignmentGroup,
         readonly baseValue: number,
         readonly modifier: number,
         explainer: Explainer<P>,
@@ -162,8 +239,9 @@ export class AlignmentItem<P = unknown> {
 
     // Wrap an item produced by a connection or interaction, whose value is
     // already fully baked (modifier 1).
-    static from(item: GenericItem): AlignmentItem {
-        return new AlignmentItem(item.label, item.value, 1, item.explanation);
+    static from(item: GenericItem, group: AlignmentGroup, scale: number): AlignmentItem {
+        return new AlignmentItem(
+            item.label, group, item.value, scale, item.explanation);
     }
 
     // Work on the common ditches. Every clan holds its own idea of what a
@@ -179,15 +257,16 @@ export class AlignmentItem<P = unknown> {
     // clans elsewhere dig ditches this one neither uses nor sees.
     static forDitching(subject: Clan, object: Clan): AlignmentItem {
         if (subject.settlement !== object.settlement) {
-            return new AlignmentItem('Ditching', 0, 0, 'not our ditches');
+            return new AlignmentItem('Ditching', 'reputation', 0, 0, 'not our ditches');
         }
         // Both in points of effort, so the disposition reads per point.
         const expected = DILIGENCE_SCALE * subject.traits.ditchingExpectation;
         const seen = observedEstimate(subject, object, ObservationDefs.Diligence);
         return new AlignmentItem(
             'Ditching',
+            'reputation',
             seen - expected,
-            subject.traits.ditchingAdmiration,
+            DITCHING_ADMIRATION_WEIGHT * subject.traits.ditchingAdmiration,
             ditchingText,
             { seen, expected },
         );
@@ -200,13 +279,14 @@ export class AlignmentItem<P = unknown> {
     // good a feast the settlement managed.
     static forFestivals(subject: Clan, object: Clan): AlignmentItem {
         if (subject.settlement !== object.settlement) {
-            return new AlignmentItem('Festivals', 0, 0, 'not our festivals');
+            return new AlignmentItem('Festivals', 'social', 0, 0, 'not our festivals');
         }
         const appeal = festivalAppeal(subject);
         return new AlignmentItem(
             'Festivals',
+            'social',
             feastAlignmentEffect(subject, object),
-            1,
+            FESTIVAL_ALIGNMENT_WEIGHT,
             feastText,
             { appeal },
         );
@@ -221,19 +301,20 @@ export class AlignmentItem<P = unknown> {
     static forFestivalGiving(
         subject: Clan, object: Clan, informationValue: number): AlignmentItem {
         if (subject.settlement !== object.settlement) {
-            return new AlignmentItem('Festival Giving', 0, 0, 'not our festivals');
+            return new AlignmentItem('Festival Giving', 'reputation', 0, 0, 'not our festivals');
         }
         const seen = festivalGivingSeen(object);
         if (seen === undefined) {
             return new AlignmentItem(
-                'Festival Giving', 0, 0, 'no festivals held yet');
+                'Festival Giving', 'reputation', 0, 0, 'no festivals held yet');
         }
         const expected = subject.traits.festivalExpectation;
         const information = clamp(informationValue, 0, 1);
         return new AlignmentItem(
             'Festival Giving',
+            'reputation',
             information * (seen - expected),
-            subject.traits.festivalAdmiration,
+            FESTIVAL_ADMIRATION_WEIGHT * subject.traits.festivalAdmiration,
             festivalGivingText,
             { seen, expected, information },
         );
@@ -248,8 +329,9 @@ export class AlignmentItem<P = unknown> {
             subject, object, subject.world.year.value);
         return new AlignmentItem(
             'Gifts',
+            'direct',
             received,
-            0.02,
+            GIFTS_WEIGHT,
             giftsText,
         );
     }
@@ -260,8 +342,9 @@ export class AlignmentItem<P = unknown> {
         const estimate = observedEstimate(subject, object, ObservationDefs.Generosity);
         return new AlignmentItem(
             'Generosity',
+            'reputation',
             estimate,
-            0.035,
+            GENEROSITY_WEIGHT,
             generosityText
         );
     }
@@ -270,8 +353,9 @@ export class AlignmentItem<P = unknown> {
         const estimate = observedEstimate(subject, object, ObservationDefs.Piety);
         return new AlignmentItem(
             'Piety',
+            'reputation',
             estimate - 50,
-            1 / 200,
+            PIETY_WEIGHT,
             pietyText
         );
     }
@@ -283,8 +367,9 @@ export class AlignmentItem<P = unknown> {
         const relativeAttention = getRelativeAttention(subject, object);
         return new AlignmentItem(
             'Sociability',
+            'social',
             relativeAttention,
-            0.1,
+            SOCIABILITY_WEIGHT,
             sociabilityText
         );
     }
@@ -297,22 +382,41 @@ export class AlignmentItem<P = unknown> {
         const since = alignment.yearsSinceRitual(year);
         return new AlignmentItem(
             'Ritual Help',
+            'direct',
             value,
-            1,
+            RITUAL_HELP_WEIGHT,
             since === undefined ? 'no rites between us' : ritualHelpText,
             { value, since },
         );
     }
 
-    // How aggressive we believe the object has been toward us, from what
-    // we've seen (or heard) of its quarrels. The biggest negative component.
-    static forConflict(subject: Clan, object: Clan): AlignmentItem {
+    // How quarrelsome we believe the object to be, from what we have seen or
+    // heard of its dealings with anyone. A reputation, and so something a
+    // clan can be wrong about.
+    static forBellicosity(subject: Clan, object: Clan): AlignmentItem {
         const estimate = observedEstimate(subject, object, ObservationDefs.Bellicosity);
         return new AlignmentItem(
-            'Conflict',
+            'Bellicosity',
+            'reputation',
             estimate,
-            -0.04,
-            bellicosityText
+            BELLICOSITY_WEIGHT,
+            bellicosityText,
+        );
+    }
+
+    // What this neighbor has actually done to us: times it reached for force
+    // against us, this year and in every year we still remember, faded by how
+    // long ago. Quite separate from the reputation above -- that is what it is
+    // known for, this is what we have suffered.
+    static forConflict(subject: Clan, object: Clan): AlignmentItem {
+        const suffered = conflictsSuffered(
+            subject, object, subject.world.year.value);
+        return new AlignmentItem(
+            'Conflict',
+            'direct',
+            suffered,
+            CONFLICT_WEIGHT,
+            conflictText,
         );
     }
 }
@@ -329,6 +433,8 @@ const sociabilityText = (i: AlignmentItem) =>
     `Attention ${pct(i.baseValue)}`;
 const bellicosityText = (i: AlignmentItem) =>
     `Bellicosity estimate ${i.baseValue.toFixed(1)}`;
+const conflictText = (i: AlignmentItem) =>
+    `${i.baseValue.toFixed(1)} done to us, standing`;
 const ditchingText = (d: { seen: number, expected: number }) =>
     `Diligence estimate ${d.seen.toFixed(1)} vs ${d.expected.toFixed(1)} expected`;
 const feastText = (d: { appeal: number }) =>

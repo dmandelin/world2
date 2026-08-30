@@ -821,6 +821,38 @@ export function giftsReceived(subject: Clan, object: Clan, year: number): number
     return GENEROSITY_SCALE * total;
 }
 
+// Years for a quarrel a clan still remembers to count for half what it did.
+// The same span as a gift: a grievance and a kindness keep about as long.
+export const CONFLICT_MEMORY_HALF_LIFE = 20;
+
+// What one clan has actually had done to it by another: times that neighbor
+// reached for force against us, this year in full and in memory faded by how
+// long ago. The counterpart of giftsReceived, and the personal side of the
+// reputation Bellicosity tracks -- what we have suffered, as against what the
+// neighbor is known for.
+export function conflictsSuffered(subject: Clan, object: Clan, year: number): number {
+    const information = subject.world.perceptions
+        .get(subject, object)?.information;
+    if (!information) return 0;
+
+    const isAgainstUs = (item: NewsItem) =>
+        item.def === NewsKinds.Conflict
+        && item.actor === object.uuid
+        && item.target === subject.uuid;
+
+    let total = 0;
+    for (const item of information.news.items) {
+        if (isAgainstUs(item)) total += item.size.weight;
+    }
+    for (const item of information.memory.entries) {
+        if (!isAgainstUs(item)) continue;
+        const age = Math.max(0, year - item.year);
+        total += item.size.weight
+            * Math.pow(0.5, age / CONFLICT_MEMORY_HALF_LIFE);
+    }
+    return BELLICOSITY_SCALE * total;
+}
+
 // Bellicosity is reported as hawk plays a year, which is already a readable
 // number, so it needs no scaling up the way giving does.
 export const BELLICOSITY_SCALE = 1;
