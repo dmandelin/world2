@@ -168,15 +168,21 @@ export function applyMarriageDecisions(world: World, decisions: MarriageDecision
     //   married to that clan.
     // - Existing marriage relationships decay. They should cease to have
     //   any effect within 3-6 generations if there are no new marriages.
-    for (const [pairID, connections] of world.connections.entries()) {
+    // Collect the faded-out ones before removing any, since removing the
+    // last connection on a pair drops the edge the walk is standing on.
+    const faded: [string, string, MarriageConnection][] = [];
+    for (const [u1, u2, connections] of world.connections.pairs()) {
         for (const connection of connections) {
             if (connection instanceof MarriageConnection) {
                 connection.relatedness *= 0.5;
                 if (connection.relatedness < 0.03) {
-                    world.connections.remove(pairID, connection);
+                    faded.push([u1, u2, connection]);
                 }
             }
         }
+    }
+    for (const [u1, u2, connection] of faded) {
+        world.connections.removeItem(u1, u2, connection);
     }
     for (const [c1, m] of pairingCounts.counts) {
         for (const [c2, count] of m) {

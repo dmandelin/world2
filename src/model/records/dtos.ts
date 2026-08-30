@@ -40,7 +40,7 @@ import { getPrestige, getLocalPrestige } from "../relations/prestige";
 import { ALL_OBSERVATION_DEFS, ObservationDefs } from "../relations/information";
 import type { ObservationDef } from "../relations/information";
 import type { ClanInformation, Memory, MemoryEntry, Observation, Observations } from "../relations/information";
-import { splitPairID, type UUID } from "./basicdata";
+import { type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
 import type { Stress } from "../people/stress";
@@ -496,8 +496,12 @@ export class WorldDTO {
         this.previousEndOfTurnSnapshot = world.previousEndOfTurnSnapshot;
     }
 
-    clansFromPairID(pairID: string): [ClanDTO, ClanDTO] {
-        return splitPairID(pairID).map(uuid => this.clanMap.get(uuid)!) as [ClanDTO, ClanDTO];
+    clanFrom(uuid: string): ClanDTO {
+        return this.clanMap.get(uuid)!;
+    }
+
+    clansFrom(uuid1: string, uuid2: string): [ClanDTO, ClanDTO] {
+        return [this.clanMap.get(uuid1)!, this.clanMap.get(uuid2)!];
     }
 
     get settlements() {

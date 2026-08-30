@@ -44,9 +44,9 @@ export function clanHelpDemand(population: number): number {
 
 export function updateMutualAidInteractions(world: World): void {
     // 1. Ensure MutualAidInteraction exists between connected pairs of clans
-    for (const [pairID, connections] of world.connections.entries()) {
+    for (const [u1, u2, connections] of world.connections.pairs()) {
         if (connections.length > 0) {
-            const [c1, c2] = world.clansFromPairID(pairID);
+            const [c1, c2] = world.clansFrom(u1, u2);
             const interaction = world.interactions.getOrCreate(c1, c2, MutualAidInteraction);
             if (c1.settlement && c2.settlement) {
                 interaction.distance = c1.settlement.milesTo(c2.settlement);

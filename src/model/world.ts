@@ -21,7 +21,7 @@ import { Settlement } from "./people/settlement";
 import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
-import { splitPairID, type UUID } from "./records/basicdata";
+import { type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
 import { settleFestivalEconomy } from "./festivals";
@@ -134,8 +134,12 @@ export class World implements NoteTaker {
         updateWorldAlerts(this);
     }
 
-    clansFromPairID(pairID: string): [Clan, Clan] {
-        return splitPairID(pairID).map(uuid => this.clanMap.get(uuid)!) as [Clan, Clan];
+    clanFrom(uuid: string): Clan {
+        return this.clanMap.get(uuid)!;
+    }
+
+    clansFrom(uuid1: string, uuid2: string): [Clan, Clan] {
+        return [this.clanMap.get(uuid1)!, this.clanMap.get(uuid2)!];
     }
 
     initialize() {

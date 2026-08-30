@@ -1,5 +1,6 @@
 import type { Clan } from "../people/people";
 import { GenericItem, uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
+import { ClanPairGraph } from "./clanpairgraph";
 import type { World } from "../world";
 import { unsigned } from "../lib/format";
 import { recordConflict } from "./information";
@@ -21,11 +22,11 @@ export class Conflicts {
     }
 
     get(c1: HasOrIsUUID, c2: HasOrIsUUID) {
-        return this.g.get(uuidOf(c1), uuidOf(c2));
+        return this.g.get(c1, c2);
     }
 
     *entriesForClan(c1: HasOrIsUUID) {
-        for (const [uuid2, conflict] of this.g.entriesForHasUUID(c1)) {
+        for (const [uuid2, conflict] of this.g.getFor(c1)) {
             const c2 = this.world.clanMap.get(uuid2);
             if (!c2) continue;
             yield [c2, conflict] as [Clan, Conflict];
@@ -53,102 +54,33 @@ export class Conflicts {
         }
     }
 
-    // Remove everything where `fn` returns true.
+    // Remove everything where `fn` returns true. Collected first, since
+    // removing an edge drops the map the walk is standing on.
     prune(fn: (c1: Clan, c2: Clan, conflict: Conflict) => boolean): void {
-        for (const [c1, c2, conflict] of this.g.entries()) {
+        const doomed: [UUID, UUID][] = [];
+        for (const [c1, c2, conflict] of this.g.pairs()) {
             const clan1 = this.world.clanMap.get(c1);
             if (!clan1) continue;
             const clan2 = this.world.clanMap.get(c2);
             if (!clan2) continue;
 
-            if (fn(clan1, clan2, conflict)) {
-                this.g.remove(c1, c2);
-            }
+            if (fn(clan1, clan2, conflict)) doomed.push([c1, c2]);
         }
+        for (const [c1, c2] of doomed) this.g.delete(c1, c2);
     }
 }
 
 // Graph of conflicts that deals in UUIDs only.
-export class ConflictGraph {
-    // clan1 -> clan2 -> conflict (where clan1.uuid < clan2.uuid)
-    private readonly m_ = new Map<UUID, Map<UUID, Conflict>>();
-    // clan2 -> clan1 -> conflict
-    private readonly r_ = new Map<UUID, Map<UUID, Conflict>>();
-
-    *entries() {
-        for (const [c1, c1Map] of this.m_) {
-            for (const [c2, conflict] of c1Map) {
-                yield [c1, c2, conflict] as [UUID, UUID, Conflict];
-            }
-        }
-    }
-
-    *entriesForHasUUID(c: HasOrIsUUID): Iterable<[UUID, Conflict]> {
-        const uuid = uuidOf(c);
-        const c1Map = this.m_.get(uuid);
-        if (!c1Map) return;
-        for (const [c2, conflict] of c1Map) {
-            yield [c2, conflict] as [UUID, Conflict];
-        }
+export class ConflictGraph extends ClanPairGraph<Conflict> {
+    getOrCreate(c1: UUID, c2: UUID): Conflict {
+        return this.getOrSet(c1, c2, () => new Conflict(c1, c2));
     }
 
     clone(): ConflictGraph {
         const g = new ConflictGraph();
-        for (const [c1, c1Map] of this.m_) {
-            for (const [c2, conflict] of c1Map) {
-                g.add(c1, c2, conflict);
-            }
-        }
+        // Conflicts are shared rather than copied, as they were before.
+        g.fillFrom(this, conflict => conflict);
         return g;
-    }
-
-    add(c1: UUID, c2: UUID, conflict: Conflict): void {
-        if (c1 > c2) [c1, c2] = [c2, c1];
-
-        let c1Map = this.m_.get(c1);
-        if (!c1Map) {
-            c1Map = new Map();
-            this.m_.set(c1, c1Map);
-        }
-        c1Map.set(c2, conflict);
-
-        let c2Map = this.r_.get(c2);
-        if (!c2Map) {
-            c2Map = new Map();
-            this.r_.set(c2, c2Map);
-        }
-        c2Map.set(c1, conflict);
-    }
-
-    remove(c1: UUID, c2: UUID): void {
-        if (c1 > c2) [c1, c2] = [c2, c1];
-
-        const c1Map = this.m_.get(c1);
-        if (!c1Map) return;
-        c1Map.delete(c2);
-        if (c1Map.size === 0) this.m_.delete(c1);
-
-        const c2Map = this.r_.get(c2);
-        if (!c2Map) return;
-        c2Map.delete(c1);
-        if (c2Map.size === 0) this.r_.delete(c2);
-    }
-
-    getOrCreate(c1: UUID, c2: UUID): Conflict {
-        let conflict = this.get(c1, c2);
-        if (!conflict) {
-            conflict = new Conflict(c1, c2);
-            this.add(c1, c2, conflict);
-        }
-        return conflict;
-    }
-
-    get(c1: UUID, c2: UUID): Conflict | undefined {
-        if (c1 > c2) [c1, c2] = [c2, c1];
-
-        const c1Map = this.m_.get(c1);
-        if (!c1Map) return undefined;
-        return c1Map.get(c2);
     }
 }
 
