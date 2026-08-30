@@ -25,7 +25,8 @@ import { type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
 import { settleFestivalEconomy } from "./festivals";
-import { propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
+import { clearNews, foldNewsIntoMemory, forgetStaleMemories, propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
+import { RecentNews } from "./records/recentnews";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
 import { FoodGiftsResult, shareFoodGifts } from "./econ/gifts";
@@ -72,6 +73,9 @@ export class World implements NoteTaker {
     // This has to be initialized before the clans because we pass it to them.
     readonly annals = new Annals(this);
     readonly notes: Note[] = [];
+    // The last twenty years of news worth reporting, for the event feeds and
+    // the settlement views. Clans keep their own; this is the world's copy.
+    readonly recentNews = new RecentNews();
     readonly alerts = new Alerts();
 
     // New villages founded during the most recent turn, used to raise
@@ -356,10 +360,10 @@ export class World implements NoteTaker {
         // How much each clan knows about each other, which depends on this
         // turn's dealings and on what those dealings let them pass along.
         updateInformationLevels(this);
-        // Pass along last turn's news and take a fresh look at each other, now
-        // that this turn's interactions are set, so that what clans have heard
-        // and noticed can inform their planning.
-        propagateNews(this);
+        // Take a fresh look at each other, now that this turn's interactions
+        // are set, so that what clans have seen and heard informs planning.
+        // The news it reads is last year's, which travelled when that year
+        // closed and stands until this one starts producing its own.
         updateObservations(this);
 
         this.planMutualHelp();
@@ -390,6 +394,10 @@ export class World implements NoteTaker {
         if (!this.headless) {
             this.beginningOfTurnSnapshot_ = new WorldDTO(this);
         }
+
+        // Last year's news has been read and what was worth keeping is in
+        // memory, so the page is clear for this year's occasions.
+        clearNews(this);
 
         // Nature decides how high the rivers run. What breaks out on top of
         // that waits until the ditches for the year are dug, below.
@@ -464,6 +472,14 @@ export class World implements NoteTaker {
         // Now that the drownings are drawn, the year's floods can be written
         // up with what they actually cost.
         noteExtremeFloods(this, this.extremeFloods);
+
+        // The year's occasions get their one round of telling, now that
+        // everything that was going to happen has happened, and then what was
+        // worth keeping passes into memory. The news itself stands until the
+        // next advance opens, so that planning can read it.
+        propagateNews(this);
+        foldNewsIntoMemory(this);
+        forgetStaleMemories(this);
 
         // Advance the year.
         this.year.advance(this.yearsPerTick);

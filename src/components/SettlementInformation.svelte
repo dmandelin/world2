@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ClanDTO, Impression, SettlementDTO } from "../model/records/dtos";
-    import type { MemoryEntry } from "../model/relations/information";
+    import type { NewsItem } from "../model/relations/information";
     import { formatYear } from "../model/records/year";
     import { sortedByKey } from "../model/lib/basics";
     import { pct, signed, unsigned } from "../model/lib/format";
@@ -125,9 +125,9 @@
     // A row of the listing. `knownBy` is empty except in the object-only view,
     // where reports of one event by several clans are coalesced into one row.
     type Row = {
-        entry: MemoryEntry;
+        entry: NewsItem;
         about: ClanDTO | undefined;
-        knownBy: { clan: ClanDTO; entry: MemoryEntry }[];
+        knownBy: { clan: ClanDTO; entry: NewsItem }[];
         // False once the occasion has run together with the rest into a
         // general impression, and can no longer be recounted on its own.
         recountable: boolean;
@@ -203,7 +203,7 @@
         return world.clanMap.get(uuid)?.name ?? "?";
     }
 
-    function description(entry: MemoryEntry): string {
+    function description(entry: NewsItem): string {
         const target = entry.target ? ` → ${clanName(entry.target)}` : "";
         return `${clanName(entry.actor)}${target}`;
     }
@@ -274,7 +274,7 @@
         return `${hops} link${hops === 1 ? "" : "s"}`;
     }
 
-    function source(entry: MemoryEntry): string {
+    function source(entry: NewsItem): string {
         if (entry.hops === 0) return "firsthand";
         return `${hopsLabel(entry.hops)}${entry.via ? ` (via ${clanName(entry.via)})` : ""}`;
     }
@@ -294,7 +294,7 @@
             .join(", ");
     }
 
-    function knowerLabel(k: { clan: ClanDTO; entry: MemoryEntry }): string {
+    function knowerLabel(k: { clan: ClanDTO; entry: NewsItem }): string {
         return `${k.clan.name} (${hopsLabel(k.entry.hops)})`;
     }
 

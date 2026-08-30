@@ -39,7 +39,7 @@ import type { Holiness } from "../relations/holiness";
 import { getPrestige, getLocalPrestige } from "../relations/prestige";
 import { ALL_OBSERVATION_DEFS, ObservationDefs } from "../relations/information";
 import type { ObservationDef } from "../relations/information";
-import type { ClanInformation, Memory, MemoryEntry, Observation, Observations } from "../relations/information";
+import type { ClanInformation, Memory, NewsItem, Observation, Observations } from "../relations/information";
 import { type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
@@ -438,8 +438,8 @@ export type ImpressionView = {
 // One event, with every clan that knows of it and the version each holds.
 export type EventKnowledge = {
     // The best-informed copy, standing for the event itself.
-    entry: MemoryEntry;
-    knownBy: { clan: ClanDTO, entry: MemoryEntry }[];
+    entry: NewsItem;
+    knownBy: { clan: ClanDTO, entry: NewsItem }[];
 };
 
 export class WorldDTO {
@@ -642,7 +642,7 @@ export class WorldDTO {
     // coalesced by event id; the copy shown is the best-informed one, since
     // the copies differ in how far they travelled to get where they are.
     eventsInvolving(clan: ClanDTO): EventKnowledge[] {
-        const events = new Map<number, { entry: MemoryEntry, knownBy: Map<ClanDTO, MemoryEntry> }>();
+        const events = new Map<number, { entry: NewsItem, knownBy: Map<ClanDTO, NewsItem> }>();
         const collect = (knower: ClanDTO, memory: Memory) => {
             for (const entry of memory.entries) {
                 if (entry.actor !== clan.uuid && entry.target !== clan.uuid) continue;

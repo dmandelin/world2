@@ -123,11 +123,11 @@ export const HawkCountBands = new BandScale('conflict', [
 // A kind of event clans remember about each other. The definition carries the
 // parameters that govern how the event fades and how well news of it travels;
 // individual events carry their own size.
-export type MemoryEventSpec = {
+export type NewsKindSpec = {
     // Years for a remembered event's weight to halve.
     halfLife: number;
     // How far news of this kind carries beyond the base rate set by
-    // attention. See MemoryEntry.transmissionChance for what the number
+    // attention. See NewsItem.transmissionChance for what the number
     // means; it is multiplied by the individual event's salience, so a kind
     // with high reach still travels no further than its small instances
     // deserve.
@@ -158,7 +158,7 @@ export type MemoryEventSpec = {
 // A kind of event clans remember about each other. The definition carries the
 // parameters that govern how the event fades and how well news of it travels;
 // individual events carry their own size.
-export class MemoryEventDef {
+export class NewsKind {
     readonly halfLife: number;
     readonly newsReach: number;
     readonly unforgettableSalience: number;
@@ -174,7 +174,7 @@ export class MemoryEventDef {
     constructor(
         readonly key: string,
         readonly label: string,
-        spec: MemoryEventSpec,
+        spec: NewsKindSpec,
     ) {
         this.halfLife = spec.halfLife;
         this.newsReach = spec.newsReach;
@@ -192,11 +192,11 @@ export class MemoryEventDef {
 
 // Starter set; more will be added as event sources are moved over to the
 // ledger (rituals, construction, ...).
-export const MemoryEventDefs = {
+export const NewsKinds = {
     // Gifts are routine and soon indistinguishable from each other, so they
     // fade faster than aid, are recounted only while recent, and are dropped
     // altogether not long after.
-    Gift: new MemoryEventDef('gift', 'Gift', {
+    Gift: new NewsKind('gift', 'Gift', {
         halfLife: 5,
         newsReach: 2,
         unforgettableSalience: 0.07,
@@ -207,7 +207,7 @@ export const MemoryEventDefs = {
         recallYears: 3,
         purgeYears: 5,
     }),
-    Aid: new MemoryEventDef('aid', 'Aid', {
+    Aid: new NewsKind('aid', 'Aid', {
         halfLife: 20,
         newsReach: 5,
         unforgettableSalience: 0.07,
@@ -218,7 +218,7 @@ export const MemoryEventDefs = {
     // a lifetime, the rest run together into a sense of how touchy a
     // neighbor is. A year in which a clan reached for force at every turn is
     // not forgotten.
-    Conflict: new MemoryEventDef('conflict', 'Conflict', {
+    Conflict: new NewsKind('conflict', 'Conflict', {
         halfLife: 20,
         newsReach: 2,
         unforgettableSalience: 0.8,
@@ -236,8 +236,8 @@ export const MemoryEventDefs = {
 // from two events.
 let nextEventId = 1;
 
-export type MemoryEntrySpec = {
-    def: MemoryEventDef;
+export type NewsItemSpec = {
+    def: NewsKind;
     // Year the event happened (as believed by the rememberer).
     year: number;
     // Clan that acted. Usually the object of these perceptions, but for news
@@ -275,8 +275,8 @@ export type MemoryEntrySpec = {
 // Note the split between `magnitude` and `size`. The former is what really
 // happened and is kept so we can check our own work; the latter is what the
 // clan came away with. Rules about how clans behave belong on the bands.
-export class MemoryEntry {
-    readonly def: MemoryEventDef;
+export class NewsItem {
+    readonly def: NewsKind;
     readonly year: number;
     readonly actor: UUID;
     readonly target: UUID | undefined;
@@ -290,7 +290,7 @@ export class MemoryEntry {
     readonly explanation: string;
     readonly eventId: number;
 
-    constructor(spec: MemoryEntrySpec) {
+    constructor(spec: NewsItemSpec) {
         this.def = spec.def;
         this.year = spec.year;
         this.actor = spec.actor;
@@ -362,8 +362,8 @@ export class MemoryEntry {
 
     // This event as the hearer files it: same event, one more link away. What
     // gets passed on is the coarse account, which is all the teller had.
-    retold(via: UUID): MemoryEntry {
-        return new MemoryEntry({
+    retold(via: UUID): NewsItem {
+        return new NewsItem({
             def: this.def,
             year: this.year,
             actor: this.actor,
@@ -381,27 +381,79 @@ export class MemoryEntry {
     }
 }
 
+// ---------------------------------------------------------------------------
+// News
+// ---------------------------------------------------------------------------
+//
+// What happened this turn, as against what is remembered of years past.
+//
+// An occasion starts as news: a clan gives, or is given to, or reaches for
+// force, and the clans with any part in it know so at once. Over the rest of
+// the turn it travels -- the neighbors of a participant pick it up in
+// proportion to how closely they deal with them and how big a thing it was.
+// By the end of the turn it has done what it is going to do: it has fed the
+// impressions clans form of each other, and the few items worth carrying have
+// passed into memory. The rest is simply gone, the way most of what happens
+// in a year is gone by the next.
+//
+// The point of the separation is that a clan may hear about far more in a
+// year than it will still know about in ten. News is wide and cheap; memory
+// is narrow and expensive, and has to be earned.
+
+// One clan's news about another, for the turn now running.
+export class ClanNews {
+    private items_: NewsItem[] = [];
+
+    get items(): readonly NewsItem[] { return this.items_; }
+    get size(): number { return this.items_.length; }
+
+    add(item: NewsItem): void {
+        this.items_.push(item);
+    }
+
+    has(eventId: number): boolean {
+        return this.items_.some(i => i.eventId === eventId);
+    }
+
+    // Everything of one kind, which is how the impressions read it.
+    of(def: NewsKind): readonly NewsItem[] {
+        return this.items_.filter(i => i.def === def);
+    }
+
+    clear(): void {
+        if (this.items_.length) this.items_ = [];
+    }
+
+    clone(): ClanNews {
+        const n = new ClanNews();
+        n.items_ = [...this.items_];
+        return n;
+    }
+}
+
+// ---------------------------------------------------------------------------
+
 // One clan's ledger of events involving another.
 export class Memory {
-    private entries_: MemoryEntry[] = [];
+    private entries_: NewsItem[] = [];
 
-    get entries(): readonly MemoryEntry[] { return this.entries_; }
+    get entries(): readonly NewsItem[] { return this.entries_; }
 
-    add(entry: MemoryEntry): void {
+    add(entry: NewsItem): void {
         this.entries_.push(entry);
     }
 
-    entriesOf(def: MemoryEventDef): MemoryEntry[] {
+    entriesOf(def: NewsKind): NewsItem[] {
         return this.entries_.filter(e => e.def === def);
     }
 
     // Decayed total magnitude of events of a kind, the usual way evaluative
     // code will consume the ledger.
-    weightOf(def: MemoryEventDef, year: number): number {
+    weightOf(def: NewsKind, year: number): number {
         return sumFun(this.entriesOf(def), e => e.weight(year));
     }
 
-    keepOnly(predicate: (entry: MemoryEntry) => boolean): void {
+    keepOnly(predicate: (entry: NewsItem) => boolean): void {
         this.entries_ = this.entries_.filter(predicate);
     }
 
@@ -421,7 +473,7 @@ export class Memory {
         // The few best per kind, found by selection rather than by sorting the
         // whole ledger: this runs for every pair every turn, and ledgers run
         // to hundreds of entries.
-        const best = new Map<MemoryEventDef, { id: number, standing: number }[]>();
+        const best = new Map<NewsKind, { id: number, standing: number }[]>();
         for (const entry of this.entries_) {
             // Everyday exchange is recounted while it is recent and then
             // simply isn't, however big any one instance was.
@@ -685,20 +737,22 @@ export const SEEDED_YEARS_SEEN = 5;
 // where there is no such claim on you. Aid is exempt from that rule, since
 // pulling anyone through a bad year is generous whoever they are.
 //
-// Transfers are recorded during the advance phase and observations are formed
-// at the start of the next turn, so the year just completed is one year back.
+// Read off this turn's news rather than out of the ledger of years past: an
+// impression is formed from what a clan has just seen and heard, and the
+// running average inside the Observation is what carries it forward. News is
+// cleared at the start of each advance, so what stands here through the
+// planning phase is exactly the year just completed.
 export function givingSeen(subject: Clan, object: Clan): number {
-    const memory = subject.world.perceptions
-        .get(subject, object)?.information.memory;
-    if (!memory) return 0;
-    const of = subject.world.year.value - subject.world.yearsPerTurn;
+    const news = subject.world.perceptions
+        .get(subject, object)?.information.news;
+    if (!news) return 0;
     let total = 0;
-    for (const entry of memory.entries) {
-        if (entry.def !== MemoryEventDefs.Aid && entry.def !== MemoryEventDefs.Gift) {
+    for (const entry of news.items) {
+        if (entry.def !== NewsKinds.Aid && entry.def !== NewsKinds.Gift) {
             continue;
         }
-        if (entry.actor !== object.uuid || entry.year !== of) continue;
-        if (entry.withinKin && entry.def === MemoryEventDefs.Gift) continue;
+        if (entry.actor !== object.uuid) continue;
+        if (entry.withinKin && entry.def === NewsKinds.Gift) continue;
         total += entry.size.weight
             * (entry.target === subject.uuid ? AID_TO_SELF_WEIGHT : 1);
     }
@@ -713,14 +767,13 @@ export const BELLICOSITY_SCALE = 1;
 // only what it knows about. Being on the receiving end weighs a little more
 // than hearing that someone else was.
 export function aggressionSeen(subject: Clan, object: Clan): number {
-    const memory = subject.world.perceptions
-        .get(subject, object)?.information.memory;
-    if (!memory) return 0;
-    const of = subject.world.year.value - subject.world.yearsPerTurn;
+    const news = subject.world.perceptions
+        .get(subject, object)?.information.news;
+    if (!news) return 0;
     let total = 0;
-    for (const entry of memory.entries) {
-        if (entry.def !== MemoryEventDefs.Conflict) continue;
-        if (entry.actor !== object.uuid || entry.year !== of) continue;
+    for (const entry of news.items) {
+        if (entry.def !== NewsKinds.Conflict) continue;
+        if (entry.actor !== object.uuid) continue;
         total += entry.size.weight
             * (entry.target === subject.uuid ? AID_TO_SELF_WEIGHT : 1);
     }
@@ -1217,7 +1270,9 @@ export const INFORMATION_ADAPT_RATE = 0.2;
 
 export class ClanInformation {
     constructor(
-        // Events, remembered and fading.
+        // What happened this turn, and who has heard of it.
+        readonly news: ClanNews = new ClanNews(),
+        // Events, remembered and fading. What survived the end of a turn.
         readonly memory: Memory = new Memory(),
         // State, estimated with varying confidence.
         readonly observations: Observations = new Observations(),
@@ -1293,7 +1348,6 @@ export class ClanInformation {
         this.unknownAfterHearsay_ = 0;
 
         const year = subject.world.year.value;
-        this.memory.forget(year);
         this.observations.fade(year);
     }
 
@@ -1323,12 +1377,12 @@ export class ClanInformation {
         }
 
         const year = subject.world.year.value;
-        this.memory.forget(year);
         this.observations.fade(year);
     }
 
     clone(): ClanInformation {
         const ci = new ClanInformation(
+            this.news.clone(),
             this.memory.clone(),
             this.observations.clone(),
         );
@@ -1398,14 +1452,16 @@ export function seedInformationLevels(world: World): void {
 // the same thing, so they get the very same entry object: that keeps the
 // footprint down, and lets views recognize two clans' reports of one event by
 // identity rather than by comparing fields.
-export function recordDirectEvent(a: Clan, b: Clan, entry: MemoryEntry): void {
+export function recordDirectEvent(a: Clan, b: Clan, entry: NewsItem): void {
     const perceptions = a.world.perceptions;
-    perceptions.getOrCreate(a, b).information.memory.add(entry);
-    perceptions.getOrCreate(b, a).information.memory.add(entry);
-    // The actor also remembers what it did, in its own ledger about itself,
-    // which is how a clan comes by a view of its own generosity and temper.
+    perceptions.getOrCreate(a, b).information.news.add(entry);
+    perceptions.getOrCreate(b, a).information.news.add(entry);
+    // The actor also knows what it did, in its own ledger about itself, which
+    // is how a clan comes by a view of its own generosity and temper.
     const actor = a.world.clanMap.get(entry.actor);
-    if (actor) perceptions.getOrCreate(actor, actor).information.memory.add(entry);
+    if (actor) perceptions.getOrCreate(actor, actor).information.news.add(entry);
+    // And the world hears of it, if it was big enough to be worth reporting.
+    a.world.recentNews.add(entry, entry.year);
 }
 
 // Remember a gift of food aid. Both donor and recipient know about it
@@ -1421,13 +1477,13 @@ export function recordFoodAid(
     // Aid looms as large as it mattered to the recipient, so size is measured
     // against a year's ration for one of its members.
     const perCapita = amount / Math.max(1, recipient.population);
-    recordDirectEvent(donor, recipient, new MemoryEntry({
-        def: MemoryEventDefs.Aid,
+    recordDirectEvent(donor, recipient, new NewsItem({
+        def: NewsKinds.Aid,
         year: donor.world.year.value,
         actor: donor.uuid,
         target: recipient.uuid,
         magnitude: amount,
-        size: MemoryEventDefs.Aid.sizeBands.classify(perCapita),
+        size: NewsKinds.Aid.sizeBands.classify(perCapita),
         need: NeedBands.classify(recipientFoodPerCapita),
         salience: perCapita,
     }));
@@ -1439,13 +1495,13 @@ export function recordFoodAid(
 export function recordFoodGift(donor: Clan, recipient: Clan, amount: number): void {
     if (amount <= 0) return;
     const perCapita = amount / Math.max(1, recipient.population);
-    recordDirectEvent(donor, recipient, new MemoryEntry({
-        def: MemoryEventDefs.Gift,
+    recordDirectEvent(donor, recipient, new NewsItem({
+        def: NewsKinds.Gift,
         year: donor.world.year.value,
         actor: donor.uuid,
         target: recipient.uuid,
         magnitude: amount,
-        size: MemoryEventDefs.Gift.sizeBands.classify(perCapita),
+        size: NewsKinds.Gift.sizeBands.classify(perCapita),
         withinKin: areKin(donor, recipient),
         salience: perCapita,
     }));
@@ -1471,13 +1527,13 @@ export function recordConflict(
     encounters: number,
 ): void {
     if (hawkPlays <= 0) return;
-    recordDirectEvent(aggressor, victim, new MemoryEntry({
-        def: MemoryEventDefs.Conflict,
+    recordDirectEvent(aggressor, victim, new NewsItem({
+        def: NewsKinds.Conflict,
         year: aggressor.world.year.value,
         actor: aggressor.uuid,
         target: victim.uuid,
         magnitude: hawkPlays,
-        size: MemoryEventDefs.Conflict.sizeBands.classify(hawkPlays),
+        size: NewsKinds.Conflict.sizeBands.classify(hawkPlays),
         // How much of the year's friction it took by force, which is what
         // says whether this was an ordinary bad patch or a year of open
         // fighting.
@@ -1489,45 +1545,40 @@ export function recordConflict(
 // Passing news along.
 // ---------------------------------------------------------------------------
 
-// How long an event stays news. Events get their chance to spread on the turn
-// after they happen and are old hat after that, which is what keeps one round
-// of gossip per event rather than an endless trickle of stale trivia.
-export const NEWS_WINDOW_YEARS = 1;
+// News gets exactly one round of telling, at the close of the year it
+// happened in. There is no window to check any more: what is in a clan's news
+// is this year's, and next year it will not be there to tell.
 
 // Spread news one link. A clan that took part in an event tells the clans it
 // interacts with, in proportion to how closely they interact and how big the
 // event was; only firsthand accounts are retold, so news currently reaches at
 // most the neighbors of a participant.
 export function propagateNews(world: World): void {
-    const now = world.year.value;
-
-    // What each clan can currently pass on: its own firsthand accounts, while
-    // they are still news. Gathered once, since each is offered to several
-    // hearers.
-    const tellable = new Map<UUID, MemoryEntry[]>();
+    // What each clan can pass on: its own firsthand accounts of this turn.
+    // Gathered once, since each is offered to several hearers.
+    const tellable = new Map<UUID, NewsItem[]>();
     for (const teller of world.allClans) {
-        const fresh: MemoryEntry[] = [];
+        const fresh: NewsItem[] = [];
         for (const [, perceptions] of world.perceptions.getFor(teller)) {
-            for (const entry of perceptions.information.memory.entries) {
-                if (entry.hops !== 0) continue;
-                if (now - entry.year > NEWS_WINDOW_YEARS) continue;
-                fresh.push(entry);
+            for (const item of perceptions.information.news.items) {
+                if (item.hops !== 0) continue;
+                fresh.push(item);
             }
         }
         if (fresh.length) tellable.set(teller.uuid, fresh);
     }
     if (!tellable.size) return;
 
-    // Collect first and file afterward, so that who hears what doesn't depend
-    // on the order clans happen to come up in.
-    const heard: { hearer: Clan, entry: MemoryEntry, teller: UUID }[] = [];
+    // Collect first and file afterward, so that who hears what does not
+    // depend on the order clans happen to come up in.
+    const heard: { hearer: Clan, item: NewsItem, teller: UUID }[] = [];
     for (const hearer of world.allClans) {
-        // Everything the hearer already has, by event rather than by copy: it
-        // shouldn't be told twice by two tellers, or told about its own doings.
+        // Everything the hearer already has, by occasion rather than by copy:
+        // it should not be told twice by two tellers, or told of its own doings.
         const known = new Set<number>();
         for (const [, perceptions] of world.perceptions.getFor(hearer)) {
-            for (const entry of perceptions.information.memory.entries) {
-                known.add(entry.eventId);
+            for (const item of perceptions.information.news.items) {
+                known.add(item.eventId);
             }
         }
 
@@ -1539,17 +1590,17 @@ export function propagateNews(world: World): void {
             const attention = getRelativeAttention(hearer, teller);
             if (attention <= 0) continue;
 
-            for (const entry of news) {
-                if (known.has(entry.eventId)) continue;
-                if (Math.random() >= entry.transmissionChance(attention)) continue;
-                known.add(entry.eventId);
-                heard.push({ hearer, entry, teller: tellerID });
+            for (const item of news) {
+                if (known.has(item.eventId)) continue;
+                if (Math.random() >= item.transmissionChance(attention)) continue;
+                known.add(item.eventId);
+                heard.push({ hearer, item, teller: tellerID });
             }
         }
     }
 
-    for (const { hearer, entry, teller } of heard) {
-        fileHeardEvent(world, hearer, entry.retold(teller));
+    for (const { hearer, item, teller } of heard) {
+        fileHeardNews(world, hearer, item.retold(teller));
     }
 }
 
@@ -1557,11 +1608,135 @@ export function propagateNews(world: World): void {
 // so it goes in the hearer's ledger on each party it already has one for. A
 // clan with no relationship to either party has nowhere to put it and loses
 // the news, which is a limitation of keying ledgers to live connections.
-function fileHeardEvent(world: World, hearer: Clan, entry: MemoryEntry): void {
-    for (const about of [entry.actor, entry.target]) {
+function fileHeardNews(world: World, hearer: Clan, item: NewsItem): void {
+    for (const about of [item.actor, item.target]) {
         if (!about || about === hearer.uuid) continue;
         const perceptions = world.perceptions.get(hearer, about);
-        perceptions?.information.memory.add(entry);
+        perceptions?.information.news.add(item);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// News into memory
+// ---------------------------------------------------------------------------
+
+// How big a thing has to be before a clan will still know of it next year.
+// Deliberately not the same threshold as being worth reporting to a reader:
+// plenty of news travels a settlement and is genuinely forgotten by everyone
+// within the year, which is what most of what happens amounts to.
+export const MEMORABLE_SALIENCE = 0.02;
+
+// How much a clan can carry at all, across everything it knows about
+// everyone. A bigger clan holds a little more, because there are more people
+// to hold it, but the sixth root makes that a weak effect: five times the
+// people carry about a third more between them, not five times as much.
+export const MEMORY_BASE_CAPACITY = 7;
+export const MEMORY_REFERENCE_POPULATION = 20;
+
+export function memoryCapacity(population: number): number {
+    if (population <= 0) return 0;
+    return MEMORY_BASE_CAPACITY
+        * Math.pow(population / MEMORY_REFERENCE_POPULATION, 1 / 6);
+}
+
+// Every ledger a clan keeps, its view of itself included.
+function ledgersOf(world: World, clan: Clan): Memory[] {
+    const ledgers: Memory[] = [];
+    const self = world.perceptions.get(clan, clan);
+    if (self) ledgers.push(self.information.memory);
+    for (const [, perceptions] of world.perceptions.getFor(clan)) {
+        ledgers.push(perceptions.information.memory);
+    }
+    return ledgers;
+}
+
+// Close the year: what was worth keeping passes into memory, and the clan
+// drops whatever it no longer has room for.
+export function foldNewsIntoMemory(world: World): void {
+    for (const clan of world.allClans) {
+        const self = world.perceptions.get(clan, clan);
+        if (self) {
+            for (const item of self.information.news.items) {
+                if (item.salience >= MEMORABLE_SALIENCE) {
+                    self.information.memory.add(item);
+                }
+            }
+        }
+        for (const [, perceptions] of world.perceptions.getFor(clan)) {
+            const information = perceptions.information;
+            for (const item of information.news.items) {
+                if (item.salience >= MEMORABLE_SALIENCE) {
+                    information.memory.add(item);
+                }
+            }
+        }
+        trimMemoryToCapacity(world, clan);
+    }
+}
+
+// Hold a clan to what it can carry. The cap is on everything it knows, not on
+// what it knows about any one neighbor, so a year of open fighting with one
+// clan really does crowd out the small kindnesses of another -- which is the
+// point of having a cap at all.
+//
+// What goes is whatever was the smallest thing, full stop, with no allowance
+// for how long ago it happened. A great occasion holds its place for as long
+// as the clan lasts: it stops being a thing that happened and becomes a thing
+// that is told, and nothing merely recent displaces it.
+function trimMemoryToCapacity(world: World, clan: Clan): void {
+    const capacity = Math.max(1, Math.round(memoryCapacity(clan.population)));
+    const ledgers = ledgersOf(world, clan);
+
+    let total = 0;
+    for (const memory of ledgers) total += memory.entries.length;
+    if (total <= capacity) return;
+
+    const saliences: number[] = [];
+    for (const memory of ledgers) {
+        for (const item of memory.entries) saliences.push(item.salience);
+    }
+    saliences.sort((a, b) => b - a);
+    const cutoff = saliences[capacity - 1];
+
+    // Ties at the cutoff would otherwise all stay, so count how much room is
+    // left for them once everything above the line has taken its place.
+    let roomAtCutoff = capacity;
+    for (const sal of saliences) if (sal > cutoff) --roomAtCutoff;
+    for (const memory of ledgers) {
+        memory.keepOnly(item => {
+            if (item.salience > cutoff) return true;
+            if (item.salience === cutoff && roomAtCutoff > 0) {
+                --roomAtCutoff;
+                return true;
+            }
+            return false;
+        });
+    }
+}
+
+// Let go of what has faded past being carried, once for the year.
+//
+// Perceptions are rebuilt more than once a turn, and forgetting used to ride
+// along with them, so a ledger was swept twice a year for the same result.
+// It is a property of the year rather than of any one rebuild, so it happens
+// here, at the close, and once.
+export function forgetStaleMemories(world: World): void {
+    const year = world.year.value;
+    for (const clan of world.allClans) {
+        world.perceptions.get(clan, clan)?.information.memory.forget(year);
+        for (const [, perceptions] of world.perceptions.getFor(clan)) {
+            perceptions.information.memory.forget(year);
+        }
+    }
+}
+
+// Clear the year's news, so a new turn starts on an empty page.
+export function clearNews(world: World): void {
+    for (const clan of world.allClans) {
+        world.perceptions.get(clan, clan)?.information.news.clear();
+        for (const [, perceptions] of world.perceptions.getFor(clan)) {
+            perceptions.information.news.clear();
+        }
     }
 }
 
@@ -1629,7 +1804,7 @@ function splitInformationLevelShare(): number {
     return 0.5 + Math.random() * 0.4;
 }
 
-function keptOnSplit(entry: MemoryEntry, keepFraction: number): boolean {
+function keptOnSplit(entry: NewsItem, keepFraction: number): boolean {
     // Everyone who lived through the big things remembers them.
     return entry.salience >= entry.def.unforgettableSalience
         || Math.random() < keepFraction;
