@@ -15,17 +15,26 @@ import { explain, type Explainer } from "../lib/explain";
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
 // affinity, mutual benefit, liking, and so on.
+//
+// It is simply what the items come to, with no smoothing year over year.
+// There would be nothing left for smoothing to do: almost everything alignment
+// is built from already carries its own history. What a clan is believed to
+// give is a running average of the last decade; what it has actually given or
+// done to us stands and fades over twenty years; rites said between the two
+// decay on their own half-lives. Damping the total on top of all that would
+// only add a second, meaningless lag to figures that already move at the speed
+// the model intends.
 
 export class Alignment {
     private items_: AlignmentItem[] = [];
+    // What it came to before the latest rebuild. Kept for the breakdown views
+    // to show the change; nothing in the model reads it.
     private previousValue_: number = 0;
     private value_: number = 0;
     // Standing goodwill from rites one clan said for the other, one running
     // total per kind of rite since they fade at different rates. Booked once,
     // where the rite is settled, and only decays after.
     private ritualBonds_ = new Map<string, DecayingCredit>();
-
-    static readonly ALPHA = 0.1;
 
     get items(): readonly AlignmentItem[] { return this.items_; }
     get previousValue(): number { return this.previousValue_; }
@@ -110,13 +119,10 @@ export class Alignment {
             AlignmentItem.forRitualHelp(this, subject.world.year.value),
         ];
         this.previousValue_ = this.value_;
-        const currentTotal = this.currentItemsTotal;
-        this.value_ = Alignment.ALPHA * currentTotal + (1 - Alignment.ALPHA) * this.previousValue_;
+        this.value_ = this.currentItemsTotal;
     }
 
-    // A clan is entirely on its own side. Held at the top of the range
-    // outright rather than smoothed toward it: this is not an opinion that
-    // has to be arrived at.
+    // A clan is entirely on its own side.
     updateForSelf(subject: Clan): void {
         this.items_ = [new AlignmentItem('Self', 'social', 1, 1, 'A clan is its own')];
         this.previousValue_ = this.value_;

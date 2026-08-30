@@ -141,10 +141,6 @@
                     <span>Previous Value:</span>
                     <strong>{signed(a.previousValue, 2)}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                    <span>Current Items Total:</span>
-                    <strong>{signed(a.currentItemsTotal, 2)}</strong>
-                </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
                     <span>Current Value:</span>
                     <strong>{signed(a.value, 2)}</strong>
