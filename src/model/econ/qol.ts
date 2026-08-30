@@ -5,6 +5,7 @@ import { getRelativeLocalPrestige } from "../relations/prestige";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { omenQolEffect } from "../rituals";
 import { feastQolEffect, festivalAppeal, festivalPower, riteQolEffect } from "../festivals";
+import { explain, type Explainer } from "../lib/explain";
 
 const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 2, 1, 0);
 
@@ -150,11 +151,26 @@ export class QualityOfLife {
     }
 }
 
-export class QualityOfLifeItem {
+// The type parameter is the explainer's argument. It appears in no member, so
+// every instantiation is the same type to anyone holding one; it exists only
+// to check, at the point of construction, that the explainer and the thing it
+// will be handed agree.
+export class QualityOfLifeItem<P = unknown> {
+    private readonly explainer_: Explainer<any>;
+    private readonly explainerArg_: unknown;
+
+    get explanation(): string {
+        return explain(this.explainer_, this.explainerArg_ ?? this);
+    }
+
     constructor(
         readonly name: string,
         readonly tag: string,
         readonly value: number,
-        readonly explanation: string,
-    ) { }
+        explainer: Explainer<P>,
+        explainerArg?: P,
+    ) {
+        this.explainer_ = explainer as Explainer<any>;
+        this.explainerArg_ = explainerArg;
+    }
 }

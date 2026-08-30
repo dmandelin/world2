@@ -1,4 +1,5 @@
 export type UUID = string;
+import { explain, type Explainer } from "../lib/explain";
 export type PairID = string;
 
 export type HasOrIsUUID = { uuid: UUID } | UUID;
@@ -18,10 +19,25 @@ export function pairIDOf(c1: HasOrIsUUID, c2: HasOrIsUUID): PairID {
     return uuid1 < uuid2 ? `${uuid1}|${uuid2}` : `${uuid2}|${uuid1}`;
 }
 
-export class GenericItem {
+// The type parameter is the explainer's argument. It appears in no member, so
+// every instantiation is the same type to anyone holding one; it exists only
+// to check, at the point of construction, that the explainer and the thing it
+// will be handed agree.
+export class GenericItem<P = unknown> {
+    private readonly explainer_: Explainer<any>;
+    private readonly explainerArg_: unknown;
+
+    get explanation(): string {
+        return explain(this.explainer_, this.explainerArg_ ?? this);
+    }
+
     constructor(
         readonly label: string,
         readonly value: number,
-        readonly explanation: string
-    ) {}
+        explainer: Explainer<P>,
+        explainerArg?: P,
+    ) {
+        this.explainer_ = explainer as Explainer<any>;
+        this.explainerArg_ = explainerArg;
+    }
 }

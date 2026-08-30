@@ -12,6 +12,8 @@ export abstract class Connection {
     abstract alignmentItem(subject: Clan, object: Clan): GenericItem;
 }
 
+const relatednessText = (d: { relatedness: number }) => `${pct(d.relatedness)}`;
+
 export class MarriageConnection extends Connection {
     relatedness: number = 0.0;
 
@@ -29,7 +31,8 @@ export class MarriageConnection extends Connection {
         return new GenericItem(
             'Marriages',
             this.relatedness,
-            `${pct(this.relatedness)}`
+            relatednessText,
+            { relatedness: this.relatedness }
         );
     }
 }

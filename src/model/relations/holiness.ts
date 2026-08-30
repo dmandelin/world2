@@ -7,6 +7,7 @@ import { SkillDefs } from "../econ/econdefs";
 import { ObservationDefs, observedEstimate } from "./information";
 import type { Opinion, OpinionItem } from "./opinion";
 import { ALL_RITUAL_TYPES, type RitualEvent, type RitualTypeDef } from "../rituals";
+import { explain, type Explainer } from "../lib/explain";
 
 // Holiness measures how close to the gods and ancestors one clan
 // thinks another stands: whom you would ask to say the words when
@@ -151,13 +152,28 @@ export class Holiness implements Opinion {
     }
 }
 
-export class HolinessItem implements OpinionItem {
+// The type parameter is the explainer's argument. It appears in no member, so
+// every instantiation is the same type to anyone holding one; it exists only
+// to check, at the point of construction, that the explainer and the thing it
+// will be handed agree.
+export class HolinessItem<P = unknown> implements OpinionItem {
+    private readonly explainer_: Explainer<any>;
+    private readonly explainerArg_: unknown;
+
+    get explanation(): string {
+        return explain(this.explainer_, this.explainerArg_ ?? this);
+    }
+
     constructor(
         readonly label: string,
         readonly baseValue: number,
         readonly modifier: number,
-        readonly explanation: string,
-    ) { }
+        explainer: Explainer<P>,
+        explainerArg?: P,
+    ) {
+        this.explainer_ = explainer as Explainer<any>;
+        this.explainerArg_ = explainerArg;
+    }
 
     get value(): number {
         return this.baseValue * this.modifier;
@@ -177,7 +193,7 @@ export class HolinessItem implements OpinionItem {
             'Piety',
             estimate,
             0.4,
-            `Piety estimate ${estimate.toFixed(0)}`
+            pietyText
         );
     }
 
@@ -190,7 +206,9 @@ export class HolinessItem implements OpinionItem {
             'Ritual Skill',
             Math.max(0, skill - HolinessItem.RITUAL_SKILL_BASELINE),
             0.5 * infoScale,
-            `Ritual skill ${skill.toFixed(0)} (base ${HolinessItem.RITUAL_SKILL_BASELINE}, info ${pct(infoScale)})`
+            scoredText,
+            { label: 'Ritual skill', value: skill,
+              baseline: HolinessItem.RITUAL_SKILL_BASELINE, infoScale }
         );
     }
 
@@ -201,7 +219,7 @@ export class HolinessItem implements OpinionItem {
             'Generosity',
             estimate,
             1,
-            `Generosity estimate ${estimate.toFixed(1)}`
+            generosityText
         );
     }
 
@@ -213,15 +231,14 @@ export class HolinessItem implements OpinionItem {
     // makes a lasting reputation.
     static forRitualOutcomes(credit: RitualCredit, year: number): HolinessItem {
         const since = credit.yearsSince(year);
+        const value = credit.value;
+        const halfLife = credit.def.holinessHalfLife;
         return new HolinessItem(
             `Rites: ${credit.def.label}`,
-            credit.value,
+            value,
             1,
-            since === undefined
-                ? 'no rites of this kind for us'
-                : `${signed(credit.value, 1)} standing from rites, last `
-                    + `${since === 0 ? 'this year' : `${since} y ago`}`
-                    + `, half-life ${credit.def.holinessHalfLife} y`
+            since === undefined ? 'no rites of this kind for us' : ritesText,
+            { value, since, halfLife },
         );
     }
 
@@ -232,10 +249,26 @@ export class HolinessItem implements OpinionItem {
             'Material QoL',
             Math.max(0, objectValue - HolinessItem.QOL_BASELINE),
             0.1 * infoScale,
-            `Material QoL ${objectValue.toFixed(0)} (base ${HolinessItem.QOL_BASELINE}, info ${pct(infoScale)})`
+            scoredText,
+            { label: 'Material QoL', value: objectValue,
+              baseline: HolinessItem.QOL_BASELINE, infoScale }
         );
     }
 }
+
+// Written once at load; each takes what it needs as an argument.
+const pietyText = (i: HolinessItem) =>
+    `Piety estimate ${i.baseValue.toFixed(0)}`;
+const generosityText = (i: HolinessItem) =>
+    `Generosity estimate ${i.baseValue.toFixed(1)}`;
+const scoredText = (
+    d: { label: string, value: number, baseline: number, infoScale: number }) =>
+    `${d.label} ${d.value.toFixed(0)} (base ${d.baseline}, info ${pct(d.infoScale)})`;
+const ritesText = (
+    d: { value: number, since: number | undefined, halfLife: number }) =>
+    `${signed(d.value, 1)} standing from rites, last `
+        + `${d.since === 0 ? 'this year' : `${d.since} y ago`}`
+        + `, half-life ${d.halfLife} y`;
 
 export function getHoliness(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     return subject.world.perceptions.get(subject.uuid, object.uuid)?.holiness.value ?? 0;

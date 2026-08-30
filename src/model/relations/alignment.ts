@@ -10,6 +10,7 @@ import { DILIGENCE_SCALE, ObservationDefs, observedEstimate } from "./informatio
 import { DecayingCredit } from "./credit";
 import type { RitualEvent } from "../rituals";
 import { feastAlignmentEffect, festivalAppeal, festivalGivingSeen } from "../festivals";
+import { explain, type Explainer } from "../lib/explain";
 
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
@@ -130,13 +131,30 @@ export class Alignment {
     }
 }
 
-export class AlignmentItem {
+// The type parameter is the explainer's argument. It appears in no member, so
+// every instantiation is the same type to anyone holding one; it exists only
+// to check, at the point of construction, that the explainer and the thing it
+// will be handed agree.
+export class AlignmentItem<P = unknown> {
+    private readonly explainer_: Explainer<any>;
+    private readonly explainerArg_: unknown;
+
+    get explanation(): string {
+        return explain(this.explainer_, this.explainerArg_ ?? this);
+    }
+
     constructor(
         readonly label: string,
         readonly baseValue: number,
         readonly modifier: number,
-        readonly explanation: string,
-    ) { }
+        explainer: Explainer<P>,
+        // What to call the explainer with. Left out when the item's own
+        // fields are all the text needs.
+        explainerArg?: P,
+    ) {
+        this.explainer_ = explainer as Explainer<any>;
+        this.explainerArg_ = explainerArg;
+    }
 
     get value(): number {
         return this.baseValue * this.modifier;
@@ -170,7 +188,8 @@ export class AlignmentItem {
             'Ditching',
             seen - expected,
             subject.traits.ditchingAdmiration,
-            `Diligence estimate ${seen.toFixed(1)} vs ${expected.toFixed(1)} expected`,
+            ditchingText,
+            { seen, expected },
         );
     }
 
@@ -183,11 +202,13 @@ export class AlignmentItem {
         if (subject.settlement !== object.settlement) {
             return new AlignmentItem('Festivals', 0, 0, 'not our festivals');
         }
+        const appeal = festivalAppeal(subject);
         return new AlignmentItem(
             'Festivals',
             feastAlignmentEffect(subject, object),
             1,
-            `Feast appeal ${festivalAppeal(subject).toFixed(2)}`,
+            feastText,
+            { appeal },
         );
     }
 
@@ -213,8 +234,8 @@ export class AlignmentItem {
             'Festival Giving',
             information * (seen - expected),
             subject.traits.festivalAdmiration,
-            `brought ${pct(seen)} of the standard vs ${pct(expected)} expected`
-                + `, seen at ${pct(information)}`,
+            festivalGivingText,
+            { seen, expected, information },
         );
     }
 
@@ -226,7 +247,7 @@ export class AlignmentItem {
             'Gifts',
             estimate,
             0.02,
-            `Generosity estimate ${estimate.toFixed(1)}`
+            generosityText
         );
     }
 
@@ -238,7 +259,7 @@ export class AlignmentItem {
             'Generosity',
             estimate,
             0.035,
-            `Generosity estimate ${estimate.toFixed(1)}`
+            generosityText
         );
     }
 
@@ -248,7 +269,7 @@ export class AlignmentItem {
             'Piety',
             estimate - 50,
             1 / 200,
-            `Piety estimate ${estimate.toFixed(0)} vs 50`
+            pietyText
         );
     }
 
@@ -261,7 +282,7 @@ export class AlignmentItem {
             'Sociability',
             relativeAttention,
             0.1,
-            `Attention ${pct(relativeAttention)}`
+            sociabilityText
         );
     }
 
@@ -275,10 +296,8 @@ export class AlignmentItem {
             'Ritual Help',
             value,
             1,
-            since === undefined
-                ? 'no rites between us'
-                : `${signed(100 * value, 1)} Favor standing, last rite `
-                    + `${since === 0 ? 'this year' : `${since} y ago`}`
+            since === undefined ? 'no rites between us' : ritualHelpText,
+            { value, since },
         );
     }
 
@@ -290,10 +309,32 @@ export class AlignmentItem {
             'Conflict',
             estimate,
             -0.04,
-            `Bellicosity estimate ${estimate.toFixed(1)}`
+            bellicosityText
         );
     }
 }
+
+// The explanations, written once at load rather than rebuilt per item. Each
+// takes what it needs as an argument, so none of them closes over anything.
+const generosityText = (i: AlignmentItem) =>
+    `Generosity estimate ${i.baseValue.toFixed(1)}`;
+const pietyText = (i: AlignmentItem) =>
+    `Piety estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
+const sociabilityText = (i: AlignmentItem) =>
+    `Attention ${pct(i.baseValue)}`;
+const bellicosityText = (i: AlignmentItem) =>
+    `Bellicosity estimate ${i.baseValue.toFixed(1)}`;
+const ditchingText = (d: { seen: number, expected: number }) =>
+    `Diligence estimate ${d.seen.toFixed(1)} vs ${d.expected.toFixed(1)} expected`;
+const feastText = (d: { appeal: number }) =>
+    `Feast appeal ${d.appeal.toFixed(2)}`;
+const festivalGivingText = (
+    d: { seen: number, expected: number, information: number }) =>
+    `brought ${pct(d.seen)} of the standard vs ${pct(d.expected)} expected`
+        + `, seen at ${pct(d.information)}`;
+const ritualHelpText = (d: { value: number, since: number | undefined }) =>
+    `${signed(100 * d.value, 1)} Favor standing, last rite `
+        + `${d.since === 0 ? 'this year' : `${d.since} y ago`}`;
 
 export function getAlignment(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     return subject.world.perceptions.get(subject.uuid, object.uuid)?.alignment.value ?? 0;

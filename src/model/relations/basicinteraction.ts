@@ -8,6 +8,9 @@ import { Interaction } from "./interaction";
 export const BASIC_INTERACTION_FIXED_COST = 5;
 export const BASE_ATTENTION_BUDGET = 180;
 
+const attentionText = (d: { relativeAttention: number }) =>
+    `From ${pct(d.relativeAttention)}`;
+
 export class BasicInteraction extends Interaction {
     amount1to2: number = 0;
     amount2to1: number = 0;
@@ -38,7 +41,8 @@ export class BasicInteraction extends Interaction {
         return new GenericItem(
             'Interaction',
             0.1 * relativeAttention,
-            `From ${pct(relativeAttention)}`,
+            attentionText,
+            { relativeAttention },
         )
     }
 }

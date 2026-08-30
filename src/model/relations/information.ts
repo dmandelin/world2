@@ -10,6 +10,7 @@ import type { UUID } from "../records/basicdata";
 import type { World } from "../world";
 import { getPrestige } from "./prestige";
 import { feastInformationContact, festivalAppeal } from "../festivals";
+import { explain, type Explainer } from "../lib/explain";
 
 // What one clan knows about another comes in two flavors:
 //
@@ -1170,13 +1171,33 @@ export class Observations {
 // The pair-level container.
 // ---------------------------------------------------------------------------
 
+// Written once at load; each takes what it needs as an argument.
+const attentionText = (i: ClanInformationItem) => `${pct(i.value)} attention`;
+const feastAppealText = (d: { appeal: number }) =>
+    `Feast appeal ${d.appeal.toFixed(2)}`;
+
 // A component of the direct contact level between two clans.
-export class ClanInformationItem {
+// The type parameter is the explainer's argument. It appears in no member, so
+// every instantiation is the same type to anyone holding one; it exists only
+// to check, at the point of construction, that the explainer and the thing it
+// will be handed agree.
+export class ClanInformationItem<P = unknown> {
+    private readonly explainer_: Explainer<any>;
+    private readonly explainerArg_: unknown;
+
+    get explanation(): string {
+        return explain(this.explainer_, this.explainerArg_ ?? this);
+    }
+
     constructor(
         readonly label: string,
         readonly value: number,
-        readonly explanation: string,
-    ) { }
+        explainer: Explainer<P>,
+        explainerArg?: P,
+    ) {
+        this.explainer_ = explainer as Explainer<any>;
+        this.explainerArg_ = explainerArg;
+    }
 }
 
 // Everything one clan knows about another.
@@ -1281,12 +1302,10 @@ export class ClanInformation {
         for (const interaction of interactions) {
             const infoVal = interaction.information(subject, object);
             const isBasic = interaction instanceof BasicInteraction;
-            const explanation = isBasic ? `${pct(infoVal)} attention` : "";
-
             this.contactItems_.push(new ClanInformationItem(
                 isBasic ? "Basic Interaction" : interaction.constructor.name,
                 infoVal,
-                explanation,
+                isBasic ? attentionText : "",
             ));
         }
 
@@ -1298,7 +1317,8 @@ export class ClanInformation {
             this.contactItems_.push(new ClanInformationItem(
                 "Festivals",
                 festival,
-                `Feast appeal ${festivalAppeal(subject).toFixed(2)}`,
+                feastAppealText,
+                { appeal: festivalAppeal(subject) },
             ));
         }
 

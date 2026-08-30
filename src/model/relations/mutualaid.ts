@@ -6,6 +6,9 @@ import { Interaction } from "./interaction";
 import { Trust } from "./trust";
 import { unsigned } from "../lib/format";
 
+const mutualAidText = (d: { value: number }) =>
+    `Mutual aid value: ${unsigned(d.value, 2)}`;
+
 export class MutualAidInteraction extends Interaction {
     readonly trustModel: Trust = new Trust();
     amount: number = 0;
@@ -32,7 +35,8 @@ export class MutualAidInteraction extends Interaction {
         return new GenericItem(
             'Mutual Aid',
             0.05 * (1 - this.icebergCost) * this.trust * this.amount,
-            `Mutual aid value: ${unsigned((1 - this.icebergCost) * this.trust * this.amount, 2)}`,
+            mutualAidText,
+            { value: (1 - this.icebergCost) * this.trust * this.amount },
         );
     }
 }

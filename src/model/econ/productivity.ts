@@ -6,6 +6,7 @@ import { Processes, SkillDefs } from './econdefs';
 import type { Process } from './process';
 import type { SkillDef } from '../people/skills';
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from '../relations/mutualaid';
+import { explain, type Explainer } from '../lib/explain';
 
 // Map of process to skills that affect productivity and the weight of that
 // skill. Built lazily on first use rather than at module-evaluation time: a
@@ -48,12 +49,37 @@ export class Productivity {
     }
 }
 
-export class ProductivityItem {
+// The type parameter is the explainer's argument. It appears in no member, so
+// every instantiation is the same type to anyone holding one; it exists only
+// to check, at the point of construction, that the explainer and the thing it
+// will be handed agree.
+// Written once at load; each takes what it needs as an argument.
+const statText = (
+    d: { label: string, statValue: number, statFactor: number }) =>
+    `${d.label} of ${d.statValue.toFixed(1)} with factor ${d.statFactor}`;
+const helpText = (d: { relativeHelp: number }) =>
+    `${pct(d.relativeHelp)} of help demand`;
+const ditchText = (d: { rating: number, flood: number }) =>
+    `ditch ${d.rating.toFixed(0)} vs flood ${d.flood.toFixed(0)}`;
+const averageText = (i: ProductivityItem) => `${pct(i.value)} of average`;
+
+export class ProductivityItem<P = unknown> {
+    private readonly explainer_: Explainer<any>;
+    private readonly explainerArg_: unknown;
+
+    get explanation(): string {
+        return explain(this.explainer_, this.explainerArg_ ?? this);
+    }
+
     constructor(
         readonly label: string,
         readonly value: number,
-        readonly explanation: string,
-    ) { }
+        explainer: Explainer<P>,
+        explainerArg?: P,
+    ) {
+        this.explainer_ = explainer as Explainer<any>;
+        this.explainerArg_ = explainerArg;
+    }
 
     static forStat(label: string, statValue: number, statFactor: number): ProductivityItem {
         const f = 1 + statFactor / 300;
@@ -61,7 +87,8 @@ export class ProductivityItem {
         return new ProductivityItem(
             label,
             fp,
-            `${label} of ${statValue.toFixed(1)} with factor ${statFactor}`,
+            statText,
+            { label, statValue, statFactor },
         );
     }
 
@@ -82,7 +109,8 @@ export class ProductivityItem {
         yield new ProductivityItem(
             'Help',
             modifier,
-            `${pct(relativeHelp)} of help demand`,
+            helpText,
+            { relativeHelp },
         );
     }
 
@@ -111,9 +139,8 @@ export class ProductivityItem {
         yield new ProductivityItem(
             'Flood control',
             differentialProductivity,
-            settlement.ditch?.building
-                ? `ditch ${settlement.ditchRating.toFixed(0)} vs flood ${settlement.floodRating.toFixed(0)}`
-                : 'no ditch');
+            settlement.ditch?.building ? ditchText : 'no ditch',
+            { rating: settlement.ditchRating, flood: settlement.floodRating });
 
         // Random component: agricultural yields are somewhat random.
         const v = 1 + 0.3 * (Math.random() + Math.random());
@@ -122,7 +149,7 @@ export class ProductivityItem {
         yield new ProductivityItem(
             'Random',
             m,
-            `${pct(m)} of average`,
+            averageText,
         );
     }
 }

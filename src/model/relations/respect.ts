@@ -6,6 +6,7 @@ import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
 import type { Opinion, OpinionItem } from "./opinion";
 import { festivalPower, riteRespectEffect } from "../festivals";
+import { explain, type Explainer } from "../lib/explain";
 
 // Respect measures how powerful and capable one clan thinks
 // another is. It's an absolute assessment, not relative to
@@ -78,13 +79,28 @@ export class Respect implements Opinion {
     }
 }
 
-export class RespectItem implements OpinionItem {
+// The type parameter is the explainer's argument. It appears in no member, so
+// every instantiation is the same type to anyone holding one; it exists only
+// to check, at the point of construction, that the explainer and the thing it
+// will be handed agree.
+export class RespectItem<P = unknown> implements OpinionItem {
+    private readonly explainer_: Explainer<any>;
+    private readonly explainerArg_: unknown;
+
+    get explanation(): string {
+        return explain(this.explainer_, this.explainerArg_ ?? this);
+    }
+
     constructor(
         readonly label: string,
         readonly baseValue: number,
         readonly modifier: number,
-        readonly explanation: string,
-    ) { }
+        explainer: Explainer<P>,
+        explainerArg?: P,
+    ) {
+        this.explainer_ = explainer as Explainer<any>;
+        this.explainerArg_ = explainerArg;
+    }
 
     get value(): number {
         return this.baseValue * this.modifier;
@@ -103,7 +119,9 @@ export class RespectItem implements OpinionItem {
             'Material QoL',
             Math.max(0, objectValue - RespectItem.QOL_BASELINE),
             0.1 * infoScale,
-            `Material QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE}, info ${pct(infoScale)})`
+            qolText,
+            { label: 'Material QoL', value: objectValue,
+              baseline: RespectItem.QOL_BASELINE, infoScale }
         );
     }
 
@@ -113,7 +131,9 @@ export class RespectItem implements OpinionItem {
             'Conversation QoL',
             Math.max(0, objectValue - RespectItem.QOL_BASELINE),
             0.05 * infoScale,
-            `Conversation QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE}, info ${pct(infoScale)})`
+            qolText,
+            { label: 'Conversation QoL', value: objectValue,
+              baseline: RespectItem.QOL_BASELINE, infoScale }
         );
     }
 
@@ -123,7 +143,9 @@ export class RespectItem implements OpinionItem {
             'Conflict QoL',
             Math.max(0, objectValue - RespectItem.QOL_BASELINE),
             0.05 * infoScale,
-            `Conflict QoL ${objectValue.toFixed(0)} (base ${RespectItem.QOL_BASELINE}, info ${pct(infoScale)})`
+            qolText,
+            { label: 'Conflict QoL', value: objectValue,
+              baseline: RespectItem.QOL_BASELINE, infoScale }
         );
     }
 
@@ -135,7 +157,9 @@ export class RespectItem implements OpinionItem {
             'Population',
             Math.max(0, doublings),
             10 * infoScale,
-            `Population ${pop} (base ${RespectItem.POP_BASELINE}, info ${pct(infoScale)})`
+            qolText,
+            { label: 'Population', value: pop,
+              baseline: RespectItem.POP_BASELINE, infoScale }
         );
     }
 
@@ -147,7 +171,9 @@ export class RespectItem implements OpinionItem {
             'Skills',
             Math.max(0, avgObjectSkill - RespectItem.SKILL_BASELINE),
             0.05 * infoScale,
-            `Skills ${avgObjectSkill.toFixed(0)} (base ${RespectItem.SKILL_BASELINE}, info ${pct(infoScale)})`
+            qolText,
+            { label: 'Skills', value: avgObjectSkill,
+              baseline: RespectItem.SKILL_BASELINE, infoScale }
         );
     }
 
@@ -159,11 +185,13 @@ export class RespectItem implements OpinionItem {
         if (subject.settlement !== object.settlement) {
             return new RespectItem('Festivals', 0, 0, 'not our festivals');
         }
+        const power = festivalPower(object);
         return new RespectItem(
             'Festivals',
             riteRespectEffect(subject, object),
             1,
-            `Rite power ${festivalPower(object).toFixed(2)}`,
+            ritePowerText,
+            { power },
         );
     }
 
@@ -173,7 +201,8 @@ export class RespectItem implements OpinionItem {
             'Generosity',
             foodAidGiven,
             2 * infoScale,
-            `Generosity (info ${pct(infoScale)})`
+            infoOnlyText,
+            { infoScale }
         );
     }
 
@@ -185,7 +214,7 @@ export class RespectItem implements OpinionItem {
             'Pride',
             pride,
             1,
-            `Pride ${signed(pride, 1)}`
+            prideText
         );
     }
 
@@ -201,6 +230,19 @@ export class RespectItem implements OpinionItem {
         );
     }
 }
+
+// Written once at load. Each takes what it needs, so none closes over
+// anything; the figures are settled when the item is built.
+type ScoredAgainst = {
+    label: string, value: number, baseline: number, infoScale: number,
+};
+const qolText = (d: ScoredAgainst) =>
+    `${d.label} ${d.value.toFixed(0)} (base ${d.baseline}, info ${pct(d.infoScale)})`;
+const infoOnlyText = (d: { infoScale: number }) =>
+    `Generosity (info ${pct(d.infoScale)})`;
+const prideText = (i: RespectItem) => `Pride ${signed(i.baseValue, 1)}`;
+const ritePowerText = (d: { power: number }) =>
+    `Rite power ${d.power.toFixed(2)}`;
 
 export function getRespect(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     return subject.world.perceptions.get(subject.uuid, object.uuid)?.respect.value ?? 0;
