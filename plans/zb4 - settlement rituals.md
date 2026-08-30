@@ -488,6 +488,7 @@ kernel model. Some of the most important points are:
 
 *   Somewhat bigger but maybe becoming more urgent
     *   Improved QoL aggregation
+    *   Deal with too many tiny settlements appearing
     *   Consider making serenity somewhat more like gifts between clans:
         have clans giving offerings estimate how well the recipients are
         aligned toward them (and have that be a primary stat and also
@@ -499,3 +500,15 @@ kernel model. Some of the most important points are:
         probably also identity)
     *   Figure out how to let craft and ritual abilities rise over time
         and how that relates to skill level
+
+*   Other major models needed
+    *   Land - we'll need more notions of creating, quality, and
+        continuity, and differential usufruct access to land
+    *   Trade - should have some notion of where that flint comes
+        from
+    *   Intervillage interactions
+        *   For one, what exactly do they do?
+        *   But this probably has some important implications for
+            leadership roles (to be speaker in that context)
+        *   We should also have villages have some sort of prestige-
+            like rating that they can potentially compete for
