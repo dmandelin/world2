@@ -9,6 +9,8 @@
         FEAST_QOL_MAX,
         RITE_QOL_MAX,
         RITE_RESPECT_MAX,
+        SKILL_FACTOR_BASE_LEVEL,
+        SKILL_FACTOR_TOP_LEVEL,
         festivalEffect,
         ritualScaleFactor,
     } from "../model/festivals";
@@ -89,12 +91,28 @@
             total: () => festivals?.givingSeen ?? 0,
         },
         {
+            label: "Craft skill",
+            tooltip:
+                "Making and performing. Kept up at the feast, which is the "
+                + "only place this model yet gives it to do. The settlement "
+                + "figure is the geometric mean weighted by clan population.",
+            value: (c) => c.skills.v(CRAFT),
+            format: (v) => unsigned(v),
+            aggregate: "none",
+            total: () => feast?.skill ?? 0,
+        },
+        {
             label: "Ritual skill",
             tooltip:
                 "Kept up at the rite itself, which is the only place the "
-                + "words get said in the order they have to be said in.",
+                + "words get said in the order they have to be said in. The "
+                + "settlement figure is a CES mean at r = -2 weighted by clan "
+                + "population, so the worst part is very nearly the whole "
+                + "story.",
             value: (c) => c.skills.v(RITUAL),
             format: (v) => unsigned(v),
+            aggregate: "none",
+            total: () => rite?.skill ?? 0,
         },
         {
             label: "Effort on festivals",
@@ -332,6 +350,20 @@
                     + "what the signs during it looked like",
             },
             {
+                label: `${a.skillName} skill`,
+                value: calc.skill.toFixed(0),
+                note: `The settlement's level, taken as the `
+                    + `${a.skillCombinationLabel}`,
+            },
+            {
+                label: "× Skill",
+                value: xm(calc.skillFactor),
+                note: `${SKILL_FACTOR_BASE_LEVEL} is ordinary and worth `
+                    + `nothing either way; ${SKILL_FACTOR_TOP_LEVEL} is worth `
+                    + `${xm(a.skillFactorAtTop)}, and the curve is `
+                    + `exponential between and past`,
+            },
+            {
                 label: "× Scale",
                 value: xm(calc.scaleFactor),
                 note: `${calc.structure.name} under ${calc.leadership.name} `
@@ -518,6 +550,7 @@
 <script lang="ts" module>
     import { SkillDefs } from "../model/econ/econdefs";
     const RITUAL = SkillDefs.Ritual;
+    const CRAFT = SkillDefs.Craft;
 </script>
 
 {#snippet settlementHeader()}

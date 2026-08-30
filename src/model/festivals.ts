@@ -1,4 +1,4 @@
-import { clamp, safeDiv, sumFun } from './lib/basics';
+import { clamp, safeDiv, sumFun, weightedGeometricMean } from './lib/basics';
 import { normal } from './lib/distributions';
 import { ces } from './lib/modelbasics';
 import { TradeGoods, type TradeGood } from './trade';
@@ -160,7 +160,30 @@ export type RitualAspectSpec = {
     // Log-scale spread of the year's luck: whether the weather held, whether
     // the dancing caught, whether the omens during it read well.
     luckSpread: number;
+    // The skill this aspect is done with, read off each clan.
+    skillName: string;
+    skillOf: (clan: Clan) => number;
+    // How one settlement-wide level is made out of the clans' several. The
+    // two aspects differ in kind here, not just in degree:
+    // - 'geometric': a weighted geometric mean, weighted by population. Every
+    //   clan's hand counts, and a clan with none drags the whole down, but a
+    //   fine performer really can carry a poor one.
+    // - 'ces': a CES mean at skillRho, again weighted by population. At a
+    //   sharply negative rho the worst part is very nearly the whole story:
+    //   a rite is only as sound as its most badly-said passage.
+    skillCombination: 'geometric' | 'ces';
+    skillRho?: number;
+    // What the skill is worth: this factor at SKILL_FACTOR_TOP_LEVEL, and
+    // 1.0 at SKILL_FACTOR_BASE_LEVEL, growing exponentially between and past.
+    skillFactorAtTop: number;
 };
+
+// Where the skill factor is pinned. A settlement of ordinary hands gets no
+// bonus and no penalty; one at the top level gets the aspect's full
+// multiplier, and the curve is exponential in between, as skill factors are
+// everywhere else in the model.
+export const SKILL_FACTOR_BASE_LEVEL = 50;
+export const SKILL_FACTOR_TOP_LEVEL = 80;
 
 export class RitualAspectDef {
     readonly key: RitualAspectKey;
@@ -173,6 +196,11 @@ export class RitualAspectDef {
     readonly rho: number;
     readonly nu: number;
     readonly luckSpread: number;
+    readonly skillName: string;
+    readonly skillOf: (clan: Clan) => number;
+    readonly skillCombination: 'geometric' | 'ces';
+    readonly skillRho: number;
+    readonly skillFactorAtTop: number;
 
     constructor(spec: RitualAspectSpec) {
         this.key = spec.key;
@@ -185,6 +213,45 @@ export class RitualAspectDef {
         this.rho = spec.rho;
         this.nu = spec.nu;
         this.luckSpread = spec.luckSpread;
+        this.skillName = spec.skillName;
+        this.skillOf = spec.skillOf;
+        this.skillCombination = spec.skillCombination;
+        this.skillRho = spec.skillRho ?? 0;
+        this.skillFactorAtTop = spec.skillFactorAtTop;
+    }
+
+    // The settlement's level at this aspect's skill, out of its clans'.
+    // Weights are population shares, so they sum to 1 and a big clan counts
+    // for more than a small one.
+    combineSkills(clans: readonly Clan[]): number {
+        const present = clans.filter(c => c.population > 0);
+        const total = sumFun(present, c => c.population);
+        if (!present.length || total <= 0) return 0;
+        const share = (c: Clan) => c.population / total;
+
+        if (this.skillCombination === 'ces') {
+            return ces(present.map(this.skillOf), {
+                rho: this.skillRho,
+                alpha: present.map(share),
+            });
+        }
+        // Shares rather than raw populations, so the powers stay small enough
+        // to multiply without running the product off the top of a double.
+        return weightedGeometricMean(present, this.skillOf, share);
+    }
+
+    // What that level is worth as a multiplier on the aspect's value.
+    skillFactor(skill: number): number {
+        const span = SKILL_FACTOR_TOP_LEVEL - SKILL_FACTOR_BASE_LEVEL;
+        return Math.pow(
+            this.skillFactorAtTop, (skill - SKILL_FACTOR_BASE_LEVEL) / span);
+    }
+
+    // How the settlement's level is arrived at, for the tables.
+    get skillCombinationLabel(): string {
+        return this.skillCombination === 'ces'
+            ? `CES mean at r = ${this.skillRho}, weighted by clan population`
+            : 'geometric mean, weighted by clan population';
     }
 
     // What a clan of this size would bring at the plain standard, in
@@ -240,6 +307,15 @@ export const RitualAspects = {
         rho: -0.5,
         nu: 0.8,
         luckSpread: 0.12,
+        skillName: 'Craft',
+        skillOf: (clan: Clan) => clan.craftSkill,
+        // Everyone's hand counts and a fine performer can carry a poor one,
+        // so the parts multiply rather than being held down to the worst.
+        skillCombination: 'geometric',
+        // A feast is one of the few things these people make on purpose to be
+        // admired, and skill at it tells enormously: a settlement of real
+        // performers throws a festival worth twice an ordinary one.
+        skillFactorAtTop: 2.0,
     }),
 
     Rite: new RitualAspectDef({
@@ -257,6 +333,16 @@ export const RitualAspects = {
         rho: -2,
         nu: 0.8,
         luckSpread: 0.12,
+        skillName: 'Ritual',
+        skillOf: (clan: Clan) => clan.ritualSkill,
+        // A rite is only as sound as its most badly-said passage, and every
+        // clan says some of it, so the worst part is very nearly the whole
+        // story.
+        skillCombination: 'ces',
+        skillRho: -2,
+        // These rites are still very simple, so there is not much room to be
+        // brilliant at them -- but there is always gravitas.
+        skillFactorAtTop: 1.25,
     }),
 };
 
@@ -428,6 +514,8 @@ export class FestivalContribution {
         // offering table.
         readonly foodEaten: number,
         readonly foodSacrificed: number,
+        // This clan's level at the skill the aspect is done with.
+        readonly skill: number,
     ) {
         this.timeRatio = safeDiv(labor, standardLabor, 0);
         this.foodRatio = safeDiv(food, standardFood, 0);
@@ -476,6 +564,11 @@ export class FestivalAspectCalc {
     // What this way of holding a festival is worth at this population.
     readonly scaleFactor: number;
 
+    // The settlement's level at the skill this aspect is done with, and what
+    // that level is worth.
+    readonly skill: number;
+    readonly skillFactor: number;
+
     // Appeal, for the feast; Power, for the rite.
     readonly value: number;
 
@@ -501,7 +594,8 @@ export class FestivalAspectCalc {
                 clan.festivals.foodPaid(aspect),
                 aspect.standardFoodFor(clan),
                 clan.festivals.foodEaten(aspect),
-                clan.festivals.foodSacrificed(aspect)));
+                clan.festivals.foodSacrificed(aspect),
+                aspect.skillOf(clan)));
 
         this.labor = sumFun(this.contributions, c => c.labor);
         this.standardLabor = aspect.standardLaborForPopulation(population);
@@ -518,7 +612,11 @@ export class FestivalAspectCalc {
         this.scaleFactor = leadership.scaleFactor
             * ritualScaleFactor(population, structure.scale[aspect.key]);
 
-        this.value = this.baseValue * this.luck * this.scaleFactor;
+        this.skill = aspect.combineSkills(clans);
+        this.skillFactor = aspect.skillFactor(this.skill);
+
+        this.value = this.baseValue * this.luck * this.scaleFactor
+            * this.skillFactor;
     }
 
     // What one clan brought, for the tables.

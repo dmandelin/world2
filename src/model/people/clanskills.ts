@@ -13,7 +13,9 @@ export class ClanSkills {
         // at some point, but nobody has done it the way this land asks, so
         // where a clan starts is mostly luck of what it happens to have
         // seen. Construction they have barely begun. They've already been
-        // fishing, though.
+        // fishing, though. Craft and Ritual start at the middle because that
+        // is what the middle means here: these are the traditional life of
+        // the people, and a clan is by definition ordinary at them.
         const gen = (skillDef: SkillDef) =>
               skillDef === SkillDefs.Irrigation
             ? randomIrrigationSkill()

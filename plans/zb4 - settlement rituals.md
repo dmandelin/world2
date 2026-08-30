@@ -477,6 +477,8 @@ kernel model. Some of the most important points are:
         to implement
     *   Requirements for specific food mixes
     *   Different clan tastes
+    *   Elaborating rites, and then skill requirements and influence
+        go up
 
 *   High-priority tasks
     *   Care skill
@@ -495,3 +497,5 @@ kernel model. Some of the most important points are:
     *   Make sure we have sufficient per-settlement correlation in
         enough outcomes to create a sense of shared fate (and
         probably also identity)
+    *   Figure out how to let craft and ritual abilities rise over time
+        and how that relates to skill level

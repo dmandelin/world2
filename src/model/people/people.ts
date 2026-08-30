@@ -18,7 +18,7 @@ import { Rites } from "../rites";
 import type { RitualEvent } from "../rituals";
 import { type TradeGood, TradeGoods, type TradePartner, TradeRelationship } from "../trade";
 import { ClanFloodDamage } from "../environment/flood";
-import { FestivalOperation } from "../festivals";
+import { FestivalOperation, RitualAspects } from "../festivals";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
@@ -154,6 +154,17 @@ export class Clan implements TradePartner {
         return this.festivalEffortShare * this.effort;
     }
 
+    // The two halves of that, which are where the two festival skills are
+    // practiced: the feast is where a clan gets its hand in at making and
+    // performing, the rite is where the words are kept.
+    get feastLabor(): number {
+        return this.festivals.labor(RitualAspects.Feast);
+    }
+
+    get riteLabor(): number {
+        return this.festivals.labor(RitualAspects.Rite);
+    }
+
     effortAllocation: EffortAllocation;
     helpAllocation: HelpAllocation = new HelpAllocation();
     operations: Operation[] = [];
@@ -272,6 +283,10 @@ export class Clan implements TradePartner {
 
     get skill() {
         return this.skills.v(SkillDefs.Agriculture);
+    }
+
+    get craftSkill() {
+        return this.skills.v(SkillDefs.Craft);
     }
 
     get ritualSkill() {
