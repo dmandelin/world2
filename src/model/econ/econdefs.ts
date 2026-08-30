@@ -21,9 +21,40 @@ import type { Clan } from '../people/people';
 // it; tight-fisted ones settle below.
 const RITUAL_SKILL_DIFFICULTY = 0.6;
 
+// Care gets a bigger share of a clan's year than either festival skill --
+// how much bigger depends on how many children it has -- so it needs a
+// higher difficulty to sit at the same equilibrium of 50. Measured, not
+// guessed: see the note above for the formula.
+const CARE_SKILL_DIFFICULTY = 0.8;
+
+// Ordered as a clan would rank them: the skills of keeping a household and a
+// people first, then the skills of getting a living, then the ones that build
+// something. Nothing sorts on sortKey for skills -- the lists are built by
+// walking this object -- but the two are kept in step so that anything which
+// starts sorting gets the same order.
 export const SkillDefs = {
+    // Looking after people: feeding the small, nursing the sick, keeping the
+    // old warm and the young out of the river. Practised in the Care activity
+    // and nowhere else, which is a larger share of the year than the festival
+    // skills get, so it holds its level at an easier difficulty than they do.
+    // Like them it is the traditional life of the people, and a clan doing
+    // its accustomed share should stay ordinary at it rather than drift.
+    Care: new SkillDef(0, 'Care', 'skill-care-256.png', '#f472b6',
+        (clan: Clan): number => clan.careLabor,
+        false, false, CARE_SKILL_DIFFICULTY),
+    // The words said in the order they have to be said in. Practiced at the
+    // rite.
+    Ritual: new SkillDef(1, 'Ritual', 'skill-ritual-256.png', '#ec4899',
+        (clan: Clan): number => clan.riteLabor,
+        false, false, RITUAL_SKILL_DIFFICULTY),
+    // Making and performing: the dancing, the music, the costumes, the
+    // vessels the food comes out of. Practiced at the feast, which is the
+    // only place this model yet gives it to do.
+    Craft: new SkillDef(2, 'Craft', 'skill-craft-256.png', '#a855f7',
+        (clan: Clan): number => clan.feastLabor,
+        false, false, RITUAL_SKILL_DIFFICULTY),
     LocalEcology: new SkillDef(
-        0,
+        3,
         'Local Ecology',
         'skill-local-ecology-256.png',
         '#22c55e',
@@ -31,10 +62,10 @@ export const SkillDefs = {
         true,
         true,
     ),
-    Fishing: new SkillDef(1, 'Fishing', 'skill-fishing-256.png', '#14b8a6',
+    Fishing: new SkillDef(4, 'Fishing', 'skill-fishing-256.png', '#14b8a6',
         (clan: Clan): number => clan.production.effortForProcesses(Processes.Fishing),
     ),
-    Agriculture: new SkillDef(2, 'Agriculture', 'skill-farming-256.png', '#f59e0b',
+    Agriculture: new SkillDef(5, 'Agriculture', 'skill-farming-256.png', '#f59e0b',
         (clan: Clan): number => clan.production.effortForProcesses(Processes.Agriculture),
     ),
     // Ditching is a small share of anyone's year, so its focus factor is low
@@ -45,24 +76,14 @@ export const SkillDefs = {
     // At half the ordinary difficulty the ceiling doubles, to about 60, and
     // the climb stretches out: about 25 at the start, 42 by year 200, 50
     // somewhere around year 350.
-    Irrigation: new SkillDef(3, 'Irrigation', 'skill-irrigation-256.png', '#3b82f6',
+    Irrigation: new SkillDef(6, 'Irrigation', 'skill-irrigation-256.png', '#3b82f6',
         (clan: Clan): number => clan.ditchingLabor,
         false, false, 0.5,
     ),
-    Construction: new SkillDef(4, 'Construction', 'skill-construction-256.png', '#8b5cf6',
+    Construction: new SkillDef(7, 'Construction', 'skill-construction-256.png', '#8b5cf6',
         (clan: Clan): number => 0),
-    // The words said in the order they have to be said in. Practiced at the
-    // rite.
-    Ritual: new SkillDef(5, 'Ritual', 'skill-ritual-256.png', '#ec4899',
-        (clan: Clan): number => clan.riteLabor,
-        false, false, RITUAL_SKILL_DIFFICULTY),
-    // Making and performing: the dancing, the music, the costumes, the
-    // vessels the food comes out of. Practiced at the feast, which is the
-    // only place this model yet gives it to do.
-    Craft: new SkillDef(6, 'Craft', 'skill-craft-256.png', '#a855f7',
-        (clan: Clan): number => clan.feastLabor,
-        false, false, RITUAL_SKILL_DIFFICULTY),
 };
+
 
 // What a worker-year brought in before the festival-time adjustment.
 const UNCOMPENSATED_OUTPUT_PER_WORKER = 3.5;

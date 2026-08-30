@@ -47,6 +47,24 @@ export function signedFormat(places: number = 0): (n: number) => string {
     return (n: number) => signed(n, places);
 }
 
+// Stats that run 0 to 100 and centre on 50 -- every skill, and the traits
+// like piety and intellect -- read much faster with a band of colour behind
+// them than as bare numbers in a wall of other bare numbers. Five bands,
+// twenty points each: the middle one is the ordinary run of things, and the
+// outer ones are the notably poor and the notably good.
+export const STAT_BAND_WIDTH = 20;
+export const STAT_BAND_COUNT = 5;
+
+export function statBand(value: number): number {
+    if (!Number.isFinite(value)) return 2;
+    const band = Math.floor(value / STAT_BAND_WIDTH);
+    return band < 0 ? 0 : band > STAT_BAND_COUNT - 1 ? STAT_BAND_COUNT - 1 : band;
+}
+
+export function statBandClass(value: number): string {
+    return `stat-band-${statBand(value)}`;
+}
+
 export function grade(t: number) {
   switch (true) {
       case t > 87.5: return 'S';

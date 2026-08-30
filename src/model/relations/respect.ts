@@ -163,8 +163,13 @@ export class RespectItem<P = unknown> implements OpinionItem {
         );
     }
 
+    // Skill at the work, which is what a clan is respected for. Care is left
+    // out on purpose: looking after your own people well is a thing neighbors
+    // like you for rather than one that makes them reckon you capable, so it
+    // weighs on alignment instead.
     static forSkills(subject: Clan, object: Clan, infoScale: number): RespectItem {
-        const skillDefs = Object.values(SkillDefs);
+        const skillDefs = Object.values(SkillDefs)
+            .filter(def => def !== SkillDefs.Care);
         const totalObjectSkill = sumFun(skillDefs, s => object.skills.v(s));
         const avgObjectSkill = totalObjectSkill / (skillDefs.length || 1);
         return new RespectItem(

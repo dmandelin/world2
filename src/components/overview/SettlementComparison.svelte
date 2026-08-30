@@ -33,6 +33,8 @@
         { key: "skillIrrigation", label: "Skill: Irrigation" },
         { key: "skillLocalEcology", label: "Skill: Local Ecology" },
         { key: "skillRitual", label: "Skill: Ritual" },
+        { key: "skillCraft", label: "Skill: Craft" },
+        { key: "skillCare", label: "Skill: Care" },
         { key: "socialAppeal", label: "Social Welfare" },
         { key: "stress", label: "Stress" },
         { key: "supportRatio", label: "Support Ratio" },

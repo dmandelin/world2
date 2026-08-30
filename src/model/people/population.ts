@@ -9,6 +9,54 @@ import { getMarriageDecisions } from "../relations/marriage";
 // nutrition, minimal shelter and no migration) and the global death-rate
 // multiplier are tunable, so read them from the shared knobs at call time.
 import { tuning } from "../tuning";
+
+// What a clan's skill at looking after its people is worth.
+//
+// All of these are pinned the same way as every other skill factor in the
+// model: nothing either way at 50, the stated figure at 80, exponential
+// between and past. Care is the traditional life of the people, so 50 is
+// what an ordinary clan manages and the numbers say what being notably good
+// or bad at it is worth against that.
+export const CARE_SKILL_BASE = 50;
+export const CARE_SKILL_TOP = 80;
+
+// Births. A clan that looks after its mothers loses fewer pregnancies and
+// gets women back to health sooner, but this was never going to be the main
+// thing care does.
+export const CARE_BIRTH_RATE_AT_TOP = 1.1;
+
+// Deaths, by age slice. Nearly all of what care is worth falls on the
+// children: keeping the small fed, warm, watched and nursed is the difference
+// between a clan that raises its babies and one that buries them. The old
+// gain something. Adults in their strength, who mostly die of things nobody
+// can nurse them through, gain almost nothing.
+export const CARE_DEATH_RATE_AT_TOP = [0.75, 0.98, 0.98, 0.90];
+
+function careFactor(care: number, atTop: number): number {
+    return Math.pow(atTop, (care - CARE_SKILL_BASE) / (CARE_SKILL_TOP - CARE_SKILL_BASE));
+}
+
+export function careBirthRateModifier(care: number): number {
+    return careFactor(care, CARE_BIRTH_RATE_AT_TOP);
+}
+
+// Applied to the causes a carer could actually do something about: illness,
+// mishap, and the frailty of the old. Not to drowning in a flood, and not to
+// starving, which is a question of how much food there is rather than of who
+// is looking after whom.
+// And what it is worth simply as a life. Points of quality of life at the top
+// of the scale, straight-line from nothing at the middle -- so a badly cared
+// for clan is as much worse off as a well cared for one is better.
+export const CARE_QOL_AT_TOP = 10;
+
+export function careQolEffect(care: number): number {
+    return CARE_QOL_AT_TOP * (care - CARE_SKILL_BASE)
+        / (CARE_SKILL_TOP - CARE_SKILL_BASE);
+}
+
+export function careDeathRateModifier(care: number, slice: number): number {
+    return careFactor(care, CARE_DEATH_RATE_AT_TOP[slice] ?? 1);
+}
 import { feastBirthRateModifier, feastDeathRateModifier, festivalAppeal } from "../festivals";
 
 function foodVarietyHealthFactor(fishRatio: number): number {
@@ -381,6 +429,16 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Festivals', appeal, safeVal(feastDeathRateModifier(this.clan), 1)));
 
+        // Care shows up on the birth rate as a single figure, and on the death
+        // rates per age slice, where the effect really lives; the death-rate
+        // entry here is the middling slices' worth of it, so the breakdown
+        // reads as something rather than nothing.
+        const care = safeVal(this.clan.careSkill, 50);
+        this.brModifiers.push(new PopulationChangeModifier(
+            'Care', care, safeVal(careBirthRateModifier(care), 1)));
+        this.drModifiers.push(new PopulationChangeModifier(
+            'Care', care, safeVal(careDeathRateModifier(care, 1), 1)));
+
         const intellect = safeVal(this.clan.traits?.intellect ?? 50, 50);
         const foresightBrModifier = Math.pow(0.9, (intellect - 50) / 15);
         const foresightDrModifier = Math.pow(0.95, (intellect - 50) / 15);
@@ -431,11 +489,19 @@ export class PopulationChangeBuilder {
         // given slice and sex mortality multiplier. Every cause is scaled by the
         // global death-rate adjustment tuning knob.
         const A = tuning.deathRateAdjustmentFactor;
+        // How much the clan's skill at looking after people is worth in each
+        // slice. The middling slices' share is already in drModifier, so it
+        // is divided back out here to keep from counting twice.
+        const careMid = careDeathRateModifier(clan.careSkill, 1);
+        const careBySlice = [0, 1, 2, 3].map(
+            i => careDeathRateModifier(clan.careSkill, i) / careMid);
         const rawRisks = (i: number, sexFactor: number): number[] => [
-            diseaseRiskBySlice[i] * Y * sexFactor * A,                 // Disease
-            BASE_DEATH_RATES[i] * this.drModifier * Y * sexFactor * A, // Hazards
-            floodRisk * sexFactor * A,                                 // Flood
-            (i === 3 ? Y / SLICE_WIDTH : 0) * sexFactor * A,           // Old Age
+            diseaseRiskBySlice[i] * careBySlice[i] * Y * sexFactor * A,  // Disease
+            BASE_DEATH_RATES[i] * this.drModifier * careBySlice[i]
+                * Y * sexFactor * A,                                    // Hazards
+            floodRisk * sexFactor * A,                                  // Flood
+            (i === 3 ? Y / SLICE_WIDTH : 0) * careBySlice[i]
+                * sexFactor * A,                                        // Old Age
             // No adjustment here because we want risk 1.0 at some point.
             Math.min(1, starvationRisk(                                // Starvation
                 consumption, STARVATION_THRESHOLDS[i][0], STARVATION_THRESHOLDS[i][1]

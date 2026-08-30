@@ -72,6 +72,8 @@ export class ClanTimePoint {
     readonly skillIrrigation: number;
     readonly skillConstruction: number;
     readonly skillRitual: number;
+    readonly skillCraft: number;
+    readonly skillCare: number;
 
     readonly traitPiety: number;
     readonly traitIntellect: number;
@@ -180,6 +182,8 @@ export class ClanTimePoint {
         this.skillIrrigation = clan.skills.v(SkillDefs.Irrigation);
         this.skillConstruction = clan.skills.v(SkillDefs.Construction);
         this.skillRitual = clan.skills.v(SkillDefs.Ritual);
+        this.skillCraft = clan.skills.v(SkillDefs.Craft);
+        this.skillCare = clan.skills.v(SkillDefs.Care);
 
         this.traitPiety = clan.traits?.piety ?? 50;
         this.traitIntellect = clan.traits?.intellect ?? 50;

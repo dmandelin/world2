@@ -23,6 +23,8 @@
         'Irrigation': 'skillIrrigation',
         'Construction': 'skillConstruction',
         'Ritual': 'skillRitual',
+        'Craft': 'skillCraft',
+        'Care': 'skillCare',
     };
     let timelineKey = $derived(skillToKeyMap[skill.name]);
 

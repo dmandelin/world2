@@ -3,7 +3,7 @@
     import type { Table, TableColumn, TableRow } from "./tables2";
     import type { ClanDTO } from "../../model/records/dtos";
     import { MutualAidInteraction, clanHelpDemand, getHelpReceivedValueFromMutualAid, getHelpProductivityModifier } from "../../model/relations/mutualaid";
-    import { pct, signed, spct, unsigned } from "../../model/lib/format";
+    import { pct, signed, spct, unsigned, statBandClass } from "../../model/lib/format";
     import { floodLevelByIndex, type ExtremeFlood, type FloodLevel } from "../../model/environment/flood";
     import ExtremeFloodIcon from "../widgets/ExtremeFloodIcon.svelte";
     import { populationAverage } from "../../model/lib/modelbasics";
@@ -24,6 +24,8 @@
         format: (v: number) => string;
         isHeader?: boolean;
         isSum?: boolean;
+        // Colour the cell by which twenty-point band the value falls in.
+        banded?: boolean;
         // For rows whose value belongs to the column's place rather than to
         // its clans, such as the weather over it.
         colValue?: (col: EntityColumnSpec) => string;
@@ -184,6 +186,7 @@
                     label: skill.name,
                     value: (c) => c.skills.v(skill),
                     format: unsigned,
+                    banded: true,
                 });
             }
             if (skillGroup.length > 0) groups.push(skillGroup);
@@ -214,7 +217,7 @@
             isHeader: row.isHeader,
             class: row.isHeader ? "header-row" : "",
             valueFn: row.colValue ? (col: EntityColumnSpec) => row.colValue!(col) : undefined,
-            cellSnippet: row.colValue ? floodCell : undefined,
+            cellSnippet: row.colValue ? floodCell : (row.banded ? bandedCell : undefined),
             tooltip: row.colValue ? floodTooltip : undefined,
         }));
 
@@ -224,6 +227,10 @@
         };
     });
 </script>
+
+{#snippet bandedCell(value: string, _row: RowDef, _col: EntityColumnSpec)}
+    <span class={statBandClass(Number(value))}>{value}</span>
+{/snippet}
 
 {#snippet floodCell(value: string, _row: RowDef, col: EntityColumnSpec)}
     {@const summary = floodSummary(col)}

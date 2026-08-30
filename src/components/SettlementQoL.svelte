@@ -37,7 +37,7 @@
         {
             tag: "personal",
             label: "Personal",
-            items: ["Leisure"]
+            items: ["Leisure", "Care"]
         },
         {
             tag: "omens",

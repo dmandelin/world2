@@ -166,6 +166,11 @@ export class Clan implements TradePartner {
         return this.festivals.labor(RitualAspects.Rite);
     }
 
+    // Time spent looking after people, which is where Care is practised.
+    get careLabor(): number {
+        return this.effortAllocation.get(Activities.Care) * this.effort;
+    }
+
     effortAllocation: EffortAllocation;
     helpAllocation: HelpAllocation = new HelpAllocation();
     operations: Operation[] = [];
@@ -289,6 +294,10 @@ export class Clan implements TradePartner {
 
     get craftSkill() {
         return this.skills.v(SkillDefs.Craft);
+    }
+
+    get careSkill() {
+        return this.skills.v(SkillDefs.Care);
     }
 
     get ritualSkill() {

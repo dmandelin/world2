@@ -23,6 +23,7 @@
         unsigned,
         unsignedFormat,
         stressColor,
+        statBandClass,
     } from "../../model/lib/format";
     import { safeDiv, sortedByKey, sumFun } from "../../model/lib/basics";
     import { populationAverage } from "../../model/lib/modelbasics";
@@ -115,6 +116,9 @@
         isBreak?: boolean;
         colspan?: number;
         cellClass?: string;
+        // Colour the cell by which twenty-point band the value falls in. For
+        // the stats that run 0-100 and centre on 50.
+        banded?: boolean;
         topics?: string[];
 
         // Value definition
@@ -1110,6 +1114,7 @@
                     label: skill.name,
                     class: "actual",
                     cellClass: "rap",
+                    banded: true,
                     useTooltip: true,
                     value: (c) => c.skills.v(skill),
                     format: unsigned,
@@ -1129,6 +1134,7 @@
                 label: "Piety",
                 class: "actual",
                 cellClass: "rap",
+                banded: true,
                 value: (c) => c.traits.piety,
                 format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.piety,
@@ -1141,6 +1147,7 @@
                 label: "Intellect",
                 class: "actual",
                 cellClass: "rap",
+                banded: true,
                 value: (c) => c.traits.intellect,
                 format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.intellect,
@@ -3162,7 +3169,12 @@
                                             {/if}
                                         </td>
                                     {:else}
-                                        <td class={row.cellClass}>
+                                        <td
+                                            class="{row.cellClass ?? ''} {row.banded &&
+                                            row.value
+                                                ? statBandClass(row.value(cs.e))
+                                                : ''}"
+                                        >
                                             {#if row.renderValueSnippet}
                                                 {@render row.renderValueSnippet(
                                                     cs,

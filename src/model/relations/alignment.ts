@@ -113,6 +113,7 @@ export class Alignment {
             AlignmentItem.forGifts(subject, object),
             AlignmentItem.forGenerosity(subject, object),
             AlignmentItem.forPiety(subject, object),
+            AlignmentItem.forCare(subject, object),
             AlignmentItem.forSociability(subject, object),
             AlignmentItem.forBellicosity(subject, object),
             AlignmentItem.forConflict(subject, object),
@@ -168,6 +169,12 @@ export const SOCIABILITY_WEIGHT = 0.124;
 export const FESTIVAL_ALIGNMENT_WEIGHT = 0.886;
 
 // -- reputation --------------------------------------------------------
+// Per point of believed skill at looking after people, away from the
+// middling 50. A clan that keeps its children alive and its old warm is
+// thought well of for it -- and this is a thing neighbors like a clan for
+// rather than one they are impressed by, so it weighs here and not on
+// respect.
+export const CARE_WEIGHT = 1 / 400;
 // Per point of believed generosity, which is a running average of what the
 // neighbor gives away in a year, in hundredths of a ration per head.
 export const GENEROSITY_WEIGHT = 0.01508;
@@ -369,6 +376,20 @@ export class AlignmentItem<P = unknown> {
     // Attention devoted to the relationship via basic interactions. A direct
     // assessment: how much we deal with them is not something we could be
     // mistaken about.
+    // How well we believe the object looks after its own people. Read off an
+    // impression rather than the truth, so a clan barely known is judged
+    // nearer to what one assumes of clans in general.
+    static forCare(subject: Clan, object: Clan): AlignmentItem {
+        const estimate = observedEstimate(subject, object, ObservationDefs.Care);
+        return new AlignmentItem(
+            'Care',
+            'reputation',
+            estimate - 50,
+            CARE_WEIGHT,
+            careText,
+        );
+    }
+
     static forSociability(subject: Clan, object: Clan): AlignmentItem {
         const relativeAttention = getRelativeAttention(subject, object);
         return new AlignmentItem(
@@ -435,6 +456,8 @@ const giftsText = (i: AlignmentItem) =>
     `${i.baseValue.toFixed(1)} given to us, standing`;
 const pietyText = (i: AlignmentItem) =>
     `Piety estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
+const careText = (i: AlignmentItem) =>
+    `Care estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
 const sociabilityText = (i: AlignmentItem) =>
     `Attention ${pct(i.baseValue)}`;
 const bellicosityText = (i: AlignmentItem) =>

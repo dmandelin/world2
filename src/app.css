@@ -79,3 +79,14 @@ table.basic tr:last-child td {
         color:saddlebrown;
     }
 }
+
+/* Bands for the stats that run 0-100 and centre on 50: skills, and traits
+ * like piety and intellect. Twenty points to a band. Kept low in saturation
+ * so a table of them still reads as a table rather than as a heat map, and
+ * warm-to-cool rather than red-to-green so the middle band is a colour of its
+ * own instead of an absence of one. */
+.stat-band-0 { background-color: #e3c3b6; }
+.stat-band-1 { background-color: #eeddc4; }
+.stat-band-2 { background-color: #eae7d5; }
+.stat-band-3 { background-color: #d5e0cb; }
+.stat-band-4 { background-color: #b9d2c4; }

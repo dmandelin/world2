@@ -949,6 +949,33 @@ export const ObservationDefs = {
         min: 0,
     }),
 
+    Care: new ObservationDef(
+        'care', 'Care', (_, clan) => clan.careSkill, {
+        // A real quality of the clan, judged by looking at how its people
+        // fare rather than by totting up occasions.
+        mode: 'impression',
+        truthFn: clan => clan.careSkill,
+        // Knowing nothing, assume a clan looks after its people about as well
+        // as anyone does.
+        prior: 50,
+        // Whether the children of a household are thriving is not a thing
+        // that can be hidden from neighbors who see them daily, but it takes
+        // a while to tell luck from competence.
+        lookStdev: 12,
+        lookWeight: 0.2,
+        attentionThreshold: 0.15,
+        conspicuousAbove: 80,
+        chatter: 1,
+        notableDeviation: 12,
+        staleHalfLife: 30,
+        seedStdev: 6,
+        seedConfidence: 0.8,
+        splitStdev: 6,
+        splitConfidenceFactor: 0.6,
+        min: 0,
+        max: 100,
+    }),
+
     Diligence: new ObservationDef(
         'diligence', 'Diligence', (_, clan) => diligenceSeen(clan), {
         // A real quantity an observer could be checked against, so it is

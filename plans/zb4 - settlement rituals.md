@@ -583,6 +583,8 @@ kernel model. Some of the most important points are:
     *   Common out clan graph data structures
 
 *   Other major models needed
+    *   Care
+        *   Also get mutual help options here
     *   Land - we'll need more notions of creating, quality, and
         continuity, and differential usufruct access to land
     *   Trade - should have some notion of where that flint comes

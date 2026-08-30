@@ -440,6 +440,16 @@
     )}
 {/snippet}
 
+{#snippet careCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+    {@render impressionCellTooltip(
+        ObservationDefs.Care,
+        subject,
+        object,
+        "How well the clan looks after its own people: whether its children " +
+            "thrive, its sick recover, its old keep warm.",
+    )}
+{/snippet}
+
 {#snippet opinionBreakdown(r: Opinion)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
 
@@ -704,6 +714,18 @@
                 impressionCellValue(ObservationDefs.Diligence),
                 unsignedFormat(1),
                 diligenceCellTooltip,
+                false,
+                true,
+            )}
+        ></TableView2>
+    </div>
+    <div>
+        <h3>Care</h3>
+        <TableView2
+            table={buildRelationshipsTable(
+                impressionCellValue(ObservationDefs.Care),
+                unsignedFormat(1),
+                careCellTooltip,
                 false,
                 true,
             )}

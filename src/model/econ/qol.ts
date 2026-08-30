@@ -4,6 +4,7 @@ import type { Consumption } from "./consumption";
 import { getRelativeLocalPrestige } from "../relations/prestige";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { omenQolEffect } from "../rituals";
+import { CARE_SKILL_BASE, CARE_SKILL_TOP, careQolEffect } from "../people/population";
 import { feastQolEffect, festivalAppeal, festivalPower, riteQolEffect } from "../festivals";
 import { explain, type Explainer } from "../lib/explain";
 
@@ -41,6 +42,7 @@ export class QualityOfLife {
             QualityOfLife.fromOmens,
             QualityOfLife.fromGatherings,
             QualityOfLife.fromSerenity,
+            QualityOfLife.fromCare,
         ];
         const m = new Map<string, QualityOfLifeItem>();
         for (const itemFun of itemFuns) {
@@ -140,6 +142,16 @@ export class QualityOfLife {
             "Serenity", "festival", value, `Rite power ${power.toFixed(2)}`);
     }
 
+    // Being well looked after: fed when small, nursed when ill, kept warm
+    // when old. The most immediate of all the things that make a life better
+    // or worse, and the one a clan has most control over.
+    static fromCare(consumption: Consumption): QualityOfLifeItem {
+        const clan = consumption.clan;
+        const care = clan ? clan.careSkill : CARE_SKILL_BASE;
+        return new QualityOfLifeItem(
+            "Care", "personal", careQolEffect(care), careText, { care });
+    }
+
     static fromLeisure(consumption: Consumption): QualityOfLifeItem {
         // Avoid -Infinity
         const leisureFraction = Math.max(0.001, consumption.leisureFraction);
@@ -155,6 +167,8 @@ export class QualityOfLife {
 // every instantiation is the same type to anyone holding one; it exists only
 // to check, at the point of construction, that the explainer and the thing it
 // will be handed agree.
+const careText = (d: { care: number }) => `Care ${d.care.toFixed(0)}`;
+
 export class QualityOfLifeItem<P = unknown> {
     private readonly explainer_: Explainer<any>;
     private readonly explainerArg_: unknown;
