@@ -18,6 +18,7 @@ import { Alerts, updateWorldAlerts, type AlertSpec } from "./records/alerts";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { applyFloodCropLosses, ExtremeFlood, noteExtremeFloods, updateExtremeFloods, updateFloodLevels } from "./environment/flood";
 import { Settlement } from "./people/settlement";
+import { MembershipCache, membershipChanged } from "./people/membership";
 import { Timeline, TimePoint } from "./records/timeline";
 import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
@@ -459,14 +460,18 @@ export class World implements NoteTaker {
 
                 const sizeBefore = settlement.effectiveResidentPopulation;
                 for (const clan of settlement.clans) clan.advancePopulation();
+                const before = settlement.clans.length;
                 removeAll(settlement.clans, c => c.population === 0);
+                if (settlement.clans.length !== before) membershipChanged();
 
                 // Tell height.
                 settlement.growTell(sizeBefore);
             }
 
             // Prune empty settlements.
+            const settlementsBefore = cl.settlements.length;
             removeAll(cl.settlements, s => s.population === 0);
+            if (cl.settlements.length !== settlementsBefore) membershipChanged();
         }
 
         // Now that the drownings are drawn, the year's floods can be written
@@ -712,12 +717,19 @@ export class World implements NoteTaker {
         return sumFun(this.clusters, (cl: SettlementCluster) => cl.population);
     }
 
-    get allSettlements() {
-        return this.clusters.flatMap(c => c.settlements);
+    // Both rebuilt only when membership changes; see people/membership.ts.
+    // Do not modify what they hand back.
+    private readonly allSettlements_ = new MembershipCache(
+        () => this.clusters.flatMap(c => c.settlements));
+    private readonly allClans_ = new MembershipCache(
+        () => this.clusters.flatMap(s => s.clans));
+
+    get allSettlements(): Settlement[] {
+        return this.allSettlements_.get();
     }
 
-    get allClans() {
-        return this.clusters.flatMap(s => s.clans);
+    get allClans(): Clan[] {
+        return this.allClans_.get();
     }
 
     get beginningOfTurnSnapshot() {

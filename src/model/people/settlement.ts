@@ -9,6 +9,7 @@ import {
     type RitualStructure,
 } from "../festivals";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
+import { membershipChanged } from "./membership";
 import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
 import { SettlementTimePoint, Timeline } from "../records/timeline";
@@ -66,6 +67,7 @@ export class Settlement {
         this.floodRating_ = cluster.floodLevel.randomRating();
 
         cluster.settlements.push(this);
+        membershipChanged();
         if (this.parent) {
             this.parent.daughters.push(this);
         }

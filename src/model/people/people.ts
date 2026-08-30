@@ -2,6 +2,7 @@ import { Annals } from "../annals";
 import { log } from "../lib/debug";
 import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
+import { membershipChanged } from "./membership";
 import { Activities, EffortAllocation } from "../decisions/effort";
 import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
@@ -199,6 +200,7 @@ export class Clan implements TradePartner {
 
         this.settlement_ = settlement;
         this.settlement_.clans.push(this);
+        membershipChanged();
         this.previousSettlement_ = settlement;
 
         for (let i = 0; i < 4; ++i) {
@@ -510,6 +512,7 @@ export class Clan implements TradePartner {
 
         this.settlement_ = settlement;
         settlement.clans.push(this);
+        membershipChanged();
 
         this.seniority = 0;
     }

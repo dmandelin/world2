@@ -5,6 +5,7 @@ import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { weightedAverage } from "../lib/modelbasics";
 import type { Process } from "../econ/process";
+import { MembershipCache } from "./membership";
 
 export const MILES_PER_UNIT = 0.16666667;
 
@@ -26,8 +27,14 @@ export class SettlementCluster {
         return MILES_PER_UNIT * distance;
     }
 
+    // Rebuilt only when somebody has moved, been born, or died: this is read
+    // tens of thousands of times a turn and flattening it each time was one of
+    // the largest costs in the model. Do not modify what this hands back.
+    private readonly clans_ = new MembershipCache(
+        () => this.settlements.flatMap(s => s.clans));
+
     get clans(): Clan[] {
-        return this.settlements.flatMap(s => s.clans);
+        return this.clans_.get();
     }
 
     get population(): number {
