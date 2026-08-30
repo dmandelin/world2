@@ -4,6 +4,29 @@
 
   let { notes }: { notes: Note[] } = $props();
 
+  // The log runs down to the bottom of the window rather than stopping at a
+  // fixed height. Where its top sits depends on how tall the map above it is,
+  // so it has to be measured; the measurement is taken against the document
+  // rather than the viewport so that scrolling does not resize it underfoot.
+  let el: HTMLDivElement | undefined = $state();
+  let maxHeight = $state(MIN_LOG_HEIGHT);
+
+  function measure() {
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      maxHeight = Math.max(
+          MIN_LOG_HEIGHT, window.innerHeight - top - LOG_BOTTOM_MARGIN);
+  }
+
+  $effect(() => {
+      // Re-measure when the feed changes, since the blocks above it may have
+      // changed size along with it.
+      notes;
+      measure();
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+  });
+
   // Icon and color config by note type
   function noteStyle(shortLabel: string): { icon: string; color: string; tag: string } {
       switch (shortLabel) {
@@ -11,6 +34,7 @@
           case '↔': return { icon: '↔️', color: '#2b6cb0', tag: 'Migration' };
           case 'H': return { icon: '🏠', color: '#6b46c1', tag: 'Housing' };
           case '🌊': return { icon: '🌊', color: '#2b6cb0', tag: 'Flood' };
+          case '🎉': return { icon: '🎉', color: '#975a16', tag: 'Ritual' };
           default: return { icon: '📝', color: '#718096', tag: 'Event' };
       }
   }
@@ -73,9 +97,15 @@
   });
 </script>
 
+<script lang="ts" module>
+    // Never collapse to nothing on a short window, and leave a little air
+    // below the last row.
+    const MIN_LOG_HEIGHT = 250;
+    const LOG_BOTTOM_MARGIN = 8;
+</script>
+
 <style>
     .event-log {
-        max-height: 250px;
         overflow-y: auto;
         font-size: 0.8rem;
         line-height: 1.4;
@@ -179,7 +209,7 @@
     }
 </style>
 
-<div class="event-log">
+<div class="event-log" bind:this={el} style="max-height: {maxHeight}px;">
     {#if yearGroups.length === 0}
         <div class="empty-state">No events yet.</div>
     {:else}

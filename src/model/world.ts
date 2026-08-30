@@ -25,6 +25,7 @@ import { Year } from "./records/year";
 import { type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
+import { planRitualChanges, type RitualChangeEvent } from "./ritualchange";
 import { settleFestivalEconomy } from "./festivals";
 import { clearNews, foldNewsIntoMemory, forgetStaleMemories, propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { RecentNews } from "./records/recentnews";
@@ -106,6 +107,10 @@ export class World implements NoteTaker {
 
     // Rituals performed this turn, across the whole world.
     rituals: RitualEvent[] = [];
+
+    // Settlements where the question of how to hold the festival came open
+    // during this turn's planning, used to raise alerts.
+    lastRitualChanges: RitualChangeEvent[] = [];
 
     // Extreme floods that struck this turn, across the whole world.
     extremeFloods: ExtremeFlood[] = [];
@@ -373,6 +378,11 @@ export class World implements NoteTaker {
         if (!priming) {
             planMigration(this);
         }
+        // Whether the settlement's festival is held as it has always been
+        // held, or whether that is open this year. A thing to be settled, so
+        // it belongs here with the other decisions; on a priming turn this
+        // only takes down who is keeping the festival.
+        planRitualChanges(this, priming);
         for (const clan of this.allClans) {
             clan.planMaintenance();
             clan.planHousing();

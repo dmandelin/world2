@@ -20,6 +20,8 @@ import type { Clan } from "./people";
 import { economicResult } from "../econ/economy";
 import { getAlignment } from "../relations/alignment";
 import type { NewSettlementDecisionReport } from "./migration";
+import type { RitualChangeEvent } from "../ritualchange";
+import type { UUID } from "../records/basicdata";
 
 export class Settlement {
     readonly uuid = crypto.randomUUID();
@@ -49,6 +51,13 @@ export class Settlement {
     ritualStructure: RitualStructure = RitualStructures.CommunalFestivals;
     ritualLeadership: RitualLeadership = RitualLeaderships.ClanElders;
     festivals: Festivals | undefined;
+
+    // Who kept the festival when the way of keeping it was last looked at,
+    // by uuid and by the name to call them in the telling. Undefined until
+    // the first look; see planRitualChanges.
+    ritualRoster: Map<UUID, string> | undefined = undefined;
+    // Every time the question of how to hold the festival has come open.
+    readonly ritualChanges: RitualChangeEvent[] = [];
 
     readonly timeline = new Timeline<SettlementTimePoint>();
 
@@ -164,6 +173,12 @@ export class Settlement {
 
     get festivalPower(): number {
         return this.festivals?.power ?? 0;
+    }
+
+    // The last time the question of how to hold the festival came open, if it
+    // ever has.
+    get lastRitualChange(): RitualChangeEvent | undefined {
+        return this.ritualChanges[this.ritualChanges.length - 1];
     }
 
     growTell(previousEffectiveResidentPopulation: number) {

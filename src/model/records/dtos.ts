@@ -25,6 +25,7 @@ import type { QualityOfLife } from "../econ/qol";
 import type { ResidenceLevel } from "../people/residence";
 import type { Rites } from "../rites";
 import type { RitualEvent } from "../rituals";
+import type { RitualChangeEvent } from "../ritualchange";
 import type { Settlement } from "../people/settlement";
 import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
@@ -294,6 +295,10 @@ export class SettlementDTO {
     readonly floodRating: number;
     readonly refoundedAfterRiverShift: boolean;
     readonly newSettlementDecisionReport: NewSettlementDecisionReport | undefined;
+    // Every time the question of how to hold the festival has come open, and
+    // whether it came open in this turn's planning.
+    readonly ritualChanges: readonly RitualChangeEvent[];
+    readonly ritualChangeThisTurn: RitualChangeEvent | undefined;
 
     readonly timeline: Timeline<SettlementTimePoint>;
 
@@ -324,6 +329,9 @@ export class SettlementDTO {
         this.floodRating = settlement.floodRating;
         this.refoundedAfterRiverShift = settlement.refoundedAfterRiverShift;
         this.newSettlementDecisionReport = settlement.newSettlementDecisionReport;
+        this.ritualChanges = [...settlement.ritualChanges];
+        this.ritualChangeThisTurn = settlement.world.lastRitualChanges
+            .find(e => e.settlement === settlement);
 
         this.timeline = settlement.timeline;
     }

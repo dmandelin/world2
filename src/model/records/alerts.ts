@@ -24,6 +24,7 @@ export type AlertKindId =
     | 'starvation'
     | 'strife'
     | 'foundation'
+    | 'ritualchange'
     | 'flood20'
     | 'flood100'
     | 'flood500';
@@ -66,6 +67,12 @@ export const ALERT_KINDS: Record<AlertKindId, AlertKindDef> = {
         icon: '🏘️',
         color: '#2f7d5b',
         description: 'A new village is being founded.',
+    },
+    ritualchange: {
+        title: 'Festival in Question',
+        icon: '🎉',
+        color: '#975a16',
+        description: 'The clans must settle again how the festival is held.',
     },
     // One badge per severity of extreme flood, so a once-in-a-lifetime
     // flood does not look like a once-in-five-centuries one.
@@ -244,6 +251,16 @@ export function updateWorldAlerts(world: World): void {
             id: foundation.settlement.uuid,
             entity: foundation.settlement,
             detail: `founded by ${foundation.clans.map(c => c.name).join(', ')}`,
+        });
+    }
+
+    // Settlements whose festival custom came open during this turn's planning.
+    for (const change of world.lastRitualChanges) {
+        world.addAlert({
+            kind: 'ritualchange',
+            id: change.settlement.uuid,
+            entity: change.settlement,
+            detail: change.detail,
         });
     }
 }

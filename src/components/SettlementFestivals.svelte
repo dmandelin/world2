@@ -22,10 +22,17 @@
     import type { Table, TableColumn, TableRow } from "./tables/tables2";
     import TableView2 from "./tables/TableView2.svelte";
     import EntityLink from "./state/EntityLink.svelte";
+    import { formatYear } from "../model/records/year";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
     let festivals = $derived(settlement.festivals);
+    // Whether the way of holding the festival is settled this year, and when
+    // it was last unsettled.
+    let ritualChange = $derived(settlement.ritualChangeThisTurn);
+    let pastRitualChanges = $derived(
+        [...settlement.ritualChanges].reverse().slice(0, 5),
+    );
     let clans = $derived(settlement.clans);
     let feast = $derived(festivals?.feast);
     let rite = $derived(festivals?.rite);
@@ -590,6 +597,28 @@
         &centerdot; {settlement.ritualLeadership.description}
     </p>
 
+    {#if ritualChange}
+        <p class="ritual-change">
+            <strong>{ritualChange.label}.</strong>
+            How the festival is held is no longer simply how it has always been
+            held: {ritualChange.detail}. The clans have it to settle among
+            themselves.
+        </p>
+    {/if}
+
+    {#if pastRitualChanges.length}
+        <h3>When the old way came into question</h3>
+        <ul class="ritual-change-list">
+            {#each pastRitualChanges as change}
+                <li>
+                    <span class="rc-year">{formatYear(change.year)}</span>
+                    <span class="rc-label">{change.label}</span>
+                    <span class="rc-detail">{change.detail}</span>
+                </li>
+            {/each}
+        </ul>
+    {/if}
+
     <h3>Who took part</h3>
     <TableView2 table={clanTable} />
 
@@ -635,6 +664,35 @@
         margin: 1.2rem 0 0.4rem;
         font-size: 1rem;
         color: #62531d;
+    }
+
+    .ritual-change {
+        margin: 0.6rem 0 0;
+        padding: 0.5rem 0.7rem;
+        max-width: 44rem;
+        border-left: 3px solid #975a16;
+        background-color: #faf3e0;
+    }
+
+    .ritual-change-list {
+        margin: 0.2rem 0 0;
+        padding-left: 1.1rem;
+        max-width: 44rem;
+        font-size: 0.85rem;
+    }
+
+    .rc-year {
+        font-variant-numeric: tabular-nums;
+        color: #a08c5a;
+        margin-right: 0.4rem;
+    }
+
+    .rc-detail {
+        color: #6b5f3a;
+    }
+
+    .rc-detail::before {
+        content: " — ";
     }
 
     .col-header-inner {
