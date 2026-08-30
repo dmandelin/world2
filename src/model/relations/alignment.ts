@@ -6,7 +6,7 @@ import type { ClanDTO } from "../records/dtos";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
-import { ObservationDefs, observedEstimate } from "./information";
+import { DILIGENCE_SCALE, ObservationDefs, observedEstimate } from "./information";
 import { DecayingCredit } from "./credit";
 import type { RitualEvent } from "../rituals";
 import { feastAlignmentEffect, festivalAppeal, festivalGivingSeen } from "../festivals";
@@ -152,21 +152,25 @@ export class AlignmentItem {
     // neighbor owes the ditches, and thinks the better of one that digs past
     // it -- and the worse of one that leaves the work to everybody else. How
     // much it matters is a disposition, so some clans keep close count and
-    // others barely notice. Only within a settlement: clans elsewhere dig
-    // ditches this one neither uses nor sees.
+    // others barely notice.
+    //
+    // What it thinks the neighbor dug is its Diligence estimate rather than
+    // the truth, so a clan it barely deals with is judged on a hazy idea
+    // pulled toward what one assumes of clans in general -- and a clan that
+    // quietly slacks gets away with it for a while. Only within a settlement:
+    // clans elsewhere dig ditches this one neither uses nor sees.
     static forDitching(subject: Clan, object: Clan): AlignmentItem {
         if (subject.settlement !== object.settlement) {
             return new AlignmentItem('Ditching', 0, 0, 'not our ditches');
         }
-        const expected = subject.traits.ditchingExpectation;
-        const actual = object.ditchingEffortShare;
-        // In points of effort, so the disposition reads per point.
-        const surplus = 100 * (actual - expected);
+        // Both in points of effort, so the disposition reads per point.
+        const expected = DILIGENCE_SCALE * subject.traits.ditchingExpectation;
+        const seen = observedEstimate(subject, object, ObservationDefs.Diligence);
         return new AlignmentItem(
             'Ditching',
-            surplus,
+            seen - expected,
             subject.traits.ditchingAdmiration,
-            `${pct(actual)} of effort on the ditches vs ${pct(expected)} expected`,
+            `Diligence estimate ${seen.toFixed(1)} vs ${expected.toFixed(1)} expected`,
         );
     }
 

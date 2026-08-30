@@ -429,6 +429,21 @@
     )}
 {/snippet}
 
+{#snippet diligenceCellTooltip(
+    value: number,
+    subject: ClanDTO,
+    object: ClanDTO,
+)}
+    {@render impressionCellTooltip(
+        ObservationDefs.Diligence,
+        subject,
+        object,
+        "Effort on the common ditches, in points of the clan's own year. " +
+            "Read off what the clan is doing now rather than remembered: " +
+            "digging is a season's work in plain sight, not an event.",
+    )}
+{/snippet}
+
 {#snippet opinionBreakdown(r: Opinion)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
 
@@ -495,6 +510,7 @@
                 <th class="num">Pride</th>
                 <th class="num">Generosity</th>
                 <th class="num">Bellicosity</th>
+                <th class="num">Diligence</th>
             </tr>
         </thead>
         <tbody>
@@ -542,6 +558,12 @@
                     <td class="num"
                         >{unsigned(
                             selfImpression(clan, ObservationDefs.Bellicosity),
+                            1,
+                        )}</td
+                    >
+                    <td class="num"
+                        >{unsigned(
+                            selfImpression(clan, ObservationDefs.Diligence),
                             1,
                         )}</td
                     >
@@ -674,6 +696,18 @@
                 impressionCellValue(ObservationDefs.Bellicosity),
                 unsignedFormat(1),
                 bellicosityCellTooltip,
+                false,
+                true,
+            )}
+        ></TableView2>
+    </div>
+    <div>
+        <h3>Diligence</h3>
+        <TableView2
+            table={buildRelationshipsTable(
+                impressionCellValue(ObservationDefs.Diligence),
+                unsignedFormat(1),
+                diligenceCellTooltip,
                 false,
                 true,
             )}

@@ -726,6 +726,22 @@ export function aggressionSeen(subject: Clan, object: Clan): number {
     return BELLICOSITY_SCALE * total;
 }
 
+// Effort on the ditches is a share of a clan's year, which is an awkward
+// number to hold an opinion about, so it is reported in points of effort --
+// the same units the ditching dispositions are expressed in.
+export const DILIGENCE_SCALE = 100;
+
+// What a clan is putting into the common ditches, as anyone watching would
+// put it. Unlike Generosity and Bellicosity this is read off what the clan is
+// currently doing rather than out of the observer's memory: digging is not an
+// event that happens and is over, it is a season's work in plain sight of
+// everyone whose fields the ditch runs around. So there is nothing to
+// remember -- an observer either has been paying enough attention this year
+// to have a fair idea, or has not.
+export function diligenceSeen(clan: Clan): number {
+    return DILIGENCE_SCALE * clan.ditchingEffortShare;
+}
+
 export const ObservationDefs = {
     Piety: new ObservationDef('piety', 'Piety', (_, clan) => clan.traits.piety, {
         mode: 'impression',
@@ -783,6 +799,41 @@ export const ObservationDefs = {
         splitStdev: 5,
         splitConfidenceFactor: 0.6,
         min: 0,
+    }),
+
+    Diligence: new ObservationDef(
+        'diligence', 'Diligence', (_, clan) => diligenceSeen(clan), {
+        // A real quantity an observer could be checked against, so it is
+        // judged by looking rather than by totting up deeds, and a hazy look
+        // is pulled back toward what one assumes of a clan in general.
+        mode: 'impression',
+        truthFn: diligenceSeen,
+        // Knowing nothing, assume a clan digs about what clans dig: the
+        // middle of the range they start out willing to give.
+        prior: 6,
+        // Everyone's fields are behind the same ditch, so a year of ordinary
+        // acquaintance places a clan's digging to within about two points of
+        // effort.
+        lookStdev: 2,
+        lookWeight: 0.2,
+        // Digging is done in the open, in company, on everybody's ditch. It
+        // takes very little acquaintance to notice who was there.
+        attentionThreshold: 0.1,
+        // A clan that spends a third of its year on the ditches is remarked
+        // on whether or not anyone was watching for it.
+        conspicuousAbove: 20,
+        // Who pulled their weight is the other great subject of village talk.
+        chatter: 1,
+        notableDeviation: 3,
+        staleHalfLife: 20,
+        seedStdev: 2,
+        seedConfidence: 0.8,
+        splitStdev: 2,
+        splitConfidenceFactor: 0.6,
+        min: 0,
+        // The willingness trait is clamped here, so no honest observer ever
+        // sees more.
+        max: 35,
     }),
 
     Bellicosity: new ObservationDef('bellicosity', 'Bellicosity', aggressionSeen, {

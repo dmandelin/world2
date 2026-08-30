@@ -385,19 +385,99 @@ kernel model. Some of the most important points are:
 *   Differential ritual skill
     *   Here use CES with weight -5 weighted by clan size
 
-*   Preference issues
-    *   Randomly generate an issue in some turns that affects different
-        clans differently
-    *   Have clans decide what to do with multiple rounds to see if
-        they can come to agreement
-    *   If they agree:
-        *   Apply that choice
-        *   If B gave A what they wanted, A's aligment toward B increases
-            and B's alignment toward a decreases
-    *   If they don't agree:
-        *   Penalty to ritual effectiveness
-        *   If B came down differently from A, then their alignment toward
-            each other decreases
+*   Preference issues and ritual changes
+    *   At times, there will be significant changes to rituals:
+        *   A clan may voluntarily introduce a change
+        *   The set of clans in a settlement may change
+        *   Circumstances may prevent the ritual from being performed
+            in the usual way, e.g., certain knowledge or special
+            resources being lost
+    *   In the initial model, ritual change events will be triggered
+        like this:
+        *   On any change to the set of clans participating in the
+            ritual, e.g., from a clan splitting and the junior staying,
+            or from a clan dying out or merging with another.
+        *   A small random chance each turn for each settlement ritual,
+            proportional to (settlement ritual size)^(7/6), such that for a
+            settlement ritual of 300 the probability is 4% per year.
+            (Settlement ritual size is the total population of clans
+            participating -- not just workers.)
+    *   When a ritual change event is triggered, one or more clans are
+        the Initiators:
+        *   For a random event, choose a clan at random, weighted by
+            intellect (baseline at 50 piety; 10x at 80 piety) factor
+            times population to be the initiator.
+        *   For a clan change event, again choose a clan at random,
+            but weight any new clans 10x.
+    *   Other clans then initially sort into Supporters and Opponents
+        *   To determine if clan C is a supporter:
+            *   First take C's alignment toward Initiator
+            *   Then take C's pop-weighted alignment toward everyone else
+                in the clan
+            *   Feed the difference between those two into a sigmoid function
+                to get a support probability
+                *   Difference 0 should give 50% probability of accepting
+    *   What's at stake:
+        *   Let's do a thought experiment ritual change. 
+            *   Imagine that there's a ritual dance that only elders do, and 
+                it's believed that only they can do it right. But then some clan
+                who particularly loves to dance has a few young people start
+                practicing it and learn it really well. Some say omens indicate
+                the ancestors are pleased as well. But others say otherwise.
+                Some like a fresh new approach. Some are envious of the
+                attention the new dancers are getting. Some fear this will upend
+                elder authority. And so on.
+            *   Clearly the stakes will depend on the exact issue, but we
+                can say something about what people care about in generalized
+                terms:
+                *   The ritual may be more or less effective (Gatherings and/or 
+                    Serenity QoL change)
+                *   Relationships in the village: alignment, respect, holiness
+        *   If the change is accepted:
+            *   +Ritual change QoL for Initiator+Supporters (in that turn, then
+                decays 20% per turn and removed after 20 turns)
+                *   1.25x QoL change for Initiator
+                *   1.00x QoL change for Supporters
+            *   -Ritual change QoL for Opponents (decays 10% per turn and removed
+                after 40 turns)
+            *   +Respect of other clans toward Initiator
+            *   +Holiness of other clans toward Initiator
+            *   +Alignment of Supporters toward Initiator+Supporters
+            *   -Alignment of Opponents toward Initiator+Supporters
+        *   If the change is rejected:
+            *   -Respect of other clans toward Initiator
+            *   -Holiness of other clans toward Initiator
+            *   -Alignment of Initiator+Supporter toward Opponents
+            *   +Alignment of Opponents toward Opponents
+        *   If there is deadlock: no decision reached:
+            *   -Ritual disruption QoL for everyone (decays 5% per turn and
+                removed after 80 years)
+            *   -Respect of Opponents toward Initiator
+            *   -Holiness of Opponents toward Initiator
+            *   -Alignment of Initiator+Supporters toward Opponents
+            *   -Alignment of Opponents toward Initator+Supporters
+        *   The alignment changes should be implemented as items in our events
+            ledger, and alignment indexed off there as we already have. Also,
+            if dyadic clan ritual help has some separate listing, get it into
+            the common ledger as well now.
+        *   Ritual change QoL should be implemented as a "changelog" on the
+            ritual operation (Festival?) where each change lists whether each
+            clan was in Initiator, Supporter, or Opponent
+    *   Now go through multiple rounds of voting (accept or reject change)
+        until clans reach assent or deadlock. Then apply the stakes outlined
+        above.
+        *   Give clans a new stat Rigidity, between 0 and 1.
+        *   In each round, have the clans go in some order. If the % of
+            clans currently voting the other way as this clan is > Rigidity,
+            this clan will switch its vote.
+            *   However, the clan retains its original Supporter or Opponent
+                status for purposes of outcomes at the end. They didn't change
+                what they wanted, they changed what they'd go along with.
+            *   The Initiator can also switch their vote (and others don't
+                necessarily drop the issue!) but their Rigidity is considered
+                1.25x for this, and if the Initiator drops, the Supporters
+                Rigidity is considered 0.75x.
+        *   No assent after 3 rounds => deadlock
 
 *   Leadership
     *   Leadership so far mostly means voluntarily contributing at
@@ -500,6 +580,7 @@ kernel model. Some of the most important points are:
         probably also identity)
     *   Figure out how to let craft and ritual abilities rise over time
         and how that relates to skill level
+    *   Common out clan graph data structures
 
 *   Other major models needed
     *   Land - we'll need more notions of creating, quality, and
