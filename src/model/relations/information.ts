@@ -147,6 +147,13 @@ export type NewsKindSpec = {
     // since. Per kind, because memorability is measured on each kind's own
     // scale: food weights run in hundredths, hawk plays in whole numbers.
     unforgettableMemorability: number;
+    // Salience at which an occasion of this kind is a big one. Salience is
+    // measured on each kind's own scale -- food in rations per head, quarrels
+    // in the share of a year's friction that turned to force -- so the raw
+    // numbers cannot be compared across kinds. Dividing by this puts them on
+    // one footing, which is what lets a clan weigh a great gift against a
+    // bad feud when it has room for only one of them.
+    notableSalience: number;
     // How long an occasion nobody recounts any more is still carried at all.
     // Past this it is gone from the ledger, not merely faded: whatever it
     // contributed lives on only in the impressions it helped form. Occasions
@@ -165,6 +172,7 @@ export class NewsKind {
     readonly sizeBands: BandScale;
     readonly unforgettableMemorability: number;
     readonly recallYears: number | undefined;
+    readonly notableSalience: number;
     readonly purgeYears: number;
     // Soonest age at which any entry of this kind could need dropping,
     // whether by fading or by its span running out. Lets a ledger with
@@ -182,6 +190,7 @@ export class NewsKind {
         this.sizeBands = spec.sizeBands;
         this.unforgettableMemorability = spec.unforgettableMemorability;
         this.recallYears = spec.recallYears;
+        this.notableSalience = spec.notableSalience;
         this.purgeYears = spec.purgeYears ?? DEFAULT_PURGE_YEARS;
         // Age past which an occasion has faded below the point of being
         // carried at all, from the half-life.
@@ -205,6 +214,9 @@ export const NewsKinds = {
         // recounted by recency, not by standing.
         unforgettableMemorability: UNFORGETTABLE_FOOD_MEMORABILITY,
         recallYears: 3,
+        // The floor of the top size band: a gift this big per head is as much
+        // as one clan ever hands another in a year.
+        notableSalience: 0.12,
         purgeYears: 5,
     }),
     Aid: new NewsKind('aid', 'Aid', {
@@ -213,6 +225,8 @@ export const NewsKinds = {
         unforgettableSalience: 0.07,
         sizeBands: FoodSizeBands,
         unforgettableMemorability: UNFORGETTABLE_FOOD_MEMORABILITY,
+        // As for gifts: the same scale of transfer, measured the same way.
+        notableSalience: 0.12,
     }),
     // Quarrels are remembered like aid: a few stand out and are recounted for
     // a lifetime, the rest run together into a sense of how touchy a
@@ -227,6 +241,9 @@ export const NewsKinds = {
         // friction and quarrels compete for the few slots like anything else,
         // so a clan recounts its three worst run-ins and no more.
         unforgettableMemorability: 4,
+        // A feud: most of a year's friction settled by force. Ordinary
+        // bickering sits well below this.
+        notableSalience: 0.6,
     }),
 };
 
@@ -316,6 +333,13 @@ export class NewsItem {
     // Striking enough to stick on its own account, whatever else happened.
     get isUnforgettable(): boolean {
         return this.memorability >= this.def.unforgettableMemorability;
+    }
+
+    // How big a thing this was for its kind, with 1 meaning a big one. The
+    // comparable figure: raw salience means different things for a gift and
+    // for a quarrel, and only this can be weighed across the two.
+    get relativeSalience(): number {
+        return this.salience / this.def.notableSalience;
     }
 
     // How this compares with other occasions right now, which is what decides
@@ -755,6 +779,44 @@ export function givingSeen(subject: Clan, object: Clan): number {
         if (entry.withinKin && entry.def === NewsKinds.Gift) continue;
         total += entry.size.weight
             * (entry.target === subject.uuid ? AID_TO_SELF_WEIGHT : 1);
+    }
+    return GENEROSITY_SCALE * total;
+}
+
+// Years for a gift a clan still remembers to count for half what it did when
+// it was given. What has been done for you does not stop mattering when the
+// year turns, but it does stop mattering eventually.
+export const GIFT_MEMORY_HALF_LIFE = 20;
+
+// What one clan has been given by another: food handed over, whether as a
+// gift or as aid in a bad year, counted only where this clan was the one
+// receiving. This is the personal side of open-handedness, as against the
+// reputation for it that Generosity tracks -- what that neighbor has actually
+// done for us, which is a different thing from what it is known for.
+//
+// This year's transfers count in full; ones the clan still remembers count
+// for whatever the years have left of them. So it accumulates over a long
+// acquaintance and decays through a long silence, where Generosity is a
+// running average of the last decade and forgets a clan's whole history the
+// moment it stops giving.
+export function giftsReceived(subject: Clan, object: Clan, year: number): number {
+    const information = subject.world.perceptions
+        .get(subject, object)?.information;
+    if (!information) return 0;
+
+    const isGiftToUs = (item: NewsItem) =>
+        (item.def === NewsKinds.Gift || item.def === NewsKinds.Aid)
+        && item.actor === object.uuid
+        && item.target === subject.uuid;
+
+    let total = 0;
+    for (const item of information.news.items) {
+        if (isGiftToUs(item)) total += item.size.weight;
+    }
+    for (const item of information.memory.entries) {
+        if (!isGiftToUs(item)) continue;
+        const age = Math.max(0, year - item.year);
+        total += item.size.weight * Math.pow(0.5, age / GIFT_MEMORY_HALF_LIFE);
     }
     return GENEROSITY_SCALE * total;
 }
@@ -1683,6 +1745,11 @@ export function foldNewsIntoMemory(world: World): void {
 // for how long ago it happened. A great occasion holds its place for as long
 // as the clan lasts: it stops being a thing that happened and becomes a thing
 // that is told, and nothing merely recent displaces it.
+//
+// Small for its own kind, that is. Raw salience counts a gift in rations per
+// head against a quarrel in the share of a year that came to blows, and on
+// those numbers no gift ever outranks any quarrel -- which is why food used
+// to vanish from every clan's memory whatever it was worth.
 function trimMemoryToCapacity(world: World, clan: Clan): void {
     const capacity = Math.max(1, Math.round(memoryCapacity(clan.population)));
     const ledgers = ledgersOf(world, clan);
@@ -1693,7 +1760,7 @@ function trimMemoryToCapacity(world: World, clan: Clan): void {
 
     const saliences: number[] = [];
     for (const memory of ledgers) {
-        for (const item of memory.entries) saliences.push(item.salience);
+        for (const item of memory.entries) saliences.push(item.relativeSalience);
     }
     saliences.sort((a, b) => b - a);
     const cutoff = saliences[capacity - 1];
@@ -1704,8 +1771,8 @@ function trimMemoryToCapacity(world: World, clan: Clan): void {
     for (const sal of saliences) if (sal > cutoff) --roomAtCutoff;
     for (const memory of ledgers) {
         memory.keepOnly(item => {
-            if (item.salience > cutoff) return true;
-            if (item.salience === cutoff && roomAtCutoff > 0) {
+            if (item.relativeSalience > cutoff) return true;
+            if (item.relativeSalience === cutoff && roomAtCutoff > 0) {
                 --roomAtCutoff;
                 return true;
             }

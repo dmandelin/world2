@@ -6,7 +6,7 @@ import type { ClanDTO } from "../records/dtos";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
-import { DILIGENCE_SCALE, ObservationDefs, observedEstimate } from "./information";
+import { DILIGENCE_SCALE, ObservationDefs, giftsReceived, observedEstimate } from "./information";
 import { DecayingCredit } from "./credit";
 import type { RitualEvent } from "../rituals";
 import { feastAlignmentEffect, festivalAppeal, festivalGivingSeen } from "../festivals";
@@ -239,15 +239,18 @@ export class AlignmentItem<P = unknown> {
         );
     }
 
-    // The personal side of generosity: gifts and aid felt as aimed at us
-    // weigh in again here, on top of the general reputation below.
+    // What this neighbor has actually given us: food handed over, this year
+    // and in every year we still remember it, faded by how long ago. Quite
+    // separate from the reputation for open-handedness below -- that is what
+    // the clan is known for, this is what it has done for us.
     static forGifts(subject: Clan, object: Clan): AlignmentItem {
-        const estimate = observedEstimate(subject, object, ObservationDefs.Generosity);
+        const received = giftsReceived(
+            subject, object, subject.world.year.value);
         return new AlignmentItem(
             'Gifts',
-            estimate,
+            received,
             0.02,
-            generosityText
+            giftsText,
         );
     }
 
@@ -318,6 +321,8 @@ export class AlignmentItem<P = unknown> {
 // takes what it needs as an argument, so none of them closes over anything.
 const generosityText = (i: AlignmentItem) =>
     `Generosity estimate ${i.baseValue.toFixed(1)}`;
+const giftsText = (i: AlignmentItem) =>
+    `${i.baseValue.toFixed(1)} given to us, standing`;
 const pietyText = (i: AlignmentItem) =>
     `Piety estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
 const sociabilityText = (i: AlignmentItem) =>
