@@ -9,6 +9,7 @@ import type { DiseaseLoadCalc } from "../environment/pathogens";
 import type { EffortAllocation } from "../decisions/effort";
 import type { ClanFloodDamage, ExtremeFlood, FloodLevel } from "../environment/flood";
 import type { DitchCalc, DitchingMethod } from "../infrastructure";
+import type { Festivals, RitualLeadership, RitualStructure } from "../festivals";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
@@ -110,6 +111,9 @@ export class ClanDTO {
     // What this clan put into the settlement's ditches this year.
     ditchingEffortShare: number;
     ditchingLabor: number;
+    // And into its festivals.
+    festivalEffortShare: number;
+    festivalLabor: number;
     effortAllocation: EffortAllocation;
     workers: number;
     seniority: number;
@@ -159,6 +163,8 @@ export class ClanDTO {
 
         this.ditchingEffortShare = clan.ditchingEffortShare;
         this.ditchingLabor = clan.ditchingLabor;
+        this.festivalEffortShare = clan.festivalEffortShare;
+        this.festivalLabor = clan.festivalLabor;
         this.effortAllocation = clan.effortAllocation.clone();
         this.seniority = clan.seniority;
         this.population = clan.population;
@@ -281,6 +287,9 @@ export class SettlementDTO {
 
     readonly ditchingMethod: DitchingMethod;
     readonly ditch: DitchCalc | undefined;
+    readonly ritualStructure: RitualStructure;
+    readonly ritualLeadership: RitualLeadership;
+    readonly festivals: Festivals | undefined;
     readonly floodLevel: FloodLevel;
     readonly floodRating: number;
     readonly refoundedAfterRiverShift: boolean;
@@ -308,6 +317,9 @@ export class SettlementDTO {
 
         this.ditchingMethod = settlement.ditchingMethod;
         this.ditch = settlement.ditch;
+        this.ritualStructure = settlement.ritualStructure;
+        this.ritualLeadership = settlement.ritualLeadership;
+        this.festivals = settlement.festivals;
         this.floodLevel = settlement.floodLevel;
         this.floodRating = settlement.floodRating;
         this.refoundedAfterRiverShift = settlement.refoundedAfterRiverShift;
@@ -326,6 +338,14 @@ export class SettlementDTO {
 
     get ditchHolds(): boolean {
         return !!this.ditch?.holdsAgainst(this.floodRating);
+    }
+
+    get festivalAppeal(): number {
+        return this.festivals?.appeal ?? 0;
+    }
+
+    get festivalPower(): number {
+        return this.festivals?.power ?? 0;
     }
 
     // The extreme floods that caught any clan living here this year.

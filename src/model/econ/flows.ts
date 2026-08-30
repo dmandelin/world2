@@ -45,6 +45,13 @@ export class Distribution extends GoodFlows {
     // Food consumed by the year's rituals: burnt, poured out, or eaten by
     // those who came to help say the words. Gone either way.
     readonly toRitual = new Map<TradeGood, number>();
+    // Food the clan brought to the settlement's festivals. Most of it is
+    // eaten there, by the people who brought it and by everyone else; the
+    // rest is burnt, poured out, or left to spoil on the offering table.
+    // The eaten share is booked into the clan's own Consumption as well, so
+    // it feeds people; the sacrificed share is simply gone.
+    readonly toFestivalFood = new Map<TradeGood, number>();
+    readonly toSacrifice = new Map<TradeGood, number>();
     readonly toDonations: DirectFlowRecord[] = [];
     readonly toGifts: DirectFlowRecord[] = [];
 
@@ -68,6 +75,8 @@ export class Distribution extends GoodFlows {
             - this.totalToWaste(good)
             - this.totalToFlood(good)
             - this.totalToRitual(good)
+            - this.totalToFestivalFood(good)
+            - this.totalToSacrifice(good)
             - this.totalToDonated(good));
     }
 
@@ -101,6 +110,18 @@ export class Distribution extends GoodFlows {
         this.toRitual.set(good, prev + amount);
     }
 
+    addFestivalFood(good: TradeGood, amount: number): void {
+        if (amount <= 0) return;
+        const prev = this.toFestivalFood.get(good) ?? 0;
+        this.toFestivalFood.set(good, prev + amount);
+    }
+
+    addSacrifice(good: TradeGood, amount: number): void {
+        if (amount <= 0) return;
+        const prev = this.toSacrifice.get(good) ?? 0;
+        this.toSacrifice.set(good, prev + amount);
+    }
+
     addDonation(recipient: Clan, good: TradeGood, amount: number): void {
         if (amount <= 0) return;
         this.toDonations.push({ clan: recipient, good, amount });
@@ -129,6 +150,14 @@ export class Distribution extends GoodFlows {
 
     totalToRitual(good: TradeGood): number {
         return this.toRitual.get(good) ?? 0;
+    }
+
+    totalToFestivalFood(good: TradeGood): number {
+        return this.toFestivalFood.get(good) ?? 0;
+    }
+
+    totalToSacrifice(good: TradeGood): number {
+        return this.toSacrifice.get(good) ?? 0;
     }
 
     totalToDonated(good: TradeGood): number {
@@ -172,6 +201,14 @@ export class Distribution extends GoodFlows {
 
     get totalFoodToRitual(): number {
         return this.sumMapGoods(this.toRitual, g => g.isSubsistence);
+    }
+
+    get totalFoodToFestival(): number {
+        return this.sumMapGoods(this.toFestivalFood, g => g.isSubsistence);
+    }
+
+    get totalFoodSacrificed(): number {
+        return this.sumMapGoods(this.toSacrifice, g => g.isSubsistence);
     }
 
     get totalFoodGiven(): number {

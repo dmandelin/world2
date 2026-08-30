@@ -24,6 +24,7 @@ import { Year } from "./records/year";
 import { splitPairID, type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
+import { settleFestivalEconomy } from "./festivals";
 import { propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
@@ -500,6 +501,12 @@ export class World implements NoteTaker {
         // The year's offerings and ritual fees come off the top, before
         // anything is eaten, stored, or given away.
         settleRitualEconomy(this);
+
+        // So does what the settlement's festivals ate and poured out. Once
+        // that food has changed hands, the year's festivals can be reckoned
+        // up: the quality of life, health and standing that follow from them
+        // are all settled below or later in the turn.
+        settleFestivalEconomy(this.allSettlements);
 
         // Run food gift sharing before arranging consumption!
         this.lastFoodGifts = shareFoodGifts(allClans);

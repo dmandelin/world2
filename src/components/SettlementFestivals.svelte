@@ -1,0 +1,592 @@
+<script lang="ts">
+    import { pct, signed, unsigned, xm } from "../model/lib/format";
+    import { populationAverage } from "../model/lib/modelbasics";
+    import {
+        ALL_RITUAL_ASPECTS,
+        FEAST_ALIGNMENT_MAX,
+        FEAST_HEALTH_SWING,
+        FEAST_INFORMATION_CONTACT,
+        FEAST_QOL_MAX,
+        RITE_QOL_MAX,
+        RITE_RESPECT_MAX,
+        festivalEffect,
+        ritualScaleFactor,
+    } from "../model/festivals";
+    import type {
+        FestivalAspectCalc,
+        RitualAspectDef,
+    } from "../model/festivals";
+    import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
+    import type { Table, TableColumn, TableRow } from "./tables/tables2";
+    import TableView2 from "./tables/TableView2.svelte";
+    import EntityLink from "./state/EntityLink.svelte";
+
+    let { settlement }: { settlement: SettlementDTO } = $props();
+
+    let festivals = $derived(settlement.festivals);
+    let clans = $derived(settlement.clans);
+    let feast = $derived(festivals?.feast);
+    let rite = $derived(festivals?.rite);
+
+    // What one clan brought to one aspect, as it stood when the festival was
+    // held rather than as the clan stands now.
+    let part = $derived(
+        (calc: FestivalAspectCalc | undefined, clan: ClanDTO) =>
+            calc?.forClan(clan.uuid),
+    );
+
+    // --- Who took part ------------------------------------------------------
+
+    interface ClanRow {
+        label: string;
+        tooltip?: string;
+        value: (clan: ClanDTO) => number;
+        format: (v: number) => string;
+        // What to show in the settlement-wide column: an average over the
+        // clans, a total, or a figure of its own.
+        aggregate?: "average" | "sum" | "none";
+        total?: () => number;
+        divider?: boolean;
+    }
+
+    let clanRows = $derived.by<ClanRow[]>(() => [
+        {
+            label: "Ritual skill",
+            tooltip:
+                "Kept up at the rite itself, which is the only place the "
+                + "words get said in the order they have to be said in.",
+            value: (c) => c.skills.v(RITUAL),
+            format: (v) => unsigned(v),
+        },
+        {
+            label: "Effort on festivals",
+            tooltip:
+                "Share of this clan's own year that went to the settlement's "
+                + "festivals. Every clan gives the notional standard, which is "
+                + "5% for the feast and 5% for the rite.",
+            value: (c) => part(feast, c)?.effortShare ?? c.festivalEffortShare,
+            format: (v) => pct(v, 1),
+            aggregate: "none",
+            total: () => festivals?.effortShare ?? 0,
+            divider: true,
+        },
+        {
+            label: "× Workers",
+            tooltip: "Hands the clan has to spend at all: its adults.",
+            value: (c) => part(feast, c)?.workers ?? c.workers,
+            format: (v) => v.toFixed(0),
+            aggregate: "sum",
+        },
+        {
+            label: "= Worker-turns",
+            tooltip:
+                "Share of effort times workers: the time actually spent "
+                + "preparing for and keeping the festivals.",
+            value: (c) =>
+                (part(feast, c)?.labor ?? 0) + (part(rite, c)?.labor ?? 0),
+            format: (v) => v.toFixed(1),
+            aggregate: "sum",
+        },
+        {
+            label: "Food laid on",
+            tooltip:
+                "Brought to the festivals out of this year's production. A "
+                + "clan with nothing to spare brings less rather than going "
+                + "hungry for it.",
+            value: (c) =>
+                (part(feast, c)?.food ?? 0) + (part(rite, c)?.food ?? 0),
+            format: (v) => v.toFixed(2),
+            aggregate: "sum",
+        },
+        {
+            label: "— eaten",
+            tooltip:
+                "Most of a festival is a meal, and the people who brought the "
+                + "food eat it. This counts toward what the clan ate this year.",
+            value: (c) =>
+                (part(feast, c)?.foodEaten ?? 0) + (part(rite, c)?.foodEaten ?? 0),
+            format: (v) => v.toFixed(2),
+            aggregate: "sum",
+        },
+        {
+            label: "— sacrificed",
+            tooltip:
+                "Burnt, poured out, or left to spoil on the offering table. "
+                + "This is the part that is really given up.",
+            value: (c) =>
+                (part(feast, c)?.foodSacrificed ?? 0)
+                + (part(rite, c)?.foodSacrificed ?? 0),
+            format: (v) => v.toFixed(2),
+            aggregate: "sum",
+        },
+        {
+            label: "Feast time",
+            tooltip:
+                "Worker-turns brought, against this clan's share of what the "
+                + "settlement's festival asks. The clan brings a share of its "
+                + "own hands; the festival asks by heads, so a clan heavy with "
+                + "children falls short of its share.",
+            value: (c) => part(feast, c)?.timeRatio ?? 0,
+            format: (v) => pct(v),
+            aggregate: "none",
+            total: () => feast?.timeRatio ?? 0,
+            divider: true,
+        },
+        {
+            label: "Feast food",
+            value: (c) => part(feast, c)?.foodRatio ?? 0,
+            format: (v) => pct(v),
+            aggregate: "none",
+            total: () => feast?.foodRatio ?? 0,
+        },
+        {
+            label: "Rite time",
+            value: (c) => part(rite, c)?.timeRatio ?? 0,
+            format: (v) => pct(v),
+            aggregate: "none",
+            total: () => rite?.timeRatio ?? 0,
+        },
+        {
+            label: "Rite food",
+            value: (c) => part(rite, c)?.foodRatio ?? 0,
+            format: (v) => pct(v),
+            aggregate: "none",
+            total: () => rite?.foodRatio ?? 0,
+        },
+        {
+            label: "Share of the work",
+            tooltip:
+                "This clan's worker-turns as a share of everyone's. With every "
+                + "clan doing the standard, this is simply how big it is.",
+            value: (c) => {
+                const total =
+                    (feast?.labor ?? 0) + (rite?.labor ?? 0);
+                if (total <= 0) return 0;
+                return (
+                    ((part(feast, c)?.labor ?? 0)
+                        + (part(rite, c)?.labor ?? 0)) / total
+                );
+            },
+            format: (v) => pct(v),
+            aggregate: "sum",
+            divider: true,
+        },
+    ]);
+
+    let clanTable = $derived.by<Table<ClanRow, ClanDTO | null, any>>(() => {
+        const columns: TableColumn<ClanRow, ClanDTO | null, string>[] = [
+            {
+                data: null,
+                label: "Settlement",
+                class: "col-header",
+                headerSnippet: settlementHeader,
+                valueFn: (row: ClanRow) => {
+                    if (clans.length === 0) return "-";
+                    if (row.aggregate === "none") {
+                        return row.format(row.total ? row.total() : 0);
+                    }
+                    if (row.aggregate === "sum") {
+                        return row.format(
+                            clans.reduce((t, c) => t + row.value(c), 0),
+                        );
+                    }
+                    return row.format(populationAverage(clans, row.value));
+                },
+            },
+            ...clans.map(
+                (clan): TableColumn<ClanRow, ClanDTO | null, string> => ({
+                    data: clan,
+                    label: clan.name,
+                    class: "col-header",
+                    headerSnippet: clanHeader,
+                    valueFn: (row: ClanRow) => row.format(row.value(clan)),
+                }),
+            ),
+        ];
+
+        const rows: TableRow<ClanRow, ClanDTO | null>[] = clanRows.map(
+            (row) => ({
+                data: row,
+                label: row.label,
+                headerTooltip: row.tooltip,
+                divider: row.divider,
+            }),
+        );
+
+        return { columns: columns as any, rows };
+    });
+
+    // --- What each aspect came to -------------------------------------------
+
+    interface FactRow {
+        label: string;
+        value: string;
+        note?: string;
+        divider?: boolean;
+    }
+
+    function aspectRows(calc: FestivalAspectCalc | undefined): FactRow[] {
+        if (!calc) return [];
+        const a = calc.aspect;
+        return [
+            {
+                label: "Time it asks",
+                value: calc.standardLabor.toFixed(1),
+                note: `Worker-turns, by heads: the festival has to be put on `
+                    + `for everyone who lives here, so its demands go with `
+                    + `${calc.population} people rather than with the hands `
+                    + `there are to do it`,
+            },
+            {
+                label: "Time given",
+                value: calc.labor.toFixed(1),
+                note: `${pct(calc.timeRatio)} of what it asks. Every clan `
+                    + `gives ${pct(a.standardEffortShare)} of its own year, so `
+                    + `what the settlement can raise depends on how many of `
+                    + `its people are grown`,
+            },
+            {
+                label: "Food it asks",
+                value: calc.standardFood.toFixed(2),
+                note: `The notional standard is ${pct(a.standardFoodShare)} `
+                    + `of every clan's year's eating`
+                    + (a.key === "rite"
+                        ? `; less by the basketful than the feast, but it has `
+                          + `to be the best of everything`
+                        : ``),
+            },
+            {
+                label: "Food laid on",
+                value: calc.food.toFixed(2),
+                note: `${pct(calc.foodRatio)} of the standard`
+                    + (calc.foodRatio < 0.995
+                        ? `, the larder being what it is`
+                        : ``),
+            },
+            {
+                label: "— eaten",
+                value: calc.foodEaten.toFixed(2),
+                note: `${pct(calc.structure.foodEatenShare)} of it, which is `
+                    + `the point of laying on food. It counts toward what `
+                    + `these clans ate this year`,
+            },
+            {
+                label: "— sacrificed",
+                value: calc.foodSacrificed.toFixed(2),
+                note: `Burnt, poured out, or left to spoil on the offering `
+                    + `table. This is the part that is really given up`,
+            },
+            {
+                label: "Time and food together",
+                value: calc.baseValue.toFixed(2),
+                divider: true,
+                note: `Combined with r = ${a.rho}, so `
+                    + (a.rho <= -2
+                        ? `neither makes up for the other`
+                        : `each makes up for the other only up to a point`)
+                    + `, and returns of ${a.nu} to the pair. The standard, `
+                    + `fully met, comes to 1.00`,
+            },
+            {
+                label: "× How the day went",
+                value: xm(calc.luck),
+                note: "Whether the weather held, whether the dancing caught, "
+                    + "what the signs during it looked like",
+            },
+            {
+                label: "× Scale",
+                value: xm(calc.scaleFactor),
+                note: `${calc.structure.name} under ${calc.leadership.name} `
+                    + `works best at about `
+                    + `${calc.structure.scale[a.key].peakPopulation} people, `
+                    + `and is worth half as much every `
+                    + `${calc.structure.scale[a.key].halfLifeDoublings} `
+                    + `doublings past that; this settlement has `
+                    + `${calc.population}`,
+            },
+            {
+                label: a.valueName,
+                value: calc.value.toFixed(2),
+                divider: true,
+            },
+        ];
+    }
+
+    function factTable(
+        calc: FestivalAspectCalc | undefined,
+    ): Table<FactRow, string, [string]> {
+        return {
+            hideHeader: true,
+            columns: [
+                {
+                    data: "Value",
+                    label: "Value",
+                    valueFn: (row: FactRow) => row.value,
+                },
+                {
+                    data: "Note",
+                    label: "Note",
+                    class: "note-col",
+                    valueFn: (row: FactRow) => row.note ?? "",
+                },
+            ] as any,
+            rows: aspectRows(calc).map((row) => ({
+                data: row,
+                label: row.label,
+                divider: row.divider,
+            })),
+        };
+    }
+
+    // --- What it is worth ---------------------------------------------------
+
+    interface EffectRow {
+        aspect: string;
+        label: string;
+        value: string;
+        note: string;
+        divider?: boolean;
+    }
+
+    let effectRows = $derived.by<EffectRow[]>(() => {
+        const appeal = settlement.festivalAppeal;
+        const power = settlement.festivalPower;
+        const fa = festivalEffect(appeal);
+        const fp = festivalEffect(power);
+        return [
+            {
+                aspect: "Feast",
+                label: "Gatherings (QoL)",
+                value: signed(FEAST_QOL_MAX * fa, 1),
+                note: `Gladness at having been there, out of at most `
+                    + `${FEAST_QOL_MAX}`,
+                divider: true,
+            },
+            {
+                aspect: "Feast",
+                label: "Birth rate",
+                value: xm(1 + FEAST_HEALTH_SWING * fa),
+                note: "People who meet at the feasts marry more readily",
+            },
+            {
+                aspect: "Feast",
+                label: "Death rate",
+                value: xm(1 - FEAST_HEALTH_SWING * fa),
+                note: "Eating well in company a few times a year tells",
+            },
+            {
+                aspect: "Feast",
+                label: "Alignment",
+                value: signed(100 * FEAST_ALIGNMENT_MAX * fa, 1),
+                note: "Favor every clan here grants every other, for having "
+                    + "danced at the same fires",
+            },
+            {
+                aspect: "Feast",
+                label: "Acquaintance",
+                value: signed(FEAST_INFORMATION_CONTACT * fa, 2),
+                note: "Contact toward every other clan in the settlement at "
+                    + "once: a feast is broadcast, not conversation",
+            },
+            {
+                aspect: "Rite",
+                label: "Serenity (QoL)",
+                value: signed(RITE_QOL_MAX * fp, 1),
+                note: `The comfort of having given gifts to the ancestors and `
+                    + `to the powers of the world, and of believing they were `
+                    + `well received, out of at most ${RITE_QOL_MAX}`,
+                divider: true,
+            },
+            {
+                aspect: "Rite",
+                label: "Respect",
+                value: signed(RITE_RESPECT_MAX * fp, 1),
+                note: "Granted every clan that took its part, by everyone who "
+                    + "saw it done",
+            },
+        ];
+    });
+
+    let effectTable = $derived.by<Table<EffectRow, string, any>>(() => ({
+        columns: [
+            {
+                data: "aspect",
+                label: "From",
+                valueFn: (row: EffectRow) => row.aspect,
+            },
+            {
+                data: "value",
+                label: "Worth",
+                valueFn: (row: EffectRow) => row.value,
+            },
+            {
+                data: "note",
+                label: "",
+                class: "note-col",
+                valueFn: (row: EffectRow) => row.note,
+            },
+        ] as any,
+        rows: effectRows.map((row) => ({
+            data: row,
+            label: row.label,
+            divider: row.divider,
+        })),
+    }));
+
+    // --- What the arrangement is worth at each size -------------------------
+
+    const SIZES = [10, 25, 50, 100, 150, 200, 300, 400, 600, 800];
+
+    // The size the festivals were actually reckoned at -- before this year's
+    // births and deaths, which is where the fact rows above read it -- slotted
+    // in among the sample sizes so it is always there to be marked.
+    let here = $derived(festivals?.population ?? settlement.population);
+
+    let sizes = $derived(
+        [...new Set([...SIZES, here])].sort((a, b) => a - b),
+    );
+
+    let scaleTable = $derived.by<Table<number, string, any>>(() => ({
+        columns: [
+            ...ALL_RITUAL_ASPECTS.map((aspect: RitualAspectDef) => ({
+                data: aspect.key,
+                label: aspect.name,
+                headerTooltip:
+                    `What ${settlement.ritualStructure.name} under `
+                    + `${settlement.ritualLeadership.name} is worth for the `
+                    + `${aspect.name.toLowerCase()} at that size. Best at `
+                    + `${settlement.ritualStructure.scale[aspect.key].peakPopulation}, `
+                    + `then halving every `
+                    + `${settlement.ritualStructure.scale[aspect.key].halfLifeDoublings} `
+                    + `doublings.`,
+                valueFn: (population: number) =>
+                    pct(
+                        settlement.ritualLeadership.scaleFactor
+                            * ritualScaleFactor(
+                                population,
+                                settlement.ritualStructure.scale[aspect.key],
+                            ),
+                    ),
+            })),
+        ] as any,
+        rows: sizes.map((population) => ({
+            data: population,
+            label: population === here ? `${population} (here)` : `${population}`,
+            class: population === here ? "this-size" : "",
+        })),
+    }));
+</script>
+
+<script lang="ts" module>
+    import { SkillDefs } from "../model/econ/econdefs";
+    const RITUAL = SkillDefs.Ritual;
+</script>
+
+{#snippet settlementHeader()}
+    <div class="col-header-inner">
+        <div><strong>Settlement</strong></div>
+        <div class="pop-sub">pop {settlement.population}</div>
+    </div>
+{/snippet}
+
+{#snippet clanHeader(clan: ClanDTO | null)}
+    <div class="col-header-inner">
+        <div><EntityLink entity={clan!} /></div>
+        <div class="pop-sub">pop {clan!.population}</div>
+    </div>
+{/snippet}
+
+<div class="festivals">
+    <p class="lede">
+        {#if festivals?.held}
+            {settlement.name} keeps its festivals as
+            <strong>{settlement.ritualStructure.name}</strong>, held together by
+            the <strong>{settlement.ritualLeadership.name}</strong>. This year
+            they took {pct(festivals.effortShare)} of everyone's time and
+            {festivals.food.toFixed(1)} of food — of which
+            {festivals.foodEaten.toFixed(1)} was eaten and
+            {festivals.foodSacrificed.toFixed(1)} given up — and came to a feast of
+            <strong>{settlement.festivalAppeal.toFixed(2)}</strong> appeal and a
+            rite of <strong>{settlement.festivalPower.toFixed(2)}</strong> power,
+            where the standard done as it has always been done and at full scale
+            would come to 1.00 each.
+        {:else}
+            No festival worth the name was held here this year.
+        {/if}
+    </p>
+    <p class="caption">
+        {settlement.ritualStructure.description}
+        &centerdot; {settlement.ritualLeadership.description}
+    </p>
+
+    <h3>Who took part</h3>
+    <TableView2 table={clanTable} />
+
+    {#if festivals}
+        {#each festivals.calcs as calc (calc.aspect.key)}
+            <h3>{calc.aspect.icon} {calc.aspect.name}</h3>
+            <p class="caption">{calc.aspect.description}</p>
+            <TableView2 table={factTable(calc)} />
+        {/each}
+
+        <h3>What it was worth</h3>
+        <TableView2 table={effectTable} />
+
+        <h3>This way of doing it, at each size</h3>
+        <p class="caption">
+            One household is not a festival and a town is a crowd. What
+            {settlement.ritualStructure.name} under
+            {settlement.ritualLeadership.name} is worth at each size, before
+            anything the clans actually bring.
+        </p>
+        <TableView2 table={scaleTable} />
+    {/if}
+</div>
+
+<style>
+    .festivals {
+        max-width: 60rem;
+    }
+
+    .lede {
+        margin: 0;
+        max-width: 44rem;
+    }
+
+    .caption {
+        margin: 0.2rem 0 0.4rem;
+        font-size: 0.85rem;
+        color: #6b5f3a;
+        max-width: 44rem;
+    }
+
+    h3 {
+        margin: 1.2rem 0 0.4rem;
+        font-size: 1rem;
+        color: #62531d;
+    }
+
+    .col-header-inner {
+        text-align: center;
+    }
+
+    .pop-sub {
+        font-size: 0.75em;
+        font-weight: normal;
+        color: #888;
+    }
+
+    /* The note column is prose, so let it sit left and wrap. */
+    :global(.festivals td.note-col) {
+        text-align: left !important;
+        font-size: 0.85em;
+        color: #6b5f3a;
+        max-width: 30rem;
+        white-space: normal;
+    }
+
+    :global(.festivals tr td.this-size) {
+        background-color: #f3edd8;
+        font-weight: bold;
+    }
+</style>

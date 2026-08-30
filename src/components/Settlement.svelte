@@ -18,6 +18,7 @@
     import SettlementEcon from "./SettlementEcon.svelte";
     import SettlementQoL from "./SettlementQoL.svelte";
     import SettlementRituals from "./SettlementRituals.svelte";
+    import SettlementFestivals from "./SettlementFestivals.svelte";
     import SettlementWaters from "./SettlementWaters.svelte";
 
     let { settlement } = $props();
@@ -35,6 +36,7 @@
         { label: "Trade", icon: "🏺", snippet: tradeTab, group: "settlement" },
         { label: "Migration", icon: "🚶", snippet: migrationTab, group: "settlement" },
         { label: "Rituals", icon: "✴", snippet: ritualsTab, group: "settlement" },
+        { label: "Festivals", icon: "🎉", snippet: festivalsTab, group: "settlement" },
         { label: "The Waters", icon: "🌊", snippet: watersTab, group: "settlement" },
 
         { label: "Relationships", icon: "🤝", snippet: relationshipsTab, group: "relations" },
@@ -103,6 +105,10 @@
 
 {#snippet ritualsTab()}
     <SettlementRituals {settlement} />
+{/snippet}
+
+{#snippet festivalsTab()}
+    <SettlementFestivals {settlement} />
 {/snippet}
 
 {#snippet watersTab()}

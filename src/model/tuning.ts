@@ -6,7 +6,7 @@
 // main-thread fallback shares this one with the live world, so callers there
 // must restore the previous values (see withTuning).
 
-import { Processes } from "./econ/econdefs";
+import { FESTIVAL_TIME_COMPENSATION, Processes } from "./econ/econdefs";
 
 export type TuningParams = {
     // Annual births per childbearing-age woman, before modifiers.
@@ -36,8 +36,10 @@ export const TUNING_PARAM_SPECS: readonly TuningParamSpec[] = [
 export const DEFAULT_TUNING: Readonly<TuningParams> = {
     baseBirthRate: 0.25,
     deathRateAdjustmentFactor: 0.88,
-    fishingOutputPerWorker: 3.3,
-    agricultureOutputPerWorker: 3.3,
+    // Scaled up with the process defaults, for the same reason: festival
+    // time has been taken out of production and the rest has to cover it.
+    fishingOutputPerWorker: 3.3 * FESTIVAL_TIME_COMPENSATION,
+    agricultureOutputPerWorker: 3.3 * FESTIVAL_TIME_COMPENSATION,
 };
 
 // Live values. Read these, don't copy them into module-level constants.

@@ -131,26 +131,35 @@ export class EffortAllocation {
     // "Applying" the allocation refers to the process of converting
     // the high-level choices to specific effort allocations.
 
+    // Rest a clan will not do without, as a share of its year.
+    static readonly MIN_REST_SHARE = 0.15;
+
     // Initialize the application process.
     applyStart() {
         // Reserve effort needed for non-production activities, then
-        // have the rest be production. Enforce at least 15% leisure.
+        // have the rest be production, keeping back the rest the clan needs.
         const fCare = Math.min(1, 0.25 * this.clan.children / this.clan.effort);
         const fHelp = this.clan.helpAllocation.total;
-        const fLeisure = Math.max(0.15, this.get(Activities.Leisure));
-        // Work on the ditches is nobody's assignment: each clan gives what
-        // it is willing to give, and the rest of the year is arranged
-        // around it.
+        // The settlement's festivals are nobody's choice: they are what the
+        // year is, and the clan arranges the rest of its work around them.
+        const fFestivals = Math.min(
+            Math.max(0, 1 - fCare - fHelp),
+            this.clan.festivalWillingness);
+        const fLeisure = Math.max(
+            EffortAllocation.MIN_REST_SHARE, this.get(Activities.Leisure));
+        // Work on the ditches is nobody's assignment either: each clan gives
+        // what it is willing to give, and the year is arranged around that.
         const fDitching = Math.min(
-            Math.max(0, 1 - fCare - fHelp - fLeisure),
+            Math.max(0, 1 - fCare - fHelp - fLeisure - fFestivals),
             this.clan.ditchingWillingness);
-        const reserved = fCare + fHelp + fLeisure + fDitching;
+        const reserved = fCare + fHelp + fLeisure + fDitching + fFestivals;
         const fProduction = Math.max(0, 1 - reserved);
 
         this.m_.set(Activities.Care, fCare);
         this.m_.set(Activities.Help, fHelp);
         this.m_.set(Activities.Leisure, fLeisure);
         this.m_.set(Activities.Ditching, fDitching);
+        this.m_.set(Activities.Festivals, fFestivals);
         this.m_.set(Activities.Production, fProduction);
 
         if (isExemplarClan(this.clan)) {
@@ -162,7 +171,7 @@ export class EffortAllocation {
 
     private scoreOption(option: EffortAllocation): number {
         const leisure = option.get(Activities.Leisure);
-        if (leisure < 0.15 - 1e-9) return -Infinity;
+        if (leisure < EffortAllocation.MIN_REST_SHARE - 1e-9) return -Infinity;
 
         const er = economicResult(this.clan, option);
         const targetPerCapita = this.clan.perCapitaFoodProductionTarget;
@@ -237,6 +246,12 @@ export class Activities {
         sortKey: 5,
         shortName: 'D',
         color: '#0891b2',
+    };
+    static readonly Festivals: Activity = {
+        name: 'Festivals',
+        sortKey: 6,
+        shortName: 'F',
+        color: '#d946ef',
     };
 }
 

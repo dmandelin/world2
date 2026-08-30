@@ -85,6 +85,8 @@
             d.totalToWaste(good) +
             d.totalToFlood(good) +
             d.totalToRitual(good) +
+            d.totalToFestivalFood(good) +
+            d.totalToSacrifice(good) +
             d.totalToDonated(good)
         );
     }
@@ -115,6 +117,8 @@
             { key: "d-waste", label: "→ Waste", order: 2, fish: d.totalToWaste(Fish), cereals: d.totalToWaste(Cereals) },
             { key: "d-flood", label: "→ Flood", order: 2.4, fish: d.totalToFlood(Fish), cereals: d.totalToFlood(Cereals) },
             { key: "d-ritual", label: "→ Ritual", order: 2.5, fish: d.totalToRitual(Fish), cereals: d.totalToRitual(Cereals) },
+            { key: "d-festival", label: "→ Festival", order: 2.6, fish: d.totalToFestivalFood(Fish), cereals: d.totalToFestivalFood(Cereals) },
+            { key: "d-sacrifice", label: "→ Sacrifice", order: 2.7, fish: d.totalToSacrifice(Fish), cereals: d.totalToSacrifice(Cereals) },
         ];
         for (const g of groupByPartner(d.toDonations)) {
             flows.push({ key: "d-aid-" + g.uuid, label: "→ Aid: " + g.name, order: 3, fish: g.fish, cereals: g.cereals });

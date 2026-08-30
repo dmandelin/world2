@@ -4,6 +4,7 @@ import type { Consumption } from "./consumption";
 import { getRelativeLocalPrestige } from "../relations/prestige";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { omenQolEffect } from "../rituals";
+import { feastQolEffect, festivalAppeal, festivalPower, riteQolEffect } from "../festivals";
 
 const foodVarietyAppealFun = createTwoSidedQuadratic(0, -10, 0.7, 2, 1, 0);
 
@@ -37,6 +38,8 @@ export class QualityOfLife {
             QualityOfLife.fromPrestige,
             QualityOfLife.fromRitualHelp,
             QualityOfLife.fromOmens,
+            QualityOfLife.fromGatherings,
+            QualityOfLife.fromSerenity,
         ];
         const m = new Map<string, QualityOfLifeItem>();
         for (const itemFun of itemFuns) {
@@ -110,6 +113,30 @@ export class QualityOfLife {
         return new QualityOfLifeItem(
             "Omens", "omens", value,
             count ? `${count} portent${count === 1 ? '' : 's'}` : 'no portents');
+    }
+
+    // Gladness at having been at the settlement's feasts: eating well in
+    // company, the dancing, the day off from the fields. Kept in its own
+    // category rather than folded in with the other social factors, which
+    // feed back into births and deaths by a separate route.
+    static fromGatherings(consumption: Consumption): QualityOfLifeItem {
+        const clan = consumption.clan;
+        const value = clan ? feastQolEffect(clan) : 0;
+        const appeal = clan ? festivalAppeal(clan) : 0;
+        return new QualityOfLifeItem(
+            "Gatherings", "festival", value, `Feast appeal ${appeal.toFixed(2)}`);
+    }
+
+    // The ease of mind that comes of having given gifts to the ancestors and
+    // to the powers of the world, and of believing they were well received:
+    // the offerings made, the words said in the order they have to be said
+    // in, and everyone there to see it done.
+    static fromSerenity(consumption: Consumption): QualityOfLifeItem {
+        const clan = consumption.clan;
+        const value = clan ? riteQolEffect(clan) : 0;
+        const power = clan ? festivalPower(clan) : 0;
+        return new QualityOfLifeItem(
+            "Serenity", "festival", value, `Rite power ${power.toFixed(2)}`);
     }
 
     static fromLeisure(consumption: Consumption): QualityOfLifeItem {

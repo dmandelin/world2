@@ -9,6 +9,7 @@ import { getMarriageDecisions } from "../relations/marriage";
 // nutrition, minimal shelter and no migration) and the global death-rate
 // multiplier are tunable, so read them from the shared knobs at call time.
 import { tuning } from "../tuning";
+import { feastBirthRateModifier, feastDeathRateModifier, festivalAppeal } from "../festivals";
 
 function foodVarietyHealthFactor(fishRatio: number): number {
     const p = 1 - fishRatio;
@@ -370,6 +371,15 @@ export class PopulationChangeBuilder {
         const socialQoLDrModifier = 1 - 0.005 * socialQoL;
         this.drModifiers.push(new PopulationChangeModifier(
             'Society', -socialQoL, socialQoLDrModifier));
+
+        // A good year of feasts: people eat well in company a few times a
+        // year, marry more readily for having met, and go home in better
+        // health and temper than they came.
+        const appeal = safeVal(festivalAppeal(this.clan), 0);
+        this.brModifiers.push(new PopulationChangeModifier(
+            'Festivals', appeal, safeVal(feastBirthRateModifier(this.clan), 1)));
+        this.drModifiers.push(new PopulationChangeModifier(
+            'Festivals', appeal, safeVal(feastDeathRateModifier(this.clan), 1)));
 
         const intellect = safeVal(this.clan.traits?.intellect ?? 50, 50);
         const foresightBrModifier = Math.pow(0.9, (intellect - 50) / 15);

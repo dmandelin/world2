@@ -18,6 +18,7 @@ import { Rites } from "../rites";
 import type { RitualEvent } from "../rituals";
 import { type TradeGood, TradeGoods, type TradePartner, TradeRelationship } from "../trade";
 import { ClanFloodDamage } from "../environment/flood";
+import { FestivalOperation } from "../festivals";
 import type { Settlement } from "./settlement";
 import type { SettlementCluster } from "./cluster";
 import type { World } from "../world";
@@ -134,6 +135,23 @@ export class Clan implements TradePartner {
 
     get ditchingLabor(): number {
         return this.ditchingEffortShare * this.effort;
+    }
+
+    // The clan's part in the settlement's festivals: what it means to give
+    // them, and what its year actually left for them. Every clan does the
+    // notional standard for now, so willingness is the same for all.
+    readonly festivals = new FestivalOperation(this);
+
+    get festivalWillingness(): number {
+        return this.festivals.willingness;
+    }
+
+    get festivalEffortShare(): number {
+        return this.effortAllocation.get(Activities.Festivals);
+    }
+
+    get festivalLabor(): number {
+        return this.festivalEffortShare * this.effort;
     }
 
     effortAllocation: EffortAllocation;
@@ -441,11 +459,16 @@ export class Clan implements TradePartner {
 
     get perCapitaFoodProductionTarget(): number {
         const piety = this.traits.piety;
-        if (piety >= 50) {
-            return Math.max(0.1, Math.pow(1.2, (piety - 50) / 15));
-        } else {
-            return Math.max(0.1, Math.pow(0.9, (50 - piety) / 15));
-        }
+        const forEating = piety >= 50
+            ? Math.max(0.1, Math.pow(1.2, (piety - 50) / 15))
+            : Math.max(0.1, Math.pow(0.9, (50 - piety) / 15));
+        // Most of what goes to the settlement's festivals comes back as a
+        // meal, so only what is given up on the offering table has to be
+        // grown on top of what the clan means to eat.
+        const sacrificed = 1 - this.settlement.ritualStructure.foodEatenShare;
+        const forFestivals = this.population > 0
+            ? sacrificed * this.festivals.totalFoodOwed / this.population : 0;
+        return forEating + forFestivals;
     }
 
     getTrait(trait: string): number {

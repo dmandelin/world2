@@ -14,7 +14,8 @@
         social: true,
         natural: true,
         personal: true,
-        omens: true
+        omens: true,
+        festival: true
     });
 
     const categories = [
@@ -42,6 +43,11 @@
             tag: "omens",
             label: "Omens",
             items: ["Omens"]
+        },
+        {
+            tag: "festival",
+            label: "Festivals",
+            items: ["Gatherings", "Serenity"]
         }
     ] as const;
 
@@ -52,7 +58,8 @@
             social: true,
             natural: true,
             personal: true,
-            omens: true
+            omens: true,
+            festival: true
         };
     }
 
@@ -63,7 +70,8 @@
             social: false,
             natural: false,
             personal: false,
-            omens: false
+            omens: false,
+            festival: false
         };
     }
 

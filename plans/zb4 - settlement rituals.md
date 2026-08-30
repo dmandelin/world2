@@ -370,10 +370,12 @@ kernel model. Some of the most important points are:
                 to 1.0 at around 100 people, and then goes down.
 
 *   Differential effort
-    *   Use the existing Giving score to modify how much effort/value each
-        clan puts forth
-    *   Give each clan an expectation for how much each clan will put
-        forth and have them modify alignment accordingly
+    *   Set this up similarly to food aid - give clans standard amounts
+        they want to give (say a scaling factor to the default contribution)
+        and expectations from them for what other clans will give
+    *   To the extent they have information on each other, they'll adjust
+        alignment toward other clans based on how they are relative to
+        expectations
 
 *   Differential craft skill
     *   Let's also combine skills in a CES-like way
@@ -469,3 +471,27 @@ kernel model. Some of the most important points are:
     things up
     *   People might start becoming rivals to having the more
         appealing or powerful rituals
+
+*   Refinements for later
+    *   Farming behavioral pull -- this is apparently less obvious how
+        to implement
+    *   Requirements for specific food mixes
+    *   Different clan tastes
+
+*   High-priority tasks
+    *   Care skill
+        *   Maybe also motivation
+    *   Timer/progress bar for turns
+    *   Pie charts for time allocation
+
+*   Somewhat bigger but maybe becoming more urgent
+    *   Improved QoL aggregation
+    *   Consider making serenity somewhat more like gifts between clans:
+        have clans giving offerings estimate how well the recipients are
+        aligned toward them (and have that be a primary stat and also
+        influence QoL) (note that it's somewhat unclear whether this is
+        about recipients' alignment toward clans, or the settlement as
+        a whole)
+    *   Make sure we have sufficient per-settlement correlation in
+        enough outcomes to create a sense of shared fate (and
+        probably also identity)

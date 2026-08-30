@@ -5,6 +5,7 @@ import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
 import type { Opinion, OpinionItem } from "./opinion";
+import { festivalPower, riteRespectEffect } from "../festivals";
 
 // Respect measures how powerful and capable one clan thinks
 // another is. It's an absolute assessment, not relative to
@@ -52,6 +53,7 @@ export class Respect implements Opinion {
             RespectItem.forConversationQoL(subject, object, qolInfoScale),
             RespectItem.forConflictQoL(subject, object, qolInfoScale),
             RespectItem.forPopulation(subject, object, infoScale),
+            RespectItem.forFestivals(subject, object),
             // A clan appraising itself doesn't take a snap judgment of a
             // stranger; it takes its own standing opinion of itself.
             subject === object
@@ -146,6 +148,22 @@ export class RespectItem implements OpinionItem {
             Math.max(0, avgObjectSkill - RespectItem.SKILL_BASELINE),
             0.05 * infoScale,
             `Skills ${avgObjectSkill.toFixed(0)} (base ${RespectItem.SKILL_BASELINE}, info ${pct(infoScale)})`
+        );
+    }
+
+    // Having taken its part in a rite that carried. Not scaled by how well
+    // the subject knows the object: everyone was there and everyone saw it
+    // done. Only within a settlement -- a clan elsewhere kept its own feasts,
+    // which these people were not at.
+    static forFestivals(subject: Clan, object: Clan): RespectItem {
+        if (subject.settlement !== object.settlement) {
+            return new RespectItem('Festivals', 0, 0, 'not our festivals');
+        }
+        return new RespectItem(
+            'Festivals',
+            riteRespectEffect(subject, object),
+            1,
+            `Rite power ${festivalPower(object).toFixed(2)}`,
         );
     }
 

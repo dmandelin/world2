@@ -95,6 +95,7 @@ export class ResidenceLevel {
                     break;
                 // In settlement.
                 case Activities.Help:
+                case Activities.Festivals:
                 case Processes.Agriculture:
                     totalWeight += fraction * fraction;
                     homeWeight += fraction * fraction;

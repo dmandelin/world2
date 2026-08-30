@@ -9,6 +9,7 @@ import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
 import { ObservationDefs, observedEstimate } from "./information";
 import { DecayingCredit } from "./credit";
 import type { RitualEvent } from "../rituals";
+import { feastAlignmentEffect, festivalAppeal } from "../festivals";
 
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
@@ -90,6 +91,7 @@ export class Alignment {
                 .filter(interaction => !(interaction instanceof BasicInteraction))
                 .map(interaction => AlignmentItem.from(interaction.alignmentItem(subject, object))),
             AlignmentItem.forDitching(subject, object),
+            AlignmentItem.forFestivals(subject, object),
             AlignmentItem.forGifts(subject, object),
             AlignmentItem.forGenerosity(subject, object),
             AlignmentItem.forPiety(subject, object),
@@ -160,6 +162,23 @@ export class AlignmentItem {
             surplus,
             subject.traits.ditchingAdmiration,
             `${pct(actual)} of effort on the ditches vs ${pct(expected)} expected`,
+        );
+    }
+
+    // A year of feasting together. Everyone in the settlement was at the
+    // same fires, ate the same food, and danced the same dances, and thinks
+    // rather better of everyone else for it. The same for every neighbor,
+    // since a feast is not aimed at anyone in particular; what varies is how
+    // good a feast the settlement managed.
+    static forFestivals(subject: Clan, object: Clan): AlignmentItem {
+        if (subject.settlement !== object.settlement) {
+            return new AlignmentItem('Festivals', 0, 0, 'not our festivals');
+        }
+        return new AlignmentItem(
+            'Festivals',
+            feastAlignmentEffect(subject, object),
+            1,
+            `Feast appeal ${festivalAppeal(subject).toFixed(2)}`,
         );
     }
 

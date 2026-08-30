@@ -1,6 +1,13 @@
 import { isExemplarClan } from "../lib/debug";
 import { shuffled, sumFun } from "../lib/basics";
 import { DitchCalc, DitchingMethod, DitchingMethods } from "../infrastructure";
+import {
+    Festivals,
+    RitualLeaderships,
+    RitualStructures,
+    type RitualLeadership,
+    type RitualStructure,
+} from "../festivals";
 import { MILES_PER_UNIT, type SettlementCluster } from "./cluster";
 import { FloodLevels, type FloodLevel } from "../environment/flood";
 import { populationAverage, weightedAverage } from "../lib/modelbasics";
@@ -35,6 +42,12 @@ export class Settlement {
     // Infrastructure.
     ditchingMethod: DitchingMethod = DitchingMethods.AtWill;
     ditch: DitchCalc | undefined;
+
+    // The settlement's own festivals: how they are held, who holds them
+    // together, and what this year's came to.
+    ritualStructure: RitualStructure = RitualStructures.CommunalFestivals;
+    ritualLeadership: RitualLeadership = RitualLeaderships.ClanElders;
+    festivals: Festivals | undefined;
 
     readonly timeline = new Timeline<SettlementTimePoint>();
 
@@ -134,6 +147,21 @@ export class Settlement {
 
     maintain() {
         this.ditch = new DitchCalc(this);
+    }
+
+    // Work out what this year's festivals came to. Called once the food for
+    // them has changed hands, since a settlement that could put nothing on
+    // the table did not hold much of a festival.
+    updateFestivals() {
+        this.festivals = new Festivals(this);
+    }
+
+    get festivalAppeal(): number {
+        return this.festivals?.appeal ?? 0;
+    }
+
+    get festivalPower(): number {
+        return this.festivals?.power ?? 0;
     }
 
     growTell(previousEffectiveResidentPopulation: number) {

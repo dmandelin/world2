@@ -9,6 +9,7 @@ import { normal } from "../lib/distributions";
 import type { UUID } from "../records/basicdata";
 import type { World } from "../world";
 import { getPrestige } from "./prestige";
+import { feastInformationContact, festivalAppeal } from "../festivals";
 
 // What one clan knows about another comes in two flavors:
 //
@@ -1235,6 +1236,18 @@ export class ClanInformation {
                 isBasic ? "Basic Interaction" : interaction.constructor.name,
                 infoVal,
                 explanation,
+            ));
+        }
+
+        // Everyone in the settlement is at the same feasts, so what is
+        // learned there is learned about everybody at once, however little
+        // the two clans otherwise have to do with each other.
+        const festival = feastInformationContact(subject, object);
+        if (festival > 0) {
+            this.contactItems_.push(new ClanInformationItem(
+                "Festivals",
+                festival,
+                `Feast appeal ${festivalAppeal(subject).toFixed(2)}`,
             ));
         }
 
