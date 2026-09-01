@@ -457,15 +457,12 @@ kernel model. Some of the most important points are:
             *   -Alignment of Initiator+Supporters toward Opponents
             *   -Alignment of Opponents toward Initator+Supporters
         *   The alignment changes should be implemented as items in our events
-            ledger, and alignment indexed off there as we already have. Also,
-            if dyadic clan ritual help has some separate listing, get it into
-            the common ledger as well now.
+            ledger, and alignment indexed off there as we already have.
         *   Ritual change QoL should be implemented as a "changelog" on the
             ritual operation (Festival?) where each change lists whether each
             clan was in Initiator, Supporter, or Opponent
     *   Now go through multiple rounds of voting (accept or reject change)
-        until clans reach assent or deadlock. Then apply the stakes outlined
-        above.
+        until clans reach assent or deadlock.
         *   Give clans a new stat Rigidity, between 0 and 1.
         *   In each round, have the clans go in some order. If the % of
             clans currently voting the other way as this clan is > Rigidity,
@@ -491,6 +488,7 @@ kernel model. Some of the most important points are:
             fundamental limit problems. Maybe this can scale things up
             to 2x given extraordinary skill and effort level, or more
             like 10-20% with typical leaders
+        *   Encourage higher contributions through persuasion and example
         *   Use persuasion and gifts to resolve coordination roadblocks.
             If they sway people:
             *   If this brought the settlement from discord to assent,
@@ -559,12 +557,11 @@ kernel model. Some of the most important points are:
     *   Different clan tastes
     *   Elaborating rites, and then skill requirements and influence
         go up
+    *   Prestige weighting for yielding
 
 *   High-priority tasks
-    *   Care skill
-        *   Maybe also motivation
-    *   Timer/progress bar for turns
     *   Pie charts for time allocation
+    *   Clean up ritual bonds using their own ledger
 
 *   Somewhat bigger but maybe becoming more urgent
     *   Improved QoL aggregation

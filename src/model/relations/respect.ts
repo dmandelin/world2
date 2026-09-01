@@ -6,6 +6,8 @@ import type { ClanDTO } from "../records/dtos";
 import { SkillDefs } from "../econ/econdefs";
 import type { Opinion, OpinionItem } from "./opinion";
 import { festivalPower, riteRespectEffect } from "../festivals";
+import { DecayingCredit } from "./credit";
+import { RITUAL_CHANGE_STANDING_HALF_LIFE } from "./standing";
 import { explain, type Explainer } from "../lib/explain";
 
 // Respect measures how powerful and capable one clan thinks
@@ -17,6 +19,10 @@ export class Respect implements Opinion {
     private informationValue_: number = 0;
     private previousValue_: number = 0;
     private value_: number = 0;
+    // What proposing a change to the settlement's festival, and how it went,
+    // has earned this clan in the subject's eyes. Stands and fades.
+    private ritualChangeCredit_ =
+        new DecayingCredit(RITUAL_CHANGE_STANDING_HALF_LIFE);
 
     static readonly ALPHA = 0.1;
 
@@ -32,6 +38,16 @@ export class Respect implements Opinion {
 
     get value(): number {
         return this.value_;
+    }
+
+    // Book what carrying a question, or failing to, did for this clan's
+    // standing. Called once, where the change is settled.
+    creditRitualChange(amount: number, year: number): void {
+        this.ritualChangeCredit_.add(amount, year);
+    }
+
+    get ritualChangeCredit(): DecayingCredit {
+        return this.ritualChangeCredit_;
     }
 
     updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
@@ -55,6 +71,8 @@ export class Respect implements Opinion {
             RespectItem.forConflictQoL(subject, object, qolInfoScale),
             RespectItem.forPopulation(subject, object, infoScale),
             RespectItem.forFestivals(subject, object),
+            RespectItem.forRitualChange(
+                this.ritualChangeCredit_, subject.world.year.value),
             // A clan appraising itself doesn't take a snap judgment of a
             // stranger; it takes its own standing opinion of itself.
             subject === object
@@ -75,6 +93,7 @@ export class Respect implements Opinion {
         a.informationValue_ = this.informationValue_;
         a.previousValue_ = this.previousValue_;
         a.value_ = this.value_;
+        a.ritualChangeCredit_ = this.ritualChangeCredit_.clone();
         return a;
     }
 }
@@ -213,6 +232,23 @@ export class RespectItem<P = unknown> implements OpinionItem {
 
     // What a clan adds to the plain facts when the clan being appraised is
     // itself. Mostly positive: few hold themselves cheap.
+    // Standing from having put something to the settlement. A clan that
+    // proposes a change and carries it is a clan that can move the others; one
+    // whose proposal is thrown out has been shown not to be.
+    static forRitualChange(credit: DecayingCredit, year: number): RespectItem {
+        credit.decayTo(year);
+        const since = credit.yearsSince(year);
+        return new RespectItem(
+            'Ritual Change',
+            credit.value,
+            1,
+            since === undefined ? 'never put anything to the settlement'
+                : ritualChangeText,
+            { value: credit.value, since,
+              halfLife: RITUAL_CHANGE_STANDING_HALF_LIFE },
+        );
+    }
+
     static forPride(clan: Clan): RespectItem {
         const pride = clan.traits.pride;
         return new RespectItem(
@@ -241,6 +277,11 @@ export class RespectItem<P = unknown> implements OpinionItem {
 type ScoredAgainst = {
     label: string, value: number, baseline: number, infoScale: number,
 };
+const ritualChangeText = (
+    d: { value: number, since: number | undefined, halfLife: number }) =>
+    `${signed(d.value, 1)} standing from changes put to the settlement, last `
+        + `${d.since === 0 ? 'this year' : `${d.since} y ago`}`
+        + `, half-life ${d.halfLife} y`;
 const qolText = (d: ScoredAgainst) =>
     `${d.label} ${d.value.toFixed(0)} (base ${d.baseline}, info ${pct(d.infoScale)})`;
 const infoOnlyText = (d: { infoScale: number }) =>

@@ -8,6 +8,7 @@ import type { Interaction } from "./interaction";
 import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
 import { DILIGENCE_SCALE, ObservationDefs, conflictsSuffered, giftsReceived, observedEstimate } from "./information";
 import { DecayingCredit } from "./credit";
+import { RITUAL_CHANGE_STANDING_HALF_LIFE } from "./standing";
 import type { RitualEvent } from "../rituals";
 import { feastAlignmentEffect, festivalAppeal, festivalGivingSeen } from "../festivals";
 import { explain, type Explainer } from "../lib/explain";
@@ -35,6 +36,11 @@ export class Alignment {
     // total per kind of rite since they fade at different rates. Booked once,
     // where the rite is settled, and only decays after.
     private ritualBonds_ = new Map<string, DecayingCredit>();
+    // And what standing together, or across the room from each other, on a
+    // question the settlement had to settle did to the same. Booked once,
+    // where the question is settled, and only decays after.
+    private ritualChangeBond_ =
+        new DecayingCredit(RITUAL_CHANGE_STANDING_HALF_LIFE);
 
     get items(): readonly AlignmentItem[] { return this.items_; }
     get previousValue(): number { return this.previousValue_; }
@@ -62,6 +68,16 @@ export class Alignment {
     creditRitual(event: RitualEvent, amount: number): void {
         this.ritualBond(event.def.key, event.def.holinessHalfLife)
             .add(amount, event.year);
+    }
+
+    // Book what where the two clans stood on a reopened question did to the
+    // standing between them. Called once, where the change is settled.
+    creditRitualChange(amount: number, year: number): void {
+        this.ritualChangeBond_.add(amount, year);
+    }
+
+    get ritualChangeBond(): DecayingCredit {
+        return this.ritualChangeBond_;
     }
 
     // Total goodwill still standing from past rites, after fading.
@@ -118,6 +134,8 @@ export class Alignment {
             AlignmentItem.forBellicosity(subject, object),
             AlignmentItem.forConflict(subject, object),
             AlignmentItem.forRitualHelp(this, subject.world.year.value),
+            AlignmentItem.forRitualChange(
+                this.ritualChangeBond_, subject.world.year.value),
         ];
         this.previousValue_ = this.value_;
         this.value_ = this.currentItemsTotal;
@@ -138,6 +156,7 @@ export class Alignment {
         for (const [key, bond] of this.ritualBonds_) {
             a.ritualBonds_.set(key, bond.clone());
         }
+        a.ritualChangeBond_ = this.ritualChangeBond_.clone();
         return a;
     }
 }
@@ -337,6 +356,20 @@ export class AlignmentItem<P = unknown> {
     // and in every year we still remember it, faded by how long ago. Quite
     // separate from the reputation for open-handedness below -- that is what
     // the clan is known for, this is what it has done for us.
+    // Where this neighbor stood the last time the settlement had to settle
+    // how its festival is held: with us, or across the room. Booked as
+    // standing credit rather than rebuilt each turn, like what a rite said
+    // for us is worth, and fading on the same footing.
+    static forRitualChange(bond: DecayingCredit, year: number): AlignmentItem {
+        bond.decayTo(year);
+        const since = bond.yearsSince(year);
+        return new AlignmentItem(
+            'Ritual Change', 'direct', bond.value, 1,
+            since === undefined ? 'nothing settled between us'
+                : ritualStanceText,
+            { standing: bond.value, since, halfLife: bond.halfLife });
+    }
+
     static forGifts(subject: Clan, object: Clan): AlignmentItem {
         const received = giftsReceived(
             subject, object, subject.world.year.value);
@@ -450,6 +483,11 @@ export class AlignmentItem<P = unknown> {
 
 // The explanations, written once at load rather than rebuilt per item. Each
 // takes what it needs as an argument, so none of them closes over anything.
+const ritualStanceText = (
+    d: { standing: number, since: number | undefined, halfLife: number }) =>
+    `${signed(d.standing, 3)} from where they stood, last `
+        + `${d.since === 0 ? 'this year' : `${d.since} y ago`}`
+        + `, half-life ${d.halfLife} y`;
 const generosityText = (i: AlignmentItem) =>
     `Generosity estimate ${i.baseValue.toFixed(1)}`;
 const giftsText = (i: AlignmentItem) =>

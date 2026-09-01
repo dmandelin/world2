@@ -19,6 +19,18 @@
         RitualAspectDef,
     } from "../model/festivals";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
+    import {
+        ABANDONED_SUPPORTER_RIGIDITY_FACTOR,
+        INITIATOR_RIGIDITY_FACTOR,
+        ritualChangeQolFor,
+    } from "../model/ritualchange";
+    import type {
+        RitualChangeEvent,
+        RitualChangeStance,
+        RitualOpinion,
+        RitualRole,
+        RitualVoteRecord,
+    } from "../model/ritualchange";
     import type { Table, TableColumn, TableRow } from "./tables/tables2";
     import TableView2 from "./tables/TableView2.svelte";
     import EntityLink from "./state/EntityLink.svelte";
@@ -34,9 +46,81 @@
         [...settlement.ritualChanges].reverse().slice(0, 5),
     );
 
+    // The settlement's standing record of what it has settled, with what each
+    // change is still worth to each clan that took part. This is where the
+    // "Ritual change" line of everyone's quality of life comes from.
+    let changelog = $derived.by(() => {
+        const year = settlement.world.yearValue;
+        return [...settlement.ritualChanges]
+            .reverse()
+            .map((event: RitualChangeEvent) => ({
+                event,
+                age: year - event.year,
+                marks: settlement.clans.map((clan: ClanDTO) => {
+                    const stance = event.stances.find(
+                        (st) => st.clan.uuid === clan.uuid,
+                    );
+                    return stance
+                        ? {
+                              role: stance.role,
+                              value: ritualChangeQolFor(
+                                  event,
+                                  stance.role,
+                                  year - event.year,
+                              ),
+                          }
+                        : undefined;
+                }),
+            }))
+            .filter((row) => row.marks.some((m) => m && m.value !== 0));
+    });
+
+    const ROLE_LABELS: Record<RitualRole, string> = {
+        initiator: "Raised it",
+        supporter: "For",
+        opponent: "Against",
+    };
+
     // Alignment runs -1 to 1 and is shown throughout as Favor x100.
     function favor(alignment: number | undefined): string {
         return alignment === undefined ? "—" : signed(100 * alignment, 0);
+    }
+
+    function sideLabel(opinion: RitualOpinion): string {
+        return opinion === "for" ? "For" : "Against";
+    }
+
+    // What the clan's disposition means, plus the standing modifiers that
+    // apply to it. What it actually counted for in any given round is on that
+    // round's own cell, since the abandoned-supporter discount comes and goes
+    // with whether the initiators are still behind their proposal.
+    function rigidityNote(stance: RitualChangeStance): string {
+        const lines = [
+            `Gives way once more than ${pct(stance.rigidity)} of the clans`
+                + ` are against it.`,
+        ];
+        if (stance.initiator) {
+            lines.push(
+                `Counted ${INITIATOR_RIGIDITY_FACTOR}× here` +
+                    ` (${(stance.rigidity * INITIATOR_RIGIDITY_FACTOR).toFixed(2)}):` +
+                    ` it is their own proposal to give up.`,
+            );
+        } else if (stance.opinion === "for") {
+            lines.push(
+                `Counted ${ABANDONED_SUPPORTER_RIGIDITY_FACTOR}×` +
+                    ` (${(stance.rigidity * ABANDONED_SUPPORTER_RIGIDITY_FACTOR).toFixed(2)})` +
+                    ` in any round after the clans who raised it drop it.`,
+            );
+        }
+        return lines.join(" ");
+    }
+
+    function roundNote(rec: RitualVoteRecord | undefined): string {
+        if (!rec) return "";
+        const faced = `${pct(rec.opposingShare)} of the clans were voting the other way, against a rigidity of ${rec.rigidity.toFixed(2)}`;
+        return rec.switched
+            ? `Gave way: ${faced}.`
+            : `Held firm: ${faced}.`;
     }
     let clans = $derived(settlement.clans);
     let feast = $derived(festivals?.feast);
@@ -614,18 +698,30 @@
             {:else}
                 The clans have it to settle among themselves.
             {/if}
-            <span class="rc-split">{ritualChange.splitLabel}.</span>
+            <span class="rc-split">{ritualChange.splitLabel}</span>, and it was
+            <span class="rc-outcome {ritualChange.outcome}"
+                >{ritualChange.decision.detail}</span
+            >.
         </p>
 
         <table class="stances">
             <thead>
                 <tr>
                     <th>Clan</th>
+                    <th class="rap" title="How far a clan can be outnumbered before it gives way, as a share of the clans present.">Rigidity</th>
                     <th class="rap">Favor to initiator</th>
                     <th class="rap">Favor to the rest</th>
                     <th class="rap">Difference</th>
                     <th class="rap">Chance for</th>
-                    <th>Stands</th>
+                    <th title="What the clan wanted. This never changes.">Wanted</th>
+                    {#each ritualChange.decision.rounds as round (round.number)}
+                        <th
+                            class="round"
+                            title="Tally after round {round.number}: {round.tallyLabel} for-against."
+                            >R{round.number}</th
+                        >
+                    {/each}
+                    <th title="What the clan ended up voting.">Settled on</th>
                 </tr>
             </thead>
             <tbody>
@@ -637,6 +733,9 @@
                                     >raised it</span
                                 >{/if}
                         </td>
+                        <td class="rap" title={rigidityNote(stance)}
+                            >{stance.rigidity.toFixed(2)}</td
+                        >
                         <td class="rap">{favor(stance.alignmentToInitiators)}</td>
                         <td class="rap">{favor(stance.alignmentToOthers)}</td>
                         <td class="rap">{favor(stance.difference)}</td>
@@ -645,12 +744,79 @@
                                 ? "—"
                                 : pct(stance.supportChance)}</td
                         >
-                        <td
-                            class="side"
-                            class:for={stance.opinion === "for"}
-                            class:against={stance.opinion === "against"}
-                            >{stance.opinion === "for" ? "For" : "Against"}</td
+                        <td class="side {stance.opinion}"
+                            >{sideLabel(stance.opinion)}</td
                         >
+                        {#each ritualChange.decision.rounds as round (round.number)}
+                            {@const rec = round.recordFor(stance.clan)}
+                            <td
+                                class="side round {rec?.to ?? ''}"
+                                class:switched={rec?.switched}
+                                title={roundNote(rec)}
+                            >
+                                {#if rec}
+                                    {rec.switched ? "↷ " : ""}{sideLabel(rec.to)}
+                                {:else}—{/if}
+                            </td>
+                        {/each}
+                        <td class="side {stance.vote}"
+                            >{sideLabel(stance.vote)}{#if stance.assented}<span
+                                    class="rc-assent"
+                                    title="Voted against what it wanted, to keep the settlement of one mind."
+                                    >gave way</span
+                                >{/if}</td
+                        >
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+        {#if ritualChange.decision.rounds.length === 0}
+            <p class="caption">
+                They were of one mind from the start; there was nothing to argue
+                about.
+            </p>
+        {/if}
+    {/if}
+
+    {#if changelog.length}
+        <h3>What the settlement has settled, and what it still costs</h3>
+        <p class="caption">
+            Getting your way wears off; being overruled keeps; a settlement
+            that could not decide carries it longest of all. Each clan's mark
+            is the one its own part in the thing earned it, and together they
+            are the Ritual change line of its quality of life.
+        </p>
+        <table class="stances changelog">
+            <thead>
+                <tr>
+                    <th>Settled</th>
+                    <th>Outcome</th>
+                    <th class="rap">Years on</th>
+                    {#each settlement.clans as clan (clan.uuid)}
+                        <th class="rap"><EntityLink entity={clan} /></th>
+                    {/each}
+                </tr>
+            </thead>
+            <tbody>
+                {#each changelog as row (row.event.year + row.event.settlement.uuid)}
+                    <tr>
+                        <td>{formatYear(row.event.year)}</td>
+                        <td class="rc-outcome {row.event.outcome}"
+                            >{row.event.decision.label}</td
+                        >
+                        <td class="rap">{row.age}</td>
+                        {#each row.marks as mark}
+                            <td
+                                class="rap"
+                                class:good={mark && mark.value > 0}
+                                class:bad={mark && mark.value < 0}
+                                title={mark ? ROLE_LABELS[mark.role] : ""}
+                            >
+                                {#if mark && mark.value !== 0}
+                                    {signed(mark.value, 2)}
+                                {:else}—{/if}
+                            </td>
+                        {/each}
                     </tr>
                 {/each}
             </tbody>
@@ -671,6 +837,9 @@
                         >
                     {/if}
                     <span class="rc-detail">{change.splitLabel}</span>
+                    <span class="rc-detail rc-outcome {change.outcome}"
+                        >{change.decision.detail}</span
+                    >
                 </li>
             {/each}
         </ul>
@@ -777,6 +946,53 @@
 
     .side.against {
         color: #9b2c2c;
+    }
+
+    /* Round columns are a trace of the argument, so they read lighter than
+       the opinion and the settled vote on either side of them. */
+    .stances th.round,
+    .stances td.side.round {
+        font-weight: normal;
+        opacity: 0.75;
+        border-left: 1px dotted #ded3ae;
+    }
+
+    .stances td.side.round.switched {
+        font-weight: 600;
+        opacity: 1;
+    }
+
+    .changelog td.good {
+        color: #2f7d5b;
+    }
+
+    .changelog td.bad {
+        color: #9b2c2c;
+    }
+
+    .rc-assent {
+        font-size: 0.75em;
+        color: #975a16;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-left: 0.3rem;
+        font-weight: normal;
+    }
+
+    .rc-outcome {
+        font-weight: 600;
+    }
+
+    .rc-outcome.accepted {
+        color: #2f7d5b;
+    }
+
+    .rc-outcome.rejected {
+        color: #9b2c2c;
+    }
+
+    .rc-outcome.deadlock {
+        color: #7b341e;
     }
 
     .ritual-change-list {

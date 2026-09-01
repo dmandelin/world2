@@ -27,7 +27,7 @@ import { Year } from "./records/year";
 import { type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
-import { planRitualChanges, type RitualChangeEvent } from "./ritualchange";
+import { planRitualChanges, settleRitualChanges, type RitualChangeEvent } from "./ritualchange";
 import { settleFestivalEconomy } from "./festivals";
 import { clearNews, foldNewsIntoMemory, forgetStaleMemories, propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { RecentNews } from "./records/recentnews";
@@ -477,6 +477,12 @@ export class World implements NoteTaker {
         // before the economy, which charges for them, and before the year's
         // deaths and quality of life, which they bear on.
         runRituals(this);
+
+        // What the questions settled in planning did to standing and to how
+        // the clans regard each other. After the news page is cleared, so the
+        // occasions it files survive the year; before the economy, which
+        // works out everyone's quality of life.
+        settleRitualChanges(this);
 
         this.advanceEconomy();
 

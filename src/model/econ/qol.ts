@@ -4,6 +4,7 @@ import type { Consumption } from "./consumption";
 import { getRelativeLocalPrestige } from "../relations/prestige";
 import { createTwoSidedQuadratic } from "../lib/modelbasics";
 import { omenQolEffect } from "../rituals";
+import { ritualChangeQolEffect, ritualChangeQolEntries } from "../ritualchange";
 import { CARE_SKILL_BASE, CARE_SKILL_TOP, careQolEffect } from "../people/population";
 import { feastQolEffect, festivalAppeal, festivalPower, riteQolEffect } from "../festivals";
 import { explain, type Explainer } from "../lib/explain";
@@ -40,6 +41,7 @@ export class QualityOfLife {
             QualityOfLife.fromPrestige,
             QualityOfLife.fromRitualHelp,
             QualityOfLife.fromOmens,
+            QualityOfLife.fromRitualChange,
             QualityOfLife.fromGatherings,
             QualityOfLife.fromSerenity,
             QualityOfLife.fromCare,
@@ -116,6 +118,20 @@ export class QualityOfLife {
         return new QualityOfLifeItem(
             "Omens", "omens", value,
             count ? `${count} portent${count === 1 ? '' : 's'}` : 'no portents');
+    }
+
+    // How the settlement's last arguments about its festival left this clan:
+    // pleased to have carried the day, sore at having been overruled, or
+    // unsettled because nothing was decided at all. Read off the settlement's
+    // record of its changes, each of which says what part every clan took.
+    static fromRitualChange(consumption: Consumption): QualityOfLifeItem {
+        const clan = consumption.clan;
+        const value = clan ? ritualChangeQolEffect(clan) : 0;
+        const count = clan ? ritualChangeQolEntries(clan).length : 0;
+        return new QualityOfLifeItem(
+            "Ritual change", "festival", value,
+            count ? `${count} change${count === 1 ? '' : 's'} still telling`
+                : 'nothing recently settled');
     }
 
     // Gladness at having been at the settlement's feasts: eating well in

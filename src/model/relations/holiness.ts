@@ -7,6 +7,8 @@ import { SkillDefs } from "../econ/econdefs";
 import { ObservationDefs, observedEstimate } from "./information";
 import type { Opinion, OpinionItem } from "./opinion";
 import { ALL_RITUAL_TYPES, type RitualEvent, type RitualTypeDef } from "../rituals";
+import { DecayingCredit } from "./credit";
+import { RITUAL_CHANGE_STANDING_HALF_LIFE } from "./standing";
 import { explain, type Explainer } from "../lib/explain";
 
 // Holiness measures how close to the gods and ancestors one clan
@@ -77,6 +79,10 @@ export class Holiness implements Opinion {
     // Standing credit from past rites, one running total per kind of rite,
     // since they fade at very different rates.
     private ritualCredits_ = new Map<string, RitualCredit>();
+    // And from having put a change to the settlement's festival, which is a
+    // claim to know how it ought to be done.
+    private ritualChangeCredit_ =
+        new DecayingCredit(RITUAL_CHANGE_STANDING_HALF_LIFE);
 
     static readonly ALPHA = 0.1;
 
@@ -108,6 +114,16 @@ export class Holiness implements Opinion {
         this.ritualCredit(event.def).add(event.holinessEffect, event.year);
     }
 
+    // Book what putting a change to the settlement's festival, and how it
+    // went, did for this clan's standing with the powers.
+    creditRitualChange(amount: number, year: number): void {
+        this.ritualChangeCredit_.add(amount, year);
+    }
+
+    get ritualChangeCredit(): DecayingCredit {
+        return this.ritualChangeCredit_;
+    }
+
     updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
         this.informationValue_ = informationValue;
 
@@ -121,6 +137,7 @@ export class Holiness implements Opinion {
         // Let what past rites earned fade before it is read off.
         const year = subject.world.year.value;
         for (const credit of this.ritualCredits_.values()) credit.decayTo(year);
+        this.ritualChangeCredit_.decayTo(year);
 
         this.items_ = [
             HolinessItem.forPiety(subject, object),
@@ -131,6 +148,7 @@ export class Holiness implements Opinion {
             // line up across clans even when a clan has had no rites.
             ...ALL_RITUAL_TYPES.map(def => HolinessItem.forRitualOutcomes(
                 this.ritualCredit(def), subject.world.year.value)),
+            HolinessItem.forRitualChange(this.ritualChangeCredit_, year),
 
             // TODO - Symbols, items, and buildings.
         ];
@@ -148,6 +166,7 @@ export class Holiness implements Opinion {
         for (const [key, credit] of this.ritualCredits_) {
             h.ritualCredits_.set(key, credit.clone());
         }
+        h.ritualChangeCredit_ = this.ritualChangeCredit_.clone();
         return h;
     }
 }
@@ -242,6 +261,23 @@ export class HolinessItem<P = unknown> implements OpinionItem {
         );
     }
 
+    // Knowing how the festival ought to be held, and being heeded on it. A
+    // clan that proposes a change and carries the settlement has been taken
+    // as knowing something about how the powers want to be approached; one
+    // whose proposal is thrown out has been told it does not.
+    static forRitualChange(credit: DecayingCredit, year: number): HolinessItem {
+        const since = credit.yearsSince(year);
+        return new HolinessItem(
+            'Ritual Change',
+            credit.value,
+            1,
+            since === undefined ? 'never put anything to the settlement'
+                : ritualChangeText,
+            { value: credit.value, since,
+              halfLife: RITUAL_CHANGE_STANDING_HALF_LIFE },
+        );
+    }
+
     // Prospering is taken as a sign of favor from above.
     static forMaterialQoL(subject: Clan, object: Clan, infoScale: number): HolinessItem {
         const objectValue = object.qol.valueFrom("material");
@@ -264,6 +300,11 @@ const generosityText = (i: HolinessItem) =>
 const scoredText = (
     d: { label: string, value: number, baseline: number, infoScale: number }) =>
     `${d.label} ${d.value.toFixed(0)} (base ${d.baseline}, info ${pct(d.infoScale)})`;
+const ritualChangeText = (
+    d: { value: number, since: number | undefined, halfLife: number }) =>
+    `${signed(d.value, 1)} standing from changes put to the settlement, last `
+        + `${d.since === 0 ? 'this year' : `${d.since} y ago`}`
+        + `, half-life ${d.halfLife} y`;
 const ritesText = (
     d: { value: number, since: number | undefined, halfLife: number }) =>
     `${signed(d.value, 1)} standing from rites, last `

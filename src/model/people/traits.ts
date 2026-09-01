@@ -103,6 +103,28 @@ export const FESTIVAL_ADMIRATION_MAX = 0.40;
 // a clan's habits can shift over a few generations.
 const FESTIVAL_GIVING_DRIFT_STDDEV = 0.01;
 
+// Rigidity: how far a clan can be outnumbered on a question the settlement
+// has to settle -- how the festival is held, so far -- before it gives way
+// and votes with everyone else. It is read as a share of the clans present,
+// so a clan at 0.5 holds out until more than half are against it, and one at
+// 0.8 until better than four in five are. Giving way is not changing your
+// mind: see RitualChangeStance in ritualchange.ts, which keeps what a clan
+// wanted apart from what it would go along with.
+//
+// The range stops short of 1 deliberately. Nobody starts out able to hold
+// out against a whole settlement on their own; the clan that can is the one
+// whose own proposal is on the table, and it gets there by the initiator's
+// bonus rather than by disposition.
+export const RIGIDITY_MIN = 0.2;
+export const RIGIDITY_MAX = 0.8;
+const RIGIDITY_DRIFT_STDDEV = 0.01;
+// Soft outer bound, as for Giving: drift can carry a clan past where it
+// started but not to the ends of the scale. A clan at a true 1 would never
+// give way on anything ever again, and over a long enough run a random walk
+// clamped at 1 would pile clans up there.
+const RIGIDITY_DRIFT_MIN = 0.05;
+const RIGIDITY_DRIFT_MAX = 0.95;
+
 function randomInRange(min: number, max: number): number {
     return min + Math.random() * (max - min);
 }
@@ -119,6 +141,7 @@ export class ClanTraits {
     private festivalGiving_: number;
     private festivalExpectation_: number;
     private festivalAdmiration_: number;
+    private rigidity_: number;
 
     constructor(
         numeric?: Partial<Record<NumericTrait, number>>,
@@ -132,6 +155,7 @@ export class ClanTraits {
         festivalGiving?: number,
         festivalExpectation?: number,
         festivalAdmiration?: number,
+        rigidity?: number,
     ) {
         this.numeric = {
             piety: numeric?.piety ?? randomTraitStat(),
@@ -153,6 +177,8 @@ export class ClanTraits {
             ?? randomInRange(FESTIVAL_EXPECTATION_MIN, FESTIVAL_EXPECTATION_MAX);
         this.festivalAdmiration_ = festivalAdmiration
             ?? randomInRange(FESTIVAL_ADMIRATION_MIN, FESTIVAL_ADMIRATION_MAX);
+        this.rigidity_ = rigidity
+            ?? randomInRange(RIGIDITY_MIN, RIGIDITY_MAX);
     }
 
     // What this clan brings to the settlement's festivals, as a factor on
@@ -212,6 +238,15 @@ export class ClanTraits {
         this.giving_ = clamp(val, -GIVING_DRIFT_LIMIT, GIVING_DRIFT_LIMIT);
     }
 
+    // A share of the clans present, so it must stay in [0, 1].
+    get rigidity(): number {
+        return this.rigidity_;
+    }
+
+    set rigidity(val: number) {
+        this.rigidity_ = clamp(val, RIGIDITY_DRIFT_MIN, RIGIDITY_DRIFT_MAX);
+    }
+
     // A probability, so it must stay in [0, 1].
     get aggression(): number {
         return this.aggression_;
@@ -261,7 +296,8 @@ export class ClanTraits {
         return new ClanTraits(
             { ...this.numeric }, this.bitmap, this.giving_, this.aggression_, this.pride_,
             this.ditchingEffort_, this.ditchingExpectation_, this.ditchingAdmiration_,
-            this.festivalGiving_, this.festivalExpectation_, this.festivalAdmiration_);
+            this.festivalGiving_, this.festivalExpectation_, this.festivalAdmiration_,
+            this.rigidity_);
     }
 
     cloneWithSplitBump(): ClanTraits {
@@ -279,6 +315,7 @@ export class ClanTraits {
         copy.aggression = copy.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         copy.ditchingEffort = copy.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
         copy.festivalGiving = copy.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
+        copy.rigidity = copy.rigidity + normal(0, RIGIDITY_DRIFT_STDDEV);
         return copy;
     }
 
@@ -298,5 +335,6 @@ export class ClanTraits {
         this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         this.ditchingEffort = this.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
         this.festivalGiving = this.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
+        this.rigidity = this.rigidity + normal(0, RIGIDITY_DRIFT_STDDEV);
     }
 }
