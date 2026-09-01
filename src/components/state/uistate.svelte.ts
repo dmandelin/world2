@@ -1,4 +1,6 @@
 import { world as _world } from '../../model/worldinstance';
+import { BREAKPOINT_IDS, defaultBreakpoints, type BreakpointId }
+    from '../../model/records/breakpoints';
 
 export type Uuidable = string | { uuid: string } | undefined;
 
@@ -73,4 +75,22 @@ export function selectCluster(uuidable: Uuidable): void {
 
 export function uuidOf(uuidable: Uuidable): string | undefined {
     return typeof uuidable === 'string' ? uuidable : uuidable?.uuid;
+}
+
+// --- Breakpoints -----------------------------------------------------------
+//
+// Which occasions cut a multi-year advance short. Kept here rather than on
+// the world because it is a setting of the viewer's, not of the simulation:
+// it changes what you get to look at, not what happens.
+
+export const breakpointState: Record<BreakpointId, boolean> =
+    $state(defaultBreakpoints());
+
+export function toggleBreakpoint(id: BreakpointId): void {
+    breakpointState[id] = !breakpointState[id];
+}
+
+export function armedBreakpoints(): Set<BreakpointId> {
+    return new Set(
+        BREAKPOINT_IDS.filter(id => breakpointState[id]));
 }

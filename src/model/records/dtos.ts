@@ -17,6 +17,7 @@ import type { MigrationCalc, NewSettlementDecisionReport, PlannedSettlement } fr
 import type { MarriageDecisions } from "../relations/marriage";
 import type { Note } from "../records/notifications";
 import type { Alert, AlertKindId } from "../records/alerts";
+import type { BreakpointHit, BreakpointId } from "../records/breakpoints";
 import type { PopulationChange } from "../people/population";
 import type { ProductionReport } from "../econ/operation";
 import type { Distribution, StockOutflow } from "../econ/flows";
@@ -681,8 +682,16 @@ export class WorldDTO {
         }));
     }
 
-    advanceFromPlanningView(ticks?: number) {
-        this.world.advanceFromUserPlanningView(ticks);
+    advanceFromPlanningView(
+        ticks?: number,
+        armedBreakpoints?: ReadonlySet<BreakpointId>,
+    ) {
+        this.world.advanceFromUserPlanningView(ticks, armedBreakpoints);
+    }
+
+    // What cut the last multi-year run short, if anything did.
+    get lastBreak(): BreakpointHit | undefined {
+        return this.world.lastBreak;
     }
 
     // Dismiss all alerts of a kind (e.g. when the player right-clicks a badge).

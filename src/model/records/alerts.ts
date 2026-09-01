@@ -175,7 +175,7 @@ export class Alerts {
 // the next turn's prune.
 // ----------------------------------------------------------------------------
 
-const DWINDLING_POPULATION = 12;
+export const DWINDLING_POPULATION = 12;
 const MALNOURISHED_PER_CAPITA_FOOD = 0.9;
 const STARVING_PER_CAPITA_FOOD = 0.7;
 

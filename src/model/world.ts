@@ -15,6 +15,8 @@ import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
 import { Alerts, updateWorldAlerts, type AlertSpec } from "./records/alerts";
+import { checkBreakpoints, type BreakpointHit, type BreakpointId }
+    from "./records/breakpoints";
 import { OffMapTradePartner, TradeGood, TradeGoods } from "./trade";
 import { applyFloodCropLosses, ExtremeFlood, noteExtremeFloods, updateExtremeFloods, updateFloodLevels } from "./environment/flood";
 import { Settlement } from "./people/settlement";
@@ -111,6 +113,11 @@ export class World implements NoteTaker {
     // Settlements where the question of how to hold the festival came open
     // during this turn's planning, used to raise alerts.
     lastRitualChanges: RitualChangeEvent[] = [];
+
+    // Occasions that cut a multi-year run short, and what cut the last one.
+    // See records/breakpoints.ts.
+    armedBreakpoints: ReadonlySet<BreakpointId> = new Set();
+    lastBreak: BreakpointHit | undefined;
 
     // Extreme floods that struck this turn, across the whole world.
     extremeFloods: ExtremeFlood[] = [];
@@ -322,14 +329,29 @@ export class World implements NoteTaker {
     runTurn(priming: boolean = false, ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick)) {
         for (let t = 0; t < ticks; t++) {
             this.behave(priming);
+            // The year the tick is for; the clock moves on inside it.
+            const year = this.year.toString();
             this.advanceTick();
+            // A run of several years stops at the year something worth
+            // looking at happened in. A single year was going to stop here
+            // anyway, so it is left alone.
+            if (ticks > 1 && !priming) {
+                this.lastBreak =
+                    checkBreakpoints(this, this.armedBreakpoints, year);
+                if (this.lastBreak) break;
+            }
         }
     }
 
-    advanceFromUserPlanningView(ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick)) {
+    advanceFromUserPlanningView(
+        ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick),
+        armedBreakpoints: ReadonlySet<BreakpointId> = new Set(),
+    ) {
         log('World >>> Advance from user planning view');
         for (const clan of this.allClans) clan.clearNotifications();
         log('Cleared notifications for all clans');
+        this.armedBreakpoints = armedBreakpoints;
+        this.lastBreak = undefined;
         this.runTurn(false, ticks);
         log('World <<< Advance from user planning view');
         this.refreshAlerts();
