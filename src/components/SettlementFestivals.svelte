@@ -601,8 +601,14 @@
         <p class="ritual-change">
             <strong>{ritualChange.label}.</strong>
             How the festival is held is no longer simply how it has always been
-            held: {ritualChange.detail}. The clans have it to settle among
-            themselves.
+            held: {ritualChange.causeDetail}.
+            {#if ritualChange.initiators.length}
+                {ritualChange.initiatorNames}
+                {ritualChange.initiators.length > 1 ? "have" : "has"} raised it,
+                and the clans have it to settle among themselves.
+            {:else}
+                The clans have it to settle among themselves.
+            {/if}
         </p>
     {/if}
 
@@ -613,7 +619,12 @@
                 <li>
                     <span class="rc-year">{formatYear(change.year)}</span>
                     <span class="rc-label">{change.label}</span>
-                    <span class="rc-detail">{change.detail}</span>
+                    <span class="rc-detail">{change.causeDetail}</span>
+                    {#if change.initiators.length}
+                        <span class="rc-detail"
+                            >raised by {change.initiatorNames}</span
+                        >
+                    {/if}
                 </li>
             {/each}
         </ul>
