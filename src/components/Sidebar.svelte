@@ -39,17 +39,13 @@
                 >
             {/each}
         </div>
-        <div
-            class="readout"
-            class:active={!!lastBreak}
-            title={lastBreak ? `${lastBreak.year} · ${lastBreak.what}` : ""}
-        >
-            {#if lastBreak}
+        <!-- Only there when it has something to say: an empty display is
+             just a dark band under the lamps. -->
+        {#if lastBreak}
+            <div class="readout" title="{lastBreak.year} · {lastBreak.what}">
                 {lastBreak.year} · {lastBreak.what}
-            {:else}
-                &mdash;
-            {/if}
-        </div>
+            </div>
+        {/if}
     </div>
 </div>
 
@@ -58,7 +54,9 @@
         position: fixed;
         /* Level with the map and the folder tab, which start at the body inset. */
         top: 8px;
-        right: 1em;
+        /* Clear of the main panel's clay border, which the instrument panel
+           below the buttons otherwise sits right on top of. */
+        right: 1.75em;
         background-color: transparent;
         z-index: 100;
         display: flex;
@@ -152,7 +150,6 @@
     }
 
     .readout {
-        min-height: 12px;
         padding: 2px 3px;
         border: 1px solid #1d2619;
         border-radius: 2px;
@@ -160,7 +157,8 @@
         font-family: "Courier New", monospace;
         font-size: 9px;
         line-height: 1.3;
-        color: #4a5a42;
+        color: #d8b84a;
+        text-shadow: 0 0 4px rgba(216, 184, 74, 0.5);
         /* Two lines is enough for almost everything; the title has the rest. */
         display: -webkit-box;
         -webkit-box-orient: vertical;
@@ -168,10 +166,5 @@
         line-clamp: 2;
         overflow: hidden;
         overflow-wrap: break-word;
-    }
-
-    .readout.active {
-        color: #d8b84a;
-        text-shadow: 0 0 4px rgba(216, 184, 74, 0.5);
     }
 </style>

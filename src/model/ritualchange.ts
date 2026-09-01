@@ -1,4 +1,6 @@
 import { chooseWeighted, sumFun } from "./lib/basics";
+import { populationAverage } from "./lib/modelbasics";
+import { getAlignment } from "./relations/alignment";
 import type { Clan } from "./people/people";
 import type { Settlement } from "./people/settlement";
 import type { World } from "./world";
@@ -117,6 +119,95 @@ function chooseInitiators(
         candidates, c => clanInitiativeWeight(c, newcomers.has(c)))];
 }
 
+// ---------------------------------------------------------------------------
+// Where everyone else stands.
+// ---------------------------------------------------------------------------
+
+// Once the question is open, every other clan falls in behind the initiators
+// or does not. What settles it is not how warmly a clan regards them in the
+// abstract but how much more warmly it regards them than the rest of the
+// people it keeps the festival with. A clan on good terms with everybody has
+// no particular reason to prefer this one's way of doing things; a clan that
+// gets on with the initiators and with nobody else has every reason.
+
+export type RitualOpinion = 'for' | 'against';
+
+// How far above its feeling for the rest of the settlement a clan has to hold
+// the initiators before it is three times as likely to back them as not.
+// Alignment runs -1 to 1 and is shown as Favor x100, so this is a fifth of
+// the scale, and about one standard deviation of the differences that
+// actually come up between the clans of a settlement.
+export const SUPPORT_ALIGNMENT_SWING = 0.2;
+export const SUPPORT_CHANCE_AT_SWING = 0.75;
+const SUPPORT_LOGIT_SLOPE =
+    Math.log(SUPPORT_CHANCE_AT_SWING / (1 - SUPPORT_CHANCE_AT_SWING))
+    / SUPPORT_ALIGNMENT_SWING;
+
+// Chance a clan comes down for the change, given how much more it thinks of
+// the initiators than of everyone else. No difference at all is a coin flip.
+export function supportChance(difference: number): number {
+    return 1 / (1 + Math.exp(-SUPPORT_LOGIT_SLOPE * difference));
+}
+
+// Where one clan stands on one reopened question. Kept per clan rather than
+// as two lists of names because there is more to come here: the assent that
+// carries a clan to the side it did not start on will be tracked alongside
+// the opinion it started with, and neither should overwrite the other.
+export class RitualChangeStance {
+    constructor(
+        readonly clan: Clan,
+        // Raised the question, rather than being asked about it.
+        readonly initiator: boolean,
+        readonly opinion: RitualOpinion,
+        // How the clan weighed it: what it makes of the initiators, what it
+        // makes of everyone else, and the chance those gave. All undefined
+        // for the initiators, who did not have to be won over.
+        readonly alignmentToInitiators?: number,
+        readonly alignmentToOthers?: number,
+        readonly supportChance?: number,
+    ) { }
+
+    get difference(): number | undefined {
+        return this.alignmentToInitiators === undefined
+            || this.alignmentToOthers === undefined
+            ? undefined
+            : this.alignmentToInitiators - this.alignmentToOthers;
+    }
+}
+
+// Sort the festival's clans into those for the change and those against it.
+// The initiators are for it by construction; everyone else is rolled.
+function takeStances(
+    settlement: Settlement,
+    initiators: readonly Clan[],
+): RitualChangeStance[] {
+    const raisedIt = new Set(initiators);
+    const participants = settlement.clans.filter(c => c.population > 0);
+    return participants.map(clan => {
+        if (raisedIt.has(clan)) {
+            return new RitualChangeStance(clan, true, 'for');
+        }
+        const toInitiators = populationAverage(
+            initiators, i => getAlignment(clan, i));
+        // Everyone else it keeps the festival with, itself and the initiators
+        // aside. With nobody else to measure them against there is nothing to
+        // go on, so the clan is as likely to fall one way as the other.
+        const rest = participants.filter(
+            c => c !== clan && !raisedIt.has(c));
+        const toOthers = rest.length
+            ? populationAverage(rest, c => getAlignment(clan, c))
+            : toInitiators;
+        const chance = supportChance(toInitiators - toOthers);
+        return new RitualChangeStance(
+            clan,
+            false,
+            Math.random() < chance ? 'for' : 'against',
+            toInitiators,
+            toOthers,
+            chance);
+    });
+}
+
 export class RitualChangeEvent {
     constructor(
         readonly settlement: Settlement,
@@ -127,6 +218,9 @@ export class RitualChangeEvent {
         // The clans who raised it. One for now; a list because a thing two
         // clans raise together is a different thing from a thing one raises.
         readonly initiators: readonly Clan[],
+        // Where every clan that keeps this festival stands, initiators
+        // included.
+        readonly stances: readonly RitualChangeStance[],
         // Who came and who went, when the roster is what did it. Those who
         // left are kept by name only: they are not here to be pointed at.
         readonly joined: readonly Clan[],
@@ -143,12 +237,25 @@ export class RitualChangeEvent {
         return this.initiators.map(c => c.name).join(', ');
     }
 
+    get supporters(): RitualChangeStance[] {
+        return this.stances.filter(s => s.opinion === 'for');
+    }
+
+    get opponents(): RitualChangeStance[] {
+        return this.stances.filter(s => s.opinion === 'against');
+    }
+
+    // How the settlement divided, in the fewest words.
+    get splitLabel(): string {
+        return `${this.supporters.length} for, ${this.opponents.length} against`;
+    }
+
     // One line on what happened, for the event feed and the alert row.
     get detail(): string {
-        const cause = this.causeDetail;
         const raised = this.initiators.length
             ? `raised by ${this.initiatorNames}` : '';
-        return [raised, cause].filter(s => s).join('; ');
+        return [raised, this.causeDetail, this.splitLabel]
+            .filter(s => s).join('; ');
     }
 
     // What put the question, without who put it.
@@ -213,9 +320,10 @@ function raiseRitualChange(
     joined: readonly Clan[],
     left: readonly string[],
 ): void {
+    const initiators = chooseInitiators(settlement, joined);
     const event = new RitualChangeEvent(
         settlement, world.year.value, cause, settlement.population,
-        chooseInitiators(settlement, joined), joined, left);
+        initiators, takeStances(settlement, initiators), joined, left);
     settlement.ritualChanges.push(event);
     world.lastRitualChanges.push(event);
     world.addNote(

@@ -14,12 +14,14 @@
   let {
     tabs,
     orientation = 'horizontal',
+    activeIndex = $bindable(0),
   }: {
     tabs: Tab[],
     orientation?: 'horizontal' | 'vertical',
+    // Which panel is open. Bindable so an owner can open one from outside,
+    // as the event feed's links do.
+    activeIndex?: number,
   } = $props();
-
-  let activeIndex = $state(0);
 
   function selectTab(index: number) {
     activeIndex = index;

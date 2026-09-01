@@ -5,9 +5,13 @@
     let {
         entity,
         extra,
+        tab,
     }: {
         entity: Uuidable & { name: string };
         extra?: Snippet<[any]>;
+        // A panel of the settlement view to open along with the entity, for
+        // links that know where what they name is written up.
+        tab?: string;
     } = $props();
 
 </script>
@@ -35,7 +39,7 @@
 
 <button 
     type="button"
-    onclick={() => selectEntity(entity)}>
+    onclick={() => selectEntity(entity, tab)}>
     {entity.name} 
     {#if extra}
         <span style="font-size: 0.8em; color: gray;">{@render extra(entity)}</span>

@@ -33,6 +33,11 @@
     let pastRitualChanges = $derived(
         [...settlement.ritualChanges].reverse().slice(0, 5),
     );
+
+    // Alignment runs -1 to 1 and is shown throughout as Favor x100.
+    function favor(alignment: number | undefined): string {
+        return alignment === undefined ? "—" : signed(100 * alignment, 0);
+    }
     let clans = $derived(settlement.clans);
     let feast = $derived(festivals?.feast);
     let rite = $derived(festivals?.rite);
@@ -609,7 +614,47 @@
             {:else}
                 The clans have it to settle among themselves.
             {/if}
+            <span class="rc-split">{ritualChange.splitLabel}.</span>
         </p>
+
+        <table class="stances">
+            <thead>
+                <tr>
+                    <th>Clan</th>
+                    <th class="rap">Favor to initiator</th>
+                    <th class="rap">Favor to the rest</th>
+                    <th class="rap">Difference</th>
+                    <th class="rap">Chance for</th>
+                    <th>Stands</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each ritualChange.stances as stance (stance.clan.uuid)}
+                    <tr>
+                        <td>
+                            <EntityLink entity={stance.clan} />
+                            {#if stance.initiator}<span class="rc-raiser"
+                                    >raised it</span
+                                >{/if}
+                        </td>
+                        <td class="rap">{favor(stance.alignmentToInitiators)}</td>
+                        <td class="rap">{favor(stance.alignmentToOthers)}</td>
+                        <td class="rap">{favor(stance.difference)}</td>
+                        <td class="rap"
+                            >{stance.supportChance === undefined
+                                ? "—"
+                                : pct(stance.supportChance)}</td
+                        >
+                        <td
+                            class="side"
+                            class:for={stance.opinion === "for"}
+                            class:against={stance.opinion === "against"}
+                            >{stance.opinion === "for" ? "For" : "Against"}</td
+                        >
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
     {/if}
 
     {#if pastRitualChanges.length}
@@ -625,6 +670,7 @@
                             >raised by {change.initiatorNames}</span
                         >
                     {/if}
+                    <span class="rc-detail">{change.splitLabel}</span>
                 </li>
             {/each}
         </ul>
@@ -683,6 +729,54 @@
         max-width: 44rem;
         border-left: 3px solid #975a16;
         background-color: #faf3e0;
+    }
+
+    .rc-split {
+        font-weight: 600;
+    }
+
+    .stances {
+        margin-top: 0.4rem;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .stances th {
+        font-weight: 600;
+        color: #6b5f3a;
+        border-bottom: 1px solid #c4b98a;
+        padding: 0.15rem 0.5rem;
+        text-align: left;
+    }
+
+    .stances td {
+        padding: 0.15rem 0.5rem;
+        border-bottom: 1px dotted #ded3ae;
+    }
+
+    .stances .rap {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .rc-raiser {
+        font-size: 0.75em;
+        color: #975a16;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-left: 0.3rem;
+    }
+
+    .side {
+        font-weight: 600;
+    }
+
+    .side.for {
+        color: #2f7d5b;
+    }
+
+    .side.against {
+        color: #9b2c2c;
     }
 
     .ritual-change-list {

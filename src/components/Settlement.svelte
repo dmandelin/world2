@@ -1,4 +1,8 @@
 <script>
+    import {
+        clearRequestedSettlementTab,
+        uiState,
+    } from "./state/uistate.svelte";
     import SettlementDemographics from "./SettlementDemographics.svelte";
     import SettlementInformation from "./SettlementInformation.svelte";
     import SettlementTraits from "./SettlementTraits.svelte";
@@ -49,6 +53,18 @@
         { label: "Graph", icon: "🕸️", snippet: relationshipsGraphTab, group: "graphs" },
         { label: "Graph2", icon: "🌐", snippet: relationshipsGraph2Tab, group: "graphs" },
     ];
+
+    // A link elsewhere can ask for a particular panel -- the event feed's
+    // notes name the panel their occasion is written up in. Honored once and
+    // then cleared, so it opens the panel rather than pinning the view to it.
+    let activeIndex = $state(0);
+    $effect(() => {
+        const wanted = uiState().requestedSettlementTab;
+        if (!wanted) return;
+        const i = tabs.findIndex((t) => t.label === wanted);
+        if (i >= 0) activeIndex = i;
+        clearRequestedSettlementTab();
+    });
 </script>
 
 {#snippet comparisonTab()}
@@ -131,4 +147,4 @@
     <SettlementRelationshipsGraph2 {settlement} />
 {/snippet}
 
-<TabbedView {tabs} orientation="vertical" />
+<TabbedView {tabs} orientation="vertical" bind:activeIndex />

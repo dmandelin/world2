@@ -27,14 +27,17 @@
       return () => window.removeEventListener('resize', measure);
   });
 
-  // Icon and color config by note type
-  function noteStyle(shortLabel: string): { icon: string; color: string; tag: string } {
+  // Icon and color config by note type. `tab`, where a kind of note has one,
+  // is the settlement panel the occasion is written up in, so following the
+  // link lands on the detail rather than on the settlement's front page.
+  function noteStyle(shortLabel: string):
+      { icon: string; color: string; tag: string; tab?: string } {
       switch (shortLabel) {
           case '✨': return { icon: '✨', color: '#b7791f', tag: 'Founding' };
           case '↔': return { icon: '↔️', color: '#2b6cb0', tag: 'Migration' };
           case 'H': return { icon: '🏠', color: '#6b46c1', tag: 'Housing' };
-          case '🌊': return { icon: '🌊', color: '#2b6cb0', tag: 'Flood' };
-          case '🎉': return { icon: '🎉', color: '#975a16', tag: 'Ritual' };
+          case '🌊': return { icon: '🌊', color: '#2b6cb0', tag: 'Flood', tab: 'The Waters' };
+          case '🎉': return { icon: '🎉', color: '#975a16', tag: 'Ritual', tab: 'Festivals' };
           default: return { icon: '📝', color: '#718096', tag: 'Event' };
       }
   }
@@ -228,7 +231,7 @@
                             <span class="note-message">
                                 {#each segments as seg}
                                     {#if seg.type === 'entity' && seg.entity}
-                                        <EntityLink entity={seg.entity} />
+                                        <EntityLink entity={seg.entity} tab={style.tab} />
                                     {:else}
                                         {seg.text}
                                     {/if}

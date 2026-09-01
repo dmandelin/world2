@@ -51,9 +51,19 @@
         world.dismissAlertKind(kind);
     }
 
+    // Where a kind of alert is written up, for the kinds that have a panel of
+    // their own. Matches the event feed, so a badge and a note about the same
+    // occasion land in the same place.
+    const ALERT_TABS: Partial<Record<AlertKindId, string>> = {
+        ritualchange: 'Festivals',
+        flood20: 'The Waters',
+        flood100: 'The Waters',
+        flood500: 'The Waters',
+    };
+
     function navigate(alert: Alert) {
         if (alert.entity) {
-            selectEntity(alert.entity);
+            selectEntity(alert.entity, ALERT_TABS[alert.kind]);
             openKind = null;
         }
     }
