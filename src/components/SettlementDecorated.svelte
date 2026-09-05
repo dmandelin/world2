@@ -27,71 +27,71 @@
 </script>
 
 <div id="top">
-    <div class="header-row">
-        <div class="main-col clay-edge">
-            <div class="icon-col">
-                <SettlementTellArt {settlement} />
-                <FloodPictogram floodLevel={settlement.floodLevel} />
-                <DitchGauge {settlement} />
-                {#if settlement.extremeFloods.length}
-                    <div class="flood-icons">
-                        {#each settlement.extremeFloods as flood, i (i)}
-                            <ExtremeFloodIcon {flood} />
-                        {/each}
+    <div class="folder-body clay-edge">
+        <div class="header-row">
+            <div class="main-col">
+                <div class="icon-col">
+                    <SettlementTellArt {settlement} />
+                    <FloodPictogram floodLevel={settlement.floodLevel} />
+                    <DitchGauge {settlement} />
+                    {#if settlement.extremeFloods.length}
+                        <div class="flood-icons">
+                            {#each settlement.extremeFloods as flood, i (i)}
+                                <ExtremeFloodIcon {flood} />
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+                <div class="name-col">
+                    <div class="name-row">
+                        <h1 style="white-space: nowrap;">
+                        {settlement.name} |
+                        <img
+                            src="stat-population-256.png"
+                            alt="Population"
+                            width="40"
+                            height="40"
+                            style="padding-bottom: 4px;"
+                        />{settlement.population}
+                        </h1>
+                        <div class="header-alerts">
+                            <AlertBadges
+                                world={settlement.world}
+                                orientation="horizontal"
+                                filter={isLocalAlert}
+                            />
+                        </div>
                     </div>
-                {/if}
+                    <SettlementVitals {settlement} />
+                </div>
             </div>
-            <div class="name-col">
-                <div class="name-row">
-                    <h1 style="white-space: nowrap;">
-                    {settlement.name} |
+            <div class="region-panel clay-edge">
+                <div class="cluster-info">
+                    <EntityLink entity={settlement.cluster} /> Region ·
                     <img
                         src="stat-population-256.png"
                         alt="Population"
-                        width="40"
-                        height="40"
-                        style="padding-bottom: 4px;"
-                    />{settlement.population}
-                    </h1>
-                    <div class="header-alerts">
-                        <AlertBadges
-                            world={settlement.world}
-                            orientation="horizontal"
-                            filter={isLocalAlert}
-                        />
-                    </div>
+                        width="16"
+                        height="16"
+                        style="padding-bottom: 2px;"
+                    />{settlement.cluster.population}
                 </div>
-                <SettlementVitals {settlement} />
+                <div class="settlement-buttons">
+                    {#each settlement.cluster.settlements as s (s.uuid)}
+                        <button
+                            type="button"
+                            class="clay-edge"
+                            class:active={s.uuid === settlement.uuid}
+                            onclick={() => onSelect(s.uuid)}
+                        >
+                            <span class="settlement-name">{s.name}</span>
+                            <span class="pop">{s.population}</span>
+                        </button>
+                    {/each}
+                </div>
             </div>
         </div>
-        <div class="region-panel clay-edge">
-            <div class="cluster-info">
-                <EntityLink entity={settlement.cluster} /> Region ·
-                <img
-                    src="stat-population-256.png"
-                    alt="Population"
-                    width="16"
-                    height="16"
-                    style="padding-bottom: 2px;"
-                />{settlement.cluster.population}
-            </div>
-            <div class="settlement-buttons">
-                {#each settlement.cluster.settlements as s (s.uuid)}
-                    <button
-                        type="button"
-                        class="clay-edge"
-                        class:active={s.uuid === settlement.uuid}
-                        onclick={() => onSelect(s.uuid)}
-                    >
-                        <span class="settlement-name">{s.name}</span>
-                        <span class="pop">{s.population}</span>
-                    </button>
-                {/each}
-            </div>
-        </div>
-    </div>
 
-    <div class="folder-body clay-edge">
         <Settlement {settlement} />
     </div>
 </div>
@@ -110,13 +110,11 @@
         display: flex;
         gap: var(--clay-gap);
         align-items: flex-start;
+        margin-bottom: var(--clay-pad);
     }
 
-    /* Manila-folder effect: .main-col is the tab and .folder-body the folder.
-       The tab drops its bottom border and overlaps the body's top edge, so the
-       two outlines read as one continuous shape. The tab runs flush to the
-       folder's left edge, so their left borders form one line; the region panel
-       sits outside the shape, beside the tab and above the body line. */
+    /* The settlement name/icon block, beside the region panel. Both sit
+       directly inside .folder-body's padding, no border of its own. */
     .main-col {
         flex: 1;
         min-width: 0;
@@ -124,13 +122,6 @@
         display: flex;
         align-items: flex-start;
         gap: 0.5rem;
-
-        position: relative;
-        z-index: 1;
-        margin-bottom: calc(-1 * var(--clay-edge-width));
-        padding: var(--clay-pad);
-        background-color: #fdfbf2;
-        border-bottom: none;
     }
 
     /* Single owner of the gutter around all tab content, so every panel opens
@@ -187,9 +178,6 @@
     .region-panel {
         flex: 0 0 auto;
         width: 296px;
-        /* The header row's bottom edge is the folder's fold line, so without
-           this the panel's border lands flush on the folder's top border. */
-        margin-bottom: var(--clay-gap);
         /* Clear the fixed sidebar (150px wide, 1em from the right, against a
            body inset 8px) and leave one standard gap beside it. */
         margin-right: calc(158px + var(--clay-gap));
