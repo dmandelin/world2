@@ -825,7 +825,7 @@
             },
             {
                 isBreak: true,
-                topics: ["food", "food:detail"],
+                topics: ["food:detail"],
             },
             {
                 label: "&nbsp;Initial stock",
@@ -951,28 +951,28 @@
                 colspan: 2,
                 renderSnippet: activitiesRender,
                 settlementRenderSnippet: settlementActivitiesRender,
-                topics: ["production"],
+                topics: ["production:detail"],
             },
             {
                 label: "(Previous)",
                 colspan: 2,
                 renderSnippet: activitiesPrevRender,
                 settlementRenderSnippet: settlementActivitiesPrevRender,
-                topics: ["production"],
+                topics: ["production:detail"],
             },
             {
                 label: "Processes",
                 colspan: 2,
                 renderSnippet: processesRender,
                 settlementRenderSnippet: settlementProcessesRender,
-                topics: ["production"],
+                topics: ["production:detail"],
             },
             {
                 label: "(Previous)",
                 colspan: 2,
                 renderSnippet: processesPrevRender,
                 settlementRenderSnippet: settlementProcessesPrevRender,
-                topics: ["production"],
+                topics: ["production:detail"],
             },
         ]);
 
@@ -996,7 +996,7 @@
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "amount") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
-                    topics: ["production"],
+                    topics: ["production:detail"],
                 },
                 {
                     label: "&nbsp;Land",
@@ -1010,7 +1010,7 @@
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "land") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
-                    topics: ["production"],
+                    topics: ["production:detail"],
                 },
                 {
                     label: "&nbsp;Labor",
@@ -1024,7 +1024,7 @@
                     deltaValue: (c) =>
                         c.production.getForProcess(process, "labor") ?? 0,
                     deltaFormat: (v) => v.toFixed(0),
-                    topics: ["production"],
+                    topics: ["production:detail"],
                 },
 
                 {
@@ -1048,7 +1048,7 @@
                             "laborProductivityFactor",
                         ) ?? 0,
                     deltaFormat: (v) => v.toFixed(2),
-                    topics: ["production", "productivity"],
+                    topics: ["production:detail", "productivity:detail"],
                 },
                 {
                     label: "&nbsp;Net LP",
@@ -1061,7 +1061,7 @@
                     settlementAgg: "geomean",
                     deltaValue: (c) => netLaborProductivity(c, process),
                     deltaFormat: (v) => v.toFixed(2),
-                    topics: ["production", "productivity"],
+                    topics: ["production:detail", "productivity:detail"],
                 },
                 {
                     label: "&nbsp;YPL",
@@ -1081,7 +1081,7 @@
                             c.production.getForProcess(process, "labor") ?? 0,
                         ),
                     deltaFormat: (v) => v.toFixed(2),
-                    topics: ["production", "productivity"],
+                    topics: ["production:detail", "productivity:detail"],
                 },
                 {
                     label: "&nbsp;YPC",
@@ -1101,7 +1101,7 @@
                             c.previousPopulation,
                         ),
                     deltaFormat: (v) => v.toFixed(2),
-                    topics: ["production", "productivity"],
+                    topics: ["production:detail", "productivity:detail"],
                 },
             ]);
         }
@@ -1120,7 +1120,7 @@
                     format: unsigned,
                     customDeltaSnippet: skillDeltaCell,
                     customDeltaContext: skill,
-                    topics: ["skills"],
+                    topics: ["skills:detail"],
                 });
             }
             if (skillGroup.length > 0) {
@@ -1141,7 +1141,7 @@
                 deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitPiety",
                 scaler: new DefaultScaler(),
-                topics: ["traits"],
+                topics: ["traits:detail"],
             },
             {
                 label: "Intellect",
@@ -1154,7 +1154,7 @@
                 deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitIntellect",
                 scaler: new DefaultScaler(),
-                topics: ["traits"],
+                topics: ["traits:detail"],
             },
             {
                 label: "Giving",
@@ -1166,7 +1166,7 @@
                 deltaFormat: (v) => signed(v, 3),
                 timelineKey: "traitGiving",
                 scaler: new ZeroCenteredScaler(),
-                topics: ["traits"],
+                topics: ["traits:detail"],
             },
             {
                 label: "Aggression",
@@ -1178,7 +1178,7 @@
                 deltaFormat: (v) => signed(v, 3),
                 timelineKey: "traitAggression",
                 scaler: new DefaultScaler(),
-                topics: ["traits"],
+                topics: ["traits:detail"],
             },
         ]);
 
@@ -2276,15 +2276,17 @@
     const lenses: Record<string, string[]> = {
         All: ["*"],
         Econ: [
-            "production",
-            "productivity",
+            "production:detail",
+            "productivity:detail",
             "food:detail",
-            "skills",
+            "skills:detail",
             "support_ratio:detail",
         ],
-        Productivity: ["productivity"],
+        Productivity: ["productivity:detail"],
         Demographics: ["demographics", "demographics:detail"],
         Perceptions: ["perceptions", "perceptions:detail"],
+        Skills: ["skills:detail"],
+        Traits: ["traits:detail"],
     };
 
     function isRowVisible(row: RowDef, selectedLensTopics: string[]): boolean {
