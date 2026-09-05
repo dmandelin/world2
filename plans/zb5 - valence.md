@@ -281,4 +281,137 @@ Now let's try to group these:
 
 *   Personality
 
-Next: Start arranging factors into a model.
+# Initial Discussion V: Grouping and simplifying
+
+Items in {} might be relevant to other settings, but we won't
+need them initially.
+
+*   Influences mood directly and also explicitly valued
+    in ways that are fairly universal
+    *   Mostly about freedom from want
+        *   Food - quantity, quality, and consistency
+        *   Needed support and care
+            *   Kin care and parenting - quality of care and carer
+                workload/support
+        *   Affiliation and belonging
+            *   Includes role/employment, conversation, gatherings
+            *   Psychosocial stress might be considered as
+                cutting into this, but it is a lack factor
+            *   This isn't truly only a lack factor, but I'm modeling
+                there as being a needed factor, with other components
+                that are more open-ended coming in through the effects
+        *   Fairness and justice
+        *   Rest -- having to work too hard is a problem and
+            not truly covered elsewhere
+        *   Psychosocial stress
+        *   Spiritual safety
+        *   {Physical safety}
+    *   Somewhat open-ended but can also be perceived as lack
+        *   Marriages, births, deaths, and health
+        *   Status and prestige
+            *   Includes role/employment, conversation?, gatherings?
+        *   Opportunities to learn and grow:
+            *   Novelty, learning, and information
+            *   Play and leisure 
+            *   Includes conversation, gatherings
+        *   {Competence and mastery
+            *   Partly via impacts on lacks, including in micro ways
+            *   Partly via flow and achievement}
+
+*   Influences mood directly and also valued differentially
+    *   {Hygiene (from standard of living, based on values)
+        we'll subsume under other ritual factors for now}
+    *   Freedom to make life choices
+        *   might become more relevant with development of authority
+            but let's also carefully consider how various local changes
+            could impinge on freedom
+    *   Purpose - visions, community goals
+        *   Includes role/employment, gatherings
+        *   Maybe Order, tradition, and the sacred can fit under this
+    *   Generosity - might be filed under affiliation and
+        prestige, but probably does have some independent
+        value
+
+*   Valued differentially
+    *   Stored resources (based on expectations)
+
+*   Personality
+
+# Modeling Discussion I: Basic Concepts
+
+In homeostatic theory, estimated utility is a function of signals
+and it has an optimum. State is therefore based on lack. This can
+work for some things, but doesn't seem to cover open-ended things
+like the number of relationships or stored resources.
+
+The more positive, open-ended factors identified are:
+
+*   Marriages and births
+*   Status and prestige
+*   Opportunities to learn and grow
+*   Purpose
+
+We'll need to somehow combine the different positive and negative
+factors. It vaguely makes sense to imagine that there's a zero
+point and negative factors take down from there. But maybe that
+makes more sense for moment-to-moment behavior. For life satisfaction,
+"standard success per culture" presumably is also a baseline, but
+not zero, rather 1. (If we're using a 0-10 scale it would be a 7.)
+In that case, we're perhaps comparing to some script.
+
+Different values we might want to compute:
+
+*   Evaluation of current year's state
+    *   Includes direct-effect factors such as food and rest
+    *   Should also include future expectations
+    *   Also includes progress on positive, open-ended factors
+*   Mood - slightly different from the latter in being the overall
+    feeling as of now
+    *   Main change would be that it could include:
+        *   Carryover from previous years (note, could be subsumed
+            under expectations)
+        *   Life satisfaction - presumably that colors the current
+            feeling
+*   Life satisfaction
+    *   Incorporates events from the past as long as the clan is
+        alive plus memories and stories
+
+As stated, mood and life satisfaction could be mutually recursive,
+but we need an ordering. I'll defer that decision, but I note that
+counterintuitively, it makes sense to have life satisfaction independent
+of current mood, but current mood probably generally depends on life
+satisfaction.
+
+# Modeling Discussion II: Calculations
+
+Let's take one item at a time.
+
+*   Food
+    *   Seems like a lack factor but there have probably been
+        especially preferred foods throughout the hominins!
+    *   Quantity is a lack factor.
+        *   We could consider having some lack at food 100%,
+            if due to friction they don't absolutely always
+            have enough to eat.
+    *   Quality is a lack factor if resulting in insufficient
+        nutrition to the point someone would go hungry. Otherwise
+        it can be a plus factor.
+    *   Combining quantity and quality
+        *   
+
+*   Kin care and parenting
+    *   What does a lack mean?
+        *   The obvious example would be not enough caretakers in
+            the group (or among helpers), so that infirm elders
+            couldn't be cared for all the time, small children
+            having to do harder jobs, caretakers overworked and
+            stressed.
+        *   Right now we automatically scale caretakers to cover,
+            so we wouldn't have that, but could consider changing
+            that.
+        *   There will also always be some help needed, so not
+            having that would produce a lack.
+    *   What about pluses?
+        *   Care skill effect makes sense here
+
+*   Affiliation and belonging
