@@ -520,7 +520,7 @@
                 deltaValue: (c) => c.generosityAverage,
                 deltaFormat: (v) => unsigned(v, 1),
                 scaler: new DefaultScaler(),
-                topics: ["perceptions"],
+                topics: ["perceptions:detail"],
             },
             {
                 label: "Bellicosity",
@@ -532,7 +532,7 @@
                 deltaValue: (c) => c.bellicosityAverage,
                 deltaFormat: (v) => unsigned(v, 1),
                 scaler: new DefaultScaler(),
-                topics: ["perceptions"],
+                topics: ["perceptions:detail"],
             },
             {
                 label: "QoL",
@@ -574,7 +574,7 @@
                 deltaFormat: (v) => signed(v, 0),
                 timelineKey: "respectAverage",
                 scaler: new ZeroCenteredScaler(),
-                topics: ["perceptions"],
+                topics: ["perceptions:detail"],
             },
             {
                 label: "&nbsp;Holiness",
@@ -591,7 +591,7 @@
                 deltaFormat: (v) => signed(v, 0),
                 timelineKey: "holinessAverage",
                 scaler: new ZeroCenteredScaler(),
-                topics: ["perceptions"],
+                topics: ["perceptions:detail"],
             },
             {
                 label: "Prestige",
@@ -616,7 +616,7 @@
                 cellClass: "rap",
                 renderValueSnippet: eventsRender,
                 settlementRenderSnippet: settlementEventsRender,
-                topics: ["welfare", "perceptions"],
+                topics: ["perceptions:detail"],
             },
             {
                 label: "Mutual Aid",
@@ -2284,6 +2284,7 @@
         ],
         Productivity: ["productivity"],
         Demographics: ["demographics", "demographics:detail"],
+        Perceptions: ["perceptions", "perceptions:detail"],
     };
 
     function isRowVisible(row: RowDef, selectedLensTopics: string[]): boolean {

@@ -586,6 +586,7 @@ kernel model. Some of the most important points are:
         continuity, and differential usufruct access to land
     *   Trade - should have some notion of where that flint comes
         from
+        *   Should probably also have local craft specialization
     *   Intervillage interactions
         *   For one, what exactly do they do?
         *   But this probably has some important implications for
