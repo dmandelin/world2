@@ -1,45 +1,61 @@
 <script lang="ts">
     import type { SettlementDTO, ClanDTO } from "../model/records/dtos";
     import {
-        EU_DECAY,
+        EU_SUBSCORES,
         EU_RANGE,
-        EU_VITALITY_SCALE,
         eudaimoniaAverage,
+        type EuSubscoreDef,
     } from "../model/self/eudaimonia";
     import { sortedByKey } from "../model/lib/basics";
-    import EudaimoniaFormula from "./self/EudaimoniaFormula.svelte";
+    import Tooltip from "./Tooltip.svelte";
+    import LineGraph from "./LineGraph.svelte";
+    import EudaimoniaCalc from "./self/EudaimoniaCalc.svelte";
+    import { settlementEudaimoniaGraphData } from "../model/records/timeline";
+    import { ZeroCenteredAutoScaler } from "./linegraph";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
-    let activeClans = $derived(
+    let clans = $derived(
         sortedByKey(
             settlement.clans.filter((c) => c.population > 0),
             (c: ClanDTO) => -c.eudaimonia.value,
         ),
     );
 
-    // Population-weighted average, which for this calculation is the same
-    // number the settlement would get from its own births and deaths.
+    // Population-weighted average, which for the Life part is the same number
+    // the settlement would get from its own births and deaths.
     let settlementValue = $derived(
         eudaimoniaAverage(
-            activeClans.map((c) => ({
+            clans.map((c) => ({
                 value: c.eudaimonia.value,
                 weight: c.population,
             })),
         ),
     );
 
-    // Which clan's working is on show. Defaults to the settlement's best.
-    let selectedUuid = $state<string | undefined>(undefined);
-    let selected = $derived(
-        activeClans.find((c) => c.uuid === selectedUuid) ?? activeClans[0],
-    );
+    function settlementSubscore(sub: EuSubscoreDef): number {
+        return eudaimoniaAverage(
+            clans.map((c) => ({
+                value: c.eudaimonia.subscore(sub.key),
+                weight: c.population,
+            })),
+        );
+    }
 
     const n = (x: number, p = 1) =>
         (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(p);
+    const pctOf = (x: number) => (x * 100).toFixed(0) + "%";
 
-    // Bar width for the roster, against the notional range so clans compare.
-    const barPct = (v: number) => Math.min(50, (Math.abs(v) / EU_RANGE) * 50);
+    // A faint bar behind a subscore cell, against the notional range, so a row
+    // reads as a shape across the settlement before it reads as numbers.
+    const barPct = (v: number) => Math.min(100, (Math.abs(v) / EU_RANGE) * 100);
+
+    let graphData = $derived(
+        settlementEudaimoniaGraphData(
+            settlement,
+            new ZeroCenteredAutoScaler(20),
+        ),
+    );
 </script>
 
 <div class="wrap">
@@ -49,109 +65,94 @@
             <div class="settlement-value" class:pos={settlementValue >= 0}>
                 {n(settlementValue)}
             </div>
-            {#if activeClans.length > 1}
-                <div class="settlement-note">averaged over {activeClans.length} clans, by population</div>
+            {#if clans.length > 1}
+                <div class="settlement-note">
+                    averaged over {clans.length} clans, by population
+                </div>
             {/if}
         </div>
-        <p class="blurb">
-            How well life is going for each clan, judged over the long run
-            rather than year by year. A year's births and deaths say what that
-            year was worth; the standing verdict moves {(
-                EU_DECAY * 100
-            ).toFixed(0)}% of the way toward it and no further, so it takes a
-            generation of good or bad years to shift. Zero is an unremarkable
-            life. Nothing clamps the number &mdash; a clan can do far better or
-            far worse than the notional &plusmn;{EU_RANGE}.
-        </p>
-        <p class="blurb">
-            The settlement figure is the clans averaged by population, which is
-            the same number the settlement would reach if the whole calculation
-            were run on its own births, deaths, and headcount &mdash; so the
-            parts and the whole always agree.
-        </p>
     </header>
 
-    <div class="body">
-        <!-- Every clan at a glance, best first, and the one being explained. -->
-        <div class="roster">
-            <div class="roster-head">Clans</div>
-            {#each activeClans as clan (clan.uuid)}
-                <button
-                    type="button"
-                    class="clan-row"
-                    class:selected={selected?.uuid === clan.uuid}
-                    onclick={() => (selectedUuid = clan.uuid)}
-                >
-                    <span class="swatch" style="background: {clan.color}"></span>
-                    <span class="clan-name">{clan.name}</span>
-                    <span class="bar-cell">
-                        <span class="bar-axis"></span>
-                        <span
-                            class="bar"
-                            class:pos={clan.eudaimonia.value >= 0}
-                            style="{clan.eudaimonia.value >= 0
-                                ? 'left: 50%'
-                                : `right: 50%`}; width: {barPct(
-                                clan.eudaimonia.value,
-                            )}%"
-                        ></span>
-                    </span>
-                    <span
-                        class="clan-value"
-                        class:pos={clan.eudaimonia.value >= 0}
-                        class:neg={clan.eudaimonia.value < 0}
-                    >
-                        {n(clan.eudaimonia.value)}
-                    </span>
-                    <span
-                        class="clan-delta"
-                        class:pos={clan.eudaimonia.delta > 0}
-                        class:neg={clan.eudaimonia.delta < 0}
-                    >
-                        {n(clan.eudaimonia.delta, 2)}
-                    </span>
-                </button>
-            {/each}
+    {#if clans.length === 0}
+        <div class="empty">No clans here.</div>
+    {:else}
+        <div class="scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="rowhead"></th>
+                        <th class="settlement-col">Settlement</th>
+                        {#each clans as clan (clan.uuid)}
+                            <th>{clan.name}</th>
+                        {/each}
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- One row per subscore; each cell explains itself. -->
+                    {#each EU_SUBSCORES as sub (sub.key)}
+                        <tr>
+                            <th class="rowhead">
+                                {sub.label}
+                                <span class="decay">{pctOf(sub.decay)}/yr</span>
+                            </th>
+                            <td class="num settlement-col">
+                                {n(settlementSubscore(sub))}
+                            </td>
+                            {#each clans as clan (clan.uuid)}
+                                {@const v = clan.eudaimonia.subscore(sub.key)}
+                                <td class="num cell">
+                                    <Tooltip>
+                                        <span class="bar-wrap">
+                                            <span
+                                                class="bar"
+                                                class:pos={v >= 0}
+                                                style="width: {barPct(v)}%"
+                                            ></span>
+                                            <span
+                                                class="figure"
+                                                class:pos={v > 0}
+                                                class:neg={v < 0}>{n(v)}</span
+                                            >
+                                        </span>
+                                        <div
+                                            slot="tooltip"
+                                            style="text-align: left; color: initial;"
+                                        >
+                                            <EudaimoniaCalc
+                                                eudaimonia={clan.eudaimonia}
+                                                {sub}
+                                            />
+                                        </div>
+                                    </Tooltip>
+                                </td>
+                            {/each}
+                        </tr>
+                    {/each}
+
+                    <tr class="total">
+                        <th class="rowhead">Total</th>
+                        <td class="num settlement-col">{n(settlementValue)}</td>
+                        {#each clans as clan (clan.uuid)}
+                            <td
+                                class="num"
+                                class:pos={clan.eudaimonia.value > 0}
+                                class:neg={clan.eudaimonia.value < 0}
+                                >{n(clan.eudaimonia.value)}</td
+                            >
+                        {/each}
+                    </tr>
+
+                </tbody>
+            </table>
         </div>
 
-        <!-- The full derivation for whichever clan is selected. -->
-        <div class="detail">
-            {#if selected}
-                <div class="detail-head">
-                    <span class="swatch" style="background: {selected.color}"
-                    ></span>
-                    <span class="detail-name">{selected.name}</span>
-                </div>
-                <EudaimoniaFormula eudaimonia={selected.eudaimonia} />
-
-                <div class="legend">
-                    <div class="legend-item">
-                        <span class="key signal"></span>
-                        <span
-                            ><b>Signal</b> &mdash; what this year alone says the
-                            clan is worth, its net growth rate read at &times;{EU_VITALITY_SCALE}.</span
-                        >
-                    </div>
-                    <div class="legend-item">
-                        <span class="key pull"></span>
-                        <span
-                            ><b>Pull</b> &mdash; the part of the gap this year
-                            actually closed.</span
-                        >
-                    </div>
-                    <div class="legend-item">
-                        <span class="key gap"></span>
-                        <span
-                            ><b>Gap</b> &mdash; distance still to run if every
-                            year were like this one.</span
-                        >
-                    </div>
-                </div>
-            {:else}
-                <div class="empty">No clans here.</div>
-            {/if}
+        <!-- Where each clan has been, and the settlement through the middle
+             of them. The table says where things stand; this says how they
+             got there. -->
+        <div class="graph">
+            <LineGraph data={graphData} />
         </div>
-    </div>
+    {/if}
 </div>
 
 <style>
@@ -187,187 +188,103 @@
     .settlement-note {
         font-size: 0.75rem;
         color: #9ca3af;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .blurb {
-        margin: 0.35rem 0 0;
-        max-width: 60ch;
-        font-size: 0.86rem;
-        line-height: 1.5;
-        color: #4b5563;
-    }
-
-    .body {
-        display: flex;
-        flex-direction: row;
-        gap: 1.75rem;
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    /* --- roster --- */
-
-    .roster {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-        min-width: 21rem;
-    }
-
-    .roster-head {
-        font-size: 0.72rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #9ca3af;
-        margin-bottom: 0.3rem;
-    }
-
-    .clan-row {
-        display: grid;
-        grid-template-columns: 0.7rem 7rem 1fr 3.4rem 3.6rem;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.22rem 0.35rem;
-        background: none;
-        border: 1px solid transparent;
-        border-radius: 3px;
-        font: inherit;
-        font-size: 0.85rem;
-        text-align: left;
-        cursor: pointer;
-    }
-
-    .clan-row:hover {
-        background: #f7f4ea;
-    }
-
-    .clan-row.selected {
-        background: #f2ede0;
-        border-color: #ddd6c0;
-    }
-
-    .swatch {
-        width: 0.7rem;
-        height: 0.7rem;
-        border-radius: 2px;
-        display: inline-block;
-    }
-
-    .clan-name {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .bar-cell {
-        position: relative;
-        height: 0.75rem;
-        min-width: 5rem;
-    }
-
-    .bar-axis {
-        position: absolute;
-        left: 50%;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: #ddd6c0;
-    }
-
-    .bar {
-        position: absolute;
-        top: 0.15rem;
-        height: 0.45rem;
-        background: #b91c1c;
-        border-radius: 1px;
-    }
-
-    .bar.pos {
-        background: #15803d;
-    }
-
-    .clan-value,
-    .clan-delta {
-        font-variant-numeric: tabular-nums;
-        text-align: right;
-    }
-
-    .clan-value.pos {
-        color: #15803d;
-    }
-    .clan-value.neg {
-        color: #b91c1c;
-    }
-
-    .clan-delta {
-        font-size: 0.78rem;
-        color: #9ca3af;
-    }
-    .clan-delta.pos {
-        color: #15803d;
-    }
-    .clan-delta.neg {
-        color: #b91c1c;
-    }
-
-    /* --- detail --- */
-
-    .detail {
-        display: flex;
-        flex-direction: column;
-        gap: 0.9rem;
-        flex: 1 1 24rem;
-        min-width: 24rem;
-    }
-
-    .detail-head {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        font-weight: 600;
-    }
-
-    .legend {
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-        font-size: 0.8rem;
-        color: #4b5563;
-        max-width: 46ch;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: baseline;
-        gap: 0.45rem;
-    }
-
-    .key {
-        width: 0.85rem;
-        height: 0.4rem;
-        border-radius: 1px;
-        flex: none;
-        position: relative;
-        top: -0.1rem;
-    }
-
-    .key.signal {
-        background: #b7c6d8;
-    }
-    .key.pull {
-        background: #15803d;
-    }
-    .key.gap {
-        background: repeating-linear-gradient(
-            90deg,
-            #b7c6d8 0 3px,
-            transparent 3px 6px
-        );
     }
 
     .empty {
         color: #6b7280;
         font-style: italic;
+    }
+
+    .graph {
+        width: 100%;
+        max-width: 56rem;
+        height: 25.6rem;
+    }
+
+    .scroll {
+        overflow-x: auto;
+    }
+
+    table {
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    th,
+    td {
+        padding: 0.22rem 0.6rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    thead th {
+        border-bottom: 1px solid #ddd6c0;
+        font-weight: 600;
+        padding-bottom: 0.35rem;
+    }
+
+    .rowhead {
+        text-align: left;
+        font-weight: 500;
+        padding-left: 0;
+        padding-right: 1.2rem;
+    }
+
+    .decay {
+        color: #9ca3af;
+        font-size: 0.78em;
+        font-weight: 400;
+        margin-left: 0.25rem;
+    }
+
+    .num {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .cell {
+        cursor: help;
+    }
+
+    .bar-wrap {
+        position: relative;
+        display: inline-block;
+        min-width: 4rem;
+        padding: 0.1rem 0;
+    }
+
+    .bar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background: #f2d9d7;
+        border-radius: 2px;
+    }
+
+    .bar.pos {
+        background: #d9e8d9;
+    }
+
+    .figure {
+        position: relative;
+    }
+
+    .settlement-col {
+        border-right: 1px solid #e5e0d0;
+        color: #4b5563;
+    }
+
+    .total td,
+    .total th {
+        border-top: 1px solid #ddd6c0;
+        font-weight: 700;
+        padding-top: 0.32rem;
+    }
+
+    .pos {
+        color: #15803d;
+    }
+    .neg {
+        color: #b91c1c;
     }
 </style>

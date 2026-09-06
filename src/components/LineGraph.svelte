@@ -18,10 +18,36 @@
   const gtop = margin;
   const gleft = margin;
 
-  let gw = $derived.by(() => width - 2 * margin);
+  // Legend entries, taken from the data rather than from the laid-out graph:
+  // the layout depends on how wide the legend is, so reading it back off the
+  // graph would be circular.
+  let legendEntries = $derived.by(() => {
+    if (data.showLegend === false) return [];
+    const all = [...(data.datasets ?? []), ...(data.secondYAxis?.datasets ?? [])];
+    return all.length > 1 ? all : [];
+  });
+
+  // The legend sits in the right margin, past the y-axis tick labels that are
+  // drawn at gright+4. The plot gives up the width rather than the labels
+  // being cut off at the edge of the svg.
+  const LEGEND_CLEARANCE = 30;   // room for the axis labels it sits beyond
+  const LEGEND_SWATCH = 14;      // swatch plus its gap
+  const LEGEND_CHAR = 5.6;       // rough advance of 10px sans-serif
+  const LEGEND_ROW = 16;
+
+  let legendWidth = $derived.by(() => {
+    if (legendEntries.length === 0) return 0;
+    const longest = Math.max(
+      ...legendEntries.map(d => String(d.label ?? '').length));
+    return LEGEND_CLEARANCE + LEGEND_SWATCH + Math.ceil(longest * LEGEND_CHAR) + 6;
+  });
+
+  let rightMargin = $derived(margin + legendWidth);
+
+  let gw = $derived.by(() => Math.max(10, width - margin - rightMargin));
   let gh = $derived.by(() => height - margin - bottomMargin);
   let gbot = $derived.by(() => height - bottomMargin);
-  let gright = $derived.by(() => width - margin);
+  let gright = $derived.by(() => width - rightMargin);
 
   let graph = $derived.by(() => {
     return new Graph(data, new GraphBox(gleft, gtop, gw, gh));
@@ -137,13 +163,14 @@
         {@html svgPath}
       {/each}
 
-      <!-- legend if there is more than one dataset -->
-      {#if side.scaledDatasets.length > 1 && graph.data.showLegend !== false}
-        {#each side.scaledDatasets as dataset, index}
-          <rect x="{gright+4}" y="{gtop - index * 16}" width="10" height="10" fill="{dataset.color}" />
-          <text x="{gright+16}" y="{gtop - index * 16 + 10}" font-size="10">{dataset.label}</text>
-        {/each}
-      {/if}
+    {/each}
+
+    <!-- legend, once for every dataset on either axis -->
+    {#each legendEntries as dataset, index}
+      <rect x="{gright + LEGEND_CLEARANCE}" y="{gtop + index * LEGEND_ROW}"
+            width="10" height="10" fill="{dataset.color}" />
+      <text x="{gright + LEGEND_CLEARANCE + LEGEND_SWATCH}"
+            y="{gtop + index * LEGEND_ROW + 9}" font-size="10">{dataset.label}</text>
     {/each}
 
 

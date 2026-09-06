@@ -1,5 +1,5 @@
 import { PopulationScaler, ZeroCenteredScaler, DefaultScaler, type YAxisScaler, type GraphData } from "../../components/linegraph";
-import type { ClanDTO } from "./dtos";
+import type { ClanDTO, SettlementDTO } from "./dtos";
 import { getLocalPrestige, getPrestige } from "../relations/prestige";
 import { znan, safeDiv } from "../lib/basics";
 import { weightedAverage, populationAverage } from "../lib/modelbasics";
@@ -51,6 +51,8 @@ export class ClanTimePoint {
     readonly subsistenceAppeal: number;
     readonly qol: number;
     readonly eudaimonia: number;
+    readonly eudaimoniaLife: number;
+    readonly eudaimoniaHunger: number;
     readonly eudaimoniaDelta: number;
     readonly stress: number;
     readonly residenceFraction: number;
@@ -100,6 +102,8 @@ export class ClanTimePoint {
         this.subsistenceAppeal = clan.happiness.subsistenceAppeal;
         this.qol = clan.qol.value;
         this.eudaimonia = clan.eudaimonia.value;
+        this.eudaimoniaLife = clan.eudaimonia.life;
+        this.eudaimoniaHunger = clan.eudaimonia.hunger;
         this.eudaimoniaDelta = clan.eudaimonia.delta;
         this.stress = clan.stress.value;
         this.residenceFraction = clan.residenceLevel.fractionInSettlement;
@@ -275,4 +279,57 @@ export function clanKeyTimelineGraphData(
     }
 
     return graphData;
+}
+// Eudaimonia over time: one line per clan of a settlement, plus one for the
+// settlement as a whole, which is the population-weighted average of whichever
+// of its clans were alive that year.
+//
+// Membership is read from the settlement as it stands now, so a clan that
+// moved in later is still drawn back through the years it spent elsewhere.
+// Over the spans this covers that is usually the clan you want to follow, but
+// the settlement line is not a record of who actually lived here.
+export function settlementEudaimoniaGraphData(
+    settlement: SettlementDTO,
+    scaler: YAxisScaler,
+): GraphData {
+    const clans = settlement.clans.filter(c => c.population > 0);
+    const world = clans[0]?.world;
+    if (!world) {
+        return { labels: [], yAxisScaler: scaler, datasets: [] };
+    }
+
+    const points = world.timeline.points;
+    const labels = world.timeline.map((tp: TimePoint) => tp.year.toString());
+
+    // The settlement first, so it reads as the headline and the clans as the
+    // spread around it.
+    const settlementData = points.map((tp: TimePoint) => {
+        let sum = 0;
+        let weight = 0;
+        for (const clan of clans) {
+            const p = tp.clans.get(clan.uuid);
+            if (!p || !(p.population > 0)) continue;
+            sum += p.eudaimonia * p.population;
+            weight += p.population;
+        }
+        return weight > 0 ? sum / weight : undefined;
+    });
+
+    const datasets = [
+        { label: settlement.name, color: '#1f2328', data: settlementData },
+        ...clans.map(clan => ({
+            label: clan.name,
+            color: clan.color,
+            data: points.map((tp: TimePoint) => tp.clans.get(clan.uuid)?.eudaimonia),
+        })),
+    ];
+
+    // No title: the panel already names it, and a second heading inside the
+    // plot only eats vertical room.
+    return {
+        showLegend: true,
+        labels,
+        yAxisScaler: scaler,
+        datasets,
+    };
 }

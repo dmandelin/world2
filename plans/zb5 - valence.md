@@ -393,7 +393,7 @@ x   Births and deaths
 *   Food
     *   Seems like a lack factor but there have probably been
         especially preferred foods throughout the hominins!
-    *   Quantity is a lack factor.
+    x   Quantity is a lack factor.
         *   We could consider having some lack at food 100%,
             if due to friction they don't absolutely always
             have enough to eat.

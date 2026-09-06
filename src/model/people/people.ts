@@ -367,7 +367,10 @@ export class Clan implements TradePartner {
     updateEudaimonia() {
         const change = this.lastPopulationChange;
         this.eudaimonia.update(
-            change.births, change.deaths, change.previousSize);
+            change.births,
+            change.deaths,
+            change.previousSize,
+            this.consumption.perCapitaFood);
     }
 
     updateHappiness() {

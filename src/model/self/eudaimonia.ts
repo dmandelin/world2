@@ -7,6 +7,15 @@
 // worth having lived -- but nothing clamps it, because a clan can do
 // spectacularly well or spectacularly badly and the number should say so.
 //
+// The verdict is made of subscores, each a running average of its own signal
+// with its own memory, added together:
+//
+//     Life    how the clan is growing or dying, over about a generation
+//     Hunger  what going short of food has cost it, over about half that
+//
+// Subscores are added, not blended: a clan that is growing and starving is
+// doing both, and the total should say so.
+//
 // ---------------------------------------------------------------------------
 // A note on how the calculation is written
 // ---------------------------------------------------------------------------
@@ -18,16 +27,21 @@
 //
 // The usual way to get both is to write the math twice -- once fast, once
 // explained -- and then spend the rest of the project keeping the two copies
-// honest. We avoid that entirely. There is ONE implementation. It takes an
-// optional trace sink; when the sink is absent (the turn loop) the function is
-// pure arithmetic guarded by a single branch, and when it is present (the
-// panel, replaying on demand) every intermediate is reported.
+// honest. We avoid that entirely. There is ONE implementation of each
+// subscore. It takes an optional trace sink; when the sink is absent (the turn
+// loop) the function is pure arithmetic guarded by a single branch, and when
+// it is present (the panel, replaying on demand) every intermediate is
+// reported.
 //
 // The trick that makes this cost nothing is that the reporting happens in one
 // block at the END, after the math, where every intermediate is still in scope
 // as a local. So the fast path pays for exactly one correctly-predicted branch
-// rather than one per step, and the math reads as ordinary math instead of
-// being interleaved with bookkeeping.
+// per subscore rather than one per step, and the math reads as ordinary math
+// instead of being interleaved with bookkeeping.
+//
+// Each subscore is its own function returning a plain number, rather than one
+// function returning a record of them. That keeps the update path free of
+// allocation, which returning an object would not.
 //
 // Replay is possible later because the inputs are cheap to keep: a handful of
 // numbers stored as flat fields on the instance, allocating nothing.
@@ -38,10 +52,13 @@
 
 // --- Tuning ---------------------------------------------------------------
 
-// How much of the gap between the running verdict and this year's signal is
-// closed per turn. 3% gives a memory of roughly a generation, which is about
-// right for something meant to summarize a life rather than a season.
-export const EU_DECAY = 0.03;
+// How much of the gap between a running subscore and this year's signal is
+// closed per turn. Life is the slower of the two: 3% gives it a memory of
+// roughly a generation, which is about right for something meant to summarize
+// a life. Hunger moves at twice that, because going short is felt sooner and
+// forgiven sooner than a line dying out is.
+export const EU_LIFE_DECAY = 0.03;
+export const EU_HUNGER_DECAY = 0.06;
 
 // The notional bound on the scale. Nothing clamps to it -- a clan can run past
 // it in either direction -- but it is what the number is written against: how
@@ -55,6 +72,13 @@ export const EU_RANGE = 100;
 // bound of 100.
 export const EU_VITALITY_SCALE = 2000;
 
+// Hunger reads off food consumption as a share of what the clan needs, so 1 is
+// enough to eat. The shortfall is raised to a power and scaled, which makes
+// going a little short cost a little and going badly short cost a lot: at
+// three-quarters rations the signal is about -44, at half about -75.
+export const EU_HUNGER_SCALE = 100;
+export const EU_HUNGER_EXPONENT = 2;
+
 // Keeps the per-capita rate finite for a clan that has just lost everyone.
 const MIN_POPULATION = 1;
 
@@ -63,18 +87,78 @@ const MIN_POPULATION = 1;
 // Named points in the derivation. A plain const object rather than an enum so
 // the values stay ordinary numbers and the module has no runtime baggage.
 export const EuNode = {
-    PrevValue: 0,
+    // Life
+    PrevLife: 0,
     Births: 1,
     Deaths: 2,
     Population: 3,
     Net: 4,
     NetRate: 5,
-    Signal: 6,
-    Pull: 7,
-    Value: 8,
+    LifeSignal: 6,
+    LifePull: 7,
+    Life: 8,
+
+    // Hunger
+    PrevHunger: 9,
+    Food: 10,
+    HungerRaw: 11,
+    HungerSignal: 12,
+    HungerPull: 13,
+    Hunger: 14,
+
+    // Total
+    PrevValue: 15,
+    Value: 16,
 } as const;
 
 export type EuNodeId = (typeof EuNode)[keyof typeof EuNode];
+
+// --- Subscores ------------------------------------------------------------
+
+export type EuSubscoreKey = "life" | "hunger";
+
+// What a subscore is, and where to find its parts in a replay. The UI walks
+// this rather than hardcoding the list, so a new subscore appears in the
+// overview tooltip and the panel table without either being edited.
+export interface EuSubscoreDef {
+    key: EuSubscoreKey;
+    label: string;
+    // Share of the gap to its signal that one year closes.
+    decay: number;
+    // Where this subscore's parts land in a report.
+    prevNode: EuNodeId;
+    signalNode: EuNodeId;
+    pullNode: EuNodeId;
+    valueNode: EuNodeId;
+    blurb: string;
+}
+
+export const EU_SUBSCORES: readonly EuSubscoreDef[] = [
+    {
+        key: "life",
+        label: "Life",
+        decay: EU_LIFE_DECAY,
+        prevNode: EuNode.PrevLife,
+        signalNode: EuNode.LifeSignal,
+        pullNode: EuNode.LifePull,
+        valueNode: EuNode.Life,
+        blurb: "Whether the clan is growing or dying, as a share of itself.",
+    },
+    {
+        key: "hunger",
+        label: "Hunger",
+        decay: EU_HUNGER_DECAY,
+        prevNode: EuNode.PrevHunger,
+        signalNode: EuNode.HungerSignal,
+        pullNode: EuNode.HungerPull,
+        valueNode: EuNode.Hunger,
+        blurb:
+            "What going short of food has cost. Never positive: eating enough "
+            + "is the most it can be worth.",
+    },
+];
+
+// --- Node metadata --------------------------------------------------------
 
 // How each point is meant to read on screen. Never touched by the update path.
 export type EuNodeRole = "input" | "derived" | "result";
@@ -92,24 +176,24 @@ export interface EuNodeDef {
 
 export const EU_NODES: readonly EuNodeDef[] = [
     {
-        id: EuNode.PrevValue,
-        label: "Standing verdict",
+        id: EuNode.PrevLife,
+        label: "Life last year",
         role: "input",
         places: 1,
-        note: "Where the clan's eudaimonia stood at the end of last year.",
+        note: "Where the Life subscore stood at the end of last year.",
     },
     {
         id: EuNode.Births,
         label: "Births",
         role: "input",
-        places: 2,
+        places: 1,
         note: "People born to the clan this year.",
     },
     {
         id: EuNode.Deaths,
         label: "Deaths",
         role: "input",
-        places: 2,
+        places: 1,
         note: "People the clan lost this year.",
     },
     {
@@ -123,7 +207,7 @@ export const EU_NODES: readonly EuNodeDef[] = [
         id: EuNode.Net,
         label: "Net change",
         role: "derived",
-        places: 2,
+        places: 1,
         note: "Births less deaths: whether the clan grew or shrank.",
     },
     {
@@ -135,25 +219,84 @@ export const EU_NODES: readonly EuNodeDef[] = [
         note: "Net change as a share of the clan, so small and large clans compare.",
     },
     {
-        id: EuNode.Signal,
-        label: "This year's signal",
+        id: EuNode.LifeSignal,
+        label: "Life signal",
         role: "derived",
         places: 1,
-        note: `The rate read as eudaimonia, at ×${EU_VITALITY_SCALE}. What the clan's eudaimonia would settle at if every year went like this one.`,
+        note: `The rate read as eudaimonia, at x${EU_VITALITY_SCALE}. Where Life would settle if every year went like this one.`,
     },
     {
-        id: EuNode.Pull,
-        label: "Pull",
+        id: EuNode.LifePull,
+        label: "Life pull",
         role: "derived",
         places: 2,
-        note: `${(EU_DECAY * 100).toFixed(0)}% of the distance from the standing verdict to this year's signal.`,
+        note: `${(EU_LIFE_DECAY * 100).toFixed(0)}% of the distance from last year's Life to this year's signal.`,
+    },
+    {
+        id: EuNode.Life,
+        label: "Life",
+        role: "result",
+        places: 1,
+        note: "Last year's Life moved by this year's pull.",
+    },
+
+    {
+        id: EuNode.PrevHunger,
+        label: "Hunger last year",
+        role: "input",
+        places: 1,
+        note: "Where the Hunger subscore stood at the end of last year.",
+    },
+    {
+        id: EuNode.Food,
+        label: "Food",
+        role: "input",
+        places: 2,
+        isRate: true,
+        note: "Food consumed per head, as a share of what the clan needs.",
+    },
+    {
+        id: EuNode.HungerRaw,
+        label: "Before clamping",
+        role: "derived",
+        places: 1,
+        note: `${EU_HUNGER_SCALE} x (food^${EU_HUNGER_EXPONENT} - 1), which runs positive when there is more than enough.`,
+    },
+    {
+        id: EuNode.HungerSignal,
+        label: "Hunger signal",
+        role: "derived",
+        places: 1,
+        note: "The same, held at zero from above: eating well is worth nothing here, only going short costs.",
+    },
+    {
+        id: EuNode.HungerPull,
+        label: "Hunger pull",
+        role: "derived",
+        places: 2,
+        note: `${(EU_HUNGER_DECAY * 100).toFixed(0)}% of the distance from last year's Hunger to this year's signal.`,
+    },
+    {
+        id: EuNode.Hunger,
+        label: "Hunger",
+        role: "result",
+        places: 1,
+        note: "Last year's Hunger moved by this year's pull.",
+    },
+
+    {
+        id: EuNode.PrevValue,
+        label: "Total last year",
+        role: "input",
+        places: 1,
+        note: "The two subscores as they stood at the end of last year.",
     },
     {
         id: EuNode.Value,
         label: "Eudaimonia",
         role: "result",
         places: 1,
-        note: "The standing verdict moved by this year's pull.",
+        note: "Life and Hunger added.",
     },
 ];
 
@@ -168,7 +311,7 @@ export interface EuTrace {
     put(id: EuNodeId, value: number): void;
 }
 
-// A trace that keeps what it is told, for the panel and the tooltip.
+// A trace that keeps what it is told, for the panel and the tooltips.
 export class EudaimoniaReport implements EuTrace {
     private readonly values_ = new Map<EuNodeId, number>();
 
@@ -199,13 +342,24 @@ export class EudaimoniaReport implements EuTrace {
 }
 
 // --- The calculation ------------------------------------------------------
+//
+// On the relaxation form both subscores use:
+//
+//     value = prev + a * (signal - prev)  ==  (1 - a) * prev + a * signal
+//
+// so the standing subscore IS scaled by (1 - decay), just implicitly. The
+// relaxation form is used because it names the pull -- how far this year
+// actually moved things -- which is the quantity the panel shows, and because
+// it keeps the correction small relative to prev instead of rescaling a large
+// number every turn. Note it decays toward the signal, not toward zero:
+// decaying toward zero and adding the signal would settle at signal/decay,
+// tens of times higher.
 
-// The one implementation. Called every turn for every clan with no trace, and
-// on demand with a trace when someone wants to see the working.
+// How the clan's growing or dying reads as eudaimonia.
 //
 // Keep the trace block at the bottom in step with the math above it.
-export function computeEudaimonia(
-    prevValue: number,
+export function computeLife(
+    prevLife: number,
     births: number,
     deaths: number,
     population: number,
@@ -219,39 +373,55 @@ export function computeEudaimonia(
     // What this one year, taken on its own, says about how the clan is doing.
     const signal = netRate * EU_VITALITY_SCALE;
 
-    // One year is only one year. It moves the standing verdict a little way
-    // toward itself and no further.
-    //
-    // This is the ordinary exponential moving average, written as a relaxation
-    // rather than expanded: the standing verdict IS scaled by (1 - EU_DECAY),
-    // just implicitly, since
-    //
-    //     prev + a*(signal - prev)  ==  (1 - a)*prev + a*signal
-    //
-    // The relaxation form is used because it names `pull` -- how far this year
-    // actually moved things -- which is the quantity the panel draws, and
-    // because it keeps the correction small relative to prev instead of
-    // rescaling a large number every turn.
-    //
-    // Note this decays toward the signal, not toward zero. Decaying toward
-    // zero and adding the signal on top would be a different model, settling
-    // at signal/EU_DECAY -- some 33x higher.
-    const pull = EU_DECAY * (signal - prevValue);
-    const value = prevValue + pull;
+    // One year is only one year.
+    const pull = EU_LIFE_DECAY * (signal - prevLife);
+    const life = prevLife + pull;
 
     if (trace !== undefined) {
-        trace.put(EuNode.PrevValue, prevValue);
+        trace.put(EuNode.PrevLife, prevLife);
         trace.put(EuNode.Births, births);
         trace.put(EuNode.Deaths, deaths);
         trace.put(EuNode.Population, population);
         trace.put(EuNode.Net, net);
         trace.put(EuNode.NetRate, netRate);
-        trace.put(EuNode.Signal, signal);
-        trace.put(EuNode.Pull, pull);
-        trace.put(EuNode.Value, value);
+        trace.put(EuNode.LifeSignal, signal);
+        trace.put(EuNode.LifePull, pull);
+        trace.put(EuNode.Life, life);
     }
 
-    return value;
+    return life;
+}
+
+// What going short of food has cost the clan.
+//
+// Keep the trace block at the bottom in step with the math above it.
+export function computeHunger(
+    prevHunger: number,
+    food: number,
+    trace?: EuTrace,
+): number {
+    // Food is consumption per head against what the clan needs, so 1 is
+    // enough. The power makes a small shortfall cost a little and a large one
+    // cost disproportionately more.
+    const raw = EU_HUNGER_SCALE * (Math.pow(food, EU_HUNGER_EXPONENT) - 1);
+
+    // Held at zero from above. Eating more than enough is not what this
+    // subscore is about; it can only ever be a debt.
+    const signal = raw > 0 ? 0 : raw;
+
+    const pull = EU_HUNGER_DECAY * (signal - prevHunger);
+    const hunger = prevHunger + pull;
+
+    if (trace !== undefined) {
+        trace.put(EuNode.PrevHunger, prevHunger);
+        trace.put(EuNode.Food, food);
+        trace.put(EuNode.HungerRaw, raw);
+        trace.put(EuNode.HungerSignal, signal);
+        trace.put(EuNode.HungerPull, pull);
+        trace.put(EuNode.Hunger, hunger);
+    }
+
+    return hunger;
 }
 
 // --- Rolling up to a settlement -------------------------------------------
@@ -275,7 +445,9 @@ export function computeEudaimonia(
 //
 // (Exact while the clans are fixed over the turn. Splits, merges, and clans
 // dying out move people between the parts and the whole, so the two can drift
-// slightly across such a year.)
+// slightly across such a year. Hunger is not linear in food, so the identity
+// does not extend to it across clans eating differently: the average is still
+// the right summary of the clans, it is just not the settlement's own hunger.)
 export function eudaimoniaAverage(
     items: readonly { value: number; weight: number }[],
 ): number {
@@ -295,45 +467,75 @@ export function eudaimoniaAverage(
 // derivation when someone asks. The inputs are flat number fields, so keeping
 // them costs no allocation.
 export class Eudaimonia {
-    value: number;
+    life: number;
+    hunger: number;
 
     // Last turn's inputs, held for replay.
-    private prevValue_: number;
+    private prevLife_: number;
+    private prevHunger_: number;
     private births_: number;
     private deaths_: number;
     private population_: number;
+    private food_: number;
     private hasRun_: boolean;
 
     constructor(
-        value = 0,
-        prevValue = 0,
+        life = 0,
+        hunger = 0,
+        prevLife = 0,
+        prevHunger = 0,
         births = 0,
         deaths = 0,
         population = 0,
+        food = 1,
         hasRun = false,
     ) {
-        this.value = value;
-        this.prevValue_ = prevValue;
+        this.life = life;
+        this.hunger = hunger;
+        this.prevLife_ = prevLife;
+        this.prevHunger_ = prevHunger;
         this.births_ = births;
         this.deaths_ = deaths;
         this.population_ = population;
+        this.food_ = food;
         this.hasRun_ = hasRun;
     }
 
     clone(): Eudaimonia {
         return new Eudaimonia(
-            this.value,
-            this.prevValue_,
+            this.life,
+            this.hunger,
+            this.prevLife_,
+            this.prevHunger_,
             this.births_,
             this.deaths_,
             this.population_,
+            this.food_,
             this.hasRun_,
         );
     }
 
+    // The verdict: the subscores added.
+    get value(): number {
+        return this.life + this.hunger;
+    }
+
+    get previousValue(): number {
+        return this.prevLife_ + this.prevHunger_;
+    }
+
+    // One subscore by key, for UI that walks EU_SUBSCORES.
+    subscore(key: EuSubscoreKey): number {
+        return key === "life" ? this.life : this.hunger;
+    }
+
+    previousSubscore(key: EuSubscoreKey): number {
+        return key === "life" ? this.prevLife_ : this.prevHunger_;
+    }
+
     // How much the verdict moved last turn.
     get delta(): number {
-        return this.hasRun_ ? this.value - this.prevValue_ : 0;
+        return this.hasRun_ ? this.value - this.previousValue : 0;
     }
 
     // Whether there is a derivation to show yet.
@@ -342,26 +544,37 @@ export class Eudaimonia {
     }
 
     // The turn update. Arithmetic only.
-    update(births: number, deaths: number, population: number): void {
-        this.prevValue_ = this.value;
+    update(
+        births: number,
+        deaths: number,
+        population: number,
+        food: number,
+    ): void {
+        this.prevLife_ = this.life;
+        this.prevHunger_ = this.hunger;
         this.births_ = births;
         this.deaths_ = deaths;
         this.population_ = population;
+        this.food_ = food;
         this.hasRun_ = true;
-        this.value = computeEudaimonia(this.value, births, deaths, population);
+        this.life = computeLife(this.life, births, deaths, population);
+        this.hunger = computeHunger(this.hunger, food);
     }
 
     // Replay last turn's update, keeping every intermediate. Only called when
-    // someone opens the panel or hovers the tooltip.
+    // someone opens the panel or hovers a tooltip.
     explain(): EudaimoniaReport {
         const report = new EudaimoniaReport();
-        computeEudaimonia(
-            this.prevValue_,
+        const life = computeLife(
+            this.prevLife_,
             this.births_,
             this.deaths_,
             this.population_,
             report,
         );
+        const hunger = computeHunger(this.prevHunger_, this.food_, report);
+        report.put(EuNode.PrevValue, this.prevLife_ + this.prevHunger_);
+        report.put(EuNode.Value, life + hunger);
         return report;
     }
 }

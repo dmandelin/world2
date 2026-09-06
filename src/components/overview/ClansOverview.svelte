@@ -50,7 +50,7 @@
     import type { Activity } from "../../model/decisions/effort";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     import RankBadge from "../RankBadge.svelte";
-    import EudaimoniaFormula from "../self/EudaimoniaFormula.svelte";
+    import EudaimoniaSubscores from "../self/EudaimoniaSubscores.svelte";
     import { requestSettlementTab } from "../state/uistate.svelte";
     import { rankBadges } from "../rankbadge";
     import { get } from "svelte/store";
@@ -2833,10 +2833,7 @@
 {/snippet}
 
 {#snippet eudaimoniaTooltip(cs: ClanLastTurnSnapshots)}
-    <EudaimoniaFormula eudaimonia={cs.e.eudaimonia} compact={true} />
-    <div style="margin-top: 6px; font-size: 0.8em; color: #6b7280;">
-        Click the row label for the full panel.
-    </div>
+    <EudaimoniaSubscores eudaimonia={cs.e.eudaimonia} />
 {/snippet}
 
 {#snippet qolTooltip(cs: ClanLastTurnSnapshots)}
