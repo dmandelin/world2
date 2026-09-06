@@ -21,7 +21,7 @@
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
     import SettlementEcon from "./SettlementEcon.svelte";
     import SettlementQoL from "./SettlementQoL.svelte";
-    import SettlementEudaimonia from "./SettlementEudaimonia.svelte";
+    import SettlementWellness from "./SettlementWellness.svelte";
     import SettlementRituals from "./SettlementRituals.svelte";
     import SettlementFestivals from "./SettlementFestivals.svelte";
     import SettlementWaters from "./SettlementWaters.svelte";
@@ -34,7 +34,7 @@
         { label: "Clans", icon: "🏵️", snippet: clansTab, group: "settlement" },
         { label: "Demographics", icon: "👥", snippet: demographicsTab, group: "settlement" },
         { label: "Information", icon: "👁️", snippet: informationTab, group: "settlement" },
-        { label: "Eudaimonia", icon: "🌾", snippet: eudaimoniaTab, group: "settlement" },
+        { label: "Wellness", icon: "🌾", snippet: wellnessTab, group: "settlement" },
         { label: "QoL", icon: "😊", snippet: qolTab, group: "settlement" },
         { label: "Econ", icon: "📊", snippet: econTab, group: "settlement" },
         { label: "Productivity", icon: "⚒️", snippet: productivityTab, group: "settlement" },
@@ -89,8 +89,8 @@
     <SettlementEcon {settlement} />
 {/snippet}
 
-{#snippet eudaimoniaTab()}
-    <SettlementEudaimonia {settlement} />
+{#snippet wellnessTab()}
+    <SettlementWellness {settlement} />
 {/snippet}
 
 {#snippet qolTab()}

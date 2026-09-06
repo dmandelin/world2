@@ -72,12 +72,20 @@ export const EU_RANGE = 100;
 // bound of 100.
 export const EU_VITALITY_SCALE = 2000;
 
-// Hunger reads off food consumption as a share of what the clan needs, so 1 is
-// enough to eat. The shortfall is raised to a power and scaled, which makes
-// going a little short cost a little and going badly short cost a lot: at
-// three-quarters rations the signal is about -44, at half about -75.
+// Food consumption is read as a share of what the clan needs, so 1 is enough
+// to eat. The shortfall is raised to a power and scaled.
+//
+// Hunger, the standing subscore, squares it: going a little short costs a
+// little and going badly short costs disproportionately more. At three-quarters
+// rations the signal is about -44, at half about -75.
+//
+// Fortune reads the same input on a straight line, so a year's eating maps to
+// a year's fortune proportionately: three-quarters rations is -25, half is
+// -50. It is a report on the year rather than a judgement accumulated over
+// many, so it does not lean on the shortfall the way Hunger does.
 export const EU_HUNGER_SCALE = 100;
 export const EU_HUNGER_EXPONENT = 2;
+export const EU_FORTUNE_EXPONENT = 1;
 
 // Keeps the per-capita rate finite for a clan that has just lost everyone.
 const MIN_POPULATION = 1;
@@ -109,6 +117,10 @@ export const EuNode = {
     // Total
     PrevValue: 15,
     Value: 16,
+
+    // Fortune: the year itself, not the running verdict.
+    FortuneRaw: 17,
+    Fortune: 18,
 } as const;
 
 export type EuNodeId = (typeof EuNode)[keyof typeof EuNode];
@@ -125,6 +137,10 @@ export interface EuSubscoreDef {
     label: string;
     // Share of the gap to its signal that one year closes.
     decay: number;
+    // Whether the concern this subscore tracks is one Fortune also reports
+    // on. Fortune reads the same inputs but on its own curve, so this marks
+    // which subscores it speaks to, not a term it sums.
+    inFortune: boolean;
     // Where this subscore's parts land in a report.
     prevNode: EuNodeId;
     signalNode: EuNodeId;
@@ -138,6 +154,10 @@ export const EU_SUBSCORES: readonly EuSubscoreDef[] = [
         key: "life",
         label: "Life",
         decay: EU_LIFE_DECAY,
+        // Left out of Fortune: this signal is a growth rate read at x2000, so
+        // in a small clan one birth swings it by a hundred points and it says
+        // more about arithmetic than about the year.
+        inFortune: false,
         prevNode: EuNode.PrevLife,
         signalNode: EuNode.LifeSignal,
         pullNode: EuNode.LifePull,
@@ -148,6 +168,7 @@ export const EU_SUBSCORES: readonly EuSubscoreDef[] = [
         key: "hunger",
         label: "Hunger",
         decay: EU_HUNGER_DECAY,
+        inFortune: true,
         prevNode: EuNode.PrevHunger,
         signalNode: EuNode.HungerSignal,
         pullNode: EuNode.HungerPull,
@@ -298,6 +319,20 @@ export const EU_NODES: readonly EuNodeDef[] = [
         places: 1,
         note: "Life and Hunger added.",
     },
+    {
+        id: EuNode.FortuneRaw,
+        label: "Before clamping",
+        role: "derived",
+        places: 1,
+        note: `${EU_HUNGER_SCALE} x (food^${EU_FORTUNE_EXPONENT} - 1), which runs positive when there is more than enough.`,
+    },
+    {
+        id: EuNode.Fortune,
+        label: "Fortune",
+        role: "result",
+        places: 1,
+        note: "How this year went, before the long verdict absorbs it.",
+    },
 ];
 
 export const EU_NODE_DEFS: ReadonlyMap<EuNodeId, EuNodeDef> = new Map(
@@ -392,7 +427,38 @@ export function computeLife(
     return life;
 }
 
-// What going short of food has cost the clan.
+// What this year's eating, on its own, says about the clan.
+//
+// Split out from computeHunger because Fortune is exactly this quantity: the
+// year itself, before the running average absorbs it. Both read the same
+// implementation rather than each having their own copy of the curve.
+//
+// Keep the trace block at the bottom in step with the math above it.
+// The shape Hunger and Fortune both read food through, differing only in the
+// exponent. Written once so the two cannot drift apart in anything but that.
+// Returns the unclamped value; each caller holds it at zero itself, because
+// each reports the before and after under its own names.
+function shortfallRaw(food: number, exponent: number): number {
+    return EU_HUNGER_SCALE * (Math.pow(food, exponent) - 1);
+}
+
+export function hungerSignal(food: number, trace?: EuTrace): number {
+    const raw = shortfallRaw(food, EU_HUNGER_EXPONENT);
+
+    // Held at zero from above. Eating more than enough is not what this is
+    // about; it can only ever be a debt.
+    const signal = raw > 0 ? 0 : raw;
+
+    if (trace !== undefined) {
+        trace.put(EuNode.Food, food);
+        trace.put(EuNode.HungerRaw, raw);
+        trace.put(EuNode.HungerSignal, signal);
+    }
+
+    return signal;
+}
+
+// What going short of food has cost the clan, over the years.
 //
 // Keep the trace block at the bottom in step with the math above it.
 export function computeHunger(
@@ -400,28 +466,39 @@ export function computeHunger(
     food: number,
     trace?: EuTrace,
 ): number {
-    // Food is consumption per head against what the clan needs, so 1 is
-    // enough. The power makes a small shortfall cost a little and a large one
-    // cost disproportionately more.
-    const raw = EU_HUNGER_SCALE * (Math.pow(food, EU_HUNGER_EXPONENT) - 1);
-
-    // Held at zero from above. Eating more than enough is not what this
-    // subscore is about; it can only ever be a debt.
-    const signal = raw > 0 ? 0 : raw;
+    const signal = hungerSignal(food, trace);
 
     const pull = EU_HUNGER_DECAY * (signal - prevHunger);
     const hunger = prevHunger + pull;
 
     if (trace !== undefined) {
         trace.put(EuNode.PrevHunger, prevHunger);
-        trace.put(EuNode.Food, food);
-        trace.put(EuNode.HungerRaw, raw);
-        trace.put(EuNode.HungerSignal, signal);
         trace.put(EuNode.HungerPull, pull);
         trace.put(EuNode.Hunger, hunger);
     }
 
     return hunger;
+}
+
+// Fortune: how the year itself went, rather than how the clan's life is
+// going. It is the sum of the current-turn signals of whichever subscores are
+// marked as counting toward it -- for now only Hunger, so it runs from 0 for
+// a well-fed year down to -100 for a starving one.
+//
+// Nothing is stored for it and nothing is computed for it during the turn: it
+// is a function of inputs the clan already keeps, so it costs nothing until
+// something asks.
+export function computeFortune(food: number, trace?: EuTrace): number {
+    const raw = shortfallRaw(food, EU_FORTUNE_EXPONENT);
+    const fortune = raw > 0 ? 0 : raw;
+
+    if (trace !== undefined) {
+        trace.put(EuNode.Food, food);
+        trace.put(EuNode.FortuneRaw, raw);
+        trace.put(EuNode.Fortune, fortune);
+    }
+
+    return fortune;
 }
 
 // --- Rolling up to a settlement -------------------------------------------
@@ -520,6 +597,13 @@ export class Eudaimonia {
         return this.life + this.hunger;
     }
 
+    // How this year went, on its own terms. Derived rather than stored: it is
+    // a function of food, which is already kept for replay, so the turn loop
+    // pays nothing for it.
+    get fortune(): number {
+        return computeFortune(this.food_);
+    }
+
     get previousValue(): number {
         return this.prevLife_ + this.prevHunger_;
     }
@@ -575,6 +659,7 @@ export class Eudaimonia {
         const hunger = computeHunger(this.prevHunger_, this.food_, report);
         report.put(EuNode.PrevValue, this.prevLife_ + this.prevHunger_);
         report.put(EuNode.Value, life + hunger);
+        computeFortune(this.food_, report);
         return report;
     }
 }

@@ -1,8 +1,15 @@
 <script lang="ts">
-    // The derivation of one eudaimonia subscore for one clan, drawn from a
-    // replay of last turn's update. Shown in the panel's cell tooltips.
+    // The derivation of one figure for one clan, drawn from a replay of last
+    // turn's update. Shown in tooltips on the overview row and the panel cells.
+    //
+    // Two shapes: a standing subscore, which runs its chain to a signal and
+    // then relaxes toward it; and Fortune, which is the year on its own and
+    // stops at the signal. Fortune reads food through a straight line where
+    // Hunger squares it, so it carries its own chain rather than borrowing
+    // Hunger's.
     import {
         EuNode,
+        EU_FORTUNE_EXPONENT,
         EU_HUNGER_EXPONENT,
         EU_HUNGER_SCALE,
         EU_VITALITY_SCALE,
@@ -13,16 +20,28 @@
     let {
         eudaimonia,
         sub,
-    }: { eudaimonia: Eudaimonia; sub: EuSubscoreDef } = $props();
+        fortune = false,
+    }: {
+        eudaimonia: Eudaimonia;
+        // Required unless this is the Fortune reading.
+        sub?: EuSubscoreDef;
+        fortune?: boolean;
+    } = $props();
 
-    // Replaying costs a few objects, and only happens for a cell someone is
+    // Replaying costs a few objects, and only happens for a figure someone is
     // actually pointing at.
     let r = $derived(eudaimonia.explain());
 
-    let prev = $derived(r.get(sub.prevNode));
-    let signal = $derived(r.get(sub.signalNode));
-    let pull = $derived(r.get(sub.pullNode));
-    let value = $derived(r.get(sub.valueNode));
+    let prev = $derived(sub ? r.get(sub.prevNode) : 0);
+    let signal = $derived(
+        fortune ? r.get(EuNode.Fortune) : sub ? r.get(sub.signalNode) : 0,
+    );
+    let pull = $derived(sub ? r.get(sub.pullNode) : 0);
+    let value = $derived(sub ? r.get(sub.valueNode) : 0);
+
+    let rawFood = $derived(
+        fortune ? r.get(EuNode.FortuneRaw) : r.get(EuNode.HungerRaw),
+    );
 
     const n = (x: number, p = 1) =>
         (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(p);
@@ -36,12 +55,16 @@
     <div class="empty">No year has been lived yet.</div>
 {:else}
     <div class="calc">
-        <div class="head">{sub.label}</div>
-        <div class="blurb">{sub.blurb}</div>
+        <div class="head">{fortune ? "Fortune" : (sub?.label ?? "")}</div>
+        <div class="blurb">
+            {fortune
+                ? "What this year alone was worth, before the long verdict takes it in."
+                : (sub?.blurb ?? "")}
+        </div>
 
         <!-- How this year's raw circumstances become a signal. -->
         <div class="chain">
-            {#if sub.key === "life"}
+            {#if !fortune && sub?.key === "life"}
                 <div class="node">
                     <div class="v">{u(r.get(EuNode.Births))}</div>
                     <div class="l">births</div>
@@ -76,21 +99,24 @@
                 </div>
                 <div class="op">&times;{EU_VITALITY_SCALE}</div>
             {:else}
+                {@const exponent = fortune
+                    ? EU_FORTUNE_EXPONENT
+                    : EU_HUNGER_EXPONENT}
                 <div class="node">
                     <div class="v">{pctOf(r.get(EuNode.Food))}</div>
                     <div class="l">of needs</div>
                 </div>
                 <div class="op">
-                    &rarr; {EU_HUNGER_SCALE}&times;(f<sup
-                        >{EU_HUNGER_EXPONENT}</sup
-                    >&minus;1)
+                    &rarr; {EU_HUNGER_SCALE}&times;(f{#if exponent !== 1}<sup
+                            >{exponent}</sup
+                        >{/if}&minus;1)
                 </div>
                 <div
                     class="node"
-                    class:neg={r.get(EuNode.HungerRaw) < 0}
-                    class:muted={r.get(EuNode.HungerRaw) > 0}
+                    class:neg={rawFood < 0}
+                    class:muted={rawFood > 0}
                 >
-                    <div class="v">{n(r.get(EuNode.HungerRaw))}</div>
+                    <div class="v">{n(rawFood)}</div>
                     <div class="l">raw</div>
                 </div>
                 <div class="op" title="Held at zero from above">
@@ -99,39 +125,47 @@
             {/if}
             <div class="node signal">
                 <div class="v">{n(signal)}</div>
-                <div class="l">signal</div>
+                <div class="l">{fortune ? "fortune" : "signal"}</div>
             </div>
         </div>
 
-        {#if sub.key === "hunger" && r.get(EuNode.HungerRaw) > 0}
+        {#if (fortune || sub?.key === "hunger") && rawFood > 0}
             <div class="aside">
-                More than enough to eat, so the signal is held at zero: this
-                subscore only ever charges for going short.
+                More than enough to eat, so it is held at zero: this only ever
+                charges for going short.
             </div>
         {/if}
 
-        <!-- The year's movement toward that signal, and no further. -->
-        <div class="eq">
-            <span class="out">{n(value)}</span>
-            <span class="o">=</span>
-            <span class="t prev">{n(prev)}</span>
-            <span class="o">+</span>
-            <span class="decay">{pctOf(sub.decay)}</span>
-            <span class="o">&times;</span>
-            <span class="o">(</span>
-            <span class="t sig">{n(signal)}</span>
-            <span class="o">&minus;</span>
-            <span class="t prev">{n(prev)}</span>
-            <span class="o">)</span>
-        </div>
+        {#if fortune}
+            <div class="foot">
+                Fortune reads food on a straight line, where the standing
+                Hunger subscore squares it &mdash; this is a report on the
+                year, not a judgement built over many.
+            </div>
+        {:else if sub}
+            <!-- The year's movement toward that signal, and no further. -->
+            <div class="eq">
+                <span class="out">{n(value)}</span>
+                <span class="o">=</span>
+                <span class="t prev">{n(prev)}</span>
+                <span class="o">+</span>
+                <span class="decay">{pctOf(sub.decay)}</span>
+                <span class="o">&times;</span>
+                <span class="o">(</span>
+                <span class="t sig">{n(signal)}</span>
+                <span class="o">&minus;</span>
+                <span class="t prev">{n(prev)}</span>
+                <span class="o">)</span>
+            </div>
 
-        <div class="foot">
-            Moved <b class:pos={pull >= 0} class:neg={pull < 0}
-                >{n(pull, 2)}</b
-            >
-            this year. At {pctOf(sub.decay)} a year it takes about
-            {Math.round(1 / sub.decay)} years to close most of the gap.
-        </div>
+            <div class="foot">
+                Moved <b class:pos={pull >= 0} class:neg={pull < 0}
+                    >{n(pull, 2)}</b
+                >
+                this year. At {pctOf(sub.decay)} a year it takes about
+                {Math.round(1 / sub.decay)} years to close most of the gap.
+            </div>
+        {/if}
     </div>
 {/if}
 

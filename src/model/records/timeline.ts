@@ -52,6 +52,7 @@ export class ClanTimePoint {
     readonly qol: number;
     readonly eudaimonia: number;
     readonly eudaimoniaLife: number;
+    readonly fortune: number;
     readonly eudaimoniaHunger: number;
     readonly eudaimoniaDelta: number;
     readonly stress: number;
@@ -103,6 +104,7 @@ export class ClanTimePoint {
         this.qol = clan.qol.value;
         this.eudaimonia = clan.eudaimonia.value;
         this.eudaimoniaLife = clan.eudaimonia.life;
+        this.fortune = clan.eudaimonia.fortune;
         this.eudaimoniaHunger = clan.eudaimonia.hunger;
         this.eudaimoniaDelta = clan.eudaimonia.delta;
         this.stress = clan.stress.value;
@@ -280,16 +282,17 @@ export function clanKeyTimelineGraphData(
 
     return graphData;
 }
-// Eudaimonia over time: one line per clan of a settlement, plus one for the
-// settlement as a whole, which is the population-weighted average of whichever
-// of its clans were alive that year.
+// One clan statistic over time: a line per clan of a settlement, plus one for
+// the settlement as a whole, which is the population-weighted average of
+// whichever of its clans were alive that year.
 //
 // Membership is read from the settlement as it stands now, so a clan that
 // moved in later is still drawn back through the years it spent elsewhere.
 // Over the spans this covers that is usually the clan you want to follow, but
 // the settlement line is not a record of who actually lived here.
-export function settlementEudaimoniaGraphData(
+export function settlementClanGraphData(
     settlement: SettlementDTO,
+    key: keyof ClanTimePoint,
     scaler: YAxisScaler,
 ): GraphData {
     const clans = settlement.clans.filter(c => c.population > 0);
@@ -309,7 +312,9 @@ export function settlementEudaimoniaGraphData(
         for (const clan of clans) {
             const p = tp.clans.get(clan.uuid);
             if (!p || !(p.population > 0)) continue;
-            sum += p.eudaimonia * p.population;
+            const v = p[key];
+            if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+            sum += v * p.population;
             weight += p.population;
         }
         return weight > 0 ? sum / weight : undefined;
@@ -320,7 +325,10 @@ export function settlementEudaimoniaGraphData(
         ...clans.map(clan => ({
             label: clan.name,
             color: clan.color,
-            data: points.map((tp: TimePoint) => tp.clans.get(clan.uuid)?.eudaimonia),
+            data: points.map((tp: TimePoint) => {
+                const v = tp.clans.get(clan.uuid)?.[key];
+                return typeof v === 'number' ? v : undefined;
+            }),
         })),
     ];
 

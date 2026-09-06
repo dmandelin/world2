@@ -1,44 +1,93 @@
 <script lang="ts">
+    // Two readings of the same machinery, side by side under one roof:
+    //
+    //   Fortune     what this year alone was worth, the signal before the
+    //               running averages absorb it
+    //   Eudaimonia  the standing verdict those averages have reached
+    //
+    // The table has the same shape either way -- a row per contributing part,
+    // a total, a column per clan -- so switching between them compares like
+    // with like rather than reading as two different screens.
     import type { SettlementDTO, ClanDTO } from "../model/records/dtos";
     import {
+        EuNode,
         EU_SUBSCORES,
         EU_RANGE,
         eudaimoniaAverage,
+        type Eudaimonia,
         type EuSubscoreDef,
     } from "../model/self/eudaimonia";
     import { sortedByKey } from "../model/lib/basics";
     import Tooltip from "./Tooltip.svelte";
     import LineGraph from "./LineGraph.svelte";
     import EudaimoniaCalc from "./self/EudaimoniaCalc.svelte";
-    import { settlementEudaimoniaGraphData } from "../model/records/timeline";
+    import { settlementClanGraphData } from "../model/records/timeline";
     import { ZeroCenteredAutoScaler } from "./linegraph";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
+    type View = "fortune" | "eudaimonia";
+    let view = $state<View>("eudaimonia");
+
+    const VIEWS: { key: View; label: string; hint: string }[] = [
+        {
+            key: "fortune",
+            label: "Fortune",
+            hint: "How this year went, on its own",
+        },
+        {
+            key: "eudaimonia",
+            label: "Eudaimonia",
+            hint: "The verdict on the whole run of years",
+        },
+    ];
+
+    // Which parts make up the figure on show.
+    let parts = $derived(
+        view === "fortune"
+            ? EU_SUBSCORES.filter((s) => s.inFortune)
+            : EU_SUBSCORES,
+    );
+
     let clans = $derived(
         sortedByKey(
             settlement.clans.filter((c) => c.population > 0),
-            (c: ClanDTO) => -c.eudaimonia.value,
+            (c: ClanDTO) => -total(c.eudaimonia),
         ),
     );
 
-    // Population-weighted average, which for the Life part is the same number
-    // the settlement would get from its own births and deaths.
+    // One replay per clan, shared by every cell of that clan's column, rather
+    // than a fresh one for each figure on screen.
+    let reports = $derived(
+        new Map(clans.map((c) => [c.uuid, c.eudaimonia.explain()])),
+    );
+
+    function total(eu: Eudaimonia): number {
+        return view === "fortune" ? eu.fortune : eu.value;
+    }
+
+    // In the Fortune view a part is Fortune's own reading of that concern,
+    // not the subscore's signal: Fortune reads food on a straight line where
+    // Hunger squares it, so the two are different numbers. With Hunger the
+    // only contributor so far, the part and the total coincide.
+    function part(clan: ClanDTO, sub: EuSubscoreDef): number {
+        return view === "fortune"
+            ? (reports.get(clan.uuid)?.get(EuNode.Fortune) ?? 0)
+            : clan.eudaimonia.subscore(sub.key);
+    }
+
     let settlementValue = $derived(
         eudaimoniaAverage(
             clans.map((c) => ({
-                value: c.eudaimonia.value,
+                value: total(c.eudaimonia),
                 weight: c.population,
             })),
         ),
     );
 
-    function settlementSubscore(sub: EuSubscoreDef): number {
+    function settlementPart(sub: EuSubscoreDef): number {
         return eudaimoniaAverage(
-            clans.map((c) => ({
-                value: c.eudaimonia.subscore(sub.key),
-                weight: c.population,
-            })),
+            clans.map((c) => ({ value: part(c, sub), weight: c.population })),
         );
     }
 
@@ -46,13 +95,14 @@
         (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(p);
     const pctOf = (x: number) => (x * 100).toFixed(0) + "%";
 
-    // A faint bar behind a subscore cell, against the notional range, so a row
-    // reads as a shape across the settlement before it reads as numbers.
+    // A faint bar behind a cell, against the notional range, so a row reads as
+    // a shape across the settlement before it reads as numbers.
     const barPct = (v: number) => Math.min(100, (Math.abs(v) / EU_RANGE) * 100);
 
     let graphData = $derived(
-        settlementEudaimoniaGraphData(
+        settlementClanGraphData(
             settlement,
+            view === "fortune" ? "fortune" : "eudaimonia",
             new ZeroCenteredAutoScaler(20),
         ),
     );
@@ -61,7 +111,17 @@
 <div class="wrap">
     <header>
         <div class="title-row">
-            <h3>Eudaimonia</h3>
+            <h3>Wellness</h3>
+            <div class="toggle" role="group" aria-label="Which reading to show">
+                {#each VIEWS as v (v.key)}
+                    <button
+                        type="button"
+                        class:on={view === v.key}
+                        title={v.hint}
+                        onclick={() => (view = v.key)}>{v.label}</button
+                    >
+                {/each}
+            </div>
             <div class="settlement-value" class:pos={settlementValue >= 0}>
                 {n(settlementValue)}
             </div>
@@ -88,18 +148,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- One row per subscore; each cell explains itself. -->
-                    {#each EU_SUBSCORES as sub (sub.key)}
+                    <!-- One row per contributing part; each cell explains
+                         itself. -->
+                    {#each parts as sub (sub.key)}
                         <tr>
                             <th class="rowhead">
                                 {sub.label}
-                                <span class="decay">{pctOf(sub.decay)}/yr</span>
+                                {#if view === "eudaimonia"}
+                                    <span class="decay"
+                                        >{pctOf(sub.decay)}/yr</span
+                                    >
+                                {:else}
+                                    <span class="decay">this year</span>
+                                {/if}
                             </th>
                             <td class="num settlement-col">
-                                {n(settlementSubscore(sub))}
+                                {n(settlementPart(sub))}
                             </td>
                             {#each clans as clan (clan.uuid)}
-                                {@const v = clan.eudaimonia.subscore(sub.key)}
+                                {@const v = part(clan, sub)}
                                 <td class="num cell">
                                     <Tooltip>
                                         <span class="bar-wrap">
@@ -118,10 +185,17 @@
                                             slot="tooltip"
                                             style="text-align: left; color: initial;"
                                         >
-                                            <EudaimoniaCalc
-                                                eudaimonia={clan.eudaimonia}
-                                                {sub}
-                                            />
+                                            {#if view === "fortune"}
+                                                <EudaimoniaCalc
+                                                    eudaimonia={clan.eudaimonia}
+                                                    fortune={true}
+                                                />
+                                            {:else}
+                                                <EudaimoniaCalc
+                                                    eudaimonia={clan.eudaimonia}
+                                                    {sub}
+                                                />
+                                            {/if}
                                         </div>
                                     </Tooltip>
                                 </td>
@@ -130,21 +204,33 @@
                     {/each}
 
                     <tr class="total">
-                        <th class="rowhead">Total</th>
+                        <th class="rowhead"
+                            >{view === "fortune" ? "Fortune" : "Total"}</th
+                        >
                         <td class="num settlement-col">{n(settlementValue)}</td>
                         {#each clans as clan (clan.uuid)}
+                            {@const t = total(clan.eudaimonia)}
                             <td
                                 class="num"
-                                class:pos={clan.eudaimonia.value > 0}
-                                class:neg={clan.eudaimonia.value < 0}
-                                >{n(clan.eudaimonia.value)}</td
+                                class:pos={t > 0}
+                                class:neg={t < 0}>{n(t)}</td
                             >
                         {/each}
                     </tr>
-
                 </tbody>
             </table>
         </div>
+
+        {#if view === "fortune" && parts.length < EU_SUBSCORES.length}
+            <div class="note">
+                Fortune reports on {parts.map((p) => p.label).join(", ")} only
+                so far, and reads it on a straight line where the standing Hunger
+                subscore squares it. Life is left out: its signal is a growth rate
+                read at a large multiple, so in a small clan a single birth swings
+                it by a hundred points, saying more about arithmetic than about the
+                year.
+            </div>
+        {/if}
 
         <!-- Where each clan has been, and the settlement through the middle
              of them. The table says where things stand; this says how they
@@ -167,11 +253,43 @@
         display: flex;
         align-items: baseline;
         gap: 0.75rem;
+        flex-wrap: wrap;
     }
 
     h3 {
         margin: 0;
         font-size: 1.15rem;
+    }
+
+    .toggle {
+        display: inline-flex;
+        gap: 0.25rem;
+        background-color: #f3edd8;
+        padding: 0.2rem;
+        border-radius: 4px;
+        align-self: center;
+    }
+
+    .toggle button {
+        font: inherit;
+        font-size: 0.82rem;
+        border: 1px solid transparent;
+        background: none;
+        border-radius: 3px;
+        padding: 0.1rem 0.6rem;
+        cursor: pointer;
+        color: #4b5563;
+    }
+
+    .toggle button:hover {
+        color: #7c2d12;
+    }
+
+    .toggle button.on {
+        background: #fbfaf5;
+        border-color: #ddd6c0;
+        color: #1f2328;
+        font-weight: 600;
     }
 
     .settlement-value {
@@ -193,6 +311,13 @@
     .empty {
         color: #6b7280;
         font-style: italic;
+    }
+
+    .note {
+        font-size: 0.8rem;
+        line-height: 1.45;
+        color: #6b7280;
+        max-width: 62ch;
     }
 
     .graph {

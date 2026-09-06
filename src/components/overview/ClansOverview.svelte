@@ -52,6 +52,7 @@
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     import RankBadge from "../RankBadge.svelte";
     import EudaimoniaSubscores from "../self/EudaimoniaSubscores.svelte";
+    import EudaimoniaCalc from "../self/EudaimoniaCalc.svelte";
     import { requestSettlementTab } from "../state/uistate.svelte";
     import { rankBadges } from "../rankbadge";
     import { get } from "svelte/store";
@@ -455,12 +456,29 @@
                 topics: ["demographics"],
             },
             {
+                label: "Fortune",
+                labelTooltip:
+                    "How this year went for the clan, before the long verdict takes it in.",
+                class: "actual",
+                cellClass: "rap",
+                panelTab: "Wellness",
+                value: (c) => c.eudaimonia.fortune,
+                format: (v) => signed(v, 0),
+                bandClass: eudaimoniaBandClass,
+                tooltipSnippet: fortuneTooltip,
+                deltaValue: (c) => c.eudaimonia.fortune,
+                deltaFormat: (v) => signed(v, 1),
+                timelineKey: "fortune",
+                scaler: new ZeroCenteredAutoScaler(20),
+                topics: ["welfare"],
+            },
+            {
                 label: "Eudaimonia",
                 labelTooltip:
                     "How well the clan's life is going, judged over the long run.",
                 class: "actual",
                 cellClass: "rap",
-                panelTab: "Eudaimonia",
+                panelTab: "Wellness",
                 value: (c) => c.eudaimonia.value,
                 format: (v) => signed(v, 0),
                 bandClass: eudaimoniaBandClass,
@@ -2847,6 +2865,13 @@
             <span><b>Average</b>, by population</span>
             <b>{signed(mean, 1)}</b>
         </div>
+    </div>
+{/snippet}
+
+{#snippet fortuneTooltip(cs: ClanLastTurnSnapshots)}
+    <EudaimoniaCalc eudaimonia={cs.e.eudaimonia} fortune={true} />
+    <div style="margin-top: 6px; font-size: 0.78em; color: #6b7280;">
+        Click the row label for the full panel.
     </div>
 {/snippet}
 
