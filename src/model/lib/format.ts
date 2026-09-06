@@ -65,6 +65,36 @@ export function statBandClass(value: number): string {
     return `stat-band-${statBand(value)}`;
 }
 
+// Bands for eudaimonia, which runs either side of zero rather than 0-100.
+//
+// Ten points to a band, with -5..+5 neutral, so that the middle band is
+// "nothing much either way" rather than a boundary a clan sits exactly on.
+// The main ramp is the first five bands, out to about +/-50, which is where
+// clans ordinarily live. Past that the colours keep deepening, but in smaller
+// steps out to +/-100, so a rare extreme still reads as more extreme without
+// the ordinary range having to wash out to leave room for it.
+export const EU_BAND_WIDTH = 10;
+export const EU_BAND_MAX = 10;
+
+// Signed band index: 0 is neutral, +1..+10 and -1..-10 either side.
+export function eudaimoniaBand(value: number): number {
+    if (!Number.isFinite(value)) return 0;
+    const band = Math.floor(
+        (Math.abs(value) + EU_BAND_WIDTH / 2) / EU_BAND_WIDTH);
+    const capped = band > EU_BAND_MAX ? EU_BAND_MAX : band;
+    return value < 0 ? -capped : capped;
+}
+
+// Two classes: `eu-band` carries the shape of the painted area, the second
+// carries only its colour.
+export function eudaimoniaBandClass(value: number): string {
+    const band = eudaimoniaBand(value);
+    if (band === 0) return 'eu-band eu-band-0';
+    return band > 0
+        ? `eu-band eu-band-p${band}`
+        : `eu-band eu-band-n${-band}`;
+}
+
 export function grade(t: number) {
   switch (true) {
       case t > 87.5: return 'S';

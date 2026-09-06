@@ -24,6 +24,7 @@
         unsignedFormat,
         stressColor,
         statBandClass,
+        eudaimoniaBandClass,
     } from "../../model/lib/format";
     import { safeDiv, sortedByKey, sumFun } from "../../model/lib/basics";
     import { populationAverage } from "../../model/lib/modelbasics";
@@ -122,6 +123,9 @@
         // Colour the cell by which twenty-point band the value falls in. For
         // the stats that run 0-100 and centre on 50.
         banded?: boolean;
+        // Or by a scheme of the row's own, for stats on a different scale.
+        // Takes precedence over `banded`.
+        bandClass?: (value: any) => string;
         topics?: string[];
         // Names a settlement panel that writes this stat up in full. When set,
         // the row label becomes a link that opens it.
@@ -224,6 +228,19 @@
             weight += item.weight;
         }
         return weight > 0 ? Math.exp(logSum / weight) : 1;
+    }
+
+    function cellBandClass(row: RowDef, clan: ClanDTO): string {
+        if (!row.value) return "";
+        if (row.bandClass) return row.bandClass(row.value(clan));
+        if (row.banded) return statBandClass(row.value(clan));
+        return "";
+    }
+
+    function settlementBandClass(row: RowDef): string {
+        if (!row.bandClass) return "";
+        const v = settlementValue(row);
+        return v === undefined ? "" : row.bandClass(v);
     }
 
     function settlementValue(row: RowDef): number | undefined {
@@ -424,7 +441,7 @@
     let rowGroups = $derived.by<RowDef[][]>(() => {
         const groups: RowDef[][] = [];
 
-        // Group 1: Demographics / Population
+        // Group 1: Population, and the long verdict on it
         groups.push([
             {
                 label: "People",
@@ -438,38 +455,25 @@
                 topics: ["demographics"],
             },
             {
-                label: "Health",
+                label: "Eudaimonia",
+                labelTooltip:
+                    "How well the clan's life is going, judged over the long run.",
                 class: "actual",
-                cellClass: "ra",
-                value: (c) =>
-                    Math.sqrt(
-                        (c.lastPopulationChange?.brModifier ?? 1) /
-                            (c.lastPopulationChange?.drModifier ?? 1),
-                    ),
-                format: spct,
-                tooltipSnippet: healthTooltip,
-                settlementAgg: "geomean",
-                settlementTooltipSnippet: settlementHealthTooltip,
-                deltaValue: (c) =>
-                    Math.sqrt(
-                        (c.lastPopulationChange?.brModifier ?? 1) /
-                            (c.lastPopulationChange?.drModifier ?? 1),
-                    ),
-                deltaFormat: pct,
-                scaler: new DefaultScaler(),
-                topics: ["demographics"],
-            },
-            {
-                label: "Residence",
-                cellClass: "ra",
-                value: (c) => c.residenceLevel.fractionInSettlement,
-                format: pct,
-                tooltipSnippet: residenceTooltip,
-                deltaValue: (c) => c.residenceLevel.fractionInSettlement,
-                deltaFormat: pct,
-                timelineKey: "residenceFraction",
-                scaler: new DefaultScaler(),
-                topics: ["demographics", "welfare"],
+                cellClass: "rap",
+                panelTab: "Eudaimonia",
+                value: (c) => c.eudaimonia.value,
+                format: (v) => signed(v, 0),
+                bandClass: eudaimoniaBandClass,
+                tooltipSnippet: eudaimoniaTooltip,
+                settlementTooltipSnippet: settlementEudaimoniaTooltip,
+                deltaValue: (c) => c.eudaimonia.value,
+                // A turn moves the verdict by a fraction of a point, so the
+                // delta keeps a decimal the stat itself does not need.
+                deltaFormat: (v) => signed(v, 1),
+                timelineKey: "eudaimonia",
+                // On its own scale, not quality of life's fixed +/-30.
+                scaler: new ZeroCenteredAutoScaler(20),
+                topics: ["welfare"],
             },
             {
                 label: "Birth rate modifier",
@@ -514,8 +518,42 @@
             },
         ]);
 
-        // Group 2: Welfare (Happiness, Social Welfare, Material Welfare, QoL, Stress, Mutual Aid, Help Modifier)
+        // Group 2: Welfare and standing
         groups.push([
+            {
+                label: "Health",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    Math.sqrt(
+                        (c.lastPopulationChange?.brModifier ?? 1) /
+                            (c.lastPopulationChange?.drModifier ?? 1),
+                    ),
+                format: spct,
+                tooltipSnippet: healthTooltip,
+                settlementAgg: "geomean",
+                settlementTooltipSnippet: settlementHealthTooltip,
+                deltaValue: (c) =>
+                    Math.sqrt(
+                        (c.lastPopulationChange?.brModifier ?? 1) /
+                            (c.lastPopulationChange?.drModifier ?? 1),
+                    ),
+                deltaFormat: pct,
+                scaler: new DefaultScaler(),
+                topics: ["demographics"],
+            },
+            {
+                label: "Residence",
+                cellClass: "ra",
+                value: (c) => c.residenceLevel.fractionInSettlement,
+                format: pct,
+                tooltipSnippet: residenceTooltip,
+                deltaValue: (c) => c.residenceLevel.fractionInSettlement,
+                deltaFormat: pct,
+                timelineKey: "residenceFraction",
+                scaler: new DefaultScaler(),
+                topics: ["demographics", "welfare"],
+            },
             {
                 label: "Generosity",
                 class: "actual",
@@ -539,26 +577,6 @@
                 deltaFormat: (v) => unsigned(v, 1),
                 scaler: new DefaultScaler(),
                 topics: ["perceptions:detail"],
-            },
-            {
-                label: "Eudaimonia",
-                labelTooltip:
-                    "How well the clan's life is going, judged over the long run.",
-                class: "actual",
-                cellClass: "rap",
-                panelTab: "Eudaimonia",
-                value: (c) => c.eudaimonia.value,
-                format: (v) => signed(v, 0),
-                tooltipSnippet: eudaimoniaTooltip,
-                settlementTooltipSnippet: settlementEudaimoniaTooltip,
-                deltaValue: (c) => c.eudaimonia.value,
-                // A turn moves the verdict by a fraction of a point, so the
-                // delta keeps a decimal the stat itself does not need.
-                deltaFormat: (v) => signed(v, 1),
-                timelineKey: "eudaimonia",
-                // On its own scale, not quality of life's fixed +/-30.
-                scaler: new ZeroCenteredAutoScaler(20),
-                topics: ["welfare"],
             },
             {
                 label: "QoL",
@@ -3232,7 +3250,11 @@
                                     {/if}
                                 </td>
                                 {@const sval = settlementValue(row)}
-                                <td class="settlement-col ra">
+                                <td
+                                    class="settlement-col ra {settlementBandClass(
+                                        row,
+                                    )}"
+                                >
                                     {#if row.settlementRenderSnippet}
                                         {@render row.settlementRenderSnippet(
                                             csnaps,
@@ -3269,10 +3291,8 @@
                                         </td>
                                     {:else}
                                         <td
-                                            class="{row.cellClass ?? ''} {row.banded &&
-                                            row.value
-                                                ? statBandClass(row.value(cs.e))
-                                                : ''}"
+                                            class="{row.cellClass ??
+                                                ''} {cellBandClass(row, cs.e)}"
                                         >
                                             {#if row.renderValueSnippet}
                                                 {@render row.renderValueSnippet(

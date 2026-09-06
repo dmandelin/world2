@@ -90,3 +90,55 @@ table.basic tr:last-child td {
 .stat-band-2 { background-color: #eae7d5; }
 .stat-band-3 { background-color: #d5e0cb; }
 .stat-band-4 { background-color: #b9d2c4; }
+
+/* Bands for eudaimonia, which runs either side of zero. Ten points to a band,
+ * -5..+5 neutral. Same warm-to-cool family as the stat bands above, so a table
+ * carrying both still reads as one thing: clay for a life going badly, the
+ * same parchment in the middle, green-teal for one going well.
+ *
+ * Bands 1-5 are the main ramp, out to about +/-50. Bands 6-10 carry on to
+ * +/-100 in smaller lightness steps with a little more saturation, so the
+ * extremes stay distinguishable without the common range going flat. */
+/* The colour is painted inside a fixed inset rather than filling the cell, so
+ * it stops short of the edges and never runs into the column divider beside
+ * it. Done as a gradient because the alternative -- trimming the cell padding
+ * -- means competing with the table's own padding rules. Each band supplies
+ * only its colour, through the custom property. */
+td.eu-band {
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(
+        to right,
+        transparent 0 0.45em,
+        var(--eu-band) 0.45em calc(100% - 0.45em),
+        transparent calc(100% - 0.45em));
+}
+
+.eu-band-0 { --eu-band: hsl(46, 30%, 88%); }
+
+/* Band 1 steps clear of the neutral parchment at once, in hue and in
+ * lightness both: the commonest reading after "nothing much" is "a little
+ * one way", and it has to be visible as such. */
+.eu-band-p1  { --eu-band: hsl(110, 26%, 85%); }
+.eu-band-p2  { --eu-band: hsl(130, 26%, 81%); }
+.eu-band-p3  { --eu-band: hsl(143, 26%, 77%); }
+.eu-band-p4  { --eu-band: hsl(152, 28%, 73%); }
+.eu-band-p5  { --eu-band: hsl(158, 30%, 69%); }
+/* Past +50: lightness in smaller steps, saturation climbing faster, so these
+ * read as more intense without running away from the main ramp. */
+.eu-band-p6  { --eu-band: hsl(160, 34%, 66%); }
+.eu-band-p7  { --eu-band: hsl(162, 38%, 63%); }
+.eu-band-p8  { --eu-band: hsl(164, 42%, 60%); }
+.eu-band-p9  { --eu-band: hsl(166, 46%, 57%); }
+.eu-band-p10 { --eu-band: hsl(168, 50%, 54%); }
+
+.eu-band-n1  { --eu-band: hsl(32, 54%, 83%); }
+.eu-band-n2  { --eu-band: hsl(27, 55%, 80%); }
+.eu-band-n3  { --eu-band: hsl(22, 52%, 78%); }
+.eu-band-n4  { --eu-band: hsl(17, 54%, 75%); }
+.eu-band-n5  { --eu-band: hsl(13, 56%, 72%); }
+.eu-band-n6  { --eu-band: hsl(11, 58%, 69%); }
+.eu-band-n7  { --eu-band: hsl(9, 60%, 66%); }
+.eu-band-n8  { --eu-band: hsl(8, 62%, 63%); }
+.eu-band-n9  { --eu-band: hsl(7, 64%, 60%); }
+.eu-band-n10 { --eu-band: hsl(6, 66%, 57%); }
