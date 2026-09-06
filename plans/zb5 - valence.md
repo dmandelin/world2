@@ -390,18 +390,17 @@ x   Births and deaths
     x   This would amount to some sort of long-term average growth
         rate as well as matching emotions
 
-*   Food
-    *   Seems like a lack factor but there have probably been
+x   Food
+    x   Seems like a lack factor but there have probably been
         especially preferred foods throughout the hominins!
     x   Quantity is a lack factor.
         *   We could consider having some lack at food 100%,
             if due to friction they don't absolutely always
             have enough to eat.
-    *   Quality is a lack factor if resulting in insufficient
+    x   Quality is a lack factor if resulting in insufficient
         nutrition to the point someone would go hungry. Otherwise
         it can be a plus factor.
-    *   Combining quantity and quality
-        *   
+    x   Combining quantity and quality
 
 *   Kin care and parenting
     *   What does a lack mean?

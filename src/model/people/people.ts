@@ -366,11 +366,16 @@ export class Clan implements TradePartner {
     // rate is what happened to the people who were here.
     updateEudaimonia() {
         const change = this.lastPopulationChange;
+        // Fish stands for hunting and gathering, cereals for mixed farming.
+        // Those are the only two foods, so the shares are complementary.
+        const fishShare = this.consumption.fishRatio;
         this.eudaimonia.update(
             change.births,
             change.deaths,
             change.previousSize,
-            this.consumption.perCapitaFood);
+            this.consumption.perCapitaFood,
+            fishShare,
+            1 - fishShare);
     }
 
     updateHappiness() {

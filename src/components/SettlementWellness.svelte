@@ -12,6 +12,9 @@
     import {
         EuNode,
         EU_SUBSCORES,
+        EU_FOOD_STEPS,
+        EU_FOOD_EXPONENT,
+        EU_FORTUNE_EXPONENT,
         EU_RANGE,
         eudaimoniaAverage,
         type Eudaimonia,
@@ -21,6 +24,7 @@
     import Tooltip from "./Tooltip.svelte";
     import LineGraph from "./LineGraph.svelte";
     import EudaimoniaCalc from "./self/EudaimoniaCalc.svelte";
+    import FoodStepCalc from "./self/FoodStepCalc.svelte";
     import { settlementClanGraphData } from "../model/records/timeline";
     import { ZeroCenteredAutoScaler } from "./linegraph";
 
@@ -59,7 +63,14 @@
     // One replay per clan, shared by every cell of that clan's column, rather
     // than a fresh one for each figure on screen.
     let reports = $derived(
-        new Map(clans.map((c) => [c.uuid, c.eudaimonia.explain()])),
+        new Map(
+            clans.map((c) => [
+                c.uuid,
+                view === "fortune"
+                    ? c.eudaimonia.explainFortune()
+                    : c.eudaimonia.explain(),
+            ]),
+        ),
     );
 
     function total(eu: Eudaimonia): number {
@@ -67,13 +78,26 @@
     }
 
     // In the Fortune view a part is Fortune's own reading of that concern,
-    // not the subscore's signal: Fortune reads food on a straight line where
-    // Hunger squares it, so the two are different numbers. With Hunger the
-    // only contributor so far, the part and the total coincide.
+    // not the subscore's standing value: Fortune reads rations on a straight
+    // line where Food squares them, so the two are different numbers. With
+    // Food the only contributor so far, the part and the total coincide.
     function part(clan: ClanDTO, sub: EuSubscoreDef): number {
         return view === "fortune"
-            ? (reports.get(clan.uuid)?.get(EuNode.Fortune) ?? 0)
+            ? (reports.get(clan.uuid)?.get(EuNode.FoodSignal) ?? 0)
             : clan.eudaimonia.subscore(sub.key);
+    }
+
+    // The steps inside the food figure, shown under it so the quantity and
+    // composition that make up nutrition, and the bonuses that follow, are on
+    // screen rather than only in a tooltip.
+    function foodStep(clan: ClanDTO, node: (typeof EU_FOOD_STEPS)[number]["node"]): number {
+        return reports.get(clan.uuid)?.get(node) ?? 0;
+    }
+
+    function settlementFoodStep(node: (typeof EU_FOOD_STEPS)[number]["node"]): number {
+        return eudaimoniaAverage(
+            clans.map((c) => ({ value: foodStep(c, node), weight: c.population })),
+        );
     }
 
     let settlementValue = $derived(
@@ -98,6 +122,12 @@
     // A faint bar behind a cell, against the notional range, so a row reads as
     // a shape across the settlement before it reads as numbers.
     const barPct = (v: number) => Math.min(100, (Math.abs(v) / EU_RANGE) * 100);
+
+    // Quantity's curve differs between the two readings, and the step
+    // tooltips show the formula, so they need to know which is in play.
+    let quantityExponent = $derived(
+        view === "fortune" ? EU_FORTUNE_EXPONENT : EU_FOOD_EXPONENT,
+    );
 
     let graphData = $derived(
         settlementClanGraphData(
@@ -148,6 +178,20 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- The whole figure first, then what it is made of. -->
+                    <tr class="total">
+                        <th class="rowhead">Everything</th>
+                        <td class="num settlement-col">{n(settlementValue)}</td>
+                        {#each clans as clan (clan.uuid)}
+                            {@const t = total(clan.eudaimonia)}
+                            <td
+                                class="num"
+                                class:pos={t > 0}
+                                class:neg={t < 0}>{n(t)}</td
+                            >
+                        {/each}
+                    </tr>
+
                     <!-- One row per contributing part; each cell explains
                          itself. -->
                     {#each parts as sub (sub.key)}
@@ -203,20 +247,45 @@
                         </tr>
                     {/each}
 
-                    <tr class="total">
-                        <th class="rowhead"
-                            >{view === "fortune" ? "Fortune" : "Total"}</th
+                    <!-- What went into the food figure above. -->
+                    {#each EU_FOOD_STEPS as step (step.node)}
+                        <tr
+                            class="step"
+                            class:substep={step.isSubtotal}
+                            class:part={step.isPart}
                         >
-                        <td class="num settlement-col">{n(settlementValue)}</td>
-                        {#each clans as clan (clan.uuid)}
-                            {@const t = total(clan.eudaimonia)}
-                            <td
-                                class="num"
-                                class:pos={t > 0}
-                                class:neg={t < 0}>{n(t)}</td
+                            <th class="rowhead" title={step.note}
+                                >{step.label}</th
                             >
-                        {/each}
-                    </tr>
+                            <td class="num settlement-col"
+                                >{n(settlementFoodStep(step.node))}</td
+                            >
+                            {#each clans as clan (clan.uuid)}
+                                {@const v = foodStep(clan, step.node)}
+                                <td class="num cell">
+                                    <Tooltip>
+                                        <span
+                                            class:pos={v > 0}
+                                            class:neg={v < 0}>{n(v)}</span
+                                        >
+                                        <div
+                                            slot="tooltip"
+                                            style="text-align: left; color: initial;"
+                                        >
+                                            <FoodStepCalc
+                                                report={reports.get(
+                                                    clan.uuid,
+                                                )!}
+                                                node={step.node}
+                                                exponent={quantityExponent}
+                                            />
+                                        </div>
+                                    </Tooltip>
+                                </td>
+                            {/each}
+                        </tr>
+                    {/each}
+
                 </tbody>
             </table>
         </div>
@@ -399,11 +468,34 @@
         color: #4b5563;
     }
 
+    /* The food breakdown reads as detail beneath the figure it explains. */
+    .step td,
+    .step th {
+        color: #6b7280;
+        font-size: 0.82rem;
+    }
+
+    .step .rowhead {
+        padding-left: 1.1rem;
+        cursor: help;
+    }
+
+    /* Terms sit in under the subtotal they add up to. */
+    .step.part .rowhead {
+        padding-left: 2.2rem;
+    }
+
+    .step.substep td,
+    .step.substep th {
+        color: #1f2328;
+        font-weight: 600;
+    }
+
     .total td,
     .total th {
-        border-top: 1px solid #ddd6c0;
+        border-bottom: 1px solid #ddd6c0;
         font-weight: 700;
-        padding-top: 0.32rem;
+        padding-bottom: 0.32rem;
     }
 
     .pos {

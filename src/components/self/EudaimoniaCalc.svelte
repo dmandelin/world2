@@ -2,16 +2,15 @@
     // The derivation of one figure for one clan, drawn from a replay of last
     // turn's update. Shown in tooltips on the overview row and the panel cells.
     //
-    // Two shapes: a standing subscore, which runs its chain to a signal and
-    // then relaxes toward it; and Fortune, which is the year on its own and
-    // stops at the signal. Fortune reads food through a straight line where
-    // Hunger squares it, so it carries its own chain rather than borrowing
-    // Hunger's.
+    // Three shapes, because the underlying chains are different shapes:
+    //
+    //   Life     a short horizontal chain from births and deaths to a signal
+    //   Food     a column of terms adding to a signal, then a relaxation
+    //   Fortune  the same column on a straight quantity curve, and no
+    //            relaxation, because it is the year rather than the verdict
     import {
         EuNode,
-        EU_FORTUNE_EXPONENT,
-        EU_HUNGER_EXPONENT,
-        EU_HUNGER_SCALE,
+        EU_FOOD_STEPS,
         EU_VITALITY_SCALE,
         type Eudaimonia,
         type EuSubscoreDef,
@@ -29,19 +28,20 @@
     } = $props();
 
     // Replaying costs a few objects, and only happens for a figure someone is
-    // actually pointing at.
-    let r = $derived(eudaimonia.explain());
+    // actually pointing at. Fortune runs the same chain on a different curve,
+    // so it gets its own report rather than sharing one.
+    let r = $derived(
+        fortune ? eudaimonia.explainFortune() : eudaimonia.explain(),
+    );
+
+    let isLife = $derived(!fortune && sub?.key === "life");
 
     let prev = $derived(sub ? r.get(sub.prevNode) : 0);
     let signal = $derived(
-        fortune ? r.get(EuNode.Fortune) : sub ? r.get(sub.signalNode) : 0,
+        fortune ? r.get(EuNode.FoodSignal) : sub ? r.get(sub.signalNode) : 0,
     );
     let pull = $derived(sub ? r.get(sub.pullNode) : 0);
     let value = $derived(sub ? r.get(sub.valueNode) : 0);
-
-    let rawFood = $derived(
-        fortune ? r.get(EuNode.FortuneRaw) : r.get(EuNode.HungerRaw),
-    );
 
     const n = (x: number, p = 1) =>
         (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(p);
@@ -58,13 +58,13 @@
         <div class="head">{fortune ? "Fortune" : (sub?.label ?? "")}</div>
         <div class="blurb">
             {fortune
-                ? "What this year alone was worth, before the long verdict takes it in."
+                ? "What this year's eating alone was worth, before the long verdict takes it in."
                 : (sub?.blurb ?? "")}
         </div>
 
-        <!-- How this year's raw circumstances become a signal. -->
-        <div class="chain">
-            {#if !fortune && sub?.key === "life"}
+        {#if isLife}
+            <!-- Births and deaths, read as a rate, read as eudaimonia. -->
+            <div class="chain">
                 <div class="node">
                     <div class="v">{u(r.get(EuNode.Births))}</div>
                     <div class="l">births</div>
@@ -98,48 +98,71 @@
                     <div class="l">a year</div>
                 </div>
                 <div class="op">&times;{EU_VITALITY_SCALE}</div>
-            {:else}
-                {@const exponent = fortune
-                    ? EU_FORTUNE_EXPONENT
-                    : EU_HUNGER_EXPONENT}
-                <div class="node">
-                    <div class="v">{pctOf(r.get(EuNode.Food))}</div>
-                    <div class="l">of needs</div>
+                <div class="node signal">
+                    <div class="v">{n(signal)}</div>
+                    <div class="l">signal</div>
                 </div>
-                <div class="op">
-                    &rarr; {EU_HUNGER_SCALE}&times;(f{#if exponent !== 1}<sup
-                            >{exponent}</sup
-                        >{/if}&minus;1)
-                </div>
-                <div
-                    class="node"
-                    class:neg={rawFood < 0}
-                    class:muted={rawFood > 0}
+            </div>
+        {:else}
+            <!-- What was eaten, then what it was worth term by term. -->
+            <div class="inputs">
+                <span
+                    ><b>{pctOf(r.get(EuNode.FoodRatio))}</b> of needs</span
                 >
-                    <div class="v">{n(rawFood)}</div>
-                    <div class="l">raw</div>
-                </div>
-                <div class="op" title="Held at zero from above">
-                    &rarr; max 0
+                <span class="sep">·</span>
+                <span><b>{pctOf(r.get(EuNode.FishShare))}</b> fish</span>
+                <span class="sep">·</span>
+                <span><b>{pctOf(r.get(EuNode.CerealShare))}</b> cereals</span>
+            </div>
+
+            <table class="terms">
+                <tbody>
+                    {#each EU_FOOD_STEPS as step (step.node)}
+                        {@const v = r.get(step.node)}
+                        <tr
+                            class:subtotal={step.isSubtotal}
+                            class:part={step.isPart}
+                        >
+                            <td class="label" title={step.note}>
+                                {step.label}
+                                {#if step.node === EuNode.Taste}
+                                    <span class="scale"
+                                        >&times;{r
+                                            .get(EuNode.TasteScale)
+                                            .toFixed(2)}</span
+                                    >
+                                {/if}
+                            </td>
+                            <td class="v" class:pos={v > 0} class:neg={v < 0}
+                                >{n(v)}</td
+                            >
+                        </tr>
+                    {/each}
+                    <tr class="signal-row">
+                        <td class="label"
+                            >{fortune ? "Fortune" : "Food signal"}</td
+                        >
+                        <td
+                            class="v"
+                            class:pos={signal > 0}
+                            class:neg={signal < 0}>{n(signal)}</td
+                        >
+                    </tr>
+                </tbody>
+            </table>
+
+            {#if r.get(EuNode.TasteScale) <= 0}
+                <div class="aside">
+                    Too little to eat for a treat to be worth anything, so the
+                    honey and beer count for nothing this year.
                 </div>
             {/if}
-            <div class="node signal">
-                <div class="v">{n(signal)}</div>
-                <div class="l">{fortune ? "fortune" : "signal"}</div>
-            </div>
-        </div>
-
-        {#if (fortune || sub?.key === "hunger") && rawFood > 0}
-            <div class="aside">
-                More than enough to eat, so it is held at zero: this only ever
-                charges for going short.
-            </div>
         {/if}
 
         {#if fortune}
             <div class="foot">
-                Fortune reads food on a straight line, where the standing
-                Hunger subscore squares it &mdash; this is a report on the
+                Fortune reads rations on a straight line, where the standing
+                Food subscore squares them &mdash; this is a report on the
                 year, not a judgement built over many.
             </div>
         {:else if sub}
@@ -194,6 +217,8 @@
         line-height: 1.35;
     }
 
+    /* --- life's horizontal chain --- */
+
     .chain {
         display: flex;
         flex-direction: row;
@@ -218,7 +243,7 @@
         border-color: #b7c6d8;
     }
 
-    .v {
+    .node .v {
         font-variant-numeric: tabular-nums;
         font-weight: 600;
         font-size: 0.95em;
@@ -236,13 +261,70 @@
     .node.neg .v {
         color: #b91c1c;
     }
-    .node.muted .v {
-        color: #9ca3af;
-    }
 
     .op {
         color: #9ca3af;
         font-size: 0.82em;
+    }
+
+    /* --- food's column of terms --- */
+
+    .inputs {
+        font-size: 0.82em;
+        color: #4b5563;
+    }
+
+    .inputs b {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .sep {
+        color: #c9c2ae;
+        margin: 0 0.3rem;
+    }
+
+    table.terms {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    table.terms td {
+        padding: 1px 0;
+        font-size: 0.88em;
+    }
+
+    table.terms .label {
+        text-align: left;
+        color: #4b5563;
+        padding-right: 1.5rem;
+    }
+
+    table.terms .v {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .scale {
+        color: #9ca3af;
+        font-size: 0.85em;
+        margin-left: 0.3rem;
+    }
+
+    tr.subtotal td {
+        border-top: 1px solid #e5e0d0;
+        font-weight: 600;
+        color: #1f2328;
+    }
+
+    tr.part .label {
+        padding-left: 0.9rem;
+    }
+
+    tr.signal-row td {
+        border-top: 2px solid #ddd6c0;
+        font-weight: 700;
+        color: #1f2328;
+        padding-top: 2px;
     }
 
     .aside {
@@ -252,6 +334,8 @@
         border-left: 2px solid #ddd6c0;
         padding-left: 0.45rem;
     }
+
+    /* --- shared tail --- */
 
     .eq {
         display: flex;
@@ -292,6 +376,13 @@
         font-size: 0.8em;
         color: #4b5563;
         line-height: 1.4;
+    }
+
+    .pos {
+        color: #15803d;
+    }
+    .neg {
+        color: #b91c1c;
     }
 
     b.pos {
