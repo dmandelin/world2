@@ -5,7 +5,7 @@
         type RowDataRowSpec,
     } from "./tables/tables2";
     import { pct, rpct, signed, unsigned } from "../model/lib/format";
-    import { sortedByKey } from "../model/lib/basics";
+    import { sortedByKey, isPositive } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import {
@@ -256,7 +256,7 @@
                 (clan: ClanDTO) => (isClanInSettlement(clan) ? clan.name : `${clan.name} *`),
                 (rowClan: ClanDTO, colClan: ClanDTO) => getAidBid(rowClan, colClan),
                 (bid: FoodAidBidRecord | undefined) => {
-                    if (!bid || bid.requestedPerCapita <= 0) return "-";
+                    if (!bid || !isPositive(bid.requestedPerCapita)) return "-";
                     return `${rpct(bid.receivedPerCapita)} / ${rpct(bid.requestedPerCapita)}`;
                 },
                 aidCellTooltip as any,
@@ -325,7 +325,7 @@
                 (clan: ClanDTO) => (isClanInSettlement(clan) ? clan.name : `${clan.name} *`),
                 (rowClan: ClanDTO, colClan: ClanDTO) => getFoodGift(colClan, rowClan),
                 (gift: FoodGiftRecord | undefined) => {
-                    if (!gift || gift.giftAbs <= 0) return "-";
+                    if (!gift || !isPositive(gift.giftAbs)) return "-";
                     return rpct(gift.giftPerCapita);
                 },
                 giftCellTooltip as any,

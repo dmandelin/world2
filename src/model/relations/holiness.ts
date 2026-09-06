@@ -1,4 +1,4 @@
-import { clamp, sumFun } from "../lib/basics";
+import { clamp, sumFun, isPositive } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
 import { pct, signed } from "../lib/format";
 import type { Clan } from "../people/people";
@@ -51,7 +51,7 @@ export class RitualCredit {
             return;
         }
         const age = year - this.throughYear_;
-        if (age <= 0) return;
+        if (!isPositive(age)) return;
         this.value_ *= Math.pow(0.5, age / this.def.holinessHalfLife);
         this.throughYear_ = year;
     }

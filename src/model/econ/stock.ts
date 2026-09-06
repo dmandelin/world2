@@ -1,4 +1,5 @@
 import { TradeGoods, type TradeGood } from "../trade";
+import { isPositive } from "../lib/basics";
 
 export class StockItem {
     constructor(
@@ -151,7 +152,7 @@ export class Stock {
         const costFactor = 1 + retrievalCostRate;
 
         for (const item of this.items_.values()) {
-            if (!item.good.isSubsistence || item.amount <= 0 || remainingNeeded <= 0) continue;
+            if (!item.good.isSubsistence || !isPositive(item.amount) || !isPositive(remainingNeeded)) continue;
 
             const maxStockNeeded = remainingNeeded * costFactor;
             if (item.amount >= maxStockNeeded) {

@@ -1,4 +1,5 @@
 import { TradeGoods, type TradeGood } from "../trade";
+import { isPositive } from "../lib/basics";
 import type { Clan } from "../people/people";
 import { Activities } from "../decisions/effort";
 
@@ -81,54 +82,54 @@ export class Distribution extends GoodFlows {
     }
 
     addConsumption(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toConsumption.get(good) ?? 0;
         this.toConsumption.set(good, prev + amount);
     }
 
     addStock(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toStock.get(good) ?? 0;
         this.toStock.set(good, prev + amount);
     }
 
     addWaste(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toWaste.get(good) ?? 0;
         this.toWaste.set(good, prev + amount);
     }
 
     addFlood(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toFlood.get(good) ?? 0;
         this.toFlood.set(good, prev + amount);
     }
 
     addRitual(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toRitual.get(good) ?? 0;
         this.toRitual.set(good, prev + amount);
     }
 
     addFestivalFood(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toFestivalFood.get(good) ?? 0;
         this.toFestivalFood.set(good, prev + amount);
     }
 
     addSacrifice(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toSacrifice.get(good) ?? 0;
         this.toSacrifice.set(good, prev + amount);
     }
 
     addDonation(recipient: Clan, good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         this.toDonations.push({ clan: recipient, good, amount });
     }
 
     addGift(recipient: Clan, good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         this.toGifts.push({ clan: recipient, good, amount });
     }
 
@@ -232,7 +233,7 @@ export class StockOutflow extends GoodFlows {
     readonly lost = new Map<TradeGood, number>();
 
     addConsumption(good: TradeGood, amount: number, cost: number = 0): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.toConsumption.get(good) ?? 0;
         this.toConsumption.set(good, prev + amount);
         if (cost > 0) {
@@ -242,7 +243,7 @@ export class StockOutflow extends GoodFlows {
     }
 
     addDonation(recipient: Clan, good: TradeGood, amount: number, cost: number = 0): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         this.toDonations.push({ clan: recipient, good, amount, transactionCost: cost });
         if (cost > 0) {
             const prevCost = this.retrievalCost.get(good) ?? 0;
@@ -251,7 +252,7 @@ export class StockOutflow extends GoodFlows {
     }
 
     addLoss(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        if (!isPositive(amount)) return;
         const prev = this.lost.get(good) ?? 0;
         this.lost.set(good, prev + amount);
     }
@@ -319,6 +320,20 @@ export class ConsumptionItem {
     ) { }
 }
 
+// The inflow guards below read `!isPositive(amount)`, which is false for NaN, so a
+// bad amount would be stored rather than skipped. Once inside the flow maps it
+// stops being traceable: it becomes food totals, then quality of life, then
+// holiness, and only shows up as some unrelated calculation refusing to work.
+// A non-finite amount is always a bug in whatever computed it, so say so here,
+// where the caller is still on the stack.
+function checkFiniteAmount(where: string, good: TradeGood, amount: number): void {
+    if (!Number.isFinite(amount)) {
+        throw new Error(
+            `${where}: ${good?.name ?? good} amount is ${amount}, ` +
+            `expected a finite number.`);
+    }
+}
+
 export class Consumption extends GoodFlows {
     readonly fromProduction = new Map<TradeGood, number>();
     readonly fromStock = new Map<TradeGood, number>();
@@ -326,24 +341,28 @@ export class Consumption extends GoodFlows {
     readonly fromGifts: DirectFlowRecord[] = [];
 
     addProduction(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        checkFiniteAmount('Consumption.addProduction', good, amount);
+        if (!isPositive(amount)) return;
         const prev = this.fromProduction.get(good) ?? 0;
         this.fromProduction.set(good, prev + amount);
     }
 
     addStock(good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        checkFiniteAmount('Consumption.addStock', good, amount);
+        if (!isPositive(amount)) return;
         const prev = this.fromStock.get(good) ?? 0;
         this.fromStock.set(good, prev + amount);
     }
 
     addDonation(donor: Clan, good: TradeGood, amount: number, cost: number = 0): void {
-        if (amount <= 0) return;
+        checkFiniteAmount('Consumption.addDonation', good, amount);
+        if (!isPositive(amount)) return;
         this.fromDonations.push({ clan: donor, good, amount, transactionCost: cost });
     }
 
     addGift(donor: Clan, good: TradeGood, amount: number): void {
-        if (amount <= 0) return;
+        checkFiniteAmount('Consumption.addGift', good, amount);
+        if (!isPositive(amount)) return;
         this.fromGifts.push({ clan: donor, good, amount });
     }
 

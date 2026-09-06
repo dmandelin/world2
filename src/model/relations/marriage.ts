@@ -1,4 +1,4 @@
-import { remove, shuffled, sortedByKey } from "../lib/basics";
+import { remove, shuffled, sortedByKey, isPositive } from "../lib/basics";
 import { weightedRandInt } from "../lib/distributions";
 import type { World } from "../world";
 import type { Clan } from "../people/people";
@@ -115,7 +115,7 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
 
         for (const [wifeClan, proposingHStates] of proposalsToWives.entries()) {
             const wState = states.get(wifeClan)!;
-            if (wState.unmatchedWives <= 0) continue;
+            if (!isPositive(wState.unmatchedWives)) continue;
 
             const sortedHProposals = sortedByKey(
                 proposingHStates,
@@ -123,8 +123,8 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
             );
 
             for (const hState of sortedHProposals) {
-                if (wState.unmatchedWives <= 0) break;
-                if (hState.unmatchedHusbands <= 0) continue;
+                if (!isPositive(wState.unmatchedWives)) break;
+                if (!isPositive(hState.unmatchedHusbands)) continue;
 
                 const count = Math.min(hState.unmatchedHusbands, wState.unmatchedWives);
                 if (count > 0) {

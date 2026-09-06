@@ -1,4 +1,4 @@
-import { chooseWeighted, clamp, sumFun, weightedHarmonicMean } from "./lib/basics";
+import { chooseWeighted, clamp, sumFun, weightedHarmonicMean, isPositive } from "./lib/basics";
 import { poisson } from "./lib/distributions";
 import { SkillDefs } from "./econ/econdefs";
 import { TradeGoods, type TradeGood } from "./trade";
@@ -449,7 +449,7 @@ function drawFood(
     for (const good of FOOD_GOODS) {
         if (owed - paid <= 1e-9) break;
         const amount = Math.min(clan.distribution.undistributed(good), owed - paid);
-        if (amount <= 0) continue;
+        if (!isPositive(amount)) continue;
         take(good, amount);
         paid += amount;
     }

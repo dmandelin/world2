@@ -386,8 +386,8 @@ satisfaction.
 
 Let's take one item at a time.
 
-*   Births and deaths
-    *   This would amount to some sort of long-term average growth
+x   Births and deaths
+    x   This would amount to some sort of long-term average growth
         rate as well as matching emotions
 
 *   Food

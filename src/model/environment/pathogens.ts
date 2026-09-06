@@ -1,6 +1,6 @@
 import { Processes } from "../econ/econdefs";
 import { Process } from "../econ/process";
-import { sum, sumFun } from "../lib/basics";
+import { sum, sumFun, isPositive } from "../lib/basics";
 import type { SettlementCluster } from "../people/cluster";
 import type { Clan } from "../people/people";
 
@@ -58,7 +58,7 @@ export class DiseaseLoadItem {
     constructor(readonly label: string, public effort: number, public diseaseLoadFactor: number) { }
 
     finish(): void {
-        if (this.effort <= 0) return;
+        if (!isPositive(this.effort)) return;
         this.load = Math.max(0, 0.05 * Math.log10(Math.max(0.001, this.effort)) * this.diseaseLoadFactor);
     }
 }

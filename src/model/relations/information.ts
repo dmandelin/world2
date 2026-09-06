@@ -1,4 +1,4 @@
-import { clamp, sumFun } from "../lib/basics";
+import { clamp, sumFun, isPositive } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { Connection } from "./connection";
 import { KinConnection, MarriageConnection } from "./connection";
@@ -378,7 +378,7 @@ export class NewsItem {
     // even by those barely paying attention. Full attention hears everything,
     // and no attention hears nothing, at any size.
     transmissionChance(attention: number): number {
-        if (attention <= 0) return 0;
+        if (!isPositive(attention)) return 0;
         if (attention >= 1) return 1;
         const reach = this.def.newsReach * Math.max(0, this.salience);
         return 1 - Math.pow(1 - attention, 1 + reach);
@@ -1166,14 +1166,14 @@ export class Observation {
         credence?: number,
     ): void {
         const w = clamp(weight, 0, 1);
-        if (w <= 0) return;
+        if (!isPositive(w)) return;
 
         const valueBefore = this.value_;
         const confidenceBefore = this.confidence_;
 
         // With nothing yet believed there is nothing to square the report
         // against, so a first report is taken at face value.
-        const agreement = this.confidence_ <= 0 ? 1 : clamp(
+        const agreement = !isPositive(this.confidence_) ? 1 : clamp(
             1 - Math.abs(reported - this.value_)
                 / (AGREEMENT_TOLERANCE_SPREADS * Math.max(spread, 1e-6)),
             -1, 1);
@@ -1227,7 +1227,7 @@ export class Observation {
     // belief is the one the undivided clan had, but the members who knew it
     // best may have gone the other way.
     degradeForSplit(year: number): void {
-        if (this.confidence_ <= 0) return;
+        if (!isPositive(this.confidence_)) return;
         this.value_ = this.def.perceivable(
             this.value_ + normal(0, this.def.splitStdev));
         this.confidence_ *= this.def.splitConfidenceFactor;
@@ -1241,7 +1241,7 @@ export class Observation {
         const from = this.fadedThrough_ ?? this.lastUpdated_;
         if (from === undefined) return;
         const age = year - from;
-        if (age <= 0) return;
+        if (!isPositive(age)) return;
         this.confidence_ *= Math.pow(0.5, age / this.def.staleHalfLife);
         this.fadedThrough_ = year;
     }
@@ -1542,7 +1542,7 @@ export function updateInformationLevels(world: World, rate?: number): void {
                 const teller = world.clanMap.get(tellerID);
                 if (!teller) continue;
                 const closeness = clamp(tellerLink.information.contact, 0, 1);
-                if (closeness <= 0) continue;
+                if (!isPositive(closeness)) continue;
                 const tellerKnows =
                     world.perceptions.get(teller, objectID)?.information.level ?? 0;
                 unknown *= 1 - INFORMATION_SPREAD_SHARE * closeness * tellerKnows;
@@ -1594,7 +1594,7 @@ export function recordFoodAid(
     amount: number,
     recipientFoodPerCapita: number,
 ): void {
-    if (amount <= 0) return;
+    if (!isPositive(amount)) return;
     // Aid looms as large as it mattered to the recipient, so size is measured
     // against a year's ration for one of its members.
     const perCapita = amount / Math.max(1, recipient.population);
@@ -1614,7 +1614,7 @@ export function recordFoodAid(
 // there is no need to record: what it says is simply that the giver had
 // something to spare and chose this neighbor.
 export function recordFoodGift(donor: Clan, recipient: Clan, amount: number): void {
-    if (amount <= 0) return;
+    if (!isPositive(amount)) return;
     const perCapita = amount / Math.max(1, recipient.population);
     recordDirectEvent(donor, recipient, new NewsItem({
         def: NewsKinds.Gift,
@@ -1647,7 +1647,7 @@ export function recordConflict(
     hawkPlays: number,
     encounters: number,
 ): void {
-    if (hawkPlays <= 0) return;
+    if (!isPositive(hawkPlays)) return;
     recordDirectEvent(aggressor, victim, new NewsItem({
         def: NewsKinds.Conflict,
         year: aggressor.world.year.value,
@@ -1709,7 +1709,7 @@ export function propagateNews(world: World): void {
             const teller = world.clanMap.get(tellerID);
             if (!teller) continue;
             const attention = getRelativeAttention(hearer, teller);
-            if (attention <= 0) continue;
+            if (!isPositive(attention)) continue;
 
             for (const item of news) {
                 if (known.has(item.eventId)) continue;
@@ -1755,7 +1755,7 @@ export const MEMORY_BASE_CAPACITY = 7;
 export const MEMORY_REFERENCE_POPULATION = 20;
 
 export function memoryCapacity(population: number): number {
-    if (population <= 0) return 0;
+    if (!isPositive(population)) return 0;
     return MEMORY_BASE_CAPACITY
         * Math.pow(population / MEMORY_REFERENCE_POPULATION, 1 / 6);
 }
@@ -2038,7 +2038,7 @@ function observeDirectly(world: World, year: number): void {
             const object = world.clanMap.get(objectID);
             if (!object) continue;
             const attention = clamp(getRelativeAttention(subject, object), 0, 1);
-            if (attention <= 0) continue;
+            if (!isPositive(attention)) continue;
 
             for (const def of ALL_OBSERVATION_DEFS) {
                 const seen = def.valueFn(subject, object);
@@ -2089,9 +2089,9 @@ function passAlongObservations(world: World, year: number): void {
                 clamp(getRelativeAttention(teller, about), 0, 1);
             for (const def of ALL_OBSERVATION_DEFS) {
                 const held = perceptions.information.observations.get(def);
-                if (!held || held.hops !== 0 || held.confidence <= 0) continue;
+                if (!held || held.hops !== 0 || !isPositive(held.confidence)) continue;
                 const chance = def.transmissionChance(attentionToSubject, held.estimate);
-                if (chance <= 0) continue;
+                if (!isPositive(chance)) continue;
                 items.push({ def, held, about: aboutID, chance });
             }
         }
@@ -2119,7 +2119,7 @@ function passAlongObservations(world: World, year: number): void {
             const teller = world.clanMap.get(tellerID);
             if (!teller) continue;
             const attention = clamp(getRelativeAttention(hearer, teller), 0, 1);
-            if (attention <= 0) continue;
+            if (!isPositive(attention)) continue;
 
             for (const { def, held, about, chance } of items) {
                 // Nobody needs to be told about themselves, and a hearer with

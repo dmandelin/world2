@@ -1,4 +1,5 @@
 import { GenericItem, type UUID } from "../records/basicdata";
+import { isPositive } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { ClanDTO, WorldDTO } from "../records/dtos";
 import type { World } from "../world";
@@ -42,7 +43,7 @@ export class MutualAidInteraction extends Interaction {
 }
 
 export function clanHelpDemand(population: number): number {
-    if (population <= 0) return 0;
+    if (!isPositive(population)) return 0;
     return population * Math.sqrt(10 / population);
 }
 
@@ -184,7 +185,7 @@ export function getHelpReceivedValueFromMutualAid(world: World | WorldDTO, clan:
 }
 
 export function getHelpProductivityModifier(help: number, demand: number): number {
-    if (demand <= 0) return 1.0;
+    if (!isPositive(demand)) return 1.0;
     const r = help / demand;
     // f(r) = 0.6 + 0.7 * (1 - e^(-0.8473 * r))
     return 0.6 + 0.7 * (1 - Math.exp(-0.8473 * r));

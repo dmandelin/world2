@@ -80,6 +80,27 @@ export function removeAll<T>(aa: T[], predicate: (t: T) => boolean): void {
     }
 }
 
+// True only for a quantity greater than zero, NaN included in what it rejects.
+//
+// Use this instead of writing a rejection guard as `if (x <= 0) return;`. That
+// form is wrong in a way that is easy to miss: NaN compares false against
+// every operator, so `NaN <= 0` is false and a NaN walks straight through the
+// guard that exists to stop bad values. Written the other way round, as
+// `if (!isPositive(x)) return;`, NaN is rejected alongside zero and negatives,
+// because `NaN > 0` is false too.
+//
+// This is not hypothetical. A respect score dipping a hair below zero made
+// getPrestige return NaN; three separate `<= 0` guards passed it along; it was
+// stored as a food gift, became the clan's food total, its quality of life,
+// and its holiness, and finally surfaced as an unrelated failure to choose a
+// ritual officiant, eight steps from the cause.
+//
+// Note this admits Infinity, which is positive. Where a value must also be
+// finite, check that separately and say so.
+export function isPositive(x: number): boolean {
+    return x > 0;
+}
+
 export function clamp(value: number, min: number = 0.0, max: number = 1.0) {
     if (isNaN(value)) return min;
     return Math.min(Math.max(value, min), max);
@@ -138,20 +159,61 @@ export function chooseFrom<T>(iterable: Iterable<T>, remove: boolean = false): T
     return remove ? arr.splice(i, 1)[0] : arr[i];
 }
 
+// A random element, each chosen with probability proportional to its weight.
+// Weights must be finite and non-negative, with at least one positive.
+//
+// The scan accumulates raw weights forward against a target of r * totalWeight
+// rather than subtracting normalized shares from r. Those shares sum to
+// slightly less than 1 in floating point, so the subtracting form could run out
+// of elements on a draw landing in that last sliver and fall through -- odds
+// around 1e-15 per call, which is rare enough to survive for years and to be
+// unreproducible whenever it did happen. Accumulating against a target that is
+// below the same running total cannot run out, and the clamp at the end covers
+// the boundary where r * totalWeight rounds up to totalWeight itself.
+//
+// Bad weights are reported rather than tolerated. Treating a NaN as zero would
+// silently bury whatever upstream calculation produced it, so the error names
+// the offending element instead.
 export function chooseWeighted<T>(arr: readonly T[], weightFn: (t: T) => number): T {
-    const ws = arr.map(weightFn);
-    const totalWeight = sum(ws);
-    
-    let randomValue = Math.random();
-    for (let i = 0; i < arr.length; ++i) {
-        randomValue -= ws[i] / totalWeight;
-        if (randomValue <= 0) {
-            return arr[i];
-        }
+    if (arr.length === 0) {
+        throw new Error('chooseWeighted: no elements to choose from.');
     }
-    
-    debugger;
-    throw new Error("Failed to choose a weighted element, may indicate bad input.");
+
+    const ws = arr.map(weightFn);
+    let totalWeight = 0;
+    let lastPositive = -1;
+    for (let i = 0; i < ws.length; ++i) {
+        const w = ws[i];
+        if (!Number.isFinite(w) || w < 0) {
+            throw new Error(
+                `chooseWeighted: weight[${i}] is ${w}, expected a finite ` +
+                `weight >= 0. Weights: [${ws.join(', ')}]`);
+        }
+        if (w > 0) lastPositive = i;
+        totalWeight += w;
+    }
+    if (lastPositive < 0) {
+        throw new Error(
+            `chooseWeighted: all ${ws.length} weights are zero, so there is ` +
+            `nothing to choose between.`);
+    }
+    if (!Number.isFinite(totalWeight)) {
+        throw new Error(
+            `chooseWeighted: weights sum to ${totalWeight}; scale them down ` +
+            `before choosing. Weights: [${ws.join(', ')}]`);
+    }
+
+    // Math.random() < 1, so the target is below the total. Strict `>` keeps a
+    // zero-weight element from ever being returned, including at target 0.
+    const target = Math.random() * totalWeight;
+    let acc = 0;
+    for (let i = 0; i < arr.length; ++i) {
+        acc += ws[i];
+        if (acc > target) return arr[i];
+    }
+    // Reachable only when rounding leaves the accumulation a hair short of the
+    // target. The last element carrying weight is the right answer there.
+    return arr[lastPositive];
 }
 
 export function shuffled<T>(arr: T[]): T[] {

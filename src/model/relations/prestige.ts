@@ -10,9 +10,18 @@ import { getRespect } from "./respect";
 // growth of the product (respect is always >= 0).
 export function getPrestige(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     const alignment = getAlignment(subject, object);
-    // Respect runs 0-100; rescale to 0-1 so it blends on the same scale as
-    // alignment (which is -1 to 1).
-    const respect = getRespect(subject, object) / 100;
+    // Respect nominally runs 0-100; rescale to 0-1 so it blends on the same
+    // scale as alignment (which is -1 to 1).
+    //
+    // Nominally, but not in fact: respect is a running average of its items
+    // with no floor, so a clan thought poorly enough of dips a hair below
+    // zero. Unfloored, the square root of a negative product returned NaN,
+    // and nothing downstream rejected it -- the `x <= 0` guards in the gift
+    // and consumption paths all pass NaN through -- so it spread silently
+    // into food totals, quality of life, and holiness, and finally surfaced
+    // a long way off as a failure to choose a ritual officiant. Barely
+    // negative respect means no respect, so the floor costs nothing.
+    const respect = Math.max(0, getRespect(subject, object) / 100);
     return Math.sign(alignment) * Math.sqrt(Math.abs(alignment) * respect);
 }
 

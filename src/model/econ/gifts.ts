@@ -1,4 +1,5 @@
 import type { Clan } from "../people/people";
+import { isPositive } from "../lib/basics";
 import { TradeGoods } from "../trade";
 import { getPrestige } from "../relations/prestige";
 import { connectedClans } from "../relations/connection";
@@ -63,14 +64,14 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
     const rawGiftsByDonor = new Map<string, RawGiftEntry[]>();
 
     for (const donor of allClans) {
-        if (donor.population <= 0) continue;
+        if (!isPositive(donor.population)) continue;
         const totalFoodProd = donor.production.totalFood();
-        if (totalFoodProd <= 0) continue;
+        if (!isPositive(totalFoodProd)) continue;
 
         for (const recipient of connectedClans(donor)) {
-            if (recipient.uuid === donor.uuid || recipient.population <= 0) continue;
+            if (recipient.uuid === donor.uuid || !isPositive(recipient.population)) continue;
             const prestige = getPrestige(donor, recipient);
-            if (prestige <= 0) continue;
+            if (!isPositive(prestige)) continue;
 
             let factor = 0.01;
             if (
@@ -88,7 +89,7 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
             }
 
             const rawGiftAbs = factor * prestige * totalFoodProd;
-            if (rawGiftAbs <= 0) continue;
+            if (!isPositive(rawGiftAbs)) continue;
 
             let entries = rawGiftsByDonor.get(donor.uuid);
             if (!entries) {
@@ -149,7 +150,7 @@ export function shareFoodGifts(allClans: Clan[]): FoodGiftsResult {
     }
 
     for (const clan of allClans) {
-        if (clan.population <= 0) continue;
+        if (!isPositive(clan.population)) continue;
         const pop = clan.population || 1;
         const givenAbs = giftsGivenMap.get(clan.uuid) ?? 0;
         const receivedAbs = giftsReceivedMap.get(clan.uuid) ?? 0;

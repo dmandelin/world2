@@ -1,7 +1,7 @@
 import type { Clan } from "../people/people";
 import { TradeGoods } from "../trade";
 import { getAlignment } from "../relations/alignment";
-import { sumFun } from "../lib/basics";
+import { sumFun, isPositive } from "../lib/basics";
 import { connectedClans } from "../relations/connection";
 import { getRelativeAttention } from "../relations/basicinteraction";
 import { recordFoodAid } from "../relations/information";
@@ -146,7 +146,7 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
         for (const donor of connectedClans(requester)) {
             if (donor.uuid === requester.uuid) continue;
             const donorBudget = donorBudgets.get(donor.uuid)?.budget ?? 0;
-            if (donorBudget <= 0) continue;
+            if (!isPositive(donorBudget)) continue;
 
             const alignment = getAlignment(donor, requester);
             const mutualRelativeAttention = getRelativeAttention(donor, requester);

@@ -1,6 +1,6 @@
 import type { Clan } from "./people/people";
 import type { NoteTaker } from "./records/notifications";
-import { mapNormalized, sumFun, weightedHarmonicMean } from "./lib/basics";
+import { mapNormalized, sumFun, weightedHarmonicMean, isPositive } from "./lib/basics";
 import { SkillDefs } from "./econ/econdefs";
 
 export const RitualGoodsUsage = {
@@ -94,7 +94,7 @@ export class Rites {
 
     private friction(participantCount: number): number {
         const extras = participantCount - this.expectedParticipantCount;
-        if (extras <= 0) return 0;
+        if (!isPositive(extras)) return 0;
 
         return -extras / 30;
     }

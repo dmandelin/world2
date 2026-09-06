@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { isPositive } from "../model/lib/basics";
     import { pct, signed, unsigned, xm } from "../model/lib/format";
     import { populationAverage } from "../model/lib/modelbasics";
     import {
@@ -313,7 +314,7 @@
             value: (c) => {
                 const total =
                     (feast?.labor ?? 0) + (rite?.labor ?? 0);
-                if (total <= 0) return 0;
+                if (!isPositive(total)) return 0;
                 return (
                     ((part(feast, c)?.labor ?? 0)
                         + (part(rite, c)?.labor ?? 0)) / total

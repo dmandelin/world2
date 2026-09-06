@@ -6,7 +6,7 @@
 
 import { SkillDefs } from "../econ/econdefs";
 import { NUMERIC_TRAITS } from "../people/traits";
-import { sumFun } from "../lib/basics";
+import { sumFun, isPositive } from "../lib/basics";
 import { weightedAverage } from "../lib/modelbasics";
 import type { Clan } from "../people/people";
 import type { Perceptions } from "../relations/perceptions";
@@ -25,7 +25,7 @@ function averageToward(clan: Clan, pick: (p: Perceptions) => number): number {
     let weight = 0;
     for (const [subjectUuid, perceptions] of clan.world.perceptions.getRegarding(clan)) {
         const subject = clan.world.clanMap.get(subjectUuid);
-        if (!subject || subject === clan || subject.population <= 0) continue;
+        if (!subject || subject === clan || !isPositive(subject.population)) continue;
         weighted += pick(perceptions) * subject.population;
         weight += subject.population;
     }

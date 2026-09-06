@@ -4,7 +4,7 @@
 // year's spread across runs is summarized — so the charts can show a real
 // distribution from the first year rather than filling in run by run.
 
-import { sumFun } from "../../model/lib/basics";
+import { sumFun, isPositive } from "../../model/lib/basics";
 import { eudaimoniaAverage } from "../../model/self/eudaimonia";
 import { loggingEnabled, setLoggingEnabled } from "../../model/lib/debug";
 import { applyTuning, readTuning, type TuningParams } from "../../model/tuning";
@@ -47,12 +47,12 @@ function sample(world: World, key: MetricKey): number {
             return world.totalPopulation;
         case 'foodProduction': {
             const people = world.totalPopulation;
-            if (people <= 0) return 0;
+            if (!isPositive(people)) return 0;
             return sumFun(world.allClans, (c) => c.production.totalFood()) / people;
         }
         case 'foodConsumption': {
             const people = world.totalPopulation;
-            if (people <= 0) return 0;
+            if (!isPositive(people)) return 0;
             return sumFun(world.allClans, (c) => c.consumption.totalFood) / people;
         }
         case 'eudaimonia':
@@ -121,7 +121,7 @@ export async function runTuningBatch(
             for (let i = 0; i < worlds.length; i++) {
                 if (!alive[i]) continue;
                 worlds[i].advanceHeadless();
-                if (worlds[i].totalPopulation <= 0) alive[i] = false;
+                if (!isPositive(worlds[i].totalPopulation)) alive[i] = false;
             }
             pending.push(frameFor(year, worlds));
 

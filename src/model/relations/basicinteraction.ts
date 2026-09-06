@@ -1,4 +1,5 @@
 import { GenericItem, uuidOf, type HasOrIsUUID, type UUID } from "../records/basicdata";
+import { isPositive } from "../lib/basics";
 import { pct } from "../lib/format";
 import type { Clan } from "../people/people";
 import type { ClanDTO } from "../records/dtos";
@@ -136,7 +137,7 @@ export function updateBasicInteractions(world: World): void {
             const matchedRelativeOffer = Math.min(relativeOffer1to2, relativeOffer2to1);
             // Neither clan can establish an interaction unless it can first
             // cover the fixed cost.
-            if (matchedRelativeOffer <= 0) continue;
+            if (!isPositive(matchedRelativeOffer)) continue;
 
             const matchedOffer1to2 =
                 matchedRelativeOffer * c2.population + BASIC_INTERACTION_FIXED_COST;

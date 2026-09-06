@@ -1,3 +1,4 @@
+import { isPositive } from "../lib/basics";
 // A running total that stands and fades: something happened, it counted for
 // a while, and it counts for less every year after. Used for the marks a
 // ritual leaves on how one clan sees another -- how holy it takes them to be,
@@ -30,7 +31,7 @@ export class DecayingCredit {
             return;
         }
         const age = year - this.throughYear_;
-        if (age <= 0) return;
+        if (!isPositive(age)) return;
         this.value_ *= Math.pow(0.5, age / this.halfLife);
         this.throughYear_ = year;
     }

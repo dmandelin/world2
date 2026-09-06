@@ -1,6 +1,6 @@
 import type { Clan } from "./people";
 import { DiseaseLoadCalc } from "../environment/pathogens";
-import { clamp, productFun, sum, sumFun } from "../lib/basics";
+import { clamp, productFun, sum, sumFun, isPositive } from "../lib/basics";
 import { spct } from "../lib/format";
 import { getLocalPrestige, getPrestige } from "../relations/prestige";
 import { zScore } from "../lib/modelbasics";
@@ -121,7 +121,7 @@ const SEX_FACTORS = [1, 1.1]; // female, male mortality multiplier
 // Bernoulli draw for the fractional part. Slices are small, so per-item die
 // rolls are simple and fast enough.
 function randomCount(n: number, p: number): number {
-    if (n <= 0 || p <= 0) return 0;
+    if (!isPositive(n) || !isPositive(p)) return 0;
     const whole = Math.floor(p);
     const frac = p - whole;
     let count = n * whole;
@@ -166,7 +166,7 @@ function applyRitualDeathAdjustment(
         // Whoever it takes is drawn from the living in proportion to numbers.
         let total = 0;
         for (const row of survivors) total += row[0] + row[1];
-        if (total <= 0) break;
+        if (!isPositive(total)) break;
         let target = Math.floor(Math.random() * total);
         outer: for (let i = 0; i < survivors.length; ++i) {
             for (let g = 0; g < 2; ++g) {
@@ -187,7 +187,7 @@ function applyRitualDeathAdjustment(
 function redistributeRisks(risks: number[]): number[] {
     const overall = 1 - risks.reduce((acc, r) => acc * (1 - r), 1);
     const total = risks.reduce((a, b) => a + b, 0);
-    if (total <= 0) return risks.map(() => 0);
+    if (!isPositive(total)) return risks.map(() => 0);
     return risks.map(r => overall * (r / total));
 }
 
@@ -369,9 +369,7 @@ export class PopulationChangeBuilder {
         readonly clan: Clan,
         readonly yearsElapsed: number = clan.world?.yearsPerTick ?? 1,
     ) {
-        const safeVal = (v: number, fallback: number = 1) => (isNaN(v) || !isFinite(v)) ? fallback : v;
-
-        const subsistence = safeVal(this.clan.consumption.perCapitaFood, 1);
+        const subsistence = this.clan.consumption.perCapitaFood;
         const foodQuantityBrModifier = clamp(subsistence, 0, 2);
         this.brModifiers.push(new PopulationChangeModifier(
             'Food Quantity', subsistence, foodQuantityBrModifier));
@@ -381,30 +379,30 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Food Quantity', subsistence, subsistenceDrModifier));
 
-        const fishRat = safeVal(this.clan.consumption.fishRatio, 0.5);
-        const foodQualityModifier = safeVal(foodVarietyHealthFactor(fishRat), 1);
+        const fishRat = this.clan.consumption.fishRatio;
+        const foodQualityModifier = foodVarietyHealthFactor(fishRat);
         this.brModifiers.push(new PopulationChangeModifier(
             'Food Quality', fishRat, foodQualityModifier));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quality', fishRat, safeVal(1 / foodQualityModifier, 1)));
+            'Food Quality', fishRat, 1 / foodQualityModifier));
 
-        const shelterModifier = 1 + 0.01 * safeVal(this.clan.housing.shelter, 1);
+        const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
         this.brModifiers.push(new PopulationChangeModifier(
             'Shelter', this.clan.housing.name, shelterModifier));
 
-        const allBrideAppeals = this.clan.world.allClans.map(c => safeVal(getAvgAppealToBrides(c), 0));
-        const clanBrideAppeal = safeVal(getAvgAppealToBrides(this.clan), 0);
-        const brideAppealZScore = safeVal(zScore(clanBrideAppeal, allBrideAppeals), 0);
+        const allBrideAppeals = this.clan.world.allClans.map(c => getAvgAppealToBrides(c));
+        const clanBrideAppeal = getAvgAppealToBrides(this.clan);
+        const brideAppealZScore = zScore(clanBrideAppeal, allBrideAppeals);
         const marriageAppealBrModifier = clamp(1 + 0.1 * brideAppealZScore, 0.67, 1.5);
         this.brModifiers.push(new PopulationChangeModifier(
             'Marriage Appeal', clanBrideAppeal, marriageAppealBrModifier));
 
-        const resFrac = safeVal(this.clan.residenceFraction, 1);
+        const resFrac = this.clan.residenceFraction;
         const mobilityBrModifier = clamp(1 + 0.5 * resFrac, 1, 1.5);
         this.brModifiers.push(new PopulationChangeModifier(
             'Settlement', resFrac, mobilityBrModifier));
 
-        const prestigeVal = safeVal(100 * getLocalPrestige(this.clan), 0);
+        const prestigeVal = 100 * getLocalPrestige(this.clan);
         const prestigeBrModifier = 1 + 0.003 * prestigeVal;
         this.brModifiers.push(new PopulationChangeModifier(
             'Prestige', prestigeVal, prestigeBrModifier));
@@ -423,23 +421,23 @@ export class PopulationChangeBuilder {
         // A good year of feasts: people eat well in company a few times a
         // year, marry more readily for having met, and go home in better
         // health and temper than they came.
-        const appeal = safeVal(festivalAppeal(this.clan), 0);
+        const appeal = festivalAppeal(this.clan);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Festivals', appeal, safeVal(feastBirthRateModifier(this.clan), 1)));
+            'Festivals', appeal, feastBirthRateModifier(this.clan)));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Festivals', appeal, safeVal(feastDeathRateModifier(this.clan), 1)));
+            'Festivals', appeal, feastDeathRateModifier(this.clan)));
 
         // Care shows up on the birth rate as a single figure, and on the death
         // rates per age slice, where the effect really lives; the death-rate
         // entry here is the middling slices' worth of it, so the breakdown
         // reads as something rather than nothing.
-        const care = safeVal(this.clan.careSkill, 50);
+        const care = this.clan.careSkill;
         this.brModifiers.push(new PopulationChangeModifier(
-            'Care', care, safeVal(careBirthRateModifier(care), 1)));
+            'Care', care, careBirthRateModifier(care)));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Care', care, safeVal(careDeathRateModifier(care, 1), 1)));
+            'Care', care, careDeathRateModifier(care, 1)));
 
-        const intellect = safeVal(this.clan.traits?.intellect ?? 50, 50);
+        const intellect = this.clan.traits?.intellect ?? 50;
         const foresightBrModifier = Math.pow(0.9, (intellect - 50) / 15);
         const foresightDrModifier = Math.pow(0.95, (intellect - 50) / 15);
         this.brModifiers.push(new PopulationChangeModifier(
@@ -447,8 +445,8 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Foresight', intellect, foresightDrModifier));
 
-        this.brModifier = safeVal(productFun(this.brModifiers, m => m.value), 1);
-        this.drModifier = safeVal(productFun(this.drModifiers, m => m.value), 1);
+        this.brModifier = productFun(this.brModifiers, m => m.value);
+        this.drModifier = productFun(this.drModifiers, m => m.value);
     }
 
     // Build a population change in three clear steps:

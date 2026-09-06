@@ -13,6 +13,7 @@
 // variables happen to be listed in.
 
 import { fUpperP, tTwoSidedP } from "./distributions";
+import { isPositive } from "../lib/basics";
 import type { SnapshotStream, SnapshotValue } from "../data/sessions";
 
 // Categorical variables beyond this many distinct values are identity-like
@@ -255,7 +256,7 @@ export function runAnova(
     const yCentered = new Float64Array(n);
     for (let i = 0; i < n; i++) yCentered[i] = y[i] - yMean;
     const totalSumSq = dot(yCentered, yCentered);
-    if (totalSumSq <= 0) return { error: `"${outputName}" is constant over these rows.` };
+    if (!isPositive(totalSumSq)) return { error: `"${outputName}" is constant over these rows.` };
     const ySd = Math.sqrt(totalSumSq / (n - 1));
 
     // Design columns.
@@ -333,7 +334,7 @@ export function runAnova(
     const modelDf = full.kept.length;
     const modelSumSq = full.explainedSumSq;
     const residualDf = n - modelDf - 1;
-    if (residualDf <= 0) return { error: 'Not enough residual degrees of freedom; use fewer inputs.' };
+    if (!isPositive(residualDf)) return { error: 'Not enough residual degrees of freedom; use fewer inputs.' };
 
     const residualSumSq = Math.max(0, totalSumSq - modelSumSq);
     const residualMeanSq = residualSumSq / residualDf;

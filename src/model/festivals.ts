@@ -1,4 +1,4 @@
-import { clamp, safeDiv, sumFun, weightedGeometricMean } from './lib/basics';
+import { clamp, safeDiv, sumFun, weightedGeometricMean, isPositive } from "./lib/basics";
 import { normal } from './lib/distributions';
 import { ces } from './lib/modelbasics';
 import { TradeGoods, type TradeGood } from './trade';
@@ -128,7 +128,7 @@ export function ritualScaleFactor(
         // it at the peak.
         return clamp(1 + doublingsPastPeak / Math.log2(peakPopulation), 0, 1);
     }
-    if (halfLifeDoublings <= 0) return 0;
+    if (!isPositive(halfLifeDoublings)) return 0;
     const halvings = Math.pow(
         doublingsPastPeak / halfLifeDoublings, SCALE_DECLINE_SHARPNESS);
     return clamp(Math.pow(2, -halvings), 0, 1);
@@ -226,7 +226,7 @@ export class RitualAspectDef {
     combineSkills(clans: readonly Clan[]): number {
         const present = clans.filter(c => c.population > 0);
         const total = sumFun(present, c => c.population);
-        if (!present.length || total <= 0) return 0;
+        if (!present.length || !isPositive(total)) return 0;
         const share = (c: Clan) => c.population / total;
 
         if (this.skillCombination === 'ces') {
@@ -282,7 +282,7 @@ export class RitualAspectDef {
     // Time and food into a base value, with 1 meaning "the standard, done as
     // it has always been done".
     baseValue(timeRatio: number, foodRatio: number): number {
-        if (timeRatio <= 0 || foodRatio <= 0) return 0;
+        if (!isPositive(timeRatio) || !isPositive(foodRatio)) return 0;
         const value = ces([timeRatio, foodRatio], {
             rho: this.rho,
             alpha: [0.5, 0.5],
@@ -745,7 +745,7 @@ function drawFestivalFood(
     for (const good of FOOD_GOODS) {
         if (owed - paid <= 1e-9) break;
         const amount = Math.min(clan.distribution.undistributed(good), owed - paid);
-        if (amount <= 0) continue;
+        if (!isPositive(amount)) continue;
 
         const eaten = amount * eatenShare;
         const sacrificed = amount - eaten;
@@ -772,7 +772,7 @@ export function settleFestivalEconomy(settlements: readonly Settlement[]): void 
             clan.festivals.startYear();
             for (const aspect of ALL_RITUAL_ASPECTS) {
                 const owed = clan.festivals.foodOwed(aspect);
-                if (owed <= 0) continue;
+                if (!isPositive(owed)) continue;
                 drawFestivalFood(clan, aspect, owed, eatenShare);
             }
         }

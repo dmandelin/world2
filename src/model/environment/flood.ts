@@ -1,4 +1,4 @@
-import { clamp, dice, sumFun } from "../lib/basics";
+import { clamp, dice, sumFun, isPositive } from "../lib/basics";
 import { plusOrMinus, weightedRandInt } from "../lib/distributions";
 import { TradeGoods } from "../trade";
 import type { Clan } from "../people/people";
@@ -375,7 +375,7 @@ export class ExtremeFlood {
         let total = 0;
         for (const item of this.impacts) {
             const damage = item.clan.floodDamage;
-            if (damage.totalDeathRisk <= 0) continue;
+            if (!isPositive(damage.totalDeathRisk)) continue;
             total += damage.deaths * item.deathRisk / damage.totalDeathRisk;
         }
         return total;
@@ -437,7 +437,7 @@ export class ClanFloodDamage {
     recordCropsLost(amount: number): void {
         const shares = this.impacts.map(i => i.cropLoss);
         const total = shares.reduce((a, b) => a + b, 0);
-        if (total <= 0) return;
+        if (!isPositive(total)) return;
         this.impacts.forEach((impact, i) => {
             impact.cropsLost += amount * shares[i] / total;
         });
@@ -491,7 +491,7 @@ export function applyFloodCropLosses(clans: Iterable<Clan>): void {
         const damage = clan.floodDamage;
         if (!damage.affected) continue;
         const lost = clan.distribution.undistributed(TradeGoods.Cereals) * damage.cropLoss;
-        if (lost <= 0) continue;
+        if (!isPositive(lost)) continue;
         clan.distribution.addFlood(TradeGoods.Cereals, lost);
         damage.recordCropsLost(lost);
     }

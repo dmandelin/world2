@@ -1,4 +1,4 @@
-import { chooseWeighted, shuffled, sumFun } from "./lib/basics";
+import { chooseWeighted, shuffled, sumFun, isPositive } from "./lib/basics";
 import { populationAverage } from "./lib/modelbasics";
 import { getAlignment } from "./relations/alignment";
 import type { Clan } from "./people/people";
@@ -87,7 +87,7 @@ export function clanDriftRate(clan: Clan, size: number): number {
 // The settlement's chance per year, which is just its clans' between them.
 export function ritualDriftChance(settlement: Settlement): number {
     const size = settlement.population;
-    if (size <= 0) return 0;
+    if (!isPositive(size)) return 0;
     return Math.min(1, sumFun(settlement.clans, c => clanDriftRate(c, size)));
 }
 

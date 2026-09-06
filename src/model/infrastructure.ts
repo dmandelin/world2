@@ -1,6 +1,6 @@
 import type { Settlement } from './people/settlement';
 import type { Clan } from './people/people';
-import { sumFun } from './lib/basics';
+import { sumFun, isPositive } from "./lib/basics";
 import { populationAverage } from './lib/modelbasics';
 import { Processes, SkillDefs } from './econ/econdefs';
 import { Productivity, ProductivityItem } from './econ/productivity';
@@ -76,7 +76,7 @@ export function ditchingProductivity(clan: Clan): Productivity {
 
 // How deep a ditch a given effort digs around a given area of fields.
 export function ditchRatingFor(effort: number, land: number): number {
-    if (effort <= 0 || land <= 0) return 0;
+    if (!isPositive(effort) || !isPositive(land)) return 0;
     return REFERENCE_RATING
         * Math.sqrt(effort / REFERENCE_EFFORT)
         * (REFERENCE_LAND / land) ** 0.25;
@@ -84,7 +84,7 @@ export function ditchRatingFor(effort: number, land: number): number {
 
 // And the other way round: what a ditch of that rating would cost.
 export function ditchEffortFor(rating: number, land: number): number {
-    if (land <= 0) return 0;
+    if (!isPositive(land)) return 0;
     return REFERENCE_EFFORT
         * (rating / REFERENCE_RATING) ** 2
         * Math.sqrt(land / REFERENCE_LAND);
@@ -94,7 +94,7 @@ export function ditchEffortFor(rating: number, land: number): number {
 // all of it once the ditch is built for the whole flood, and its share of
 // the flood before that.
 export function ditchDepthCredit(rating: number, floodRating: number): number {
-    if (floodRating <= 0) return 1;
+    if (!isPositive(floodRating)) return 1;
     return Math.min(1, rating / floodRating);
 }
 
