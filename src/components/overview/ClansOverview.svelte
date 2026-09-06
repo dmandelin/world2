@@ -50,6 +50,8 @@
     import type { Activity } from "../../model/decisions/effort";
     import SimpleTooltip from "../widgets/SimpleTooltip.svelte";
     import RankBadge from "../RankBadge.svelte";
+    import EudaimoniaFormula from "../self/EudaimoniaFormula.svelte";
+    import { requestSettlementTab } from "../state/uistate.svelte";
     import { rankBadges } from "../rankbadge";
     import { get } from "svelte/store";
     import {
@@ -69,6 +71,7 @@
     import {
         PopulationScaler,
         ZeroCenteredScaler,
+        ZeroCenteredAutoScaler,
         DefaultScaler,
         type YAxisScaler,
     } from "../linegraph";
@@ -120,6 +123,9 @@
         // the stats that run 0-100 and centre on 50.
         banded?: boolean;
         topics?: string[];
+        // Names a settlement panel that writes this stat up in full. When set,
+        // the row label becomes a link that opens it.
+        panelTab?: string;
 
         // Value definition
         value?: (c: ClanDTO) => any;
@@ -533,6 +539,26 @@
                 deltaFormat: (v) => unsigned(v, 1),
                 scaler: new DefaultScaler(),
                 topics: ["perceptions:detail"],
+            },
+            {
+                label: "Eudaimonia",
+                labelTooltip:
+                    "How well the clan's life is going, judged over the long run.",
+                class: "actual",
+                cellClass: "rap",
+                panelTab: "Eudaimonia",
+                value: (c) => c.eudaimonia.value,
+                format: (v) => signed(v, 0),
+                tooltipSnippet: eudaimoniaTooltip,
+                settlementTooltipSnippet: settlementEudaimoniaTooltip,
+                deltaValue: (c) => c.eudaimonia.value,
+                // A turn moves the verdict by a fraction of a point, so the
+                // delta keeps a decimal the stat itself does not need.
+                deltaFormat: (v) => signed(v, 1),
+                timelineKey: "eudaimonia",
+                // On its own scale, not quality of life's fixed +/-30.
+                scaler: new ZeroCenteredAutoScaler(20),
+                topics: ["welfare"],
             },
             {
                 label: "QoL",
@@ -2759,6 +2785,60 @@
     )}
 {/snippet}
 
+{#snippet settlementEudaimoniaTooltip(css: ClanLastTurnSnapshots[])}
+    {@const clans = css.map((cs) => cs.e).filter((c) => c.population > 0)}
+    {@const totalPop = sumFun(clans, (c) => c.population)}
+    {@const mean =
+        totalPop > 0
+            ? sumFun(clans, (c) => c.eudaimonia.value * c.population) / totalPop
+            : 0}
+    <div style="width: 17rem; max-width: 17rem;">
+        <div style="font-weight: 600; margin-bottom: 4px;">
+            Settlement eudaimonia
+        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="color: #6b7280; font-size: 0.78em; text-align: right;">
+                    <th style="text-align: left; font-weight: 400;">Clan</th>
+                    <th style="font-weight: 400;">People</th>
+                    <th style="font-weight: 400;">Share</th>
+                    <th style="font-weight: 400;">Eudaimonia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each sortedByKey(clans, (c: ClanDTO) => -c.eudaimonia.value) as clan (clan.uuid)}
+                    <tr style="text-align: right; font-variant-numeric: tabular-nums;">
+                        <td style="text-align: left;">{clan.name}</td>
+                        <td>{clan.population}</td>
+                        <td style="color: #6b7280;"
+                            >{pct(safeDiv(clan.population, totalPop))}</td
+                        >
+                        <td
+                            style="color: {clan.eudaimonia.value >= 0
+                                ? '#15803d'
+                                : '#b91c1c'};">{signed(clan.eudaimonia.value, 0)}</td
+                        >
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+        <hr style="margin: 6px 0; border: none; border-top: 1px solid #eee;" />
+        <div
+            style="display: flex; justify-content: space-between; font-variant-numeric: tabular-nums;"
+        >
+            <span><b>Average</b>, by population</span>
+            <b>{signed(mean, 1)}</b>
+        </div>
+    </div>
+{/snippet}
+
+{#snippet eudaimoniaTooltip(cs: ClanLastTurnSnapshots)}
+    <EudaimoniaFormula eudaimonia={cs.e.eudaimonia} compact={true} />
+    <div style="margin-top: 6px; font-size: 0.8em; color: #6b7280;">
+        Click the row label for the full panel.
+    </div>
+{/snippet}
+
 {#snippet qolTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanQolTooltipTable(cs.e)}></TableView2>
 {/snippet}
@@ -3127,7 +3207,26 @@
                                 >
                             {:else}
                                 <td class="row-label">
-                                    {#if row.labelTooltip}
+                                    {#if row.panelTab}
+                                        <button
+                                            type="button"
+                                            class="row-label-link"
+                                            title="Open the {row.panelTab} panel"
+                                            onclick={() =>
+                                                requestSettlementTab(
+                                                    row.panelTab!,
+                                                )}
+                                        >
+                                            {#if row.labelTooltip}
+                                                <SimpleTooltip
+                                                    tip={row.labelTooltip}
+                                                    >{@html row.label}</SimpleTooltip
+                                                >
+                                            {:else}
+                                                {@html row.label}
+                                            {/if}
+                                        </button>
+                                    {:else if row.labelTooltip}
                                         <SimpleTooltip tip={row.labelTooltip}
                                             >{@html row.label}</SimpleTooltip
                                         >
@@ -3310,6 +3409,27 @@
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 12em;
+    }
+
+    /* A row label that opens the panel writing that stat up in full. */
+    .row-label-link {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .row-label-link:hover {
+        color: #7c2d12;
+    }
+
+    .row-label-link:focus-visible {
+        outline: 2px solid #7c2d12;
+        outline-offset: 2px;
     }
 
     .lens-button-group {

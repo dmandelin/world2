@@ -46,6 +46,7 @@
         people: "#3b82f6",
         foodProduction: "#f59e0b",
         foodConsumption: "#ef4444",
+        eudaimonia: "#7c2d12",
     };
 
     // ---- run state ----

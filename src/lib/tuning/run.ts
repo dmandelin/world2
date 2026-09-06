@@ -5,6 +5,7 @@
 // distribution from the first year rather than filling in run by run.
 
 import { sumFun } from "../../model/lib/basics";
+import { eudaimoniaAverage } from "../../model/self/eudaimonia";
 import { loggingEnabled, setLoggingEnabled } from "../../model/lib/debug";
 import { applyTuning, readTuning, type TuningParams } from "../../model/tuning";
 import { World } from "../../model/world";
@@ -54,6 +55,15 @@ function sample(world: World, key: MetricKey): number {
             if (people <= 0) return 0;
             return sumFun(world.allClans, (c) => c.consumption.totalFood) / people;
         }
+        case 'eudaimonia':
+            // Population-weighted average over every living clan, the same
+            // rollup the settlement column shows.
+            return eudaimoniaAverage(
+                world.allClans.map((c) => ({
+                    value: c.eudaimonia.value,
+                    weight: c.population,
+                })),
+            );
     }
 }
 

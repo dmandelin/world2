@@ -51,6 +51,38 @@ export class ZeroCenteredScaler extends YAxisScaler {
   }
 }
 
+// Keeps zero in the middle, like ZeroCenteredScaler, but sizes the axis to the
+// data instead of to the fixed +/-30 that suits quality of life. For stats on
+// their own scale -- eudaimonia runs to about +/-1 -- where a fixed axis would
+// draw every series as a flat line on the centre.
+export class ZeroCenteredAutoScaler extends YAxisScaler {
+  // minSpan keeps a series that has barely moved from being magnified into
+  // meaningless noise.
+  constructor(readonly minSpan: number = 1) {
+    super();
+  }
+
+  endpoints(datasets: Dataset[]): [number, number] {
+    const [min, max] = this.range(datasets);
+    const extent = Math.max(
+      Math.abs(Number.isFinite(min) ? min : 0),
+      Math.abs(Number.isFinite(max) ? max : 0),
+    );
+    // Round up to one significant figure so the axis lands on a readable
+    // number rather than on whatever the largest sample happened to be.
+    let span = this.minSpan;
+    if (extent > 0) {
+      const step = Math.pow(10, Math.floor(Math.log10(extent)));
+      span = Math.max(this.minSpan, Math.ceil((extent * 1.1) / step) * step);
+    }
+    return [-span, span];
+  }
+
+  ticks(datasets: Dataset[]): number[] {
+    return [0];
+  }
+}
+
 export type GraphData = {
   // Title of the graph.
   title?: string;

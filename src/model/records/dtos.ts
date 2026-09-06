@@ -46,6 +46,7 @@ import { type UUID } from "./basicdata";
 import type { ConnectionGraph } from "../relations/connection";
 import type { Conflict, ConflictGraph, Conflicts } from "../relations/conflict";
 import type { Stress } from "../people/stress";
+import type { Eudaimonia } from "../self/eudaimonia";
 import type { FoodGiftsResult } from "../econ/gifts";
 
 export type TradeRelationshipsDTO = {
@@ -109,6 +110,7 @@ export class ClanDTO {
     consumption: Consumption;
     stress: Stress;
     qol: QualityOfLife;
+    eudaimonia: Eudaimonia;
 
     // What this clan put into the settlement's ditches this year.
     ditchingEffortShare: number;
@@ -162,6 +164,7 @@ export class ClanDTO {
         this.consumption = clan.consumption;
         this.stress = clan.stress.clone();
         this.qol = clan.qol;
+        this.eudaimonia = clan.eudaimonia.clone();
 
         this.ditchingEffortShare = clan.ditchingEffortShare;
         this.ditchingLabor = clan.ditchingLabor;

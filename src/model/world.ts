@@ -498,6 +498,8 @@ export class World implements NoteTaker {
 
                 const sizeBefore = settlement.effectiveResidentPopulation;
                 for (const clan of settlement.clans) clan.advancePopulation();
+                // Reads the year's births and deaths, so it follows them.
+                for (const clan of settlement.clans) clan.updateEudaimonia();
                 const before = settlement.clans.length;
                 removeAll(settlement.clans, c => c.population === 0);
                 if (settlement.clans.length !== before) membershipChanged();

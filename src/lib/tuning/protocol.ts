@@ -16,6 +16,7 @@ export const METRIC_KEYS = [
     'people',
     'foodProduction',
     'foodConsumption',
+    'eudaimonia',
 ] as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[number];
@@ -32,6 +33,7 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'people', label: 'People', precision: 0 },
     { key: 'foodProduction', label: 'Food produced / capita', precision: 2 },
     { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2 },
+    { key: 'eudaimonia', label: 'Eudaimonia', precision: 1 },
 ];
 
 // One metric's distribution across the runs at a single year.

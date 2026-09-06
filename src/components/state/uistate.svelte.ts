@@ -67,6 +67,13 @@ export function selectSettlement(uuidable: Uuidable, tab?: string): void {
     uiPrimaryState.requestedSettlementTab = tab;
 }
 
+// Ask the settlement view to open one of its panels, without changing which
+// settlement or clan is selected. For a stat that has somewhere fuller to be
+// read about, so clicking it takes you there.
+export function requestSettlementTab(tab: string): void {
+    uiPrimaryState.requestedSettlementTab = tab;
+}
+
 // Called by the settlement view once it has opened the panel that was asked
 // for, so the request does not stand and override the next click.
 export function clearRequestedSettlementTab(): void {

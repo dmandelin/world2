@@ -27,6 +27,7 @@ import type { Year } from "../records/year";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { divideInformationOnSplit } from "../relations/information";
 import { Stress } from "./stress";
+import { Eudaimonia } from "../self/eudaimonia";
 import { Distribution, StockOutflow, Consumption } from "../econ/flows";
 import { Stock } from "../econ/stock";
 import { BasicInteraction } from "../relations/basicinteraction";
@@ -178,6 +179,7 @@ export class Clan implements TradePartner {
     readonly tradeRelationships = new Set<TradeRelationship>();
 
     stress = new Stress();
+    eudaimonia = new Eudaimonia();
 
     production: ProductionReport = new ProductionReport([]);
     distribution: Distribution;
@@ -356,6 +358,16 @@ export class Clan implements TradePartner {
 
     updateStress() {
         this.stress.update(this);
+    }
+
+    // The year's verdict on how the clan's life is going. Runs after the
+    // population is advanced, since it reads what the year cost and gained,
+    // and against the population the clan started the year with, so that the
+    // rate is what happened to the people who were here.
+    updateEudaimonia() {
+        const change = this.lastPopulationChange;
+        this.eudaimonia.update(
+            change.births, change.deaths, change.previousSize);
     }
 
     updateHappiness() {

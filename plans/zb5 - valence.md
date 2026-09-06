@@ -386,6 +386,10 @@ satisfaction.
 
 Let's take one item at a time.
 
+*   Births and deaths
+    *   This would amount to some sort of long-term average growth
+        rate as well as matching emotions
+
 *   Food
     *   Seems like a lack factor but there have probably been
         especially preferred foods throughout the hominins!

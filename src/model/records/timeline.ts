@@ -50,6 +50,8 @@ export class ClanTimePoint {
     readonly socialAppeal: number;
     readonly subsistenceAppeal: number;
     readonly qol: number;
+    readonly eudaimonia: number;
+    readonly eudaimoniaDelta: number;
     readonly stress: number;
     readonly residenceFraction: number;
     readonly respectAverage: number;
@@ -97,6 +99,8 @@ export class ClanTimePoint {
         this.socialAppeal = clan.happiness.socialAppeal;
         this.subsistenceAppeal = clan.happiness.subsistenceAppeal;
         this.qol = clan.qol.value;
+        this.eudaimonia = clan.eudaimonia.value;
+        this.eudaimoniaDelta = clan.eudaimonia.delta;
         this.stress = clan.stress.value;
         this.residenceFraction = clan.residenceLevel.fractionInSettlement;
         
