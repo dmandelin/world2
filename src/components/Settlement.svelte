@@ -16,6 +16,7 @@
     import SettlementComparison from "./overview/SettlementComparison.svelte";
     import SettlementProductivity from "./SettlementProductivity.svelte";
     import SettlementInfrastructure from "./SettlementInfrastructure.svelte";
+    import SettlementLand from "./SettlementLand.svelte";
     import SettlementMutualAid from "./SettlementMutualAid.svelte";
     import SettlementMarriages from "./SettlementMarriages.svelte";
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
@@ -38,6 +39,7 @@
         { label: "QoL", icon: "😊", snippet: qolTab, group: "settlement" },
         { label: "Econ", icon: "📊", snippet: econTab, group: "settlement" },
         { label: "Productivity", icon: "⚒️", snippet: productivityTab, group: "settlement" },
+        { label: "Land", icon: "🏞️", snippet: landTab, group: "settlement" },
         { label: "Infrastructure", icon: "🛠️", snippet: infrastructureTab, group: "settlement" },
         { label: "Trade", icon: "🏺", snippet: tradeTab, group: "settlement" },
         { label: "Migration", icon: "🚶", snippet: migrationTab, group: "settlement" },
@@ -75,6 +77,10 @@
 
 {#snippet migrationTab()}
     <SettlementMigrationDetails {settlement} />
+{/snippet}
+
+{#snippet landTab()}
+    <SettlementLand {settlement} />
 {/snippet}
 
 {#snippet infrastructureTab()}

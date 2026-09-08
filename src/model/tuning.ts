@@ -40,7 +40,10 @@ export const DEFAULT_TUNING: Readonly<TuningParams> = {
     // Scaled up with the process defaults, for the same reason: festival
     // time has been taken out of production and the rest has to cover it.
     fishingOutputPerWorker: 3.3 * FESTIVAL_TIME_COMPENSATION,
-    agricultureOutputPerWorker: 3.3 * FESTIVAL_TIME_COMPENSATION,
+    // Farming's base is the yield on ordinary land, with the Land quality
+    // modifier carrying the rest, so it sits below the fishing base. Scaled
+    // off it the same way econdefs.ts scales its own pair.
+    agricultureOutputPerWorker: 2.62 * FESTIVAL_TIME_COMPENSATION,
 };
 
 // Live values. Read these, don't copy them into module-level constants.

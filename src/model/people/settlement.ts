@@ -18,6 +18,12 @@ import type { World } from "../world";
 import type { Year } from "../records/year";
 import type { Clan } from "./people";
 import { economicResult } from "../econ/economy";
+import {
+    DAUGHTER_PLOTS_BASE,
+    FOUNDING_PLOTS_BASE,
+    SettlementLand,
+    SettlementLandAllocation,
+} from "../econ/land";
 import { getAlignment } from "../relations/alignment";
 import type { NewSettlementDecisionReport } from "./migration";
 import type { RitualChangeEvent } from "../ritualchange";
@@ -35,6 +41,16 @@ export class Settlement {
 
     readonly localTradeGoods = new Set<TradeGood>();
     newSettlementDecisionReport: NewSettlementDecisionReport | undefined = undefined;
+
+    // The fields. `land` is the stretch of alluvium the settlement sits on,
+    // redrawn whenever the river moves; `landAllocation` is who took up
+    // which of it, settled afresh every spring.
+    land: SettlementLand;
+    landAllocation: SettlementLandAllocation | undefined = undefined;
+    // Whether this year's scramble has happened yet. Until it has, the
+    // allocation on hand is last year's: good enough to judge what a clan's
+    // fields are worth, but not what it holds. See LandAllocation.from.
+    landIsTakenUp = false;
 
     // Environment.
     private floodLevel_: FloodLevel = FloodLevels.Moderate;
@@ -71,6 +87,11 @@ export class Settlement {
 
         this.foundationYear = world.year.clone();
 
+        // The first settlements had the pick of the river; a daughter is
+        // taking up whatever stretch was still going.
+        this.land = SettlementLand.fresh(
+            parent ? DAUGHTER_PLOTS_BASE : FOUNDING_PLOTS_BASE);
+
         // Until the next flood, a new settlement sees what its cluster sees.
         this.floodLevel_ = cluster.floodLevel;
         this.floodRating_ = cluster.floodLevel.randomRating();
@@ -80,6 +101,36 @@ export class Settlement {
         if (this.parent) {
             this.parent.daughters.push(this);
         }
+    }
+
+    // The stretch of alluvium a settlement of this standing can expect to
+    // come into: the original sites took the best of the river, and anything
+    // founded since has had to make do with less.
+    private get plotsBase(): number {
+        return this.parent ? DAUGHTER_PLOTS_BASE : FOUNDING_PLOTS_BASE;
+    }
+
+    // The river has moved. The settlement stays where it is, but the fields
+    // it farms are new ground: how much there is of it, and how good it is,
+    // are drawn again from scratch, and last year's holdings mean nothing.
+    resettleLand() {
+        this.land = SettlementLand.fresh(this.plotsBase);
+        this.landAllocation = undefined;
+        this.landIsTakenUp = false;
+    }
+
+    // Open the year's fields. Everything is unclaimed again until the clans
+    // go out to it.
+    beginLandYear() {
+        this.landIsTakenUp = false;
+    }
+
+    // Settle who farms what this year. Run after the clans have worked out
+    // how much farming they mean to do, since nobody takes up ground they
+    // have no hands for.
+    allocateLand() {
+        this.landAllocation = SettlementLandAllocation.for(this);
+        this.landIsTakenUp = true;
     }
 
     milesTo(other: Settlement): number {

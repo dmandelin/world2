@@ -449,7 +449,13 @@ export class World implements NoteTaker {
                 if (Math.random() <= settlement.floodLevel.riverShiftProbability()) {
                     settlement.refoundedAfterRiverShift = true;
                     settlement.foundationYear = settlement.world.year.clone();
+                    // New channel, new fields: what there is to farm here is
+                    // drawn again from scratch.
+                    settlement.resettleLand();
                 }
+
+                // Last year's holdings lapse; the fields are open again.
+                settlement.beginLandYear();
 
                 for (const clan of settlement.clans) clan.residenceLevel.update();
             }
@@ -457,6 +463,12 @@ export class World implements NoteTaker {
             // This has to happen before actual economic production
             // and distribution.
             cl.applyEffortAllocations();
+
+            // Now that each clan knows how much farming it means to do, the
+            // families go out and take up the ground for it.
+            for (const settlement of cl.settlements) {
+                settlement.allocateLand();
+            }
 
             // Update disease load:
             // - After labor allocations, since those influence disease load, and we

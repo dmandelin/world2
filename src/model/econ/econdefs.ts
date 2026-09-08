@@ -90,11 +90,28 @@ const UNCOMPENSATED_OUTPUT_PER_WORKER = 3.5;
 export const BASE_OUTPUT_PER_WORKER =
     UNCOMPENSATED_OUTPUT_PER_WORKER * FESTIVAL_TIME_COMPENSATION;
 
+// Farming has its own base, and a lower one, because it is the only process
+// scored plot by plot: the Land quality modifier carries the full worth of
+// the ground, so this is the yield on ordinary land and prime land doubles
+// it. Fishing has no such modifier and keeps the flat base above.
+//
+// The number is a calibration. Fresh alluvium averages about 1.58 ordinary
+// plots to the plot, so setting this to 3.5 / 1.58 = 2.22 would leave the
+// average settlement growing exactly what it grew before land quality
+// existed, and leaving it at 3.5 would hand everyone a 58% windfall at once.
+// 2.78 splits the difference: good land is worth having, and the average
+// stretch of river comes out about 26% better fed than under the old model.
+// Raise it to make the alluvium richer, lower it to make farming a harder
+// living; the spread between clans comes from the land, not from here.
+const UNCOMPENSATED_FARMING_OUTPUT_PER_WORKER = 2.78;
+export const FARMING_OUTPUT_PER_WORKER =
+    UNCOMPENSATED_FARMING_OUTPUT_PER_WORKER * FESTIVAL_TIME_COMPENSATION;
+
 export const Processes = {
     Fishing:
         new Process('Fishing', 1, 'F', '#3b82f6', TradeGoods.Fish,
             BASE_OUTPUT_PER_WORKER),
     Agriculture:
         new Process('Agriculture', 2, 'A', '#10b981', TradeGoods.Cereals,
-            BASE_OUTPUT_PER_WORKER),
+            FARMING_OUTPUT_PER_WORKER),
 };

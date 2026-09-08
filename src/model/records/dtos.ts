@@ -9,6 +9,7 @@ import type { DiseaseLoadCalc } from "../environment/pathogens";
 import type { EffortAllocation } from "../decisions/effort";
 import type { ClanFloodDamage, ExtremeFlood, FloodLevel } from "../environment/flood";
 import type { DitchCalc, DitchingMethod } from "../infrastructure";
+import type { SettlementLand, SettlementLandAllocation } from "../econ/land";
 import type { Festivals, RitualLeadership, RitualStructure } from "../festivals";
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
@@ -292,6 +293,10 @@ export class SettlementDTO {
 
     readonly ditchingMethod: DitchingMethod;
     readonly ditch: DitchCalc | undefined;
+    // The fields, and who took up which of them this year. Both are replaced
+    // rather than edited in place, so holding the reference snapshots them.
+    readonly land: SettlementLand;
+    readonly landAllocation: SettlementLandAllocation | undefined;
     readonly ritualStructure: RitualStructure;
     readonly ritualLeadership: RitualLeadership;
     readonly festivals: Festivals | undefined;
@@ -326,6 +331,8 @@ export class SettlementDTO {
 
         this.ditchingMethod = settlement.ditchingMethod;
         this.ditch = settlement.ditch;
+        this.land = settlement.land;
+        this.landAllocation = settlement.landAllocation;
         this.ritualStructure = settlement.ritualStructure;
         this.ritualLeadership = settlement.ritualLeadership;
         this.festivals = settlement.festivals;

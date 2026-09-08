@@ -3,6 +3,7 @@ import { pct, spct } from '../lib/format';
 import { product } from '../lib/basics';
 import { FloodLevel, FloodLevels } from '../environment/flood';
 import { Processes, SkillDefs } from './econdefs';
+import { FRESH_ALLUVIUM_QUALITY_FACTOR } from './landquality';
 import type { Process } from './process';
 import type { SkillDef } from '../people/skills';
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from '../relations/mutualaid';
@@ -29,7 +30,6 @@ function getProcessSkills(): Map<Process, [SkillDef, number][]> {
 }
 
 export class Productivity {
-    // TODO - Make land quality matter
     // TODO - Make culture/personality matter
 
     constructor(readonly items: ProductivityItem[]) { }
@@ -41,6 +41,7 @@ export class Productivity {
     static forClanProcess(clan: Clan, process: Process, labor: number, land: number): Productivity {
         const items = [
             ...ProductivityItem.fromSkills(clan, process),
+            ...ProductivityItem.fromLand(clan, process),
             ...ProductivityItem.fromHelp(clan, process),
             ...ProductivityItem.fromEnvironment(clan, process),
         ];
@@ -62,6 +63,8 @@ const helpText = (d: { relativeHelp: number }) =>
 const ditchText = (d: { rating: number, flood: number }) =>
     `ditch ${d.rating.toFixed(0)} vs flood ${d.flood.toFixed(0)}`;
 const averageText = (i: ProductivityItem) => `${pct(i.value)} of average`;
+const landText = (d: { description: string }) =>
+    `${d.description}; the farming base is the yield on ordinary land`;
 
 export class ProductivityItem<P = unknown> {
     private readonly explainer_: Explainer<any>;
@@ -97,6 +100,27 @@ export class ProductivityItem<P = unknown> {
             const skillValue = clan.skills.v(skill);
             yield ProductivityItem.forStat(skill.name, skillValue, skillFactor);
         }
+    }
+
+    // What the fields a clan took up this spring are worth: the plain
+    // average of its plots' productivities, so prime land reads 200% and
+    // poor land 50%. This is why farming's base in econdefs.ts is the yield
+    // on ordinary land and sits below fishing's -- the ground is scored
+    // here, not there. See land.ts for how the plots were taken up.
+    static *fromLand(clan: Clan, process: Process) {
+        if (process !== Processes.Agriculture) return;
+
+        // A clan with no holding -- one that arrived after the spring's
+        // scramble, or a world still being set up -- is reckoned to be on an
+        // average stretch of the river.
+        const holding = clan.settlement.landAllocation?.forClan(clan);
+
+        yield new ProductivityItem(
+            'Land quality',
+            holding ? holding.qualityFactor : FRESH_ALLUVIUM_QUALITY_FACTOR,
+            landText,
+            { description: holding ? holding.description : 'no land taken up this year' },
+        );
     }
 
     static *fromHelp(clan: Clan, process: Process) {

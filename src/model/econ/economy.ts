@@ -18,7 +18,7 @@ export function economicResult(
     const population = clan.population;
 
     const labor = LaborAllocation.from(clan, effort);
-    const land = LandAllocation.from(clan);
+    const land = LandAllocation.from(clan, labor);
 
     const production = produce(operations, labor.m, land.m);
 

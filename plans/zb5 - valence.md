@@ -402,19 +402,49 @@ x   Food
         it can be a plus factor.
     x   Combining quantity and quality
 
-*   Kin care and parenting
-    *   What does a lack mean?
-        *   The obvious example would be not enough caretakers in
-            the group (or among helpers), so that infirm elders
-            couldn't be cared for all the time, small children
-            having to do harder jobs, caretakers overworked and
-            stressed.
-        *   Right now we automatically scale caretakers to cover,
-            so we wouldn't have that, but could consider changing
-            that.
-        *   There will also always be some help needed, so not
-            having that would produce a lack.
-    *   What about pluses?
-        *   Care skill effect makes sense here
+*   Food followups
+    x   We need to fix the issue that farm productivity is low due to
+        flooding modifiers and thus overall production is low
+        x   Fix is to add the land model so we can juice productivity
+            with early land being the best
 
-*   Affiliation and belonging
+*   Land model refinements:
+    *   Conflict if out of land
+    *   Richer new village site model
+
+*   Kin care and parenting
+    *   Right now we auto-adjust the care allocation to the exact
+        amount needed, so there's never a problem.
+    *   One way we can adjust is to say that if the care allocation
+        goes over a certain %, then it's starting to call on clan
+        members less suited as carers, leading to lower quality care
+        and/or more stress on carers. 
+    *   I also see cases in the UI where some clan allocates 50% or
+        more to care and almost no time for production. We should
+        allow clans to under-care, with corresponding penalties.
+        *   We'll also need to let them ask for help, as we do for
+            food.
+        *   And we should let them care more than usual.
+    *   Effects of more/better care:
+        *   -death rate
+        *   +skill learning rate
+        *   +more tendency to be kind?
+        *   Would make sense to have better health as in productivity etc
+            but we don't have that yet
+    *   Eudaimonia effects:
+        *   -stress/-child-rearing if not enough care
+        *   +parent/child joy if extra care
+    *   It's probably time to do early weaning properly too
+        *   Remove existing "settlement" birth rate bonuses
+        *   Let clans choose weaning age 2-4 on half-year steps
+        *   Default = 4
+        *   Lower weaning age ->
+            *   Higher birth rate
+            *   Need to look into whether cereal foods would be needed
+                or if it could be done with wild foods in theory
+            *   Higher care cost if mobile
+
+*   Fairness and justice
+*   Rest -- having to work too hard is a problem and
+    not truly covered elsewhere
+*   Stress from omens and its relief
