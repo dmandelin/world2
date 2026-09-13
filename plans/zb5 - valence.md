@@ -414,6 +414,10 @@ x   Food
         change course mid-year
         *   Might want to substitute emergency actions for general
             optimization, like planting an extra crop
+    *   Incorporate omens, e.g., give experts some ability to predict
+        and tell other clans
+        *   Give immediate-return economies an ability to adjust
+            faster
 
 *   Land model refinements:
     *   Conflict if out of land

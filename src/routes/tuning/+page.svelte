@@ -44,6 +44,8 @@
         settlements: "#8b5cf6",
         clans: "#10b981",
         people: "#3b82f6",
+        birthRate: "#0d9488",
+        deathRate: "#9f1239",
         foodProduction: "#f59e0b",
         foodConsumption: "#ef4444",
         eudaimonia: "#7c2d12",
@@ -80,7 +82,11 @@
         // One push per metric per batch of frames. Appending in place keeps
         // this linear in the frames arriving rather than in history so far.
         for (const spec of METRIC_SPECS) {
-            series[spec.key].push(...frames.map((f) => f.summaries[spec.key]));
+            // A summary over no runs has nothing to plot -- the birth and
+            // death rates before the first year has run, for one.
+            series[spec.key].push(
+                ...frames.map((f) => f.summaries[spec.key]).filter((s) => s.count > 0),
+            );
         }
     }
 
@@ -255,6 +261,7 @@
                 points={series[spec.key]}
                 precision={spec.precision}
                 color={CHART_COLORS[spec.key]}
+                yRange={spec.yRange}
             />
         {/each}
     </section>
@@ -262,7 +269,11 @@
     <p class="legend-note">
         Shaded band spans min–max across runs; the darker band is the
         interquartile range and the dashed line the median, both shown once
-        there are 5 or more runs. The solid line is the mean.
+        there are 5 or more runs. The solid line is the mean. Birth and death
+        rates are per 1000 people alive at the start of the year, counted only
+        over the runs still going that year, and drawn on a fixed 0–50 scale:
+        anything higher runs off the top, though the figures under the chart
+        still give it.
     </p>
 </div>
 

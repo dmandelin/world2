@@ -54,6 +54,8 @@ export class Settlement {
 
     // Environment.
     private floodLevel_: FloodLevel = FloodLevels.Moderate;
+    // Last year's, which is what the fish stocks answer to.
+    private previousFloodLevel_: FloodLevel = FloodLevels.Moderate;
     // How hard this year's water pushes against the ditches, on the same
     // scale as a ditch's rating.
     private floodRating_: number = 0;
@@ -94,6 +96,7 @@ export class Settlement {
 
         // Until the next flood, a new settlement sees what its cluster sees.
         this.floodLevel_ = cluster.floodLevel;
+        this.previousFloodLevel_ = cluster.floodLevel;
         this.floodRating_ = cluster.floodLevel.randomRating();
 
         cluster.settlements.push(this);
@@ -184,11 +187,19 @@ export class Settlement {
         return this.floodLevel_;
     }
 
+    // Last year's flood level, for whatever answers to the flood a year late.
+    get previousFloodLevel(): FloodLevel {
+        return this.previousFloodLevel_;
+    }
+
     get floodRating(): number {
         return this.floodRating_;
     }
 
+    // Called once a year, when the year's flood is drawn: this year's level
+    // becomes last year's before the new one arrives.
     updateFloodLevel(level: FloodLevel): void {
+        this.previousFloodLevel_ = this.floodLevel_;
         this.floodLevel_ = level;
         this.floodRating_ = level.randomRating();
     }

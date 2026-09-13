@@ -12,6 +12,7 @@ import { World } from "../../model/world";
 import {
     METRIC_KEYS,
     summarize,
+    YEARLY_RATE_METRICS,
     type BatchConfig,
     type MetricKey,
     type Summary,
@@ -45,6 +46,14 @@ function sample(world: World, key: MetricKey): number {
             return world.allClans.length;
         case 'people':
             return world.totalPopulation;
+        case 'birthRate':
+        case 'deathRate': {
+            // Per thousand people alive at the start of the year, per year.
+            const v = world.lastYearVitals;
+            if (!isPositive(v.population) || !isPositive(v.years)) return 0;
+            const count = key === 'birthRate' ? v.births : v.deaths;
+            return 1000 * count / v.population / v.years;
+        }
         case 'foodProduction': {
             const people = world.totalPopulation;
             if (!isPositive(people)) return 0;
@@ -67,10 +76,15 @@ function sample(world: World, key: MetricKey): number {
     }
 }
 
-function frameFor(year: number, worlds: World[]): YearFrame {
+// `advanced` says which worlds took this year, for the metrics that only
+// exist for a run that did; see YEARLY_RATE_METRICS.
+function frameFor(year: number, worlds: World[], advanced: readonly boolean[]): YearFrame {
     const summaries = {} as Record<MetricKey, Summary>;
     for (const key of METRIC_KEYS) {
-        summaries[key] = summarize(year, worlds.map((w) => sample(w, key)));
+        const sampled = YEARLY_RATE_METRICS.has(key)
+            ? worlds.filter((_, i) => advanced[i])
+            : worlds;
+        summaries[key] = summarize(year, sampled.map((w) => sample(w, key)));
     }
     return { year, summaries };
 }
@@ -90,8 +104,10 @@ export async function runTuningBatch(
 
     try {
         const worlds: World[] = [];
-        // A run whose population dies out stops advancing but keeps
-        // contributing its (zero) values, so the averages stay honest.
+        // A run whose population dies out stops advancing. It keeps
+        // contributing its (zero) values to the ordinary metrics, so their
+        // averages stay honest, but drops out of the yearly rates, which it
+        // no longer has; see YEARLY_RATE_METRICS.
         const alive: boolean[] = [];
 
         for (let i = 0; i < config.runs; i++) {
@@ -108,7 +124,7 @@ export async function runTuningBatch(
             await yieldToEventLoop();
         }
 
-        let pending: YearFrame[] = [frameFor(0, worlds)];
+        let pending: YearFrame[] = [frameFor(0, worlds, worlds.map(() => false))];
         let sliceStart = Date.now();
 
         const flush = (yearsDone: number) => {
@@ -118,12 +134,13 @@ export async function runTuningBatch(
         };
 
         for (let year = 1; year <= config.years; year++) {
+            const advanced = alive.slice();
             for (let i = 0; i < worlds.length; i++) {
                 if (!alive[i]) continue;
                 worlds[i].advanceHeadless();
                 if (!isPositive(worlds[i].totalPopulation)) alive[i] = false;
             }
-            pending.push(frameFor(year, worlds));
+            pending.push(frameFor(year, worlds, advanced));
 
             if (Date.now() - sliceStart >= SLICE_MS) {
                 flush(year);

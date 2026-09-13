@@ -6,11 +6,14 @@
         points,
         precision = 0,
         color = "#3b82f6",
+        yRange,
     }: {
         title: string;
         points: Summary[];
         precision?: number;
         color?: string;
+        // A fixed y axis. Unset, the axis fits the data.
+        yRange?: readonly [number, number];
     } = $props();
 
     // Fixed drawing space; CSS scales the whole thing, so text stays in
@@ -45,6 +48,7 @@
     });
 
     let yDomain = $derived.by<[number, number]>(() => {
+        if (yRange) return [yRange[0], yRange[1]];
         if (!shown.length) return [0, 1];
         let lo = Infinity;
         let hi = -Infinity;
@@ -143,21 +147,33 @@
         {/each}
 
         {#if shown.length}
-            <path d={band((p) => p.max, (p) => p.min)} fill={color} opacity="0.14" />
-            {#if showQuartiles}
-                <path
-                    d={band((p) => p.p75, (p) => p.p25)}
-                    fill={color}
-                    opacity="0.28"
-                />
-                <path
-                    d={line((p) => p.median)}
-                    class="series"
-                    stroke={color}
-                    stroke-dasharray="4 3"
-                />
-            {/if}
-            <path d={line((p) => p.mean)} class="series mean" stroke={color} />
+            <!-- Clipped to the plot area, so a series that runs past a fixed
+                 y axis leaves the frame rather than drawing over the title
+                 and tick labels. The viewBox keeps the outer coordinates. -->
+            <svg
+                x={PAD.left}
+                y={PAD.top}
+                width={gw}
+                height={gh}
+                viewBox="{PAD.left} {PAD.top} {gw} {gh}"
+                overflow="hidden"
+            >
+                <path d={band((p) => p.max, (p) => p.min)} fill={color} opacity="0.14" />
+                {#if showQuartiles}
+                    <path
+                        d={band((p) => p.p75, (p) => p.p25)}
+                        fill={color}
+                        opacity="0.28"
+                    />
+                    <path
+                        d={line((p) => p.median)}
+                        class="series"
+                        stroke={color}
+                        stroke-dasharray="4 3"
+                    />
+                {/if}
+                <path d={line((p) => p.mean)} class="series mean" stroke={color} />
+            </svg>
         {/if}
 
         <!-- x axis end labels -->
@@ -196,7 +212,7 @@
         padding: 0.25rem;
     }
 
-    svg {
+    .chart > svg {
         width: 100%;
         height: auto;
         display: block;

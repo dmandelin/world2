@@ -8,7 +8,7 @@ import { updateBasicInteractions } from "./relations/basicinteraction";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { isExemplarClan, log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { economicResult } from "./econ/economy";
-import { rollHarvestLuck } from "./econ/productivity";
+import { rollFishingLuck, rollHarvestLuck } from "./econ/productivity";
 import { Distribution, StockOutflow, Consumption } from "./econ/flows";
 import { QualityOfLife } from "./econ/qol";
 import { marry, MarriageDecisions } from "./relations/marriage";
@@ -122,6 +122,13 @@ export class World implements NoteTaker {
 
     // Extreme floods that struck this turn, across the whole world.
     extremeFloods: ExtremeFlood[] = [];
+
+    // The last year's births and deaths across the whole world, and the
+    // people they came out of: everyone as they stood at the start of the
+    // year, before its births and deaths. Tallied as each clan's population
+    // is advanced, before the clans that died out are cleared away, so their
+    // deaths are counted too.
+    lastYearVitals = { births: 0, deaths: 0, population: 0, years: 0 };
 
     dto: WorldDTO | undefined;
 
@@ -499,6 +506,10 @@ export class World implements NoteTaker {
 
         this.advanceEconomy();
 
+        // The year's births and deaths, tallied below as each clan's
+        // population is advanced.
+        const vitals = { births: 0, deaths: 0, population: 0, years: this.yearsPerTick };
+
         // Advance perceptions and learnings.
         for (const cl of this.clusters) {
             for (const settlement of cl.settlements) {
@@ -510,7 +521,13 @@ export class World implements NoteTaker {
                 for (const clan of settlement.clans) clan.advanceSeniority();
 
                 const sizeBefore = settlement.effectiveResidentPopulation;
-                for (const clan of settlement.clans) clan.advancePopulation();
+                for (const clan of settlement.clans) {
+                    clan.advancePopulation();
+                    const change = clan.lastPopulationChange;
+                    vitals.births += change.births;
+                    vitals.deaths += change.deaths;
+                    vitals.population += change.previousSize;
+                }
                 // Reads the year's births and deaths, so it follows them.
                 for (const clan of settlement.clans) clan.updateEudaimonia();
                 const before = settlement.clans.length;
@@ -526,6 +543,8 @@ export class World implements NoteTaker {
             removeAll(cl.settlements, s => s.population === 0);
             if (cl.settlements.length !== settlementsBefore) membershipChanged();
         }
+
+        this.lastYearVitals = vitals;
 
         // Now that the drownings are drawn, the year's floods can be written
         // up with what they actually cost.
@@ -562,10 +581,11 @@ export class World implements NoteTaker {
             for (const settlement of cl.settlements) {
                 for (const clan of settlement.clans) {
                     allClans.push(clan);
-                    // The harvest's luck falls once, when the crop comes in,
-                    // after every clan has settled its year's work without
-                    // knowing it.
+                    // The year's luck, in the fields and at the nets, falls
+                    // once, after every clan has settled its year's work
+                    // without knowing it.
                     clan.harvestLuck = rollHarvestLuck();
+                    clan.fishingLuck = rollFishingLuck();
                     const r = economicResult(clan, clan.effortAllocation, 'actual');
                     clan.production = r.production;
                     clan.distribution = new Distribution(clan);

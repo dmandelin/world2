@@ -119,6 +119,9 @@ export class Clan implements TradePartner {
     // productivity.ts.
     harvestLuck: number = 1;
 
+    // The same for the clan's catch; see rollFishingLuck in productivity.ts.
+    fishingLuck: number = 1;
+
     // Troubles this clan faced this turn, and how the rites for them went.
     ritualEvents: RitualEvent[] = [];
     // Rites this clan said this turn, for itself or for a neighbor.

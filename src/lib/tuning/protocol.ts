@@ -14,9 +14,11 @@ export const METRIC_KEYS = [
     'settlements',
     'clans',
     'people',
+    'eudaimonia',
+    'birthRate',
+    'deathRate',
     'foodProduction',
     'foodConsumption',
-    'eudaimonia',
 ] as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[number];
@@ -25,16 +27,33 @@ export type MetricSpec = {
     readonly key: MetricKey;
     readonly label: string;
     readonly precision: number;
+    // A fixed y axis, for charts that read best on a set scale. Anything
+    // outside it runs off the edge of the plot. Unset, the axis fits the data.
+    readonly yRange?: readonly [number, number];
 };
 
+// In the order the charts are laid out, which keeps the birth and death rates
+// side by side.
 export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'settlements', label: 'Settlements', precision: 0 },
     { key: 'clans', label: 'Clans', precision: 0 },
     { key: 'people', label: 'People', precision: 0 },
+    { key: 'eudaimonia', label: 'Eudaimonia', precision: 1 },
+    { key: 'birthRate', label: 'Birth rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
+    { key: 'deathRate', label: 'Death rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
     { key: 'foodProduction', label: 'Food produced / capita', precision: 2 },
     { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2 },
-    { key: 'eudaimonia', label: 'Eudaimonia', precision: 1 },
 ];
+
+// Metrics that are rates over the year just run. They are summarized only
+// over the runs that actually advanced that year: a run that has died out
+// has no rate, and scoring it as zero would drag the averages down. So
+// their summaries can cover fewer runs than the others, and cover none at
+// all before the first year has run.
+export const YEARLY_RATE_METRICS: ReadonlySet<MetricKey> = new Set<MetricKey>([
+    'birthRate',
+    'deathRate',
+]);
 
 // One metric's distribution across the runs at a single year.
 export type Summary = {

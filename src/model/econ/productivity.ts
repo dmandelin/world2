@@ -49,6 +49,18 @@ export function rollHarvestLuck(): number {
     return Math.random() < 0.5 ? v : 1 / v;
 }
 
+// The luck of a clan's catch, drawn the same way as the harvest's but with
+// half the spread: better or worse than average by up to 30%. Fishing a
+// marsh and lagoon takes many kinds of fish, which do not all fail together,
+// so a catch swings less from year to year than a crop does. Drawn once a
+// clan a year; see advanceEconomy in world.ts and Clan.fishingLuck.
+const FISHING_LUCK_SPREAD = 0.15;
+
+export function rollFishingLuck(): number {
+    const v = 1 + FISHING_LUCK_SPREAD * (Math.random() + Math.random());
+    return Math.random() < 0.5 ? v : 1 / v;
+}
+
 export class Productivity {
     // TODO - Make culture/personality matter
 
@@ -85,6 +97,7 @@ const helpText = (d: { relativeHelp: number }) =>
 const ditchText = (d: { rating: number, flood: number }) =>
     `ditch ${d.rating.toFixed(0)} vs flood ${d.flood.toFixed(0)}`;
 const averageText = (i: ProductivityItem) => `${pct(i.value)} of average`;
+const stocksText = (d: { flood: string }) => `${d.flood} flood last year`;
 const landText = (d: { description: string }) =>
     `${d.description}; the farming base is the yield on ordinary land`;
 
@@ -162,13 +175,18 @@ export class ProductivityItem<P = unknown> {
 
     // The year's water, the ditches against it, and the harvest's luck.
     static *fromEnvironment(clan: Clan, process: Process, outlook: Outlook) {
-        if (process !== Processes.Agriculture) return;
-        const settlement = clan.settlement;
-
         // A clan planning its year knows nothing of the flood to come or of
-        // how the harvest will fall, so none of this enters its reckoning.
+        // how its harvest or catch will fall, so none of this enters its
+        // reckoning.
         if (outlook === 'expected') return;
 
+        if (process === Processes.Fishing) {
+            yield* ProductivityItem.fromWaters(clan);
+            return;
+        }
+        if (process !== Processes.Agriculture) return;
+
+        const settlement = clan.settlement;
         const floodLevel = settlement.floodLevel;
         const effect = floodLevel.agricultureOn('alluvium');
         const baseProductivity = effect.unditched;
@@ -198,6 +216,35 @@ export class ProductivityItem<P = unknown> {
         yield new ProductivityItem(
             'Random',
             clan.harvestLuck,
+            averageText,
+        );
+    }
+
+    // What the waters give a clan's fishing this year. A floodplain fishery
+    // answers to the flood twice over (see FloodFishingEffect in flood.ts):
+    // last year's flood set how many fish there are, and this year's sets
+    // how easy they are to get at.
+    private static *fromWaters(clan: Clan) {
+        const settlement = clan.settlement;
+        const lastYear = settlement.previousFloodLevel;
+        const thisYear = settlement.floodLevel;
+
+        yield new ProductivityItem(
+            'Fish stocks',
+            lastYear.fishingOn().stock,
+            stocksText,
+            { flood: lastYear.name });
+        yield new ProductivityItem(
+            'Water level',
+            thisYear.fishingOn().catchability,
+            thisYear.name);
+
+        // Random component: a catch is somewhat random too, though steadier
+        // than a harvest. Drawn once for the year, before this is called; see
+        // Clan.fishingLuck.
+        yield new ProductivityItem(
+            'Random',
+            clan.fishingLuck,
             averageText,
         );
     }

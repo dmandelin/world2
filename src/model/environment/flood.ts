@@ -11,8 +11,8 @@ import type { NoteTaker } from "../records/notifications";
 // is worth. There are two kinds of flood:
 //
 // - "Normal" levels, from scant to abundant, which every settlement gets
-//   one of every year. They set farm output and the odds of the river
-//   shifting its bed. That's what this file models today.
+//   one of every year. They set farm and fishing output and the odds of
+//   the river shifting its bed. That's what this file models today.
 // - Extreme floods (20-, 100-, and 500-year), which strike on top of the
 //   normal level and destroy crops, housing, and people. Not yet modeled.
 //
@@ -44,6 +44,29 @@ export class FloodAgricultureEffect {
     }
 }
 
+// How a flood level pays off for fishing. Floodplain fisheries answer to the
+// flood twice over, pulling in opposite directions:
+//
+// - Stocks: a flood spreads the fish over the plain to feed and spawn, so a
+//   big one means more fish to catch the following year and a scant one
+//   means fewer -- by more than a big one adds, since in a drought fish
+//   starve, fail to breed, and die in the shrinking pools.
+// - Catchability: in the year itself, low water crowds the fish into
+//   channels and pools where they are easy to take, and high water scatters
+//   them across the plain and into the reeds.
+//
+// So a scant year is a good one at the nets and a poor one after, and an
+// abundant year the reverse -- the other way round from what an abundant
+// flood does to unditched fields.
+export class FloodFishingEffect {
+    constructor(
+        // Catch factor in the year after a flood at this level.
+        readonly stock: number,
+        // Catch factor in a year with a flood at this level.
+        readonly catchability: number,
+    ) {}
+}
+
 export class FloodLevel {
     constructor(
         // Position in the scale, 0 (scant) through 4 (abundant).
@@ -51,6 +74,7 @@ export class FloodLevel {
         readonly name: string,
         readonly description: string,
         private readonly agriculture: Record<LandType, FloodAgricultureEffect>,
+        private readonly fishing: FloodFishingEffect,
         // Expected river shifts per year at this level.
         readonly expectedRiverShifts: number,
         // Share of built value lost to water damage in a year at this level.
@@ -60,6 +84,10 @@ export class FloodLevel {
 
     agricultureOn(land: LandType = 'alluvium'): FloodAgricultureEffect {
         return this.agriculture[land];
+    }
+
+    fishingOn(): FloodFishingEffect {
+        return this.fishing;
     }
 
     riverShiftProbability(yearsElapsed: number = 1): number {
@@ -89,6 +117,7 @@ export const FloodLevels = {
         'Scant',
         'The rivers barely rose; much of the land stayed dry',
         { alluvium: new FloodAgricultureEffect(0.60, 0.80) },
+        new FloodFishingEffect(0.75, 1.10),
         0.002,
         0.00,
     ),
@@ -97,6 +126,7 @@ export const FloodLevels = {
         'Low',
         'The rivers rose less than usual',
         { alluvium: new FloodAgricultureEffect(0.75, 0.90) },
+        new FloodFishingEffect(0.90, 1.05),
         0.005,
         0.01,
     ),
@@ -105,6 +135,7 @@ export const FloodLevels = {
         'Moderate',
         'The rivers rose about as they usually do',
         { alluvium: new FloodAgricultureEffect(0.90, 1.00) },
+        new FloodFishingEffect(1.00, 1.00),
         0.010,
         0.02,
     ),
@@ -113,6 +144,7 @@ export const FloodLevels = {
         'High',
         'The rivers rose more than usual',
         { alluvium: new FloodAgricultureEffect(0.75, 1.10) },
+        new FloodFishingEffect(1.10, 0.95),
         0.015,
         0.04,
     ),
@@ -121,6 +153,7 @@ export const FloodLevels = {
         'Abundant',
         'The rivers spilled far across the fields',
         { alluvium: new FloodAgricultureEffect(0.60, 1.20) },
+        new FloodFishingEffect(1.20, 0.90),
         0.020,
         0.07,
     ),
