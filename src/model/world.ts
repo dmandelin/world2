@@ -8,6 +8,7 @@ import { updateBasicInteractions } from "./relations/basicinteraction";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { isExemplarClan, log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { economicResult } from "./econ/economy";
+import { rollHarvestLuck } from "./econ/productivity";
 import { Distribution, StockOutflow, Consumption } from "./econ/flows";
 import { QualityOfLife } from "./econ/qol";
 import { marry, MarriageDecisions } from "./relations/marriage";
@@ -561,7 +562,11 @@ export class World implements NoteTaker {
             for (const settlement of cl.settlements) {
                 for (const clan of settlement.clans) {
                     allClans.push(clan);
-                    const r = economicResult(clan, clan.effortAllocation);
+                    // The harvest's luck falls once, when the crop comes in,
+                    // after every clan has settled its year's work without
+                    // knowing it.
+                    clan.harvestLuck = rollHarvestLuck();
+                    const r = economicResult(clan, clan.effortAllocation, 'actual');
                     clan.production = r.production;
                     clan.distribution = new Distribution(clan);
                     clan.stockOutflow = new StockOutflow(clan);

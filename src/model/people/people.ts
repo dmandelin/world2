@@ -113,6 +113,12 @@ export class Clan implements TradePartner {
     // What this year's extreme floods, if any, did to this clan.
     floodDamage: ClanFloodDamage = new ClanFloodDamage(this);
 
+    // How this year's harvest fell for the clan, on top of everything that
+    // can be reckoned: drawn once a year when the crop comes in, and not
+    // known to the clan while it plans. See rollHarvestLuck in
+    // productivity.ts.
+    harvestLuck: number = 1;
+
     // Troubles this clan faced this turn, and how the rites for them went.
     ritualEvents: RitualEvent[] = [];
     // Rites this clan said this turn, for itself or for a neighbor.

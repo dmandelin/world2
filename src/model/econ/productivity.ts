@@ -1,7 +1,6 @@
 import { Clan } from '../people/people';
 import { pct, spct } from '../lib/format';
 import { product } from '../lib/basics';
-import { FloodLevel, FloodLevels } from '../environment/flood';
 import { Processes, SkillDefs } from './econdefs';
 import { FRESH_ALLUVIUM_QUALITY_FACTOR } from './landquality';
 import type { Process } from './process';
@@ -29,6 +28,27 @@ function getProcessSkills(): Map<Process, [SkillDef, number][]> {
     return processSkills;
 }
 
+// When output is being reckoned, and so what can be known about the year.
+//
+// - 'expected': a clan working out how to spend its effort. The flood has
+//   not come and the harvest's luck has not fallen, and the clan has no
+//   reckoning of either -- not even of what they come to on average -- so
+//   they are left out of its sums altogether. This is what the effort
+//   optimizer must use.
+// - 'actual': the harvest itself, once the year has shown its hand.
+export type Outlook = 'expected' | 'actual';
+
+// The luck of a clan's harvest, on top of everything that can be reckoned:
+// half the time better than average by up to 60%, half the time worse by the
+// same factor. Drawn once a clan a year, when the crop comes in; see
+// advanceEconomy in world.ts and Clan.harvestLuck.
+const HARVEST_LUCK_SPREAD = 0.3;
+
+export function rollHarvestLuck(): number {
+    const v = 1 + HARVEST_LUCK_SPREAD * (Math.random() + Math.random());
+    return Math.random() < 0.5 ? v : 1 / v;
+}
+
 export class Productivity {
     // TODO - Make culture/personality matter
 
@@ -38,12 +58,14 @@ export class Productivity {
         return product(this.items.map(item => item.value));
     }
 
-    static forClanProcess(clan: Clan, process: Process, labor: number, land: number): Productivity {
+    static forClanProcess(
+        clan: Clan, process: Process, labor: number, land: number,
+        outlook: Outlook): Productivity {
         const items = [
             ...ProductivityItem.fromSkills(clan, process),
             ...ProductivityItem.fromLand(clan, process),
             ...ProductivityItem.fromHelp(clan, process),
-            ...ProductivityItem.fromEnvironment(clan, process),
+            ...ProductivityItem.fromEnvironment(clan, process, outlook),
         ];
 
         return new Productivity(items);
@@ -138,11 +160,16 @@ export class ProductivityItem<P = unknown> {
         );
     }
 
-    static *fromEnvironment(clan: Clan, process: Process, floodLevel?: FloodLevel) {
+    // The year's water, the ditches against it, and the harvest's luck.
+    static *fromEnvironment(clan: Clan, process: Process, outlook: Outlook) {
         if (process !== Processes.Agriculture) return;
-        floodLevel = floodLevel ?? clan.settlement.floodLevel;
-
         const settlement = clan.settlement;
+
+        // A clan planning its year knows nothing of the flood to come or of
+        // how the harvest will fall, so none of this enters its reckoning.
+        if (outlook === 'expected') return;
+
+        const floodLevel = settlement.floodLevel;
         const effect = floodLevel.agricultureOn('alluvium');
         const baseProductivity = effect.unditched;
         // What the ditches are worth against this year's water: their share
@@ -166,13 +193,11 @@ export class ProductivityItem<P = unknown> {
             settlement.ditch?.building ? ditchText : 'no ditch',
             { rating: settlement.ditchRating, flood: settlement.floodRating });
 
-        // Random component: agricultural yields are somewhat random.
-        const v = 1 + 0.3 * (Math.random() + Math.random());
-        const m = Math.random() < 0.5 ? v : 1 / v;
-
+        // Random component: agricultural yields are somewhat random. Drawn
+        // once for the year, before this is called; see Clan.harvestLuck.
         yield new ProductivityItem(
             'Random',
-            m,
+            clan.harvestLuck,
             averageText,
         );
     }

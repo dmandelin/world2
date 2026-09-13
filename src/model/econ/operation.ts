@@ -1,4 +1,4 @@
-import { Productivity } from "./productivity";
+import { Productivity, type Outlook } from "./productivity";
 import { sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import type { Process } from "./process";
@@ -11,12 +11,13 @@ export class Operation {
         readonly process: Process,
     ) { }
 
-    produce(labor: number, land: number): OperationProductionReport {
+    produce(labor: number, land: number, outlook: Outlook): OperationProductionReport {
         // Assume output is linear in workers and land at this scale, 
         // with both required.
         const inputAmount = Math.min(land, labor);
 
-        let productivity = Productivity.forClanProcess(this.clan, this.process, labor, land);
+        let productivity = Productivity.forClanProcess(
+            this.clan, this.process, labor, land, outlook);
 
         const lpBase = this.process.outputPerWorker;
         const lpMod = productivity.tfp ?? 1;
@@ -37,12 +38,13 @@ export class Operation {
 export function produce(
     operations: Operation[],
     labor: ReadonlyMap<Operation, number>,
-    land: ReadonlyMap<Operation, number>): ProductionReport {
+    land: ReadonlyMap<Operation, number>,
+    outlook: Outlook): ProductionReport {
     const reports: OperationProductionReport[] = [];
     for (const op of operations) {
         const laborAmount = labor.get(op) ?? 0;
         const landAmount = land.get(op) ?? 0;
-        const report = op.produce(laborAmount, landAmount);
+        const report = op.produce(laborAmount, landAmount, outlook);
         reports.push(report);
     }
     return new ProductionReport(reports);

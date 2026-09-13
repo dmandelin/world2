@@ -407,6 +407,13 @@ x   Food
         flooding modifiers and thus overall production is low
         x   Fix is to add the land model so we can juice productivity
             with early land being the best
+    *   Tuning for proper growth rate
+        *   Give clans some visibility into yield conditions if
+            appropriate
+    *   Consider to what extent clans should actually be able to
+        change course mid-year
+        *   Might want to substitute emergency actions for general
+            optimization, like planting an extra crop
 
 *   Land model refinements:
     *   Conflict if out of land

@@ -173,7 +173,9 @@ export class EffortAllocation {
         const leisure = option.get(Activities.Leisure);
         if (leisure < EffortAllocation.MIN_REST_SHARE - 1e-9) return -Infinity;
 
-        const er = economicResult(this.clan, option);
+        // Judged without the flood or the harvest's luck, neither of which
+        // is known while the year's work is still being settled.
+        const er = economicResult(this.clan, option, 'expected');
         const targetPerCapita = this.clan.perCapitaFoodProductionTarget;
         const foodPerCapita = (this.clan.population > 0) ? er.production.totalFood() / this.clan.population : targetPerCapita;
 

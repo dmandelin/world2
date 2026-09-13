@@ -4,13 +4,19 @@ import { Consumption } from "./consumption";
 import { LaborAllocation } from "./labor";
 import { LandAllocation } from "./land";
 import { produce, type ProductionReport } from "./operation";
+import type { Outlook } from "./productivity";
 import { QualityOfLife } from "./qol";
 
 // The result of one turn's economic activity based on the clan's 
 // state, including its effort allocation. No side effects.
+//
+// `outlook` says whether this is a clan planning its year, which knows
+// nothing of the year's flood or luck, or the harvest itself. See Outlook in
+// productivity.ts.
 export function economicResult(
     clan: Clan, 
-    effort: EffortAllocation): EconomicResult {
+    effort: EffortAllocation,
+    outlook: Outlook): EconomicResult {
 
     // Data we read off of the clan. These will be effectively
     // fixed during optimization.
@@ -20,7 +26,7 @@ export function economicResult(
     const labor = LaborAllocation.from(clan, effort);
     const land = LandAllocation.from(clan, labor);
 
-    const production = produce(operations, labor.m, land.m);
+    const production = produce(operations, labor.m, land.m, outlook);
 
     const consumption = new Consumption(clan);
     for (const [good, amount] of production.totals().entries()) {
