@@ -384,6 +384,18 @@ satisfaction.
 
 # Modeling Discussion II: Calculations
 
+*   Sidebar on big current theme
+    *   There are many refinements to be made, but it's starting to
+        look like a reasonably rich (to the point that results can
+        be complex and harder to understand now) base model.
+    *   One key thing to add besides the valence model is a true
+        sense of history. Clans should remember significant people
+        and events. Those memories should pass into legends and myths
+        and shape a sense of identity and history.
+    *   Key points to do this:
+        *   As we are doing for valence, firm up this aspect for each
+            submodel as we clean it up.
+
 Let's take one item at a time.
 
 x   Births and deaths
@@ -407,6 +419,8 @@ x   Food
         flooding modifiers and thus overall production is low
         x   Fix is to add the land model so we can juice productivity
             with early land being the best
+    *   Historical memory of key events
+        *   Also technological developments and related memories
     *   Tuning for proper growth rate
         *   Give clans some visibility into yield conditions if
             appropriate

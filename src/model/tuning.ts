@@ -35,7 +35,7 @@ export const TUNING_PARAM_SPECS: readonly TuningParamSpec[] = [
 ];
 
 export const DEFAULT_TUNING: Readonly<TuningParams> = {
-    baseBirthRate: 0.25,
+    baseBirthRate: 0.20,
     deathRateAdjustmentFactor: 0.88,
     // Scaled up with the process defaults, for the same reason: festival
     // time has been taken out of production and the rest has to cover it.
