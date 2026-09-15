@@ -36,6 +36,7 @@ import { Conflicts } from "./relations/conflict";
 import { FoodRedistributionResult, redistributeFood } from "./econ/redistribution";
 import { FoodGiftsResult, shareFoodGifts } from "./econ/gifts";
 import { SnapshotRecorder } from "./data/recorder";
+import { updateHistories } from "./people/history";
 import type { RecordingSession } from "./data/sessions";
 
 // Sites used when generating a world. The first three are the historical
@@ -549,6 +550,10 @@ export class World implements NoteTaker {
         // Now that the drownings are drawn, the year's floods can be written
         // up with what they actually cost.
         noteExtremeFloods(this, this.extremeFloods);
+
+        // And the year passes into each clan's history, floods, fortune and
+        // all, while it is still this year.
+        updateHistories(this);
 
         // The year's occasions get their one round of telling, now that
         // everything that was going to happen has happened, and then what was

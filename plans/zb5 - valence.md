@@ -395,6 +395,10 @@ satisfaction.
     *   Key points to do this:
         *   As we are doing for valence, firm up this aspect for each
             submodel as we clean it up.
+    *   Probably also about time to have significant people in the
+        clan memories
+    *   Have clans exchange history information as applicable
+    *   Give clans more ways to forget things
 
 Let's take one item at a time.
 

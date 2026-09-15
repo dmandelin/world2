@@ -16,14 +16,34 @@ const HAMLET_NAMES: string[] = [
   "Urzi", "Zapu", "Emdu", "Gali", "Lapi", "Inur", "Talu", "Sipu",
   "Arzu", "Kazi", "Belu", "Zemu", "Amar", "Nilu", "Razu", "Tima",
   "Gari", "Suzu", "Unur", "Kari", "Duli", "Zupu", "Iram", "Tuki",
-  "Shan", "Niga", "Uman", "Lazu", "Paku", "Omzi", "Tazu", "Sima"
+  "Shan", "Nima", "Uman", "Lazu", "Paku", "Omzi", "Tazu", "Sima"
 ];
 
-export function randomHamletName(): string {
-    if (!HAMLET_NAMES.length) {
-        const i = Math.floor(Math.random() * 900000) + 100000;
-        return `Hamlet-${i}`;
-    }
+// Personal names, for the ancestors a clan remembers.
+const ANCESTOR_NAMES: string[] = [
+  "Abba", "Adda", "Akalla", "Amagi", "Ammu", "Anni", "Baragi", "Bazi",
+  "Dada", "Dudu", "Ekimu", "Ennu", "Ezi", "Gemeti", "Gishu", "Hala",
+  "Ibbi", "Idda", "Ilalu", "Innin", "Ishma", "Kabta", "Kikku", "Kuda",
+  "Lalla", "Lugi", "Lumma", "Mamu", "Menna", "Mesi", "Nanni", "Nia",
+  "Ninna", "Nisa", "Nuzi", "Pilu", "Puzi", "Rimma", "Sagga", "Shesh",
+  "Shuni", "Sinna", "Tabbi", "Tulla", "Ubbu", "Ulla", "Ummi", "Urra",
+  "Zabi", "Zikku", "Zummi", "Ashu", "Belli", "Dimma", "Ezina", "Gagu",
+  "Hunzu", "Ilsu", "Kalki", "Mudu", "Namma", "Ruti", "Saggu", "Tiddu",
+];
 
-    return chooseFrom(HAMLET_NAMES, true);
+// Two different names, for the two ancestors at the head of a line.
+export function randomAncestorPair(): [string, string] {
+  const first = chooseFrom(ANCESTOR_NAMES);
+  let second = chooseFrom(ANCESTOR_NAMES);
+  while (second === first) second = chooseFrom(ANCESTOR_NAMES);
+  return [first, second];
+}
+
+export function randomHamletName(): string {
+  if (!HAMLET_NAMES.length) {
+    const i = Math.floor(Math.random() * 900000) + 100000;
+    return `Hamlet-${i}`;
+  }
+
+  return chooseFrom(HAMLET_NAMES, true);
 }

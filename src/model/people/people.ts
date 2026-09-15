@@ -31,6 +31,7 @@ import { Eudaimonia } from "../self/eudaimonia";
 import { Distribution, StockOutflow, Consumption } from "../econ/flows";
 import { Stock } from "../econ/stock";
 import { BasicInteraction } from "../relations/basicinteraction";
+import { History, newHistoryEventId } from "./history";
 
 const CLAN_NAMES: string[] = [
     "Abzu", "Adab", "Akkad", "Akkul", "Akkur", "Alulim", "Amurru", "Anzu", "Apin", "Aratta", "Asarlu",
@@ -190,6 +191,9 @@ export class Clan implements TradePartner {
     stress = new Stress();
     eudaimonia = new Eudaimonia();
 
+    // What the clan remembers of its own past. See history.ts.
+    history: History;
+
     production: ProductionReport = new ProductionReport([]);
     distribution: Distribution;
     stockOutflow: StockOutflow;
@@ -211,6 +215,8 @@ export class Clan implements TradePartner {
         public population: number,
     ) {
         this.foundedYear = world.year.clone();
+        // A clan split off from another replaces this with its parent's.
+        this.history = History.founding(world.year.value);
         this.world.clanMap.set(this.uuid, this);
         this.world.timeline.register(this.uuid, this.name);
 
@@ -619,6 +625,14 @@ export class Clan implements TradePartner {
         // Both clans are made of people who knew the neighbors, so divide what
         // the undivided clan knew rather than letting the new one start blank.
         divideInformationOnSplit(this, newClan);
+        // Both halves lived through everything the undivided clan did, so
+        // both keep its history; from here the two copies go their own ways.
+        // Each now traces itself to this split rather than the older origin.
+        const splitEventId = newHistoryEventId();
+        const splitYear = this.world.year.value;
+        newClan.history = this.history.clone();
+        this.history.foundBySplit(splitEventId, splitYear, 'senior', newClan);
+        newClan.history.foundBySplit(splitEventId, splitYear, 'cadet', this);
         // TODO - Inherit the rest of the relationships from the parent clan.
 
         // Plan for the new clan, since it didn't get a chance to during the main

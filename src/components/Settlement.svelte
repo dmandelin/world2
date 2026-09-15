@@ -26,6 +26,7 @@
     import SettlementRituals from "./SettlementRituals.svelte";
     import SettlementFestivals from "./SettlementFestivals.svelte";
     import SettlementWaters from "./SettlementWaters.svelte";
+    import SettlementHistory from "./SettlementHistory.svelte";
 
     let { settlement } = $props();
 
@@ -36,6 +37,7 @@
         { label: "Demographics", icon: "👥", snippet: demographicsTab, group: "settlement" },
         { label: "Information", icon: "👁️", snippet: informationTab, group: "settlement" },
         { label: "Wellness", icon: "🌾", snippet: wellnessTab, group: "settlement" },
+        { label: "History", icon: "📜", snippet: historyTab, group: "settlement" },
         { label: "QoL", icon: "😊", snippet: qolTab, group: "settlement" },
         { label: "Econ", icon: "📊", snippet: econTab, group: "settlement" },
         { label: "Productivity", icon: "⚒️", snippet: productivityTab, group: "settlement" },
@@ -97,6 +99,10 @@
 
 {#snippet wellnessTab()}
     <SettlementWellness {settlement} />
+{/snippet}
+
+{#snippet historyTab()}
+    <SettlementHistory {settlement} />
 {/snippet}
 
 {#snippet qolTab()}

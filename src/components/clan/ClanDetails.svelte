@@ -5,11 +5,13 @@
     import ClanOverviewDetails from './ClanOverviewDetails.svelte';
     import ClanRecentMarriages from './ClanRecentMarriages.svelte';
     import ClanMarriageAppeal from './ClanMarriageAppeal.svelte';
+    import ClanHistory from '../history/ClanHistory.svelte';
 
     let { clan }: { clan: ClanDTO } = $props();
 
     const tabs = [
         { label: "Overview", snippet: overviewTab },
+        { label: "History", snippet: historyTab },
         { label: "Marriage Appeal", snippet: marriageAppealTab },
         { label: "Recent Marriages", snippet: recentMarriagesTab },
         { label: "Migration", snippet: migrationTab },
@@ -18,6 +20,10 @@
 
 {#snippet overviewTab()}
     <ClanOverviewDetails clan={clan} />
+{/snippet}
+
+{#snippet historyTab()}
+    <ClanHistory history={clan.history} clanName={clan.name} />
 {/snippet}
 
 {#snippet marriageAppealTab()}
