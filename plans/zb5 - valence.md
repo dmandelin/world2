@@ -289,9 +289,9 @@ need them initially.
 *   Influences mood directly and also explicitly valued
     in ways that are fairly universal
     *   Mostly about freedom from want
-        *   Food - quantity, quality, and consistency
-        *   Needed support and care
-            *   Kin care and parenting - quality of care and carer
+        v   Food - quantity, quality, and consistency
+        v   Needed support and care
+            v   Kin care and parenting - quality of care and carer
                 workload/support
         *   Affiliation and belonging
             *   Includes role/employment, conversation, gatherings
@@ -440,22 +440,22 @@ x   Food
     *   (P3) Richer new village site model
 
 *   Kin care and parenting
-    *   Right now we auto-adjust the care allocation to the exact
+    x   Right now we auto-adjust the care allocation to the exact
         amount needed, so there's never a problem.
     *   One way we can adjust is to say that if the care allocation
         goes over a certain %, then it's starting to call on clan
         members less suited as carers, leading to lower quality care
         and/or more stress on carers. 
-    *   I also see cases in the UI where some clan allocates 50% or
+    x   I also see cases in the UI where some clan allocates 50% or
         more to care and almost no time for production. We should
         allow clans to under-care, with corresponding penalties.
-        *   We'll also need to let them ask for help, as we do for
+        x   We'll also need to let them ask for help, as we do for
             food.
-        *   And we should let them care more than usual.
+        x   And we should let them care more than usual.
     *   Effects of more/better care:
-        *   -death rate
-        *   +skill learning rate
-        *   +more tendency to be kind?
+        x   -death rate
+        x   +skill learning rate
+        x   +more tendency to be kind?
         *   Would make sense to have better health as in productivity etc
             but we don't have that yet
     *   Eudaimonia effects:
@@ -473,7 +473,8 @@ x   Food
                 or if it could be done with wild foods in theory
             *   Higher care cost if mobile
 
-*   Fairness and justice
-*   Rest -- having to work too hard is a problem and
+*   Affiliation and belonging
+*   (P2) Fairness and justice
+*   (P2) Rest -- having to work too hard is a problem and
     not truly covered elsewhere
 *   Stress from omens and its relief
