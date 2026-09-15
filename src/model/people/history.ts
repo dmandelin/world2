@@ -93,27 +93,31 @@ export function timeframeTooltip(tf: HistoryTimeframeDef): string {
 // --- What the clan knows of when --------------------------------------------
 
 export interface WhenLevel {
+    // What the clan says.
     label: string;
     // Events younger than this are known at this level or better.
     upToAge: number;
+    // The ages the level covers, in our terms rather than the clan's.
+    range: string;
 }
 
 // The clan counts years exactly only for the last three. Past that, it knows
-// roughly how long ago; past a hundred, only that it was long ago.
+// roughly how long ago, in years and then in generations; past a hundred,
+// only that it was long ago.
 export const WHEN_LEVELS: readonly WhenLevel[] = [
-    { label: "this year", upToAge: 1 },
-    { label: "last year", upToAge: 2 },
-    { label: "the year before last", upToAge: 3 },
-    { label: "three to five years ago", upToAge: 5 },
-    { label: "five to ten years ago", upToAge: 10 },
-    { label: "ten to twenty years ago", upToAge: 20 },
-    { label: "twenty to forty years ago", upToAge: 40 },
-    { label: "forty to sixty years ago", upToAge: 60 },
-    { label: "sixty to a hundred years ago", upToAge: 100 },
-    { label: "a long time ago", upToAge: 150 },
-    { label: "in the ancestors' time", upToAge: Infinity },
+    { label: "this year", upToAge: 1, range: "this year" },
+    { label: "last year", upToAge: 2, range: "1 year ago" },
+    { label: "the year before last", upToAge: 3, range: "2 years ago" },
+    { label: "a few years ago", upToAge: 5, range: "3 to 5 years ago" },
+    { label: "some years ago", upToAge: 10, range: "5 to 10 years ago" },
+    { label: "less than a generation ago", upToAge: 20, range: "10 to 20 years ago" },
+    { label: "a generation ago", upToAge: 40, range: "20 to 40 years ago" },
+    { label: "two generations ago", upToAge: 60, range: "40 to 60 years ago" },
+    { label: "three or four generations ago", upToAge: 100, range: "60 to 100 years ago" },
+    { label: "a long time ago", upToAge: 150, range: "100 to 150 years ago" },
+    { label: "in the ancestors' time", upToAge: Infinity, range: "150 years ago or more" },
     // Never reached by age alone; for processes that turn history into myth.
-    { label: "in the days of creation", upToAge: Infinity },
+    { label: "in the days of creation", upToAge: Infinity, range: "beyond any reckoning" },
 ];
 
 export const WhenLevels = {
@@ -268,6 +272,25 @@ export class FortuneMemory extends HistoryItem {
 }
 
 export type AnyHistoryItem = OriginMemory | FloodMemory | FortuneMemory;
+
+// Names one event across every clan that remembers it, where an item is one
+// clan's copy. The same year's Fortune could in principle be one clan's best
+// year and another's worst, so a Fortune record's polarity is part of it.
+export function historyEventKey(item: AnyHistoryItem): string {
+    return item.kind === "fortune"
+        ? `fortune:${item.eventId}:${item.polarity}`
+        : `${item.kind}:${item.eventId}`;
+}
+
+const KIND_ORDER: Record<HistoryItemKind, number> = { origin: 0, flood: 1, fortune: 2 };
+
+// Oldest first; what happened before anyone was counting leads.
+export function compareHistoryItems(a: AnyHistoryItem, b: AnyHistoryItem): number {
+    const ay = a.year ?? -Infinity;
+    const by = b.year ?? -Infinity;
+    if (ay !== by) return ay - by;
+    return KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+}
 
 // --- Fortune records --------------------------------------------------------
 
@@ -476,6 +499,51 @@ export class History {
             }
         }
     }
+}
+
+// --- Laying out for display ---------------------------------------------------
+
+export interface HistoryWhenGroup<T> {
+    level: number;
+    def: WhenLevel;
+    entries: T[];
+}
+
+export interface HistoryTimeframeGroup<T> {
+    tf: HistoryTimeframeDef;
+    whens: HistoryWhenGroup<T>[];
+}
+
+// Lays history out newest first: by how far back the story lies, then by
+// what the clan knows of when it happened, then by year. `place` finds the
+// item an entry stands for and the history that holds it, so a listing of
+// several clans' memories can be laid out the same way as one clan's.
+export function groupHistory<T>(
+    entries: readonly T[],
+    place: (entry: T) => { item: AnyHistoryItem; history: History },
+): HistoryTimeframeGroup<T>[] {
+    const groups: HistoryTimeframeGroup<T>[] = [];
+    for (const tf of HISTORY_TIMEFRAMES) {
+        const byLevel = new Map<number, T[]>();
+        for (const entry of entries) {
+            const { item, history } = place(entry);
+            if (history.timeframeOf(item) !== tf.key) continue;
+            const list = byLevel.get(item.when);
+            if (list) list.push(entry);
+            else byLevel.set(item.when, [entry]);
+        }
+        if (byLevel.size === 0) continue;
+        const whens = [...byLevel]
+            .sort(([a], [b]) => a - b)
+            .map(([level, list]) => ({
+                level,
+                def: WHEN_LEVELS[level],
+                entries: list.toSorted((a, b) =>
+                    compareHistoryItems(place(b).item, place(a).item)),
+            }));
+        groups.push({ tf, whens });
+    }
+    return groups;
 }
 
 // --- The year's update ------------------------------------------------------
