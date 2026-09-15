@@ -20,6 +20,7 @@ import type { Note } from "../records/notifications";
 import type { Alert, AlertKindId } from "../records/alerts";
 import type { BreakpointHit, BreakpointId } from "../records/breakpoints";
 import type { PopulationChange } from "../people/population";
+import { careStandardShare } from "../people/care";
 import type { ProductionReport } from "../econ/operation";
 import type { Distribution, StockOutflow } from "../econ/flows";
 import type { Stock } from "../econ/stock";
@@ -128,6 +129,10 @@ export class ClanDTO {
     migrationPlan: MigrationCalc | undefined;
     lastPopulationChange: PopulationChange;
     perCapitaFoodProductionTarget: number;
+    // How much looking after got done against what the children need, and
+    // the share of the year the standard asks for. See care.ts.
+    careProvision: number;
+    careStandardShare: number;
     population: number;
     effectiveResidentPopulation: number;
 
@@ -179,6 +184,8 @@ export class ClanDTO {
         this.seniority = clan.seniority;
         this.population = clan.population;
         this.perCapitaFoodProductionTarget = clan.perCapitaFoodProductionTarget;
+        this.careProvision = clan.careProvision;
+        this.careStandardShare = careStandardShare(clan);
         this.workers = clan.workers;
         this.effectiveResidentPopulation = clan.effectiveResidentPopulation;
         this.residenceFraction = clan.residenceFraction;

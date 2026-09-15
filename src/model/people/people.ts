@@ -4,6 +4,7 @@ import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
 import { membershipChanged } from "./membership";
 import { Activities, EffortAllocation } from "../decisions/effort";
+import { careSkillFactor } from "./care";
 import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
 import { HousingDecision } from "../decisions/housingdecision";
@@ -180,6 +181,13 @@ export class Clan implements TradePartner {
     // Time spent looking after people, which is where Care is practised.
     get careLabor(): number {
         return this.effortAllocation.get(Activities.Care) * this.effort;
+    }
+
+    // How much looking after actually got done, against what the children
+    // need: the care effort given against the standard, times what the
+    // clan's skill makes of it. See care.ts.
+    get careProvision(): number {
+        return this.effortAllocation.careRatio * careSkillFactor(this.careSkill);
     }
 
     effortAllocation: EffortAllocation;
@@ -390,7 +398,8 @@ export class Clan implements TradePartner {
             change.previousSize,
             this.consumption.perCapitaFood,
             fishShare,
-            1 - fishShare);
+            1 - fishShare,
+            this.careProvision);
     }
 
     updateHappiness() {
@@ -607,7 +616,9 @@ export class Clan implements TradePartner {
         const newClan = new Clan(this.world, this.settlement, this.annals, name, color, newSize);
         newClan.traits = this.traits.cloneWithSplitBump();
         newClan.skills = this.skills.cloneFor(newClan);
-        newClan.effortAllocation = new EffortAllocation(newClan, this.effortAllocation.m, this.effortAllocation.pm);
+        newClan.effortAllocation = new EffortAllocation(
+            newClan, this.effortAllocation.m, this.effortAllocation.pm,
+            this.effortAllocation.carePlan);
         for (let i = 0; i < this.slices.length; ++i) {
             newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
             newClan.slices[i][1] = Math.round(this.slices[i][1] * fraction);

@@ -15,6 +15,7 @@
         type Eudaimonia,
         type EuSubscoreDef,
     } from "../../model/self/eudaimonia";
+    import { childhoodJoyLabel } from "../../model/people/care";
 
     let {
         eudaimonia,
@@ -38,8 +39,9 @@
 
     let prev = $derived(sub ? r.get(sub.prevNode) : 0);
     let signal = $derived(
-        fortune ? r.get(EuNode.FoodSignal) : sub ? r.get(sub.signalNode) : 0,
+        fortune ? r.get(EuNode.Fortune) : sub ? r.get(sub.signalNode) : 0,
     );
+    let joy = $derived(fortune ? r.get(EuNode.ChildhoodJoy) : 0);
     let pull = $derived(sub ? r.get(sub.pullNode) : 0);
     let value = $derived(sub ? r.get(sub.valueNode) : 0);
 
@@ -58,7 +60,7 @@
         <div class="head">{fortune ? "Fortune" : (sub?.label ?? "")}</div>
         <div class="blurb">
             {fortune
-                ? "What this year's eating alone was worth, before the long verdict takes it in."
+                ? "What this year's eating and the care of the young were worth, before the long verdict takes it in."
                 : (sub?.blurb ?? "")}
         </div>
 
@@ -138,6 +140,22 @@
                             >
                         </tr>
                     {/each}
+                    {#if fortune}
+                        <tr class="subtotal">
+                            <td
+                                class="label"
+                                title="Care provided against what the children need: above it is Childhood Joy, below it Caretaker Stress."
+                            >
+                                {childhoodJoyLabel(joy)}
+                                <span class="scale"
+                                    >{pctOf(r.get(EuNode.CareProvision))} care</span
+                                >
+                            </td>
+                            <td class="v" class:pos={joy > 0} class:neg={joy < 0}
+                                >{n(joy)}</td
+                            >
+                        </tr>
+                    {/if}
                     <tr class="signal-row">
                         <td class="label"
                             >{fortune ? "Fortune" : "Food signal"}</td
@@ -163,7 +181,9 @@
             <div class="foot">
                 Fortune reads rations on a straight line, where the standing
                 Food subscore squares them &mdash; this is a report on the
-                year, not a judgement built over many.
+                year, not a judgement built over many. Care is read against
+                what the children need: above it is Childhood Joy, below it
+                Caretaker Stress.
             </div>
         {:else if sub}
             <!-- The year's movement toward that signal, and no further. -->

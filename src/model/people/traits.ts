@@ -1,7 +1,9 @@
 import { clamp } from "../lib/basics";
 import { normal, poisson } from "../lib/distributions";
 
-export const NUMERIC_TRAITS = ['piety', 'intellect'] as const;
+// Nurture: how much care a clan wants to give its children, against the
+// standard they need. See care.ts.
+export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -160,6 +162,7 @@ export class ClanTraits {
         this.numeric = {
             piety: numeric?.piety ?? randomTraitStat(),
             intellect: numeric?.intellect ?? randomTraitStat(),
+            nurture: numeric?.nurture ?? randomTraitStat(),
         };
         this.bitmap = bitmap;
         this.giving_ = giving ?? randomGiving();
@@ -270,6 +273,14 @@ export class ClanTraits {
 
     set intellect(val: number) {
         this.numeric['intellect'] = clamp(Math.round(val), 0, 100);
+    }
+
+    get nurture(): number {
+        return this.numeric['nurture'] ?? 50;
+    }
+
+    set nurture(val: number) {
+        this.numeric['nurture'] = clamp(Math.round(val), 0, 100);
     }
 
     get(trait: string): number {

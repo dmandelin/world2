@@ -22,6 +22,7 @@
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
     import SettlementEcon from "./SettlementEcon.svelte";
     import SettlementQoL from "./SettlementQoL.svelte";
+    import SettlementCare from "./SettlementCare.svelte";
     import SettlementWellness from "./SettlementWellness.svelte";
     import SettlementRituals from "./SettlementRituals.svelte";
     import SettlementFestivals from "./SettlementFestivals.svelte";
@@ -39,6 +40,7 @@
         { label: "Wellness", icon: "🌾", snippet: wellnessTab, group: "settlement" },
         { label: "History", icon: "📜", snippet: historyTab, group: "settlement" },
         { label: "QoL", icon: "😊", snippet: qolTab, group: "settlement" },
+        { label: "Care", icon: "🤱", snippet: careTab, group: "settlement" },
         { label: "Econ", icon: "📊", snippet: econTab, group: "settlement" },
         { label: "Productivity", icon: "⚒️", snippet: productivityTab, group: "settlement" },
         { label: "Land", icon: "🏞️", snippet: landTab, group: "settlement" },
@@ -107,6 +109,10 @@
 
 {#snippet qolTab()}
     <SettlementQoL {settlement} />
+{/snippet}
+
+{#snippet careTab()}
+    <SettlementCare {settlement} />
 {/snippet}
 
 {#snippet demographicsTab()}

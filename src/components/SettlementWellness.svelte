@@ -115,6 +115,20 @@
         );
     }
 
+    // Fortune's reading of how the year's care went: Childhood Joy above the
+    // standard, Caretaker Stress below it.
+    // Read off the clan rather than the replay, which in the Eudaimonia view
+    // doesn't run Fortune's chain.
+    function joyOf(clan: ClanDTO): number {
+        return clan.eudaimonia.childhoodJoy;
+    }
+
+    let settlementJoy = $derived(
+        eudaimoniaAverage(
+            clans.map((c) => ({ value: joyOf(c), weight: c.population })),
+        ),
+    );
+
     const n = (x: number, p = 1) =>
         (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(p);
     const pctOf = (x: number) => (x * 100).toFixed(0) + "%";
@@ -247,6 +261,46 @@
                         </tr>
                     {/each}
 
+                    <!-- How the year's care went. Part of Fortune, so shown
+                         set apart when the standing verdict is on screen. -->
+                        <tr class:outside={view !== "fortune"}>
+                            <th
+                                class="rowhead"
+                                title="Childhood Joy when care provided is above what the children need, Caretaker Stress when below. It counts toward Fortune, not Eudaimonia."
+                            >
+                                Childhood Joy
+                                <span class="decay"
+                                    >{view === "fortune"
+                                        ? "this year"
+                                        : "Fortune only"}</span
+                                >
+                            </th>
+                            <td class="num settlement-col">
+                                {n(settlementJoy)}
+                            </td>
+                            {#each clans as clan (clan.uuid)}
+                                {@const v = joyOf(clan)}
+                                <td class="num cell">
+                                    <Tooltip>
+                                        <span
+                                            class="figure"
+                                            class:pos={v > 0}
+                                            class:neg={v < 0}>{n(v)}</span
+                                        >
+                                        <div
+                                            slot="tooltip"
+                                            style="text-align: left; color: initial;"
+                                        >
+                                            <EudaimoniaCalc
+                                                eudaimonia={clan.eudaimonia}
+                                                fortune={true}
+                                            />
+                                        </div>
+                                    </Tooltip>
+                                </td>
+                            {/each}
+                        </tr>
+
                     <!-- What went into the food figure above. -->
                     {#each EU_FOOD_STEPS as step (step.node)}
                         <tr
@@ -292,9 +346,9 @@
 
         {#if view === "fortune" && parts.length < EU_SUBSCORES.length}
             <div class="note">
-                Fortune reports on {parts.map((p) => p.label).join(", ")} only
-                so far, and reads it on a straight line where the standing Hunger
-                subscore squares it. Life is left out: its signal is a growth rate
+                Fortune reports on {parts.map((p) => p.label).join(", ")} and
+                care only so far, and reads food on a straight line where the
+                standing Hunger subscore squares it. Life is left out: its signal is a growth rate
                 read at a large multiple, so in a small clan a single birth swings
                 it by a hundred points, saying more about arithmetic than about the
                 year.
@@ -311,6 +365,11 @@
 </div>
 
 <style>
+    /* A row that doesn't count toward the figure on screen. */
+    tr.outside {
+        opacity: 0.55;
+    }
+
     .wrap {
         display: flex;
         flex-direction: column;

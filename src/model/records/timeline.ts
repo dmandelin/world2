@@ -82,11 +82,13 @@ export class ClanTimePoint {
 
     readonly traitPiety: number;
     readonly traitIntellect: number;
+    readonly traitNurture: number;
     readonly traitGiving: number;
     readonly traitAggression: number;
 
     readonly activityLeisure: number;
     readonly activityCare: number;
+    readonly careProvision: number;
     readonly activityHelp: number;
     readonly activityProduction: number;
     readonly processFishing: number;
@@ -197,11 +199,13 @@ export class ClanTimePoint {
 
         this.traitPiety = clan.traits?.piety ?? 50;
         this.traitIntellect = clan.traits?.intellect ?? 50;
+        this.traitNurture = clan.traits?.nurture ?? 50;
         this.traitGiving = clan.traits?.giving ?? 0;
         this.traitAggression = clan.traits?.aggression ?? 0.2;
 
         this.activityLeisure = clan.effortAllocation.get(Activities.Leisure) * 100;
         this.activityCare = clan.effortAllocation.get(Activities.Care) * 100;
+        this.careProvision = clan.careProvision * 100;
         this.activityHelp = clan.effortAllocation.get(Activities.Help) * 100;
         this.activityProduction = clan.effortAllocation.get(Activities.Production) * 100;
         this.processFishing = clan.effortAllocation.getForProcess(Processes.Fishing) * 100;

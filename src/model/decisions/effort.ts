@@ -3,10 +3,26 @@ import { Processes } from "../econ/econdefs";
 import { safeDiv } from "../lib/basics";
 import { isExemplarClan } from "../lib/debug";
 import { pct } from "../lib/format";
+import { CARE_EFFORT_MIN, CARE_FOOD_SECURITY, careStandardShare, desiredCareRatio } from "../people/care";
 import type { Clan } from "../people/people";
 import type { SkillDef } from "../people/skills";
 import type { Process } from "../econ/process";
 import type { Tagged } from "../econ/tagged";
+
+// How a clan settled its care for the year, all against the standard its
+// children need. Kept as decided, so later drift in the clan's disposition
+// doesn't rewrite what it chose.
+export type CarePlan = {
+    // What its Nurture asked for.
+    readonly wanted: number;
+    // What it actually gave.
+    readonly given: number;
+    // Food it expected to grow with the care it wanted, as a share of its
+    // food target. Below CARE_FOOD_SECURITY it cut care to grow more.
+    readonly foodOutlook: number;
+};
+
+const STANDARD_CARE_PLAN: CarePlan = { wanted: 1, given: 1, foodOutlook: 1 };
 
 // How a clan allocates its "effort", which subsumes time taken
 // (including preparation and recovery) and other factors not
@@ -23,10 +39,16 @@ export class EffortAllocation {
     // effort. Must sum to 1.
     private pm_: Map<Process, number> = new Map();
 
+    // Settled in applyStart and left alone by the steps after it.
+    private carePlan_: CarePlan;
+
     constructor(
         readonly clan: Clan,
         m?: ReadonlyMap<Activity, number>,
-        pm?: ReadonlyMap<Process, number>) {
+        pm?: ReadonlyMap<Process, number>,
+        carePlan: CarePlan = STANDARD_CARE_PLAN) {
+
+        this.carePlan_ = carePlan;
 
         if (m) {
             this.m_ = new Map(m);
@@ -62,6 +84,15 @@ export class EffortAllocation {
 
     get pm(): ReadonlyMap<Process, number> {
         return this.pm_;
+    }
+
+    get carePlan(): CarePlan {
+        return this.carePlan_;
+    }
+
+    // Care effort given, against the standard the clan's children need.
+    get careRatio(): number {
+        return this.carePlan_.given;
     }
 
     *forProduction(): Iterable<[Process, number]> {
@@ -101,7 +132,7 @@ export class EffortAllocation {
     }
 
     clone(): EffortAllocation {
-        return new EffortAllocation(this.clan, this.m_, this.pm_);
+        return new EffortAllocation(this.clan, this.m_, this.pm_, this.carePlan_);
     }
 
     shifted(from: Process, to: Process, delta: number): EffortAllocation {
@@ -116,7 +147,7 @@ export class EffortAllocation {
                 return [process, fraction];
             }
         });
-        return new EffortAllocation(this.clan, this.m_, new Map(pm));
+        return new EffortAllocation(this.clan, this.m_, new Map(pm), this.carePlan_);
     }
 
     shiftedActivity(from: Activity, to: Activity, delta: number): EffortAllocation {
@@ -125,7 +156,7 @@ export class EffortAllocation {
         const m = new Map(this.m_);
         m.set(from, this.get(from) - actualDelta);
         m.set(to, this.get(to) + actualDelta);
-        return new EffortAllocation(this.clan, m, this.pm_);
+        return new EffortAllocation(this.clan, m, this.pm_, this.carePlan_);
     }
 
     // "Applying" the allocation refers to the process of converting
@@ -134,11 +165,57 @@ export class EffortAllocation {
     // Rest a clan will not do without, as a share of its year.
     static readonly MIN_REST_SHARE = 0.15;
 
+    // How many times a clan halves the range when working out how far it
+    // has to cut back on care to expect enough food.
+    private static readonly CARE_SEARCH_STEPS = 6;
+
     // Initialize the application process.
     applyStart() {
-        // Reserve effort needed for non-production activities, then
-        // have the rest be production, keeping back the rest the clan needs.
-        const fCare = Math.min(1, 0.25 * this.clan.children / this.clan.effort);
+        // Care comes first. The clan gives its children the care it wants to
+        // give -- unless that leaves it expecting to go badly short of food,
+        // in which case it gives as much as still lets it expect enough, and
+        // however short it is, never less than the minimum.
+        const standard = careStandardShare(this.clan);
+        const wanted = desiredCareRatio(this.clan.traits.nurture);
+        this.reserve(standard * wanted);
+        const foodOutlook = this.expectedFoodShare();
+        let careRatio = wanted;
+        if (standard > 0 && wanted > CARE_EFFORT_MIN && !isFoodSecure(foodOutlook)) {
+            this.reserve(standard * CARE_EFFORT_MIN);
+            if (isFoodSecure(this.expectedFoodShare())) {
+                // Enough food at lo, not at hi.
+                let lo = CARE_EFFORT_MIN;
+                let hi = wanted;
+                for (let i = 0; i < EffortAllocation.CARE_SEARCH_STEPS; ++i) {
+                    const mid = (lo + hi) / 2;
+                    this.reserve(standard * mid);
+                    if (isFoodSecure(this.expectedFoodShare())) lo = mid; else hi = mid;
+                }
+                careRatio = lo;
+            } else {
+                careRatio = CARE_EFFORT_MIN;
+            }
+            this.reserve(standard * careRatio);
+        }
+        // What was actually given, which falls short of the ratio when the
+        // children would need more than the clan's whole year.
+        const given = standard > 0
+            ? this.get(Activities.Care) / standard
+            : careRatio;
+        this.carePlan_ = { wanted, given, foodOutlook };
+
+        if (isExemplarClan(this.clan)) {
+            console.log(
+                `Start effort allocation for ${this.clan.name}:`,
+                this.clan.effortAllocation.debugString());
+        }
+    }
+
+    // Reserve effort for everything that isn't production around the given
+    // share of care, then have the rest be production, keeping back the rest
+    // the clan needs.
+    private reserve(careShare: number) {
+        const fCare = Math.min(1, careShare);
         const fHelp = this.clan.helpAllocation.total;
         // The settlement's festivals are nobody's choice: they are what the
         // year is, and the clan arranges the rest of its work around them.
@@ -161,12 +238,16 @@ export class EffortAllocation {
         this.m_.set(Activities.Ditching, fDitching);
         this.m_.set(Activities.Festivals, fFestivals);
         this.m_.set(Activities.Production, fProduction);
+    }
 
-        if (isExemplarClan(this.clan)) {
-            console.log(
-                `Start effort allocation for ${this.clan.name}:`,
-                this.clan.effortAllocation.debugString());
-        }
+    // Food the allocation as it stands leaves the clan expecting to grow, as
+    // a share of its food target. Judged without the year's luck, as the
+    // steps below judge food.
+    private expectedFoodShare(): number {
+        const target = this.clan.perCapitaFoodProductionTarget;
+        if (!(this.clan.population > 0) || !(target > 0)) return 1;
+        const er = economicResult(this.clan, this, 'expected');
+        return er.production.totalFood() / this.clan.population / target;
     }
 
     private scoreOption(option: EffortAllocation): number {
@@ -186,7 +267,7 @@ export class EffortAllocation {
         }
     }
 
-    // Try to make one step change to the allocation. Return true if 
+    // Try to make one step change to the allocation. Return true if
     // a change was made.
     applyStep(labor: Map<Process, Map<Clan, number>>): boolean {
         const options: EffortAllocation[] = [
@@ -214,6 +295,12 @@ export class EffortAllocation {
         this.pm_ = bestOption.pm_;
         return true;
     }
+}
+
+// Whether a clan expecting to grow this share of its food target feels secure
+// enough to give its children all the care it wants to.
+function isFoodSecure(foodShare: number): boolean {
+    return foodShare >= CARE_FOOD_SECURITY - 1e-9;
 }
 
 export type Activity = Tagged;

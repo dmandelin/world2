@@ -12,6 +12,7 @@ import { RITUAL_CHANGE_STANDING_HALF_LIFE } from "./standing";
 import type { RitualEvent } from "../rituals";
 import { feastAlignmentEffect, festivalAppeal, festivalGivingSeen } from "../festivals";
 import { explain, type Explainer } from "../lib/explain";
+import { careSociabilityFactor } from "../people/care";
 
 // The alignment of clan A toward clan B is how much A cares
 // about B's welfare, including all considerations such as
@@ -129,7 +130,6 @@ export class Alignment {
             AlignmentItem.forGifts(subject, object),
             AlignmentItem.forGenerosity(subject, object),
             AlignmentItem.forPiety(subject, object),
-            AlignmentItem.forCare(subject, object),
             AlignmentItem.forSociability(subject, object),
             AlignmentItem.forBellicosity(subject, object),
             AlignmentItem.forConflict(subject, object),
@@ -188,12 +188,6 @@ export const SOCIABILITY_WEIGHT = 0.124;
 export const FESTIVAL_ALIGNMENT_WEIGHT = 0.886;
 
 // -- reputation --------------------------------------------------------
-// Per point of believed skill at looking after people, away from the
-// middling 50. A clan that keeps its children alive and its old warm is
-// thought well of for it -- and this is a thing neighbors like a clan for
-// rather than one they are impressed by, so it weighs here and not on
-// respect.
-export const CARE_WEIGHT = 1 / 400;
 // Per point of believed generosity, which is a running average of what the
 // neighbor gives away in a year, in hundredths of a ration per head.
 export const GENEROSITY_WEIGHT = 0.01508;
@@ -408,29 +402,20 @@ export class AlignmentItem<P = unknown> {
 
     // Attention devoted to the relationship via basic interactions. A direct
     // assessment: how much we deal with them is not something we could be
-    // mistaken about.
-    // How well we believe the object looks after its own people. Read off an
-    // impression rather than the truth, so a clan barely known is judged
-    // nearer to what one assumes of clans in general.
-    static forCare(subject: Clan, object: Clan): AlignmentItem {
-        const estimate = observedEstimate(subject, object, ObservationDefs.Care);
-        return new AlignmentItem(
-            'Care',
-            'reputation',
-            estimate - 50,
-            CARE_WEIGHT,
-            careText,
-        );
-    }
-
+    // mistaken about. What it is worth depends on how both clans' people
+    // were raised, since well looked-after people get on better; see
+    // care.ts.
     static forSociability(subject: Clan, object: Clan): AlignmentItem {
         const relativeAttention = getRelativeAttention(subject, object);
+        const upbringing = careSociabilityFactor(
+            subject.careProvision, object.careProvision);
         return new AlignmentItem(
             'Sociability',
             'social',
             relativeAttention,
-            SOCIABILITY_WEIGHT,
-            sociabilityText
+            SOCIABILITY_WEIGHT * upbringing,
+            sociabilityText,
+            { relativeAttention, upbringing },
         );
     }
 
@@ -494,10 +479,8 @@ const giftsText = (i: AlignmentItem) =>
     `${i.baseValue.toFixed(1)} given to us, standing`;
 const pietyText = (i: AlignmentItem) =>
     `Piety estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
-const careText = (i: AlignmentItem) =>
-    `Care estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
-const sociabilityText = (i: AlignmentItem) =>
-    `Attention ${pct(i.baseValue)}`;
+const sociabilityText = (d: { relativeAttention: number, upbringing: number }) =>
+    `Attention ${pct(d.relativeAttention)}, upbringing x${d.upbringing.toFixed(2)}`;
 const bellicosityText = (i: AlignmentItem) =>
     `Bellicosity estimate ${i.baseValue.toFixed(1)}`;
 const conflictText = (i: AlignmentItem) =>

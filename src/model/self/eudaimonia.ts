@@ -19,7 +19,8 @@
 // Alongside them is Fortune, which is the food signal for the current year
 // alone, before the running average absorbs it. It runs the same chain on a
 // gentler quantity curve, because it reports on a year rather than judging a
-// life.
+// life, and adds what the year's care was like: Childhood Joy, or Caretaker
+// Stress when negative.
 //
 // ---------------------------------------------------------------------------
 // A note on how the calculation is written
@@ -61,6 +62,8 @@
 // If you add a step: add the local, then add its `put` to the trace block a
 // few lines below, then add it to EU_NODES. All three are in this file within
 // a screen of each other, which is the point.
+
+import { childhoodJoy } from "../people/care";
 
 // --- Tuning ---------------------------------------------------------------
 
@@ -173,6 +176,11 @@ export const EuNode = {
     FoodSignal: 40,
     FoodPull: 41,
     Food: 42,
+
+    // Care, which Fortune reads alongside the food
+    CareProvision: 45,
+    ChildhoodJoy: 46,
+    Fortune: 47,
 
     // Totals
     PrevValue: 50,
@@ -362,6 +370,13 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: `${(EU_FOOD_DECAY * 100).toFixed(0)}% of the distance from last year's Food to this year's signal.` },
     { id: EuNode.Food, label: "Food", role: "result", places: 1,
       note: "Last year's Food moved by this year's pull." },
+
+    { id: EuNode.CareProvision, label: "Care provided", role: "input", places: 2, isRate: true,
+      note: "Looking after the clan's people got done, as a share of what its children need." },
+    { id: EuNode.ChildhoodJoy, label: "Childhood Joy", role: "derived", places: 1,
+      note: "What the year's care was worth: Childhood Joy above the standard, Caretaker Stress below it." },
+    { id: EuNode.Fortune, label: "Fortune", role: "result", places: 1,
+      note: "The year's eating and its care together." },
 
     { id: EuNode.PrevValue, label: "Total last year", role: "input", places: 1,
       note: "The two subscores as they stood at the end of last year." },
@@ -614,16 +629,29 @@ export function computeFood(
 }
 
 // Fortune: how the year itself went, rather than how the clan's life is
-// going. The same chain on a straight quantity curve, and no running average
-// after it.
+// going. The food chain on a straight quantity curve, and no running average
+// after it, plus what the year's care was like: Childhood Joy when the
+// children got more looking after than they needed, Caretaker Stress when
+// less. See care.ts.
 export function computeFortune(
     foodRatio: number,
     fishShare: number,
     cerealShare: number,
+    careProvision: number,
     trace?: EuTrace,
 ): number {
-    return computeFoodSignal(
+    const food = computeFoodSignal(
         foodRatio, fishShare, cerealShare, EU_FORTUNE_EXPONENT, trace);
+    const joy = childhoodJoy(careProvision);
+    const fortune = food + joy;
+
+    if (trace !== undefined) {
+        trace.put(EuNode.CareProvision, careProvision);
+        trace.put(EuNode.ChildhoodJoy, joy);
+        trace.put(EuNode.Fortune, fortune);
+    }
+
+    return fortune;
 }
 
 // --- Rolling up to a settlement -------------------------------------------
@@ -677,6 +705,7 @@ export class Eudaimonia {
     private foodRatio_: number;
     private fishShare_: number;
     private cerealShare_: number;
+    private careProvision_: number;
     private hasRun_: boolean;
 
     constructor(
@@ -691,7 +720,9 @@ export class Eudaimonia {
         fishShare = 0.5,
         cerealShare = 0.5,
         hasRun = false,
+        careProvision = 1,
     ) {
+        this.careProvision_ = careProvision;
         this.life = life;
         this.food = food;
         this.prevLife_ = prevLife;
@@ -718,6 +749,7 @@ export class Eudaimonia {
             this.fishShare_,
             this.cerealShare_,
             this.hasRun_,
+            this.careProvision_,
         );
     }
 
@@ -735,7 +767,14 @@ export class Eudaimonia {
     // nothing for it.
     get fortune(): number {
         return computeFortune(
-            this.foodRatio_, this.fishShare_, this.cerealShare_);
+            this.foodRatio_, this.fishShare_, this.cerealShare_,
+            this.careProvision_);
+    }
+
+    // Fortune's reading of how the year's care went: Childhood Joy, or when
+    // negative, Caretaker Stress.
+    get childhoodJoy(): number {
+        return childhoodJoy(this.careProvision_);
     }
 
     // One subscore by key, for UI that walks EU_SUBSCORES.
@@ -764,7 +803,9 @@ export class Eudaimonia {
         foodRatio: number,
         fishShare: number,
         cerealShare: number,
+        careProvision: number = 1,
     ): void {
+        this.careProvision_ = careProvision;
         this.prevLife_ = this.life;
         this.prevFood_ = this.food;
         this.births_ = births;
@@ -807,7 +848,8 @@ export class Eudaimonia {
     explainFortune(): EudaimoniaReport {
         const report = new EudaimoniaReport();
         computeFortune(
-            this.foodRatio_, this.fishShare_, this.cerealShare_, report);
+            this.foodRatio_, this.fishShare_, this.cerealShare_,
+            this.careProvision_, report);
         return report;
     }
 }

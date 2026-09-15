@@ -2,6 +2,7 @@ import { type Clan } from './people';
 import { type ClanSkill, type SkillDef } from './skills';
 import { moveToward } from '../lib/modelbasics';
 import { chooseWeighted, stochasticRound, sumFun } from '../lib/basics';
+import { careLearningFactor } from './care';
 
 // About skill changes
 //
@@ -104,6 +105,11 @@ export class ClanSkillChange {
     readonly intellect: number;
     readonly intellectFactor: number;
 
+    // How well the clan's children were looked after, and what that did for
+    // how readily they take up what their elders know. See care.ts.
+    readonly careProvision: number;
+    readonly careFactor: number;
+
     // Value before the change.
     readonly initialValue: number;
 
@@ -120,8 +126,14 @@ export class ClanSkillChange {
         // A harder tradition takes more damage in the passing on. Half the
         // difficulty falls here and half on the learning below, so the two
         // together move the ceiling by the difficulty itself.
+        //
+        // Well looked-after children also lose less of it, and pick up more
+        // below; badly looked-after ones the reverse.
+        this.careProvision = clan.careProvision;
+        this.careFactor = careLearningFactor(this.careProvision);
         const lossFactor =
-            0.005 * this.elapsedYears * Math.sqrt(skillDef.difficulty);
+            0.005 * this.elapsedYears * Math.sqrt(skillDef.difficulty)
+            / this.careFactor;
 
         // Maintaining traditions
         this.initialValue = skill.value;
@@ -218,7 +230,8 @@ export class ClanSkillChange {
         //        tuning so must be done carefully.
         const clanSkillFactor = skillDef.clanSkill ? 1.5 : 1;
         const observationRate = 0.25 * this.elapsedYears * this.focusFactor
-            * clanSkillFactor * this.intellectFactor / Math.sqrt(skillDef.difficulty);
+            * clanSkillFactor * this.intellectFactor * this.careFactor
+            / Math.sqrt(skillDef.difficulty);
         const expectedDeltaFromObservation = observationRate;
         const deltaFromObservation = stochasticRound(expectedDeltaFromObservation);
         this.items.push(new ClanSkillChangeItem('Observation', deltaFromObservation, expectedDeltaFromObservation));

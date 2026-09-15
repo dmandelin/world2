@@ -126,6 +126,8 @@
                 <b>{pct(clanSkill.lastChange.focusFactor)}</b> learning rate from <b>{pct(clanSkill.lastChange.focus)}</b> focus
                 <br />
                 <b>{pct(clanSkill.lastChange.intellectFactor)}</b> intellect factor ({clanSkill.lastChange.intellect})
+                <br />
+                <b>{pct(clanSkill.lastChange.careFactor)}</b> upbringing factor ({pct(clanSkill.lastChange.careProvision)} care provided)
             </p>
             <h4>Imitation Sources</h4>
             {#if imitationTable}

@@ -388,7 +388,7 @@ satisfaction.
     *   There are many refinements to be made, but it's starting to
         look like a reasonably rich (to the point that results can
         be complex and harder to understand now) base model.
-    *   One key thing to add besides the valence model is a true
+    x   One key thing to add besides the valence model is a true
         sense of history. Clans should remember significant people
         and events. Those memories should pass into legends and myths
         and shape a sense of identity and history.
@@ -423,23 +423,21 @@ x   Food
         flooding modifiers and thus overall production is low
         x   Fix is to add the land model so we can juice productivity
             with early land being the best
-    *   Historical memory of key events
-        *   Also technological developments and related memories
-    *   Tuning for proper growth rate
-        *   Give clans some visibility into yield conditions if
-            appropriate
-    *   Consider to what extent clans should actually be able to
+    *   (P2) Consider to what extent clans should actually be able to
         change course mid-year
         *   Might want to substitute emergency actions for general
             optimization, like planting an extra crop
-    *   Incorporate omens, e.g., give experts some ability to predict
+        *   Consider what clans can actually know about this in fishing
+            vs farming
+    *   (P2) Incorporate omens, e.g., give experts some ability to predict
         and tell other clans
         *   Give immediate-return economies an ability to adjust
             faster
+    *   (P3) Also technological developments and related memories
 
 *   Land model refinements:
-    *   Conflict if out of land
-    *   Richer new village site model
+    *   (P2) Conflict if out of land
+    *   (P3) Richer new village site model
 
 *   Kin care and parenting
     *   Right now we auto-adjust the care allocation to the exact
@@ -463,6 +461,8 @@ x   Food
     *   Eudaimonia effects:
         *   -stress/-child-rearing if not enough care
         *   +parent/child joy if extra care
+    *   Get some sort of mutual help for care, but probably make the
+        dynamics somewhat different from other forms
     *   It's probably time to do early weaning properly too
         *   Remove existing "settlement" birth rate bonuses
         *   Let clans choose weaning age 2-4 on half-year steps

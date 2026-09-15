@@ -1219,6 +1219,21 @@
                 topics: ["traits:detail"],
             },
             {
+                label: "Nurture",
+                labelTooltip:
+                    "How much care the clan wants to give its children: 50 gives the standard, 65 gives 110% of it.",
+                class: "actual",
+                cellClass: "rap",
+                banded: true,
+                value: (c) => c.traits.nurture,
+                format: (v) => v.toFixed(0),
+                deltaValue: (c) => c.traits.nurture,
+                deltaFormat: (v) => v.toFixed(0),
+                timelineKey: "traitNurture",
+                scaler: new DefaultScaler(),
+                topics: ["traits:detail"],
+            },
+            {
                 label: "Giving",
                 class: "actual",
                 cellClass: "rap",

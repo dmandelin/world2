@@ -10,41 +10,23 @@ import { getMarriageDecisions } from "../relations/marriage";
 // multiplier are tunable, so read them from the shared knobs at call time.
 import { tuning } from "../tuning";
 
-// What a clan's skill at looking after its people is worth.
+// What care is worth to births and deaths reads care provided -- effort given
+// as well as how well it is done -- and lives in care.ts with the rest of what
+// that is worth.
+import { careBirthRateModifier, careDeathRateModifier } from "./care";
+
+// What a clan's skill at looking after its people is worth to its quality of
+// life.
 //
-// All of these are pinned the same way as every other skill factor in the
-// model: nothing either way at 50, the stated figure at 80, exponential
-// between and past. Care is the traditional life of the people, so 50 is
-// what an ordinary clan manages and the numbers say what being notably good
-// or bad at it is worth against that.
+// Pinned the same way as every other skill factor in the model: nothing
+// either way at 50, the stated figure at 80, straight-line between and past.
+// Care is the traditional life of the people, so 50 is what an ordinary clan
+// manages and the numbers say what being notably good or bad at it is worth
+// against that.
 export const CARE_SKILL_BASE = 50;
 export const CARE_SKILL_TOP = 80;
 
-// Births. A clan that looks after its mothers loses fewer pregnancies and
-// gets women back to health sooner, but this was never going to be the main
-// thing care does.
-export const CARE_BIRTH_RATE_AT_TOP = 1.1;
-
-// Deaths, by age slice. Nearly all of what care is worth falls on the
-// children: keeping the small fed, warm, watched and nursed is the difference
-// between a clan that raises its babies and one that buries them. The old
-// gain something. Adults in their strength, who mostly die of things nobody
-// can nurse them through, gain almost nothing.
-export const CARE_DEATH_RATE_AT_TOP = [0.75, 0.98, 0.98, 0.90];
-
-function careFactor(care: number, atTop: number): number {
-    return Math.pow(atTop, (care - CARE_SKILL_BASE) / (CARE_SKILL_TOP - CARE_SKILL_BASE));
-}
-
-export function careBirthRateModifier(care: number): number {
-    return careFactor(care, CARE_BIRTH_RATE_AT_TOP);
-}
-
-// Applied to the causes a carer could actually do something about: illness,
-// mishap, and the frailty of the old. Not to drowning in a flood, and not to
-// starving, which is a question of how much food there is rather than of who
-// is looking after whom.
-// And what it is worth simply as a life. Points of quality of life at the top
+// What it is worth simply as a life. Points of quality of life at the top
 // of the scale, straight-line from nothing at the middle -- so a badly cared
 // for clan is as much worse off as a well cared for one is better.
 export const CARE_QOL_AT_TOP = 10;
@@ -52,10 +34,6 @@ export const CARE_QOL_AT_TOP = 10;
 export function careQolEffect(care: number): number {
     return CARE_QOL_AT_TOP * (care - CARE_SKILL_BASE)
         / (CARE_SKILL_TOP - CARE_SKILL_BASE);
-}
-
-export function careDeathRateModifier(care: number, slice: number): number {
-    return careFactor(care, CARE_DEATH_RATE_AT_TOP[slice] ?? 1);
 }
 import { feastBirthRateModifier, feastDeathRateModifier, festivalAppeal } from "../festivals";
 
@@ -427,15 +405,15 @@ export class PopulationChangeBuilder {
         this.drModifiers.push(new PopulationChangeModifier(
             'Festivals', appeal, feastDeathRateModifier(this.clan)));
 
-        // Care shows up on the birth rate as a single figure, and on the death
-        // rates per age slice, where the effect really lives; the death-rate
-        // entry here is the middling slices' worth of it, so the breakdown
-        // reads as something rather than nothing.
-        const care = this.clan.careSkill;
+        // Care provided shows up on the birth rate as a single figure, and on
+        // the death rates per age slice, where the effect really lives; the
+        // death-rate entry here is the middling slices' worth of it, so the
+        // breakdown reads as something rather than nothing.
+        const provision = this.clan.careProvision;
         this.brModifiers.push(new PopulationChangeModifier(
-            'Care', care, careBirthRateModifier(care)));
+            'Care', provision, careBirthRateModifier(provision)));
         this.drModifiers.push(new PopulationChangeModifier(
-            'Care', care, careDeathRateModifier(care, 1)));
+            'Care', provision, careDeathRateModifier(provision, 1)));
 
         const intellect = this.clan.traits?.intellect ?? 50;
         const foresightBrModifier = Math.pow(0.9, (intellect - 50) / 15);
@@ -487,12 +465,17 @@ export class PopulationChangeBuilder {
         // given slice and sex mortality multiplier. Every cause is scaled by the
         // global death-rate adjustment tuning knob.
         const A = tuning.deathRateAdjustmentFactor;
-        // How much the clan's skill at looking after people is worth in each
-        // slice. The middling slices' share is already in drModifier, so it
-        // is divided back out here to keep from counting twice.
-        const careMid = careDeathRateModifier(clan.careSkill, 1);
+        // How much the looking after the clan's people got done is worth in
+        // each slice. Applied to the causes a carer could actually do
+        // something about: illness, mishap, and the frailty of the old. Not
+        // to drowning in a flood, and not to starving, which is a question of
+        // how much food there is rather than of who is looking after whom.
+        // The middling slices' share is already in drModifier, so it is
+        // divided back out here to keep from counting twice.
+        const provision = clan.careProvision;
+        const careMid = careDeathRateModifier(provision, 1);
         const careBySlice = [0, 1, 2, 3].map(
-            i => careDeathRateModifier(clan.careSkill, i) / careMid);
+            i => careDeathRateModifier(provision, i) / careMid);
         const rawRisks = (i: number, sexFactor: number): number[] => [
             diseaseRiskBySlice[i] * careBySlice[i] * Y * sexFactor * A,  // Disease
             BASE_DEATH_RATES[i] * this.drModifier * careBySlice[i]
