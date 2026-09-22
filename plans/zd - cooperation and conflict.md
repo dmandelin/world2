@@ -516,3 +516,93 @@ happen so perhaps should also be treated early.
         *   Looks like a similar set of items applies as to a single
             conflict, with somewhat different texture and the ability
             to adjust in real time.
+
+## More on conversation and conflict
+
+Conversation:
+
+*   Change basic interactions so that each clan can directly cover
+    around 50% in a 150-person village. This will make it so that
+    there is generally incomplete and thus variable coverage at any
+    given time.
+*   Change how conversation is generated:
+    *   Doing activities together creates opportunities for conversation.
+        Includes productive work, care, leisure, ritual, and other
+        interactions.
+    *   We can have new activities such as Visit or Gift that have
+        the primary effect of generating conversation.
+*   Change effects of conversation
+    *   Eventually we need to make sure it has the right loading of
+        functional effects such as news, gossip, skill exchange, and
+        marriage partners
+    *   But also, it should be a component of Fortune, which can
+        now have 3 separate needs: food, care, and society
+        *   Right now care apparently works as an additive bonus
+            for childhood joy, centered around some baseline.
+        *   Rework so that all are needed with some CES function
+            somewhat like harmonic
+        *   That implies taking these 3 needs to a 0-1 scale
+        *   Maybe use a baseline to get back a 0-centered score
+            when needed
+*   Choices
+    *   TODO
+*   Items
+    *   Redo how attention is allocated
+        *   Change attention so that it's based on activities and relationships,
+            with selective matching happening *within* that.
+        *   Generators
+            *   Help activity: this will generate some amount of conversation
+                between the two proportional to the time spent
+            *   Marriage/Kin/Friends relationships: also generates conversation
+                between the two proportional to the time spent. Later we'll
+                do more with this, but just base it on the relationship for now.
+            *   Group-level things: settlement (all clans in same settlement),
+                ditching (all clans participating), festivals (all clans
+                participating): this will generate some amount of conversation
+                proportional to time spent, but clans can choose who they
+                prefer to converse with and it gets matched up.
+                *   Matching choices should be based on the clan's prestige view
+                    of the other one, that is both how much they respect that
+                    other clan and how much they think they are good
+                *   It might be a good idea to do the attention allocation at
+                    settlement level 1 time,
+                *   Remember to have some UI to show this allocation as well
+                    as the whole computation where conversation level comes from
+        *   Tune so that in a village of 150, each clan has conversation with
+            strength (= conversation amount/object clan population) averaging
+            about 0.5 across other clans.
+    *   If needed, cap conversation amounts
+    *   Add affinities:
+        *   Random dyadic value
+        *   Conversation value variable on things like alignment
+    *   Add diversity benefit for conversation and relationships
+    *   Rework how information is based on all this
+        *   TODO
+    *   Rework how fortune is based on all this
+        *   3 goods: food, care, conversation
+    *   Other effects
+        *   TODO: skill and other learning
+        *   TODO: make it influence marriage partners.
+
+
+    *   Later: Add Visiting activity to account for relatives and friends
+        conversation time
+    *   Later: Make it also about relationships and have closer relationships
+        be more valuable
+
+Conflict:
+
+*   Start with a model of somewhat rare conflicts, the most serious
+    ones
+*   TODO: What are the conflicts and their stakes?
+*   Initially: Fight, Trial, Bluff
+    *    Fight vs Fight: Contest of direct action, intimidation, and alliances
+    *    Fight vs Trial: TODO
+    *    Fight vs Bluff: fight wins
+    *    Trial vs Trial: Contest of speech, alliances, and reputation
+    *    Trial vs Bluff: trial wins
+    *    Bluff vs Bluff: Like trial but cheaper and more variable
+*   Fighting hurts reputation
+*   Trial could help or hurt reputation
+*   We can also allow for conflicts that proceed over multiple turns
+    *   TODO
