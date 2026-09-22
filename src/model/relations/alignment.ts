@@ -5,7 +5,7 @@ import { GenericItem } from "../records/basicdata";
 import type { ClanDTO } from "../records/dtos";
 import type { Connection } from "./connection";
 import type { Interaction } from "./interaction";
-import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
+import { Conversation, getRelativeAttention } from "./conversation";
 import { DILIGENCE_SCALE, ObservationDefs, conflictsSuffered, giftsReceived, observedEstimate } from "./information";
 import { DecayingCredit } from "./credit";
 import { RITUAL_CHANGE_STANDING_HALF_LIFE } from "./standing";
@@ -117,10 +117,10 @@ export class Alignment {
             ...connections.map(connection => AlignmentItem.from(
                 connection.alignmentItem(subject, object),
                 'social', CONNECTION_WEIGHT)),
-            // Basic-interaction attention is folded into the Sociability item
+            // Conversation attention is folded into the Sociability item
             // below, so only keep other interaction types (e.g. mutual aid).
             ...interactions
-                .filter(interaction => !(interaction instanceof BasicInteraction))
+                .filter(interaction => !(interaction instanceof Conversation))
                 .map(interaction => AlignmentItem.from(
                     interaction.alignmentItem(subject, object),
                     'direct', MUTUAL_AID_WEIGHT)),
@@ -400,7 +400,7 @@ export class AlignmentItem<P = unknown> {
         );
     }
 
-    // Attention devoted to the relationship via basic interactions. A direct
+    // Attention devoted to the relationship via conversation. A direct
     // assessment: how much we deal with them is not something we could be
     // mistaken about. What it is worth depends on how both clans' people
     // were raised, since well looked-after people get on better; see

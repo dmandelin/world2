@@ -6,13 +6,13 @@ import type { ClanDTO } from "../records/dtos";
 import type { World } from "../world";
 import { Interaction } from "./interaction";
 
-export const BASIC_INTERACTION_FIXED_COST = 5;
+export const CONVERSATION_FIXED_COST = 5;
 export const BASE_ATTENTION_BUDGET = 180;
 
 const attentionText = (d: { relativeAttention: number }) =>
     `From ${pct(d.relativeAttention)}`;
 
-export class BasicInteraction extends Interaction {
+export class Conversation extends Interaction {
     amount1to2: number = 0;
     amount2to1: number = 0;
     
@@ -22,7 +22,7 @@ export class BasicInteraction extends Interaction {
 
     directedRelativeAttention(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
         const amount = subject.uuid === this.c1 ? this.amount1to2 : this.amount2to1;
-        const effectiveAmount = Math.max(0, amount - BASIC_INTERACTION_FIXED_COST);
+        const effectiveAmount = Math.max(0, amount - CONVERSATION_FIXED_COST);
         return effectiveAmount / object.population;
     }
 
@@ -40,7 +40,7 @@ export class BasicInteraction extends Interaction {
     alignmentItem(subject: Clan|ClanDTO, object: Clan|ClanDTO): GenericItem {
         const relativeAttention = this.relativeAttention(subject, object);
         return new GenericItem(
-            'Interaction',
+            'Conversation',
             0.1 * relativeAttention,
             attentionText,
             { relativeAttention },
@@ -48,7 +48,7 @@ export class BasicInteraction extends Interaction {
     }
 }
 
-export function updateBasicInteractions(world: World): void {
+export function updateConversations(world: World): void {
     // This is a matching process: to have a relationship, two clans must
     // spend A attention on each other. Algorithm:
     // - For each clan, calculate the relationship appeal of each clan
@@ -98,7 +98,7 @@ export function updateBasicInteractions(world: World): void {
 
                 // The fixed cost is paid in addition to the attention needed
                 // to reach 100% relative attention toward the other clan.
-                const maximumOffer = c2.population + BASIC_INTERACTION_FIXED_COST;
+                const maximumOffer = c2.population + CONVERSATION_FIXED_COST;
                 if (newOffer >= maximumOffer) {
                     newOffer = maximumOffer;
                     remainingClans.delete(c2);
@@ -116,8 +116,8 @@ export function updateBasicInteractions(world: World): void {
         offers.set(c1, offerMap);
     }
 
-    // Clear previous basic interactions.
-    world.interactions.removeType(BasicInteraction);
+    // Clear previous conversations.
+    world.interactions.removeType(Conversation);
 
     // Match offers and ensure relationships exist.
     const acceptedOffers = new Map<Clan, Set<Clan>>();
@@ -131,21 +131,21 @@ export function updateBasicInteractions(world: World): void {
             // fixed cost. For example, N + 5 offered to a clan of size N is
             // a full match for 2N + 5 offered to a clan of size 2N.
             const relativeOffer1to2 =
-                (offer1to2 - BASIC_INTERACTION_FIXED_COST) / c2.population;
+                (offer1to2 - CONVERSATION_FIXED_COST) / c2.population;
             const relativeOffer2to1 =
-                (offer2to1 - BASIC_INTERACTION_FIXED_COST) / c1.population;
+                (offer2to1 - CONVERSATION_FIXED_COST) / c1.population;
             const matchedRelativeOffer = Math.min(relativeOffer1to2, relativeOffer2to1);
             // Neither clan can establish an interaction unless it can first
             // cover the fixed cost.
             if (!isPositive(matchedRelativeOffer)) continue;
 
             const matchedOffer1to2 =
-                matchedRelativeOffer * c2.population + BASIC_INTERACTION_FIXED_COST;
+                matchedRelativeOffer * c2.population + CONVERSATION_FIXED_COST;
             const matchedOffer2to1 =
-                matchedRelativeOffer * c1.population + BASIC_INTERACTION_FIXED_COST;
+                matchedRelativeOffer * c1.population + CONVERSATION_FIXED_COST;
             if (isNaN(matchedOffer1to2) || isNaN(matchedOffer2to1)) debugger;
             
-            const interaction = world.interactions.getOrCreate(c1, c2, BasicInteraction);
+            const interaction = world.interactions.getOrCreate(c1, c2, Conversation);
             interaction.amount1to2 = matchedOffer1to2;
             interaction.amount2to1 = matchedOffer2to1;
 
@@ -161,7 +161,7 @@ export function getRelativeAttention<T extends Clan|ClanDTO>(subject: T, object:
     const interactions = subject.world.interactions.get(subject, object);
     let relativeAttention = 0;
     for (const interaction of interactions) {
-        if (!(interaction instanceof BasicInteraction)) continue;
+        if (!(interaction instanceof Conversation)) continue;
         relativeAttention += interaction.relativeAttention(subject, object);
     }
     return relativeAttention;

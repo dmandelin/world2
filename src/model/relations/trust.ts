@@ -2,7 +2,7 @@ import { clamp, sumFun } from "../lib/basics";
 import type { Clan } from "../people/people";
 import { GenericItem } from "../records/basicdata";
 import { getAlignment } from "./alignment";
-import { getRelativeAttention } from "./basicinteraction";
+import { getRelativeAttention } from "./conversation";
 import type { Conflict } from "./conflict";
 
 export const TRUST_DECAY_ALPHA = 0.5;

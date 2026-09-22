@@ -3,7 +3,7 @@ import { TradeGoods } from "../trade";
 import { getAlignment } from "../relations/alignment";
 import { sumFun, isPositive } from "../lib/basics";
 import { connectedClans } from "../relations/connection";
-import { getRelativeAttention } from "../relations/basicinteraction";
+import { getRelativeAttention } from "../relations/conversation";
 import { recordFoodAid } from "../relations/information";
 
 export const AID_ALIGNMENT_THRESHOLD = -0.5;

@@ -4,7 +4,7 @@ import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { connectedClans, ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { createTrends } from "./records/trends";
 import { InteractionGraph } from "./relations/interaction";
-import { updateBasicInteractions } from "./relations/basicinteraction";
+import { updateConversations } from "./relations/conversation";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { isExemplarClan, log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { economicResult } from "./econ/economy";
@@ -184,7 +184,7 @@ export class World implements NoteTaker {
         // Establish who deals with whom, then let the clans start out already
         // knowing each other, as neighbors of long standing would.
         this.planConnections();
-        updateBasicInteractions(this);
+        updateConversations(this);
         updatePerceptions(this);
         seedInformationLevels(this);
         seedObservations(this);
@@ -390,7 +390,7 @@ export class World implements NoteTaker {
         //this.clans.prune();
 
         this.planConnections();
-        updateBasicInteractions(this);
+        updateConversations(this);
         updateMutualAidInteractions(this);
         // Update perceptions here so they can influence the rest of planning.
         updatePerceptions(this);

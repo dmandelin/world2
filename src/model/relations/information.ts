@@ -3,7 +3,7 @@ import type { Clan } from "../people/people";
 import type { Connection } from "./connection";
 import { KinConnection, MarriageConnection } from "./connection";
 import type { Interaction } from "./interaction";
-import { BasicInteraction, getRelativeAttention } from "./basicinteraction";
+import { Conversation, getRelativeAttention } from "./conversation";
 import { pct } from "../lib/format";
 import { normal } from "../lib/distributions";
 import type { UUID } from "../records/basicdata";
@@ -1476,11 +1476,11 @@ export class ClanInformation {
         this.contactItems_ = [];
         for (const interaction of interactions) {
             const infoVal = interaction.information(subject, object);
-            const isBasic = interaction instanceof BasicInteraction;
+            const isConversation = interaction instanceof Conversation;
             this.contactItems_.push(new ClanInformationItem(
-                isBasic ? "Basic Interaction" : interaction.constructor.name,
+                isConversation ? "Conversation" : interaction.constructor.name,
                 infoVal,
-                isBasic ? attentionText : "",
+                isConversation ? attentionText : "",
             ));
         }
 

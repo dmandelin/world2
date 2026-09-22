@@ -124,7 +124,7 @@ export function careLearningFactor(provision: number): number {
 // --- Getting on with the neighbors ------------------------------------------
 
 // People raised with plenty of looking after get more out of the everyday
-// dealings between clans: factor on the goodwill from basic interactions at
+// dealings between clans: factor on the goodwill from conversation at
 // 150% care provided. Read for both clans, since it takes two to get on.
 export const CARE_SOCIABILITY_AT_TOP = 1.25;
 

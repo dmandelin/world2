@@ -3,7 +3,7 @@
     import type { ClanDTO, SettlementDTO } from '../model/records/dtos';
     import { colorInterpolator } from '../model/lib/basics';
     import { connectionsOfType, FriendshipConnection, KinConnection, MarriageConnection } from '../model/relations/connection';
-    import { BasicInteraction } from '../model/relations/basicinteraction';
+    import { Conversation } from '../model/relations/conversation';
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
@@ -116,9 +116,9 @@
         }
     }
 
-    class BasicInteractionDisplayOption extends RelationshipDisplayOption {
+    class ConversationDisplayOption extends RelationshipDisplayOption {
         *relationships(clan: ClanDTO): Iterable<[ClanDTO, RelationshipDirection, number, string]> {
-            for (const [other, interaction] of world.interactionsForType(clan, BasicInteraction)) {
+            for (const [other, interaction] of world.interactionsForType(clan, Conversation)) {
                 yield [other, '-', 0.5 * interaction.relativeAttention(clan, other), DEFAULT_RELATIONSHIP_COLOR];
             }
         }
@@ -340,7 +340,7 @@
         { label: "A", tooltip: "Alignment", data: new AlignmentDisplayOption() },
         { label: "R", tooltip: "Respect", data: new RespectDisplayOption() },
         { label: "H", tooltip: "Holiness", data: new HolinessDisplayOption() },
-        { label: "I-S", tooltip: "Social interaction", data: new BasicInteractionDisplayOption() },
+        { label: "I-S", tooltip: "Social interaction", data: new ConversationDisplayOption() },
         { label: "I-H", tooltip: "Mutual help", data: new MutualHelpDisplayOption() },
         { label: "C-M", tooltip: "Marriage relationships", data: new MarriageRelationshipDisplayOption() },
         { label: "C-K", tooltip: "Kinship relationships", data: new KinshipRelationshipDisplayOption() },

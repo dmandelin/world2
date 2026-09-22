@@ -20,9 +20,9 @@
     import ConflictDetailsTable from "./tables/ConflictDetailsTable.svelte";
     import Tooltip from "./Tooltip.svelte";
     import {
-        BASIC_INTERACTION_FIXED_COST,
-        BasicInteraction,
-    } from "../model/relations/basicinteraction";
+        CONVERSATION_FIXED_COST,
+        Conversation,
+    } from "../model/relations/conversation";
     import type { Opinion } from "../model/relations/opinion";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
@@ -70,8 +70,8 @@
         colClan: ClanDTO,
     ): number {
         const att = world.attentionTo(rowClan, colClan);
-        if (att <= BASIC_INTERACTION_FIXED_COST) return 0;
-        return (att - BASIC_INTERACTION_FIXED_COST) / colClan.population;
+        if (att <= CONVERSATION_FIXED_COST) return 0;
+        return (att - CONVERSATION_FIXED_COST) / colClan.population;
     }
 
     function informationCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -104,7 +104,7 @@
         const interactions = world.interactions.get(rowClan, colClan);
         let value = 0;
         for (const interaction of interactions) {
-            if (interaction instanceof BasicInteraction) {
+            if (interaction instanceof Conversation) {
                 const amount = Math.min(
                     interaction.amount1to2,
                     interaction.amount2to1,
@@ -155,7 +155,7 @@
 )}
     {@const att = world.attentionTo(subject, object)}
     {#if att}
-        ({unsigned(att)} attention - {BASIC_INTERACTION_FIXED_COST} fixed cost) /
+        ({unsigned(att)} attention - {CONVERSATION_FIXED_COST} fixed cost) /
         {object.population} population = {unsigned(value, 2)} relative attention
     {/if}
 {/snippet}
@@ -189,12 +189,12 @@
     object: ClanDTO,
 )}
     {@const interactions = world.interactions.get(subject, object)}
-    {@const basic = interactions.find((i) => i instanceof BasicInteraction)}
-    {#if basic}
+    {@const conv = interactions.find((i) => i instanceof Conversation)}
+    {#if conv}
         {@const subToObj =
-            subject.uuid === basic.c1 ? basic.amount1to2 : basic.amount2to1}
+            subject.uuid === conv.c1 ? conv.amount1to2 : conv.amount2to1}
         {@const objToSub =
-            subject.uuid === basic.c1 ? basic.amount2to1 : basic.amount1to2}
+            subject.uuid === conv.c1 ? conv.amount2to1 : conv.amount1to2}
         {@const matched = Math.min(subToObj, objToSub)}
         {@const payoff = 5 * (matched / subject.population)}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">

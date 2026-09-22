@@ -35,7 +35,7 @@ import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeli
 import type { TrendDTO } from "../records/trends";
 import { type World } from "../world";
 import { Interaction, type InteractionGraph } from "../relations/interaction";
-import { BasicInteraction } from "../relations/basicinteraction";
+import { Conversation } from "../relations/conversation";
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
 import type { Respect } from "../relations/respect";
@@ -573,7 +573,7 @@ export class WorldDTO {
 
     attentionTo(clan: ClanDTO, other: ClanDTO) {
         for (const i of this.interactionsWith(clan, other)) {
-            if (i instanceof BasicInteraction) {
+            if (i instanceof Conversation) {
                 return i.c1 == clan.uuid ? i.amount1to2 : i.amount2to1;
             }
         }

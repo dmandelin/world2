@@ -31,7 +31,7 @@ import { Stress } from "./stress";
 import { Eudaimonia } from "../self/eudaimonia";
 import { Distribution, StockOutflow, Consumption } from "../econ/flows";
 import { Stock } from "../econ/stock";
-import { BasicInteraction } from "../relations/basicinteraction";
+import { Conversation } from "../relations/conversation";
 import { History, newHistoryEventId } from "./history";
 
 const CLAN_NAMES: string[] = [
@@ -353,7 +353,7 @@ export class Clan implements TradePartner {
         let value = 0;
         for (const [_, interactions] of this.world.interactions.getFor(this)) {
             for (const interaction of interactions) {
-                if (interaction instanceof BasicInteraction) {
+                if (interaction instanceof Conversation) {
                     const amount = Math.min(interaction.amount1to2, interaction.amount2to1);
                     if (amount > 0) {
                         const relativeAmount = amount / this.population;
