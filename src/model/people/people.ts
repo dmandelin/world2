@@ -399,6 +399,7 @@ export class Clan implements TradePartner {
         inputs.cerealShare = 1 - inputs.fishShare;
         inputs.careEffort = this.effortAllocation.careRatio;
         inputs.careSkill = this.careSkill;
+        inputs.careShare = this.effortAllocation.get(Activities.Care);
         readConversationForFortune(this, inputs);
         this.eudaimonia.update(
             change.births,

@@ -29,8 +29,8 @@
 //             Beer        the pleasures of a cereal one
 //       Social
 //         Care
-//           Quantity      the looking after given
-//           Skill         what skill made of it
+//           Comfort       how well looked after everyone was
+//           Stress        what the looking after cost those doing it
 //         Conversation
 //           Quantity      how many people outside the clan it knows
 //           Quality       how well it gets on with them
@@ -86,7 +86,7 @@
 // few lines below, then add it to EU_NODES (and FORTUNE_TREE, if it is part of
 // the tree). All of them are in this file, which is the point.
 
-import { careQuantityJoy, careSkillJoy } from "../people/care";
+import { careComfort, careSkillFactor, careStress } from "../people/care";
 
 // --- Tuning ---------------------------------------------------------------
 
@@ -251,6 +251,8 @@ export class FortuneInputs {
     careEffort = 1;
     // The clan's Care skill.
     careSkill = 50;
+    // Share of the clan's effort that went into care.
+    careShare = 0.2;
     // People outside the clan its people deal with regularly.
     conversationAmount = EU_CONVERSATION_STANDARD;
     // Acquaintance-weighted absolute affinity for those people's clans.
@@ -262,6 +264,7 @@ export class FortuneInputs {
         this.cerealShare = o.cerealShare;
         this.careEffort = o.careEffort;
         this.careSkill = o.careSkill;
+        this.careShare = o.careShare;
         this.conversationAmount = o.conversationAmount;
         this.conversationAffinity = o.conversationAffinity;
     }
@@ -296,6 +299,7 @@ export const EuNode = {
     CerealShare: 12,
     CareEffort: 13,
     CareSkillLevel: 14,
+    CareShare: 17,
     ConversationAmount: 15,
     ConversationAffinity: 16,
 
@@ -321,8 +325,9 @@ export const EuNode = {
     Social: 30,
     //     Care
     Care: 31,
-    CareQuantity: 32,
-    CareSkill: 33,
+    CareComfort: 32,
+    CareStress: 33,
+    CareProvision: 38,
     //     Conversation
     Conversation: 34,
     ConversationQuantity: 35,
@@ -386,10 +391,9 @@ export const FORTUNE_TREE: FortuneTreeNode = {
             children: [
                 {
                     node: EuNode.Care,
-                    combine: BLEND,
                     children: [
-                        { node: EuNode.CareQuantity },
-                        { node: EuNode.CareSkill },
+                        { node: EuNode.CareComfort },
+                        { node: EuNode.CareStress },
                     ],
                 },
                 {
@@ -563,6 +567,8 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "Care effort given, as a share of what the clan's children need." },
     { id: EuNode.CareSkillLevel, label: "Care skill", role: "input", places: 0,
       note: "The clan's skill at looking after people." },
+    { id: EuNode.CareShare, label: "Care share", role: "input", places: 0, isRate: true,
+      note: "Share of the clan's effort that went into looking after people." },
     { id: EuNode.ConversationAmount, label: "Acquaintance", role: "input", places: 0,
       note: "People outside the clan its people deal with regularly." },
     { id: EuNode.ConversationAffinity, label: "Affinity", role: "input", places: 2,
@@ -595,11 +601,13 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.Social, label: "Social", role: "derived", places: 1,
       note: "What the year was worth in people: care and conversation blended." },
     { id: EuNode.Care, label: "Care", role: "derived", places: 1,
-      note: "Childhood Joy, or when negative, Caretaker Stress: the effort given and the skill it was given with, blended." },
-    { id: EuNode.CareQuantity, label: "Quantity", role: "derived", places: 1,
-      note: "Care effort given against what the children need." },
-    { id: EuNode.CareSkill, label: "Skill", role: "derived", places: 1,
-      note: "How much looking after the clan's skill got out of that effort." },
+      note: "How well looked after everyone was, and what it cost those doing it, added." },
+    { id: EuNode.CareProvision, label: "Care provided", role: "derived", places: 2, isRate: true,
+      note: "Care effort against the standard, times what the clan's skill made of it." },
+    { id: EuNode.CareComfort, label: "Comfort", role: "derived", places: 1,
+      note: "How well looked after everyone was: care provided, at 50 a doubling from the standard." },
+    { id: EuNode.CareStress, label: "Stress", role: "derived", places: 1,
+      note: "What the looking after cost the people doing it: nothing at a fifth of the clan's effort, a little easier below that, and wearing fast above." },
     { id: EuNode.Conversation, label: "Conversation", role: "derived", places: 1,
       note: "How many people outside the clan it knows, and how well it gets on with them, blended." },
     { id: EuNode.ConversationQuantity, label: "Quantity", role: "derived", places: 1,
@@ -815,19 +823,21 @@ function traceFood(
     trace.put(EuNode.Food, food);
 }
 
-// Fortune > Social > Care: Childhood Joy, or when negative, Caretaker Stress.
-// The effort given and the skill it was given with, each read against the
-// standard. See care.ts.
+// Fortune > Social > Care: how well looked after everyone was, and what it
+// cost the people doing it. See care.ts.
 export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
-    const quantity = careQuantityJoy(inputs.careEffort);
-    const skill = careSkillJoy(inputs.careSkill);
-    const care = combine2(EuNode.Care, quantity, skill);
+    const provision = inputs.careEffort * careSkillFactor(inputs.careSkill);
+    const comfort = careComfort(provision);
+    const stress = careStress(inputs.careShare);
+    const care = combine2(EuNode.Care, comfort, stress);
 
     if (trace !== undefined) {
         trace.put(EuNode.CareEffort, inputs.careEffort);
         trace.put(EuNode.CareSkillLevel, inputs.careSkill);
-        trace.put(EuNode.CareQuantity, quantity);
-        trace.put(EuNode.CareSkill, skill);
+        trace.put(EuNode.CareShare, inputs.careShare);
+        trace.put(EuNode.CareProvision, provision);
+        trace.put(EuNode.CareComfort, comfort);
+        trace.put(EuNode.CareStress, stress);
         trace.put(EuNode.Care, care);
     }
 
@@ -1011,8 +1021,7 @@ export class Eudaimonia {
         return computeFortune(this.inputs_, EU_FORTUNE_FOOD_EXPONENT);
     }
 
-    // Fortune's reading of how the year's care went: Childhood Joy, or when
-    // negative, Caretaker Stress.
+    // Fortune's reading of how the year's care went: comfort and stress.
     get care(): number {
         return computeCare(this.inputs_);
     }

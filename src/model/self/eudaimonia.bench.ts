@@ -56,7 +56,9 @@ import {
     EU_BLEND_UP_SCALE,
     EU_BLEND_DOWN_SCALE,
 } from "./eudaimonia";
-import { CHILDHOOD_JOY_SCALE, careSkillFactor } from "../people/care";
+// Care's two terms are called rather than written out: stress walks a table
+// of knots, which inlining by hand would only obscure.
+import { careComfort, careSkillFactor, careStress } from "../people/care";
 
 // --- What we are comparing against ----------------------------------------
 
@@ -71,11 +73,6 @@ function inlineLife(
     const netRate = net / Math.max(population, 1);
     const signal = netRate * EU_VITALITY_SCALE;
     return prevLife + EU_LIFE_DECAY * (signal - prevLife);
-}
-
-// Care provided is held inside this range before Fortune reads it; see care.ts.
-function bound(p: number): number {
-    return p < 0.25 ? 0.25 : p > 2.5 ? 2.5 : p;
 }
 
 // The blend, written out; see eudaimonia.ts.
@@ -103,9 +100,8 @@ function inlineFortune(prevFortune: number, x: FortuneInputs): number {
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
     const food = blend2(quantity, quality) + honey + beer;
-    const care = blend2(
-        CHILDHOOD_JOY_SCALE * (bound(x.careEffort) - 1),
-        CHILDHOOD_JOY_SCALE * (bound(careSkillFactor(x.careSkill)) - 1));
+    const care = careComfort(x.careEffort * careSkillFactor(x.careSkill))
+        + careStress(x.careShare);
     const amount = x.conversationAmount;
     const conversation = blend2(
         EU_CONVERSATION_PER_DOUBLING * Math.log2(
@@ -153,10 +149,10 @@ function buildDetail(
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
     const taste = honey + beer;
     const food = nutrition + taste;
-    const careQuantity = CHILDHOOD_JOY_SCALE * (bound(x.careEffort) - 1);
-    const careSkill =
-        CHILDHOOD_JOY_SCALE * (bound(careSkillFactor(x.careSkill)) - 1);
-    const care = blend2(careQuantity, careSkill);
+    const provision = x.careEffort * careSkillFactor(x.careSkill);
+    const comfort = careComfort(provision);
+    const stress = careStress(x.careShare);
+    const care = comfort + stress;
     const amount = x.conversationAmount;
     const convQuantity = EU_CONVERSATION_PER_DOUBLING * Math.log2(
         (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
@@ -193,9 +189,10 @@ function buildDetail(
     m.set("taste", new DetailItem("Taste", taste, "Pleasures"));
     m.set("food", new DetailItem("Food", food, "This year"));
     m.set("material", new DetailItem("Material", food, "This year"));
-    m.set("careQuantity", new DetailItem("Quantity", careQuantity, "Effort"));
-    m.set("careSkill", new DetailItem("Skill", careSkill, "Skill"));
-    m.set("care", new DetailItem("Care", care, "Childhood Joy"));
+    m.set("careProvision", new DetailItem("Care provided", provision, "Effort x skill"));
+    m.set("comfort", new DetailItem("Comfort", comfort, "Looked after"));
+    m.set("stress", new DetailItem("Stress", stress, "Cost of it"));
+    m.set("care", new DetailItem("Care", care, "Added"));
     m.set("convQuantity", new DetailItem("Quantity", convQuantity, "People known"));
     m.set("convQuality", new DetailItem("Quality", convQuality, "Affinity"));
     m.set("conversation", new DetailItem("Conversation", conversation, "This year"));
@@ -218,6 +215,7 @@ const pops = new Float64Array(N_CASES);
 const rations = new Float64Array(N_CASES);
 const fish = new Float64Array(N_CASES);
 const careEffort = new Float64Array(N_CASES);
+const careShare = new Float64Array(N_CASES);
 const careSkill = new Float64Array(N_CASES);
 const known = new Float64Array(N_CASES);
 const affinity = new Float64Array(N_CASES);
@@ -235,6 +233,7 @@ for (let i = 0; i < N_CASES; ++i) {
     rations[i] = 0.5 + rnd();
     fish[i] = rnd();
     careEffort[i] = 0.5 + rnd();
+    careShare[i] = rnd() * 0.5;
     careSkill[i] = 20 + rnd() * 60;
     known[i] = rnd() * 200;
     affinity[i] = 0.3 + rnd() * 0.6;
@@ -247,6 +246,7 @@ function fill(j: number): FortuneInputs {
     inputs.fishShare = fish[j];
     inputs.cerealShare = 1 - fish[j];
     inputs.careEffort = careEffort[j];
+    inputs.careShare = careShare[j];
     inputs.careSkill = careSkill[j];
     inputs.conversationAmount = known[j];
     inputs.conversationAffinity = affinity[j];

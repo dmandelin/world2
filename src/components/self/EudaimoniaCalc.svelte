@@ -17,7 +17,6 @@
         type Eudaimonia,
         type EuSubscoreDef,
     } from "../../model/self/eudaimonia";
-    import { childhoodJoyLabel } from "../../model/people/care";
 
     let {
         eudaimonia,
@@ -39,10 +38,6 @@
 
     // The tree's rows beneath the root, which is shown as the total instead.
     const TREE_ROWS = FORTUNE_ROWS.filter((row) => row.depth > 0);
-
-    // Care's label says which way it went.
-    const rowLabel = (node: (typeof TREE_ROWS)[number]["node"], v: number) =>
-        node === EuNode.Care ? childhoodJoyLabel(v) : euNodeDef(node).label;
 
     let isLife = $derived(!fortune && sub?.key === "life");
 
@@ -131,6 +126,10 @@
                 <span
                     >skill <b>{u(r.get(EuNode.CareSkillLevel), 0)}</b></span
                 >
+                <span class="sep">·</span>
+                <span
+                    ><b>{pctOf(r.get(EuNode.CareShare))}</b> of effort</span
+                >
                 <br />
                 <span
                     ><b>{u(r.get(EuNode.ConversationAmount), 0)}</b> people known</span
@@ -151,7 +150,7 @@
                                 title={euNodeDef(row.node).note}
                                 style="padding-left: {(row.depth - 1) * 0.9}rem"
                             >
-                                {rowLabel(row.node, v)}
+                                {euNodeDef(row.node).label}
                                 {#if row.combine.key !== "sum"}
                                     <span class="how">{row.combine.label.toLowerCase()}</span>
                                 {/if}

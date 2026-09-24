@@ -137,27 +137,42 @@ export function careSociabilityFactor(
 
 // --- Fortune ----------------------------------------------------------------
 
-// Care's part of Fortune comes in two terms, one for each of the factors that
-// multiply into care provided, so a year can be seen to have gone well or
-// badly for the effort given or for the skill it was given with:
+// Care's part of Fortune comes in two terms:
 //
-//     Quantity  the care effort given, against the standard
-//     Skill     what the clan's skill made of each unit of it
+//     Comfort  how well looked after everyone was: care provided, the effort
+//              given times what the clan's skill made of it
+//     Stress   what the looking after cost the people doing it: the share of
+//              the clan's effort that went into it
 //
-// Each is worth this many points per whole standard's worth above or below 1,
-// held inside the same range as care provided. A clan giving 150% of the
-// standard has a year +10 better for the effort; one scraping by at 50%, -10
-// worse. Together they are Childhood Joy, or when negative, Caretaker Stress.
-export const CHILDHOOD_JOY_SCALE = 20;
+// Comfort is worth this many points per doubling of care provided, so each
+// doubling is worth the same and more care runs into diminishing returns:
+// twice the standard is +50, four times +100, half the standard -50. It is
+// held inside the same range as care provided before it is read, so it runs
+// from -100 to about +66.
+export const CARE_COMFORT_PER_DOUBLING = 50;
 
-export function careQuantityJoy(effortRatio: number): number {
-    return CHILDHOOD_JOY_SCALE * (bounded(effortRatio) - 1);
+export function careComfort(provision: number): number {
+    return CARE_COMFORT_PER_DOUBLING * Math.log2(bounded(provision));
 }
 
-export function careSkillJoy(skill: number): number {
-    return CHILDHOOD_JOY_SCALE * (bounded(careSkillFactor(skill)) - 1);
-}
+// Stress, as [share of the clan's effort given to care, points] knots. It runs
+// straight between knots and carries on past the last along the last segment.
+// A fifth of the clan's time is what looking after people ordinarily takes and
+// costs nothing; less than that is a little easier on everyone, and more wears
+// people down fast.
+export const CARE_STRESS_KNOTS: readonly (readonly [number, number])[] = [
+    [0, 10],
+    [0.2, 0],
+    [0.3, -10],
+    [0.5, -30],
+];
 
-export function childhoodJoyLabel(joy: number): string {
-    return joy >= 0 ? "Childhood Joy" : "Caretaker Stress";
+export function careStress(share: number): number {
+    const knots = CARE_STRESS_KNOTS;
+    const s = Number.isFinite(share) ? clamp(share, 0, 1) : 0;
+    let i = 0;
+    while (i < knots.length - 2 && s > knots[i + 1][0]) ++i;
+    const [s0, v0] = knots[i];
+    const [s1, v1] = knots[i + 1];
+    return v0 + (v1 - v0) * (s - s0) / (s1 - s0);
 }

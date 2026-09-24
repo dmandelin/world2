@@ -22,7 +22,6 @@
         type EuNodeId,
         type EuSubscoreDef,
     } from "../model/self/eudaimonia";
-    import { childhoodJoyLabel } from "../model/people/care";
     import { sortedByKey } from "../model/lib/basics";
     import Tooltip from "./Tooltip.svelte";
     import LineGraph from "./LineGraph.svelte";
@@ -108,7 +107,6 @@
     // Care's label says which way it went.
     function rowLabel(node: EuNodeId, v: number): string {
         if (node === EuNode.Fortune) return "Fortune signal";
-        if (node === EuNode.Care) return childhoodJoyLabel(v);
         return euNodeDef(node).label;
     }
 

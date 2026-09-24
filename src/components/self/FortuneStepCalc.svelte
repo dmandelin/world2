@@ -23,7 +23,8 @@
         type EuNodeId,
     } from "../../model/self/eudaimonia";
     import {
-        CHILDHOOD_JOY_SCALE,
+        CARE_COMFORT_PER_DOUBLING,
+        CARE_STRESS_KNOTS,
         careSkillFactor,
     } from "../../model/people/care";
 
@@ -127,25 +128,31 @@
             Cereals make beer, worth rather more than honey, but only so much
             beer is any use &mdash; held at {EU_BEER_MAX}.
         </div>
-    {:else if node === EuNode.CareQuantity}
+    {:else if node === EuNode.CareComfort}
         <div class="line">
-            {CHILDHOOD_JOY_SCALE} &times; ({pctOf(get(EuNode.CareEffort))} effort
-            &minus; 1) = <b>{n(get(EuNode.CareQuantity))}</b>
-        </div>
-        <div class="note">
-            Care effort given, against the standard every clan owes its
-            children.
-        </div>
-    {:else if node === EuNode.CareSkill}
-        <div class="line">
-            {CHILDHOOD_JOY_SCALE} &times; ({pctOf(
+            {pctOf(get(EuNode.CareEffort))} effort &times; {pctOf(
                 careSkillFactor(get(EuNode.CareSkillLevel)),
-            )} at skill {u(get(EuNode.CareSkillLevel), 0)} &minus; 1) =
-            <b>{n(get(EuNode.CareSkill))}</b>
+            )} at skill {u(get(EuNode.CareSkillLevel), 0)} =
+            {pctOf(get(EuNode.CareProvision))} provided
+        </div>
+        <div class="line">
+            {CARE_COMFORT_PER_DOUBLING} &times; log<sub>2</sub>({pctOf(
+                get(EuNode.CareProvision),
+            )}) = <b>{n(get(EuNode.CareComfort))}</b>
         </div>
         <div class="note">
-            How much looking after the clan's skill got out of each unit of
-            effort.
+            Each doubling of care provided is worth the same, so more care
+            runs into diminishing returns.
+        </div>
+    {:else if node === EuNode.CareStress}
+        <div class="line">
+            {pctOf(get(EuNode.CareShare))} of the clan's effort to care =
+            <b>{n(get(EuNode.CareStress))}</b>
+        </div>
+        <div class="note">
+            {CARE_STRESS_KNOTS.map(
+                ([s, v]) => `${pctOf(s)}: ${n(v, 0)}`,
+            ).join(", ")}, straight between them.
         </div>
     {:else if node === EuNode.ConversationQuantity}
         <div class="line">
