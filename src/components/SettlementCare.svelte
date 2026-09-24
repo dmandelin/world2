@@ -63,7 +63,7 @@
                 },
                 {
                     label: "Food outlook",
-                    note: `Food the clan expected to grow with the care it wanted, against its food target. Below ${pct(CARE_FOOD_SECURITY)} it takes effort from care, down to ${pct(CARE_EFFORT_MIN)} of the standard.`,
+                    note: `Nutrition the clan expected from what it would grow with the care it wanted, against its nutrition target. Below ${pct(CARE_FOOD_SECURITY)} it takes effort from care, down to ${pct(CARE_EFFORT_MIN)} of the standard.`,
                     value: (c) => plan(c).foodOutlook,
                     format: pct,
                     sense: 1,

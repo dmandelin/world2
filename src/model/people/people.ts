@@ -5,7 +5,7 @@ import { ClanSkills } from "./clanskills";
 import { membershipChanged } from "./membership";
 import { Activities, EffortAllocation } from "../decisions/effort";
 import { careSkillFactor } from "./care";
-import { nutritionOf } from "./nutrition";
+import { nutritionFromRaw, nutritionOf } from "./nutrition";
 import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
 import { HousingDecision } from "../decisions/housingdecision";
@@ -543,18 +543,27 @@ export class Clan implements TradePartner {
         }
     }
 
-    get perCapitaFoodProductionTarget(): number {
+    // The nutrition the clan plans its work to reach, if it ate everything it
+    // grew. Pious clans aim higher, as they always have: the old food target
+    // of 1.2x per 15 Piety above 50 (0.9x per 15 below), read as rations of
+    // a perfectly balanced diet and taken through nutrition's diminishing
+    // returns. So an ordinary clan aims at 100%, one at 80 Piety at about
+    // 121%, one at 20 at about 81%.
+    get nutritionTarget(): number {
         const piety = this.traits.piety;
-        const forEating = piety >= 50
+        const rations = piety >= 50
             ? Math.max(0.1, Math.pow(1.2, (piety - 50) / 15))
             : Math.max(0.1, Math.pow(0.9, (50 - piety) / 15));
-        // Most of what goes to the settlement's festivals comes back as a
-        // meal, so only what is given up on the offering table has to be
-        // grown on top of what the clan means to eat.
+        return nutritionFromRaw(rations);
+    }
+
+    // Food per head given up on the settlement's offering tables, which the
+    // clan has to grow but will not eat. Most of what goes to the festivals
+    // comes back as a meal, so only the sacrificed part counts against it.
+    get perCapitaFestivalSacrifice(): number {
         const sacrificed = 1 - this.settlement.ritualStructure.foodEatenShare;
-        const forFestivals = this.population > 0
+        return this.population > 0
             ? sacrificed * this.festivals.totalFoodOwed / this.population : 0;
-        return forEating + forFestivals;
     }
 
     getTrait(trait: string): number {

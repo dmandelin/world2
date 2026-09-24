@@ -32,9 +32,9 @@ export const CARE_EFFORT_MAX = 1.5;
 // 121% provided.
 export const CARE_FACTOR_PER_15 = 1.1;
 
-// Share of its food target a clan must expect to meet before it will give the
-// care it wants to. Short of that, it takes effort from care for the fields
-// and the nets, but never below CARE_EFFORT_MIN.
+// Share of its nutrition target a clan must expect to meet before it will give
+// the care it wants to. Short of that, it takes effort from care for the
+// fields and the nets, but never below CARE_EFFORT_MIN.
 export const CARE_FOOD_SECURITY = 0.8;
 
 // The Care activity's share of a clan's year at the standard.

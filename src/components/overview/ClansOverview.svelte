@@ -2931,8 +2931,9 @@
 
 {#snippet foodProducedTooltip(cs: ClanLastTurnSnapshots)}
     <div style="margin-bottom: 6px;">
-        <b>Food Target:</b>
-        {pct(cs.e.perCapitaFoodProductionTarget)} / capita
+        <b>Nutrition target:</b>
+        {pct(cs.e.nutritionTarget)}, after
+        {pct(cs.e.perCapitaFestivalSacrifice)} / capita sacrificed at festivals
     </div>
     <TableView2 table={clanFoodProductionTooltipTable(cs.e)}></TableView2>
 {/snippet}

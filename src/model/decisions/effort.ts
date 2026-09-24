@@ -4,6 +4,8 @@ import { safeDiv } from "../lib/basics";
 import { isExemplarClan } from "../lib/debug";
 import { pct } from "../lib/format";
 import { CARE_EFFORT_MIN, CARE_FOOD_SECURITY, careStandardShare, desiredCareRatio } from "../people/care";
+import { nutritionOf } from "../people/nutrition";
+import { TradeGoods } from "../trade";
 import type { Clan } from "../people/people";
 import type { SkillDef } from "../people/skills";
 import type { Process } from "../econ/process";
@@ -17,8 +19,9 @@ export type CarePlan = {
     readonly wanted: number;
     // What it actually gave.
     readonly given: number;
-    // Food it expected to grow with the care it wanted, as a share of its
-    // food target. Below CARE_FOOD_SECURITY it cut care to grow more.
+    // Nutrition it expected from what it would grow with the care it wanted,
+    // as a share of its nutrition target. Below CARE_FOOD_SECURITY it cut
+    // care to grow more.
     readonly foodOutlook: number;
 };
 
@@ -240,30 +243,32 @@ export class EffortAllocation {
         this.m_.set(Activities.Production, fProduction);
     }
 
-    // Food the allocation as it stands leaves the clan expecting to grow, as
-    // a share of its food target. Judged without the year's luck, as the
-    // steps below judge food.
+    // Nutrition the allocation as it stands leaves the clan expecting, as a
+    // share of its nutrition target. Judged without the year's luck, as the
+    // steps below judge it.
     private expectedFoodShare(): number {
-        const target = this.clan.perCapitaFoodProductionTarget;
+        const target = this.clan.nutritionTarget;
         if (!(this.clan.population > 0) || !(target > 0)) return 1;
-        const er = economicResult(this.clan, this, 'expected');
-        return er.production.totalFood() / this.clan.population / target;
+        return expectedNutrition(this.clan, this) / target;
     }
 
     private scoreOption(option: EffortAllocation): number {
         const leisure = option.get(Activities.Leisure);
         if (leisure < EffortAllocation.MIN_REST_SHARE - 1e-9) return -Infinity;
 
-        // Judged without the flood or the harvest's luck, neither of which
-        // is known while the year's work is still being settled.
-        const er = economicResult(this.clan, option, 'expected');
-        const targetPerCapita = this.clan.perCapitaFoodProductionTarget;
-        const foodPerCapita = (this.clan.population > 0) ? er.production.totalFood() / this.clan.population : targetPerCapita;
+        // Short of its nutrition target, a clan works toward it -- by working
+        // more, or by shifting between the nets and the fields for a better
+        // balanced diet -- and past it, rests. Judged without the flood or
+        // the harvest's luck, neither of which is known while the year's work
+        // is still being settled.
+        const target = this.clan.nutritionTarget;
+        if (!(this.clan.population > 0)) return 1000 + leisure;
+        const nutrition = expectedNutrition(this.clan, option);
 
-        if (foodPerCapita >= targetPerCapita - 1e-9) {
+        if (nutrition >= target - 1e-9) {
             return 1000 + leisure;
         } else {
-            return foodPerCapita;
+            return nutrition;
         }
     }
 
@@ -297,7 +302,21 @@ export class EffortAllocation {
     }
 }
 
-// Whether a clan expecting to grow this share of its food target feels secure
+// The nutrition a clan would get from an allocation if it ate everything it
+// grew, less what it has to give up at the festivals. The mix is the mix of
+// what it grows. Judged on the expected harvest, without the year's luck.
+function expectedNutrition(clan: Clan, allocation: EffortAllocation): number {
+    if (!(clan.population > 0)) return 0;
+    const er = economicResult(clan, allocation, 'expected');
+    const fish = er.production.forGood(TradeGoods.Fish);
+    const cereals = er.production.forGood(TradeGoods.Cereals);
+    const total = fish + cereals;
+    if (!(total > 0)) return 0;
+    const eaten = total / clan.population - clan.perCapitaFestivalSacrifice;
+    return nutritionOf(eaten, cereals / total);
+}
+
+// Whether a clan expecting to meet this share of its nutrition target feels secure
 // enough to give its children all the care it wants to.
 function isFoodSecure(foodShare: number): boolean {
     return foodShare >= CARE_FOOD_SECURITY - 1e-9;

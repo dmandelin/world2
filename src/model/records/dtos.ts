@@ -130,7 +130,8 @@ export class ClanDTO {
     seniority: number;
     migrationPlan: MigrationCalc | undefined;
     lastPopulationChange: PopulationChange;
-    perCapitaFoodProductionTarget: number;
+    nutritionTarget: number;
+    perCapitaFestivalSacrifice: number;
     // How much looking after got done against what the children need, and
     // the share of the year the standard asks for. See care.ts.
     careProvision: number;
@@ -191,7 +192,8 @@ export class ClanDTO {
         this.effortAllocation = clan.effortAllocation.clone();
         this.seniority = clan.seniority;
         this.population = clan.population;
-        this.perCapitaFoodProductionTarget = clan.perCapitaFoodProductionTarget;
+        this.nutritionTarget = clan.nutritionTarget;
+        this.perCapitaFestivalSacrifice = clan.perCapitaFestivalSacrifice;
         this.careProvision = clan.careProvision;
         this.nutrition = clan.nutrition;
         this.careStandardShare = careStandardShare(clan);
