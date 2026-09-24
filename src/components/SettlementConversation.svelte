@@ -7,18 +7,20 @@
         unsigned,
         unsignedFormat,
     } from "../model/lib/format";
-    import { sortedByKey } from "../model/lib/basics";
+    import { sortedByKey, sumFun } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
     import type { Snippet } from "svelte";
     import Tooltip2 from "./Tooltip2.svelte";
     import {
         Conversation,
         GROUP_SOURCES,
+        GroupSources,
         TieSources,
         appealOf,
         relativeAffinityOf,
         AFFINITY_APPEAL_WEIGHT,
         APPEAL_FLOOR,
+        TALKATIVENESS_DOUBLING,
         getRelativeAttention,
         type ConversationSource,
         type ConversationItem,
@@ -318,7 +320,8 @@
                 label: "Supply",
                 valueFn: (row: any) =>
                     isClanDTO(row) ? rowSupplyTotal(row) : grandSupplyTotal(),
-                formatFn: (v: number) => unsigned(v, 2),
+                formatFn: (v: number) => unsigned(v, 0),
+                tooltip: supplyCellTooltip,
                 class: "total-col",
             },
             {
@@ -340,7 +343,8 @@
                         : isClanDTO(col)
                         ? colOfferTotal(col)
                         : grandOfferTotal(),
-                formatFn: (v: number) => unsigned(v, 2),
+                formatFn: (v: number, col: any) =>
+                    unsigned(v, col === "Supply" ? 0 : 2),
                 class: "total-row",
             },
         ];
@@ -454,6 +458,72 @@
         );
     });
 </script>
+
+{#snippet supplyCellTooltip(value: number, row: any)}
+    {#if isClanDTO(row)}
+        {@const items = row.conversationBudget.items.filter((i) =>
+            selectedSources.includes(i.source.name))}
+        {@const base = sumFun(items, (i) => i.supply / i.talk)}
+        <div class="supply-tip">
+            <div class="supply-tip-title">Acquaintance Supply: {row.name}</div>
+            <div class="supply-tip-formula">
+                Supply = Time Share × Intensity × Scale × Talkativeness, where
+                Scale = (People / Base Size)<sup>exponent</sup> and
+                Talkativeness = 2<sup>(T − 50) / {TALKATIVENESS_DOUBLING}</sup>
+                (T = {row.traits.talkativeness})
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Venue</th>
+                        <th>People</th>
+                        <th>Rel. People</th>
+                        <th>Scale</th>
+                        <th>Intensity</th>
+                        <th>Scale × Int.</th>
+                        <th>Time Share</th>
+                        <th>Talk.</th>
+                        <th>Supply</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each items as item}
+                        {@const base = item.source.baseSize}
+                        {@const ties = item.source === TieSources.Marriage ||
+                            item.source === TieSources.Kin ||
+                            item.source === TieSources.Friendship}
+                        <tr>
+                            <td>{item.source.name}</td>
+                            <td>{item.people !== undefined ? unsigned(item.people, 0) : "—"}</td>
+                            <td>{item.people !== undefined && base ? unsigned(item.people / base, 2) : "—"}</td>
+                            <td>{ties ? "—" : unsigned(item.scale, 3)}</td>
+                            <td>{ties ? "—" : unsigned(item.source.intensity, 0)}</td>
+                            <td>{ties ? "—" : unsigned(item.scale * item.source.intensity, 1)}</td>
+                            <td>{ties ? "—" : pct(item.share)}</td>
+                            <td>×{unsigned(item.talk, 2)}</td>
+                            <td><strong>{unsigned(item.supply, 0)}</strong></td>
+                        </tr>
+                    {/each}
+                    <tr class="supply-tip-total">
+                        <td colspan="7">Total</td>
+                        <td title="What Talkativeness came to overall: total supply against what it would have been at 50.">
+                            ×{unsigned(base > 0 ? value / base : 1, 2)}
+                            ({signed(value - base, 0)})
+                        </td>
+                        <td><strong>{unsigned(value, 0)}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            {#if items.some((i) => i.source === TieSources.Marriage ||
+                i.source === TieSources.Kin || i.source === TieSources.Friendship)}
+                <div class="supply-tip-note">
+                    Marriage, kin and friendship visits still use their own
+                    formula, in strength rather than acquaintance.
+                </div>
+            {/if}
+        </div>
+    {/if}
+{/snippet}
 
 {#snippet appealCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
     {@const affinity = relativeAffinityOf(subject, object)}
@@ -676,10 +746,16 @@
         </div>
         <div class="formulas-grid">
             <div class="formula-box">
-                <div class="box-title">🏛️ Group Activities (Settlement, Ditching, Festivals)</div>
+                <div class="box-title">🏛️ Group Activities (Settlement, Ditching, Festivals) &amp; Help</div>
                 <div class="formula-content">
                     <div class="formula-line">
-                        <strong>Acquaintance Supply:</strong> <code>Time Share × Intensity × √(Pop₁ / 20)</code>
+                        <strong>Acquaintance Supply:</strong> <code>Time Share × Intensity × Scale × Talkativeness</code>
+                    </div>
+                    <div class="formula-line">
+                        <strong>Talkativeness:</strong> <code>× 2<sup>(T − 50) / {TALKATIVENESS_DOUBLING}</sup></code> on every offer, ties included
+                    </div>
+                    <div class="formula-line">
+                        <strong>Scale:</strong> <code>(People / Base Size)<sup>exponent</sup></code>, 1 for help
                     </div>
                     <div class="formula-line">
                         <strong>Partner Preference:</strong> <code>Weight₁→₂ = Appeal(c₁ → c₂)</code>
@@ -688,21 +764,22 @@
                         <strong>Appeal Formula:</strong> <code>max({APPEAL_FLOOR}, 1 + {AFFINITY_APPEAL_WEIGHT} × Relative Affinity)</code>
                     </div>
                     <div class="formula-line">
-                        <strong>Offered Strength:</strong> <code>Allocated Supply</code>
+                        <strong>Offered Strength:</strong> <code>Allocated Supply / Pop₂</code>
                     </div>
                     <ul class="param-list">
-                        <li>• <strong>Settlement:</strong> Time = residence share, Intensity = 2.0</li>
-                        <li>• <strong>Ditching:</strong> Time = ditching share, Intensity = 6.0</li>
-                        <li>• <strong>Festivals:</strong> Time = festival share, Intensity = 8.0</li>
+                        <li>• <strong>Settlement:</strong> Time = residence share, People = everyone, Base = {GroupSources.Settlement.baseSize}, Exp = {unsigned(GroupSources.Settlement.scaleExponent ?? 0, 3)}, Intensity = {GroupSources.Settlement.intensity}</li>
+                        <li>• <strong>Ditching:</strong> Time = ditching share, People = workers, Base = {GroupSources.Ditching.baseSize}, Exp = {unsigned(GroupSources.Ditching.scaleExponent ?? 0, 3)}, Intensity = {GroupSources.Ditching.intensity}</li>
+                        <li>• <strong>Festivals:</strong> Time = festival share, People = everyone, Base = {GroupSources.Festivals.baseSize}, Exp = {unsigned(GroupSources.Festivals.scaleExponent ?? 0, 3)}, Intensity = {GroupSources.Festivals.intensity}</li>
+                        <li>• <strong>Help:</strong> Time = field help allocation, one partner at a time, Intensity = {TieSources.Help.intensity}</li>
                     </ul>
                 </div>
             </div>
 
             <div class="formula-box">
-                <div class="box-title">🤝 Standing Ties &amp; Help (Help, Marriage, Kin, Friendship)</div>
+                <div class="box-title">🤝 Standing Ties (Marriage, Kin, Friendship)</div>
                 <div class="formula-content">
                     <div class="formula-line">
-                        <strong>Acquaintance Supply:</strong> <code>Visit Share × Intensity × Reach × √(Pop₁ / 20)</code>
+                        <strong>Supply (in strength):</strong> <code>Visit Share × Intensity × Reach × √(Pop₁ / 20)</code>
                     </div>
                     <div class="formula-line">
                         <strong>Reach (Distance):</strong> <code>1.0 in settlement, max(0, 1 - 0.045 × miles) elsewhere</code>
@@ -711,7 +788,6 @@
                         <strong>Offered Strength:</strong> <code>Supply</code>
                     </div>
                     <ul class="param-list">
-                        <li>• <strong>Help:</strong> Share = field help allocation, Intensity = 6.0</li>
                         <li>• <strong>Marriage:</strong> Share = 12% × relatedness, Intensity = 8.0</li>
                         <li>• <strong>Kin:</strong> Share = 4%, Intensity = 8.0</li>
                         <li>• <strong>Friendship:</strong> Share = 6%, Intensity = 8.0</li>
@@ -738,6 +814,45 @@
 </div>
 
 <style>
+    .supply-tip {
+        font-size: 0.9em;
+        padding: 0.25rem;
+        text-align: left;
+        color: initial;
+    }
+    .supply-tip-title {
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+        border-bottom: 1px dashed #ccc;
+        padding-bottom: 0.2rem;
+    }
+    .supply-tip-formula,
+    .supply-tip-note {
+        font-size: 0.85em;
+        color: #666;
+        margin: 0.25rem 0;
+    }
+    .supply-tip table {
+        border-collapse: collapse;
+        font-size: 0.85em;
+    }
+    .supply-tip th,
+    .supply-tip td {
+        padding: 0.1rem 0.4rem;
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+    .supply-tip th:first-child,
+    .supply-tip td:first-child {
+        text-align: left;
+    }
+    .supply-tip thead tr {
+        border-bottom: 1px solid #ccc;
+    }
+    .supply-tip-total td {
+        border-top: 1px solid #ccc;
+    }
     .conversation-panel {
         display: flex;
         flex-direction: column;

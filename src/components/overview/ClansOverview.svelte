@@ -1234,6 +1234,21 @@
                 topics: ["traits:detail"],
             },
             {
+                label: "Talkativeness",
+                labelTooltip:
+                    "How much the clan puts into conversation in every setting: 50 is ordinary, 80 offers twice as much, 20 half.",
+                class: "actual",
+                cellClass: "rap",
+                banded: true,
+                value: (c) => c.traits.talkativeness,
+                format: (v) => v.toFixed(0),
+                deltaValue: (c) => c.traits.talkativeness,
+                deltaFormat: (v) => v.toFixed(0),
+                timelineKey: "traitTalkativeness",
+                scaler: new DefaultScaler(),
+                topics: ["traits:detail"],
+            },
+            {
                 label: "Giving",
                 class: "actual",
                 cellClass: "rap",

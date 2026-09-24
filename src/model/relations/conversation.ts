@@ -40,18 +40,64 @@ import {
 
 // A setting in which conversation happens.
 //
-// `intensity` is how much acquaintance a person-year in that setting is
-// worth. It differs by setting because settings differ in how much of the
-// time is actually spent among the other clan's people: a year of simply
+// A clan's supply of acquaintance in a setting is
+//
+//     time share x intensity x scale
+//
+// `intensity` is how much acquaintance a whole year in that setting is worth
+// to a clan. It differs by setting because settings differ in how much of the
+// time is actually spent among the other clans' people: a year of simply
 // living in the same village is mostly spent within one's own clan, while a
 // festival is nothing but other people.
+//
+// `scale` is what the size of the gathering does to that. When N people get
+// together, what comes of it can be anything from a set of conversations in
+// pairs, where more people add nothing (scale 1), to one great conversation
+// with everybody, where each person meets all N (scale up to N). Real
+// gatherings sit near the first end. Each group setting has a base size, in
+// people, at which scale is 1, and
+//
+//     scale = (people / base size) ^ exponent
+//
+// Settings between two particular clans have no gathering to scale: 1.
 export type ConversationSource = {
     readonly name: string;
     // Sorted for display; also the order items appear in.
     readonly sortKey: number;
     readonly intensity: number;
     readonly note: string;
+    // People taking part at which the scale factor is 1. Group settings only.
+    readonly baseSize?: number;
+    readonly scaleExponent?: number;
 };
+
+// What the size of a gathering does to the acquaintance it yields.
+export function venueScale(source: ConversationSource, people: number): number {
+    if (source.baseSize === undefined || source.scaleExponent === undefined) return 1;
+    if (!isPositive(people)) return 0;
+    return (people / source.baseSize) ** source.scaleExponent;
+}
+
+// Talkativeness: every offer a clan makes is multiplied by
+//
+//     2 ^ ((talkativeness - 50) / TALKATIVENESS_DOUBLING)
+//
+// so an ordinary clan at 50 offers what the setting yields, one at 80 twice
+// that, and one at 20 half.
+export const TALKATIVENESS_DOUBLING = 30;
+
+export function talkativenessFactor(talkativeness: number): number {
+    return 2 ** ((talkativeness - 50) / TALKATIVENESS_DOUBLING);
+}
+
+// Acquaintance a whole year in each setting is worth, at scale 1. Set so that
+// at the start, with clans living in the settlement 30% of the year, an
+// average clan's supply of about 90 comes roughly 40% from festivals, 30%
+// from the settlement, 20% from help and 10% from ditching.
+export const SETTLEMENT_INTENSITY = 90;
+export const DITCHING_INTENSITY = 150;
+export const FESTIVALS_INTENSITY = 360;
+export const HELP_INTENSITY = 190;
 
 // Settings where a whole group takes part together, and a clan can choose
 // whom within the group to spend its time with.
@@ -59,28 +105,38 @@ export class GroupSources {
     // Simply living in the same place: the paths, the water, the doorways.
     // Time is the share of the year the clan is actually in the settlement
     // rather than out at the fishing camps, so nomadic clans get less of it.
+    // Its people are everyone in the clans living there.
     static readonly Settlement: ConversationSource = {
         name: 'Settlement',
         sortKey: 1,
-        intensity: 2,
+        intensity: SETTLEMENT_INTENSITY,
         note: 'Share of the year spent living in the settlement',
+        baseSize: 150,
+        scaleExponent: 1 / 6,
     };
 
     // Work on the common ditches, done shoulder to shoulder with whoever else
-    // turned out for it.
+    // turned out for it. Its people are the workers of the clans taking part.
+    // Work parties are small whatever the size of the turnout, so size barely
+    // matters.
     static readonly Ditching: ConversationSource = {
         name: 'Ditching',
         sortKey: 2,
-        intensity: 6,
+        intensity: DITCHING_INTENSITY,
         note: 'Share of the year spent on the common ditches',
+        baseSize: 50,
+        scaleExponent: 0.05,
     };
 
     // The settlement's festivals, which are almost entirely other people.
+    // Everyone in the clans taking part comes.
     static readonly Festivals: ConversationSource = {
         name: 'Festivals',
         sortKey: 3,
-        intensity: 8,
+        intensity: FESTIVALS_INTENSITY,
         note: "Share of the year spent at the settlement's festivals",
+        baseSize: 150,
+        scaleExponent: 1 / 6,
     };
 }
 
@@ -88,11 +144,13 @@ export class GroupSources {
 // to choose between.
 export class TieSources {
     // Helping in another clan's fields. Already matched in person-years by
-    // the help planner, so both sides put in the same time.
+    // the help planner, so both sides put in the same time. Supplied in
+    // acquaintance like the group settings, since it is time spent among
+    // another clan's people in the same way.
     static readonly Help: ConversationSource = {
         name: 'Help',
         sortKey: 4,
-        intensity: 6,
+        intensity: HELP_INTENSITY,
         note: 'Share of the year spent working in their fields',
     };
 
@@ -235,10 +293,18 @@ export class ConversationBudgetItem {
     supply: number = 0;
     // How much of that found someone on the other side to take it up.
     used: number = 0;
+    // People taking part in the setting, and the scale factor that came to.
+    // Group settings only; a tie is 1 and has no gathering.
+    people: number | undefined;
+    scale: number = 1;
+    // What the clan's Talkativeness multiplied it by.
+    talk: number = 1;
 
     constructor(
         readonly source: ConversationSource,
-        readonly share: number,
+        // Share of the clan's year spent in this setting. Ties add each
+        // pair's share as they are walked.
+        public share: number,
     ) { }
 
     get unused(): number {
@@ -249,6 +315,9 @@ export class ConversationBudgetItem {
         const item = new ConversationBudgetItem(this.source, this.share);
         item.supply = this.supply;
         item.used = this.used;
+        item.people = this.people;
+        item.scale = this.scale;
+        item.talk = this.talk;
         return item;
     }
 }
@@ -271,6 +340,22 @@ export class ConversationBudget {
         const b = new ConversationBudget();
         b.items = this.items.map(i => i.clone());
         return b;
+    }
+}
+
+// People taking part in a group setting: the whole population of the clans
+// taking part, for the settlement and its festivals; only the workers, for
+// the ditches. How much of the year each clan is actually there is its time
+// share, not a smaller gathering.
+function venuePeople(source: ConversationSource, participants: Clan[]): number {
+    switch (source) {
+        case GroupSources.Settlement:
+        case GroupSources.Festivals:
+            return sumFun(participants, c => c.population);
+        case GroupSources.Ditching:
+            return sumFun(participants, c => c.workers);
+        default:
+            return 0;
     }
 }
 
@@ -352,14 +437,21 @@ class Venue {
 
     readonly initialOffers = new Map<Clan, Map<Clan, number>>();
 
+    // People taking part, and what that does to the acquaintance it yields.
+    readonly people: number;
+    readonly scale: number;
+
     constructor(
         readonly source: ConversationSource,
         readonly participants: Clan[],
     ) {
+        this.people = venuePeople(source, participants);
+        this.scale = venueScale(source, this.people);
         for (const c1 of participants) {
             const share = groupShare(c1, source);
             this.share.set(c1, share);
-            this.supply.set(c1, share * c1.population * source.intensity);
+            this.supply.set(c1, share * source.intensity * this.scale
+                * talkativenessFactor(c1.traits.talkativeness));
 
             const w = new Map<Clan, number>();
             for (const c2 of participants) {
@@ -516,6 +608,9 @@ export function updateConversations(world: World): void {
                 const budgetItem = new ConversationBudgetItem(
                     source, venue.share.get(c1) ?? 0);
                 budgetItem.supply = venue.supply.get(c1) ?? 0;
+                budgetItem.people = venue.people;
+                budgetItem.scale = venue.scale;
+                budgetItem.talk = talkativenessFactor(c1.traits.talkativeness);
                 c1.conversationBudget.items.push(budgetItem);
             }
 
@@ -550,6 +645,7 @@ export function updateConversations(world: World): void {
         let item = clan.conversationBudget.item(source);
         if (!item) {
             item = new ConversationBudgetItem(source, 0);
+            item.talk = talkativenessFactor(clan.traits.talkativeness);
             clan.conversationBudget.items.push(item);
         }
         return item;
@@ -563,8 +659,10 @@ export function updateConversations(world: World): void {
         if (!isPositive(reach)) return;
         const popMod1 = c1.population > 0 ? Math.sqrt(c1.population / 20) : 0;
         const popMod2 = c2.population > 0 ? Math.sqrt(c2.population / 20) : 0;
-        const supply1 = share1 * source.intensity * reach * popMod1;
-        const supply2 = share2 * source.intensity * reach * popMod2;
+        const supply1 = share1 * source.intensity * reach * popMod1
+            * talkativenessFactor(c1.traits.talkativeness);
+        const supply2 = share2 * source.intensity * reach * popMod2
+            * talkativenessFactor(c2.traits.talkativeness);
 
         const item1 = tieBudget(c1, source, share1);
         const item2 = tieBudget(c2, source, share2);
@@ -582,6 +680,34 @@ export function updateConversations(world: World): void {
         item2.used += strength;
     };
 
+    // Help is supplied in acquaintance, like the group settings, but to one
+    // partner at a time, so there is nothing to choose: each side offers its
+    // time in the other's fields. The planner matched the two in person-
+    // years, so the offers come out equal in strength.
+    const addHelp = (c1: Clan, c2: Clan, share1: number, share2: number) => {
+        const source = TieSources.Help;
+        const supply1 = share1 * source.intensity
+            * talkativenessFactor(c1.traits.talkativeness);
+        const supply2 = share2 * source.intensity
+            * talkativenessFactor(c2.traits.talkativeness);
+        const offered1to2 = supply1 / c2.population;
+        const offered2to1 = supply2 / c1.population;
+        const strength = Math.min(offered1to2, offered2to1, MAX_STRENGTH);
+
+        const item1 = tieBudget(c1, source, share1);
+        const item2 = tieBudget(c2, source, share2);
+        item1.share += share1;
+        item2.share += share2;
+        item1.supply += supply1;
+        item2.supply += supply2;
+        if (!isPositive(strength) && !isPositive(offered1to2) && !isPositive(offered2to1)) return;
+
+        record(c1, c2, new ConversationItem(
+            source, share1, share2, offered1to2, offered2to1, strength));
+        item1.used += strength * c2.population;
+        item2.used += strength * c1.population;
+    };
+
     for (const [u1, u2, connections] of world.connections.pairs()) {
         const [c1, c2] = world.clansFrom(u1, u2);
         if (!c1 || !c2 || c1.population <= 0 || c2.population <= 0) continue;
@@ -595,7 +721,7 @@ export function updateConversations(world: World): void {
         const help1 = helpShare(c1, c2);
         const help2 = helpShare(c2, c1);
         if (isPositive(help1) || isPositive(help2)) {
-            addTie(c1, c2, TieSources.Help, help1, help2);
+            addHelp(c1, c2, help1, help2);
         }
     }
 

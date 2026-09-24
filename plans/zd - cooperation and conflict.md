@@ -608,11 +608,13 @@ Conversation:
         x   Tune so that in a village of 150, each clan has conversation with
             strength (= conversation amount/object clan population) averaging
             about 0.5 across other clans.
-    *   If needed, cap conversation amounts
     x   Add affinities:
         x   Affinity concept
         x   Random dyadic value
         x   Affinity influences alignment
+    x   Rework conversation supply
+        x   Basic new model
+        x   Different levels of talkativeness per clan
     *   Conversation appeal
         *   Factors
             *   Affinity should help

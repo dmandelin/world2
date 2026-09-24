@@ -3,15 +3,21 @@ import { normal, poisson } from "../lib/distributions";
 
 // Nurture: how much care a clan wants to give its children, against the
 // standard they need. See care.ts.
-export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture'] as const;
+// Talkativeness: how much a clan puts into conversation, whatever the
+// setting. See talkativenessFactor in conversation.ts.
+export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
 export type BooleanTrait = string;
 
-function randomTraitStat(): number {
-    return clamp(Math.round(normal(50, 12)), 0, 100);
+function randomTraitStat(sd: number = 12): number {
+    return clamp(Math.round(normal(50, sd)), 0, 100);
 }
+
+// Wider than the other 0-100 traits: clans differ a good deal in how much
+// they have to say.
+const TALKATIVENESS_SD = 15;
 
 // Giving: a direct +/- modifier to the per-capita food threshold a clan
 // keeps for itself before its surplus becomes available as aid (see
@@ -163,6 +169,7 @@ export class ClanTraits {
             piety: numeric?.piety ?? randomTraitStat(),
             intellect: numeric?.intellect ?? randomTraitStat(),
             nurture: numeric?.nurture ?? randomTraitStat(),
+            talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
         };
         this.bitmap = bitmap;
         this.giving_ = giving ?? randomGiving();
@@ -281,6 +288,14 @@ export class ClanTraits {
 
     set nurture(val: number) {
         this.numeric['nurture'] = clamp(Math.round(val), 0, 100);
+    }
+
+    get talkativeness(): number {
+        return this.numeric['talkativeness'] ?? 50;
+    }
+
+    set talkativeness(val: number) {
+        this.numeric['talkativeness'] = clamp(Math.round(val), 0, 100);
     }
 
     get(trait: string): number {
