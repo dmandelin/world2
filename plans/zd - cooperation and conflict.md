@@ -614,6 +614,21 @@ Conversation:
         x   Random dyadic value
         x   Affinity influences alignment
     *   Conversation appeal
+        *   Factors
+            *   Affinity should help
+            *   Desire to have relationship for other benefits should help
+                *   Food aid
+                *   Ritual aid
+                *   Marriage!
+            *   Distance should hurt
+            *   Piety
+            *   Sociability?
+            *   Bellicosity
+            *   Conflict
+            *   Density: the more conversation between a given
+                pair, the easier it gets
+            *   Diversity: may want different benefits, types of
+                information
     *   Add diversity benefit for conversation and relationships
     *   Rework how information is based on all this
         *   TODO
@@ -621,7 +636,21 @@ Conversation:
         *   3 goods: food, care, conversation
     *   Other effects
         *   TODO: skill and other learning
-        *   TODO: make it influence marriage partners.
+        *   TODO: make it influence marriage partners
+    *   Benefits to conversation
+        *   +direct enjoyment etc
+        *   +alignment
+        *   +respect (from name being mentioned more)
+        *   -(as in worse stress): there is some cost
+        *   +ability to imitiate behaviors of partners
+        *   +ability to learn skills from partners
+        *   +ability to marry
+        *   +ability to get food aid
+        *   +ability to get ritual aid
+        *   +ability to influence
+        *   +gain information about other clans
+            *   In particular, there should be some point about defense
+                here, being more protected against conflict actions
 
 
     *   Later: Add Visiting activity to account for relatives and friends

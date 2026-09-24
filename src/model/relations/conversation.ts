@@ -13,7 +13,6 @@ import {
     KinConnection,
     MarriageConnection,
 } from "./connection";
-import { getPrestige } from "./prestige";
 
 // Conversation: the ordinary back-and-forth of village life, which is where
 // nearly everything else social starts.
@@ -35,7 +34,7 @@ import { getPrestige } from "./prestige";
 // matching: each side offers, and what actually happens is the lesser of the
 // two offers. Within the group sources -- the village, the ditches, the
 // festivals -- a clan has some say in whom it spends the time with, and
-// spends it on the clans it thinks well of; see `appealOf`.
+// spends it on the clans it has most in common with; see `appealOf`.
 
 // --- Sources ---------------------------------------------------------------
 
@@ -132,12 +131,13 @@ export const MARRIAGE_VISIT_SHARE = 0.12;
 export const KIN_VISIT_SHARE = 0.04;
 export const FRIENDSHIP_VISIT_SHARE = 0.06;
 
-// How much a clan's willingness to spend its time on another swings with what
-// it thinks of that clan. Appeal is 1 at neutral, and prestige runs -1 to 1,
-// so this is the full swing either way; the floor keeps a clan nobody likes
-// from becoming entirely invisible, since villagers still have to get past
-// each other in the lane.
-export const PRESTIGE_APPEAL_WEIGHT = 1.2;
+// How much a clan's willingness to spend its time on another swings with its
+// affinity for that clan. Appeal is 1 at neutral, and relative affinity is 0
+// for a clan as close as the subject's average acquaintance and 1 for one as
+// close as itself, so this is the full swing either way; the floor keeps a
+// clan nobody has anything in common with from becoming entirely invisible,
+// since villagers still have to get past each other in the lane.
+export const AFFINITY_APPEAL_WEIGHT = 1.2;
 export const APPEAL_FLOOR = 0.15;
 
 // Nobody can know more of a clan than all of it, so one source can carry a
@@ -324,12 +324,17 @@ function visitReach(c1: Clan, c2: Clan): number {
 }
 
 // How much a clan wants to spend its time on another: neutral at 1, more for
-// a clan it thinks well of and less for one it does not. Prestige is the
-// combined judgment -- how far the subject is aligned with the other clan and
-// how much it respects it -- so it is what "good company" comes to here.
+// a clan it has more in common with than usual and less for one it has less.
+// Relative affinity, so that each clan seeks out the company it finds most
+// congenial among those it knows, however congenial they are outright. A clan
+// it does not know yet reads as average.
 export function appealOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     return Math.max(
-        APPEAL_FLOOR, 1 + PRESTIGE_APPEAL_WEIGHT * getPrestige(subject, object));
+        APPEAL_FLOOR, 1 + AFFINITY_APPEAL_WEIGHT * relativeAffinityOf(subject, object));
+}
+
+export function relativeAffinityOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
+    return subject.world.perceptions.get(subject, object)?.affinity.relative ?? 0;
 }
 
 // --- Allocation and matching -----------------------------------------------

@@ -16,11 +16,13 @@
         GROUP_SOURCES,
         TieSources,
         appealOf,
+        relativeAffinityOf,
+        AFFINITY_APPEAL_WEIGHT,
+        APPEAL_FLOOR,
         getRelativeAttention,
         type ConversationSource,
         type ConversationItem,
     } from "../model/relations/conversation";
-    import { getPrestige } from "../model/relations/prestige";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
@@ -454,20 +456,16 @@
 </script>
 
 {#snippet appealCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
-    {@const alignment = world.alignmentToward(subject, object)?.value ?? 0}
-    {@const respect = (world.respectToward(subject, object)?.value ?? 0) / 100}
-    {@const prestige = getPrestige(subject, object)}
+    {@const affinity = relativeAffinityOf(subject, object)}
     {@const appeal = appealOf(subject, object)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
         <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
             Conversation Appeal: {subject.name} &rarr; {object.name}
         </div>
         <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none; font-size: 0.9em;">
-            <li>• Alignment (goodness): {signed(alignment, 2)}</li>
-            <li>• Respect (capability): {unsigned(respect, 2)}</li>
-            <li>• Combined Prestige: {signed(prestige, 2)}</li>
+            <li>• Relative affinity: {signed(affinity, 2)}</li>
             <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-            <li><strong>Appeal Formula:</strong> max(0.15, 1 + 1.2 &times; {signed(prestige, 2)}) = <strong>{unsigned(appeal, 2)}</strong></li>
+            <li><strong>Appeal Formula:</strong> max({APPEAL_FLOOR}, 1 + {AFFINITY_APPEAL_WEIGHT} &times; {signed(affinity, 2)}) = <strong>{unsigned(appeal, 2)}</strong></li>
         </ul>
     </div>
 {/snippet}
@@ -621,7 +619,7 @@
                 <span class="info-badge">ℹ️</span>
                 <Tooltip2>
                     <div class="header-tooltip-box">
-                        How much the row clan wants to converse with the column clan: based on prestige (alignment and respect). Includes average rows and columns at top and left.
+                        How much the row clan wants to converse with the column clan: based on its relative affinity for it. Includes average rows and columns at top and left.
                     </div>
                 </Tooltip2>
             </h3>
@@ -687,7 +685,7 @@
                         <strong>Partner Preference:</strong> <code>Weight₁→₂ = Appeal(c₁ → c₂)</code>
                     </div>
                     <div class="formula-line">
-                        <strong>Appeal Formula:</strong> <code>max(0.15, 1 + 1.2 × Prestige)</code>
+                        <strong>Appeal Formula:</strong> <code>max({APPEAL_FLOOR}, 1 + {AFFINITY_APPEAL_WEIGHT} × Relative Affinity)</code>
                     </div>
                     <div class="formula-line">
                         <strong>Offered Strength:</strong> <code>Allocated Supply</code>
