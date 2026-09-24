@@ -30,6 +30,7 @@
     import { populationAverage } from "../../model/lib/modelbasics";
     import ClanEffortMiniBar from "../items/ClanEffortMiniBar.svelte";
     import ClanResidenceTooltip from "../items/ClanResidenceTooltip.svelte";
+    import NutritionCalc from "../self/NutritionCalc.svelte";
     import EntityLink from "../state/EntityLink.svelte";
     import PopulationChange from "../PopulationChange.svelte";
     import PopulationPyramid from "../PopulationPyramid.svelte";
@@ -774,6 +775,21 @@
                 label: "Food",
                 class: "actual",
                 isHeader: true,
+                topics: ["food", "food:detail", "welfare"],
+            },
+            {
+                // How much was eaten times how well balanced it was, with
+                // diminishing returns past 100%. See nutrition.ts.
+                label: "&nbsp;Nutrition",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) => c.nutrition,
+                format: pct,
+                tooltipSnippet: nutritionTooltip,
+                deltaValue: (c) => c.nutrition,
+                deltaFormat: pct,
+                timelineKey: "nutrition",
+                scaler: new DefaultScaler(),
                 topics: ["food", "food:detail", "welfare"],
             },
             {
@@ -2935,6 +2951,10 @@
 
 {#snippet foodTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2 table={clanSustenanceTooltipTable(cs.e)}></TableView2>
+{/snippet}
+
+{#snippet nutritionTooltip(cs: ClanLastTurnSnapshots)}
+    <NutritionCalc clan={cs.e} />
 {/snippet}
 
 {#snippet foodStockTooltip(cs: ClanLastTurnSnapshots)}

@@ -135,6 +135,9 @@ export class ClanDTO {
     // the share of the year the standard asks for. See care.ts.
     careProvision: number;
     careStandardShare: number;
+    // Nutritional state, where 1 is everything its people need. See
+    // nutrition.ts.
+    nutrition: number;
     population: number;
     effectiveResidentPopulation: number;
 
@@ -190,6 +193,7 @@ export class ClanDTO {
         this.population = clan.population;
         this.perCapitaFoodProductionTarget = clan.perCapitaFoodProductionTarget;
         this.careProvision = clan.careProvision;
+        this.nutrition = clan.nutrition;
         this.careStandardShare = careStandardShare(clan);
         this.workers = clan.workers;
         this.effectiveResidentPopulation = clan.effectiveResidentPopulation;

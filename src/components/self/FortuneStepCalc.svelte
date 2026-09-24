@@ -8,15 +8,13 @@
         EudaimoniaReport,
         EU_BEER_MAX,
         EU_BEER_PER_SHARE,
-        EU_CEREAL_IDEAL_SHARE,
-        EU_QUALITY_AT_ALL_CEREAL,
-        EU_QUALITY_AT_NO_CEREAL,
+        EU_NUTRITION_RATE,
+        EU_NUTRITION_SCALE,
         EU_CONVERSATION_FLOOR,
         EU_CONVERSATION_NEUTRAL_AFFINITY,
         EU_CONVERSATION_PER_DOUBLING,
         EU_CONVERSATION_QUALITY_SCALE,
         EU_CONVERSATION_STANDARD,
-        EU_FOOD_SCALE,
         EU_HONEY_PER_SHARE,
         FORTUNE_CHILDREN,
         combinerOf,
@@ -28,16 +26,19 @@
         CARE_STRESS_KNOTS,
         careSkillFactor,
     } from "../../model/people/care";
+    import {
+        BALANCE_AT_ALL_CEREAL,
+        BALANCE_AT_NO_CEREAL,
+        NUTRITION_IDEAL_CEREAL_SHARE,
+        NUTRITION_MAX,
+    } from "../../model/people/nutrition";
 
     let {
         report,
         node,
-        exponent,
     }: {
         report: EudaimoniaReport;
         node: EuNodeId;
-        // Food quantity's curve differs between the subscore and the year.
-        exponent: number;
     } = $props();
 
     const n = (x: number, p = 1) =>
@@ -77,32 +78,30 @@
                 </tr>
             </tbody>
         </table>
-    {:else if node === EuNode.FoodQuantity}
+    {:else if node === EuNode.FoodNutrition}
         <div class="line">
-            {EU_FOOD_SCALE} &times; ({pctOf(get(EuNode.FoodRatio))}{#if exponent !== 1}<sup
-                    >{exponent}</sup
-                >{/if} &minus; 1) = <b>{n(get(EuNode.FoodQuantityRaw))}</b>
+            {pctOf(get(EuNode.FoodRatio))} rations &times;
+            {pctOf(get(EuNode.FoodBalance))} balance =
+            {pctOf(get(EuNode.NutritionRaw))}
+            {#if get(EuNode.NutritionRaw) > 1}
+                &rarr; {pctOf(get(EuNode.NutritionLevel))}
+                <span class="cap">(toward {pctOf(NUTRITION_MAX)})</span>
+            {/if}
+            nutrition
+        </div>
+        <div class="line">
+            {EU_NUTRITION_SCALE} &times; (1 &minus; e<sup
+                >&minus;{EU_NUTRITION_RATE} &times; ({pctOf(
+                    get(EuNode.NutritionLevel),
+                )} &minus; 1)</sup
+            >) = <b>{n(get(EuNode.FoodNutrition))}</b>
         </div>
         <div class="note">
-            Held at zero from above: eating more than enough counts for
-            nothing, so this can only ever be a debt.
-        </div>
-    {:else if node === EuNode.FoodQuality}
-        {@const c = get(EuNode.CerealShare)}
-        {@const high = c >= EU_CEREAL_IDEAL_SHARE}
-        <div class="line">
-            {high ? EU_QUALITY_AT_ALL_CEREAL : EU_QUALITY_AT_NO_CEREAL} &times;
-            (({pctOf(c)} &minus; {pctOf(EU_CEREAL_IDEAL_SHARE)}) &divide;
-            {pctOf(high ? 1 - EU_CEREAL_IDEAL_SHARE : EU_CEREAL_IDEAL_SHARE)})<sup
-                >2</sup
-            >
-            = <b>{n(get(EuNode.FoodQuality))}</b>
-        </div>
-        <div class="note">
-            A balanced diet is {pctOf(EU_CEREAL_IDEAL_SHARE)} cereals and costs
-            nothing. All fish costs {EU_QUALITY_AT_NO_CEREAL}, all cereal
-            {EU_QUALITY_AT_ALL_CEREAL}, rising as the square of the distance
-            from the balance.
+            Balance is 100% at {pctOf(NUTRITION_IDEAL_CEREAL_SHARE)} cereals,
+            {pctOf(BALANCE_AT_NO_CEREAL)} at all fish and
+            {pctOf(BALANCE_AT_ALL_CEREAL)} at all cereal. Past 100%, nutrition
+            runs toward a ceiling of {pctOf(NUTRITION_MAX)}. As Fortune, 100%
+            is nothing, 70% about &minus;50, and the ceiling about +10.
         </div>
     {:else if node === EuNode.Honey}
         <div class="line">

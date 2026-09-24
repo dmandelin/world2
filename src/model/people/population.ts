@@ -37,11 +37,6 @@ export function careQolEffect(care: number): number {
 }
 import { feastBirthRateModifier, feastDeathRateModifier, festivalAppeal } from "../festivals";
 
-function foodVarietyHealthFactor(fishRatio: number): number {
-    const p = 1 - fishRatio;
-    return 1 - 0.125 * p * p;
-}
-
 export const INITIAL_POPULATION_RATIOS = [
     [0.2157, 0.2337],
     [0.1541, 0.1598],
@@ -347,22 +342,17 @@ export class PopulationChangeBuilder {
         readonly clan: Clan,
         readonly yearsElapsed: number = clan.world?.yearsPerTick ?? 1,
     ) {
-        const subsistence = this.clan.consumption.perCapitaFood;
-        const foodQuantityBrModifier = clamp(subsistence, 0, 2);
+        // Nutrition: how much the clan ate and how well balanced it was,
+        // together. See nutrition.ts.
+        const nutrition = this.clan.nutrition;
+        const nutritionBrModifier = clamp(nutrition, 0, 2);
         this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', subsistence, foodQuantityBrModifier));
-        const subsistenceDrModifier = subsistence >= 1
-            ? 1 - clamp((subsistence - 1) / 5, 0, 0.2)
-            : 1 + clamp((1 - subsistence) / 2, 0, 0.5);
+            'Nutrition', nutrition, nutritionBrModifier));
+        const nutritionDrModifier = nutrition >= 1
+            ? 1 - clamp((nutrition - 1) / 5, 0, 0.2)
+            : 1 + clamp((1 - nutrition) / 2, 0, 0.5);
         this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quantity', subsistence, subsistenceDrModifier));
-
-        const fishRat = this.clan.consumption.fishRatio;
-        const foodQualityModifier = foodVarietyHealthFactor(fishRat);
-        this.brModifiers.push(new PopulationChangeModifier(
-            'Food Quality', fishRat, foodQualityModifier));
-        this.drModifiers.push(new PopulationChangeModifier(
-            'Food Quality', fishRat, 1 / foodQualityModifier));
+            'Nutrition', nutrition, nutritionDrModifier));
 
         const shelterModifier = 1 + 0.01 * this.clan.housing.shelter;
         this.brModifiers.push(new PopulationChangeModifier(

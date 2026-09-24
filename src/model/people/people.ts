@@ -5,6 +5,7 @@ import { ClanSkills } from "./clanskills";
 import { membershipChanged } from "./membership";
 import { Activities, EffortAllocation } from "../decisions/effort";
 import { careSkillFactor } from "./care";
+import { nutritionOf } from "./nutrition";
 import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
 import { HousingDecision } from "../decisions/housingdecision";
@@ -193,6 +194,15 @@ export class Clan implements TradePartner {
     // clan's skill makes of it. See care.ts.
     get careProvision(): number {
         return this.effortAllocation.careRatio * careSkillFactor(this.careSkill);
+    }
+
+    // The clan's nutritional state this year, where 1 is everything its
+    // people normally need: how much it ate, times how well balanced it was,
+    // with diminishing returns past 1. See nutrition.ts.
+    get nutrition(): number {
+        if (!this.consumption) return 1;
+        return nutritionOf(
+            this.consumption.perCapitaFood, 1 - this.consumption.fishRatio);
     }
 
     effortAllocation: EffortAllocation;

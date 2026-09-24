@@ -176,9 +176,8 @@
 
         {#if fortune}
             <div class="foot">
-                The year's Fortune reads rations on a straight line, where the
-                standing Fortune subscore squares them &mdash; this is a report
-                on the year, not a judgement built over many. Each node combines
+                This is a report on the year, not a judgement built over many.
+                Each node combines
                 the ones beneath it: by adding them, or where marked, by a
                 blend that lets a bad part drag the whole down.
             </div>

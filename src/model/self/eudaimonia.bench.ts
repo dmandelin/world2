@@ -40,10 +40,8 @@ import {
     FortuneInputs,
     EU_LIFE_DECAY,
     EU_FORTUNE_DECAY,
-    EU_SUBSCORE_FOOD_EXPONENT,
-    EU_FOOD_SCALE,
+    nutritionFortune,
     EU_VITALITY_SCALE,
-    foodQuality,
     EU_HONEY_PER_SHARE,
     EU_BEER_PER_SHARE,
     EU_BEER_MAX,
@@ -58,6 +56,7 @@ import {
 // Care's two terms are called rather than written out: stress walks a table
 // of knots, which inlining by hand would only obscure.
 import { careComfort, careSkillFactor, careStress } from "../people/care";
+import { foodBalance, nutritionFromRaw } from "../people/nutrition";
 
 // --- What we are comparing against ----------------------------------------
 
@@ -89,14 +88,12 @@ function blend2(a: number, b: number): number {
 }
 
 function inlineFortune(prevFortune: number, x: FortuneInputs): number {
-    const quantityRaw =
-        EU_FOOD_SCALE * (Math.pow(x.foodRatio, EU_SUBSCORE_FOOD_EXPONENT) - 1);
-    const quantity = quantityRaw > 0 ? 0 : quantityRaw;
-    const quality = foodQuality(x.cerealShare);
+    const nutrition = nutritionFortune(nutritionFromRaw(
+        (x.foodRatio > 0 ? x.foodRatio : 0) * foodBalance(x.cerealShare)));
     const honey = EU_HONEY_PER_SHARE * x.fishShare;
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
-    const food = blend2(quantity, quality) + honey + beer;
+    const food = nutrition + honey + beer;
     const care = careComfort(x.careEffort * careSkillFactor(x.careSkill))
         + careStress(x.careShare);
     const amount = x.conversationAmount;
@@ -134,11 +131,10 @@ function buildDetail(
     const lifePull = EU_LIFE_DECAY * (lifeSignal - prevLife);
     const life = prevLife + lifePull;
 
-    const quantityRaw =
-        EU_FOOD_SCALE * (Math.pow(x.foodRatio, EU_SUBSCORE_FOOD_EXPONENT) - 1);
-    const quantity = quantityRaw > 0 ? 0 : quantityRaw;
-    const quality = foodQuality(x.cerealShare);
-    const nutrition = blend2(quantity, quality);
+    const balance = foodBalance(x.cerealShare);
+    const raw = (x.foodRatio > 0 ? x.foodRatio : 0) * balance;
+    const level = nutritionFromRaw(raw);
+    const nutrition = nutritionFortune(level);
     const honey = EU_HONEY_PER_SHARE * x.fishShare;
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
@@ -174,10 +170,10 @@ function buildDetail(
     m.set("foodRatio", new DetailItem("Rations", x.foodRatio, "Share of needs"));
     m.set("fishShare", new DetailItem("Fish share", x.fishShare, "Of the diet"));
     m.set("cerealShare", new DetailItem("Cereal share", x.cerealShare, "Of the diet"));
-    m.set("quantityRaw", new DetailItem("Before clamping", quantityRaw, "Runs positive"));
-    m.set("quantity", new DetailItem("Quantity", quantity, "Short of enough"));
-    m.set("quality", new DetailItem("Quality", quality, "Too much cereal"));
-    m.set("nutrition", new DetailItem("Nutrition", nutrition, "Nourishment"));
+    m.set("balance", new DetailItem("Balance", balance, "Of the mix"));
+    m.set("raw", new DetailItem("Before the ceiling", raw, "Rations x balance"));
+    m.set("level", new DetailItem("Nutrition level", level, "Share of needs"));
+    m.set("nutrition", new DetailItem("Nutrition", nutrition, "As Fortune"));
     m.set("honey", new DetailItem("Honey", honey, "Gathered pleasures"));
     m.set("beerRaw", new DetailItem("Before capping", beerRaw, "Face value"));
     m.set("beer", new DetailItem("Beer", beer, "Brewed pleasures"));

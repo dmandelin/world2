@@ -13,8 +13,6 @@
         EuNode,
         EU_SUBSCORES,
         FORTUNE_ROWS,
-        EU_SUBSCORE_FOOD_EXPONENT,
-        EU_FORTUNE_FOOD_EXPONENT,
         EU_RANGE,
         euNodeDef,
         eudaimoniaAverage,
@@ -132,12 +130,6 @@
     // A faint bar behind a cell, against the notional range, so a row reads as
     // a shape across the settlement before it reads as numbers.
     const barPct = (v: number) => Math.min(100, (Math.abs(v) / EU_RANGE) * 100);
-
-    // Food quantity's curve differs between the two readings, and the step
-    // tooltips show the formula, so they need to know which is in play.
-    let quantityExponent = $derived(
-        view === "fortune" ? EU_FORTUNE_FOOD_EXPONENT : EU_SUBSCORE_FOOD_EXPONENT,
-    );
 
     let graphData = $derived(
         settlementClanGraphData(
@@ -285,7 +277,6 @@
                                                         clan.uuid,
                                                     )!}
                                                     node={row.node}
-                                                    exponent={quantityExponent}
                                                 />
                                             {/if}
                                         </div>
@@ -300,9 +291,7 @@
 
         {#if view === "fortune"}
             <div class="note">
-                The year's Fortune reads food on a straight line where the
-                standing Fortune subscore squares the shortfall. Life is left
-                out: its signal is a growth rate read at a large multiple, so in
+                Life is left out of the year's Fortune: its signal is a growth rate read at a large multiple, so in
                 a small clan a single birth swings it by a hundred points,
                 saying more about arithmetic than about the year.
             </div>

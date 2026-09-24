@@ -65,6 +65,7 @@ export class ClanTimePoint {
     readonly foodProduced: number;
     readonly foodTransferred: number;
     readonly food: number;
+    readonly nutrition: number;
     readonly foodStorage: number;
     readonly averagePrestige: number;
     readonly happiness: number;
@@ -180,6 +181,7 @@ export class ClanTimePoint {
         const foodGiven = (clan.distribution?.totalFoodGiven ?? 0) + (clan.stockOutflow?.totalFoodGiven ?? 0);
         this.foodTransferred = (foodTaken - foodGiven) / (clan.population || 1);
         this.food = clan.consumption.perCapitaFood;
+        this.nutrition = clan.nutrition;
         this.foodStorage = clan.stock ? clan.stock.perCapitaFoodStock(clan.population) : 0;
         this.averagePrestige = 100 * getLocalPrestige(clan);
         this.happiness = clan.happinessValue;
