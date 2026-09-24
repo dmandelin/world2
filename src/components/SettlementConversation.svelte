@@ -80,7 +80,9 @@
         return appealOf(rowClan, colClan);
     }
 
-    // Offer: Sum of offered strength from rowClan -> colClan for selected sources
+    // Offer: acquaintance offered from rowClan -> colClan for selected
+    // sources, in people like the Supply column. The model keeps offers as
+    // strength (a share of the other clan), so this turns them back.
     function offerCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
         if (rowClan.uuid === colClan.uuid) return 0;
         const interactions = world.interactionsWith(rowClan, colClan);
@@ -93,12 +95,14 @@
                 total += item.offeredFrom(rowClan, conv);
             }
         }
-        return total;
+        return total * colClan.population;
     }
 
-    // Amount: Matched conversation strength
+    // Amount: matched conversation, in people like the offers: how many of
+    // the column clan's people the row clan came to know. Strength is the
+    // same both ways, so this differs across the diagonal only by size.
     function amountCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
-        return getRelativeAttention(rowClan, colClan);
+        return getRelativeAttention(rowClan, colClan) * colClan.population;
     }
 
     // Value: Same as amount for now
@@ -328,7 +332,7 @@
                 label: "Total",
                 valueFn: (row: any) =>
                     isClanDTO(row) ? rowOfferTotal(row) : grandOfferTotal(),
-                formatFn: (v: number) => unsigned(v, 2),
+                formatFn: (v: number) => unsigned(v, 0),
                 class: "total-col",
             },
         ];
@@ -343,15 +347,14 @@
                         : isClanDTO(col)
                         ? colOfferTotal(col)
                         : grandOfferTotal(),
-                formatFn: (v: number, col: any) =>
-                    unsigned(v, col === "Supply" ? 0 : 2),
+                formatFn: (v: number) => unsigned(v, 0),
                 class: "total-row",
             },
         ];
 
         return buildCrossTab(
             offerCellValue,
-            unsignedFormat(2),
+            unsignedFormat(0),
             offerCellTooltip,
             false,
             initialCols,
@@ -399,7 +402,7 @@
                 label: "Total",
                 valueFn: (row: any) =>
                     isClanDTO(row) ? rowAmountTotal(row) : grandAmountTotal(),
-                formatFn: (v: number) => unsigned(v, 2),
+                formatFn: (v: number) => unsigned(v, 0),
                 class: "total-col",
             },
         ];
@@ -410,14 +413,14 @@
                 divider: true,
                 valueFn: (col: any) =>
                     isClanDTO(col) ? colAmountTotal(col) : grandAmountTotal(),
-                formatFn: (v: number) => unsigned(v, 2),
+                formatFn: (v: number) => unsigned(v, 0),
                 class: "total-row",
             },
         ];
 
         return buildCrossTab(
             amountCellValue,
-            unsignedFormat(2),
+            unsignedFormat(0),
             amountCellTooltip,
             false,
             initialCols,
@@ -559,14 +562,16 @@
             </div>
             {#if conv}
                 <div style="margin-bottom: 0.4rem;">
-                    <strong>Filtered Offer Strength:</strong> {unsigned(value, 2)}
+                    <strong>Filtered Offer:</strong> {unsigned(value, 1)} people
+                    ({unsigned(value / object.population, 2)} of {object.name}'s {object.population})
                 </div>
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
                     <thead>
                         <tr style="border-bottom: 1px solid #ccc; text-align: left;">
                             <th style="padding-right: 0.5rem;">Source</th>
                             <th style="padding-right: 0.5rem;">Explanation</th>
-                            <th style="text-align: right; padding-right: 0.5rem;">Offered Strength</th>
+                            <th style="text-align: right; padding-right: 0.5rem;">Offered (people)</th>
+                            <th style="text-align: right; padding-right: 0.5rem;">Strength</th>
                             <th style="text-align: center;">Active Filter</th>
                         </tr>
                     </thead>
@@ -576,6 +581,7 @@
                             <tr style="border-bottom: 1px solid #eee; opacity: {isSelected ? 1 : 0.4};">
                                 <td style="font-weight: 600; padding-right: 0.5rem;">{item.source.name}</td>
                                 <td style="font-size: 0.85em; color: #554422; padding-right: 0.5rem;">{getItemExplanation(item, subject, object, conv)}</td>
+                                <td style="text-align: right; padding-right: 0.5rem;">{unsigned(item.offeredFrom(subject, conv) * object.population, 1)}</td>
                                 <td style="text-align: right; padding-right: 0.5rem;">{unsigned(item.offeredFrom(subject, conv), 2)}</td>
                                 <td style="text-align: center;">{isSelected ? "✓" : "—"}</td>
                             </tr>
@@ -598,24 +604,27 @@
     {@const conv = interactions.find((i) => i instanceof Conversation)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 280px;">
         <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
-            Conversation Amount: {subject.name} &amp; {object.name}
+            Conversation Amount: {subject.name} &rarr; {object.name}
         </div>
         {#if conv}
             <div style="margin-bottom: 0.4rem;">
-                <strong>Matched Conversation Strength:</strong> {unsigned(conv.strength, 2)}
+                <strong>Matched:</strong> {unsigned(value, 1)} people
+                ({unsigned(conv.strength, 2)} of {object.name}'s {object.population})
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
                 <thead>
                     <tr style="border-bottom: 1px solid #ccc; text-align: left;">
                         <th>Source</th>
-                        <th style="text-align: right;">Matched Strength</th>
+                        <th style="text-align: right;">People</th>
+                        <th style="text-align: right;">Strength</th>
                     </tr>
                 </thead>
                 <tbody>
                     {#each conv.items as item}
                         <tr style="border-bottom: 1px solid #eee;">
                             <td>{item.source.name}</td>
-                            <td style="text-align: right; font-weight: bold;">{unsigned(item.strength, 2)}</td>
+                            <td style="text-align: right; font-weight: bold;">{unsigned(item.strength * object.population, 1)}</td>
+                            <td style="text-align: right;">{unsigned(item.strength, 2)}</td>
                         </tr>
                     {/each}
                 </tbody>
@@ -648,7 +657,7 @@
                 <span class="info-badge">ℹ️</span>
                 <Tooltip2>
                     <div class="header-tooltip-box">
-                        Offers made from row clan to column clan. Includes total rows and columns at top and left. Filter using the dropdown above.
+                        Acquaintance offered by the row clan to the column clan, in people, on the same basis as Supply. Includes total rows and columns at top and left. Filter using the dropdown above.
                     </div>
                 </Tooltip2>
             </h3>
@@ -706,7 +715,7 @@
                 <span class="info-badge">ℹ️</span>
                 <Tooltip2>
                     <div class="header-tooltip-box">
-                        Matched conversation strength between clans across all active sources. Includes total rows and columns at top and left.
+                        Matched conversation across all sources, in people like the offers: how many of the column clan's people the row clan came to know. Includes total rows and columns at top and left.
                     </div>
                 </Tooltip2>
             </h3>

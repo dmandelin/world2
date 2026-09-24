@@ -617,7 +617,7 @@ Conversation:
         x   Different levels of talkativeness per clan
     *   Conversation appeal
         *   Factors
-            *   Affinity should help
+            x   Affinity should help
             *   Desire to have relationship for other benefits should help
                 *   Food aid
                 *   Ritual aid
@@ -631,7 +631,6 @@ Conversation:
                 pair, the easier it gets
             *   Diversity: may want different benefits, types of
                 information
-    *   Add diversity benefit for conversation and relationships
     *   Rework how information is based on all this
         *   TODO
     *   Rework how fortune is based on all this
