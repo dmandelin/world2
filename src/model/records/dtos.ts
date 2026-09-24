@@ -39,6 +39,7 @@ import { Interaction, type InteractionGraph } from "../relations/interaction";
 import { Conversation } from "../relations/conversation";
 import type { PerceptionsGraph } from "../relations/perceptions";
 import type { Alignment } from "../relations/alignment";
+import type { Affinity } from "../relations/affinity";
 import type { Respect } from "../relations/respect";
 import type { Holiness } from "../relations/holiness";
 import { getPrestige, getLocalPrestige } from "../relations/prestige";
@@ -590,6 +591,10 @@ export class WorldDTO {
 
     alignmentToward(clan: ClanDTO, other: ClanDTO): Alignment | undefined {
         return this.perceptions.get(clan.uuid, other.uuid)?.alignment;
+    }
+
+    affinityToward(clan: ClanDTO, other: ClanDTO): Affinity | undefined {
+        return this.perceptions.get(clan.uuid, other.uuid)?.affinity;
     }
 
     respectToward(clan: ClanDTO, other: ClanDTO): Respect | undefined {

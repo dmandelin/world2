@@ -1,4 +1,5 @@
 import { Alignment } from "./alignment";
+import { Affinity, selfAffinity, updateAffinities } from "./affinity";
 import { ClanInformation } from "./information";
 import { Connection, ConnectionGraph } from "./connection";
 import { Respect } from "./respect";
@@ -15,17 +16,23 @@ export class Perceptions {
     readonly alignment = new Alignment();
     readonly respect = new Respect();
     readonly holiness = new Holiness();
+    // Updated separately, by updateAffinities, ahead of the rest: its
+    // relative reading needs every pair the subject knows done first, and
+    // alignment reads it.
+    readonly affinity: Affinity;
 
     constructor(
         information: ClanInformation = new ClanInformation(),
         alignment: Alignment = new Alignment(),
         respect: Respect = new Respect(),
         holiness: Holiness = new Holiness(),
+        affinity: Affinity = new Affinity(),
     ) {
         this.information = information;
         this.alignment = alignment;
         this.respect = respect;
         this.holiness = holiness;
+        this.affinity = affinity;
     }
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
@@ -33,7 +40,8 @@ export class Perceptions {
         this.respect.updateFor(subject, object, this.information.value);
         this.holiness.updateFor(subject, object, this.information.value);
         this.alignment.updateFor(
-            subject, object, connections, interactions, this.information.value);
+            subject, object, connections, interactions, this.information.value,
+            this.affinity.forAlignment);
     }
 
     // A clan appraising itself. Full information, unqualified goodwill, and
@@ -51,6 +59,7 @@ export class Perceptions {
             this.alignment.clone(),
             this.respect.clone(),
             this.holiness.clone(),
+            this.affinity.clone(),
         );
     }
 }
@@ -73,9 +82,11 @@ export class PerceptionsGraph extends DirectedClanPairGraph<Perceptions> {
     getOrCreate(subject: HasOrIsUUID, object: HasOrIsUUID): Perceptions {
         let perceptions = this.get(subject, object);
         if (!perceptions) {
-            perceptions = new Perceptions();
             const subjectID = uuidOf(subject);
             const objectID = uuidOf(object);
+            perceptions = subjectID === objectID
+                ? new Perceptions(undefined, undefined, undefined, undefined, selfAffinity())
+                : new Perceptions();
             if (subjectID === objectID) {
                 this.self_.set(subjectID, perceptions);
             } else {
@@ -127,8 +138,20 @@ function updateSelfPerceptions(world: World): void {
     }
 }
 
-export function updatePerceptions(world: World): void {
+// `yearPassed` is set for the end-of-turn update only, so that affinity's
+// temperament drifts once a year however often perceptions are refreshed.
+export function updatePerceptions(world: World, yearPassed: boolean = false): void {
     world.perceptions.keepOnlyIn(world.connections);
+
+    // Settle who knows whom before anything is judged, so affinity can be
+    // worked out over every pair first; alignment builds on it.
+    for (const [u1, u2] of world.connections.pairs()) {
+        world.perceptions.getOrCreate(u1, u2);
+        world.perceptions.getOrCreate(u2, u1);
+    }
+    world.perceptions.keepSelfOnly(new Set(world.allClans.map(c => c.uuid)));
+    for (const clan of world.allClans) world.perceptions.getOrCreate(clan, clan);
+    updateAffinities(world, yearPassed);
 
     for (const [u1, u2, connections] of world.connections.pairs()) {
         const [c1, c2] = world.clansFrom(u1, u2);

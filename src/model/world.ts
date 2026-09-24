@@ -27,6 +27,7 @@ import { WorldDTO } from "./records/dtos";
 import { Year } from "./records/year";
 import { type UUID } from "./records/basicdata";
 import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
+import { updateAffinities } from "./relations/affinity";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
 import { planRitualChanges, settleRitualChanges, type RitualChangeEvent } from "./ritualchange";
 import { settleFestivalEconomy } from "./festivals";
@@ -201,6 +202,10 @@ export class World implements NoteTaker {
 
         // Run planning because we're about to activate planning view.
         this.behave(true);
+        // Planning moved clans' plans on from the end-of-turn state affinity
+        // was read from; bring it in line with what is about to be shown,
+        // without spending a year's drift.
+        updateAffinities(this, false);
 
         // Log distances between clusters.
         if (loggingEnabled()) {
@@ -566,8 +571,9 @@ export class World implements NoteTaker {
         // Advance the year.
         this.year.advance(this.yearsPerTick);
 
-        // Update perceptions based on the end-of-turn state.
-        updatePerceptions(this);
+        // Update perceptions based on the end-of-turn state. The one update
+        // that counts as a year passing, for affinity's drift.
+        updatePerceptions(this, true);
 
         if (!this.headless) {
             this.previousEndOfTurnSnapshot_ = this.endOfTurnSnapshot_;

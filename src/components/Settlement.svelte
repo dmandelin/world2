@@ -20,6 +20,7 @@
     import SettlementLand from "./SettlementLand.svelte";
     import SettlementMutualAid from "./SettlementMutualAid.svelte";
     import SettlementMarriages from "./SettlementMarriages.svelte";
+    import SettlementAffinity from "./SettlementAffinity.svelte";
     import SettlementRedistribution from "./SettlementRedistribution.svelte";
     import SettlementEcon from "./SettlementEcon.svelte";
     import SettlementQoL from "./SettlementQoL.svelte";
@@ -55,6 +56,7 @@
         { label: "Relationships", icon: "🤝", snippet: relationshipsTab, group: "relations" },
         { label: "Conversation", icon: "💬", snippet: conversationTab, group: "relations" },
         { label: "Marriages", icon: "💍", snippet: marriagesTab, group: "relations" },
+        { label: "Affinity", icon: "🧩", snippet: affinityTab, group: "relations" },
         { label: "Redistribution", icon: "🍲", snippet: redistributionTab, group: "relations" },
         { label: "Mutual Aid", icon: "🤲", snippet: mutualAidTab, group: "relations" },
 
@@ -147,6 +149,10 @@
 
 {#snippet marriagesTab()}
     <SettlementMarriages {settlement} />
+{/snippet}
+
+{#snippet affinityTab()}
+    <SettlementAffinity {settlement} />
 {/snippet}
 
 {#snippet ritualsTab()}

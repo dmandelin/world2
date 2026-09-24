@@ -517,14 +517,69 @@ happen so perhaps should also be treated early.
             conflict, with somewhat different texture and the ability
             to adjust in real time.
 
+
 ## More on conversation and conflict
+
+### Affinity and knowledge
+
+From any particular point of view, social graphs tend to have a
+nested structure that we might abstract as:
+
+*     5: immediate family/close friends/small team
+         high alignment, sharing, support, emotions
+         intimate knowledge
+*    15: extended family/friends/large team
+         generalized sharing/help for lots of things
+         high knowledge of general traits, habits, events
+*    50: lineage/acquaintences/small business
+         benevolence but lower emotional investment
+         knowledge of important traits and life events
+*   150: larger lineage group/social circles/village
+         common-decency and situational investment
+         knowledge of group identity, how to get along with
+
+Our basic unit is `class Clan`, which typically ranges from
+15-50 people, so it doesn't have a definite position in this
+structure. Further, individuals and families inside clans have
+other connections through marriage and friendship, so they
+could be close friends with people outside their clan. In fact,
+those sub-clan cross-clan relationships might make up a
+significant part of overall cross-clan relationships.
+
+We have to simplify greatly to keep things at all manageable.
+First, let's assume something like a Pareto distribution for
+whom people spend time with, specifically the classic 80/20.
+In a village of 150, then 80% of time would be spent with
+about 30 people, roughly corresponding to a clan. However, the
+closest N people are not necessarily all clan members, so we
+could reasonably assign a lower number.
+
+Second, let's assume these networks are in fact pretty unequal.
+Although some societies may feature material and formal equality,
+it seems that social networks normally don't look that way.
+
+A key way Pareto distributions can form is via "rich get richer"
+dynamics, so we should keep and in fact expand prestige as an
+attractor. We need some other things:
+
+*   Affinity ~ cultural/interactional compatibility to influence
+    relationship choice and value
+    *   Some part essentially unpredictable
+*   Kinship and marriage: should expand desirability and benefit
+    of conversation (maybe via affinity, maybe other things too)
+*   Proximity will matter at larger scales
+*   Reciprocity: actual benefit of the interactions
+*   Apparently highly connected people tend to be connected to
+    each other; I'm sure this happens intentionally to some
+    extent but I wouldn't be surprised if it emerges from the
+    above
+
+
+
+### Items
 
 Conversation:
 
-*   Change basic interactions so that each clan can directly cover
-    around 50% in a 150-person village. This will make it so that
-    there is generally incomplete and thus variable coverage at any
-    given time.
 *   Change how conversation is generated:
     *   Doing activities together creates opportunities for conversation.
         Includes productive work, care, leisure, ritual, and other
@@ -554,9 +609,11 @@ Conversation:
             strength (= conversation amount/object clan population) averaging
             about 0.5 across other clans.
     *   If needed, cap conversation amounts
-    *   Add affinities:
-        *   Random dyadic value
-        *   Conversation value variable on things like alignment
+    x   Add affinities:
+        x   Affinity concept
+        x   Random dyadic value
+        x   Affinity influences alignment
+    *   Conversation appeal
     *   Add diversity benefit for conversation and relationships
     *   Rework how information is based on all this
         *   TODO

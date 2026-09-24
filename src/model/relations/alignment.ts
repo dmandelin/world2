@@ -111,9 +111,13 @@ export class Alignment {
         // How much of the object the subject actually sees, 0 to 1. Some
         // items are judgments about conduct the subject may simply not have
         // been in a position to notice.
-        informationValue: number = 1): void {
+        informationValue: number = 1,
+        // How much the subject has in common with the object: the average
+        // of its absolute and relative affinity.
+        affinity: number = 0): void {
 
         this.items_ = [
+            AlignmentItem.forAffinity(affinity),
             ...connections.map(connection => AlignmentItem.from(
                 connection.alignmentItem(subject, object),
                 'social', CONNECTION_WEIGHT)),
@@ -181,6 +185,12 @@ export class Alignment {
 // simple neighborhood. The connections report these on their own scale and
 // this brings them into proportion with everything else.
 export const CONNECTION_WEIGHT = 0.194;
+// Affinity, added straight in: the average of absolute affinity (how much
+// the two have in common, 0 to 1) and relative affinity (how that compares
+// with the other clans the subject knows, centered on 0). The absolute half
+// lifts alignment across the board by about a quarter; the relative half
+// moves it toward kindred clans and away from strangers.
+export const AFFINITY_WEIGHT = 1;
 // Attention paid to the relationship, as a share of all this clan attends to.
 export const SOCIABILITY_WEIGHT = 0.124;
 // Goodwill left by a year of feasting together; see festivals.ts, which sets
@@ -364,6 +374,13 @@ export class AlignmentItem<P = unknown> {
             { standing: bond.value, since, halfLife: bond.halfLife });
     }
 
+    // How much the two have in common: the average of absolute and relative
+    // affinity, added straight in.
+    static forAffinity(affinity: number): AlignmentItem {
+        return new AlignmentItem(
+            'Affinity', 'social', affinity, AFFINITY_WEIGHT, affinityText);
+    }
+
     static forGifts(subject: Clan, object: Clan): AlignmentItem {
         const received = giftsReceived(
             subject, object, subject.world.year.value);
@@ -473,6 +490,8 @@ const ritualStanceText = (
     `${signed(d.standing, 3)} from where they stood, last `
         + `${d.since === 0 ? 'this year' : `${d.since} y ago`}`
         + `, half-life ${d.halfLife} y`;
+const affinityText = (i: AlignmentItem) =>
+    `Mean of absolute and relative affinity ${signed(i.baseValue, 2)}`;
 const generosityText = (i: AlignmentItem) =>
     `Generosity estimate ${i.baseValue.toFixed(1)}`;
 const giftsText = (i: AlignmentItem) =>
