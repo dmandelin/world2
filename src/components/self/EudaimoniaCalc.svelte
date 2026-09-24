@@ -145,13 +145,16 @@
                 <tbody>
                     {#each TREE_ROWS as row (row.node)}
                         {@const v = r.get(row.node)}
-                        <tr class:subtotal={row.isSum}>
+                        <tr class:subtotal={row.hasChildren}>
                             <td
                                 class="label"
                                 title={euNodeDef(row.node).note}
                                 style="padding-left: {(row.depth - 1) * 0.9}rem"
                             >
                                 {rowLabel(row.node, v)}
+                                {#if row.combine.key !== "sum"}
+                                    <span class="how">{row.combine.label.toLowerCase()}</span>
+                                {/if}
                             </td>
                             <td class="v" class:pos={v > 0} class:neg={v < 0}
                                 >{n(v)}</td
@@ -176,8 +179,9 @@
             <div class="foot">
                 The year's Fortune reads rations on a straight line, where the
                 standing Fortune subscore squares them &mdash; this is a report
-                on the year, not a judgement built over many. Every node is the
-                sum of the ones beneath it.
+                on the year, not a judgement built over many. Each node combines
+                the ones beneath it: by adding them, or where marked, by a
+                blend that lets a bad part drag the whole down.
             </div>
         {:else if sub}
             <!-- The year's movement toward that signal, and no further. -->
@@ -372,6 +376,13 @@
         font-size: 0.8em;
         color: #4b5563;
         line-height: 1.4;
+    }
+
+    .how {
+        color: #9ca3af;
+        font-size: 0.8em;
+        font-weight: 400;
+        margin-left: 0.3rem;
     }
 
     .pos {

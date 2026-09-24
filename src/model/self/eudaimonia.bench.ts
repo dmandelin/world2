@@ -8,12 +8,16 @@
 //
 // A weaker claim used to hold too -- that the absent sink cost nothing at all
 // against hand-inlined math -- and it stopped holding once the food chain grew.
-// B ran at roughly 1.8x A with the food chain alone, and about 1.5x with the
-// full Fortune tree. Some of that was a long cold branch spoiling
-// inlining, which moving the trace blocks out of line recovered part of; the
-// rest is the extra call layers the shared implementation needs. In absolute
-// terms it is about 11ms over a 2000-turn run, so the design still stands, but
-// the honest claim is "far cheaper than D", not "free".
+// B ran at roughly 1.8x A with the food chain alone, about 1.5x with the full
+// Fortune tree, and about 1.35x once the tree blended some of its nodes (the
+// blends' exp and log raised the floor more than the overhead). Some of that
+// was a long cold branch spoiling inlining, which moving the trace blocks out
+// of line recovered part of; the rest is the extra call layers the shared
+// implementation needs, and the lookup of each node's combiner. Calling the
+// combiners through their interface instead of directly doubled B; see
+// combine2 in eudaimonia.ts. In absolute terms the overhead is about 30ms over
+// a 2000-turn run of 100 clans, so the design still stands, but the honest
+// claim is "far cheaper than D", not "free".
 //
 // Note C and D allocate heavily and so are GC-bound: their numbers move
 // noticeably between runs. A and B are stable and are the ones to read.
@@ -49,6 +53,8 @@ import {
     EU_CONVERSATION_PER_DOUBLING,
     EU_CONVERSATION_QUALITY_SCALE,
     EU_CONVERSATION_STANDARD,
+    EU_BLEND_UP_SCALE,
+    EU_BLEND_DOWN_SCALE,
 } from "./eudaimonia";
 import { CHILDHOOD_JOY_SCALE, careSkillFactor } from "../people/care";
 
@@ -72,26 +78,42 @@ function bound(p: number): number {
     return p < 0.25 ? 0.25 : p > 2.5 ? 2.5 : p;
 }
 
+// The blend, written out; see eudaimonia.ts.
+function liftB(v: number): number {
+    return v >= 0
+        ? Math.expm1(v / EU_BLEND_UP_SCALE)
+        : -Math.expm1(-v / EU_BLEND_DOWN_SCALE);
+}
+
+function blend2(a: number, b: number): number {
+    const m = (liftB(a) + liftB(b)) / 2;
+    return m >= 0
+        ? EU_BLEND_UP_SCALE * Math.log1p(m)
+        : -EU_BLEND_DOWN_SCALE * Math.log1p(-m);
+}
+
 function inlineFortune(prevFortune: number, x: FortuneInputs): number {
     const quantityRaw =
         EU_FOOD_SCALE * (Math.pow(x.foodRatio, EU_SUBSCORE_FOOD_EXPONENT) - 1);
     const quantity = quantityRaw > 0 ? 0 : quantityRaw;
     const cerealExcess = x.cerealShare - EU_CEREAL_SHARE_FREE;
-    const nutrition =
+    const quality =
         cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
     const honey = EU_HONEY_PER_SHARE * x.fishShare;
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
-    const food = quantity + nutrition + honey + beer;
-    const care = CHILDHOOD_JOY_SCALE * (bound(x.careEffort) - 1)
-        + CHILDHOOD_JOY_SCALE * (bound(careSkillFactor(x.careSkill)) - 1);
+    const food = blend2(quantity, quality) + honey + beer;
+    const care = blend2(
+        CHILDHOOD_JOY_SCALE * (bound(x.careEffort) - 1),
+        CHILDHOOD_JOY_SCALE * (bound(careSkillFactor(x.careSkill)) - 1));
     const amount = x.conversationAmount;
-    const conversation = EU_CONVERSATION_PER_DOUBLING * Math.log2(
-        (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
-        / EU_CONVERSATION_STANDARD)
-        + EU_CONVERSATION_QUALITY_SCALE
-        * (x.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
-    const signal = food + care + conversation;
+    const conversation = blend2(
+        EU_CONVERSATION_PER_DOUBLING * Math.log2(
+            (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
+            / EU_CONVERSATION_STANDARD),
+        EU_CONVERSATION_QUALITY_SCALE
+            * (x.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY));
+    const signal = blend2(food, blend2(care, conversation));
     return prevFortune + EU_FORTUNE_DECAY * (signal - prevFortune);
 }
 
@@ -125,7 +147,7 @@ function buildDetail(
     const cerealExcess = x.cerealShare - EU_CEREAL_SHARE_FREE;
     const quality =
         cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
-    const nutrition = quantity + quality;
+    const nutrition = blend2(quantity, quality);
     const honey = EU_HONEY_PER_SHARE * x.fishShare;
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
@@ -134,16 +156,16 @@ function buildDetail(
     const careQuantity = CHILDHOOD_JOY_SCALE * (bound(x.careEffort) - 1);
     const careSkill =
         CHILDHOOD_JOY_SCALE * (bound(careSkillFactor(x.careSkill)) - 1);
-    const care = careQuantity + careSkill;
+    const care = blend2(careQuantity, careSkill);
     const amount = x.conversationAmount;
     const convQuantity = EU_CONVERSATION_PER_DOUBLING * Math.log2(
         (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
         / EU_CONVERSATION_STANDARD);
     const convQuality = EU_CONVERSATION_QUALITY_SCALE
         * (x.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
-    const conversation = convQuantity + convQuality;
-    const social = care + conversation;
-    const signal = food + social;
+    const conversation = blend2(convQuantity, convQuality);
+    const social = blend2(care, conversation);
+    const signal = blend2(food, social);
     const fortunePull = EU_FORTUNE_DECAY * (signal - prevFortune);
     const fortune = prevFortune + fortunePull;
 

@@ -35,8 +35,12 @@
 //           Quantity      how many people outside the clan it knows
 //           Quality       how well it gets on with them
 //
-// For now every inner node is just the sum of its children. The year's
-// Fortune, shown on its own, is the tree as it stands. The Fortune subscore
+// Each inner node combines its children, by default by adding them. The
+// nodes where the parts are needs that make up for each other only so far --
+// those with quantity and quality under them, Social, and Fortune itself --
+// BLEND them instead, which lets a bad part drag the whole down. See
+// "Combining" below. The year's Fortune, shown on its own, is the tree as it
+// stands. The Fortune subscore
 // runs the same tree on a harsher food quantity curve and averages it.
 //
 // FORTUNE_TREE below is the tree as data, for the UI to walk. The calculation
@@ -63,10 +67,11 @@
 // one correctly-predicted branch per part rather than one per step, and the
 // math reads as ordinary math instead of being interleaved with bookkeeping.
 //
-// This is not quite free -- with the full Fortune tree the update path
-// benchmarks at roughly 1.5x the inlined floor, about 11ms over a 2000-turn
-// run of 100 clans -- but it is far cheaper than building the labeled detail
-// every turn, and allocates nothing. Re-run eudaimonia.bench.ts if the tree grows again.
+// This is not quite free -- with the full Fortune tree and its blends the
+// update path benchmarks at roughly 1.35x the inlined floor, about 30ms over a
+// 2000-turn run of 100 clans -- but it is far cheaper than building the
+// labeled detail every turn, and allocates nothing. The blends' exp and log
+// are most of what the floor itself costs now. Re-run eudaimonia.bench.ts if the tree grows again.
 //
 // Each part is its own function returning a plain number, rather than one
 // function returning a record of them. That keeps the update path free of
@@ -159,6 +164,74 @@ export const EU_CONVERSATION_FLOOR = EU_CONVERSATION_STANDARD / 16;
 // +10 better for it.
 export const EU_CONVERSATION_NEUTRAL_AFFINITY = 0.6;
 export const EU_CONVERSATION_QUALITY_SCALE = 25;
+
+// --- Combining -------------------------------------------------------------
+//
+// How an inner node of the Fortune tree makes one value of its children's.
+// Every combiner has the same form: lift each child onto its own scale, add
+// the lifted values, and finish the total back into eudaimonia units. That is
+// general enough for anything we are likely to want, and needs no arrays, so
+// the update path stays free of allocation.
+//
+// SUM lifts and finishes with the identity: plain addition.
+//
+// BLEND is a quasi-arithmetic mean: a mean taken on a curve,
+//
+//     blend(x...) = f^-1( mean f(x) )
+//
+//     f(x) =  e^(x/U) - 1     for x >= 0
+//     f(x) =  1 - e^(-x/D)    for x <  0
+//
+// f runs straight through zero with slope about 1, but it bends upward above
+// zero and bends down much harder below it. So a mean taken on it is pulled
+// toward the high values when all is well, a little, and toward the low ones
+// when anything is going badly, a lot -- more the worse it is going, and more
+// the more parts are going badly. At U = 120 and D = 60:
+//
+//     0 and +100       -> +60   (the mean is +50)
+//     -1 and +100      -> +59.5 (a small want barely registers)
+//     -100 and +100    -> -55   (the mean is 0)
+//     -100, -100, +100 -> -74
+//     -20 and -1       -> -11
+//
+// Note that it is a mean, not a total: two parts at +10 blend to +10, where
+// they would sum to +20.
+export const EU_BLEND_UP_SCALE = 120;
+export const EU_BLEND_DOWN_SCALE = 60;
+
+export interface EuCombiner {
+    readonly key: "sum" | "blend";
+    readonly label: string;
+    lift(x: number): number;
+    finish(total: number, count: number): number;
+}
+
+export const SUM: EuCombiner = {
+    key: "sum",
+    label: "Sum",
+    lift: (x) => x,
+    finish: (total) => total,
+};
+
+function blendLift(x: number): number {
+    return x >= 0
+        ? Math.expm1(x / EU_BLEND_UP_SCALE)
+        : -Math.expm1(-x / EU_BLEND_DOWN_SCALE);
+}
+
+function blendFinish(total: number, count: number): number {
+    const m = total / count;
+    return m >= 0
+        ? EU_BLEND_UP_SCALE * Math.log1p(m)
+        : -EU_BLEND_DOWN_SCALE * Math.log1p(-m);
+}
+
+export const BLEND: EuCombiner = {
+    key: "blend",
+    label: "Blend",
+    lift: blendLift,
+    finish: blendFinish,
+};
 
 // Keeps the per-capita rate finite for a clan that has just lost everyone.
 const MIN_POPULATION = 1;
@@ -270,14 +343,17 @@ export type EuNodeId = (typeof EuNode)[keyof typeof EuNode];
 // --- The Fortune tree -----------------------------------------------------
 
 // One node of Fortune's tree. Labels and notes live with the node metadata in
-// EU_NODES; this is only the shape.
+// EU_NODES; this is only the shape, and how each inner node combines its
+// children. Sum unless it says otherwise.
 export interface FortuneTreeNode {
     node: EuNodeId;
+    combine?: EuCombiner;
     children?: readonly FortuneTreeNode[];
 }
 
 export const FORTUNE_TREE: FortuneTreeNode = {
     node: EuNode.Fortune,
+    combine: BLEND,
     children: [
         {
             node: EuNode.Material,
@@ -287,6 +363,7 @@ export const FORTUNE_TREE: FortuneTreeNode = {
                     children: [
                         {
                             node: EuNode.FoodNutrition,
+                            combine: BLEND,
                             children: [
                                 { node: EuNode.FoodQuantity },
                                 { node: EuNode.FoodQuality },
@@ -305,9 +382,11 @@ export const FORTUNE_TREE: FortuneTreeNode = {
         },
         {
             node: EuNode.Social,
+            combine: BLEND,
             children: [
                 {
                     node: EuNode.Care,
+                    combine: BLEND,
                     children: [
                         { node: EuNode.CareQuantity },
                         { node: EuNode.CareSkill },
@@ -315,6 +394,7 @@ export const FORTUNE_TREE: FortuneTreeNode = {
                 },
                 {
                     node: EuNode.Conversation,
+                    combine: BLEND,
                     children: [
                         { node: EuNode.ConversationQuantity },
                         { node: EuNode.ConversationQuality },
@@ -326,21 +406,62 @@ export const FORTUNE_TREE: FortuneTreeNode = {
 };
 
 // The tree flattened in reading order, each node with its depth below the
-// root (which is depth 0) and whether it sums children of its own. The panel
-// and the tooltips walk this rather than naming rows themselves.
+// root (which is depth 0), whether it combines children of its own, and how.
+// The panel and the tooltips walk this rather than naming rows themselves.
 export interface FortuneRow {
     node: EuNodeId;
     depth: number;
-    isSum: boolean;
+    hasChildren: boolean;
+    combine: EuCombiner;
 }
 
 function flattenTree(t: FortuneTreeNode, depth: number, out: FortuneRow[]): FortuneRow[] {
-    out.push({ node: t.node, depth, isSum: !!t.children?.length });
+    out.push({
+        node: t.node,
+        depth,
+        hasChildren: !!t.children?.length,
+        combine: t.combine ?? SUM,
+    });
     for (const c of t.children ?? []) flattenTree(c, depth + 1, out);
     return out;
 }
 
 export const FORTUNE_ROWS: readonly FortuneRow[] = flattenTree(FORTUNE_TREE, 0, []);
+
+// Each node's combiner, indexed by node id, for the calculation to look up.
+// Nodes outside the tree, and leaves, read as sums, which is harmless.
+const COMBINER_OF: readonly EuCombiner[] = (() => {
+    const out: EuCombiner[] = [];
+    for (const id of Object.values(EuNode)) out[id] = SUM;
+    for (const row of FORTUNE_ROWS) out[row.node] = row.combine;
+    return out;
+})();
+
+export function combinerOf(node: EuNodeId): EuCombiner {
+    return COMBINER_OF[node];
+}
+
+// Combine children as the tree says `node` does. Fixed arities rather than an
+// array, so the update path allocates nothing.
+//
+// The combiners we have are called directly rather than through the
+// interface: going through lift and finish makes every call site see every
+// combiner, which V8 will not inline, and the benchmark put that at about
+// double the cost of the whole update. Any other combiner takes the general
+// path and works, just more slowly.
+function combine1(node: EuNodeId, a: number): number {
+    const c = COMBINER_OF[node];
+    if (c === SUM) return a;
+    if (c === BLEND) return blendFinish(blendLift(a), 1);
+    return c.finish(c.lift(a), 1);
+}
+
+function combine2(node: EuNodeId, a: number, b: number): number {
+    const c = COMBINER_OF[node];
+    if (c === SUM) return a + b;
+    if (c === BLEND) return blendFinish(blendLift(a) + blendLift(b), 2);
+    return c.finish(c.lift(a) + c.lift(b), 2);
+}
 
 // Each inner node's children, for showing what a sum is made of.
 export const FORTUNE_CHILDREN: ReadonlyMap<EuNodeId, readonly EuNodeId[]> = new Map(
@@ -448,14 +569,14 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "The clan's affinity for the clans it talks with, averaged by acquaintance." },
 
     { id: EuNode.Fortune, label: "Fortune", role: "result", places: 1,
-      note: "Material and social fortune added." },
+      note: "Material and social fortune blended: a bad side drags the whole down." },
 
     { id: EuNode.Material, label: "Material", role: "derived", places: 1,
       note: "What the year was worth in things: for now, only food." },
     { id: EuNode.Food, label: "Food", role: "derived", places: 1,
       note: "Nutrition and taste added: what this year's eating was worth." },
     { id: EuNode.FoodNutrition, label: "Nutrition", role: "derived", places: 1,
-      note: "Quantity and quality added: what the food was worth as nourishment." },
+      note: "Quantity and quality blended: what the food was worth as nourishment." },
     { id: EuNode.FoodQuantity, label: "Quantity", role: "derived", places: 1,
       note: "How far short of enough the clan ate." },
     { id: EuNode.FoodQuantityRaw, label: "Before clamping", role: "derived", places: 1,
@@ -472,15 +593,15 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "What the cereals would have brewed, before only so much beer is any use." },
 
     { id: EuNode.Social, label: "Social", role: "derived", places: 1,
-      note: "What the year was worth in people: care and conversation added." },
+      note: "What the year was worth in people: care and conversation blended." },
     { id: EuNode.Care, label: "Care", role: "derived", places: 1,
-      note: "Childhood Joy, or when negative, Caretaker Stress: the effort given and the skill it was given with, added." },
+      note: "Childhood Joy, or when negative, Caretaker Stress: the effort given and the skill it was given with, blended." },
     { id: EuNode.CareQuantity, label: "Quantity", role: "derived", places: 1,
       note: "Care effort given against what the children need." },
     { id: EuNode.CareSkill, label: "Skill", role: "derived", places: 1,
       note: "How much looking after the clan's skill got out of that effort." },
     { id: EuNode.Conversation, label: "Conversation", role: "derived", places: 1,
-      note: "How many people outside the clan it knows, and how well it gets on with them, added." },
+      note: "How many people outside the clan it knows, and how well it gets on with them, blended." },
     { id: EuNode.ConversationQuantity, label: "Quantity", role: "derived", places: 1,
       note: `People outside the clan dealt with regularly, at ${EU_CONVERSATION_PER_DOUBLING} a doubling from ${EU_CONVERSATION_STANDARD}.` },
     { id: EuNode.ConversationQuality, label: "Quality", role: "derived", places: 1,
@@ -638,14 +759,14 @@ export function computeFood(
     const quality =
         cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
 
-    const nutrition = quantity + quality;
+    const nutrition = combine2(EuNode.FoodNutrition, quantity, quality);
 
     const honey = EU_HONEY_PER_SHARE * fishShare;
     const beerRaw = EU_BEER_PER_SHARE * cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
-    const taste = honey + beer;
+    const taste = combine2(EuNode.FoodTaste, honey, beer);
 
-    const food = nutrition + taste;
+    const food = combine2(EuNode.Food, nutrition, taste);
 
     if (trace !== undefined) {
         traceFood(trace, foodRatio, fishShare, cerealShare, quantityRaw,
@@ -700,7 +821,7 @@ function traceFood(
 export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
     const quantity = careQuantityJoy(inputs.careEffort);
     const skill = careSkillJoy(inputs.careSkill);
-    const care = quantity + skill;
+    const care = combine2(EuNode.Care, quantity, skill);
 
     if (trace !== undefined) {
         trace.put(EuNode.CareEffort, inputs.careEffort);
@@ -722,7 +843,8 @@ export function computeConversation(inputs: FortuneInputs, trace?: EuTrace): num
         / EU_CONVERSATION_STANDARD);
     const quality = EU_CONVERSATION_QUALITY_SCALE
         * (inputs.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
-    const conversation = quantity + quality;
+    const conversation = combine2(
+        EuNode.Conversation, quantity, quality);
 
     if (trace !== undefined) {
         trace.put(EuNode.ConversationAmount, amount);
@@ -735,21 +857,21 @@ export function computeConversation(inputs: FortuneInputs, trace?: EuTrace): num
     return conversation;
 }
 
-// Fortune: how a year went. The whole tree, each inner node the sum of its
-// children.
+// Fortune: how a year went. The whole tree, each inner node combining its
+// children as FORTUNE_TREE says.
 export function computeFortune(
     inputs: FortuneInputs,
     foodQuantityExponent: number,
     trace?: EuTrace,
 ): number {
     const food = computeFood(inputs, foodQuantityExponent, trace);
-    const material = food;
+    const material = combine1(EuNode.Material, food);
 
     const care = computeCare(inputs, trace);
     const conversation = computeConversation(inputs, trace);
-    const social = care + conversation;
+    const social = combine2(EuNode.Social, care, conversation);
 
-    const fortune = material + social;
+    const fortune = combine2(EuNode.Fortune, material, social);
 
     if (trace !== undefined) {
         trace.put(EuNode.Material, material);

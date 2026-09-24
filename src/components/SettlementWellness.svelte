@@ -248,16 +248,20 @@
                         </tr>
                     {/each}
 
-                    <!-- The Fortune tree, each node the sum of those
+                    <!-- The Fortune tree, each node combining those
                          indented beneath it. -->
                     {#each treeRows as row (row.node)}
                         {@const sv = settlementTreeValue(row.node)}
-                        <tr class="step" class:substep={row.isSum}>
+                        <tr class="step" class:substep={row.hasChildren}>
                             <th
                                 class="rowhead"
                                 title={euNodeDef(row.node).note}
                                 style="padding-left: {1.1 * (view === 'fortune' ? row.depth : row.depth + 1)}rem"
-                                >{rowLabel(row.node, sv)}</th
+                                >{rowLabel(row.node, sv)}{#if row.combine.key !== "sum"}<span
+                                        class="decay"
+                                        title="Blended rather than added: a bad part drags the whole down, and parts that are all going well lift it a little."
+                                        >{row.combine.label.toLowerCase()}</span
+                                    >{/if}</th
                             >
                             <td class="num settlement-col">{n(sv)}</td>
                             {#each clans as clan (clan.uuid)}

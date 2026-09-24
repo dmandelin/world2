@@ -574,6 +574,79 @@ attractor. We need some other things:
     extent but I wouldn't be surprised if it emerges from the
     above
 
+### Conversation and Satisfaction
+
+I will assume that people have some sort of drive for conversation.
+As usual, the details must be incredibly complex and we'll use some
+greatly simplified abstraction.
+
+*   Much of the enjoyment is surely simply directly from being
+    together, interacting, etc. so we can have a direct Fortune
+    component
+*   People also want to hear news from friends and relatives,
+    so there should be some demand for that
+*   People may be motivated to converse by additional benefits such
+    as learning skills, but in that case perhaps we can assign the
+    Fortune benefit to learning the skill, or trying to
+
+Let's start with 3 components: food, care, and conversation,
+grouped into material (food) and social (care and conversation).
+We're going to switch fortune to being at base a positive score,
+with the idea that 0 = exctinct, and anything positive means
+some chance of survival and more.
+
+Then if we look at food alone, something like 0.8 per capita 
+could be a score of 10, as a baseline. Maybe that scales up to 15
+at 1.0, slightly higher above.
+
+An immediate issue is that material and social scale up differently.
+Material scales up for everyone as the economy grows; actual welfare
+benefit probably has diminishing returns, but still, over the course
+of history this massively changes.
+
+Social should perhaps be subsetted into spiritual or psychological
+(not particularly different etymologically). There, we definitely
+can imagine an enrichment of experience over time as people have
+more stories, arts, ideas, and so on. But there is probably also a
+gradual effective restriction of liberties causing a reduction of
+experiences in certain dimensions, e.g., pacification. This also
+points up that we should be including leisure and "general life" in
+this component.
+
+At present, the social offerings are pretty simple, but better
+quality of conversation should matter, as well as quantity, to some
+extent.
+
+Now, how to combine material and social, taking into account the
+different scaling? Actually, maybe they don't scale so differently.
+Food doesn't actually give 3x the benefit at 3x baseline quantity.
+If we use "something like logarithmic" on each side, then combine,
+that might make sense.
+
+Let's choose a scale where 50 is average and 100 would be really
+high. Then we can use a CES function with roughly rho = -5.
+
+Hmmm, this is getting hard to understand. Let's back up and think
+about what we really want to measure, which here is subjective
+happiness in an annual time frame. That would actually make sense
+to put on a 0 baseline. That does mean we'll need expectations
+to rise as production rises, and we'll want to get some "absolute"
+metrics somewhere.
+
+Returning to the basic question, let's ask some specific questions
+about how people feel about different quadrants:
+
+*   M+ S-
+    *   Moderately wealthy but moderately lonely. In the moment
+        probably somewhat less happy than baseline; balance is
+        apparently more optimal than imbalance, in this direction
+        at least
+*   M- S+
+    *   Moderately broke but pretty happy with connections. Intuitively
+        I want to say this is better than the previous option, but
+        it depends on what moderately broke is. Maybe in a prehistoric
+        setting it's a bigger deal; could be symmetrical
+
 
 
 ### Items

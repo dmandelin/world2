@@ -1,8 +1,8 @@
 <script lang="ts">
     // Where one node of the Fortune tree came from, for the tooltip on that
     // node's figure. The panel shows the numbers; this shows the working
-    // behind whichever one is being pointed at. A sum shows its children; a
-    // leaf shows its formula.
+    // behind whichever one is being pointed at. An inner node shows its
+    // children's values and what they combined to; a leaf shows its formula.
     import {
         EuNode,
         EudaimoniaReport,
@@ -18,6 +18,7 @@
         EU_FOOD_SCALE,
         EU_HONEY_PER_SHARE,
         FORTUNE_CHILDREN,
+        combinerOf,
         euNodeDef,
         type EuNodeId,
     } from "../../model/self/eudaimonia";
@@ -44,6 +45,7 @@
 
     let def = $derived(euNodeDef(node));
     let children = $derived(FORTUNE_CHILDREN.get(node));
+    let combiner = $derived(combinerOf(node));
     let get = (id: EuNodeId) => report.get(id);
 </script>
 
@@ -51,13 +53,28 @@
     <div class="head">{def.label}</div>
 
     {#if children}
-        <div class="line">
-            {#each children as child, i (child)}
-                {#if i > 0}{" "}{/if}{n(get(child))}
-                <span class="cap">{euNodeDef(child).label.toLowerCase()}</span>
-            {/each}
-            = <b>{n(get(node))}</b>
-        </div>
+        <!-- What went in and what came out; the row's note says how. -->
+        <table class="parts">
+            <tbody>
+                {#each children as child (child)}
+                    {@const v = get(child)}
+                    <tr>
+                        <td>{euNodeDef(child).label}</td>
+                        <td class="v" class:pos={v > 0} class:neg={v < 0}
+                            >{n(v)}</td
+                        >
+                    </tr>
+                {/each}
+                <tr class="result">
+                    <td>{combiner.label}</td>
+                    <td
+                        class="v"
+                        class:pos={get(node) > 0}
+                        class:neg={get(node) < 0}>{n(get(node))}</td
+                    >
+                </tr>
+            </tbody>
+        </table>
     {:else if node === EuNode.FoodQuantity}
         <div class="line">
             {EU_FOOD_SCALE} &times; ({pctOf(get(EuNode.FoodRatio))}{#if exponent !== 1}<sup
@@ -157,9 +174,6 @@
         </div>
     {/if}
 
-    {#if children}
-        <div class="note">{def.note}</div>
-    {/if}
 </div>
 
 <style>
@@ -189,6 +203,34 @@
     .cap {
         color: #9ca3af;
         font-size: 0.9em;
+    }
+
+    table.parts {
+        border-collapse: collapse;
+        font-size: 0.88em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    table.parts td {
+        padding: 1px 0;
+    }
+
+    table.parts td.v {
+        text-align: right;
+        padding-left: 1.5rem;
+    }
+
+    tr.result td {
+        border-top: 1px solid #e5e0d0;
+        font-weight: 700;
+    }
+
+    .pos {
+        color: #15803d;
+    }
+
+    .neg {
+        color: #b91c1c;
     }
 
     .note {
