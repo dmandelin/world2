@@ -10,17 +10,37 @@
 // The verdict is made of subscores, each a running average of its own signal
 // with its own memory, added together:
 //
-//     Life  how the clan is growing or dying, over about a generation
-//     Food  what the clan has been eating, over about half that
+//     Life     how the clan is growing or dying, over about a generation
+//     Fortune  how its years have been going, over about half that
 //
-// Subscores are added, not blended: a clan that is growing and starving is
+// Subscores are added, not blended: a clan that is growing and miserable is
 // doing both, and the total should say so.
 //
-// Alongside them is Fortune, which is the food signal for the current year
-// alone, before the running average absorbs it. It runs the same chain on a
-// gentler quantity curve, because it reports on a year rather than judging a
-// life, and adds what the year's care was like: Childhood Joy, or Caretaker
-// Stress when negative.
+// Fortune is how a year went, and it is a tree:
+//
+//     Fortune
+//       Material
+//         Food
+//           Nutrition
+//             Quantity    enough to eat
+//             Quality     varied enough to nourish
+//           Taste
+//             Honey       the pleasures of a gathered diet
+//             Beer        the pleasures of a cereal one
+//       Social
+//         Care
+//           Quantity      the looking after given
+//           Skill         what skill made of it
+//         Conversation
+//           Quantity      how many people outside the clan it knows
+//           Quality       how well it gets on with them
+//
+// For now every inner node is just the sum of its children. The year's
+// Fortune, shown on its own, is the tree as it stands. The Fortune subscore
+// runs the same tree on a harsher food quantity curve and averages it.
+//
+// FORTUNE_TREE below is the tree as data, for the UI to walk. The calculation
+// follows the same shape, one function per subtree.
 //
 // ---------------------------------------------------------------------------
 // A note on how the calculation is written
@@ -43,37 +63,35 @@
 // one correctly-predicted branch per part rather than one per step, and the
 // math reads as ordinary math instead of being interleaved with bookkeeping.
 //
-// When the chain was short this cost nothing measurable against hand-inlined
-// math. It is no longer quite free -- the update path benchmarks at roughly
-// 1.8x the inlined floor, which is about 5ms over a 2000-turn run, immaterial
-// but not nothing. What it still buys is the comparison that matters: some 90x
-// cheaper than building the labeled detail every turn, and no allocation at
-// all. Re-run eudaimonia.bench.ts if the chain grows again.
+// This is not quite free -- with the full Fortune tree the update path
+// benchmarks at roughly 1.5x the inlined floor, about 11ms over a 2000-turn
+// run of 100 clans -- but it is far cheaper than building the labeled detail
+// every turn, and allocates nothing. Re-run eudaimonia.bench.ts if the tree grows again.
 //
 // Each part is its own function returning a plain number, rather than one
 // function returning a record of them. That keeps the update path free of
 // allocation, which returning an object would not.
 //
-// The Food subscore and Fortune run the SAME chain with different quantity
-// exponents, so they would collide if they wrote to one report. They get a
-// report each -- explain() and explainFortune() -- rather than a duplicate set
-// of node names.
+// The Fortune subscore and the year's Fortune run the SAME tree with different
+// food quantity exponents, so they would collide if they wrote to one report.
+// They get a report each -- explain() and explainFortune() -- rather than a
+// duplicate set of node names.
 //
 // If you add a step: add the local, then add its `put` to the trace block a
-// few lines below, then add it to EU_NODES. All three are in this file within
-// a screen of each other, which is the point.
+// few lines below, then add it to EU_NODES (and FORTUNE_TREE, if it is part of
+// the tree). All of them are in this file, which is the point.
 
-import { childhoodJoy } from "../people/care";
+import { careQuantityJoy, careSkillJoy } from "../people/care";
 
 // --- Tuning ---------------------------------------------------------------
 
 // How much of the gap between a running subscore and this year's signal is
 // closed per turn. Life is the slower of the two: 3% gives it a memory of
 // roughly a generation, which is about right for something meant to summarize
-// a life. Food moves at twice that, because eating badly is felt sooner and
-// forgiven sooner than a line dying out is.
+// a life. Fortune moves at twice that, because a bad run of years is felt
+// sooner and forgiven sooner than a line dying out is.
 export const EU_LIFE_DECAY = 0.03;
-export const EU_FOOD_DECAY = 0.06;
+export const EU_FORTUNE_DECAY = 0.06;
 
 // The notional bound on the scale. Nothing clamps to it -- a clan can run past
 // it in either direction -- but it is what the number is written against: how
@@ -92,18 +110,19 @@ export const EU_VITALITY_SCALE = 2000;
 // Food consumption is read as a share of what the clan needs, so 1 is enough
 // to eat. Quantity is the shortfall from that, raised to a power and scaled.
 //
-// The Food subscore squares it: going a little short costs a little and going
-// badly short costs disproportionately more. At three-quarters rations the
-// signal is about -44, at half about -75.
+// The Fortune subscore squares it: going a little short costs a little and
+// going badly short costs disproportionately more. At three-quarters rations
+// the term is about -44, at half about -75.
 //
-// Fortune reads the same input on a straight line, so a year's eating maps to
-// a year's fortune proportionately: three-quarters rations is -25, half -50.
-// It is a report on the year rather than a judgement accumulated over many.
+// The year's Fortune reads the same input on a straight line, so a year's
+// eating maps to a year's fortune proportionately: three-quarters rations is
+// -25, half -50. It is a report on the year rather than a judgement
+// accumulated over many.
 export const EU_FOOD_SCALE = 100;
-export const EU_FOOD_EXPONENT = 2;
-export const EU_FORTUNE_EXPONENT = 1;
+export const EU_SUBSCORE_FOOD_EXPONENT = 2;
+export const EU_FORTUNE_FOOD_EXPONENT = 1;
 
-// Composition, on the assumption that fishing stands for hunting and gathering
+// Nutrition quality, on the assumption that fishing stands for hunting and gathering
 // generally -- a varied and nourishing diet -- and farming for mixed
 // production including goats and sheep, nourishing but less so.
 //
@@ -121,22 +140,71 @@ export const EU_HONEY_PER_SHARE = 5;
 export const EU_BEER_PER_SHARE = 20;
 export const EU_BEER_MAX = 10;
 
-// A treat is worth less to the starving and more to the comfortable, so the
-// bonuses are scaled by how the nutrition came out rather than simply added:
-// nothing at all at -30, their full worth at 0, and a quarter more again by
-// +150. Between those points it runs straight, and it is held inside them.
-export const EU_TASTE_ZERO_AT = -30;
-export const EU_TASTE_FULL_AT = 0;
-export const EU_TASTE_BOOST_AT = 150;
-export const EU_TASTE_BOOST = 1.25;
+// --- Conversation ------------------------------------------------------------
+//
+// Quantity reads how many people outside the clan its people deal with
+// regularly -- its acquaintance, summed over every clan it converses with; see
+// relations/conversation.ts. An ordinary clan knows about 70. More is better,
+// but each doubling is worth the same, so this many points per doubling from
+// the standard, and a clan that knows next to nobody bottoms out at the floor
+// rather than running off to minus infinity: 4 doublings short, -16.
+export const EU_CONVERSATION_STANDARD = 70;
+export const EU_CONVERSATION_PER_DOUBLING = 4;
+export const EU_CONVERSATION_FLOOR = EU_CONVERSATION_STANDARD / 16;
+
+// Quality reads how well the clan gets on with the people it talks to: its
+// absolute affinity for each clan it converses with, averaged by acquaintance.
+// Clans mostly sit between 0.5 and 0.85, so 0.6 is the neutral point, and a
+// clan that talks only with those it has everything in common with (1.0) is
+// +10 better for it.
+export const EU_CONVERSATION_NEUTRAL_AFFINITY = 0.6;
+export const EU_CONVERSATION_QUALITY_SCALE = 25;
 
 // Keeps the per-capita rate finite for a clan that has just lost everyone.
 const MIN_POPULATION = 1;
+
+// --- Inputs ----------------------------------------------------------------
+
+// What Fortune reads about a year. Flat number fields, written in place each
+// turn, so keeping them for replay costs no allocation.
+export class FortuneInputs {
+    // Food eaten per head, as a share of what the clan needs.
+    foodRatio = 1;
+    // Shares of the diet. Fish stands for hunting and gathering, cereals for
+    // mixed farming; the two are complementary.
+    fishShare = 0.5;
+    cerealShare = 0.5;
+    // Care effort given, as a share of the standard.
+    careEffort = 1;
+    // The clan's Care skill.
+    careSkill = 50;
+    // People outside the clan its people deal with regularly.
+    conversationAmount = EU_CONVERSATION_STANDARD;
+    // Acquaintance-weighted absolute affinity for those people's clans.
+    conversationAffinity = EU_CONVERSATION_NEUTRAL_AFFINITY;
+
+    copyFrom(o: FortuneInputs): void {
+        this.foodRatio = o.foodRatio;
+        this.fishShare = o.fishShare;
+        this.cerealShare = o.cerealShare;
+        this.careEffort = o.careEffort;
+        this.careSkill = o.careSkill;
+        this.conversationAmount = o.conversationAmount;
+        this.conversationAffinity = o.conversationAffinity;
+    }
+
+    clone(): FortuneInputs {
+        const c = new FortuneInputs();
+        c.copyFrom(this);
+        return c;
+    }
+}
 
 // --- The calculation graph ------------------------------------------------
 
 // Named points in the derivation. A plain const object rather than an enum so
 // the values stay ordinary numbers and the module has no runtime baggage.
+// Fortune's nodes are grouped as its tree is.
 export const EuNode = {
     // Life
     PrevLife: 0,
@@ -149,38 +217,48 @@ export const EuNode = {
     LifePull: 7,
     Life: 8,
 
-    // Food inputs
-    PrevFood: 10,
-    FoodRatio: 11,
-    FishShare: 12,
-    CerealShare: 13,
+    // Fortune's inputs
+    FoodRatio: 10,
+    FishShare: 11,
+    CerealShare: 12,
+    CareEffort: 13,
+    CareSkillLevel: 14,
+    ConversationAmount: 15,
+    ConversationAffinity: 16,
 
-    // Nutrition: what the food is worth as nourishment
-    QuantityRaw: 20,
-    Quantity: 21,
-    Composition: 22,
-    Nutrition: 23,
+    // Fortune
+    Fortune: 20,
 
-    // Taste: what it is worth beyond nourishment
-    Honey: 30,
-    Beer: 31,
-    TasteRaw: 32,
-    TasteScale: 33,
-    Taste: 34,
-    // What each treat is actually worth once nutrition has had its say. These
-    // are what the panel shows, since they are the amounts that add to Taste.
-    HoneyScaled: 35,
-    BeerScaled: 36,
+    //   Material
+    Material: 21,
+    //     Food
+    Food: 22,
+    //       Nutrition
+    FoodNutrition: 23,
+    FoodQuantity: 24,
+    FoodQuantityRaw: 25,
+    FoodQuality: 26,
+    //       Taste
+    FoodTaste: 27,
+    Honey: 28,
+    Beer: 29,
+    BeerRaw: 37,
 
-    // Food, and what the year's food does to the standing subscore
-    FoodSignal: 40,
-    FoodPull: 41,
-    Food: 42,
+    //   Social
+    Social: 30,
+    //     Care
+    Care: 31,
+    CareQuantity: 32,
+    CareSkill: 33,
+    //     Conversation
+    Conversation: 34,
+    ConversationQuantity: 35,
+    ConversationQuality: 36,
 
-    // Care, which Fortune reads alongside the food
-    CareProvision: 45,
-    ChildhoodJoy: 46,
-    Fortune: 47,
+    // The Fortune subscore: the tree, averaged over the years
+    PrevFortune: 40,
+    FortunePull: 41,
+    FortuneSubscore: 42,
 
     // Totals
     PrevValue: 50,
@@ -189,9 +267,95 @@ export const EuNode = {
 
 export type EuNodeId = (typeof EuNode)[keyof typeof EuNode];
 
+// --- The Fortune tree -----------------------------------------------------
+
+// One node of Fortune's tree. Labels and notes live with the node metadata in
+// EU_NODES; this is only the shape.
+export interface FortuneTreeNode {
+    node: EuNodeId;
+    children?: readonly FortuneTreeNode[];
+}
+
+export const FORTUNE_TREE: FortuneTreeNode = {
+    node: EuNode.Fortune,
+    children: [
+        {
+            node: EuNode.Material,
+            children: [
+                {
+                    node: EuNode.Food,
+                    children: [
+                        {
+                            node: EuNode.FoodNutrition,
+                            children: [
+                                { node: EuNode.FoodQuantity },
+                                { node: EuNode.FoodQuality },
+                            ],
+                        },
+                        {
+                            node: EuNode.FoodTaste,
+                            children: [
+                                { node: EuNode.Honey },
+                                { node: EuNode.Beer },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+        {
+            node: EuNode.Social,
+            children: [
+                {
+                    node: EuNode.Care,
+                    children: [
+                        { node: EuNode.CareQuantity },
+                        { node: EuNode.CareSkill },
+                    ],
+                },
+                {
+                    node: EuNode.Conversation,
+                    children: [
+                        { node: EuNode.ConversationQuantity },
+                        { node: EuNode.ConversationQuality },
+                    ],
+                },
+            ],
+        },
+    ],
+};
+
+// The tree flattened in reading order, each node with its depth below the
+// root (which is depth 0) and whether it sums children of its own. The panel
+// and the tooltips walk this rather than naming rows themselves.
+export interface FortuneRow {
+    node: EuNodeId;
+    depth: number;
+    isSum: boolean;
+}
+
+function flattenTree(t: FortuneTreeNode, depth: number, out: FortuneRow[]): FortuneRow[] {
+    out.push({ node: t.node, depth, isSum: !!t.children?.length });
+    for (const c of t.children ?? []) flattenTree(c, depth + 1, out);
+    return out;
+}
+
+export const FORTUNE_ROWS: readonly FortuneRow[] = flattenTree(FORTUNE_TREE, 0, []);
+
+// Each inner node's children, for showing what a sum is made of.
+export const FORTUNE_CHILDREN: ReadonlyMap<EuNodeId, readonly EuNodeId[]> = new Map(
+    (function collect(t: FortuneTreeNode): [EuNodeId, EuNodeId[]][] {
+        const kids = t.children ?? [];
+        return [
+            ...(kids.length ? [[t.node, kids.map((k) => k.node)] as [EuNodeId, EuNodeId[]]] : []),
+            ...kids.flatMap(collect),
+        ];
+    })(FORTUNE_TREE),
+);
+
 // --- Subscores ------------------------------------------------------------
 
-export type EuSubscoreKey = "life" | "food";
+export type EuSubscoreKey = "life" | "fortune";
 
 // What a subscore is, and where to find its parts in a replay. The UI walks
 // this rather than hardcoding the list, so a new subscore appears in the
@@ -201,10 +365,6 @@ export interface EuSubscoreDef {
     label: string;
     // Share of the gap to its signal that one year closes.
     decay: number;
-    // Whether the concern this subscore tracks is one Fortune also reports
-    // on. Fortune reads the same inputs on its own quantity curve, so this
-    // marks which subscores it speaks to, not a term it sums.
-    inFortune: boolean;
     // Where this subscore's parts land in a report.
     prevNode: EuNodeId;
     signalNode: EuNodeId;
@@ -218,10 +378,6 @@ export const EU_SUBSCORES: readonly EuSubscoreDef[] = [
         key: "life",
         label: "Life",
         decay: EU_LIFE_DECAY,
-        // Left out of Fortune: this signal is a growth rate read at x2000, so
-        // in a small clan one birth swings it by a hundred points and it says
-        // more about arithmetic than about the year.
-        inFortune: false,
         prevNode: EuNode.PrevLife,
         signalNode: EuNode.LifeSignal,
         pullNode: EuNode.LifePull,
@@ -229,71 +385,16 @@ export const EU_SUBSCORES: readonly EuSubscoreDef[] = [
         blurb: "Whether the clan is growing or dying, as a share of itself.",
     },
     {
-        key: "food",
-        label: "Food",
-        decay: EU_FOOD_DECAY,
-        inFortune: true,
-        prevNode: EuNode.PrevFood,
-        signalNode: EuNode.FoodSignal,
-        pullNode: EuNode.FoodPull,
-        valueNode: EuNode.Food,
+        key: "fortune",
+        label: "Fortune",
+        decay: EU_FORTUNE_DECAY,
+        prevNode: EuNode.PrevFortune,
+        signalNode: EuNode.Fortune,
+        pullNode: EuNode.FortunePull,
+        valueNode: EuNode.FortuneSubscore,
         blurb:
-            "What the clan has been eating: enough of it, varied enough to "
-            + "nourish, and with something to enjoy in it.",
-    },
-];
-
-// The steps of the food chain, in the order they should read on screen. The
-// panel walks this rather than naming rows itself.
-export interface EuFoodStep {
-    node: EuNodeId;
-    label: string;
-    // A heading that its following terms add up to, rather than a term itself.
-    isSubtotal?: boolean;
-    // A term belonging to the subtotal above it.
-    isPart?: boolean;
-    note: string;
-}
-
-// Each subtotal leads, with the terms that make it up indented beneath. The
-// parts are the amounts that actually add to the subtotal, so the treats
-// appear at what nutrition left them worth rather than at face value.
-export const EU_FOOD_STEPS: readonly EuFoodStep[] = [
-    {
-        node: EuNode.Nutrition,
-        label: "Nutrition",
-        isSubtotal: true,
-        note: "Quantity and composition together: what the food was worth as nourishment.",
-    },
-    {
-        node: EuNode.Quantity,
-        label: "Quantity",
-        isPart: true,
-        note: "How far short of enough the clan ate.",
-    },
-    {
-        node: EuNode.Composition,
-        label: "Composition",
-        isPart: true,
-        note: `Cereals past ${(EU_CEREAL_SHARE_FREE * 100).toFixed(0)}% of the diet, which a mixed diet no longer balances. Fish carries no penalty.`,
-    },
-    {
-        node: EuNode.Taste,
-        label: "Taste",
-        isSubtotal: true,
-        note: "Honey and beer, scaled by how the nutrition came out: worth nothing to the starving, more to the comfortable.",
-    },
-    {
-        node: EuNode.HoneyScaled,
-        label: "Honey",
-        isPart: true,
-        note: "What the gatherers turned up, at what it was worth given how well the clan ate.",
-    },
-    {
-        node: EuNode.BeerScaled,
-        label: "Beer",
-        isPart: true,
-        note: `What the cereals brewed, capped at ${EU_BEER_MAX} before scaling, at what it was worth given how well the clan ate.`,
+            "How the clan's years have been going: enough to eat, and good to "
+            + "eat, looked after, and with people to talk to.",
     },
 ];
 
@@ -331,62 +432,80 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.Life, label: "Life", role: "result", places: 1,
       note: "Last year's Life moved by this year's pull." },
 
-    { id: EuNode.PrevFood, label: "Food last year", role: "input", places: 1,
-      note: "Where the Food subscore stood at the end of last year." },
     { id: EuNode.FoodRatio, label: "Rations", role: "input", places: 2, isRate: true,
       note: "Food eaten per head, as a share of what the clan needs." },
     { id: EuNode.FishShare, label: "Fish share", role: "input", places: 0, isRate: true,
       note: "Share of the diet from fishing, standing for hunting and gathering generally." },
     { id: EuNode.CerealShare, label: "Cereal share", role: "input", places: 0, isRate: true,
       note: "Share of the diet from farming, standing for mixed farming with herds." },
+    { id: EuNode.CareEffort, label: "Care effort", role: "input", places: 0, isRate: true,
+      note: "Care effort given, as a share of what the clan's children need." },
+    { id: EuNode.CareSkillLevel, label: "Care skill", role: "input", places: 0,
+      note: "The clan's skill at looking after people." },
+    { id: EuNode.ConversationAmount, label: "Acquaintance", role: "input", places: 0,
+      note: "People outside the clan its people deal with regularly." },
+    { id: EuNode.ConversationAffinity, label: "Affinity", role: "input", places: 2,
+      note: "The clan's affinity for the clans it talks with, averaged by acquaintance." },
 
-    { id: EuNode.QuantityRaw, label: "Before clamping", role: "derived", places: 1,
-      note: "Runs positive when there is more than enough, which counts for nothing here." },
-    { id: EuNode.Quantity, label: "Quantity", role: "derived", places: 1,
-      note: "How far short of enough the clan ate." },
-    { id: EuNode.Composition, label: "Composition", role: "derived", places: 1,
-      note: "The nutritional cost of leaning too hard on cereals." },
-    { id: EuNode.Nutrition, label: "Nutrition", role: "derived", places: 1,
-      note: "Quantity and composition together." },
-
-    { id: EuNode.Honey, label: "Honey", role: "derived", places: 1,
-      note: "The pleasures of a gathered diet." },
-    { id: EuNode.Beer, label: "Beer", role: "derived", places: 1,
-      note: "The pleasures of a cereal one, up to the point of enough." },
-    { id: EuNode.TasteRaw, label: "Before scaling", role: "derived", places: 1,
-      note: "Honey and beer added, before nutrition decides what they are worth." },
-    { id: EuNode.TasteScale, label: "Worth", role: "derived", places: 2,
-      note: "What a treat is worth at this level of nourishment." },
-    { id: EuNode.Taste, label: "Taste", role: "derived", places: 1,
-      note: "The pleasures, at what they are worth here." },
-    { id: EuNode.HoneyScaled, label: "Honey", role: "derived", places: 1,
-      note: "What the gathered pleasures were worth at this level of nourishment." },
-    { id: EuNode.BeerScaled, label: "Beer", role: "derived", places: 1,
-      note: "What the brewed pleasures were worth at this level of nourishment." },
-
-    { id: EuNode.FoodSignal, label: "Food signal", role: "derived", places: 1,
-      note: "Nutrition and taste together: what this year's eating was worth." },
-    { id: EuNode.FoodPull, label: "Food pull", role: "derived", places: 2,
-      note: `${(EU_FOOD_DECAY * 100).toFixed(0)}% of the distance from last year's Food to this year's signal.` },
-    { id: EuNode.Food, label: "Food", role: "result", places: 1,
-      note: "Last year's Food moved by this year's pull." },
-
-    { id: EuNode.CareProvision, label: "Care provided", role: "input", places: 2, isRate: true,
-      note: "Looking after the clan's people got done, as a share of what its children need." },
-    { id: EuNode.ChildhoodJoy, label: "Childhood Joy", role: "derived", places: 1,
-      note: "What the year's care was worth: Childhood Joy above the standard, Caretaker Stress below it." },
     { id: EuNode.Fortune, label: "Fortune", role: "result", places: 1,
-      note: "The year's eating and its care together." },
+      note: "Material and social fortune added." },
+
+    { id: EuNode.Material, label: "Material", role: "derived", places: 1,
+      note: "What the year was worth in things: for now, only food." },
+    { id: EuNode.Food, label: "Food", role: "derived", places: 1,
+      note: "Nutrition and taste added: what this year's eating was worth." },
+    { id: EuNode.FoodNutrition, label: "Nutrition", role: "derived", places: 1,
+      note: "Quantity and quality added: what the food was worth as nourishment." },
+    { id: EuNode.FoodQuantity, label: "Quantity", role: "derived", places: 1,
+      note: "How far short of enough the clan ate." },
+    { id: EuNode.FoodQuantityRaw, label: "Before clamping", role: "derived", places: 1,
+      note: "Runs positive when there is more than enough, which counts for nothing here." },
+    { id: EuNode.FoodQuality, label: "Quality", role: "derived", places: 1,
+      note: `The cost of leaning too hard on cereals: past ${(EU_CEREAL_SHARE_FREE * 100).toFixed(0)}% of the diet, a mixed diet no longer balances. Fish carries no penalty.` },
+    { id: EuNode.FoodTaste, label: "Taste", role: "derived", places: 1,
+      note: "Honey and beer added: what the food was worth beyond nourishment." },
+    { id: EuNode.Honey, label: "Honey", role: "derived", places: 1,
+      note: "The pleasures of a gathered diet, in proportion to how much of it the gatherers provide." },
+    { id: EuNode.Beer, label: "Beer", role: "derived", places: 1,
+      note: `The pleasures of a cereal one, up to the point of enough: held at ${EU_BEER_MAX}.` },
+    { id: EuNode.BeerRaw, label: "Before capping", role: "derived", places: 1,
+      note: "What the cereals would have brewed, before only so much beer is any use." },
+
+    { id: EuNode.Social, label: "Social", role: "derived", places: 1,
+      note: "What the year was worth in people: care and conversation added." },
+    { id: EuNode.Care, label: "Care", role: "derived", places: 1,
+      note: "Childhood Joy, or when negative, Caretaker Stress: the effort given and the skill it was given with, added." },
+    { id: EuNode.CareQuantity, label: "Quantity", role: "derived", places: 1,
+      note: "Care effort given against what the children need." },
+    { id: EuNode.CareSkill, label: "Skill", role: "derived", places: 1,
+      note: "How much looking after the clan's skill got out of that effort." },
+    { id: EuNode.Conversation, label: "Conversation", role: "derived", places: 1,
+      note: "How many people outside the clan it knows, and how well it gets on with them, added." },
+    { id: EuNode.ConversationQuantity, label: "Quantity", role: "derived", places: 1,
+      note: `People outside the clan dealt with regularly, at ${EU_CONVERSATION_PER_DOUBLING} a doubling from ${EU_CONVERSATION_STANDARD}.` },
+    { id: EuNode.ConversationQuality, label: "Quality", role: "derived", places: 1,
+      note: `How much the clan has in common with the people it talks to, against an affinity of ${EU_CONVERSATION_NEUTRAL_AFFINITY}.` },
+
+    { id: EuNode.PrevFortune, label: "Fortune last year", role: "input", places: 1,
+      note: "Where the Fortune subscore stood at the end of last year." },
+    { id: EuNode.FortunePull, label: "Fortune pull", role: "derived", places: 2,
+      note: `${(EU_FORTUNE_DECAY * 100).toFixed(0)}% of the distance from last year's Fortune subscore to this year's signal.` },
+    { id: EuNode.FortuneSubscore, label: "Fortune", role: "result", places: 1,
+      note: "Last year's Fortune subscore moved by this year's pull." },
 
     { id: EuNode.PrevValue, label: "Total last year", role: "input", places: 1,
       note: "The two subscores as they stood at the end of last year." },
     { id: EuNode.Value, label: "Eudaimonia", role: "result", places: 1,
-      note: "Life and Food added." },
+      note: "Life and Fortune added." },
 ];
 
 export const EU_NODE_DEFS: ReadonlyMap<EuNodeId, EuNodeDef> = new Map(
     EU_NODES.map((d) => [d.id, d]),
 );
+
+export function euNodeDef(id: EuNodeId): EuNodeDef {
+    return EU_NODE_DEFS.get(id)!;
+}
 
 // --- Tracing --------------------------------------------------------------
 
@@ -466,7 +585,7 @@ export function computeLife(
     return life;
 }
 
-// Out of line for the same reason as traceFoodSignal below: a long cold branch
+// Out of line for the same reason as traceFood below: a long cold branch
 // counts against inlining the hot function it sits in.
 function traceLife(
     trace: EuTrace,
@@ -491,44 +610,24 @@ function traceLife(
     trace.put(EuNode.Life, life);
 }
 
-// What a treat is worth to a clan eating this well or this badly. Nothing at
-// all when they are starving, their face value when fed, a little more when
-// there is plenty.
-export function tasteScale(nutrition: number): number {
-    if (nutrition <= EU_TASTE_ZERO_AT) return 0;
-    if (nutrition >= EU_TASTE_BOOST_AT) return EU_TASTE_BOOST;
-    if (nutrition < EU_TASTE_FULL_AT) {
-        return (
-            (nutrition - EU_TASTE_ZERO_AT) /
-            (EU_TASTE_FULL_AT - EU_TASTE_ZERO_AT)
-        );
-    }
-    return (
-        1 +
-        (EU_TASTE_BOOST - 1) *
-            ((nutrition - EU_TASTE_FULL_AT) /
-                (EU_TASTE_BOOST_AT - EU_TASTE_FULL_AT))
-    );
-}
-
-// What a year's eating was worth: enough of it, varied enough to nourish, and
-// with something in it to enjoy.
+// Fortune > Material > Food: nutrition -- enough of it, varied enough to
+// nourish -- and taste, something in it to enjoy.
 //
-// The exponent is the one thing the Food subscore and Fortune differ in, so
-// this is written once and called twice rather than copied. Because both may
-// be on screen at the same time, each caller passes its own report; they would
-// overwrite each other in a shared one.
+// The quantity exponent is the one thing the Fortune subscore and the year's
+// Fortune differ in, so this is written once and called by both.
 //
 // Keep the trace block at the bottom in step with the math above it.
-export function computeFoodSignal(
-    foodRatio: number,
-    fishShare: number,
-    cerealShare: number,
+export function computeFood(
+    inputs: FortuneInputs,
     quantityExponent: number,
     trace?: EuTrace,
 ): number {
-    // Nourishment. Eating more than enough counts for nothing, so quantity is
-    // held at zero from above and can only ever be a debt.
+    const foodRatio = inputs.foodRatio;
+    const fishShare = inputs.fishShare;
+    const cerealShare = inputs.cerealShare;
+
+    // Eating more than enough counts for nothing, so quantity is held at zero
+    // from above and can only ever be a debt.
     const quantityRaw =
         EU_FOOD_SCALE * (Math.pow(foodRatio, quantityExponent) - 1);
     const quantity = quantityRaw > 0 ? 0 : quantityRaw;
@@ -536,119 +635,147 @@ export function computeFoodSignal(
     // Cereals past the share a mixed diet absorbs. Fish carries no penalty:
     // gathering and hunting bring variety of their own.
     const cerealExcess = cerealShare - EU_CEREAL_SHARE_FREE;
-    const composition =
+    const quality =
         cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
 
-    const nutrition = quantity + composition;
+    const nutrition = quantity + quality;
 
-    // Pleasures, which are worth what the nourishment lets them be worth.
     const honey = EU_HONEY_PER_SHARE * fishShare;
     const beerRaw = EU_BEER_PER_SHARE * cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
-    const tasteRaw = honey + beer;
-    const scale = tasteScale(nutrition);
-    const taste = tasteRaw * scale;
+    const taste = honey + beer;
 
-    const signal = nutrition + taste;
+    const food = nutrition + taste;
 
     if (trace !== undefined) {
-        traceFoodSignal(trace, foodRatio, fishShare, cerealShare, quantityRaw,
-            quantity, composition, nutrition, honey, beer, tasteRaw, scale,
-            taste, signal);
+        traceFood(trace, foodRatio, fishShare, cerealShare, quantityRaw,
+            quantity, quality, nutrition, honey, beerRaw, beer, taste, food);
     }
 
-    return signal;
+    return food;
 }
 
-// The reporting half of computeFoodSignal, kept in a function of its own
-// rather than inline in the branch above.
+// The reporting half of computeFood, kept in a function of its own rather than
+// inline in the branch above.
 //
-// This is speed rather than tidiness, though less of it than hoped. A long
-// cold branch counts against the budget V8 uses to decide whether to inline
-// the function it sits in, so moving thirteen `put` calls out of the hot
-// function is worth something: the benchmark put it at about 14% of the update
-// path. It does not buy back all of the cost -- see the note on the honesty of
-// the "costs nothing" claim in eudaimonia.bench.ts.
+// This is speed rather than tidiness. A long cold branch counts against the
+// budget V8 uses to decide whether to inline the function it sits in, so
+// moving a dozen `put` calls out of the hot function is worth something: the
+// benchmark put it at about 14% of the update path.
 //
 // Keep this in step with the math above it -- the two are adjacent for that
 // reason.
-function traceFoodSignal(
+function traceFood(
     trace: EuTrace,
     foodRatio: number,
     fishShare: number,
     cerealShare: number,
     quantityRaw: number,
     quantity: number,
-    composition: number,
+    quality: number,
     nutrition: number,
     honey: number,
+    beerRaw: number,
     beer: number,
-    tasteRaw: number,
-    scale: number,
     taste: number,
-    signal: number,
+    food: number,
 ): void {
     trace.put(EuNode.FoodRatio, foodRatio);
     trace.put(EuNode.FishShare, fishShare);
     trace.put(EuNode.CerealShare, cerealShare);
-    trace.put(EuNode.QuantityRaw, quantityRaw);
-    trace.put(EuNode.Quantity, quantity);
-    trace.put(EuNode.Composition, composition);
-    trace.put(EuNode.Nutrition, nutrition);
+    trace.put(EuNode.FoodQuantityRaw, quantityRaw);
+    trace.put(EuNode.FoodQuantity, quantity);
+    trace.put(EuNode.FoodQuality, quality);
+    trace.put(EuNode.FoodNutrition, nutrition);
     trace.put(EuNode.Honey, honey);
+    trace.put(EuNode.BeerRaw, beerRaw);
     trace.put(EuNode.Beer, beer);
-    trace.put(EuNode.TasteRaw, tasteRaw);
-    trace.put(EuNode.TasteScale, scale);
-    trace.put(EuNode.Taste, taste);
-    trace.put(EuNode.HoneyScaled, honey * scale);
-    trace.put(EuNode.BeerScaled, beer * scale);
-    trace.put(EuNode.FoodSignal, signal);
+    trace.put(EuNode.FoodTaste, taste);
+    trace.put(EuNode.Food, food);
 }
 
-// The standing Food subscore, moved by this year's eating.
-export function computeFood(
-    prevFood: number,
-    foodRatio: number,
-    fishShare: number,
-    cerealShare: number,
-    trace?: EuTrace,
-): number {
-    const signal = computeFoodSignal(
-        foodRatio, fishShare, cerealShare, EU_FOOD_EXPONENT, trace);
-
-    const pull = EU_FOOD_DECAY * (signal - prevFood);
-    const food = prevFood + pull;
+// Fortune > Social > Care: Childhood Joy, or when negative, Caretaker Stress.
+// The effort given and the skill it was given with, each read against the
+// standard. See care.ts.
+export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
+    const quantity = careQuantityJoy(inputs.careEffort);
+    const skill = careSkillJoy(inputs.careSkill);
+    const care = quantity + skill;
 
     if (trace !== undefined) {
-        trace.put(EuNode.PrevFood, prevFood);
-        trace.put(EuNode.FoodPull, pull);
-        trace.put(EuNode.Food, food);
+        trace.put(EuNode.CareEffort, inputs.careEffort);
+        trace.put(EuNode.CareSkillLevel, inputs.careSkill);
+        trace.put(EuNode.CareQuantity, quantity);
+        trace.put(EuNode.CareSkill, skill);
+        trace.put(EuNode.Care, care);
     }
 
-    return food;
+    return care;
 }
 
-// Fortune: how the year itself went, rather than how the clan's life is
-// going. The food chain on a straight quantity curve, and no running average
-// after it, plus what the year's care was like: Childhood Joy when the
-// children got more looking after than they needed, Caretaker Stress when
-// less. See care.ts.
-export function computeFortune(
-    foodRatio: number,
-    fishShare: number,
-    cerealShare: number,
-    careProvision: number,
-    trace?: EuTrace,
-): number {
-    const food = computeFoodSignal(
-        foodRatio, fishShare, cerealShare, EU_FORTUNE_EXPONENT, trace);
-    const joy = childhoodJoy(careProvision);
-    const fortune = food + joy;
+// Fortune > Social > Conversation: how many people outside the clan it knows,
+// and how well it gets on with them.
+export function computeConversation(inputs: FortuneInputs, trace?: EuTrace): number {
+    const amount = inputs.conversationAmount;
+    const quantity = EU_CONVERSATION_PER_DOUBLING * Math.log2(
+        (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
+        / EU_CONVERSATION_STANDARD);
+    const quality = EU_CONVERSATION_QUALITY_SCALE
+        * (inputs.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
+    const conversation = quantity + quality;
 
     if (trace !== undefined) {
-        trace.put(EuNode.CareProvision, careProvision);
-        trace.put(EuNode.ChildhoodJoy, joy);
+        trace.put(EuNode.ConversationAmount, amount);
+        trace.put(EuNode.ConversationAffinity, inputs.conversationAffinity);
+        trace.put(EuNode.ConversationQuantity, quantity);
+        trace.put(EuNode.ConversationQuality, quality);
+        trace.put(EuNode.Conversation, conversation);
+    }
+
+    return conversation;
+}
+
+// Fortune: how a year went. The whole tree, each inner node the sum of its
+// children.
+export function computeFortune(
+    inputs: FortuneInputs,
+    foodQuantityExponent: number,
+    trace?: EuTrace,
+): number {
+    const food = computeFood(inputs, foodQuantityExponent, trace);
+    const material = food;
+
+    const care = computeCare(inputs, trace);
+    const conversation = computeConversation(inputs, trace);
+    const social = care + conversation;
+
+    const fortune = material + social;
+
+    if (trace !== undefined) {
+        trace.put(EuNode.Material, material);
+        trace.put(EuNode.Social, social);
         trace.put(EuNode.Fortune, fortune);
+    }
+
+    return fortune;
+}
+
+// The standing Fortune subscore, moved by this year's Fortune read on the
+// harsher food curve.
+export function computeFortuneSubscore(
+    prevFortune: number,
+    inputs: FortuneInputs,
+    trace?: EuTrace,
+): number {
+    const signal = computeFortune(inputs, EU_SUBSCORE_FOOD_EXPONENT, trace);
+
+    const pull = EU_FORTUNE_DECAY * (signal - prevFortune);
+    const fortune = prevFortune + pull;
+
+    if (trace !== undefined) {
+        trace.put(EuNode.PrevFortune, prevFortune);
+        trace.put(EuNode.FortunePull, pull);
+        trace.put(EuNode.FortuneSubscore, fortune);
     }
 
     return fortune;
@@ -670,10 +797,10 @@ export function computeFortune(
 // deaths, and headcount. And because the update is affine in the standing
 // verdict and the signal, the identity carries through it.
 //
-// Food is not linear in its inputs -- it squares the shortfall, clamps, and
-// scales the bonuses -- so the identity does not extend to it across clans
-// eating differently. The average is still the right summary of the clans; it
-// is just not the settlement's own food score.
+// Fortune is not linear in its inputs -- it squares the food shortfall, clamps,
+// and reads conversation on a log scale -- so the identity does not extend to
+// it across clans living differently. The average is still the right summary
+// of the clans; it is just not the settlement's own fortune.
 export function eudaimoniaAverage(
     items: readonly { value: number; weight: number }[],
 ): number {
@@ -694,96 +821,87 @@ export function eudaimoniaAverage(
 // them costs no allocation.
 export class Eudaimonia {
     life: number;
-    food: number;
+    fortuneSubscore: number;
 
     // Last turn's inputs, held for replay.
     private prevLife_: number;
-    private prevFood_: number;
+    private prevFortune_: number;
     private births_: number;
     private deaths_: number;
     private population_: number;
-    private foodRatio_: number;
-    private fishShare_: number;
-    private cerealShare_: number;
-    private careProvision_: number;
+    private readonly inputs_: FortuneInputs;
     private hasRun_: boolean;
 
     constructor(
         life = 0,
-        food = 0,
+        fortuneSubscore = 0,
         prevLife = 0,
-        prevFood = 0,
+        prevFortune = 0,
         births = 0,
         deaths = 0,
         population = 0,
-        foodRatio = 1,
-        fishShare = 0.5,
-        cerealShare = 0.5,
+        inputs: FortuneInputs = new FortuneInputs(),
         hasRun = false,
-        careProvision = 1,
     ) {
-        this.careProvision_ = careProvision;
         this.life = life;
-        this.food = food;
+        this.fortuneSubscore = fortuneSubscore;
         this.prevLife_ = prevLife;
-        this.prevFood_ = prevFood;
+        this.prevFortune_ = prevFortune;
         this.births_ = births;
         this.deaths_ = deaths;
         this.population_ = population;
-        this.foodRatio_ = foodRatio;
-        this.fishShare_ = fishShare;
-        this.cerealShare_ = cerealShare;
+        this.inputs_ = inputs;
         this.hasRun_ = hasRun;
     }
 
     clone(): Eudaimonia {
         return new Eudaimonia(
             this.life,
-            this.food,
+            this.fortuneSubscore,
             this.prevLife_,
-            this.prevFood_,
+            this.prevFortune_,
             this.births_,
             this.deaths_,
             this.population_,
-            this.foodRatio_,
-            this.fishShare_,
-            this.cerealShare_,
+            this.inputs_.clone(),
             this.hasRun_,
-            this.careProvision_,
         );
+    }
+
+    // What Fortune read last year.
+    get inputs(): Readonly<FortuneInputs> {
+        return this.inputs_;
     }
 
     // The verdict: the subscores added.
     get value(): number {
-        return this.life + this.food;
+        return this.life + this.fortuneSubscore;
     }
 
     get previousValue(): number {
-        return this.prevLife_ + this.prevFood_;
+        return this.prevLife_ + this.prevFortune_;
     }
 
     // How this year went, on its own terms. Derived rather than stored: it is
     // a function of inputs already kept for replay, so the turn loop pays
     // nothing for it.
     get fortune(): number {
-        return computeFortune(
-            this.foodRatio_, this.fishShare_, this.cerealShare_,
-            this.careProvision_);
+        return computeFortune(this.inputs_, EU_FORTUNE_FOOD_EXPONENT);
     }
 
     // Fortune's reading of how the year's care went: Childhood Joy, or when
     // negative, Caretaker Stress.
-    get childhoodJoy(): number {
-        return childhoodJoy(this.careProvision_);
+    get care(): number {
+        return computeCare(this.inputs_);
     }
 
     // One subscore by key, for UI that walks EU_SUBSCORES.
     subscore(key: EuSubscoreKey): number {
-        return key === "life" ? this.life : this.food;
+        return key === "life" ? this.life : this.fortuneSubscore;
     }
 
     previousSubscore(key: EuSubscoreKey): number {
-        return key === "life" ? this.prevLife_ : this.prevFood_;
+        return key === "life" ? this.prevLife_ : this.prevFortune_;
     }
 
     // How much the verdict moved last turn.
@@ -795,29 +913,24 @@ export class Eudaimonia {
         return this.hasRun_;
     }
 
-    // The turn update. Arithmetic only.
+    // The turn update. Arithmetic only. `inputs` is copied, so the caller can
+    // reuse one object from year to year.
     update(
         births: number,
         deaths: number,
         population: number,
-        foodRatio: number,
-        fishShare: number,
-        cerealShare: number,
-        careProvision: number = 1,
+        inputs: FortuneInputs,
     ): void {
-        this.careProvision_ = careProvision;
         this.prevLife_ = this.life;
-        this.prevFood_ = this.food;
+        this.prevFortune_ = this.fortuneSubscore;
         this.births_ = births;
         this.deaths_ = deaths;
         this.population_ = population;
-        this.foodRatio_ = foodRatio;
-        this.fishShare_ = fishShare;
-        this.cerealShare_ = cerealShare;
+        this.inputs_.copyFrom(inputs);
         this.hasRun_ = true;
         this.life = computeLife(this.life, births, deaths, population);
-        this.food = computeFood(
-            this.food, foodRatio, fishShare, cerealShare);
+        this.fortuneSubscore = computeFortuneSubscore(
+            this.fortuneSubscore, this.inputs_);
     }
 
     // Replay last turn's update, keeping every intermediate. Only called when
@@ -831,25 +944,18 @@ export class Eudaimonia {
             this.population_,
             report,
         );
-        const food = computeFood(
-            this.prevFood_,
-            this.foodRatio_,
-            this.fishShare_,
-            this.cerealShare_,
-            report,
-        );
-        report.put(EuNode.PrevValue, this.prevLife_ + this.prevFood_);
-        report.put(EuNode.Value, life + food);
+        const fortune = computeFortuneSubscore(
+            this.prevFortune_, this.inputs_, report);
+        report.put(EuNode.PrevValue, this.prevLife_ + this.prevFortune_);
+        report.put(EuNode.Value, life + fortune);
         return report;
     }
 
-    // The same chain on Fortune's gentler quantity curve. A report of its own,
+    // The year's Fortune on its gentler food curve. A report of its own,
     // because the two would overwrite each other's steps in a shared one.
     explainFortune(): EudaimoniaReport {
         const report = new EudaimoniaReport();
-        computeFortune(
-            this.foodRatio_, this.fishShare_, this.cerealShare_,
-            this.careProvision_, report);
+        computeFortune(this.inputs_, EU_FORTUNE_FOOD_EXPONENT, report);
         return report;
     }
 }

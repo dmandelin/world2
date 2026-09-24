@@ -14,7 +14,8 @@
         careLearningFactor,
         careSkillFactor,
         careSociabilityFactor,
-        childhoodJoy,
+        careQuantityJoy,
+        careSkillJoy,
     } from "../model/people/care";
     import { eudaimoniaAverage } from "../model/self/eudaimonia";
     import { signed } from "../model/lib/format";
@@ -180,8 +181,10 @@
                 },
                 {
                     label: "Childhood Joy",
-                    note: "Points of Fortune: Childhood Joy when care provided is above the standard, Caretaker Stress when below.",
-                    value: (c) => childhoodJoy(c.careProvision),
+                    note: "Points of Fortune: Childhood Joy when care effort and skill are above the standard, Caretaker Stress when below. Effort and skill each count on their own.",
+                    value: (c) =>
+                        careQuantityJoy(c.effortAllocation.careRatio) +
+                        careSkillJoy(careSkill(c)),
                     format: (v) => signed(v, 1),
                     sense: 1,
                     mid: 0,

@@ -137,13 +137,25 @@ export function careSociabilityFactor(
 
 // --- Fortune ----------------------------------------------------------------
 
-// Childhood Joy, or when negative, Caretaker Stress: points of Fortune per
-// whole standard's worth of care provided above or below the standard. A clan
-// at 150% has a year +10 better for it; one scraping by at 50%, -10 worse.
+// Care's part of Fortune comes in two terms, one for each of the factors that
+// multiply into care provided, so a year can be seen to have gone well or
+// badly for the effort given or for the skill it was given with:
+//
+//     Quantity  the care effort given, against the standard
+//     Skill     what the clan's skill made of each unit of it
+//
+// Each is worth this many points per whole standard's worth above or below 1,
+// held inside the same range as care provided. A clan giving 150% of the
+// standard has a year +10 better for the effort; one scraping by at 50%, -10
+// worse. Together they are Childhood Joy, or when negative, Caretaker Stress.
 export const CHILDHOOD_JOY_SCALE = 20;
 
-export function childhoodJoy(provision: number): number {
-    return CHILDHOOD_JOY_SCALE * (bounded(provision) - 1);
+export function careQuantityJoy(effortRatio: number): number {
+    return CHILDHOOD_JOY_SCALE * (bounded(effortRatio) - 1);
+}
+
+export function careSkillJoy(skill: number): number {
+    return CHILDHOOD_JOY_SCALE * (bounded(careSkillFactor(skill)) - 1);
 }
 
 export function childhoodJoyLabel(joy: number): string {

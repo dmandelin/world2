@@ -53,7 +53,7 @@ export class ClanTimePoint {
     readonly eudaimonia: number;
     readonly eudaimoniaLife: number;
     readonly fortune: number;
-    readonly eudaimoniaFood: number;
+    readonly eudaimoniaFortune: number;
     readonly eudaimoniaDelta: number;
     readonly stress: number;
     readonly residenceFraction: number;
@@ -108,7 +108,7 @@ export class ClanTimePoint {
         this.eudaimonia = clan.eudaimonia.value;
         this.eudaimoniaLife = clan.eudaimonia.life;
         this.fortune = clan.eudaimonia.fortune;
-        this.eudaimoniaFood = clan.eudaimonia.food;
+        this.eudaimoniaFortune = clan.eudaimonia.fortuneSubscore;
         this.eudaimoniaDelta = clan.eudaimonia.delta;
         this.stress = clan.stress.value;
         this.residenceFraction = clan.residenceLevel.fractionInSettlement;

@@ -12,19 +12,22 @@
     import {
         EuNode,
         EU_SUBSCORES,
-        EU_FOOD_STEPS,
-        EU_FOOD_EXPONENT,
-        EU_FORTUNE_EXPONENT,
+        FORTUNE_ROWS,
+        EU_SUBSCORE_FOOD_EXPONENT,
+        EU_FORTUNE_FOOD_EXPONENT,
         EU_RANGE,
+        euNodeDef,
         eudaimoniaAverage,
         type Eudaimonia,
+        type EuNodeId,
         type EuSubscoreDef,
     } from "../model/self/eudaimonia";
+    import { childhoodJoyLabel } from "../model/people/care";
     import { sortedByKey } from "../model/lib/basics";
     import Tooltip from "./Tooltip.svelte";
     import LineGraph from "./LineGraph.svelte";
     import EudaimoniaCalc from "./self/EudaimoniaCalc.svelte";
-    import FoodStepCalc from "./self/FoodStepCalc.svelte";
+    import FortuneStepCalc from "./self/FortuneStepCalc.svelte";
     import { settlementClanGraphData } from "../model/records/timeline";
     import { ZeroCenteredAutoScaler } from "./linegraph";
 
@@ -46,12 +49,21 @@
         },
     ];
 
-    // Which parts make up the figure on show.
-    let parts = $derived(
+    // Which subscores make up the figure on show. The year's Fortune has
+    // none: it is the tree itself.
+    let parts = $derived(view === "fortune" ? [] : EU_SUBSCORES);
+
+    // The Fortune tree beneath the total. In the Eudaimonia view the root is
+    // shown too, as the signal the Fortune subscore is moving toward; in the
+    // Fortune view it is the total already on the first row.
+    let treeRows = $derived(
         view === "fortune"
-            ? EU_SUBSCORES.filter((s) => s.inFortune)
-            : EU_SUBSCORES,
+            ? FORTUNE_ROWS.filter((row) => row.depth > 0)
+            : FORTUNE_ROWS,
     );
+
+    // The Fortune subscore, for the tooltip on the tree's root.
+    const fortuneSub = EU_SUBSCORES.find((s) => s.key === "fortune")!;
 
     let clans = $derived(
         sortedByKey(
@@ -77,27 +89,27 @@
         return view === "fortune" ? eu.fortune : eu.value;
     }
 
-    // In the Fortune view a part is Fortune's own reading of that concern,
-    // not the subscore's standing value: Fortune reads rations on a straight
-    // line where Food squares them, so the two are different numbers. With
-    // Food the only contributor so far, the part and the total coincide.
     function part(clan: ClanDTO, sub: EuSubscoreDef): number {
-        return view === "fortune"
-            ? (reports.get(clan.uuid)?.get(EuNode.FoodSignal) ?? 0)
-            : clan.eudaimonia.subscore(sub.key);
+        return clan.eudaimonia.subscore(sub.key);
     }
 
-    // The steps inside the food figure, shown under it so the quantity and
-    // composition that make up nutrition, and the bonuses that follow, are on
-    // screen rather than only in a tooltip.
-    function foodStep(clan: ClanDTO, node: (typeof EU_FOOD_STEPS)[number]["node"]): number {
+    // One node of the Fortune tree, from the clan's replay: on the year's
+    // curve in the Fortune view, on the subscore's in the Eudaimonia view.
+    function treeValue(clan: ClanDTO, node: EuNodeId): number {
         return reports.get(clan.uuid)?.get(node) ?? 0;
     }
 
-    function settlementFoodStep(node: (typeof EU_FOOD_STEPS)[number]["node"]): number {
+    function settlementTreeValue(node: EuNodeId): number {
         return eudaimoniaAverage(
-            clans.map((c) => ({ value: foodStep(c, node), weight: c.population })),
+            clans.map((c) => ({ value: treeValue(c, node), weight: c.population })),
         );
+    }
+
+    // Care's label says which way it went.
+    function rowLabel(node: EuNodeId, v: number): string {
+        if (node === EuNode.Fortune) return "Fortune signal";
+        if (node === EuNode.Care) return childhoodJoyLabel(v);
+        return euNodeDef(node).label;
     }
 
     let settlementValue = $derived(
@@ -115,20 +127,6 @@
         );
     }
 
-    // Fortune's reading of how the year's care went: Childhood Joy above the
-    // standard, Caretaker Stress below it.
-    // Read off the clan rather than the replay, which in the Eudaimonia view
-    // doesn't run Fortune's chain.
-    function joyOf(clan: ClanDTO): number {
-        return clan.eudaimonia.childhoodJoy;
-    }
-
-    let settlementJoy = $derived(
-        eudaimoniaAverage(
-            clans.map((c) => ({ value: joyOf(c), weight: c.population })),
-        ),
-    );
-
     const n = (x: number, p = 1) =>
         (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(p);
     const pctOf = (x: number) => (x * 100).toFixed(0) + "%";
@@ -137,10 +135,10 @@
     // a shape across the settlement before it reads as numbers.
     const barPct = (v: number) => Math.min(100, (Math.abs(v) / EU_RANGE) * 100);
 
-    // Quantity's curve differs between the two readings, and the step
+    // Food quantity's curve differs between the two readings, and the step
     // tooltips show the formula, so they need to know which is in play.
     let quantityExponent = $derived(
-        view === "fortune" ? EU_FORTUNE_EXPONENT : EU_FOOD_EXPONENT,
+        view === "fortune" ? EU_FORTUNE_FOOD_EXPONENT : EU_SUBSCORE_FOOD_EXPONENT,
     );
 
     let graphData = $derived(
@@ -212,13 +210,9 @@
                         <tr>
                             <th class="rowhead">
                                 {sub.label}
-                                {#if view === "eudaimonia"}
-                                    <span class="decay"
-                                        >{pctOf(sub.decay)}/yr</span
-                                    >
-                                {:else}
-                                    <span class="decay">this year</span>
-                                {/if}
+                                <span class="decay"
+                                    >{pctOf(sub.decay)}/yr</span
+                                >
                             </th>
                             <td class="num settlement-col">
                                 {n(settlementPart(sub))}
@@ -243,15 +237,53 @@
                                             slot="tooltip"
                                             style="text-align: left; color: initial;"
                                         >
-                                            {#if view === "fortune"}
+                                            <EudaimoniaCalc
+                                                eudaimonia={clan.eudaimonia}
+                                                {sub}
+                                            />
+                                        </div>
+                                    </Tooltip>
+                                </td>
+                            {/each}
+                        </tr>
+                    {/each}
+
+                    <!-- The Fortune tree, each node the sum of those
+                         indented beneath it. -->
+                    {#each treeRows as row (row.node)}
+                        {@const sv = settlementTreeValue(row.node)}
+                        <tr class="step" class:substep={row.isSum}>
+                            <th
+                                class="rowhead"
+                                title={euNodeDef(row.node).note}
+                                style="padding-left: {1.1 * (view === 'fortune' ? row.depth : row.depth + 1)}rem"
+                                >{rowLabel(row.node, sv)}</th
+                            >
+                            <td class="num settlement-col">{n(sv)}</td>
+                            {#each clans as clan (clan.uuid)}
+                                {@const v = treeValue(clan, row.node)}
+                                <td class="num cell">
+                                    <Tooltip>
+                                        <span
+                                            class:pos={v > 0}
+                                            class:neg={v < 0}>{n(v)}</span
+                                        >
+                                        <div
+                                            slot="tooltip"
+                                            style="text-align: left; color: initial;"
+                                        >
+                                            {#if row.node === EuNode.Fortune}
                                                 <EudaimoniaCalc
                                                     eudaimonia={clan.eudaimonia}
-                                                    fortune={true}
+                                                    sub={fortuneSub}
                                                 />
                                             {:else}
-                                                <EudaimoniaCalc
-                                                    eudaimonia={clan.eudaimonia}
-                                                    {sub}
+                                                <FortuneStepCalc
+                                                    report={reports.get(
+                                                        clan.uuid,
+                                                    )!}
+                                                    node={row.node}
+                                                    exponent={quantityExponent}
                                                 />
                                             {/if}
                                         </div>
@@ -260,98 +292,17 @@
                             {/each}
                         </tr>
                     {/each}
-
-                    <!-- How the year's care went. Part of Fortune, so shown
-                         set apart when the standing verdict is on screen. -->
-                        <tr class:outside={view !== "fortune"}>
-                            <th
-                                class="rowhead"
-                                title="Childhood Joy when care provided is above what the children need, Caretaker Stress when below. It counts toward Fortune, not Eudaimonia."
-                            >
-                                Childhood Joy
-                                <span class="decay"
-                                    >{view === "fortune"
-                                        ? "this year"
-                                        : "Fortune only"}</span
-                                >
-                            </th>
-                            <td class="num settlement-col">
-                                {n(settlementJoy)}
-                            </td>
-                            {#each clans as clan (clan.uuid)}
-                                {@const v = joyOf(clan)}
-                                <td class="num cell">
-                                    <Tooltip>
-                                        <span
-                                            class="figure"
-                                            class:pos={v > 0}
-                                            class:neg={v < 0}>{n(v)}</span
-                                        >
-                                        <div
-                                            slot="tooltip"
-                                            style="text-align: left; color: initial;"
-                                        >
-                                            <EudaimoniaCalc
-                                                eudaimonia={clan.eudaimonia}
-                                                fortune={true}
-                                            />
-                                        </div>
-                                    </Tooltip>
-                                </td>
-                            {/each}
-                        </tr>
-
-                    <!-- What went into the food figure above. -->
-                    {#each EU_FOOD_STEPS as step (step.node)}
-                        <tr
-                            class="step"
-                            class:substep={step.isSubtotal}
-                            class:part={step.isPart}
-                        >
-                            <th class="rowhead" title={step.note}
-                                >{step.label}</th
-                            >
-                            <td class="num settlement-col"
-                                >{n(settlementFoodStep(step.node))}</td
-                            >
-                            {#each clans as clan (clan.uuid)}
-                                {@const v = foodStep(clan, step.node)}
-                                <td class="num cell">
-                                    <Tooltip>
-                                        <span
-                                            class:pos={v > 0}
-                                            class:neg={v < 0}>{n(v)}</span
-                                        >
-                                        <div
-                                            slot="tooltip"
-                                            style="text-align: left; color: initial;"
-                                        >
-                                            <FoodStepCalc
-                                                report={reports.get(
-                                                    clan.uuid,
-                                                )!}
-                                                node={step.node}
-                                                exponent={quantityExponent}
-                                            />
-                                        </div>
-                                    </Tooltip>
-                                </td>
-                            {/each}
-                        </tr>
-                    {/each}
-
                 </tbody>
             </table>
         </div>
 
-        {#if view === "fortune" && parts.length < EU_SUBSCORES.length}
+        {#if view === "fortune"}
             <div class="note">
-                Fortune reports on {parts.map((p) => p.label).join(", ")} and
-                care only so far, and reads food on a straight line where the
-                standing Hunger subscore squares it. Life is left out: its signal is a growth rate
-                read at a large multiple, so in a small clan a single birth swings
-                it by a hundred points, saying more about arithmetic than about the
-                year.
+                The year's Fortune reads food on a straight line where the
+                standing Fortune subscore squares the shortfall. Life is left
+                out: its signal is a growth rate read at a large multiple, so in
+                a small clan a single birth swings it by a hundred points,
+                saying more about arithmetic than about the year.
             </div>
         {/if}
 
@@ -365,11 +316,6 @@
 </div>
 
 <style>
-    /* A row that doesn't count toward the figure on screen. */
-    tr.outside {
-        opacity: 0.55;
-    }
-
     .wrap {
         display: flex;
         flex-direction: column;
@@ -527,7 +473,7 @@
         color: #4b5563;
     }
 
-    /* The food breakdown reads as detail beneath the figure it explains. */
+    /* The Fortune tree reads as detail beneath the figure it explains. */
     .step td,
     .step th {
         color: #6b7280;
@@ -535,13 +481,7 @@
     }
 
     .step .rowhead {
-        padding-left: 1.1rem;
         cursor: help;
-    }
-
-    /* Terms sit in under the subtotal they add up to. */
-    .step.part .rowhead {
-        padding-left: 2.2rem;
     }
 
     .step.substep td,

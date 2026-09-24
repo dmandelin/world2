@@ -8,10 +8,11 @@
 //
 // A weaker claim used to hold too -- that the absent sink cost nothing at all
 // against hand-inlined math -- and it stopped holding once the food chain grew.
-// B now runs at roughly 1.8x A. Some of that was a long cold branch spoiling
+// B ran at roughly 1.8x A with the food chain alone, and about 1.5x with the
+// full Fortune tree. Some of that was a long cold branch spoiling
 // inlining, which moving the trace blocks out of line recovered part of; the
 // rest is the extra call layers the shared implementation needs. In absolute
-// terms it is about 5ms over a 2000-turn run, so the design still stands, but
+// terms it is about 11ms over a 2000-turn run, so the design still stands, but
 // the honest claim is "far cheaper than D", not "free".
 //
 // Note C and D allocate heavily and so are GC-bound: their numbers move
@@ -29,13 +30,13 @@
 
 import {
     computeLife,
-    computeFood,
-    tasteScale,
+    computeFortuneSubscore,
     EudaimoniaReport,
     EuNode,
+    FortuneInputs,
     EU_LIFE_DECAY,
-    EU_FOOD_DECAY,
-    EU_FOOD_EXPONENT,
+    EU_FORTUNE_DECAY,
+    EU_SUBSCORE_FOOD_EXPONENT,
     EU_FOOD_SCALE,
     EU_VITALITY_SCALE,
     EU_CEREAL_SHARE_FREE,
@@ -43,7 +44,13 @@ import {
     EU_HONEY_PER_SHARE,
     EU_BEER_PER_SHARE,
     EU_BEER_MAX,
+    EU_CONVERSATION_FLOOR,
+    EU_CONVERSATION_NEUTRAL_AFFINITY,
+    EU_CONVERSATION_PER_DOUBLING,
+    EU_CONVERSATION_QUALITY_SCALE,
+    EU_CONVERSATION_STANDARD,
 } from "./eudaimonia";
+import { CHILDHOOD_JOY_SCALE, careSkillFactor } from "../people/care";
 
 // --- What we are comparing against ----------------------------------------
 
@@ -60,25 +67,32 @@ function inlineLife(
     return prevLife + EU_LIFE_DECAY * (signal - prevLife);
 }
 
-function inlineFood(
-    prevFood: number,
-    foodRatio: number,
-    fishShare: number,
-    cerealShare: number,
-): number {
+// Care provided is held inside this range before Fortune reads it; see care.ts.
+function bound(p: number): number {
+    return p < 0.25 ? 0.25 : p > 2.5 ? 2.5 : p;
+}
+
+function inlineFortune(prevFortune: number, x: FortuneInputs): number {
     const quantityRaw =
-        EU_FOOD_SCALE * (Math.pow(foodRatio, EU_FOOD_EXPONENT) - 1);
+        EU_FOOD_SCALE * (Math.pow(x.foodRatio, EU_SUBSCORE_FOOD_EXPONENT) - 1);
     const quantity = quantityRaw > 0 ? 0 : quantityRaw;
-    const cerealExcess = cerealShare - EU_CEREAL_SHARE_FREE;
-    const composition =
+    const cerealExcess = x.cerealShare - EU_CEREAL_SHARE_FREE;
+    const nutrition =
         cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
-    const nutrition = quantity + composition;
-    const honey = EU_HONEY_PER_SHARE * fishShare;
-    const beerRaw = EU_BEER_PER_SHARE * cerealShare;
+    const honey = EU_HONEY_PER_SHARE * x.fishShare;
+    const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
-    const taste = (honey + beer) * tasteScale(nutrition);
-    const signal = nutrition + taste;
-    return prevFood + EU_FOOD_DECAY * (signal - prevFood);
+    const food = quantity + nutrition + honey + beer;
+    const care = CHILDHOOD_JOY_SCALE * (bound(x.careEffort) - 1)
+        + CHILDHOOD_JOY_SCALE * (bound(careSkillFactor(x.careSkill)) - 1);
+    const amount = x.conversationAmount;
+    const conversation = EU_CONVERSATION_PER_DOUBLING * Math.log2(
+        (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
+        / EU_CONVERSATION_STANDARD)
+        + EU_CONVERSATION_QUALITY_SCALE
+        * (x.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
+    const signal = food + care + conversation;
+    return prevFortune + EU_FORTUNE_DECAY * (signal - prevFortune);
 }
 
 // The thing we are avoiding: building a labeled record of every step on every
@@ -93,13 +107,11 @@ class DetailItem {
 
 function buildDetail(
     prevLife: number,
-    prevFood: number,
+    prevFortune: number,
     births: number,
     deaths: number,
     population: number,
-    foodRatio: number,
-    fishShare: number,
-    cerealShare: number,
+    x: FortuneInputs,
 ): Map<string, DetailItem> {
     const net = births - deaths;
     const netRate = net / Math.max(population, 1);
@@ -108,21 +120,32 @@ function buildDetail(
     const life = prevLife + lifePull;
 
     const quantityRaw =
-        EU_FOOD_SCALE * (Math.pow(foodRatio, EU_FOOD_EXPONENT) - 1);
+        EU_FOOD_SCALE * (Math.pow(x.foodRatio, EU_SUBSCORE_FOOD_EXPONENT) - 1);
     const quantity = quantityRaw > 0 ? 0 : quantityRaw;
-    const cerealExcess = cerealShare - EU_CEREAL_SHARE_FREE;
-    const composition =
+    const cerealExcess = x.cerealShare - EU_CEREAL_SHARE_FREE;
+    const quality =
         cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
-    const nutrition = quantity + composition;
-    const honey = EU_HONEY_PER_SHARE * fishShare;
-    const beerRaw = EU_BEER_PER_SHARE * cerealShare;
+    const nutrition = quantity + quality;
+    const honey = EU_HONEY_PER_SHARE * x.fishShare;
+    const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
-    const tasteRaw = honey + beer;
-    const scale = tasteScale(nutrition);
-    const taste = tasteRaw * scale;
-    const foodSignal = nutrition + taste;
-    const foodPull = EU_FOOD_DECAY * (foodSignal - prevFood);
-    const food = prevFood + foodPull;
+    const taste = honey + beer;
+    const food = nutrition + taste;
+    const careQuantity = CHILDHOOD_JOY_SCALE * (bound(x.careEffort) - 1);
+    const careSkill =
+        CHILDHOOD_JOY_SCALE * (bound(careSkillFactor(x.careSkill)) - 1);
+    const care = careQuantity + careSkill;
+    const amount = x.conversationAmount;
+    const convQuantity = EU_CONVERSATION_PER_DOUBLING * Math.log2(
+        (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
+        / EU_CONVERSATION_STANDARD);
+    const convQuality = EU_CONVERSATION_QUALITY_SCALE
+        * (x.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
+    const conversation = convQuantity + convQuality;
+    const social = care + conversation;
+    const signal = food + social;
+    const fortunePull = EU_FORTUNE_DECAY * (signal - prevFortune);
+    const fortune = prevFortune + fortunePull;
 
     const m = new Map<string, DetailItem>();
     m.set("prevLife", new DetailItem("Life last year", prevLife, "Last year"));
@@ -134,23 +157,31 @@ function buildDetail(
     m.set("lifeSignal", new DetailItem("Life signal", lifeSignal, "Settles at"));
     m.set("lifePull", new DetailItem("Life pull", lifePull, "Moved by"));
     m.set("life", new DetailItem("Life", life, "Subscore"));
-    m.set("prevFood", new DetailItem("Food last year", prevFood, "Last year"));
-    m.set("foodRatio", new DetailItem("Rations", foodRatio, "Share of needs"));
-    m.set("fishShare", new DetailItem("Fish share", fishShare, "Of the diet"));
-    m.set("cerealShare", new DetailItem("Cereal share", cerealShare, "Of the diet"));
+    m.set("prevFortune", new DetailItem("Fortune last year", prevFortune, "Last year"));
+    m.set("foodRatio", new DetailItem("Rations", x.foodRatio, "Share of needs"));
+    m.set("fishShare", new DetailItem("Fish share", x.fishShare, "Of the diet"));
+    m.set("cerealShare", new DetailItem("Cereal share", x.cerealShare, "Of the diet"));
     m.set("quantityRaw", new DetailItem("Before clamping", quantityRaw, "Runs positive"));
     m.set("quantity", new DetailItem("Quantity", quantity, "Short of enough"));
-    m.set("composition", new DetailItem("Composition", composition, "Too much cereal"));
+    m.set("quality", new DetailItem("Quality", quality, "Too much cereal"));
     m.set("nutrition", new DetailItem("Nutrition", nutrition, "Nourishment"));
     m.set("honey", new DetailItem("Honey", honey, "Gathered pleasures"));
+    m.set("beerRaw", new DetailItem("Before capping", beerRaw, "Face value"));
     m.set("beer", new DetailItem("Beer", beer, "Brewed pleasures"));
-    m.set("tasteRaw", new DetailItem("Before scaling", tasteRaw, "Face value"));
-    m.set("tasteScale", new DetailItem("Worth", scale, "At this nourishment"));
-    m.set("taste", new DetailItem("Taste", taste, "What they are worth"));
-    m.set("foodSignal", new DetailItem("Food signal", foodSignal, "This year"));
-    m.set("foodPull", new DetailItem("Food pull", foodPull, "Moved by"));
-    m.set("food", new DetailItem("Food", food, "Subscore"));
-    m.set("value", new DetailItem("Eudaimonia", life + food, "Added"));
+    m.set("taste", new DetailItem("Taste", taste, "Pleasures"));
+    m.set("food", new DetailItem("Food", food, "This year"));
+    m.set("material", new DetailItem("Material", food, "This year"));
+    m.set("careQuantity", new DetailItem("Quantity", careQuantity, "Effort"));
+    m.set("careSkill", new DetailItem("Skill", careSkill, "Skill"));
+    m.set("care", new DetailItem("Care", care, "Childhood Joy"));
+    m.set("convQuantity", new DetailItem("Quantity", convQuantity, "People known"));
+    m.set("convQuality", new DetailItem("Quality", convQuality, "Affinity"));
+    m.set("conversation", new DetailItem("Conversation", conversation, "This year"));
+    m.set("social", new DetailItem("Social", social, "This year"));
+    m.set("signal", new DetailItem("Fortune signal", signal, "This year"));
+    m.set("fortunePull", new DetailItem("Fortune pull", fortunePull, "Moved by"));
+    m.set("fortune", new DetailItem("Fortune", fortune, "Subscore"));
+    m.set("value", new DetailItem("Eudaimonia", life + fortune, "Added"));
     return m;
 }
 
@@ -164,6 +195,10 @@ const deaths = new Float64Array(N_CASES);
 const pops = new Float64Array(N_CASES);
 const rations = new Float64Array(N_CASES);
 const fish = new Float64Array(N_CASES);
+const careEffort = new Float64Array(N_CASES);
+const careSkill = new Float64Array(N_CASES);
+const known = new Float64Array(N_CASES);
+const affinity = new Float64Array(N_CASES);
 
 // Fixed seed so runs compare to each other.
 let seed = 12345;
@@ -177,6 +212,23 @@ for (let i = 0; i < N_CASES; ++i) {
     deaths[i] = Math.floor(rnd() * 0.06 * pops[i]);
     rations[i] = 0.5 + rnd();
     fish[i] = rnd();
+    careEffort[i] = 0.5 + rnd();
+    careSkill[i] = 20 + rnd() * 60;
+    known[i] = rnd() * 200;
+    affinity[i] = 0.3 + rnd() * 0.6;
+}
+
+// One inputs object, refilled per case, as the turn loop does.
+const inputs = new FortuneInputs();
+function fill(j: number): FortuneInputs {
+    inputs.foodRatio = rations[j];
+    inputs.fishShare = fish[j];
+    inputs.cerealShare = 1 - fish[j];
+    inputs.careEffort = careEffort[j];
+    inputs.careSkill = careSkill[j];
+    inputs.conversationAmount = known[j];
+    inputs.conversationAffinity = affinity[j];
+    return inputs;
 }
 
 // Accumulated so nothing can be optimized away.
@@ -193,20 +245,20 @@ const variants: Variant[] = [
             for (let i = 0; i < iters; ++i) {
                 const j = i & (N_CASES - 1);
                 l = inlineLife(l, births[j], deaths[j], pops[j]);
-                f = inlineFood(f, rations[j], fish[j], 1 - fish[j]);
+                f = inlineFortune(f, fill(j));
             }
             sink += l + f;
         },
     },
     {
-        name: "B  computeLife+Food, no trace  <-- turn update",
+        name: "B  computeLife+Fortune, no trace  <-- turn update",
         run: (iters) => {
             let l = 0;
             let f = 0;
             for (let i = 0; i < iters; ++i) {
                 const j = i & (N_CASES - 1);
                 l = computeLife(l, births[j], deaths[j], pops[j]);
-                f = computeFood(f, rations[j], fish[j], 1 - fish[j]);
+                f = computeFortuneSubscore(f, fill(j));
             }
             sink += l + f;
         },
@@ -220,8 +272,8 @@ const variants: Variant[] = [
                 const j = i & (N_CASES - 1);
                 const r = new EudaimoniaReport();
                 l = computeLife(l, births[j], deaths[j], pops[j], r);
-                f = computeFood(f, rations[j], fish[j], 1 - fish[j], r);
-                sink += r.get(EuNode.Nutrition);
+                f = computeFortuneSubscore(f, fill(j), r);
+                sink += r.get(EuNode.Social);
             }
             sink += l + f;
         },
@@ -234,10 +286,9 @@ const variants: Variant[] = [
             for (let i = 0; i < iters; ++i) {
                 const j = i & (N_CASES - 1);
                 const m = buildDetail(
-                    l, f, births[j], deaths[j], pops[j],
-                    rations[j], fish[j], 1 - fish[j]);
+                    l, f, births[j], deaths[j], pops[j], fill(j));
                 l = m.get("life")!.value;
-                f = m.get("food")!.value;
+                f = m.get("fortune")!.value;
             }
             sink += l + f;
         },
@@ -264,7 +315,7 @@ function bench(v: Variant): number {
 }
 
 console.log(
-    "eudaimonia update (Life + Food): " +
+    "eudaimonia update (Life + Fortune): " +
         ITERS.toLocaleString() +
         " updates x " +
         REPS +

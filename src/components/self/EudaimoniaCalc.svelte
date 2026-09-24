@@ -5,13 +5,15 @@
     // Three shapes, because the underlying chains are different shapes:
     //
     //   Life     a short horizontal chain from births and deaths to a signal
-    //   Food     a column of terms adding to a signal, then a relaxation
-    //   Fortune  the same column on a straight quantity curve, and no
-    //            relaxation, because it is the year rather than the verdict
+    //   Fortune  the Fortune tree as an indented column of sums, then a
+    //   subscore relaxation
+    //   Fortune  the same tree on a straight food quantity curve, and no
+    //   (year)   relaxation, because it is the year rather than the verdict
     import {
         EuNode,
-        EU_FOOD_STEPS,
+        FORTUNE_ROWS,
         EU_VITALITY_SCALE,
+        euNodeDef,
         type Eudaimonia,
         type EuSubscoreDef,
     } from "../../model/self/eudaimonia";
@@ -23,17 +25,24 @@
         fortune = false,
     }: {
         eudaimonia: Eudaimonia;
-        // Required unless this is the Fortune reading.
+        // Required unless this is the year's Fortune.
         sub?: EuSubscoreDef;
         fortune?: boolean;
     } = $props();
 
     // Replaying costs a few objects, and only happens for a figure someone is
-    // actually pointing at. Fortune runs the same chain on a different curve,
-    // so it gets its own report rather than sharing one.
+    // actually pointing at. The year's Fortune runs the same tree on a
+    // different curve, so it gets its own report rather than sharing one.
     let r = $derived(
         fortune ? eudaimonia.explainFortune() : eudaimonia.explain(),
     );
+
+    // The tree's rows beneath the root, which is shown as the total instead.
+    const TREE_ROWS = FORTUNE_ROWS.filter((row) => row.depth > 0);
+
+    // Care's label says which way it went.
+    const rowLabel = (node: (typeof TREE_ROWS)[number]["node"], v: number) =>
+        node === EuNode.Care ? childhoodJoyLabel(v) : euNodeDef(node).label;
 
     let isLife = $derived(!fortune && sub?.key === "life");
 
@@ -41,7 +50,6 @@
     let signal = $derived(
         fortune ? r.get(EuNode.Fortune) : sub ? r.get(sub.signalNode) : 0,
     );
-    let joy = $derived(fortune ? r.get(EuNode.ChildhoodJoy) : 0);
     let pull = $derived(sub ? r.get(sub.pullNode) : 0);
     let value = $derived(sub ? r.get(sub.valueNode) : 0);
 
@@ -60,7 +68,7 @@
         <div class="head">{fortune ? "Fortune" : (sub?.label ?? "")}</div>
         <div class="blurb">
             {fortune
-                ? "What this year's eating and the care of the young were worth, before the long verdict takes it in."
+                ? "How this year went: what was eaten, how the young were looked after, and who there was to talk to, before the long verdict takes it in."
                 : (sub?.blurb ?? "")}
         </div>
 
@@ -106,7 +114,7 @@
                 </div>
             </div>
         {:else}
-            <!-- What was eaten, then what it was worth term by term. -->
+            <!-- What Fortune read, then what it was worth node by node. -->
             <div class="inputs">
                 <span
                     ><b>{pctOf(r.get(EuNode.FoodRatio))}</b> of needs</span
@@ -115,50 +123,44 @@
                 <span><b>{pctOf(r.get(EuNode.FishShare))}</b> fish</span>
                 <span class="sep">·</span>
                 <span><b>{pctOf(r.get(EuNode.CerealShare))}</b> cereals</span>
+                <br />
+                <span
+                    ><b>{pctOf(r.get(EuNode.CareEffort))}</b> care effort</span
+                >
+                <span class="sep">·</span>
+                <span
+                    >skill <b>{u(r.get(EuNode.CareSkillLevel), 0)}</b></span
+                >
+                <br />
+                <span
+                    ><b>{u(r.get(EuNode.ConversationAmount), 0)}</b> people known</span
+                >
+                <span class="sep">·</span>
+                <span
+                    ><b>{u(r.get(EuNode.ConversationAffinity), 2)}</b> affinity</span
+                >
             </div>
 
             <table class="terms">
                 <tbody>
-                    {#each EU_FOOD_STEPS as step (step.node)}
-                        {@const v = r.get(step.node)}
-                        <tr
-                            class:subtotal={step.isSubtotal}
-                            class:part={step.isPart}
-                        >
-                            <td class="label" title={step.note}>
-                                {step.label}
-                                {#if step.node === EuNode.Taste}
-                                    <span class="scale"
-                                        >&times;{r
-                                            .get(EuNode.TasteScale)
-                                            .toFixed(2)}</span
-                                    >
-                                {/if}
+                    {#each TREE_ROWS as row (row.node)}
+                        {@const v = r.get(row.node)}
+                        <tr class:subtotal={row.isSum}>
+                            <td
+                                class="label"
+                                title={euNodeDef(row.node).note}
+                                style="padding-left: {(row.depth - 1) * 0.9}rem"
+                            >
+                                {rowLabel(row.node, v)}
                             </td>
                             <td class="v" class:pos={v > 0} class:neg={v < 0}
                                 >{n(v)}</td
                             >
                         </tr>
                     {/each}
-                    {#if fortune}
-                        <tr class="subtotal">
-                            <td
-                                class="label"
-                                title="Care provided against what the children need: above it is Childhood Joy, below it Caretaker Stress."
-                            >
-                                {childhoodJoyLabel(joy)}
-                                <span class="scale"
-                                    >{pctOf(r.get(EuNode.CareProvision))} care</span
-                                >
-                            </td>
-                            <td class="v" class:pos={joy > 0} class:neg={joy < 0}
-                                >{n(joy)}</td
-                            >
-                        </tr>
-                    {/if}
                     <tr class="signal-row">
                         <td class="label"
-                            >{fortune ? "Fortune" : "Food signal"}</td
+                            >{fortune ? "Fortune" : "Fortune signal"}</td
                         >
                         <td
                             class="v"
@@ -168,22 +170,14 @@
                     </tr>
                 </tbody>
             </table>
-
-            {#if r.get(EuNode.TasteScale) <= 0}
-                <div class="aside">
-                    Too little to eat for a treat to be worth anything, so the
-                    honey and beer count for nothing this year.
-                </div>
-            {/if}
         {/if}
 
         {#if fortune}
             <div class="foot">
-                Fortune reads rations on a straight line, where the standing
-                Food subscore squares them &mdash; this is a report on the
-                year, not a judgement built over many. Care is read against
-                what the children need: above it is Childhood Joy, below it
-                Caretaker Stress.
+                The year's Fortune reads rations on a straight line, where the
+                standing Fortune subscore squares them &mdash; this is a report
+                on the year, not a judgement built over many. Every node is the
+                sum of the ones beneath it.
             </div>
         {:else if sub}
             <!-- The year's movement toward that signal, and no further. -->
@@ -287,7 +281,7 @@
         font-size: 0.82em;
     }
 
-    /* --- food's column of terms --- */
+    /* --- fortune's column of terms --- */
 
     .inputs {
         font-size: 0.82em;
@@ -324,20 +318,10 @@
         font-variant-numeric: tabular-nums;
     }
 
-    .scale {
-        color: #9ca3af;
-        font-size: 0.85em;
-        margin-left: 0.3rem;
-    }
-
     tr.subtotal td {
         border-top: 1px solid #e5e0d0;
         font-weight: 600;
         color: #1f2328;
-    }
-
-    tr.part .label {
-        padding-left: 0.9rem;
     }
 
     tr.signal-row td {
@@ -345,14 +329,6 @@
         font-weight: 700;
         color: #1f2328;
         padding-top: 2px;
-    }
-
-    .aside {
-        font-size: 0.78em;
-        color: #6b7280;
-        line-height: 1.35;
-        border-left: 2px solid #ddd6c0;
-        padding-left: 0.45rem;
     }
 
     /* --- shared tail --- */

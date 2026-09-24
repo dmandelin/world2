@@ -28,10 +28,14 @@ import type { Year } from "../records/year";
 import { connectedClans, KinConnection } from "../relations/connection";
 import { divideInformationOnSplit } from "../relations/information";
 import { Stress } from "./stress";
-import { Eudaimonia } from "../self/eudaimonia";
+import { Eudaimonia, FortuneInputs } from "../self/eudaimonia";
 import { Distribution, StockOutflow, Consumption } from "../econ/flows";
 import { Stock } from "../econ/stock";
-import { Conversation, ConversationBudget } from "../relations/conversation";
+import {
+    Conversation,
+    ConversationBudget,
+    readConversationForFortune,
+} from "../relations/conversation";
 import { History, newHistoryEventId } from "./history";
 
 const CLAN_NAMES: string[] = [
@@ -199,6 +203,8 @@ export class Clan implements TradePartner {
 
     stress = new Stress();
     eudaimonia = new Eudaimonia();
+    // Scratch for gathering what Fortune reads each year; see updateEudaimonia.
+    private readonly fortuneInputs_ = new FortuneInputs();
 
     // What the clan remembers of its own past. See history.ts.
     history: History;
@@ -385,17 +391,20 @@ export class Clan implements TradePartner {
     // rate is what happened to the people who were here.
     updateEudaimonia() {
         const change = this.lastPopulationChange;
+        const inputs = this.fortuneInputs_;
+        inputs.foodRatio = this.consumption.perCapitaFood;
         // Fish stands for hunting and gathering, cereals for mixed farming.
         // Those are the only two foods, so the shares are complementary.
-        const fishShare = this.consumption.fishRatio;
+        inputs.fishShare = this.consumption.fishRatio;
+        inputs.cerealShare = 1 - inputs.fishShare;
+        inputs.careEffort = this.effortAllocation.careRatio;
+        inputs.careSkill = this.careSkill;
+        readConversationForFortune(this, inputs);
         this.eudaimonia.update(
             change.births,
             change.deaths,
             change.previousSize,
-            this.consumption.perCapitaFood,
-            fishShare,
-            1 - fishShare,
-            this.careProvision);
+            inputs);
     }
 
     updateHappiness() {
