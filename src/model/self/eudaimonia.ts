@@ -36,7 +36,8 @@
 // Each inner node combines its children, by default by adding them. The
 // nodes where the parts are needs that make up for each other only so far --
 // those with quantity and quality under them, Social, and Fortune itself --
-// BLEND them instead, which lets a bad part drag the whole down. See
+// BLEND them instead, which lets a bad part drag the whole down. Food SAVORs
+// its taste, counting it for more the better fed the clan is. See
 // "Combining" below. The year's Fortune, shown on its own, is the tree as it
 // stands. The Fortune subscore averages it over the years.
 //
@@ -156,12 +157,10 @@ export const EU_CONVERSATION_QUALITY_SCALE = 25;
 // --- Combining -------------------------------------------------------------
 //
 // How an inner node of the Fortune tree makes one value of its children's.
-// Every combiner has the same form: lift each child onto its own scale, add
-// the lifted values, and finish the total back into eudaimonia units. That is
-// general enough for anything we are likely to want, and needs no arrays, so
-// the update path stays free of allocation.
+// A combiner takes its children in tree order, one or two of them -- no node
+// has more yet -- as plain arguments, so the update path allocates nothing.
 //
-// SUM lifts and finishes with the identity: plain addition.
+// SUM is plain addition.
 //
 // BLEND is a quasi-arithmetic mean: a mean taken on a curve,
 //
@@ -188,17 +187,17 @@ export const EU_BLEND_UP_SCALE = 120;
 export const EU_BLEND_DOWN_SCALE = 60;
 
 export interface EuCombiner {
-    readonly key: "sum" | "blend";
+    readonly key: "sum" | "blend" | "savor";
     readonly label: string;
-    lift(x: number): number;
-    finish(total: number, count: number): number;
+    one(a: number): number;
+    pair(a: number, b: number): number;
 }
 
 export const SUM: EuCombiner = {
     key: "sum",
     label: "Sum",
-    lift: (x) => x,
-    finish: (total) => total,
+    one: (a) => a,
+    pair: (a, b) => a + b,
 };
 
 function blendLift(x: number): number {
@@ -214,11 +213,65 @@ function blendFinish(total: number, count: number): number {
         : -EU_BLEND_DOWN_SCALE * Math.log1p(-m);
 }
 
+function blendPair(a: number, b: number): number {
+    return blendFinish(blendLift(a) + blendLift(b), 2);
+}
+
 export const BLEND: EuCombiner = {
     key: "blend",
     label: "Blend",
-    lift: blendLift,
-    finish: blendFinish,
+    one: (a) => a,
+    pair: blendPair,
+};
+
+// SAVOR combines Nutrition with Taste: a treat is worth more to the well fed
+// and little to the hungry, so
+//
+//     savor(nutrition, taste) = nutrition + beta(nutrition) * taste
+//
+// where beta reads the Nutrition term itself, in points of Fortune. Both
+// halves leave 0 flat, so taste counts at face value right around enough to
+// eat.
+//
+// Below 0, taste fades fast toward a floor -- a treat is still a treat, even
+// hungry -- along a bell curve:
+//
+//     beta = FLOOR + (1 - FLOOR) * e^(-(points / S)^2)
+//
+// with S set so that beta is 80% at -10 points (about 91% nutrition). Then
+// 45% at -20, 22% at -35 (75% nutrition), and the 20% floor from there.
+//
+// Above 0 it rises as a parabola to 150% at the points the Nutrition term
+// takes at the 125% ceiling, about +10:
+//
+//     beta = 1 + 0.5 * (points / points@125%)^2
+export const EU_SAVOR_FLOOR = 0.2;
+export const EU_SAVOR_REF_POINTS = -10;
+export const EU_SAVOR_AT_REF = 0.8;
+export const EU_SAVOR_AT_HIGH = 1.5;
+export const EU_SAVOR_HIGH_POINTS = nutritionFortune(1.25);
+
+const SAVOR_FADE = Math.abs(EU_SAVOR_REF_POINTS) / Math.sqrt(Math.log(
+    (1 - EU_SAVOR_FLOOR) / (EU_SAVOR_AT_REF - EU_SAVOR_FLOOR)));
+
+export function savorBeta(nutrition: number): number {
+    if (nutrition < 0) {
+        const t = nutrition / SAVOR_FADE;
+        return EU_SAVOR_FLOOR + (1 - EU_SAVOR_FLOOR) * Math.exp(-t * t);
+    }
+    const t = nutrition / EU_SAVOR_HIGH_POINTS;
+    return 1 + (EU_SAVOR_AT_HIGH - 1) * t * t;
+}
+
+function savorPair(nutrition: number, taste: number): number {
+    return nutrition + savorBeta(nutrition) * taste;
+}
+
+export const SAVOR: EuCombiner = {
+    key: "savor",
+    label: "Savor",
+    one: (a) => a,
+    pair: savorPair,
 };
 
 // Keeps the per-capita rate finite for a clan that has just lost everyone.
@@ -353,6 +406,7 @@ export const FORTUNE_TREE: FortuneTreeNode = {
             children: [
                 {
                     node: EuNode.Food,
+                    combine: SAVOR,
                     children: [
                         { node: EuNode.FoodNutrition },
                         {
@@ -430,22 +484,22 @@ export function combinerOf(node: EuNodeId): EuCombiner {
 // array, so the update path allocates nothing.
 //
 // The combiners we have are called directly rather than through the
-// interface: going through lift and finish makes every call site see every
-// combiner, which V8 will not inline, and the benchmark put that at about
-// double the cost of the whole update. Any other combiner takes the general
-// path and works, just more slowly.
+// interface: going through it makes every call site see every combiner,
+// which V8 will not inline, and the benchmark put that at about double the
+// cost of the whole update. Any other combiner takes the general path and
+// works, just more slowly.
 function combine1(node: EuNodeId, a: number): number {
     const c = COMBINER_OF[node];
-    if (c === SUM) return a;
-    if (c === BLEND) return blendFinish(blendLift(a), 1);
-    return c.finish(c.lift(a), 1);
+    if (c === SUM || c === BLEND || c === SAVOR) return a;
+    return c.one(a);
 }
 
 function combine2(node: EuNodeId, a: number, b: number): number {
     const c = COMBINER_OF[node];
     if (c === SUM) return a + b;
-    if (c === BLEND) return blendFinish(blendLift(a) + blendLift(b), 2);
-    return c.finish(c.lift(a) + c.lift(b), 2);
+    if (c === BLEND) return blendPair(a, b);
+    if (c === SAVOR) return savorPair(a, b);
+    return c.pair(a, b);
 }
 
 // Each inner node's children, for showing what a sum is made of.
@@ -561,7 +615,7 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.Material, label: "Material", role: "derived", places: 1,
       note: "What the year was worth in things: for now, only food." },
     { id: EuNode.Food, label: "Food", role: "derived", places: 1,
-      note: "Nutrition and taste added: what this year's eating was worth." },
+      note: "Nutrition, plus taste weighted by how well fed the clan was: what this year's eating was worth." },
     { id: EuNode.FoodNutrition, label: "Nutrition", role: "derived", places: 1,
       note: "The clan's nutritional state as Fortune: nothing at 100%, about -50 at 70%, up to about +10 at the 125% ceiling." },
     { id: EuNode.FoodBalance, label: "Balance", role: "derived", places: 2, isRate: true,

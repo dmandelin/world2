@@ -41,6 +41,7 @@ import {
     EU_LIFE_DECAY,
     EU_FORTUNE_DECAY,
     nutritionFortune,
+    savorBeta,
     EU_VITALITY_SCALE,
     EU_HONEY_PER_SHARE,
     EU_BEER_PER_SHARE,
@@ -88,12 +89,13 @@ function blend2(a: number, b: number): number {
 }
 
 function inlineFortune(prevFortune: number, x: FortuneInputs): number {
-    const nutrition = nutritionFortune(nutritionFromRaw(
-        (x.foodRatio > 0 ? x.foodRatio : 0) * foodBalance(x.cerealShare)));
+    const level = nutritionFromRaw(
+        (x.foodRatio > 0 ? x.foodRatio : 0) * foodBalance(x.cerealShare));
+    const nutrition = nutritionFortune(level);
     const honey = EU_HONEY_PER_SHARE * x.fishShare;
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
-    const food = nutrition + honey + beer;
+    const food = nutrition + savorBeta(nutrition) * (honey + beer);
     const care = careComfort(x.careEffort * careSkillFactor(x.careSkill))
         + careStress(x.careShare);
     const amount = x.conversationAmount;
@@ -139,7 +141,7 @@ function buildDetail(
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
     const taste = honey + beer;
-    const food = nutrition + taste;
+    const food = nutrition + savorBeta(nutrition) * taste;
     const provision = x.careEffort * careSkillFactor(x.careSkill);
     const comfort = careComfort(provision);
     const stress = careStress(x.careShare);

@@ -18,6 +18,7 @@
         EU_HONEY_PER_SHARE,
         FORTUNE_CHILDREN,
         combinerOf,
+        savorBeta,
         euNodeDef,
         type EuNodeId,
     } from "../../model/self/eudaimonia";
@@ -68,6 +69,12 @@
                         >
                     </tr>
                 {/each}
+                {#if combiner.key === "savor"}
+                    <tr>
+                        <td>Taste weight (&beta;)</td>
+                        <td class="v">&times;{u(savorBeta(get(children[0])), 2)}</td>
+                    </tr>
+                {/if}
                 <tr class="result">
                     <td>{combiner.label}</td>
                     <td
