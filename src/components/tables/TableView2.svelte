@@ -127,6 +127,11 @@
                             class="{row.class ?? ''} {column.class ?? ''}"
                             class:bold={row.bold}
                             class:clickable={!!column.onClickCell}
+                            style={column.cellStyleFn?.(
+                                cellValue(row, column),
+                                row.data,
+                                column.data,
+                            )}
                             onclick={() =>
                                 column.onClickCell?.(
                                     cellValue(row, column),

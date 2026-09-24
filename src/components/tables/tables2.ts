@@ -62,6 +62,10 @@ export interface TableColumn<RowData, ColData, CellData> {
     // row data, and column.
     onClickCell?: (data: CellData, row: RowData, col: ColData) => void;
 
+    // If set, inline style for each cell in this column, e.g. a background
+    // color keyed to the value. Return undefined for no style.
+    cellStyleFn?: (data: CellData, row: RowData, col: ColData) => string | undefined;
+
     // Optional CSS class name to style header and cells.
     class?: string;
 }

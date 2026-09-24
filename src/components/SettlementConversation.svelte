@@ -284,6 +284,49 @@
         return source.note;
     }
 
+    // --- Cell colors ----------------------------------------------------------
+    //
+    // Appeal reads as warmth: how drawn one clan is to another's company.
+    // Cool, quiet slate for the ones it keeps away from, soft apricot deepening
+    // toward terracotta for the ones it seeks out. Brackets every 0.1 either
+    // side of a neutral 0.95-1.05.
+    const APPEAL_COOL = ["#e9eef0", "#d8e1e6", "#c4d2da", "#adc1cc", "#94aebd"];
+    const APPEAL_WARM = ["#fbeedc", "#f7ddbd", "#f2c79b", "#eaad7c", "#df9063"];
+
+    function appealStyle(value: number): string | undefined {
+        const steps = Math.floor(Math.abs(value - 1) / 0.1 + 0.5);
+        if (steps === 0) return undefined;
+        const palette = value > 1 ? APPEAL_WARM : APPEAL_COOL;
+        return `background-color: ${palette[Math.min(steps, palette.length) - 1]};`;
+    }
+
+    // Conversation in people reads as how lively it gets: still and pale at
+    // nothing, through butter and apricot, to a bright coral-rose where the
+    // talk fizzes. Brackets of 10 people, the last open-ended from 90.
+    const AMOUNT_PALETTE = [
+        "#f4f1ea", "#f3ecd2", "#f4e3b0", "#f6d88c", "#f7c870",
+        "#f6b25f", "#f39a58", "#ec805b", "#e0676a", "#d0547d",
+    ];
+
+    function amountStyle(value: number): string | undefined {
+        const i = Math.min(AMOUNT_PALETTE.length - 1, Math.max(0, Math.floor(value / 10)));
+        return `background-color: ${AMOUNT_PALETTE[i]};`;
+    }
+
+    // Color only the clan-by-clan cells, not the totals, averages or the
+    // blank diagonal.
+    function colorClanCells<T extends CrossTab<ClanDTO, number>>(
+        table: T,
+        style: (value: number) => string | undefined,
+    ): T {
+        for (const column of table.columns) {
+            if (!isClanDTO(column.data)) continue;
+            column.cellStyleFn = (value: number, row: any, col: any) =>
+                isClanDTO(row) && row.uuid !== col.uuid ? style(value) : undefined;
+        }
+        return table;
+    }
+
     // --- Table Builders -------------------------------------------------------
 
     function buildCrossTab<CellValue>(
@@ -352,14 +395,14 @@
             },
         ];
 
-        return buildCrossTab(
+        return colorClanCells(buildCrossTab(
             offerCellValue,
             unsignedFormat(0),
             offerCellTooltip,
             false,
             initialCols,
             initialRows,
-        );
+        ), amountStyle);
     });
 
     // Build Appeal table (Avg column & Avg row)
@@ -385,14 +428,14 @@
             },
         ];
 
-        return buildCrossTab(
+        return colorClanCells(buildCrossTab(
             appealCellValue,
             unsignedFormat(2),
             appealCellTooltip,
             false,
             initialCols,
             initialRows,
-        );
+        ), appealStyle);
     });
 
     // Build Amount table (Total column & Total row)
@@ -418,14 +461,14 @@
             },
         ];
 
-        return buildCrossTab(
+        return colorClanCells(buildCrossTab(
             amountCellValue,
             unsignedFormat(0),
             amountCellTooltip,
             false,
             initialCols,
             initialRows,
-        );
+        ), amountStyle);
     });
 
     // Build Value table (Total column & Total row)
