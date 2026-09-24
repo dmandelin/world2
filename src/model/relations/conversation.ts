@@ -63,7 +63,7 @@ export class GroupSources {
     static readonly Settlement: ConversationSource = {
         name: 'Settlement',
         sortKey: 1,
-        intensity: 2.6,
+        intensity: 2,
         note: 'Share of the year spent living in the settlement',
     };
 
@@ -169,7 +169,7 @@ export class ConversationItem {
         readonly offered2to1: number,
         // What they settled at: the lesser of the two.
         readonly strength: number,
-    ) {}
+    ) { }
 
     offeredFrom(subject: Clan | ClanDTO, conversation: Conversation): number {
         return subject.uuid === conversation.c1
@@ -178,6 +178,13 @@ export class ConversationItem {
 
     shareFor(subject: Clan | ClanDTO, conversation: Conversation): number {
         return subject.uuid === conversation.c1 ? this.share1 : this.share2;
+    }
+
+    // The same item seen from the other clan's side.
+    flipped(): ConversationItem {
+        return new ConversationItem(
+            this.source, this.share2, this.share1,
+            this.offered2to1, this.offered1to2, this.strength);
     }
 }
 
@@ -201,15 +208,15 @@ export class Conversation extends Interaction {
 
     // Conversation is mutual, so both clans see the same strength. The
     // arguments are kept for the shape the callers expect.
-    relativeAttention(subject?: Clan|ClanDTO, object?: Clan|ClanDTO): number {
+    relativeAttention(subject?: Clan | ClanDTO, object?: Clan | ClanDTO): number {
         return this.strength;
     }
 
-    information(subject: Clan|ClanDTO, object: Clan|ClanDTO): number {
+    information(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
         return this.strength;
     }
 
-    alignmentItem(subject: Clan|ClanDTO, object: Clan|ClanDTO): GenericItem {
+    alignmentItem(subject: Clan | ClanDTO, object: Clan | ClanDTO): GenericItem {
         return new GenericItem(
             'Conversation',
             0.1 * this.strength,
@@ -232,7 +239,7 @@ export class ConversationBudgetItem {
     constructor(
         readonly source: ConversationSource,
         readonly share: number,
-    ) {}
+    ) { }
 
     get unused(): number {
         return Math.max(0, this.supply - this.used);
@@ -284,8 +291,7 @@ function groupShare(clan: Clan, source: ConversationSource): number {
 // The share of its year a clan spends on a standing tie to one other clan.
 // Returns undefined for connections that generate no visiting of their own:
 // being neighbors is already the Settlement source.
-function tieShare(connection: Connection, subject: Clan, object: Clan):
-    { source: ConversationSource, share: number } | undefined {
+function tieShare(connection: Connection, subject: Clan, object: Clan): { source: ConversationSource, share: number } | undefined {
 
     if (connection instanceof MarriageConnection) {
         return {
@@ -321,7 +327,7 @@ function visitReach(c1: Clan, c2: Clan): number {
 // a clan it thinks well of and less for one it does not. Prestige is the
 // combined judgment -- how far the subject is aligned with the other clan and
 // how much it respects it -- so it is what "good company" comes to here.
-export function appealOf(subject: Clan, object: Clan): number {
+export function appealOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
     return Math.max(
         APPEAL_FLOOR, 1 + PRESTIGE_APPEAL_WEIGHT * getPrestige(subject, object));
 }
@@ -339,6 +345,8 @@ class Venue {
     // What each is currently offering: subject -> object -> acquaintance.
     readonly offers = new Map<Clan, Map<Clan, number>>();
 
+    readonly initialOffers = new Map<Clan, Map<Clan, number>>();
+
     constructor(
         readonly source: ConversationSource,
         readonly participants: Clan[],
@@ -351,13 +359,29 @@ class Venue {
             const w = new Map<Clan, number>();
             for (const c2 of participants) {
                 if (c1 === c2) continue;
-                // Weighted by how many of them there are to talk to as well
-                // as by how much the clan cares to: a clan twice the size
-                // takes twice the conversation to know equally well.
-                w.set(c2, c2.population * appealOf(c1, c2));
+                // Weighted by how much the clan cares to converse with c2.
+                w.set(c2, appealOf(c1, c2));
             }
             this.weights.set(c1, w);
             this.offers.set(c1, new Map());
+        }
+
+        // Initial Pass: Spread total supply across all partners
+        for (const c1 of this.participants) {
+            this.spread(
+                c1,
+                this.participants.filter(c2 => c2 !== c1),
+                this.supply.get(c1) ?? 0);
+        }
+
+        // Capture initial offers before allocate() trims or reallocates them.
+        for (const c1 of this.participants) {
+            const initMap = new Map<Clan, number>();
+            const currentMap = this.offers.get(c1)!;
+            for (const [c2, amt] of currentMap) {
+                initMap.set(c2, amt);
+            }
+            this.initialOffers.set(c1, initMap);
         }
     }
 
@@ -369,6 +393,12 @@ class Venue {
     // matched all of it.
     offeredStrength(c1: Clan, c2: Clan): number {
         return c2.population > 0 ? this.offer(c1, c2) / c2.population : 0;
+    }
+
+    // Initial strength offered before any trimming or reallocation rounds.
+    initialOfferedStrength(c1: Clan, c2: Clan): number {
+        const off = this.initialOffers.get(c1)?.get(c2) ?? 0;
+        return c2.population > 0 ? off / c2.population : 0;
     }
 
     // What the pair actually has: neither side can converse alone.
@@ -396,13 +426,6 @@ class Venue {
     // part to the partners who would have taken more. Offers never fall below
     // what was already matched, so this only ever settles upward.
     allocate(): void {
-        for (const c1 of this.participants) {
-            this.spread(
-                c1,
-                this.participants.filter(c2 => c2 !== c1),
-                this.supply.get(c1) ?? 0);
-        }
-
         for (let round = 1; round < MATCHING_ROUNDS; ++round) {
             // Read the matched levels off the round's offers before changing
             // any of them, so everyone is answering the same board.
@@ -423,6 +446,7 @@ class Venue {
                 for (const c2 of this.participants) {
                     if (c1 === c2) continue;
                     const level = matched.get(c1)!.get(c2)!;
+                    // Offers are in acquaintance, levels in strength.
                     const used = level * c2.population;
                     const offered = offers.get(c2) ?? 0;
                     if (offered > used + 1e-9) {
@@ -456,7 +480,14 @@ export function updateConversations(world: World): void {
     // written, so a pair's items come out in source order however the sources
     // were walked.
     const contributions = new Map<Clan, Map<Clan, ConversationItem[]>>();
+    // Keyed by the pair in uuid order, so the group sources (walked in
+    // settlement order) and the ties (walked in connection order) land on
+    // the same entry.
     const record = (c1: Clan, c2: Clan, item: ConversationItem) => {
+        if (c1.uuid > c2.uuid) {
+            [c1, c2] = [c2, c1];
+            item = item.flipped();
+        }
         let side = contributions.get(c1);
         if (!side) contributions.set(c1, side = new Map());
         let items = side.get(c2);
@@ -487,18 +518,20 @@ export function updateConversations(world: World): void {
                 for (let j = i + 1; j < participants.length; ++j) {
                     const [c1, c2] = [participants[i], participants[j]];
                     const strength = venue.matchedStrength(c1, c2);
-                    if (!isPositive(strength)) continue;
+                    const initOff1 = venue.initialOfferedStrength(c1, c2);
+                    const initOff2 = venue.initialOfferedStrength(c2, c1);
+                    if (!isPositive(strength) && !isPositive(initOff1) && !isPositive(initOff2)) continue;
                     record(c1, c2, new ConversationItem(
                         source,
                         venue.share.get(c1) ?? 0,
                         venue.share.get(c2) ?? 0,
-                        venue.offeredStrength(c1, c2),
-                        venue.offeredStrength(c2, c1),
+                        initOff1,
+                        initOff2,
                         strength));
-                    c1.conversationBudget.item(source)!.used +=
-                        strength * c2.population;
-                    c2.conversationBudget.item(source)!.used +=
-                        strength * c1.population;
+                    // Budgets are in acquaintance: the people of the
+                    // other clan this one came to know.
+                    c1.conversationBudget.item(source)!.used += strength * c2.population;
+                    c2.conversationBudget.item(source)!.used += strength * c1.population;
                 }
             }
         }
@@ -523,23 +556,25 @@ export function updateConversations(world: World): void {
 
         const reach = visitReach(c1, c2);
         if (!isPositive(reach)) return;
-        const supply1 = share1 * c1.population * source.intensity * reach;
-        const supply2 = share2 * c2.population * source.intensity * reach;
+        const popMod1 = c1.population > 0 ? Math.sqrt(c1.population / 20) : 0;
+        const popMod2 = c2.population > 0 ? Math.sqrt(c2.population / 20) : 0;
+        const supply1 = share1 * source.intensity * reach * popMod1;
+        const supply2 = share2 * source.intensity * reach * popMod2;
 
         const item1 = tieBudget(c1, source, share1);
         const item2 = tieBudget(c2, source, share2);
         item1.supply += supply1;
         item2.supply += supply2;
 
-        const offered1to2 = c2.population > 0 ? supply1 / c2.population : 0;
-        const offered2to1 = c1.population > 0 ? supply2 / c1.population : 0;
+        const offered1to2 = supply1;
+        const offered2to1 = supply2;
         const strength = Math.min(offered1to2, offered2to1, MAX_STRENGTH);
-        if (!isPositive(strength)) return;
+        if (!isPositive(strength) && !isPositive(offered1to2) && !isPositive(offered2to1)) return;
 
         record(c1, c2, new ConversationItem(
             source, share1, share2, offered1to2, offered2to1, strength));
-        item1.used += strength * c2.population;
-        item2.used += strength * c1.population;
+        item1.used += strength;
+        item2.used += strength;
     };
 
     for (const [u1, u2, connections] of world.connections.pairs()) {
@@ -565,35 +600,39 @@ export function updateConversations(world: World): void {
             items.sort((a, b) => a.source.sortKey - b.source.sortKey);
             const strength = clamp(
                 sumFun(items, i => i.strength), 0, MAX_STRENGTH);
-            if (!isPositive(strength)) continue;
+            const hasAnyOffer = items.some(i => isPositive(i.offered1to2) || isPositive(i.offered2to1) || isPositive(i.strength));
+            if (!hasAnyOffer) continue;
 
             const conversation =
                 world.interactions.getOrCreate(c1, c2, Conversation);
-            conversation.items = items;
+            if (conversation.c1 !== c1.uuid) {
+                // Align ConversationItem fields with conversation.c1 (c2) and conversation.c2 (c1)
+                conversation.items = items.map(item => item.flipped());
+            } else {
+                conversation.items = items;
+            }
             conversation.strength = strength;
-            // The pair's own order need not be the order we walked them in.
-            const [first, second] =
-                conversation.c1 === c1.uuid ? [c1, c2] : [c2, c1];
-            conversation.amount1to2 = strength * second.population;
-            conversation.amount2to1 = strength * first.population;
+            conversation.amount1to2 = strength;
+            conversation.amount2to1 = strength;
         }
     }
 
+
     for (const clan of world.allClans) {
         clan.conversationBudget.items.sort(
-            (a, b) => a.source.sortKey - b.source.sortKey);
+            (a: ConversationBudgetItem, b: ConversationBudgetItem) => a.source.sortKey - b.source.sortKey);
     }
 }
 
 // --- Reading it back -------------------------------------------------------
 
-export function getConversation<T extends Clan|ClanDTO>(
+export function getConversation<T extends Clan | ClanDTO>(
     subject: T, object: T): Conversation | undefined {
 
     return subject.world.interactions.getOfType(subject, object, Conversation);
 }
 
-export function getRelativeAttention<T extends Clan|ClanDTO>(
+export function getRelativeAttention<T extends Clan | ClanDTO>(
     subject: T, object: T): number {
 
     return getConversation(subject, object)?.strength ?? 0;

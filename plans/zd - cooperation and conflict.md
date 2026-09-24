@@ -547,28 +547,10 @@ Conversation:
 *   Choices
     *   TODO
 *   Items
-    *   Redo how attention is allocated
-        *   Change attention so that it's based on activities and relationships,
+    x   Redo how attention is allocated
+        x   Change attention so that it's based on activities and relationships,
             with selective matching happening *within* that.
-        *   Generators
-            *   Help activity: this will generate some amount of conversation
-                between the two proportional to the time spent
-            *   Marriage/Kin/Friends relationships: also generates conversation
-                between the two proportional to the time spent. Later we'll
-                do more with this, but just base it on the relationship for now.
-            *   Group-level things: settlement (all clans in same settlement),
-                ditching (all clans participating), festivals (all clans
-                participating): this will generate some amount of conversation
-                proportional to time spent, but clans can choose who they
-                prefer to converse with and it gets matched up.
-                *   Matching choices should be based on the clan's prestige view
-                    of the other one, that is both how much they respect that
-                    other clan and how much they think they are good
-                *   It might be a good idea to do the attention allocation at
-                    settlement level 1 time,
-                *   Remember to have some UI to show this allocation as well
-                    as the whole computation where conversation level comes from
-        *   Tune so that in a village of 150, each clan has conversation with
+        x   Tune so that in a village of 150, each clan has conversation with
             strength (= conversation amount/object clan population) averaging
             about 0.5 across other clans.
     *   If needed, cap conversation amounts
@@ -589,6 +571,7 @@ Conversation:
         conversation time
     *   Later: Make it also about relationships and have closer relationships
         be more valuable
+    *   Later: Compatible language requirement.
 
 Conflict:
 

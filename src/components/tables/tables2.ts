@@ -240,6 +240,7 @@ export interface RowDataColumnSpec<RowData> {
     formatFn?: (value: any, row?: RowData, col?: any) => string;
     tooltip?: Snippet<[any, RowData, any]>;
     headerTooltip?: string;
+    class?: string;
 }
 
 export interface RowDataRowSpec<ColData> {
@@ -249,6 +250,7 @@ export interface RowDataRowSpec<ColData> {
     tooltip?: Snippet<[any, any, ColData]>;
     headerTooltip?: Snippet<[any]> | string;
     divider?: boolean;
+    class?: string;
 }
 
 export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, CellData> {
@@ -269,6 +271,7 @@ export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, Ce
         colClassFn?: (item: RowColData) => string,
         rowClassFn?: (item: RowColData) => string,
         initialRowDataCols?: RowDataColumnSpec<RowColData>[],
+        initialRowDataRows?: RowDataRowSpec<RowColData>[],
     ) {
         this.columns = [];
 
@@ -281,6 +284,7 @@ export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, Ce
                     formatFn: spec.formatFn,
                     tooltip: spec.tooltip,
                     headerTooltip: spec.headerTooltip,
+                    class: spec.class ?? 'total-col',
                 });
             }
         }
@@ -303,17 +307,35 @@ export class CrossTab<RowColData, CellData> implements CrossTable<RowColData, Ce
                     formatFn: spec.formatFn,
                     tooltip: spec.tooltip,
                     headerTooltip: spec.headerTooltip,
+                    class: spec.class,
                 });
             }
         }
 
-        this.rows = [...data].map(e => ({
+        this.rows = [];
+
+        if (initialRowDataRows) {
+            for (const spec of initialRowDataRows) {
+                this.rows.push({
+                    data: spec as any,
+                    label: spec.label,
+                    valueFn: spec.valueFn,
+                    formatFn: spec.formatFn,
+                    tooltip: spec.tooltip as any,
+                    headerTooltip: spec.headerTooltip,
+                    divider: spec.divider,
+                    class: spec.class ?? 'total-row',
+                });
+            }
+        }
+
+        this.rows.push(...[...data].map(e => ({
             data: e,
             label: labelFn(e),
             tooltip,
             headerTooltip: rowHeaderTooltip,
             class: rowClassFn?.(e),
-        }));
+        })));
 
         if (rowDataRows) {
             for (const spec of rowDataRows) {

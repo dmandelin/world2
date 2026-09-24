@@ -20,7 +20,6 @@
     import ConflictDetailsTable from "./tables/ConflictDetailsTable.svelte";
     import Tooltip from "./Tooltip.svelte";
     import {
-        CONVERSATION_FIXED_COST,
         Conversation,
     } from "../model/relations/conversation";
     import type { Opinion } from "../model/relations/opinion";
@@ -70,8 +69,7 @@
         colClan: ClanDTO,
     ): number {
         const att = world.attentionTo(rowClan, colClan);
-        if (att <= CONVERSATION_FIXED_COST) return 0;
-        return (att - CONVERSATION_FIXED_COST) / colClan.population;
+        return colClan.population > 0 ? att / colClan.population : 0;
     }
 
     function informationCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
@@ -153,10 +151,43 @@
     subject: ClanDTO,
     object: ClanDTO,
 )}
-    {@const att = world.attentionTo(subject, object)}
-    {#if att}
-        ({unsigned(att)} attention - {CONVERSATION_FIXED_COST} fixed cost) /
-        {object.population} population = {unsigned(value, 2)} relative attention
+    {@const interactions = world.interactionsWith(subject, object)}
+    {@const conv = interactions.find(i => i instanceof Conversation)}
+    {#if conv}
+        <div style="font-size: 0.9em; padding: 0.25rem; min-width: 320px;">
+            <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
+                Conversation: {subject.name} &amp; {object.name}
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+                <strong>Total Conversation Strength:</strong> {unsigned(conv.strength, 2)}
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #ccc; text-align: left;">
+                        <th style="padding: 0.15rem 0.3rem;">Source</th>
+                        <th style="padding: 0.15rem 0.3rem; text-align: right;">{subject.name} Off.</th>
+                        <th style="padding: 0.15rem 0.3rem; text-align: right;">{object.name} Off.</th>
+                        <th style="padding: 0.15rem 0.3rem; text-align: right;">Matched</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each conv.items as item}
+                        {@const offSub = item.offeredFrom(subject, conv)}
+                        {@const offObj = item.offeredFrom(object, conv)}
+                        <tr style="border-bottom: 1px idotted #eee;">
+                            <td style="padding: 0.15rem 0.3rem;">{item.source.name}</td>
+                            <td style="padding: 0.15rem 0.3rem; text-align: right;">{unsigned(offSub, 2)}</td>
+                            <td style="padding: 0.15rem 0.3rem; text-align: right;">{unsigned(offObj, 2)}</td>
+                            <td style="padding: 0.15rem 0.3rem; text-align: right; font-weight: bold;">{unsigned(item.strength, 2)}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {:else}
+        <div style="font-size: 0.9em; padding: 0.25rem;">
+            No conversation between {subject.name} and {object.name}.
+        </div>
     {/if}
 {/snippet}
 
@@ -196,7 +227,7 @@
         {@const objToSub =
             subject.uuid === conv.c1 ? conv.amount2to1 : conv.amount1to2}
         {@const matched = Math.min(subToObj, objToSub)}
-        {@const payoff = 5 * (matched / subject.population)}
+        {@const payoff = 5 * matched}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
             <strong>Mutual Aid Source Details:</strong>
             <ul
@@ -782,6 +813,49 @@
         {@render selfRegardTable()}
     </div>
 </div>
+
+{#snippet clanBudgetSection()}
+    <div style="margin-top: 2rem; border-top: 2px solid #d4c5a9; padding-top: 1rem;">
+        <h3 style="margin-top: 0; margin-bottom: 0.25rem;">Clan Conversation Budget Allocation</h3>
+        <div style="font-size: 0.85em; color: #6e5b47; margin-bottom: 1rem;">
+            Acquaintance budget generated from activities (Settlement living, Ditching, Festivals, Help) and standing relationships (Marriage, Kin, Friendship).
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem;">
+            {#each sortedByKey(settlement.clans, c => c.name) as clan}
+                <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid #e2d9c4; border-radius: 6px; padding: 0.75rem;">
+                    <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d8cea6; padding-bottom: 0.25rem;">
+                        <span>{clan.name}</span>
+                        <span style="font-weight: normal; font-size: 0.85rem; color: #555;">Pop: {clan.population}</span>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82em;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #c8bba0; text-align: left; color: #554422;">
+                                <th style="padding: 0.2rem 0.3rem;">Source</th>
+                                <th style="padding: 0.2rem 0.3rem; text-align: right;">Share</th>
+                                <th style="padding: 0.2rem 0.3rem; text-align: right;">Supply</th>
+                                <th style="padding: 0.2rem 0.3rem; text-align: right;">Used</th>
+                                <th style="padding: 0.2rem 0.3rem; text-align: right;">Unused</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each clan.conversationBudget.items as item}
+                                <tr style="border-bottom: 1px solid #ece5d5;">
+                                    <td style="padding: 0.2rem 0.3rem; font-weight: 500;" title={item.source.note}>{item.source.name}</td>
+                                    <td style="padding: 0.2rem 0.3rem; text-align: right;">{pct(item.share)}</td>
+                                    <td style="padding: 0.2rem 0.3rem; text-align: right;">{unsigned(item.supply, 1)}</td>
+                                    <td style="padding: 0.2rem 0.3rem; text-align: right; font-weight: 600; color: #2e6b38;">{unsigned(item.used, 1)}</td>
+                                    <td style="padding: 0.2rem 0.3rem; text-align: right; color: #885522;">{unsigned(item.unused, 1)}</td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+            {/each}
+        </div>
+    </div>
+{/snippet}
+
+{@render clanBudgetSection()}
 
 <style>
     .relationships-grid {

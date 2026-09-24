@@ -10,6 +10,7 @@
     import SettlementTrade from "./SettlementTrade.svelte";
     import TabbedView from "./TabbedView.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
+    import SettlementConversation from "./SettlementConversation.svelte";
     import SettlementRelationshipsGraph from "./SettlementRelationshipsGraph.svelte";
     import SettlementRelationshipsGraph2 from "./SettlementRelationshipsGraph2.svelte";
     import SettlementMigrationDetails from "./overview/SettlementMigrationDetails.svelte";
@@ -52,6 +53,7 @@
         { label: "The Waters", icon: "🌊", snippet: watersTab, group: "settlement" },
 
         { label: "Relationships", icon: "🤝", snippet: relationshipsTab, group: "relations" },
+        { label: "Conversation", icon: "💬", snippet: conversationTab, group: "relations" },
         { label: "Marriages", icon: "💍", snippet: marriagesTab, group: "relations" },
         { label: "Redistribution", icon: "🍲", snippet: redistributionTab, group: "relations" },
         { label: "Mutual Aid", icon: "🤲", snippet: mutualAidTab, group: "relations" },
@@ -137,6 +139,10 @@
 
 {#snippet relationshipsTab()}
     <SettlementRelationships {settlement} />
+{/snippet}
+
+{#snippet conversationTab()}
+    <SettlementConversation {settlement} />
 {/snippet}
 
 {#snippet marriagesTab()}

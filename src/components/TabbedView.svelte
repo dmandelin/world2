@@ -43,8 +43,11 @@
   <div class="tab-headers">
     {#each tabs as tab, i}
       {@const startsGroup = i > 0 && tabs[i - 1].group !== tab.group}
+      {#if startsGroup}
+        <div class="group-divider"></div>
+      {/if}
       {#if tab.icon}
-        <div class="tab-slot" class:group-start={startsGroup}>
+        <div class="tab-slot">
           <Tooltip>
             {@render tabButton(tab, i)}
             <div slot="tooltip">{tab.label}</div>
@@ -90,7 +93,8 @@
 }
 .tabbed.vertical .tab-headers {
   flex: 0 0 auto;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, min-content);
   gap: 0.1rem;
   margin-bottom: 0;
 }
@@ -140,12 +144,14 @@
   background-color: #f0e7cd;
 }
 /* Gap plus a hairline where one group of tabs gives way to the next. */
-.tabbed.vertical .tab-slot.group-start {
-  margin-top: 0.55rem;
-  padding-top: 0.55rem;
+.tabbed.vertical .group-divider {
+  grid-column: 1 / -1;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
   border-top: 1px solid #e0d4ab;
+  height: 0;
 }
-.tabbed:not(.vertical) .tab-slot.group-start {
+.tabbed:not(.vertical) .group-divider {
   margin-left: 0.75rem;
   padding-left: 0.75rem;
   border-left: 1px solid #e0d4ab;

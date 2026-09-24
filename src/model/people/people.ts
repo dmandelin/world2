@@ -31,7 +31,7 @@ import { Stress } from "./stress";
 import { Eudaimonia } from "../self/eudaimonia";
 import { Distribution, StockOutflow, Consumption } from "../econ/flows";
 import { Stock } from "../econ/stock";
-import { Conversation } from "../relations/conversation";
+import { Conversation, ConversationBudget } from "../relations/conversation";
 import { History, newHistoryEventId } from "./history";
 
 const CLAN_NAMES: string[] = [
@@ -154,6 +154,7 @@ export class Clan implements TradePartner {
     // them, and what its year actually left for them. Every clan does the
     // notional standard for now, so willingness is the same for all.
     readonly festivals = new FestivalOperation(this);
+    conversationBudget = new ConversationBudget();
 
     get festivalWillingness(): number {
         return this.festivals.willingness;
@@ -354,14 +355,9 @@ export class Clan implements TradePartner {
         for (const [_, interactions] of this.world.interactions.getFor(this)) {
             for (const interaction of interactions) {
                 if (interaction instanceof Conversation) {
-                    const amount = Math.min(interaction.amount1to2, interaction.amount2to1);
-                    if (amount > 0) {
-                        const relativeAmount = amount / this.population;
-                        value += relativeAmount;
-                    }
+                    value += interaction.strength;
                 }
             }
-
         }
         return 5 * value;
     }

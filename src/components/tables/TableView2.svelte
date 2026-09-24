@@ -225,4 +225,23 @@
         background-color: #ebdcb9;
         color: #6e5b47;
     }
+
+    :global(td.total-col),
+    :global(th.total-col) {
+        background-color: #f7f1e3;
+        font-weight: bold;
+        border-right: 2px solid #d4c5a9 !important;
+    }
+
+    :global(tr.total-row td),
+    :global(td.total-row) {
+        background-color: #f7f1e3;
+        font-weight: bold;
+        border-bottom: 2px solid #d4c5a9 !important;
+    }
+
+    :global(tr.total-row td.total-col) {
+        background-color: #ece3cf;
+        font-weight: bold;
+    }
 </style>

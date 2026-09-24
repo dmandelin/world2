@@ -28,6 +28,7 @@ import type { QualityOfLife } from "../econ/qol";
 import type { ResidenceLevel } from "../people/residence";
 import type { Rites } from "../rites";
 import type { RitualEvent } from "../rituals";
+import type { ConversationBudget } from "../relations/conversation";
 import type { RitualChangeEvent } from "../ritualchange";
 import type { Settlement } from "../people/settlement";
 import type { SettlementCluster } from "../people/cluster";
@@ -149,7 +150,10 @@ export class ClanDTO {
     // Troubles this clan faced this turn, and how the rites went.
     ritualEvents: RitualEvent[];
 
+    readonly conversationBudget: ConversationBudget;
+
     constructor(clan: Clan, readonly settlement: SettlementDTO) {
+        this.conversationBudget = clan.conversationBudget.clone();
         this.year = settlement.world.year.toString();
         this.uuid = clan.uuid;
 
