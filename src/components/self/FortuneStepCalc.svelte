@@ -8,8 +8,9 @@
         EudaimoniaReport,
         EU_BEER_MAX,
         EU_BEER_PER_SHARE,
-        EU_CEREAL_NUTRITION_PENALTY,
-        EU_CEREAL_SHARE_FREE,
+        EU_CEREAL_IDEAL_SHARE,
+        EU_QUALITY_AT_ALL_CEREAL,
+        EU_QUALITY_AT_NO_CEREAL,
         EU_CONVERSATION_FLOOR,
         EU_CONVERSATION_NEUTRAL_AFFINITY,
         EU_CONVERSATION_PER_DOUBLING,
@@ -87,25 +88,21 @@
             nothing, so this can only ever be a debt.
         </div>
     {:else if node === EuNode.FoodQuality}
-        {#if get(EuNode.CerealShare) > EU_CEREAL_SHARE_FREE}
-            <div class="line">
-                &minus;{EU_CEREAL_NUTRITION_PENALTY} &times; ({pctOf(
-                    get(EuNode.CerealShare),
-                )} cereals &minus; {pctOf(EU_CEREAL_SHARE_FREE)}) =
-                <b>{n(get(EuNode.FoodQuality))}</b>
-            </div>
-        {:else}
-            <div class="line">
-                Cereals are {pctOf(get(EuNode.CerealShare))} of the diet,
-                within the {pctOf(EU_CEREAL_SHARE_FREE)} a mixed diet balances,
-                so nothing is charged.
-            </div>
-        {/if}
+        {@const c = get(EuNode.CerealShare)}
+        {@const high = c >= EU_CEREAL_IDEAL_SHARE}
+        <div class="line">
+            {high ? EU_QUALITY_AT_ALL_CEREAL : EU_QUALITY_AT_NO_CEREAL} &times;
+            (({pctOf(c)} &minus; {pctOf(EU_CEREAL_IDEAL_SHARE)}) &divide;
+            {pctOf(high ? 1 - EU_CEREAL_IDEAL_SHARE : EU_CEREAL_IDEAL_SHARE)})<sup
+                >2</sup
+            >
+            = <b>{n(get(EuNode.FoodQuality))}</b>
+        </div>
         <div class="note">
-            Fishing stands for hunting and gathering, which is varied and
-            nourishing and carries no penalty at all. Farming stands for mixed
-            production with goats and sheep, nourishing but less so, and past
-            {pctOf(EU_CEREAL_SHARE_FREE)} of the diet the balance is lost.
+            A balanced diet is {pctOf(EU_CEREAL_IDEAL_SHARE)} cereals and costs
+            nothing. All fish costs {EU_QUALITY_AT_NO_CEREAL}, all cereal
+            {EU_QUALITY_AT_ALL_CEREAL}, rising as the square of the distance
+            from the balance.
         </div>
     {:else if node === EuNode.Honey}
         <div class="line">

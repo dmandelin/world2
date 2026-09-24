@@ -127,15 +127,28 @@ export const EU_FOOD_SCALE = 100;
 export const EU_SUBSCORE_FOOD_EXPONENT = 2;
 export const EU_FORTUNE_FOOD_EXPONENT = 1;
 
-// Nutrition quality, on the assumption that fishing stands for hunting and gathering
-// generally -- a varied and nourishing diet -- and farming for mixed
-// production including goats and sheep, nourishing but less so.
+// Nutrition quality, on the assumption that fishing stands for hunting and
+// gathering generally -- varied, but short of some things a farm provides --
+// and farming for mixed production including goats and sheep, which is
+// nourishing but narrow when it is all there is.
 //
-// So fish carries no nutritional penalty at all. Cereals carry one only past
-// the share a mixed diet can absorb: nothing up to 30% of the diet, and
-// -7 per unit of the diet beyond that, so an all-cereal diet costs about -4.9.
-export const EU_CEREAL_SHARE_FREE = 0.3;
-export const EU_CEREAL_NUTRITION_PENALTY = 7;
+// So the best diet is a mix: 30% cereals costs nothing. Either side of that
+// the cost rises as the square of the distance, steeper toward cereals: all
+// fish is -10, all cereal -30. The two halves are parabolas that both peak
+// at the ideal, so the curve is smooth there and its slope is continuous.
+export const EU_CEREAL_IDEAL_SHARE = 0.3;
+export const EU_QUALITY_AT_NO_CEREAL = -10;
+export const EU_QUALITY_AT_ALL_CEREAL = -30;
+
+export function foodQuality(cerealShare: number): number {
+    const d = cerealShare - EU_CEREAL_IDEAL_SHARE;
+    if (d < 0) {
+        const t = d / EU_CEREAL_IDEAL_SHARE;
+        return EU_QUALITY_AT_NO_CEREAL * t * t;
+    }
+    const t = d / (1 - EU_CEREAL_IDEAL_SHARE);
+    return EU_QUALITY_AT_ALL_CEREAL * t * t;
+}
 
 // The pleasures each kind of food brings, beyond nourishment. Gatherers turn
 // up honey and the like, worth a little in proportion to how much of the diet
@@ -588,7 +601,7 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.FoodQuantityRaw, label: "Before clamping", role: "derived", places: 1,
       note: "Runs positive when there is more than enough, which counts for nothing here." },
     { id: EuNode.FoodQuality, label: "Quality", role: "derived", places: 1,
-      note: `The cost of leaning too hard on cereals: past ${(EU_CEREAL_SHARE_FREE * 100).toFixed(0)}% of the diet, a mixed diet no longer balances. Fish carries no penalty.` },
+      note: `How well balanced the diet was: nothing at ${(EU_CEREAL_IDEAL_SHARE * 100).toFixed(0)}% cereals, ${EU_QUALITY_AT_NO_CEREAL} at all fish, ${EU_QUALITY_AT_ALL_CEREAL} at all cereal.` },
     { id: EuNode.FoodTaste, label: "Taste", role: "derived", places: 1,
       note: "Honey and beer added: what the food was worth beyond nourishment." },
     { id: EuNode.Honey, label: "Honey", role: "derived", places: 1,
@@ -761,11 +774,8 @@ export function computeFood(
         EU_FOOD_SCALE * (Math.pow(foodRatio, quantityExponent) - 1);
     const quantity = quantityRaw > 0 ? 0 : quantityRaw;
 
-    // Cereals past the share a mixed diet absorbs. Fish carries no penalty:
-    // gathering and hunting bring variety of their own.
-    const cerealExcess = cerealShare - EU_CEREAL_SHARE_FREE;
-    const quality =
-        cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
+    // How far the diet strays from a balanced mix, either way.
+    const quality = foodQuality(cerealShare);
 
     const nutrition = combine2(EuNode.FoodNutrition, quantity, quality);
 

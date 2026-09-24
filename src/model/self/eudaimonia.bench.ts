@@ -43,8 +43,7 @@ import {
     EU_SUBSCORE_FOOD_EXPONENT,
     EU_FOOD_SCALE,
     EU_VITALITY_SCALE,
-    EU_CEREAL_SHARE_FREE,
-    EU_CEREAL_NUTRITION_PENALTY,
+    foodQuality,
     EU_HONEY_PER_SHARE,
     EU_BEER_PER_SHARE,
     EU_BEER_MAX,
@@ -93,9 +92,7 @@ function inlineFortune(prevFortune: number, x: FortuneInputs): number {
     const quantityRaw =
         EU_FOOD_SCALE * (Math.pow(x.foodRatio, EU_SUBSCORE_FOOD_EXPONENT) - 1);
     const quantity = quantityRaw > 0 ? 0 : quantityRaw;
-    const cerealExcess = x.cerealShare - EU_CEREAL_SHARE_FREE;
-    const quality =
-        cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
+    const quality = foodQuality(x.cerealShare);
     const honey = EU_HONEY_PER_SHARE * x.fishShare;
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
@@ -140,9 +137,7 @@ function buildDetail(
     const quantityRaw =
         EU_FOOD_SCALE * (Math.pow(x.foodRatio, EU_SUBSCORE_FOOD_EXPONENT) - 1);
     const quantity = quantityRaw > 0 ? 0 : quantityRaw;
-    const cerealExcess = x.cerealShare - EU_CEREAL_SHARE_FREE;
-    const quality =
-        cerealExcess > 0 ? -EU_CEREAL_NUTRITION_PENALTY * cerealExcess : 0;
+    const quality = foodQuality(x.cerealShare);
     const nutrition = blend2(quantity, quality);
     const honey = EU_HONEY_PER_SHARE * x.fishShare;
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
