@@ -7,10 +7,7 @@ import type { ClanDTO } from "../records/dtos";
 import type { Settlement } from "../people/settlement";
 import type { World } from "../world";
 import { Interaction } from "./interaction";
-import {
-    EU_CONVERSATION_NEUTRAL_AFFINITY,
-    type FortuneInputs,
-} from "../self/eudaimonia";
+import type { FortuneInputs } from "../self/eudaimonia";
 import {
     Connection,
     FriendshipConnection,
@@ -793,12 +790,12 @@ export function conversationPayoff(clan: Clan | ClanDTO): number {
 
 // What Fortune reads of a clan's conversation this year, written into its
 // inputs: how many people outside the clan its people deal with, and its
-// absolute affinity for their clans averaged by how many of each it knows. A
-// clan that talks with nobody reads neutral on affinity, since there is
-// nobody to get on well or badly with; see eudaimonia.ts.
+// Conversation Appeal for their clans averaged by how many of each it knows.
+// A clan that talks with nobody reads neutral on appeal, since there is
+// nobody to find appealing or not; see eudaimonia.ts.
 export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): void {
     let amount = 0;
-    let affinity = 0;
+    let appeal = 0;
     for (const [uuid, interactions] of clan.world.interactions.getFor(clan)) {
         const other = clan.world.clanFrom(uuid);
         if (!other) continue;
@@ -806,11 +803,9 @@ export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): v
             if (!(interaction instanceof Conversation)) continue;
             const known = interaction.strength * other.population;
             amount += known;
-            affinity += known
-                * (clan.world.perceptions.get(clan, other)?.affinity.absolute ?? 0);
+            appeal += known * appealOf(clan, other);
         }
     }
     inputs.conversationAmount = amount;
-    inputs.conversationAffinity = amount > 0
-        ? affinity / amount : EU_CONVERSATION_NEUTRAL_AFFINITY;
+    inputs.conversationAppeal = amount > 0 ? appeal / amount : 1;
 }

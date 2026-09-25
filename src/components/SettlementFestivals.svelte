@@ -275,10 +275,11 @@
         {
             label: "Feast time",
             tooltip:
-                "Worker-turns brought, against this clan's share of what the "
-                + "settlement's festival asks. The clan brings a share of its "
-                + "own hands; the festival asks by heads, so a clan heavy with "
-                + "children falls short of its share.",
+                "Worker-turns brought, as the clan's Talkativeness makes of "
+                + "them, against this clan's share of what the settlement's "
+                + "festival asks. The clan brings a share of its own hands; "
+                + "the festival asks by heads, so a clan heavy with children "
+                + "falls short of its share.",
             value: (c) => part(feast, c)?.timeRatio ?? 0,
             format: (v) => pct(v),
             aggregate: "none",
@@ -393,7 +394,9 @@
             {
                 label: "Time given",
                 value: calc.labor.toFixed(1),
-                note: `${pct(calc.timeRatio)} of what it asks. Every clan `
+                note: `${calc.effectiveLabor.toFixed(1)} as the clans' `
+                    + `Talkativeness makes of it, which is `
+                    + `${pct(calc.timeRatio)} of what it asks. Every clan `
                     + `gives ${pct(a.standardEffortShare)} of its own year, so `
                     + `what the settlement can raise depends on how many of `
                     + `its people are grown`,

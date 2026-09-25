@@ -30,15 +30,16 @@
 //           Comfort       how well looked after everyone was
 //           Stress        what the looking after cost those doing it
 //         Conversation
-//           Quantity      how many people outside the clan it knows
-//           Quality       how well it gets on with them
+//           Quality       how appealing and how varied its company was
+//           Quantity      how much of it there was
 //
 // Each inner node combines its children, by default by adding them. The
 // nodes where the parts are needs that make up for each other only so far --
 // those with quantity and quality under them, Social, and Fortune itself --
 // BLEND them instead, which lets a bad part drag the whole down. Food SAVORs
-// its taste, counting it for more the better fed the clan is. See
-// "Combining" below. The year's Fortune, shown on its own, is the tree as it
+// its taste, counting it for more the better fed the clan is, and
+// Conversation ENGAGEs its quantity, counting it for more the better the
+// company. See "Combining" below. The year's Fortune, shown on its own, is the tree as it
 // stands. The Fortune subscore averages it over the years.
 //
 // FORTUNE_TREE below is the tree as data, for the UI to walk. The calculation
@@ -83,7 +84,7 @@
 // few lines below, then add it to EU_NODES (and FORTUNE_TREE, if it is part of
 // the tree). All of them are in this file, which is the point.
 
-import { careComfort, careSkillFactor, careStress } from "../people/care";
+import { careComfort, careProvisionOf, careStress } from "../people/care";
 import { foodBalance, nutritionFromRaw } from "../people/nutrition";
 
 // --- Tuning ---------------------------------------------------------------
@@ -136,23 +137,60 @@ export const EU_BEER_MAX = 10;
 
 // --- Conversation ------------------------------------------------------------
 //
-// Quantity reads how many people outside the clan its people deal with
-// regularly -- its acquaintance, summed over every clan it converses with; see
-// relations/conversation.ts. An ordinary clan knows about 70. More is better,
-// but each doubling is worth the same, so this many points per doubling from
-// the standard, and a clan that knows next to nobody bottoms out at the floor
-// rather than running off to minus infinity: 4 doublings short, -16.
-export const EU_CONVERSATION_STANDARD = 70;
-export const EU_CONVERSATION_PER_DOUBLING = 4;
-export const EU_CONVERSATION_FLOOR = EU_CONVERSATION_STANDARD / 16;
+// Conversation is read somewhat as food is: a quality, and a quantity whose
+// worth depends on the quality.
+//
+// Acquaintance is how many people outside the clan its people deal with
+// regularly, summed over every clan it converses with; see
+// relations/conversation.ts.
+//
+// Quality is the clan's Conversation Appeal for the clans it talks with --
+// how much it wants to spend its time on each, 1 being neutral; see appealOf
+// -- averaged by acquaintance, times a diversity factor for how many people
+// that is:
+//
+//     quality = mean appeal * (acquaintance / 120)^(1/6)
+//
+// As Fortune it is 100 points per unit from 1, so an appeal of 1.01 is +1.
+export const EU_CONVERSATION_DIVERSITY_REF = 120;
+export const EU_CONVERSATION_DIVERSITY_EXPONENT = 1 / 6;
+export const EU_CONVERSATION_QUALITY_SCALE = 100;
 
-// Quality reads how well the clan gets on with the people it talks to: its
-// absolute affinity for each clan it converses with, averaged by acquaintance.
-// Clans mostly sit between 0.5 and 0.85, so 0.6 is the neutral point, and a
-// clan that talks only with those it has everything in common with (1.0) is
-// +10 better for it.
-export const EU_CONVERSATION_NEUTRAL_AFFINITY = 0.6;
-export const EU_CONVERSATION_QUALITY_SCALE = 25;
+export function conversationDiversity(acquaintance: number): number {
+    if (!(acquaintance > 0)) return 0;
+    return Math.pow(acquaintance / EU_CONVERSATION_DIVERSITY_REF,
+        EU_CONVERSATION_DIVERSITY_EXPONENT);
+}
+
+// Quantity reads acquaintance against a requirement every clan has alike.
+// Having nobody to talk to at all is -100, but a little goes a long way:
+//
+//     -100 * (1 - r^s)             below the requirement
+//     MAX * (1 - e^(-k (r - 1)))   above it
+//
+// with s set so that a tenth of the requirement is -50, which puts half of it
+// at about -19; and k set so that the two halves meet with the same slope,
+// rising slowly toward +10 past the requirement: +7.8 at 150%.
+export const EU_CONVERSATION_REQUIREMENT = 70;
+export const EU_CONVERSATION_QUANTITY_AT_NONE = -100;
+export const EU_CONVERSATION_HALF_SHARE = 0.1;
+export const EU_CONVERSATION_QUANTITY_MAX = 10;
+
+const CONVERSATION_SHORT_EXPONENT =
+    Math.log(2) / Math.log(1 / EU_CONVERSATION_HALF_SHARE);
+const CONVERSATION_PLENTY_RATE =
+    -EU_CONVERSATION_QUANTITY_AT_NONE * CONVERSATION_SHORT_EXPONENT
+    / EU_CONVERSATION_QUANTITY_MAX;
+
+export function conversationQuantityFortune(acquaintance: number): number {
+    const r = acquaintance > 0 ? acquaintance / EU_CONVERSATION_REQUIREMENT : 0;
+    if (r < 1) {
+        return EU_CONVERSATION_QUANTITY_AT_NONE
+            * (1 - Math.pow(r, CONVERSATION_SHORT_EXPONENT));
+    }
+    return EU_CONVERSATION_QUANTITY_MAX
+        * -Math.expm1(-CONVERSATION_PLENTY_RATE * (r - 1));
+}
 
 // --- Combining -------------------------------------------------------------
 //
@@ -187,10 +225,14 @@ export const EU_BLEND_UP_SCALE = 120;
 export const EU_BLEND_DOWN_SCALE = 60;
 
 export interface EuCombiner {
-    readonly key: "sum" | "blend" | "savor";
+    readonly key: "sum" | "blend" | "savor" | "engage";
     readonly label: string;
     one(a: number): number;
     pair(a: number, b: number): number;
+    // For combiners of the form a + weight(a) * b: the weight, and what to
+    // call it on screen.
+    readonly weight?: (a: number) => number;
+    readonly weightLabel?: string;
 }
 
 export const SUM: EuCombiner = {
@@ -272,6 +314,46 @@ export const SAVOR: EuCombiner = {
     label: "Savor",
     one: (a) => a,
     pair: savorPair,
+    weight: savorBeta,
+    weightLabel: "Taste weight (β)",
+};
+
+// ENGAGE combines Conversation's quality with its quantity: plenty of company
+// is worth more when the company is good, and not much when it is poor, so
+//
+//     engage(quality, quantity) = quality + gamma(quality) * quantity
+//
+// where gamma reads the Quality term, in points of Fortune, on a logistic
+// curve topping out at 1.25:
+//
+//     gamma = MAX / (1 + (MAX - 1) * e^(-k * points))
+//
+// which is 1 at 0 whatever k is. k is set so gamma is 0.2 at -50; then it is
+// about 0.01 at -100, 0.68 at -20, 1.16 at +20, and 1.25 by +100.
+export const EU_ENGAGE_MAX = 1.25;
+export const EU_ENGAGE_REF_POINTS = -50;
+export const EU_ENGAGE_AT_REF = 0.2;
+
+const ENGAGE_RATE = -Math.log(
+    (EU_ENGAGE_MAX / EU_ENGAGE_AT_REF - 1) / (EU_ENGAGE_MAX - 1))
+    / EU_ENGAGE_REF_POINTS;
+
+export function engageGamma(quality: number): number {
+    return EU_ENGAGE_MAX
+        / (1 + (EU_ENGAGE_MAX - 1) * Math.exp(-ENGAGE_RATE * quality));
+}
+
+function engagePair(quality: number, quantity: number): number {
+    return quality + engageGamma(quality) * quantity;
+}
+
+export const ENGAGE: EuCombiner = {
+    key: "engage",
+    label: "Engage",
+    one: (a) => a,
+    pair: engagePair,
+    weight: engageGamma,
+    weightLabel: "Quantity weight (γ)",
 };
 
 // Keeps the per-capita rate finite for a clan that has just lost everyone.
@@ -292,12 +374,15 @@ export class FortuneInputs {
     careEffort = 1;
     // The clan's Care skill.
     careSkill = 50;
+    // The clan's Talkativeness, which helps care along a little.
+    talkativeness = 50;
     // Share of the clan's effort that went into care.
     careShare = 0.2;
     // People outside the clan its people deal with regularly.
-    conversationAmount = EU_CONVERSATION_STANDARD;
-    // Acquaintance-weighted absolute affinity for those people's clans.
-    conversationAffinity = EU_CONVERSATION_NEUTRAL_AFFINITY;
+    conversationAmount = EU_CONVERSATION_REQUIREMENT;
+    // The clan's Conversation Appeal for those people's clans, averaged by
+    // acquaintance.
+    conversationAppeal = 1;
 
     copyFrom(o: FortuneInputs): void {
         this.foodRatio = o.foodRatio;
@@ -305,9 +390,10 @@ export class FortuneInputs {
         this.cerealShare = o.cerealShare;
         this.careEffort = o.careEffort;
         this.careSkill = o.careSkill;
+        this.talkativeness = o.talkativeness;
         this.careShare = o.careShare;
         this.conversationAmount = o.conversationAmount;
-        this.conversationAffinity = o.conversationAffinity;
+        this.conversationAppeal = o.conversationAppeal;
     }
 
     clone(): FortuneInputs {
@@ -340,9 +426,10 @@ export const EuNode = {
     CerealShare: 12,
     CareEffort: 13,
     CareSkillLevel: 14,
+    Talkativeness: 18,
     CareShare: 17,
     ConversationAmount: 15,
-    ConversationAffinity: 16,
+    ConversationAppeal: 16,
 
     // Fortune
     Fortune: 20,
@@ -371,8 +458,10 @@ export const EuNode = {
     CareProvision: 38,
     //     Conversation
     Conversation: 34,
-    ConversationQuantity: 35,
-    ConversationQuality: 36,
+    ConversationQuality: 35,
+    ConversationQuantity: 36,
+    ConversationDiversity: 39,
+    ConversationQualityLevel: 43,
 
     // The Fortune subscore: the tree, averaged over the years
     PrevFortune: 40,
@@ -433,10 +522,10 @@ export const FORTUNE_TREE: FortuneTreeNode = {
                 },
                 {
                     node: EuNode.Conversation,
-                    combine: BLEND,
+                    combine: ENGAGE,
                     children: [
-                        { node: EuNode.ConversationQuantity },
                         { node: EuNode.ConversationQuality },
+                        { node: EuNode.ConversationQuantity },
                     ],
                 },
             ],
@@ -490,7 +579,7 @@ export function combinerOf(node: EuNodeId): EuCombiner {
 // works, just more slowly.
 function combine1(node: EuNodeId, a: number): number {
     const c = COMBINER_OF[node];
-    if (c === SUM || c === BLEND || c === SAVOR) return a;
+    if (c === SUM || c === BLEND || c === SAVOR || c === ENGAGE) return a;
     return c.one(a);
 }
 
@@ -499,6 +588,7 @@ function combine2(node: EuNodeId, a: number, b: number): number {
     if (c === SUM) return a + b;
     if (c === BLEND) return blendPair(a, b);
     if (c === SAVOR) return savorPair(a, b);
+    if (c === ENGAGE) return engagePair(a, b);
     return c.pair(a, b);
 }
 
@@ -602,12 +692,14 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "Care effort given, as a share of what the clan's children need." },
     { id: EuNode.CareSkillLevel, label: "Care skill", role: "input", places: 0,
       note: "The clan's skill at looking after people." },
+    { id: EuNode.Talkativeness, label: "Talkativeness", role: "input", places: 0,
+      note: "How much the clan likes to talk, which helps its care along a little." },
     { id: EuNode.CareShare, label: "Care share", role: "input", places: 0, isRate: true,
       note: "Share of the clan's effort that went into looking after people." },
     { id: EuNode.ConversationAmount, label: "Acquaintance", role: "input", places: 0,
       note: "People outside the clan its people deal with regularly." },
-    { id: EuNode.ConversationAffinity, label: "Affinity", role: "input", places: 2,
-      note: "The clan's affinity for the clans it talks with, averaged by acquaintance." },
+    { id: EuNode.ConversationAppeal, label: "Appeal", role: "input", places: 2,
+      note: "The clan's Conversation Appeal for the clans it talks with, averaged by acquaintance." },
 
     { id: EuNode.Fortune, label: "Fortune", role: "result", places: 1,
       note: "Material and social fortune blended: a bad side drags the whole down." },
@@ -638,17 +730,21 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.Care, label: "Care", role: "derived", places: 1,
       note: "How well looked after everyone was, and what it cost those doing it, added." },
     { id: EuNode.CareProvision, label: "Care provided", role: "derived", places: 2, isRate: true,
-      note: "Care effort against the standard, times what the clan's skill made of it." },
+      note: "Care effort against the standard, times what the clan's skill and Talkativeness made of it." },
     { id: EuNode.CareComfort, label: "Comfort", role: "derived", places: 1,
       note: "How well looked after everyone was: care provided, at 50 a doubling from the standard." },
     { id: EuNode.CareStress, label: "Stress", role: "derived", places: 1,
       note: "What the looking after cost the people doing it: nothing at a fifth of the clan's effort, a little easier below that, and wearing fast above." },
     { id: EuNode.Conversation, label: "Conversation", role: "derived", places: 1,
-      note: "How many people outside the clan it knows, and how well it gets on with them, blended." },
-    { id: EuNode.ConversationQuantity, label: "Quantity", role: "derived", places: 1,
-      note: `People outside the clan dealt with regularly, at ${EU_CONVERSATION_PER_DOUBLING} a doubling from ${EU_CONVERSATION_STANDARD}.` },
+      note: "Quality, plus quantity weighted by how good the company was." },
+    { id: EuNode.ConversationDiversity, label: "Diversity", role: "derived", places: 2, isRate: true,
+      note: `How many people the clan talks with, as (acquaintance / ${EU_CONVERSATION_DIVERSITY_REF})^(1/6).` },
+    { id: EuNode.ConversationQualityLevel, label: "Conversation quality", role: "derived", places: 2,
+      note: "Appeal times diversity, where 1 is ordinary company." },
     { id: EuNode.ConversationQuality, label: "Quality", role: "derived", places: 1,
-      note: `How much the clan has in common with the people it talks to, against an affinity of ${EU_CONVERSATION_NEUTRAL_AFFINITY}.` },
+      note: `Conversation quality as Fortune: ${EU_CONVERSATION_QUALITY_SCALE} points per unit from 1.` },
+    { id: EuNode.ConversationQuantity, label: "Quantity", role: "derived", places: 1,
+      note: `Acquaintance against a requirement of ${EU_CONVERSATION_REQUIREMENT}: -100 with nobody, -50 at a tenth, rising slowly toward +${EU_CONVERSATION_QUANTITY_MAX} past it.` },
 
     { id: EuNode.PrevFortune, label: "Fortune last year", role: "input", places: 1,
       note: "Where the Fortune subscore stood at the end of last year." },
@@ -847,7 +943,8 @@ function traceFood(
 // Fortune > Social > Care: how well looked after everyone was, and what it
 // cost the people doing it. See care.ts.
 export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
-    const provision = inputs.careEffort * careSkillFactor(inputs.careSkill);
+    const provision = careProvisionOf(
+        inputs.careEffort, inputs.careSkill, inputs.talkativeness);
     const comfort = careComfort(provision);
     const stress = careStress(inputs.careShare);
     const care = combine2(EuNode.Care, comfort, stress);
@@ -855,6 +952,7 @@ export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
     if (trace !== undefined) {
         trace.put(EuNode.CareEffort, inputs.careEffort);
         trace.put(EuNode.CareSkillLevel, inputs.careSkill);
+        trace.put(EuNode.Talkativeness, inputs.talkativeness);
         trace.put(EuNode.CareShare, inputs.careShare);
         trace.put(EuNode.CareProvision, provision);
         trace.put(EuNode.CareComfort, comfort);
@@ -865,23 +963,23 @@ export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
     return care;
 }
 
-// Fortune > Social > Conversation: how many people outside the clan it knows,
-// and how well it gets on with them.
+// Fortune > Social > Conversation: how good the company was, and how much of
+// it there was, counted for more the better it was.
 export function computeConversation(inputs: FortuneInputs, trace?: EuTrace): number {
     const amount = inputs.conversationAmount;
-    const quantity = EU_CONVERSATION_PER_DOUBLING * Math.log2(
-        (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
-        / EU_CONVERSATION_STANDARD);
-    const quality = EU_CONVERSATION_QUALITY_SCALE
-        * (inputs.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
-    const conversation = combine2(
-        EuNode.Conversation, quantity, quality);
+    const diversity = conversationDiversity(amount);
+    const level = inputs.conversationAppeal * diversity;
+    const quality = EU_CONVERSATION_QUALITY_SCALE * (level - 1);
+    const quantity = conversationQuantityFortune(amount);
+    const conversation = combine2(EuNode.Conversation, quality, quantity);
 
     if (trace !== undefined) {
         trace.put(EuNode.ConversationAmount, amount);
-        trace.put(EuNode.ConversationAffinity, inputs.conversationAffinity);
-        trace.put(EuNode.ConversationQuantity, quantity);
+        trace.put(EuNode.ConversationAppeal, inputs.conversationAppeal);
+        trace.put(EuNode.ConversationDiversity, diversity);
+        trace.put(EuNode.ConversationQualityLevel, level);
         trace.put(EuNode.ConversationQuality, quality);
+        trace.put(EuNode.ConversationQuantity, quantity);
         trace.put(EuNode.Conversation, conversation);
     }
 

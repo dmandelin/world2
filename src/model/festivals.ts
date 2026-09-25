@@ -3,6 +3,7 @@ import { normal } from './lib/distributions';
 import { ces } from './lib/modelbasics';
 import { TradeGoods, type TradeGood } from './trade';
 import type { Clan } from './people/people';
+import { sociableTalkFactor } from './people/talkativeness';
 import type { Settlement } from './people/settlement';
 
 // The settlement's own festivals: the round of gatherings the whole village
@@ -490,6 +491,11 @@ export class FestivalOperation {
 export class FestivalContribution {
     readonly timeRatio: number;
     readonly foodRatio: number;
+    // What the clan's Talkativeness makes of its time: festival work is
+    // mostly people, and goes a little better for a clan that likes to talk.
+    // See talkativeness.ts. Its labor at that is the effective labor.
+    readonly talkFactor: number;
+    readonly effectiveLabor: number;
 
     constructor(
         readonly clan: Clan,
@@ -517,7 +523,9 @@ export class FestivalContribution {
         // This clan's level at the skill the aspect is done with.
         readonly skill: number,
     ) {
-        this.timeRatio = safeDiv(labor, standardLabor, 0);
+        this.talkFactor = sociableTalkFactor(clan.traits.talkativeness);
+        this.effectiveLabor = labor * this.talkFactor;
+        this.timeRatio = safeDiv(this.effectiveLabor, standardLabor, 0);
         this.foodRatio = safeDiv(food, standardFood, 0);
     }
 
@@ -544,8 +552,10 @@ export class FestivalAspectCalc {
     readonly contributions: FestivalContribution[];
 
     // Worker-turns and food laid on across the settlement, against what the
-    // notional standard asks of it.
+    // notional standard asks of it. Effective labor is worker-turns as each
+    // clan's Talkativeness makes of them, which is what the time ratio reads.
     readonly labor: number;
+    readonly effectiveLabor: number;
     readonly standardLabor: number;
     readonly food: number;
     readonly standardFood: number;
@@ -598,13 +608,14 @@ export class FestivalAspectCalc {
                 aspect.skillOf(clan)));
 
         this.labor = sumFun(this.contributions, c => c.labor);
+        this.effectiveLabor = sumFun(this.contributions, c => c.effectiveLabor);
         this.standardLabor = aspect.standardLaborForPopulation(population);
         this.food = sumFun(this.contributions, c => c.food);
         this.standardFood = sumFun(this.contributions, c => c.standardFood);
         this.foodEaten = sumFun(this.contributions, c => c.foodEaten);
         this.foodSacrificed = sumFun(this.contributions, c => c.foodSacrificed);
 
-        this.timeRatio = safeDiv(this.labor, this.standardLabor, 0);
+        this.timeRatio = safeDiv(this.effectiveLabor, this.standardLabor, 0);
         this.foodRatio = safeDiv(this.food, this.standardFood, 0);
 
         this.baseValue = aspect.baseValue(this.timeRatio, this.foodRatio);

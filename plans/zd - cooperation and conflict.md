@@ -651,27 +651,17 @@ about how people feel about different quadrants:
 
 ### Items
 
+(General next themes: We need to hook conversation into the other
+models, get conversations happening across settlements, make some
+concentration via repeat benefits and/or appeal differences. At
+that point, we could have some sort of social network. Then we'd
+be in shape to get back to the next valence points, belonging and
+justice. Belonging would involve firming up how conversation impacts
+aid and other benefits, and probably at that time adding something
+about identity. Justice would be off the conflict model, treated below.)
+
 Conversation:
 
-*   Change how conversation is generated:
-    *   Doing activities together creates opportunities for conversation.
-        Includes productive work, care, leisure, ritual, and other
-        interactions.
-    *   We can have new activities such as Visit or Gift that have
-        the primary effect of generating conversation.
-*   Change effects of conversation
-    *   Eventually we need to make sure it has the right loading of
-        functional effects such as news, gossip, skill exchange, and
-        marriage partners
-    *   But also, it should be a component of Fortune, which can
-        now have 3 separate needs: food, care, and society
-        *   Right now care apparently works as an additive bonus
-            for childhood joy, centered around some baseline.
-        *   Rework so that all are needed with some CES function
-            somewhat like harmonic
-        *   That implies taking these 3 needs to a 0-1 scale
-        *   Maybe use a baseline to get back a 0-centered score
-            when needed
 *   Choices
     *   TODO
 *   Items
@@ -702,17 +692,17 @@ Conversation:
             *   Conflict
             *   Density: the more conversation between a given
                 pair, the easier it gets
-            *   Diversity: may want different benefits, types of
+            x   Diversity: may want different benefits, types of
                 information
     *   Rework how information is based on all this
         *   TODO
-    *   Rework how fortune is based on all this
-        *   3 goods: food, care, conversation
+    x   Rework how fortune is based on all this
+        x   3 goods: food, care, conversation
     *   Other effects
         *   TODO: skill and other learning
         *   TODO: make it influence marriage partners
     *   Benefits to conversation
-        *   +direct enjoyment etc
+        x   +direct enjoyment etc
         *   +alignment
         *   +respect (from name being mentioned more)
         *   -(as in worse stress): there is some cost
@@ -749,3 +739,9 @@ Conflict:
 *   Trial could help or hurt reputation
 *   We can also allow for conflicts that proceed over multiple turns
     *   TODO
+
+*   Some frequency possibilities to think about:
+    *   Homicide: 50 per 100K per year => 1 per ten years in village of 200
+        *   Cause or consequence of conflicts? Probably both.
+    *   Property damage, livestock disputes, civil disputes: lots
+    *   Bullying and abuse: hard to say

@@ -10,15 +10,14 @@
         EU_BEER_PER_SHARE,
         EU_NUTRITION_RATE,
         EU_NUTRITION_SCALE,
-        EU_CONVERSATION_FLOOR,
-        EU_CONVERSATION_NEUTRAL_AFFINITY,
-        EU_CONVERSATION_PER_DOUBLING,
+        EU_CONVERSATION_DIVERSITY_REF,
+        EU_CONVERSATION_HALF_SHARE,
         EU_CONVERSATION_QUALITY_SCALE,
-        EU_CONVERSATION_STANDARD,
+        EU_CONVERSATION_QUANTITY_MAX,
+        EU_CONVERSATION_REQUIREMENT,
         EU_HONEY_PER_SHARE,
         FORTUNE_CHILDREN,
         combinerOf,
-        savorBeta,
         euNodeDef,
         type EuNodeId,
     } from "../../model/self/eudaimonia";
@@ -33,6 +32,7 @@
         NUTRITION_IDEAL_CEREAL_SHARE,
         NUTRITION_MAX,
     } from "../../model/people/nutrition";
+    import { sociableTalkFactor } from "../../model/people/talkativeness";
 
     let {
         report,
@@ -69,10 +69,12 @@
                         >
                     </tr>
                 {/each}
-                {#if combiner.key === "savor"}
+                {#if combiner.weight}
                     <tr>
-                        <td>Taste weight (&beta;)</td>
-                        <td class="v">&times;{u(savorBeta(get(children[0])), 2)}</td>
+                        <td>{combiner.weightLabel}</td>
+                        <td class="v"
+                            >&times;{u(combiner.weight(get(children[0])), 2)}</td
+                        >
                     </tr>
                 {/if}
                 <tr class="result">
@@ -135,7 +137,9 @@
         <div class="line">
             {pctOf(get(EuNode.CareEffort))} effort &times; {pctOf(
                 careSkillFactor(get(EuNode.CareSkillLevel)),
-            )} at skill {u(get(EuNode.CareSkillLevel), 0)} =
+            )} at skill {u(get(EuNode.CareSkillLevel), 0)} &times; {pctOf(
+                sociableTalkFactor(get(EuNode.Talkativeness)),
+            )} at talkativeness {u(get(EuNode.Talkativeness), 0)} =
             {pctOf(get(EuNode.CareProvision))} provided
         </div>
         <div class="line">
@@ -157,30 +161,38 @@
                 ([s, v]) => `${pctOf(s)}: ${n(v, 0)}`,
             ).join(", ")}, straight between them.
         </div>
-    {:else if node === EuNode.ConversationQuantity}
-        <div class="line">
-            {EU_CONVERSATION_PER_DOUBLING} &times; log<sub>2</sub>({u(
-                get(EuNode.ConversationAmount),
-                0,
-            )} known &divide; {EU_CONVERSATION_STANDARD}) =
-            <b>{n(get(EuNode.ConversationQuantity))}</b>
-        </div>
-        <div class="note">
-            People outside the clan its people deal with regularly. Each
-            doubling is worth the same, and knowing fewer than
-            {u(EU_CONVERSATION_FLOOR)} counts as knowing that many.
-        </div>
     {:else if node === EuNode.ConversationQuality}
         <div class="line">
+            {u(get(EuNode.ConversationAppeal), 2)} appeal &times;
+            ({u(get(EuNode.ConversationAmount), 0)} known &divide;
+            {EU_CONVERSATION_DIVERSITY_REF})<sup>1/6</sup> =
+            {u(get(EuNode.ConversationAppeal), 2)} &times;
+            {u(get(EuNode.ConversationDiversity), 2)} =
+            {u(get(EuNode.ConversationQualityLevel), 2)}
+        </div>
+        <div class="line">
             {EU_CONVERSATION_QUALITY_SCALE} &times; ({u(
-                get(EuNode.ConversationAffinity),
+                get(EuNode.ConversationQualityLevel),
                 2,
-            )} affinity &minus; {EU_CONVERSATION_NEUTRAL_AFFINITY}) =
-            <b>{n(get(EuNode.ConversationQuality))}</b>
+            )} &minus; 1) = <b>{n(get(EuNode.ConversationQuality))}</b>
         </div>
         <div class="note">
-            The clan's affinity for the clans it talks with, averaged by how
-            many of each it knows.
+            Appeal is how much the clan wants to spend its time on the clans it
+            talks with, averaged by how many of each it knows. Diversity is
+            how many people that is.
+        </div>
+    {:else if node === EuNode.ConversationQuantity}
+        <div class="line">
+            {u(get(EuNode.ConversationAmount), 0)} known &divide;
+            {EU_CONVERSATION_REQUIREMENT} required =
+            {pctOf(get(EuNode.ConversationAmount) / EU_CONVERSATION_REQUIREMENT)}
+            &rarr; <b>{n(get(EuNode.ConversationQuantity))}</b>
+        </div>
+        <div class="note">
+            &minus;100 with nobody to talk to, &minus;50 at
+            {pctOf(EU_CONVERSATION_HALF_SHARE)} of the requirement, about
+            &minus;19 at half, 0 at the requirement, and rising slowly toward
+            +{EU_CONVERSATION_QUANTITY_MAX} past it.
         </div>
     {/if}
 

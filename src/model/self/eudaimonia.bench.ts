@@ -46,17 +46,16 @@ import {
     EU_HONEY_PER_SHARE,
     EU_BEER_PER_SHARE,
     EU_BEER_MAX,
-    EU_CONVERSATION_FLOOR,
-    EU_CONVERSATION_NEUTRAL_AFFINITY,
-    EU_CONVERSATION_PER_DOUBLING,
     EU_CONVERSATION_QUALITY_SCALE,
-    EU_CONVERSATION_STANDARD,
+    conversationDiversity,
+    conversationQuantityFortune,
+    engageGamma,
     EU_BLEND_UP_SCALE,
     EU_BLEND_DOWN_SCALE,
 } from "./eudaimonia";
 // Care's two terms are called rather than written out: stress walks a table
 // of knots, which inlining by hand would only obscure.
-import { careComfort, careSkillFactor, careStress } from "../people/care";
+import { careComfort, careProvisionOf, careStress } from "../people/care";
 import { foodBalance, nutritionFromRaw } from "../people/nutrition";
 
 // --- What we are comparing against ----------------------------------------
@@ -96,15 +95,14 @@ function inlineFortune(prevFortune: number, x: FortuneInputs): number {
     const beerRaw = EU_BEER_PER_SHARE * x.cerealShare;
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
     const food = nutrition + savorBeta(nutrition) * (honey + beer);
-    const care = careComfort(x.careEffort * careSkillFactor(x.careSkill))
+    const care = careComfort(
+        careProvisionOf(x.careEffort, x.careSkill, x.talkativeness))
         + careStress(x.careShare);
     const amount = x.conversationAmount;
-    const conversation = blend2(
-        EU_CONVERSATION_PER_DOUBLING * Math.log2(
-            (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
-            / EU_CONVERSATION_STANDARD),
-        EU_CONVERSATION_QUALITY_SCALE
-            * (x.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY));
+    const convQuality = EU_CONVERSATION_QUALITY_SCALE
+        * (x.conversationAppeal * conversationDiversity(amount) - 1);
+    const conversation = convQuality
+        + engageGamma(convQuality) * conversationQuantityFortune(amount);
     const signal = blend2(food, blend2(care, conversation));
     return prevFortune + EU_FORTUNE_DECAY * (signal - prevFortune);
 }
@@ -142,17 +140,16 @@ function buildDetail(
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
     const taste = honey + beer;
     const food = nutrition + savorBeta(nutrition) * taste;
-    const provision = x.careEffort * careSkillFactor(x.careSkill);
+    const provision = careProvisionOf(x.careEffort, x.careSkill, x.talkativeness);
     const comfort = careComfort(provision);
     const stress = careStress(x.careShare);
     const care = comfort + stress;
     const amount = x.conversationAmount;
-    const convQuantity = EU_CONVERSATION_PER_DOUBLING * Math.log2(
-        (amount > EU_CONVERSATION_FLOOR ? amount : EU_CONVERSATION_FLOOR)
-        / EU_CONVERSATION_STANDARD);
+    const diversity = conversationDiversity(amount);
     const convQuality = EU_CONVERSATION_QUALITY_SCALE
-        * (x.conversationAffinity - EU_CONVERSATION_NEUTRAL_AFFINITY);
-    const conversation = blend2(convQuantity, convQuality);
+        * (x.conversationAppeal * diversity - 1);
+    const convQuantity = conversationQuantityFortune(amount);
+    const conversation = convQuality + engageGamma(convQuality) * convQuantity;
     const social = blend2(care, conversation);
     const signal = blend2(food, social);
     const fortunePull = EU_FORTUNE_DECAY * (signal - prevFortune);
@@ -187,7 +184,8 @@ function buildDetail(
     m.set("stress", new DetailItem("Stress", stress, "Cost of it"));
     m.set("care", new DetailItem("Care", care, "Added"));
     m.set("convQuantity", new DetailItem("Quantity", convQuantity, "People known"));
-    m.set("convQuality", new DetailItem("Quality", convQuality, "Affinity"));
+    m.set("diversity", new DetailItem("Diversity", diversity, "People known"));
+    m.set("convQuality", new DetailItem("Quality", convQuality, "Appeal x diversity"));
     m.set("conversation", new DetailItem("Conversation", conversation, "This year"));
     m.set("social", new DetailItem("Social", social, "This year"));
     m.set("signal", new DetailItem("Fortune signal", signal, "This year"));
@@ -211,7 +209,7 @@ const careEffort = new Float64Array(N_CASES);
 const careShare = new Float64Array(N_CASES);
 const careSkill = new Float64Array(N_CASES);
 const known = new Float64Array(N_CASES);
-const affinity = new Float64Array(N_CASES);
+const appeal = new Float64Array(N_CASES);
 
 // Fixed seed so runs compare to each other.
 let seed = 12345;
@@ -229,7 +227,7 @@ for (let i = 0; i < N_CASES; ++i) {
     careShare[i] = rnd() * 0.5;
     careSkill[i] = 20 + rnd() * 60;
     known[i] = rnd() * 200;
-    affinity[i] = 0.3 + rnd() * 0.6;
+    appeal[i] = 0.5 + rnd();
 }
 
 // One inputs object, refilled per case, as the turn loop does.
@@ -242,7 +240,7 @@ function fill(j: number): FortuneInputs {
     inputs.careShare = careShare[j];
     inputs.careSkill = careSkill[j];
     inputs.conversationAmount = known[j];
-    inputs.conversationAffinity = affinity[j];
+    inputs.conversationAppeal = appeal[j];
     return inputs;
 }
 

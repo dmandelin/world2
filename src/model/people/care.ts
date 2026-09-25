@@ -1,5 +1,6 @@
 import { clamp } from "../lib/basics";
 import type { Clan } from "./people";
+import { sociableTalkFactor } from "./talkativeness";
 
 // Care: looking after the people who can't look after themselves -- feeding
 // the small, nursing the sick, keeping the old warm and the young out of the
@@ -53,6 +54,15 @@ export function desiredCareRatio(nurture: number): number {
 // How much looking after a unit of care effort gets done.
 export function careSkillFactor(skill: number): number {
     return Math.pow(CARE_FACTOR_PER_15, (skill - 50) / 15);
+}
+
+// Care provided, against what the children need: the effort given against
+// the standard, times what the clan's skill makes of it, times what its
+// Talkativeness does -- looking after people goes a little better for a clan
+// that likes to talk. See talkativeness.ts.
+export function careProvisionOf(
+    effortRatio: number, skill: number, talkativeness: number): number {
+    return effortRatio * careSkillFactor(skill) * sociableTalkFactor(talkativeness);
 }
 
 // Held inside this range before any effect is read off it, so a clan with

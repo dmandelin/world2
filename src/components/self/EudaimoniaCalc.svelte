@@ -136,7 +136,7 @@
                 >
                 <span class="sep">·</span>
                 <span
-                    ><b>{u(r.get(EuNode.ConversationAffinity), 2)}</b> affinity</span
+                    ><b>{u(r.get(EuNode.ConversationAppeal), 2)}</b> appeal</span
                 >
             </div>
 

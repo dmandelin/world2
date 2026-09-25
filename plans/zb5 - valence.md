@@ -289,10 +289,8 @@ need them initially.
 *   Influences mood directly and also explicitly valued
     in ways that are fairly universal
     *   Mostly about freedom from want
-        v   Food - quantity, quality, and consistency
-        v   Needed support and care
-            v   Kin care and parenting - quality of care and carer
-                workload/support
+        x   Food - quantity, quality, and consistency
+        x   Needed support and care
         *   Affiliation and belonging
             *   Includes role/employment, conversation, gatherings
             *   Psychosocial stress might be considered as

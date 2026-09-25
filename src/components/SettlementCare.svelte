@@ -19,6 +19,7 @@
     } from "../model/people/care";
     import { eudaimoniaAverage } from "../model/self/eudaimonia";
     import { signed } from "../model/lib/format";
+    import { sociableTalkFactor } from "../model/people/talkativeness";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
@@ -119,8 +120,16 @@
                     mid: 1,
                 },
                 {
+                    label: "Talkativeness factor",
+                    note: "Looking after people goes a little better for a clan that likes to talk: 105% per 15 points of Talkativeness above 50.",
+                    value: (c) => sociableTalkFactor(c.traits.talkativeness),
+                    format: times,
+                    sense: 1,
+                    mid: 1,
+                },
+                {
                     label: "Care provided",
-                    note: "Effort given times the skill factor: how much of what the children need was actually done.",
+                    note: "Effort given times the skill and Talkativeness factors: how much of what the children need was actually done.",
                     value: (c) => c.careProvision,
                     format: pct,
                     sense: 1,

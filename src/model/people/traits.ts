@@ -1,5 +1,6 @@
 import { clamp } from "../lib/basics";
 import { normal, poisson } from "../lib/distributions";
+import { TALKATIVENESS_SD } from "./talkativeness";
 
 // Nurture: how much care a clan wants to give its children, against the
 // standard they need. See care.ts.
@@ -15,9 +16,9 @@ function randomTraitStat(sd: number = 12): number {
     return clamp(Math.round(normal(50, sd)), 0, 100);
 }
 
-// Wider than the other 0-100 traits: clans differ a good deal in how much
-// they have to say.
-const TALKATIVENESS_SD = 15;
+// Talkativeness is wider than the other 0-100 traits: clans differ a good deal
+// in how much they have to say. TALKATIVENESS_SD lives in talkativeness.ts,
+// since what the trait does to work is measured in it.
 
 // Giving: a direct +/- modifier to the per-capita food threshold a clan
 // keeps for itself before its surplus becomes available as aid (see

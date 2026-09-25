@@ -71,6 +71,7 @@ export function ditchingProductivity(clan: Clan): Productivity {
             SkillDefs.Irrigation.name,
             clan.skills.v(SkillDefs.Irrigation),
             DITCHING_SKILL_WEIGHT),
+        ProductivityItem.fromTalkativeness(clan),
     ]);
 }
 

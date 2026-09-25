@@ -4,7 +4,7 @@ import { clamp, randInt, remove, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
 import { membershipChanged } from "./membership";
 import { Activities, EffortAllocation } from "../decisions/effort";
-import { careSkillFactor } from "./care";
+import { careProvisionOf } from "./care";
 import { nutritionFromRaw, nutritionOf } from "./nutrition";
 import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
@@ -193,7 +193,9 @@ export class Clan implements TradePartner {
     // need: the care effort given against the standard, times what the
     // clan's skill makes of it. See care.ts.
     get careProvision(): number {
-        return this.effortAllocation.careRatio * careSkillFactor(this.careSkill);
+        return careProvisionOf(
+            this.effortAllocation.careRatio, this.careSkill,
+            this.traits.talkativeness);
     }
 
     // The clan's nutritional state this year, where 1 is everything its
@@ -410,6 +412,7 @@ export class Clan implements TradePartner {
         inputs.careEffort = this.effortAllocation.careRatio;
         inputs.careSkill = this.careSkill;
         inputs.careShare = this.effortAllocation.get(Activities.Care);
+        inputs.talkativeness = this.traits.talkativeness;
         readConversationForFortune(this, inputs);
         this.eudaimonia.update(
             change.births,
