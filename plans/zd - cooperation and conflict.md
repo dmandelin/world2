@@ -665,57 +665,38 @@ Conversation:
 *   Choices
     *   TODO
 *   Items
-    x   Redo how attention is allocated
-        x   Change attention so that it's based on activities and relationships,
-            with selective matching happening *within* that.
-        x   Tune so that in a village of 150, each clan has conversation with
-            strength (= conversation amount/object clan population) averaging
-            about 0.5 across other clans.
-    x   Add affinities:
-        x   Affinity concept
-        x   Random dyadic value
-        x   Affinity influences alignment
-    x   Rework conversation supply
-        x   Basic new model
-        x   Different levels of talkativeness per clan
     *   Conversation appeal
         *   Factors
             x   Affinity should help
-            *   Desire to have relationship for other benefits should help
+            x   Diversity: may want different benefits, types of
+                information
+            *   (P1) Density: the more conversation between a given
+                pair, the easier it gets
+            *   (P1) Distance should hurt
+            *   (P2) Desire to have relationship for other benefits should help
                 *   Food aid
                 *   Ritual aid
                 *   Marriage!
-            *   Distance should hurt
-            *   Piety
-            *   Sociability?
-            *   Bellicosity
-            *   Conflict
-            *   Density: the more conversation between a given
-                pair, the easier it gets
-            x   Diversity: may want different benefits, types of
-                information
+            *   (P2) Conflict
+            *   (P3) Piety
+            *   (P3) Sociability?
+            *   (P3) Bellicosity
     *   Rework how information is based on all this
-        *   TODO
-    x   Rework how fortune is based on all this
-        x   3 goods: food, care, conversation
-    *   Other effects
-        *   TODO: skill and other learning
-        *   TODO: make it influence marriage partners
+        *   (P2) TODO
     *   Benefits to conversation
         x   +direct enjoyment etc
-        *   +alignment
-        *   +respect (from name being mentioned more)
-        *   -(as in worse stress): there is some cost
-        *   +ability to imitiate behaviors of partners
-        *   +ability to learn skills from partners
-        *   +ability to marry
-        *   +ability to get food aid
-        *   +ability to get ritual aid
-        *   +ability to influence
-        *   +gain information about other clans
+        *   (P1) +alignment
+        *   (P1) +gain information about other clans
             *   In particular, there should be some point about defense
                 here, being more protected against conflict actions
-
+        *   (P2) +respect (from name being mentioned more)
+        *   (P2) +ability to imitiate behaviors of partners
+        *   (P2) +ability to learn skills from partners
+        *   (P2) +ability to marry
+        *   (P2) +ability to get food aid
+        *   (P2) +ability to get ritual aid
+        *   (P2) +ability to influence
+        *   (P3) -(as in worse stress): there is some cost
 
     *   Later: Add Visiting activity to account for relatives and friends
         conversation time
