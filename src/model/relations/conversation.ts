@@ -788,11 +788,21 @@ export function conversationPayoff(clan: Clan | ClanDTO): number {
     return CONVERSATION_QOL_SCALE * total;
 }
 
+// What one clan's conversation with another is worth to it: the strength of
+// it -- the share of the other clan it knows -- times its Conversation Appeal
+// for that clan. The Conversation panel shows this per pair, and Fortune reads
+// it through readConversationForFortune.
+export function conversationValueOf(
+    strength: number, subject: Clan | ClanDTO, partner: Clan | ClanDTO): number {
+    return strength * appealOf(subject, partner);
+}
+
 // What Fortune reads of a clan's conversation this year, written into its
 // inputs: how many people outside the clan its people deal with, and its
-// Conversation Appeal for their clans averaged by how many of each it knows.
-// A clan that talks with nobody reads neutral on appeal, since there is
-// nobody to find appealing or not; see eudaimonia.ts.
+// Conversation Appeal for their clans averaged by how many of each it knows
+// -- the per-pair conversation values, scaled by each partner's size and
+// divided by the acquaintance. A clan that talks with nobody reads neutral on
+// appeal, since there is nobody to find appealing or not; see eudaimonia.ts.
 export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): void {
     let amount = 0;
     let appeal = 0;
@@ -801,9 +811,9 @@ export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): v
         if (!other) continue;
         for (const interaction of interactions) {
             if (!(interaction instanceof Conversation)) continue;
-            const known = interaction.strength * other.population;
-            amount += known;
-            appeal += known * appealOf(clan, other);
+            amount += interaction.strength * other.population;
+            appeal += conversationValueOf(interaction.strength, clan, other)
+                * other.population;
         }
     }
     inputs.conversationAmount = amount;

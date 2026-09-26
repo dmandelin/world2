@@ -22,6 +22,7 @@
         APPEAL_FLOOR,
         TALKATIVENESS_DOUBLING,
         getRelativeAttention,
+        conversationValueOf,
         type ConversationSource,
         type ConversationItem,
     } from "../model/relations/conversation";
@@ -105,9 +106,13 @@
         return getRelativeAttention(rowClan, colClan) * colClan.population;
     }
 
-    // Value: Same as amount for now
+    // Value: the strength of the conversation -- the share of the column
+    // clan the row clan knows -- times the row clan's appeal for it. The same
+    // per-pair value Fortune's Conversation Quality is built from.
     function valueCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
-        return getRelativeAttention(rowClan, colClan);
+        if (rowClan.uuid === colClan.uuid) return 0;
+        return conversationValueOf(
+            getRelativeAttention(rowClan, colClan), rowClan, colClan);
     }
 
     // Offer Supply Totals
@@ -226,33 +231,44 @@
         return total;
     }
 
-    // Value Totals
-    function rowValueTotal(rowClan: ClanDTO): number {
+    // Value Averages: plain means over the other clans, since the cells are
+    // shares of different clans and do not add up to anything.
+    function rowValueAvg(rowClan: ClanDTO): number {
         let total = 0;
+        let count = 0;
         for (const colClan of settlement.clans) {
             if (rowClan.uuid !== colClan.uuid) {
                 total += valueCellValue(rowClan, colClan);
+                ++count;
             }
         }
-        return total;
+        return count > 0 ? total / count : 0;
     }
 
-    function colValueTotal(colClan: ClanDTO): number {
+    function colValueAvg(colClan: ClanDTO): number {
         let total = 0;
+        let count = 0;
         for (const rowClan of settlement.clans) {
             if (rowClan.uuid !== colClan.uuid) {
                 total += valueCellValue(rowClan, colClan);
+                ++count;
             }
         }
-        return total;
+        return count > 0 ? total / count : 0;
     }
 
-    function grandValueTotal(): number {
+    function grandValueAvg(): number {
         let total = 0;
+        let count = 0;
         for (const rowClan of settlement.clans) {
-            total += rowValueTotal(rowClan);
+            for (const colClan of settlement.clans) {
+                if (rowClan.uuid !== colClan.uuid) {
+                    total += valueCellValue(rowClan, colClan);
+                    ++count;
+                }
+            }
         }
-        return total;
+        return count > 0 ? total / count : 0;
     }
 
     // Helper for explaining offer items
@@ -311,6 +327,20 @@
     function amountStyle(value: number): string | undefined {
         const i = Math.min(AMOUNT_PALETTE.length - 1, Math.max(0, Math.floor(value / 10)));
         return `background-color: ${AMOUNT_PALETTE[i]};`;
+    }
+
+    // Conversation value reads as how much good a clan got of it: pale at
+    // nothing, through a soft sage, to a deep green where the company was
+    // both plentiful and wanted. Brackets of 10%, the last open-ended from
+    // 90%, which is about where knowing nearly all of a clan one likes lands.
+    const VALUE_PALETTE = [
+        "#f3f4ef", "#e8efdf", "#dbe8cc", "#cce0b8", "#bbd6a3",
+        "#a8ca8e", "#93bc7b", "#7dad6b", "#679c5e", "#528a54",
+    ];
+
+    function valueStyle(value: number): string | undefined {
+        const i = Math.min(VALUE_PALETTE.length - 1, Math.max(0, Math.floor(value * 10)));
+        return `background-color: ${VALUE_PALETTE[i]};`;
     }
 
     // Color only the clan-by-clan cells, not the totals, averages or the
@@ -471,37 +501,37 @@
         ), amountStyle);
     });
 
-    // Build Value table (Total column & Total row)
+    // Build Value table (Avg column & Avg row)
     let valueTable = $derived.by(() => {
         const initialCols = [
             {
-                label: "Total",
+                label: "Avg",
                 valueFn: (row: any) =>
-                    isClanDTO(row) ? rowValueTotal(row) : grandValueTotal(),
-                formatFn: (v: number) => unsigned(v, 2),
+                    isClanDTO(row) ? rowValueAvg(row) : grandValueAvg(),
+                formatFn: (v: number) => pct(v),
                 class: "total-col",
             },
         ];
 
         const initialRows = [
             {
-                label: "Total",
+                label: "Avg",
                 divider: true,
                 valueFn: (col: any) =>
-                    isClanDTO(col) ? colValueTotal(col) : grandValueTotal(),
-                formatFn: (v: number) => unsigned(v, 2),
+                    isClanDTO(col) ? colValueAvg(col) : grandValueAvg(),
+                formatFn: (v: number) => pct(v),
                 class: "total-row",
             },
         ];
 
-        return buildCrossTab(
+        return colorClanCells(buildCrossTab(
             valueCellValue,
-            unsignedFormat(2),
+            (v: number) => pct(v),
             valueCellTooltip,
             false,
             initialCols,
             initialRows,
-        );
+        ), valueStyle);
     });
 </script>
 
@@ -679,15 +709,21 @@
 {/snippet}
 
 {#snippet valueCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+    {@const strength = getRelativeAttention(subject, object)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
-            Conversation Value: {subject.name} &amp; {object.name}
+            Conversation Value: {subject.name} &rarr; {object.name}
         </div>
         <div>
-            <strong>Value Score:</strong> {unsigned(value, 2)}
+            {pct(strength)} of {object.name} known
+            &times; {unsigned(appealOf(subject, object), 2)} appeal
+            = <strong>{pct(value)}</strong>
         </div>
         <div style="font-size: 0.85em; color: #666; margin-top: 0.35rem; font-style: italic;">
-            Currently equals matched conversation amount; will be elaborated with relationship dynamics in future updates.
+            How much {subject.name}'s conversation with {object.name} is worth
+            to it: how much of {object.name} it knows, times how much it wants
+            to spend its time on them. Fortune's Conversation Quality averages
+            these by how many people each is.
         </div>
     </div>
 {/snippet}
@@ -775,7 +811,7 @@
                 <span class="info-badge">ℹ️</span>
                 <Tooltip2>
                     <div class="header-tooltip-box">
-                        Subjective value of conversation between clans (currently identical to conversation amount). Includes total rows and columns at top and left.
+                        What each clan's conversation with each other clan is worth to it: the share of the other clan it knows, times its appeal for them. The average row and column at top and left are plain means over the other clans.
                     </div>
                 </Tooltip2>
             </h3>
