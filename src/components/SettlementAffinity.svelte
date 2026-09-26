@@ -7,7 +7,7 @@
     import { pct, signed, unsigned, unsignedFormat } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
-    import { AffNode } from "../model/relations/affinity";
+    import AffinityCalc from "./relations/AffinityCalc.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
@@ -107,14 +107,6 @@
         return t;
     }
     let alignmentTable = $derived(buildAlignmentTable());
-
-    function formatStep(value: number, role: string, id: string): string {
-        // The temperament parts are offsets around 0, not shares.
-        if (id === AffNode.TemperamentShared || id === AffNode.TemperamentOwn)
-            return signed(value, 2);
-        if (role === "input") return pct(value);
-        return value.toFixed(2);
-    }
 </script>
 
 {#snippet alignmentCellTooltip(
@@ -167,39 +159,8 @@
 {/snippet}
 
 {#snippet cellTooltip(value: number | null, subject: ClanDTO, object: ClanDTO)}
-    {@const affinity = world.affinityToward(subject, object)}
-    {#if affinity && value !== null}
-        {@const report = affinity.report(subject, object)}
-        <div class="tip">
-            <strong>Affinity ({subject.name} → {object.name})</strong>
-            <table>
-                <tbody>
-                    {#each report.steps as { def, value: v }}
-                        <tr
-                            class:factor={def.role === "factor"}
-                            class:input={def.role === "input"}
-                            class:result={def.role === "result"}
-                            title={def.note}
-                        >
-                            <td>{def.label}</td>
-                            <td class="num">{formatStep(v, def.role, def.id)}</td>
-                        </tr>
-                    {/each}
-                    <tr class="input">
-                        <td>{subject.name} average</td>
-                        <td class="num">{affinity.mean.toFixed(2)}</td>
-                    </tr>
-                    <tr class="result">
-                        <td>Relative</td>
-                        <td class="num">{signed(affinity.relative, 2)}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p class="note">
-                Relative = (affinity − average) / (1 − average), the average
-                being over the clans {subject.name} knows.
-            </p>
-        </div>
+    {#if value !== null}
+        <AffinityCalc {subject} {object} />
     {/if}
 {/snippet}
 
@@ -296,35 +257,5 @@
         border: 1px solid #e2d9c8;
         border-radius: 6px;
         background-color: #faf6ea;
-    }
-    .tip {
-        font-size: 0.9em;
-        padding: 0.25rem;
-        min-width: 260px;
-    }
-    .tip table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 0.25rem;
-    }
-    .tip td {
-        padding: 0.05rem 0.25rem;
-    }
-    .tip .num {
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-    }
-    .tip tr.input td {
-        color: #777;
-        padding-left: 1rem;
-    }
-    .tip tr.result td {
-        font-weight: bold;
-        border-top: 1px solid #ccc;
-    }
-    .tip .note {
-        margin: 0.25rem 0 0;
-        color: #666;
-        font-size: 0.85em;
     }
 </style>

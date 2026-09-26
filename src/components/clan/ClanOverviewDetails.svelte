@@ -1,7 +1,14 @@
 <script lang="ts">
     import type { ClanDTO } from "../../model/records/dtos";
     import TableView2 from "../tables/TableView2.svelte";
-    import { alignmentStyle, conversationValueStyle } from "../tables/cellColors";
+    import {
+        affinityStyle,
+        alignmentStyle,
+        conversationAmountStyle,
+        conversationAppealStyle,
+        conversationValueStyle,
+    } from "../tables/cellColors";
+    import AffinityCalc from "../relations/AffinityCalc.svelte";
     import EntityLink from "../state/EntityLink.svelte";
     import { IterableTable } from "../tables/tables2";
     import {
@@ -14,9 +21,12 @@
     } from "../../model/relations/connection";
     import { pct, signed, unsigned } from "../../model/lib/format";
     import {
+        AFFINITY_APPEAL_WEIGHT,
+        APPEAL_FLOOR,
         appealOf,
         conversationValueOf,
         getRelativeAttention,
+        relativeAffinityOf,
     } from "../../model/relations/conversation";
     import { sortedByKey } from "../../model/lib/basics";
 
@@ -100,6 +110,36 @@
                     valueFn: (other) => getRelationshipTypes(other),
                 },
                 {
+                    data: "Affinity",
+                    label: "Affinity",
+                    headerTooltip: `How much ${clan.name} has in common with the other clan, 0 to 100`,
+                    valueFn: (other) =>
+                        world.affinityToward(clan, other)?.absolute ?? NaN,
+                    formatFn: (v: number) =>
+                        Number.isFinite(v) ? unsigned(100 * v, 0) : "-",
+                    tooltip: affinityTooltip,
+                    cellStyleFn: (v: number) => affinityStyle(v),
+                },
+                {
+                    data: "Appeal",
+                    label: "Appeal",
+                    headerTooltip: `Conversation appeal: how much ${clan.name} wants to spend its time on the other clan, 1 being neutral`,
+                    valueFn: (other) => appealOf(clan, other),
+                    formatFn: (v: number) => unsigned(v, 2),
+                    tooltip: appealTooltip,
+                    cellStyleFn: (v: number) => conversationAppealStyle(v),
+                },
+                {
+                    data: "Amount",
+                    label: "Amount",
+                    headerTooltip: `Conversation amount: how many of the other clan's people ${clan.name} deals with regularly`,
+                    valueFn: (other) =>
+                        getRelativeAttention(clan, other) * other.population,
+                    formatFn: (v: number) => unsigned(v, 0),
+                    tooltip: amountTooltip,
+                    cellStyleFn: (v: number) => conversationAmountStyle(v),
+                },
+                {
                     data: "Conversation",
                     label: "Talk",
                     valueFn: (other) => conversationValue(other),
@@ -144,6 +184,46 @@
     {:else}
         {name}
     {/if}
+{/snippet}
+
+{#snippet affinityTooltip(val: number, other: ClanDTO)}
+    <AffinityCalc subject={clan} object={other} />
+{/snippet}
+
+{#snippet appealTooltip(val: number, other: ClanDTO)}
+    {@const rel = relativeAffinityOf(clan, other)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 240px;">
+        <div>
+            1 + {AFFINITY_APPEAL_WEIGHT} &times; {signed(rel, 2)} relative
+            affinity =
+            {#if 1 + AFFINITY_APPEAL_WEIGHT * rel < APPEAL_FLOOR}
+                {unsigned(1 + AFFINITY_APPEAL_WEIGHT * rel, 2)}, held at the
+                floor of
+            {/if}
+            <strong>{unsigned(val, 2)}</strong>
+        </div>
+        <div style="font-size: 0.85em; color: #666; margin-top: 0.35rem;">
+            How much {clan.name} wants to spend its time on {other.name},
+            against the clans it knows on average: it seeks out the ones it has
+            more in common with. Never below {unsigned(APPEAL_FLOOR, 2)}, since
+            villagers still have to get past each other in the lane.
+        </div>
+    </div>
+{/snippet}
+
+{#snippet amountTooltip(val: number, other: ClanDTO)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 240px;">
+        <div>
+            {pct(getRelativeAttention(clan, other))} of {other.name}'s
+            {other.population} people = <strong>{unsigned(val, 1)}</strong>
+            known
+        </div>
+        <div style="font-size: 0.85em; color: #666; margin-top: 0.35rem;">
+            How many of {other.name}'s people {clan.name} deals with regularly:
+            the conversation's strength, the same both ways, times their
+            number.
+        </div>
+    </div>
 {/snippet}
 
 {#snippet conversationTooltip(val: number, other: ClanDTO)}

@@ -9,7 +9,11 @@
     } from "../model/lib/format";
     import { sortedByKey, sumFun } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
-    import { conversationValueStyle } from "./tables/cellColors";
+    import {
+        conversationAmountStyle,
+        conversationAppealStyle,
+        conversationValueStyle,
+    } from "./tables/cellColors";
     import type { Snippet } from "svelte";
     import Tooltip2 from "./Tooltip2.svelte";
     import {
@@ -296,32 +300,13 @@
 
     // --- Cell colors ----------------------------------------------------------
     //
-    // Appeal reads as warmth: how drawn one clan is to another's company.
-    // Cool, quiet slate for the ones it keeps away from, soft apricot deepening
-    // toward terracotta for the ones it seeks out. Brackets every 0.1 either
-    // side of a neutral 0.95-1.05.
-    const APPEAL_COOL = ["#e9eef0", "#d8e1e6", "#c4d2da", "#adc1cc", "#94aebd"];
-    const APPEAL_WARM = ["#fbeedc", "#f7ddbd", "#f2c79b", "#eaad7c", "#df9063"];
+    // Appeal's colors are shared with the clan overview's relationships
+    // table; see cellColors.ts.
+    const appealStyle = conversationAppealStyle;
 
-    function appealStyle(value: number): string | undefined {
-        const steps = Math.floor(Math.abs(value - 1) / 0.1 + 0.5);
-        if (steps === 0) return undefined;
-        const palette = value > 1 ? APPEAL_WARM : APPEAL_COOL;
-        return `background-color: ${palette[Math.min(steps, palette.length) - 1]};`;
-    }
-
-    // Conversation in people reads as how lively it gets: still and pale at
-    // nothing, through butter and apricot, to a bright coral-rose where the
-    // talk fizzes. Brackets of 10 people, the last open-ended from 90.
-    const AMOUNT_PALETTE = [
-        "#f4f1ea", "#f3ecd2", "#f4e3b0", "#f6d88c", "#f7c870",
-        "#f6b25f", "#f39a58", "#ec805b", "#e0676a", "#d0547d",
-    ];
-
-    function amountStyle(value: number): string | undefined {
-        const i = Math.min(AMOUNT_PALETTE.length - 1, Math.max(0, Math.floor(value / 10)));
-        return `background-color: ${AMOUNT_PALETTE[i]};`;
-    }
+    // Conversation amount's colors are shared with the clan overview's
+    // relationships table; see cellColors.ts.
+    const amountStyle = conversationAmountStyle;
 
     // Conversation value's colors are shared with the clan overview's
     // relationships table; see cellColors.ts.
