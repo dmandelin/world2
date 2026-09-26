@@ -672,6 +672,37 @@ Conversation:
                 information
             *   (P1) Density: the more conversation between a given
                 pair, the easier it gets
+                *   How does this work in detail?
+                    *   One factor would be that if by conversation
+                        people become more similar, then affinity
+                        would rise.
+                        *   We could also have the idiosyncratic
+                            affinity factor rise!
+                        *   This should be able to make people less
+                            similar to others, so that the factors
+                            don't all just go really high
+                        *   The idiosyncratic affinity could be based
+                            on a fingerprint, but honestly I think it's
+                            more inscrutable than that
+                    *   So let's start making people learn from each
+                        other through conversation. We'll initially
+                        want them to be able to specifically alter the
+                        things that affect affinity:
+                        *   Relationships: become friends or form new
+                            kinship relationship
+                        *   Farming ratio: imitate others by prestige
+                            plus conversation
+                        *   Residence: fixed by farming ratio now but
+                            could also involve nesting fraction
+                            *   Might want to add care practices here
+                                too
+                        *   Idiosyncratic: Let's let this rise if they
+                            interact more often, but then lower idiosyncratic
+                            factor with others
+                            *   Might also work to make this relative
+                                in general.
+                        *   For later: Should alignments toward others
+                            be an important affinity matching item.
             *   (P1) Distance should hurt
             *   (P2) Desire to have relationship for other benefits should help
                 *   Food aid
