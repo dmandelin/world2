@@ -7,15 +7,15 @@
 //
 // It is made of factors, each between 0 and 1, averaged together:
 //
-//     Kinship     whether one is a cadet of the other
+//     Kinship     1 for the clan itself, 0.5 if one is a cadet of the other
 //     Residence   how alike they are in time spent living in the settlement
 //     Livelihood  how alike they are in farming against fishing
 //     Temperament an unexplained liking, unique to the pair, slowly drifting
 //
 // A clan has affinity exactly 1 with itself: it is its own kin and lives
-// exactly as it does. Two clans that
-// are identical in every respect but are not the same clan come to 1 apart
-// from temperament.
+// exactly as it does. No other clan is quite that close: a senior and cadet
+// pair that are identical in every other respect still fall short of 1 by
+// half a kinship, and on top of that by temperament.
 //
 // Affinity is directional. The factors above are symmetric except for
 // temperament, which is part shared by the pair and part each side's own. What
@@ -75,6 +75,11 @@ const STEP_FACTOR = Math.sqrt(2 * TEMPERAMENT_PULL - TEMPERAMENT_PULL ** 2);
 // affinity is not meaningful (every clan it knows is as dear as itself).
 const MIN_RELATIVE_SPAN = 1e-6;
 
+// Kinship between a senior clan and its cadet, or the other way. A split
+// clan is still family, but it is not the clan itself: it is half the way
+// there.
+export const KIN_CADET_KINSHIP = 0.5;
+
 // --- Nodes ----------------------------------------------------------------
 
 export const AffNode = {
@@ -104,7 +109,7 @@ export interface AffNodeDef {
 
 export const AFF_NODES: readonly AffNodeDef[] = [
     { id: AffNode.Kinship, label: "Kinship", role: "factor",
-      note: "1 if one clan is a cadet of the other." },
+      note: `${KIN_CADET_KINSHIP} if one clan is a cadet of the other; 1 only for the clan itself.` },
     { id: AffNode.SubjectResidence, label: "Own residence", role: "input",
       note: "Share of the year the subject spends in the settlement." },
     { id: AffNode.ObjectResidence, label: "Their residence", role: "input",
@@ -170,7 +175,9 @@ export function computeAffinity<T extends Clan | ClanDTO>(
     const self = subject.uuid === object.uuid;
     const connections = subject.world.connections;
 
-    const kinship = self || connections.getForType(subject, object, KinConnection) ? 1 : 0;
+    const kinship = self ? 1
+        : connections.getForType(subject, object, KinConnection) ? KIN_CADET_KINSHIP
+        : 0;
 
     const subjectResidence = subject.residenceFraction;
     const objectResidence = object.residenceFraction;
