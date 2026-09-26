@@ -454,6 +454,11 @@ export class World implements NoteTaker {
         this.conflicts.advance();
         marry(this);
         migrate(this);
+        // Clans that moved have new neighbors now, not at next turn's
+        // planning: the end-of-turn perceptions and the snapshot both read
+        // who lives with whom. This turn's conversations and help were
+        // already planned from where clans were, and stand.
+        this.planConnections();
 
         // Advance within clusters.
         for (const cl of this.clusters) {
