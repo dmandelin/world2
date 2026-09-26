@@ -37,6 +37,13 @@
     import SkillDelta from "../SkillDelta.svelte";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
+    import { selectEntity } from "../state/uistate.svelte";
+    import {
+        appealOf,
+        averageConversationValue,
+        conversationValueOf,
+        getRelativeAttention,
+    } from "../../model/relations/conversation";
     import {
         getClanLastTurnSnapshots,
         SettlementDTO,
@@ -680,6 +687,20 @@
                 renderValueSnippet: eventsRender,
                 settlementRenderSnippet: settlementEventsRender,
                 topics: ["perceptions:detail"],
+            },
+            {
+                // Conversation value averaged over the other clans here, as
+                // the Conversation panel's Avg column shows it. The figure
+                // links to the clan's overview, which lists it partner by
+                // partner.
+                label: "Conversation",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => averageConversationValue(c, settlementClans),
+                format: pct,
+                renderValueSnippet: conversationValueRender,
+                panelTab: "Conversation",
+                topics: ["perceptions"],
             },
             {
                 label: "Mutual Aid",
@@ -3210,6 +3231,61 @@
     {/if}
 {/snippet}
 
+{#snippet conversationValueRender(cs: ClanLastTurnSnapshots)}
+    {@const clan = cs.e}
+    <Tooltip>
+        <button
+            type="button"
+            class="value-link"
+            onclick={() => selectEntity(clan)}
+            >{pct(averageConversationValue(clan, settlementClans))}</button
+        >
+        <div slot="tooltip" style="text-align: left; color: initial;">
+            {@render conversationValueTooltip(clan)}
+        </div>
+    </Tooltip>
+{/snippet}
+
+{#snippet conversationValueTooltip(clan: ClanDTO)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
+        <div style="font-weight: bold; margin-bottom: 0.35rem;">
+            Conversation: {clan.name}
+        </div>
+        <table style="border-collapse: collapse; font-size: 0.9em;">
+            <thead>
+                <tr style="text-align: right; color: #6b7280;">
+                    <th style="text-align: left;">With</th>
+                    <th>Known</th>
+                    <th>Appeal</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each settlementClans.filter((o) => o.uuid !== clan.uuid) as other (other.uuid)}
+                    {@const strength = getRelativeAttention(clan, other)}
+                    <tr style="text-align: right;">
+                        <td style="text-align: left; padding-right: 0.8em;">{other.name}</td>
+                        <td style="padding: 0 0.4em;">{pct(strength)}</td>
+                        <td style="padding: 0 0.4em;">&times;{appealOf(clan, other).toFixed(2)}</td>
+                        <td style="padding-left: 0.4em;"><b>{pct(conversationValueOf(strength, clan, other))}</b></td>
+                    </tr>
+                {/each}
+                <tr style="text-align: right; border-top: 1px solid #ddd6c0;">
+                    <td style="text-align: left;">Average</td>
+                    <td></td>
+                    <td></td>
+                    <td><b>{pct(averageConversationValue(clan, settlementClans))}</b></td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="font-size: 0.85em; color: #6b7280; margin-top: 0.35rem; max-width: 22rem;">
+            Each partner's value is the share of that clan known times the
+            appeal of its company; this is their plain average over the other
+            clans here. Click through for the clan's partners everywhere.
+        </div>
+    </div>
+{/snippet}
+
 {#snippet supportRatioValueRender(cs: ClanLastTurnSnapshots)}
     {#if cs.p}
         <Tooltip>
@@ -3514,6 +3590,23 @@
         margin: 0;
         cursor: pointer;
         text-decoration: none;
+    }
+
+    /* A figure that opens something, marked like EntityLink: a dotted rule
+     * rather than button chrome. */
+    .value-link {
+        all: unset;
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-decoration-thickness: 1px;
+        text-decoration-color: #a5987a;
+        text-underline-offset: 0.2em;
+    }
+
+    .value-link:hover {
+        color: saddlebrown;
+        text-decoration-color: saddlebrown;
     }
 
     .row-label-link:hover {

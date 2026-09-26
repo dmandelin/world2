@@ -9,6 +9,7 @@
     } from "../model/lib/format";
     import { sortedByKey, sumFun } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
+    import { conversationValueStyle } from "./tables/cellColors";
     import type { Snippet } from "svelte";
     import Tooltip2 from "./Tooltip2.svelte";
     import {
@@ -23,6 +24,7 @@
         TALKATIVENESS_DOUBLING,
         getRelativeAttention,
         conversationValueOf,
+        averageConversationValue,
         type ConversationSource,
         type ConversationItem,
     } from "../model/relations/conversation";
@@ -234,15 +236,7 @@
     // Value Averages: plain means over the other clans, since the cells are
     // shares of different clans and do not add up to anything.
     function rowValueAvg(rowClan: ClanDTO): number {
-        let total = 0;
-        let count = 0;
-        for (const colClan of settlement.clans) {
-            if (rowClan.uuid !== colClan.uuid) {
-                total += valueCellValue(rowClan, colClan);
-                ++count;
-            }
-        }
-        return count > 0 ? total / count : 0;
+        return averageConversationValue(rowClan, settlement.clans);
     }
 
     function colValueAvg(colClan: ClanDTO): number {
@@ -329,19 +323,9 @@
         return `background-color: ${AMOUNT_PALETTE[i]};`;
     }
 
-    // Conversation value reads as how much good a clan got of it: pale at
-    // nothing, through a soft sage, to a deep green where the company was
-    // both plentiful and wanted. Brackets of 10%, the last open-ended from
-    // 90%, which is about where knowing nearly all of a clan one likes lands.
-    const VALUE_PALETTE = [
-        "#f3f4ef", "#e8efdf", "#dbe8cc", "#cce0b8", "#bbd6a3",
-        "#a8ca8e", "#93bc7b", "#7dad6b", "#679c5e", "#528a54",
-    ];
-
-    function valueStyle(value: number): string | undefined {
-        const i = Math.min(VALUE_PALETTE.length - 1, Math.max(0, Math.floor(value * 10)));
-        return `background-color: ${VALUE_PALETTE[i]};`;
-    }
+    // Conversation value's colors are shared with the clan overview's
+    // relationships table; see cellColors.ts.
+    const valueStyle = conversationValueStyle;
 
     // Color only the clan-by-clan cells, not the totals, averages or the
     // blank diagonal.

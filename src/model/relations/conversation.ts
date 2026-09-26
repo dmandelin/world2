@@ -797,6 +797,23 @@ export function conversationValueOf(
     return strength * appealOf(subject, partner);
 }
 
+// A clan's conversation value averaged over the other clans of its
+// settlement: a plain mean, since the values are shares of different clans
+// and do not add up to anything. What the Conversation panel's Avg column and
+// the clans overview's Conversation row show.
+export function averageConversationValue<T extends Clan | ClanDTO>(
+    subject: T, settlementClans: readonly T[]): number {
+    let total = 0;
+    let count = 0;
+    for (const other of settlementClans) {
+        if (other.uuid === subject.uuid) continue;
+        total += conversationValueOf(
+            getRelativeAttention(subject, other), subject, other);
+        ++count;
+    }
+    return count > 0 ? total / count : 0;
+}
+
 // What Fortune reads of a clan's conversation this year, written into its
 // inputs: how many people outside the clan its people deal with, and its
 // Conversation Appeal for their clans averaged by how many of each it knows

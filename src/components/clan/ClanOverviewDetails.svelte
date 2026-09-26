@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { ClanDTO } from "../../model/records/dtos";
     import TableView2 from "../tables/TableView2.svelte";
+    import { alignmentStyle, conversationValueStyle } from "../tables/cellColors";
     import EntityLink from "../state/EntityLink.svelte";
     import { IterableTable } from "../tables/tables2";
     import {
@@ -12,6 +13,11 @@
         type Connection,
     } from "../../model/relations/connection";
     import { pct, signed, unsigned } from "../../model/lib/format";
+    import {
+        appealOf,
+        conversationValueOf,
+        getRelativeAttention,
+    } from "../../model/relations/conversation";
     import { sortedByKey } from "../../model/lib/basics";
 
     let { clan }: { clan: ClanDTO } = $props();
@@ -33,12 +39,20 @@
             const conns = connMap.get(other.uuid);
             if (conns && conns.length > 0) return true;
             if (other.settlement?.uuid === clan.settlement?.uuid) return true;
+            if (getRelativeAttention(clan, other) > 0) return true;
             const alignUs = world.alignmentToward(clan, other)?.value ?? 0;
             const alignThem = world.alignmentToward(other, clan)?.value ?? 0;
             return alignUs !== 0 || alignThem !== 0;
         });
         return sortedByKey(filtered, (c) => c.name);
     });
+
+    // What this clan's conversation with another is worth to it; see
+    // conversationValueOf.
+    function conversationValue(other: ClanDTO): number {
+        return conversationValueOf(
+            getRelativeAttention(clan, other), clan, other);
+    }
 
     function getRelationshipTypes(other: ClanDTO): string {
         const conns = connMap.get(other.uuid) ?? [];
@@ -75,25 +89,43 @@
             (c) => c.name,
             [
                 {
+                    data: "Settlement",
+                    label: "Where",
+                    valueFn: (other) => other.settlement?.name ?? "-",
+                    cellSnippet: settlementLinkSnippet,
+                },
+                {
                     data: "Types",
-                    label: "Relationship Types",
+                    label: "Who",
                     valueFn: (other) => getRelationshipTypes(other),
                 },
                 {
+                    data: "Conversation",
+                    label: "Talk",
+                    valueFn: (other) => conversationValue(other),
+                    formatFn: (v: number) => pct(v),
+                    tooltip: conversationTooltip,
+                    cellStyleFn: (v: number) => conversationValueStyle(v),
+                },
+                {
                     data: "OurAlignment",
-                    label: `Alignment (${clan.name} → Other)`,
+                    label: "Our View",
+                    headerTooltip: `Alignment, ${clan.name} toward the other clan, x100`,
                     valueFn: (other) =>
                         world.alignmentToward(clan, other)?.value ?? 0,
-                    formatFn: (v: number) => signed(v, 2),
+                    formatFn: (v: number) => signed(100 * v, 0),
                     tooltip: ourAlignmentTooltip,
+                    cellStyleFn: (v: number) => alignmentStyle(v),
                 },
                 {
                     data: "TheirAlignment",
-                    label: `Alignment (Other → ${clan.name})`,
+                    label: "Their View",
+                    headerTooltip: `Alignment, the other clan toward ${clan.name}, x100`,
                     valueFn: (other) =>
                         world.alignmentToward(other, clan)?.value ?? 0,
-                    formatFn: (v: number) => signed(v, 2),
+                    formatFn: (v: number) => signed(100 * v, 0),
                     tooltip: theirAlignmentTooltip,
+                    cellStyleFn: (v: number) => alignmentStyle(v),
                 },
             ],
             clanLinkSnippet,
@@ -106,6 +138,29 @@
     <EntityLink entity={other} />
 {/snippet}
 
+{#snippet settlementLinkSnippet(name: string, other: ClanDTO)}
+    {#if other.settlement}
+        <EntityLink entity={other.settlement} />
+    {:else}
+        {name}
+    {/if}
+{/snippet}
+
+{#snippet conversationTooltip(val: number, other: ClanDTO)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 240px;">
+        <div>
+            {pct(getRelativeAttention(clan, other))} of {other.name} known
+            &times; {unsigned(appealOf(clan, other), 2)} appeal
+            = <strong>{pct(val)}</strong>
+        </div>
+        <div style="font-size: 0.85em; color: #666; margin-top: 0.35rem;">
+            How much {clan.name}'s conversation with {other.name} is worth to
+            it: how much of {other.name} it knows, times how much it wants to
+            spend its time on them.
+        </div>
+    </div>
+{/snippet}
+
 {#snippet alignmentDetail(a: ReturnType<typeof world.alignmentToward>)}
     {#if a}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
@@ -115,7 +170,7 @@
                         data: "Value",
                         label: "Value",
                         valueFn: (i) => i.value,
-                        formatFn: (i: number) => signed(i, 2),
+                        formatFn: (i: number) => signed(100 * i, 0),
                     },
                     {
                         data: "Mod",
@@ -127,7 +182,7 @@
                         data: "Base",
                         label: "Base",
                         valueFn: (i) => i.baseValue,
-                        formatFn: (i: number) => signed(i, 2),
+                        formatFn: (i: number) => signed(100 * i, 0),
                     },
                     {
                         data: "Explanation",
@@ -139,11 +194,11 @@
             <div style="margin-top: 0.5rem; border-top: 1px solid #ccc; padding-top: 0.5rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
                     <span>Previous Value:</span>
-                    <strong>{signed(a.previousValue, 2)}</strong>
+                    <strong>{signed(100 * a.previousValue, 0)}</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 0.25rem; border-top: 1px dashed #eee; padding-top: 0.25rem;">
                     <span>Current Value:</span>
-                    <strong>{signed(a.value, 2)}</strong>
+                    <strong>{signed(100 * a.value, 0)}</strong>
                 </div>
             </div>
         </div>
