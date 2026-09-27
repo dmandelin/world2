@@ -647,7 +647,160 @@ about how people feel about different quadrants:
         it depends on what moderately broke is. Maybe in a prehistoric
         setting it's a bigger deal; could be symmetrical
 
+### Learning Through Conversation
 
+This is coming up as an important topic, and a key way for conversation
+to take effect. Let's consider different kinds of learning:
+
+*   Choices: more/less care, agriculture, etc
+*   Skills: imitating others' ways of doing things
+*   Evaluations: imitating others' opinions of others
+*   Getting along: learning to get along better within the
+    relationship
+
+For getting along, let's consider some analogous situations that
+might be slightly more visible:
+
+*   Nations trading: they might start with various protocol mismatches
+    and information asymmetries. But fairly quickly, they'd get some
+    decent protocols, and become more aware of each other's needs and
+    offerings. They might also build roads, ports, create treaties,
+    and other such actions to boost trade. Over longer periods of time
+    arrangements could be very elaborate.
+*   Work teams forming up: typically people start with different
+    expectations and don't fully understand each other's communications.
+    But they both learn to understand each other better and become more
+    similar in key points of work, and work more effectively together.
+
+In these villages, there might be quite a lot of long-term continuity,
+so we could have fewer cases of really different people encountering
+each other and learning to get along. But the same dynamics could be
+in play.
+
+Now let's think through the different points:
+
+*   Choices
+    *   For certain choices, it may cost something to innovate, like
+        a new process being less familiar or a new style being more
+        risky. In this case, it would help clans be be able to go by
+        the results of others' choices too. This might be a somewhat
+        limited sample of the whole community, especially at first.
+    *   One way to approach this might be to add features for this
+        for any choice where clans are finding it too hard or too easy
+        to make better choices.
+    *   Agriculture is a natural candidate since it's in the affinity
+        score.
+        *   What exactly are clans imitating? It's not like they have
+            records of how much their neighbors grew.
+        *   It seems people could imitate explicit practices, general
+            habits, and goals.
+            *   Explicit practice: E.g., day of rest each week
+            *   General habits: E.g., tend to farm more often on days
+                your neighbor does, fuzzily synchronizing effort levels
+            *   Goals: E.g., imitate a goal of having the weeds down to
+                a certain level, or to have X rough amount of grain in
+                storage
+        *   Also on this point of not having records, it seems that
+            without them, people could *not* be planting some measured
+            X amount knowing they'll have enough for next year, which
+            they adjust according to numerical factors. More likely,
+            they'd have a general idea of what they need to do, embedded
+            in custom and intuition. This could and probably did amount
+            to a complex algorithm. With relatively slowly changing
+            technology and environment (which may or may not have been
+            the case for our start state), it could be quite well tuned.
+            However, various changes must have happened.
+        *   In that case, what would people adopt? It seems we're talking
+            about a dense network of practices that aren't necessarily
+            very explicit. But let's consider two scenarios:
+            *   Let's assume that the ag effort split represents a
+                certain fraction of individual families focusing effort
+                in a certain area. Then, individual families could
+                imitate other families in other clans, effectively
+                making the clan imitate others' labor splits.
+            *   On the other hand, we've more typically assumed that
+                the clan does roughly similar practices, with some
+                variation. In this case, things are complicated, but
+                maybe people can be modeled as basically deciding how
+                much land to plant. As discussed, this is probably a
+                very complex process, but it seems reasonable to assume
+                that if people are communicating about things like this,
+                they can somehow exchange information that influences
+                what they do.
+        *   So, the processes are very complicated, but it does seem
+            generally reasonable to let clans imitate each others'
+            allocations, with some error.
+        *   Now, what about the cost of change? Or how does change
+            work anyway?
+            *   It seems that in a given year, people could temporarily
+                shift their efforts because it seems better that way
+                (due to factors they can observe), and that if the
+                temporary changes are repeated, the baseline allocation
+                could shift.
+            *   That could actually cause clans to have different choices
+                because of their different experiences, which could then
+                be grounds for difference and imitation.
+            *   Similarly, we could have clans make new decisions each
+                year based on their results last year, with similar
+                effects.
+            *   Finally, we could let clans sometimes just decide to
+                do things differently.
+            *   On the other side of things, could people be constantly
+                tinkering with different effort allocations and seeing
+                if they're better or worse? A few could, but, for example,
+                in modern times people tend to have fairly consistent
+                work hours and things like that.
+*   Skills
+    *   The possibility of imitation seems clear enough, but what
+        about the costs of innovation?
+    *   I guess there doesn't necessarily have to be a cost to innovation.
+        Some people might randomly develop more skill through normal
+        practice.
+    *   For more specialized skills like pottery, some could in fact
+        practice a lot more and build up more skill at cost.
+*   Attitudes
+    *   Information flows via conversation, which already somewhat
+        synchronizes attitudes
+    *   But alignment and prestige judgments should spread through
+        conversation too
+*   Relating
+    *   Analogous to the nations trading model, we can imagine building
+        "infrastructure and practices" to improve relating.
+        *   This doesn't seem to imply a deterioration in relationships
+            with others, but:
+            *   That building has some cost so they can't necessarily
+                afford to it with everyone they're in a relationship
+                with.
+            *   It could, indirectly, if that goes into affinity and
+                thus lowers others' relative affinity. And that's probably
+                enough of an effect for that point.
+    *   In some cases there should be carryover learning to other
+        relationships (like learning to be a certain social class),
+        but for direct relationships between individuals there is
+        again a common part, which we can model, but also the individual
+        part.
+        *   A more relevant case would probably be specific new cultural
+            practices (formal gift exchanges, etc) that could be used in
+            different relationships.
+    *   As with some of our other things, there doesn't necessarily need
+        to be a measurable "cost", but rather, these things can develop
+        through activity.
+        *   We can let the conversation coverage determine a target
+            "infrastructure" level, which the relationship can grow
+            toward.
+    *   An important point is that sometimes, when nations/people/etc
+        learn more about each other, there's a positive surprise, and
+        the relationship is much more valuable than they originally
+        expected.
+        *   This gets incredibly complicated but it's a way that we
+            can introduce the concept of friendship, with friend
+            relationships being generated and being limited in some
+            way.
+    *   Similarly, there can be a negative surprise, with a major
+        conflict occurring, which sometimes seriously damages the
+        relationship or even ends it.
+        *   Also incredibly complicated but works with the conflict
+            model.
 
 ### Items
 
@@ -662,7 +815,22 @@ about identity. Justice would be off the conflict model, treated below.)
 
 Conversation:
 
-*   Choices
+*   Influenced by conversation
+    *   Choices
+        *   Rework ag/fishing effort allocation
+    *   Skills
+        *   Add imitation via conversation
+        *   (P2) Special skills
+    *   Attitudes
+        *   Add/confirm alignment flow
+        *   Add/confirm respect flow
+    *   Relating
+        *   Connection building
+        *   (P1.5) Friendship
+        *   (P2) Conflict/connection breaking
+        *   (P2) Marriage - via conversation 2-step
+            *   Need to fix up marriage for 1-year turns
+*   Choices for conversation
     *   TODO
 *   Items
     *   Conversation appeal
@@ -751,6 +919,7 @@ Conflict:
 *   Trial could help or hurt reputation
 *   We can also allow for conflicts that proceed over multiple turns
     *   TODO
+*   Conflicts caused by conversation (to lead to breakdown)
 
 *   Some frequency possibilities to think about:
     *   Homicide: 50 per 100K per year => 1 per ten years in village of 200
