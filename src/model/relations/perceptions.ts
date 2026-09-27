@@ -1,5 +1,6 @@
 import { Alignment } from "./alignment";
 import { Affinity, selfAffinity, updateAffinities } from "./affinity";
+import { ConversationHistory } from "./conversation";
 import { ClanInformation } from "./information";
 import { Connection, ConnectionGraph } from "./connection";
 import { Respect } from "./respect";
@@ -20,6 +21,9 @@ export class Perceptions {
     // relative reading needs every pair the subject knows done first, and
     // alignment reads it.
     readonly affinity: Affinity;
+    // How much the two have been talking, as it bears on appeal. Stepped
+    // once a turn by updateConversationHistory.
+    readonly conversationHistory: ConversationHistory;
 
     constructor(
         information: ClanInformation = new ClanInformation(),
@@ -27,12 +31,14 @@ export class Perceptions {
         respect: Respect = new Respect(),
         holiness: Holiness = new Holiness(),
         affinity: Affinity = new Affinity(),
+        conversationHistory: ConversationHistory = new ConversationHistory(),
     ) {
         this.information = information;
         this.alignment = alignment;
         this.respect = respect;
         this.holiness = holiness;
         this.affinity = affinity;
+        this.conversationHistory = conversationHistory;
     }
 
     updateFor(subject: Clan, object: Clan, connections: Connection[], interactions: Interaction[]): void {
@@ -60,6 +66,7 @@ export class Perceptions {
             this.respect.clone(),
             this.holiness.clone(),
             this.affinity.clone(),
+            this.conversationHistory.clone(),
         );
     }
 }

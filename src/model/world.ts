@@ -4,7 +4,7 @@ import { Clan, randomClanColor, randomClanName } from "./people/people";
 import { connectedClans, ConnectionGraph, NeighborConnection } from "./relations/connection";
 import { createTrends } from "./records/trends";
 import { InteractionGraph } from "./relations/interaction";
-import { updateConversations } from "./relations/conversation";
+import { updateConversationHistory, updateConversations } from "./relations/conversation";
 import { updateMutualAidInteractions } from "./relations/mutualaid";
 import { isExemplarClan, log, loggingEnabled, setExemplarClanUID, setExemplarSettlementUUID } from "./lib/debug";
 import { economicResult } from "./econ/economy";
@@ -399,6 +399,9 @@ export class World implements NoteTaker {
         updateMutualAidInteractions(this);
         // Update perceptions here so they can influence the rest of planning.
         updatePerceptions(this);
+        // Once a turn, now that this year's conversation is settled and the
+        // pairs that know each other are too.
+        updateConversationHistory(this);
         // How much each clan knows about each other, which depends on this
         // turn's dealings and on what those dealings let them pass along.
         updateInformationLevels(this);

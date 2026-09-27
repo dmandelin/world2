@@ -823,9 +823,19 @@ Conversation:
         *   (P2) Special skills
     *   Attitudes
         *   Add/confirm alignment flow
+            *   Might need to fix up better what alignment is around
+                this.
         *   Add/confirm respect flow
     *   Relating
         *   Connection building
+            *   Technically, this should influence both affinity
+                (people becoming more similar in subtle ways) and
+                conversation appeal directly (from interacting
+                better through other ways than becoming more
+                similar).
+            *   Affinity flow
+            x   Appeal boost - let's start here because it will
+                be easier to understand
         *   (P1.5) Friendship
         *   (P2) Conflict/connection breaking
         *   (P2) Marriage - via conversation 2-step

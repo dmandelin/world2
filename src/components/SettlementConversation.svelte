@@ -23,6 +23,13 @@
         TieSources,
         appealOf,
         relativeAffinityOf,
+        affinityAppealOf,
+        historyOf,
+        HISTORY_MIN,
+        HISTORY_MAX,
+        HISTORY_MIDPOINT,
+        HISTORY_WIDTH,
+        HISTORY_STEP,
         AFFINITY_APPEAL_WEIGHT,
         APPEAL_FLOOR,
         TALKATIVENESS_DOUBLING,
@@ -572,15 +579,27 @@
 
 {#snippet appealCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
     {@const affinity = relativeAffinityOf(subject, object)}
+    {@const fromAffinity = affinityAppealOf(subject, object)}
+    {@const history = historyOf(subject, object)}
+    {@const multiplier = history?.multiplier ?? 1}
     {@const appeal = appealOf(subject, object)}
-    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 280px;">
         <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
             Conversation Appeal: {subject.name} &rarr; {object.name}
         </div>
         <ul style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none; font-size: 0.9em;">
             <li>• Relative affinity: {signed(affinity, 2)}</li>
+            <li>• From affinity: 1 + {AFFINITY_APPEAL_WEIGHT} &times; {signed(affinity, 2)} = {unsigned(fromAffinity, 2)}</li>
             <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
-            <li><strong>Appeal Formula:</strong> max({APPEAL_FLOOR}, 1 + {AFFINITY_APPEAL_WEIGHT} &times; {signed(affinity, 2)}) = <strong>{unsigned(appeal, 2)}</strong></li>
+            {#if history}
+                <li>• Conversation last year: {unsigned(history.amount, 0)} of {object.name}'s people</li>
+                <li>• History target: {pct(history.target)}</li>
+                <li>• History: {pct(multiplier)} (moves {pct(HISTORY_STEP)} of the way to target each year)</li>
+            {:else}
+                <li>• History: {pct(1)} ({subject.name} does not know {object.name})</li>
+            {/if}
+            <hr style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;" />
+            <li><strong>Appeal:</strong> max({APPEAL_FLOOR}, {unsigned(fromAffinity, 2)} &times; {pct(multiplier)}) = <strong>{unsigned(appeal, 2)}</strong></li>
         </ul>
     </div>
 {/snippet}
@@ -746,7 +765,7 @@
                 <span class="info-badge">ℹ️</span>
                 <Tooltip2>
                     <div class="header-tooltip-box">
-                        How much the row clan wants to converse with the column clan: based on its relative affinity for it. Includes average rows and columns at top and left.
+                        How much the row clan wants to converse with the column clan: based on its relative affinity for it, and on how much the two have been talking. Includes average rows and columns at top and left.
                     </div>
                 </Tooltip2>
             </h3>
@@ -818,7 +837,10 @@
                         <strong>Partner Preference:</strong> <code>Weight₁→₂ = Appeal(c₁ → c₂)</code>
                     </div>
                     <div class="formula-line">
-                        <strong>Appeal Formula:</strong> <code>max({APPEAL_FLOOR}, 1 + {AFFINITY_APPEAL_WEIGHT} × Relative Affinity)</code>
+                        <strong>Appeal Formula:</strong> <code>max({APPEAL_FLOOR}, (1 + {AFFINITY_APPEAL_WEIGHT} × Relative Affinity) × History)</code>
+                    </div>
+                    <div class="formula-line">
+                        <strong>History:</strong> moves {pct(HISTORY_STEP)} of the way each year to <code>{pct(HISTORY_MIN)} + {pct(HISTORY_MAX - HISTORY_MIN)} / (1 + e<sup>−(Amount − {HISTORY_MIDPOINT}) / {HISTORY_WIDTH}</sup>)</code>, Amount in people
                     </div>
                     <div class="formula-line">
                         <strong>Offered Strength:</strong> <code>Allocated Supply / Pop₂</code>

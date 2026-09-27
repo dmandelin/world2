@@ -414,9 +414,90 @@ function visitReach(c1: Clan, c2: Clan): number {
 // Relative affinity, so that each clan seeks out the company it finds most
 // congenial among those it knows, however congenial they are outright. A clan
 // it does not know yet reads as average.
+//
+// Then History: clans that have been talking keep talking. See
+// ConversationHistory.
 export function appealOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
-    return Math.max(
-        APPEAL_FLOOR, 1 + AFFINITY_APPEAL_WEIGHT * relativeAffinityOf(subject, object));
+    return Math.max(APPEAL_FLOOR,
+        affinityAppealOf(subject, object) * historyMultiplierOf(subject, object));
+}
+
+// Appeal from affinity alone, before History.
+export function affinityAppealOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
+    return 1 + AFFINITY_APPEAL_WEIGHT * relativeAffinityOf(subject, object);
+}
+
+export function historyOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): ConversationHistory | undefined {
+    return subject.world.perceptions.get(subject, object)?.conversationHistory;
+}
+
+export function historyMultiplierOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
+    return historyOf(subject, object)?.multiplier ?? 1;
+}
+
+// --- History ---------------------------------------------------------------
+//
+// Talk begets talk. Clans that have been conversing a good deal have things
+// to pick up where they left off, people they know, habits of seeking each
+// other out; clans that barely speak drift further apart. So appeal carries a
+// multiplier for the pair's history, between HISTORY_MIN and HISTORY_MAX.
+//
+// Each turn there is a target for it, a sigmoid in how much the subject came
+// to know of the other clan (in people, as the Conversation Amount table
+// shows it), and the multiplier closes HISTORY_STEP of the way to it. So a
+// change in how much two clans talk takes a few years to show in how much
+// they want to.
+export const HISTORY_MIN = 0.8;
+export const HISTORY_MAX = 1.2;
+// The amount, in people, at which the target is neutral (1), and how quickly
+// it turns: a pair at the midpoint +/- 2 widths is about three-quarters of
+// the way to the bound. Set against pairs within a settlement typically
+// coming to know 10 to 25 of each other's people.
+export const HISTORY_MIDPOINT = 15;
+export const HISTORY_WIDTH = 5;
+export const HISTORY_STEP = 1 / 3;
+
+export function historyTarget(amount: number): number {
+    return HISTORY_MIN + (HISTORY_MAX - HISTORY_MIN)
+        / (1 + Math.exp(-(amount - HISTORY_MIDPOINT) / HISTORY_WIDTH));
+}
+
+// A clan's conversation history with another, directed: what it came to know
+// of the other clan is scaled by that clan's size.
+export class ConversationHistory {
+    // Starts neutral: no history yet.
+    multiplier = 1;
+    // Last turn's amount, in people, and the target it gave.
+    amount = 0;
+    target = 1;
+
+    step(amount: number): void {
+        this.amount = amount;
+        this.target = historyTarget(amount);
+        this.multiplier += HISTORY_STEP * (this.target - this.multiplier);
+    }
+
+    clone(): ConversationHistory {
+        const h = new ConversationHistory();
+        h.multiplier = this.multiplier;
+        h.amount = this.amount;
+        h.target = this.target;
+        return h;
+    }
+}
+
+// Once a turn, after the year's conversation is settled and perceptions have
+// settled which clans know each other. Every pair a clan knows gets a step,
+// so one it has stopped talking to heads for HISTORY_MIN.
+export function updateConversationHistory(world: World): void {
+    for (const subject of world.allClans) {
+        for (const [objectID, perceptions] of world.perceptions.getFor(subject.uuid)) {
+            const object = world.clanFrom(objectID);
+            if (!object) continue;
+            const amount = getRelativeAttention(subject, object) * object.population;
+            perceptions.conversationHistory.step(amount);
+        }
+    }
 }
 
 export function relativeAffinityOf(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {
