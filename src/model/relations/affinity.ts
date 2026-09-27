@@ -58,6 +58,7 @@ import { KinConnection } from "./connection";
 // 70% of the variance, so the two sides' temperaments correlate at about 0.7
 // (a little less after clamping to [0, 1]). Together they have a spread of
 // about 0.2, so temperament stays mostly within 0.1 to 0.9.
+export const TEMPERAMENT_BASE = 0.5;
 export const TEMPERAMENT_SD = 0.2;
 export const TEMPERAMENT_SHARED_VARIANCE = 0.7;
 // How much of the way back to 0 each part is pulled in a year. At 1% a part
@@ -90,6 +91,7 @@ export const AffNode = {
     SubjectFarming: "subjectFarming",
     ObjectFarming: "objectFarming",
     Livelihood: "livelihood",
+    TemperamentBase: "temperamentBase",
     TemperamentShared: "temperamentShared",
     TemperamentOwn: "temperamentOwn",
     Temperament: "temperament",
@@ -122,12 +124,14 @@ export const AFF_NODES: readonly AffNodeDef[] = [
       note: "Farming as a share of the other clan's farming and fishing." },
     { id: AffNode.Livelihood, label: "Livelihood", role: "factor",
       note: "1 less the difference in farming share." },
+    { id: AffNode.TemperamentBase, label: "Base temperament", role: "input",
+      note: "Where temperament stands before the pair's own liking: the middle of the range." },
     { id: AffNode.TemperamentShared, label: "Shared temperament", role: "input",
       note: "How well the two get on, the same from either side. Centered on 0." },
     { id: AffNode.TemperamentOwn, label: "Own temperament", role: "input",
       note: "What this side makes of it, apart from the other. Centered on 0." },
     { id: AffNode.Temperament, label: "Temperament", role: "factor",
-      note: "Unexplained liking, unique to this direction of the pair, drifting slowly." },
+      note: "Base + shared + own, held within 0 to 1: unexplained liking, drifting slowly." },
     { id: AffNode.Absolute, label: "Affinity", role: "result",
       note: "The average of the factors." },
 ];
@@ -259,7 +263,7 @@ export class Affinity {
     get shared(): number { return this.shared_; }
     get own(): number { return this.own_; }
     get temperament(): number {
-        return Math.min(1, Math.max(0, 0.5 + this.shared_ + this.own_));
+        return Math.min(1, Math.max(0, TEMPERAMENT_BASE + this.shared_ + this.own_));
     }
     get absolute(): number { return this.absolute_; }
     get relative(): number { return this.relative_; }
@@ -273,6 +277,7 @@ export class Affinity {
     report<T extends Clan | ClanDTO>(subject: T, object: T): AffinityReport {
         const report = new AffinityReport();
         computeAffinity(subject, object, this.temperament, report);
+        report.put(AffNode.TemperamentBase, TEMPERAMENT_BASE);
         report.put(AffNode.TemperamentShared, this.shared_);
         report.put(AffNode.TemperamentOwn, this.own_);
         return report;

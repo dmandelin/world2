@@ -14,6 +14,7 @@
         // The temperament parts are offsets around 0, not shares.
         if (id === AffNode.TemperamentShared || id === AffNode.TemperamentOwn)
             return signed(value, 2);
+        if (id === AffNode.TemperamentBase) return value.toFixed(2);
         if (role === "input") return pct(value);
         return value.toFixed(2);
     }
