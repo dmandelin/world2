@@ -3,13 +3,15 @@
     import {
         armedBreakpoints,
         breakpointState,
+        runControls,
         toggleBreakpoint,
     } from "./state/uistate.svelte";
 
     let { world } = $props();
 
     function advance(years?: number) {
-        world.advanceFromPlanningView(years, armedBreakpoints());
+        world.advanceFromPlanningView(
+            years, armedBreakpoints(), runControls.preventMigrations);
     }
 
     // Only meaningful after a run that could have been cut short.
@@ -47,6 +49,12 @@
             </div>
         {/if}
     </div>
+
+    <label class="run-control clay-edge"
+        title="Clans still decide whether they want to leave, but nobody goes.">
+        <input type="checkbox" bind:checked={runControls.preventMigrations} />
+        No migrations
+    </label>
 </div>
 
 <style>
@@ -166,5 +174,26 @@
         line-clamp: 2;
         overflow: hidden;
         overflow-wrap: break-word;
+    }
+
+    .run-control {
+        width: 150px;
+        margin-top: 6px;
+        padding: 3px 5px;
+        box-sizing: border-box;
+        background-color: #2f3b2a;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: #c9d6bd;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .run-control input {
+        margin: 0;
+        accent-color: #c9a227;
+        cursor: pointer;
     }
 </style>

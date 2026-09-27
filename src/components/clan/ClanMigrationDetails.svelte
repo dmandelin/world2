@@ -305,7 +305,9 @@
                                 <span class="banner-icon">📍</span>
                                 <div>
                                     <strong>Will Not Migrate</strong> (remains
-                                    at {clan.settlement.name})
+                                    at {clan.settlement.name}{plan.prevented
+                                        ? '; migration is turned off'
+                                        : ''})
                                 </div>
                             </div>
                         {/if}

@@ -122,6 +122,10 @@ export class World implements NoteTaker {
     armedBreakpoints: ReadonlySet<BreakpointId> = new Set();
     lastBreak: BreakpointHit | undefined;
 
+    // Clans still weigh up leaving, but none actually go. For watching how
+    // stress builds in settlements that can't shed it.
+    migrationsPrevented = false;
+
     // Extreme floods that struck this turn, across the whole world.
     extremeFloods: ExtremeFlood[] = [];
 
@@ -360,8 +364,10 @@ export class World implements NoteTaker {
     advanceFromUserPlanningView(
         ticks: number = Math.round(this.yearsPerTurn / this.yearsPerTick),
         armedBreakpoints: ReadonlySet<BreakpointId> = new Set(),
+        preventMigrations: boolean = false,
     ) {
         log('World >>> Advance from user planning view');
+        this.migrationsPrevented = preventMigrations;
         for (const clan of this.allClans) clan.clearNotifications();
         log('Cleared notifications for all clans');
         this.armedBreakpoints = armedBreakpoints;

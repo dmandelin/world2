@@ -56,6 +56,8 @@ export class MigrationCalc {
     targets: Map<MigrationTarget, CandidateMigrationCalc> = new Map();
     best: CandidateMigrationCalc | undefined;
     willMigrate: boolean = false;
+    // Agreed to leave, but migration is turned off for this run.
+    prevented: boolean = false;
 
     constructor(readonly clan: Clan, dummy: boolean = false) {
         if (dummy) return;
@@ -304,11 +306,16 @@ export function planMigration(world: World) {
             return choices[choices.length - 1] && clan.migrationPlan!.wantToMove;
         });
 
+        // With migration turned off the negotiation still runs, so the
+        // pressure to leave shows up in the reports; it just goes nowhere.
         const agreedToMigrate = finalTopChoices.length > 0;
+        const willMigrate = agreedToMigrate && !world.migrationsPrevented;
 
         for (const clan of clans) {
             const plan = clan.migrationPlan!;
-            if (agreedToMigrate && finalTopChoices.includes(clan)) {
+            plan.prevented = agreedToMigrate && !willMigrate
+                && finalTopChoices.includes(clan);
+            if (willMigrate && finalTopChoices.includes(clan)) {
                 plan.willMigrate = true;
                 plan.best = plan.targets.get(NewSettlement);
             } else {
@@ -317,7 +324,7 @@ export function planMigration(world: World) {
             }
         }
 
-        if (agreedToMigrate && finalTopChoices.length > 0) {
+        if (willMigrate) {
             const newSettlementName = randomHamletName();
             const [x, y] = settlement.cluster.placer_.placeFor();
             const planned = new PlannedSettlement(newSettlementName, x, y, settlement.cluster, settlement, finalTopChoices);

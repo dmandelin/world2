@@ -721,8 +721,10 @@ export class WorldDTO {
     advanceFromPlanningView(
         ticks?: number,
         armedBreakpoints?: ReadonlySet<BreakpointId>,
+        preventMigrations?: boolean,
     ) {
-        this.world.advanceFromUserPlanningView(ticks, armedBreakpoints);
+        this.world.advanceFromUserPlanningView(
+            ticks, armedBreakpoints, preventMigrations);
     }
 
     // What cut the last multi-year run short, if anything did.

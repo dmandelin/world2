@@ -115,3 +115,13 @@ export function armedBreakpoints(): Set<BreakpointId> {
     return new Set(
         BREAKPOINT_IDS.filter(id => breakpointState[id]));
 }
+
+// --- Run controls ----------------------------------------------------------
+//
+// Switches that do change what happens, handed to the world with each
+// advance. Off by default in the model; on by default here, where they are
+// for studying the prototype.
+
+export const runControls = $state({
+    preventMigrations: true,
+});
