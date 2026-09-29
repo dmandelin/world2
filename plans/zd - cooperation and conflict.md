@@ -802,6 +802,38 @@ Now let's think through the different points:
         *   Also incredibly complicated but works with the conflict
             model.
 
+### Conflict and Alignment
+
+Something that comes up trying to detail conflict is other clans choosing
+sides. One of the most basic kinds of conflicts is conflict over people's
+perceptions of each other, so it's natural to have that as a core model,
+and it might illuminate both topics.
+
+Imagine there's a frightening omen related to a taboo violation, with
+the offenders unknown but strongly suspected to belong to clan A or B.
+Even without existing animosity, A and B now have a strong incentive to
+pin the blame on each other. We could also imagine allowing an aggressive
+move, for clan A who is envious of clan B's position to spread rumors
+about B.
+
+Now, the entire point of the aggressive move in either case is to reduce
+clan B's position or reputation, so we need to understand exactly what
+that means and why matters. And we have to understand how other clans
+will react to those moves, which will determine much of the actual result
+of the move.
+
+TODO: Figure out what to actually do with the below.
+```
+Now let's replace the conflict model. You can keep the most basic data structures for tracking the relation between two clans (if applicable), but change the concept like this:
+there will eventually be multiple conflict types, but for now, just one, Insult
+This could be a literal insult as in saying something derogatory about another clan, but could also include violating their rights, spreading gossip against them, and any other forms of non-violent, non-material (including divine/sorcerous) aggression
+give a pair of clans a probability of Insult each turn equal to k * (conversation amount) / (conversation quality) where k = 0.002
+have high piety and intellect decrease the chance
+have high talkativeness and especially aggression increase the change
+The two clans then play a hawk-dove-type game where we will call the strategies Denounce and Repair.
+Denounce means use any means at their disposal to 
+```
+
 ### Items
 
 (General next themes: We need to hook conversation into the other
