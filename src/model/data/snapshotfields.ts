@@ -43,10 +43,12 @@ export const SETTLEMENT_FIELDS: readonly FieldSpec<Settlement>[] = [
             : 0,
     },
     {
+        // Against the people the food was shared out to; see Consumption.
         name: 'foodConsumptionPerCapita',
-        get: s => s.population > 0
-            ? sumFun(s.clans, c => c.consumption.totalFood) / s.population
-            : 0,
+        get: s => {
+            const fed = sumFun(s.clans, c => c.consumption.population);
+            return fed > 0 ? sumFun(s.clans, c => c.consumption.totalFood) / fed : 0;
+        },
     },
     { name: 'qol', get: s => weightedAverage(s.clans, c => c.qol.value, c => c.population) },
     { name: 'materialQol', get: s => weightedAverage(s.clans, c => c.qol.valueFrom('material'), c => c.population) },

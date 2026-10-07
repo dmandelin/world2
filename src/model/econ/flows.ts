@@ -357,6 +357,17 @@ export class Consumption extends GoodFlows {
     readonly fromDonations: DirectFlowRecord[] = [];
     readonly fromGifts: DirectFlowRecord[] = [];
 
+    // The people this food was for: the clan as it stood when the year's
+    // food was shared out. Every per-head figure is against this, not the
+    // clan's population later in the year, after births and deaths, which
+    // would make a growing clan look worse fed than it was.
+    readonly population: number;
+
+    constructor(clan: Clan) {
+        super(clan);
+        this.population = clan.population;
+    }
+
     addProduction(good: TradeGood, amount: number): void {
         checkFiniteAmount('Consumption.addProduction', good, amount);
         if (!isPositive(amount)) return;
@@ -455,7 +466,7 @@ export class Consumption extends GoodFlows {
     }
 
     get perCapitaFood(): number {
-        const pop = this.clan.population || 1;
+        const pop = this.population || 1;
         return this.totalFood / pop;
     }
 
@@ -474,7 +485,7 @@ export class Consumption extends GoodFlows {
     }
 
     perCapita(good: TradeGood): number {
-        const pop = this.clan.population || 1;
+        const pop = this.population || 1;
         return this.totalGood(good) / pop;
     }
 
@@ -487,7 +498,7 @@ export class Consumption extends GoodFlows {
             ...this.fromDonations.map(r => r.good),
             ...this.fromGifts.map(r => r.good)
         ]);
-        const pop = this.clan.population || 1;
+        const pop = this.population || 1;
         for (const good of goodsSet) {
             result.set(good, {
                 good,

@@ -191,6 +191,13 @@
         return total;
     });
 
+    // The people the year's food was shared out to, before the year's births
+    // and deaths: what every per-head figure of the year's food is against, so
+    // the rows add up to what was consumed. See Consumption.
+    function fedPopulation(c: ClanDTO): number {
+        return c.consumption?.population || c.population || 1;
+    }
+
     // Population-weighted average of clan effort shares. The inputs each sum to
     // 1 over the activities (or processes) a clan is engaged in, so the result
     // does too, and activities only some clans pursue count as zero elsewhere.
@@ -820,7 +827,7 @@
                 value: (c) =>
                     c.distribution
                         ? c.distribution.totalFoodFromProduction /
-                          (c.population || 1)
+                          fedPopulation(c)
                         : 0,
                 format: fmt2,
                 tooltipSnippet: foodProducedTooltip,
@@ -828,7 +835,7 @@
                 deltaValue: (c) =>
                     c.distribution
                         ? c.distribution.totalFoodFromProduction /
-                          (c.population || 1)
+                          fedPopulation(c)
                         : 0,
                 deltaFormat: fmt2,
                 timelineKey: "foodProduced",
@@ -842,7 +849,7 @@
                 cellClass: "ra",
                 value: (c) =>
                     -(c.distribution?.totalFoodToFlood ?? 0) /
-                    (c.population || 1),
+                    fedPopulation(c),
                 format: fmt2,
                 topics: ["food:detail"],
             },
@@ -853,7 +860,7 @@
                 value: (c) => {
                     const rec = c.consumption?.totalFoodGiftsReceived ?? 0;
                     const giv = c.distribution?.totalFoodGiftsGiven ?? 0;
-                    return (rec - giv) / (c.population || 1);
+                    return (rec - giv) / fedPopulation(c);
                 },
                 format: fmt2,
                 tooltipSnippet: giftsTooltip,
@@ -867,7 +874,7 @@
                     const rec = c.consumption?.totalFoodAidReceived ?? 0;
                     const givProd = c.distribution?.totalFoodAidGiven ?? 0;
                     const givStock = c.stockOutflow?.totalFoodAidGiven ?? 0;
-                    return (rec - (givProd + givStock)) / (c.population || 1);
+                    return (rec - (givProd + givStock)) / fedPopulation(c);
                 },
                 format: fmt2,
                 tooltipSnippet: aidTooltip,
@@ -880,7 +887,7 @@
                 value: (c) => {
                     const ret = c.stockOutflow?.totalFoodRetrieved ?? 0;
                     const sent = c.distribution?.totalFoodToStock ?? 0;
-                    return (ret - sent) / (c.population || 1);
+                    return (ret - sent) / fedPopulation(c);
                 },
                 format: fmt2,
                 tooltipSnippet: fromStockTooltip,
@@ -893,7 +900,7 @@
                 cellClass: "ra",
                 value: (c) =>
                     -(c.distribution?.totalFoodToRitual ?? 0) /
-                    (c.population || 1),
+                    fedPopulation(c),
                 format: fmt2,
                 topics: ["food:detail"],
             },
@@ -903,7 +910,7 @@
                 cellClass: "ra",
                 value: (c) =>
                     -(c.distribution?.totalFoodWasted ?? 0) /
-                    (c.population || 1),
+                    fedPopulation(c),
                 format: fmt2,
                 topics: ["food:detail"],
             },
@@ -932,7 +939,7 @@
                 cellClass: "ra",
                 value: (c) => {
                     if (!c.stock) return 0;
-                    const pop = c.population || 1;
+                    const pop = fedPopulation(c);
                     const init =
                         c.stock.totalFoodStock -
                         c.stock.totalFoodAdditions +
@@ -949,7 +956,7 @@
                 class: "actual",
                 cellClass: "ra",
                 value: (c) =>
-                    c.stock ? c.stock.perCapitaFoodAdditions(c.population) : 0,
+                    c.stock ? c.stock.perCapitaFoodAdditions(fedPopulation(c)) : 0,
                 format: fmt2,
                 topics: ["food:detail"],
             },
@@ -960,7 +967,7 @@
                 value: (c) =>
                     c.stockOutflow
                         ? c.stockOutflow.totalFoodToConsumption /
-                          (c.population || 1)
+                          fedPopulation(c)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -972,7 +979,7 @@
                 value: (c) =>
                     c.stockOutflow
                         ? c.stockOutflow.totalFoodGiftsGiven /
-                          (c.population || 1)
+                          fedPopulation(c)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -983,7 +990,7 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.stockOutflow
-                        ? c.stockOutflow.totalFoodAidGiven / (c.population || 1)
+                        ? c.stockOutflow.totalFoodAidGiven / fedPopulation(c)
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -994,7 +1001,7 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.stock
-                        ? c.stock.perCapitaFoodRetrievalCost(c.population)
+                        ? c.stock.perCapitaFoodRetrievalCost(fedPopulation(c))
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -1005,7 +1012,7 @@
                 cellClass: "ra",
                 value: (c) =>
                     c.stock
-                        ? c.stock.perCapitaFoodStorageLoss(c.population)
+                        ? c.stock.perCapitaFoodStorageLoss(fedPopulation(c))
                         : 0,
                 format: fmt2,
                 topics: ["food:detail"],
@@ -1016,7 +1023,7 @@
                 cellClass: "ra",
                 value: (c) => {
                     if (!c.stock) return 0;
-                    const pop = c.population || 1;
+                    const pop = fedPopulation(c);
                     const net =
                         c.stock.totalFoodAdditions -
                         c.stock.totalFoodRetrievals -
@@ -1407,7 +1414,7 @@
     }
 
     function clanGiftsTooltipTable(clan: ClanDTO) {
-        const pop = clan.population || 1;
+        const pop = fedPopulation(clan);
         const rows: TableRow<TransferTooltipRow, string>[] = [];
 
         // Inflows (Received as gifts)
@@ -1527,7 +1534,7 @@
     }
 
     function clanAidTooltipTable(clan: ClanDTO) {
-        const pop = clan.population || 1;
+        const pop = fedPopulation(clan);
         const rows: TableRow<TransferTooltipRow, string>[] = [];
 
         // Inflows (Received as aid)
@@ -1663,7 +1670,7 @@
     }
 
     function clanFromStockTooltipTable(clan: ClanDTO) {
-        const pop = clan.population || 1;
+        const pop = fedPopulation(clan);
         const rows: TableRow<TransferTooltipRow, string>[] = [];
 
         // Inflows (Retrieved from stock)
