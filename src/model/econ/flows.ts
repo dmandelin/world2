@@ -133,6 +133,14 @@ export class Distribution extends GoodFlows {
         this.toGifts.push({ clan: recipient, good, amount });
     }
 
+    // Food the clan had set aside to eat, handed over as aid instead.
+    consumptionToDonation(recipient: Clan, good: TradeGood, amount: number): void {
+        if (!isPositive(amount)) return;
+        const prev = this.toConsumption.get(good) ?? 0;
+        this.toConsumption.set(good, Math.max(0, prev - amount));
+        this.toDonations.push({ clan: recipient, good, amount });
+    }
+
     totalToConsumption(good: TradeGood): number {
         return this.toConsumption.get(good) ?? 0;
     }
@@ -251,6 +259,15 @@ export class StockOutflow extends GoodFlows {
         }
     }
 
+    // Food already taken out of store to eat, handed over as aid instead. The
+    // cost of getting it out was paid when it was taken.
+    consumptionToDonation(recipient: Clan, good: TradeGood, amount: number): void {
+        if (!isPositive(amount)) return;
+        const prev = this.toConsumption.get(good) ?? 0;
+        this.toConsumption.set(good, Math.max(0, prev - amount));
+        this.toDonations.push({ clan: recipient, good, amount });
+    }
+
     addLoss(good: TradeGood, amount: number): void {
         if (!isPositive(amount)) return;
         const prev = this.lost.get(good) ?? 0;
@@ -352,6 +369,21 @@ export class Consumption extends GoodFlows {
         if (!isPositive(amount)) return;
         const prev = this.fromStock.get(good) ?? 0;
         this.fromStock.set(good, prev + amount);
+    }
+
+    // Take back food booked as eaten, because the clan gave it away instead.
+    removeProduction(good: TradeGood, amount: number): void {
+        checkFiniteAmount('Consumption.removeProduction', good, amount);
+        if (!isPositive(amount)) return;
+        const prev = this.fromProduction.get(good) ?? 0;
+        this.fromProduction.set(good, Math.max(0, prev - amount));
+    }
+
+    removeStock(good: TradeGood, amount: number): void {
+        checkFiniteAmount('Consumption.removeStock', good, amount);
+        if (!isPositive(amount)) return;
+        const prev = this.fromStock.get(good) ?? 0;
+        this.fromStock.set(good, Math.max(0, prev - amount));
     }
 
     addDonation(donor: Clan, good: TradeGood, amount: number, cost: number = 0): void {

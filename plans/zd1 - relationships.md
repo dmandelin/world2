@@ -294,7 +294,76 @@ We can try to do this incrementally. For example:
     *   Probably should have them but might be hard to tune
 *   (P2) Revamp effects of bad nutrient mix
 
-*   Current effects of food consumption level:
+*   Thinking about food aid:
+    *   Let's think deeper about our model for how these things
+        happen
+        *   The most basic event is that one person or family, when
+            hungry, goes to ask someone else for food
+        *   We're going to assume that those asked for food may or
+            may not give, depending on many factors, such as whether
+            they have anything handy, their attitude on that day,
+            their expectations that someone else might feed, them,
+            etc.
+            *   Generosity is the "norm" in the sense that people
+                are notionally expected to give when asked, but it
+                appears there are usually many outs, and actual
+                behavior is not necessarily that tethered to any
+                simple rule (just as in most other environments).
+            *   Key factors for us are kinship, expectations,
+                memory, affection.
+        *   In the current setup, when are people willing to give?
+            *   Any surplus food over 100%: no benefit to keeping
+            *   If they expect a cooperative exchange relationship
+                to persist with the asker
+                *   For now, let's assume that being reasonable
+                    neighbors would be enough - they don't have to
+                    give food back, but they're keeping the peace,
+                    supplying marriage partners, doing favors
+                *   There's not too high a chance of terminating
+                    now, but also not too low - clans do move around
+            *   If they think they need to give for reputational
+                purposes
+            *   For feast and gift occasions
+            *   Shared produce
+        *   When are people not willing to give?
+            *   If they need to punish the asker over something else
+            *   If they think the asker isn't really in need
+            *   If they're annoyed at the asker
+            *   If they have no idea who the asker is
+        *   We should also assume that if people are refused when
+            asking one clan, they'll try another.
+        *   Bringing in the bluffing game:
+            *   Clans should be able to ask for food whether they
+                need it or not
+            *   How well can clans tell whether each other needs
+                food?
+                *   If they know each other well, the weight loss of
+                    0.9 nutrition would be apparent
+                *   They might hear from other clans how much they're
+                    asking for food and things like that
+                *   Otherwise, hard to know, but the weight loss of
+                    0.8 nutrition would probably be enough
+            *   Question: Why would clans want to fake need when
+                there's nothing to do with extra food anyway? Good
+                point, but:
+                *   Clans below 100% might ask for food from another
+                    clan that's actually hungrier
+                *   Clans could ask for food from others so they can
+                    enjoy more leisure
+        *   Model for now:
+            *   Willing to give anything over 100%, but prioritize
+                by alignment
+            *   Do microtransactions, maybe optimize later
+            *   Hard to see what to build up first for a model that
+                makes any sense. Maybe start with obvious ones, test
+                different invaders, refine.
+
+Other items:
+
+*   Fix bug with information being too low and apply results to food
+    aid
+*   Fix up other immediate issues
+*   Add in defectors
 
 *   Improved model of food consumption effects:
     *   First, some heuristics of long term-effects:

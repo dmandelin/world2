@@ -9,7 +9,6 @@
     import TableView2 from "./tables/TableView2.svelte";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import {
-        AID_BUDGET_FOOD_THRESHOLD,
         type FoodAidBidRecord,
         type FoodRedistributionResult,
     } from "../model/econ/redistribution";
@@ -220,14 +219,14 @@
 
             const bottomRows: RowDataRowSpec<ClanDTO>[] = [
                 {
-                    label: "Aid Budget",
+                    label: "On Hand",
                     valueFn: (colItem: any) => {
                         if (!isClanDTO(colItem)) return null;
                         const s = redistributionResult?.getClanSummary(colItem.uuid);
-                        return s ? s.aidBudgetPerCapita : 0;
+                        return s ? s.initialOnHandPerCapita : 0;
                     },
                     formatFn: formatBottomCell,
-                    tooltip: aidBudgetRowTooltip as any,
+                    tooltip: onHandRowTooltip as any,
                     divider: true,
                 },
                 {
@@ -257,7 +256,8 @@
                 (rowClan: ClanDTO, colClan: ClanDTO) => getAidBid(rowClan, colClan),
                 (bid: FoodAidBidRecord | undefined) => {
                     if (!bid || !isPositive(bid.requestedPerCapita)) return "-";
-                    return `${rpct(bid.receivedPerCapita)} / ${rpct(bid.requestedPerCapita)}`;
+                    const cell = `${rpct(bid.receivedPerCapita)} / ${rpct(bid.requestedPerCapita)}`;
+                    return bid.refused ? `${cell} ×` : cell;
                 },
                 aidCellTooltip as any,
                 undefined,
@@ -429,40 +429,26 @@
                 style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
             >
                 <li>
-                    • Donor Alignment to Requester: <strong
-                        >{signed(bid.alignment, 2)}</strong
+                    • Conversation Amount: <strong
+                        >{unsigned(bid.conversationAmount, 1)}</strong
                     >
                 </li>
                 <li>
-                    • Mutual Relative Attention: <strong
-                        >{pct(bid.mutualRelativeAttention, 1)}</strong
+                    • Donor's Information on Requester: <strong
+                        >{pct(bid.information, 0)}</strong
                     >
                 </li>
                 <li>
-                    • Request Weight: <strong
-                        >{unsigned(bid.weight, 1)}</strong
-                    >
-                </li>
-                <li>
-                    • Normalized Share: <strong
-                        >{pct(bid.normalizedShare, 1)}</strong
-                    >
+                    • Gives While Requester Below: <strong
+                        >{pct(bid.ratio, 1)}</strong
+                    > of donor's food per capita
                 </li>
                 <hr
                     style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
                 />
                 <li>
-                    • Aid Eligibility Cap: <strong
-                        >{unsigned(bid.eligibleAidBudgetAbs, 1)}</strong
-                    > ({pct(bid.mutualRelativeAttention, 1)} of {unsigned(
-                        bid.eligibleAidBudgetAbs / bid.mutualRelativeAttention,
-                        1,
-                    )} donor budget)
-                </li>
-                <li>
-                    • Aid Requested Before Attention Cap: <strong
-                        >{unsigned(bid.unconstrainedRequestedAbs, 1)}</strong
-                    >
+                    • Rounds Asked: <strong>{bid.rounds}</strong>
+                    {#if bid.refused}(refused){/if}
                 </li>
                 <li>
                     • Absolute Aid Requested: <strong
@@ -588,45 +574,29 @@
     {/if}
 {/snippet}
 
-{#snippet aidBudgetRowTooltip(val: number, arg2: any, arg3?: any)}
+{#snippet onHandRowTooltip(val: number, arg2: any, arg3?: any)}
     {@const colClan = isClanDTO(arg3) ? arg3 : isClanDTO(arg2) ? arg2 : null}
     {@const summary = colClan ? redistributionResult?.getClanSummary(colClan.uuid) : undefined}
     {#if summary && colClan}
         <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
-            <strong>Aid Budget Calculation: {colClan.name}</strong>
+            <strong>Food on Hand: {colClan.name}</strong>
             <ul
                 style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
             >
                 <li>
-                    • Cereal Production: <strong
-                        >{unsigned(summary.prodCereals, 1)}</strong
-                    > ({rpct(summary.prodCerealsPerCapita)} / capita)
+                    • Eating before aid: <strong
+                        >{rpct(summary.initialFoodPerCapita)}</strong
+                    > / capita (nutrition {rpct(summary.initialNutrition)})
                 </li>
                 <li>
-                    • Production Used: <strong
-                        >{unsigned(summary.prodCerealsUsed, 1)}</strong
-                    > ({rpct(summary.prodCerealsUsedPerCapita)} / capita)
+                    • On hand before aid: <strong
+                        >{rpct(summary.initialOnHandPerCapita)}</strong
+                    > / capita (eating, spare, and what could come out of store)
                 </li>
                 <li>
-                    • Food before aid: <strong
-                        >{unsigned(summary.initialFood, 1)}</strong
-                    > ({rpct(summary.initialFoodPerCapita)} / capita)
-                </li>
-                <hr
-                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
-                />
-                <li>
-                    • Food retained ({rpct(AID_BUDGET_FOOD_THRESHOLD)} / capita): <strong
-                        >{unsigned(summary.initialFood - summary.aidBudget, 1)}</strong
-                    > ({rpct((summary.initialFood - summary.aidBudget) / summary.population)} / capita)
-                </li>
-                <hr
-                    style="margin: 0.25rem 0; border: none; border-top: 1px solid #ccc;"
-                />
-                <li>
-                    • Total Aid Budget: <strong
-                        >{unsigned(summary.aidBudget, 1)}</strong
-                    > ({rpct(summary.aidBudgetPerCapita)} / capita)
+                    • On hand after aid: <strong
+                        >{rpct(summary.finalOnHandPerCapita)}</strong
+                    > / capita
                 </li>
             </ul>
         </div>
@@ -650,6 +620,21 @@
                 <li>
                     • Per Capita of Donor: <strong
                         >{rpct(summary.totalGivenPerCapita)}</strong
+                    >
+                </li>
+                <li>
+                    • From spare production: <strong
+                        >{unsigned(summary.givenFromSurplusAbs, 1)}</strong
+                    >
+                </li>
+                <li>
+                    • From store: <strong
+                        >{unsigned(summary.givenFromStockAbs, 1)}</strong
+                    >
+                </li>
+                <li>
+                    • From its own meals: <strong
+                        >{unsigned(summary.givenFromOwnFoodAbs, 1)}</strong
                     >
                 </li>
             </ul>
@@ -688,7 +673,8 @@
     <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">
         {#if viewMode === "Aid"}
             Shows food aid requests and transfers for the turn. Requesters are shown in rows and donors in columns.
-            Cells show "X/Y" where X is aid received and Y is aid requested (per capita of receiving clan).
+            Cells show "X/Y" where X is aid received and Y is aid requested (per capita of receiving clan);
+            &times; marks a donor that refused part of a request.
         {:else if viewMode === "Gifts"}
             Shows food gifts from donor cereal production. Recipients are shown in rows and givers in columns.
             Cells show gift received (per capita of receiving clan).

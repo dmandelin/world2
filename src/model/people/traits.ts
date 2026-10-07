@@ -20,10 +20,9 @@ function randomTraitStat(sd: number = 12): number {
 // in how much they have to say. TALKATIVENESS_SD lives in talkativeness.ts,
 // since what the trait does to work is measured in it.
 
-// Giving: a direct +/- modifier to the per-capita food threshold a clan
-// keeps for itself before its surplus becomes available as aid (see
-// AID_BUDGET_FOOD_THRESHOLD in redistribution.ts). Positive means the clan
-// is willing to keep less for itself, i.e. more generous.
+// Giving: how generous a clan is, positive being more so. It once set how
+// much food a clan kept back before giving aid; the present aid model in
+// redistribution.ts does not read it.
 export const GIVING_MIN = -0.05;
 export const GIVING_MAX = 0.05;
 // Soft outer bound: drift can carry a clan past its starting range, but not
