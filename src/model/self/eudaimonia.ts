@@ -85,7 +85,7 @@
 // the tree). All of them are in this file, which is the point.
 
 import { careComfort, careProvisionOf, careStress } from "../people/care";
-import { foodBalance, nutritionBirthModifier, nutritionFromRaw } from "../people/nutrition";
+import { foodBalance, nutritionFromRaw } from "../people/nutrition";
 
 // --- Tuning ---------------------------------------------------------------
 
@@ -113,27 +113,42 @@ export const EU_VITALITY_SCALE = 2000;
 //
 // Nutrition reads the clan's nutritional state -- how much it ate times how
 // well balanced it was, 1 being everything its people need; see
-// people/nutrition.ts -- as points of Fortune: the log of what that state
-// does for births, the birth rate multiplier m,
+// people/nutrition.ts -- as points of Fortune: the log of a smoothstep of
+// nutrition, s, from nothing at EU_NUTRITION_LOW to full at EU_NUTRITION_HIGH,
+// measured from where it stands at 100%,
 //
-//     SCALE * ln(m(nutrition))
+//     SCALE * (ln s(nutrition) - ln s(1))
 //
-// held no lower than EU_NUTRITION_FLOOR. m is 1 from 95% nutrition up, so
-// being well fed is nothing in Fortune and being short of it is a loss, the
-// more so the further short: -1 at 90%, -8 at 80%, -23 at 70%, -49 at 60%.
-// SCALE is set so that 50% nutrition is -100, which is -228 at 42% and
-// without limit as m goes to nothing at 40%, hence the floor, reached at
-// about 43%.
+// held no lower than EU_NUTRITION_FLOOR. So 100% nutrition is nothing in
+// Fortune, and falling short of it is a loss from the first step, the more so
+// the further short: -5 at 90%, -14 at 80%, -29 at 70%, -54 at 60%. SCALE is
+// set so that 50% nutrition is -100, which is -149 at 45% and without limit
+// as s goes to nothing at 40%, hence the floor, reached at about 42%.
+// The top edge is a little past 100% so the curve is still falling there;
+// above 100% it levels off at about +0.6.
+export const EU_NUTRITION_LOW = 0.4;
+export const EU_NUTRITION_HIGH = 1.05;
 export const EU_NUTRITION_ANCHOR_LEVEL = 0.5;
 export const EU_NUTRITION_ANCHOR_POINTS = -100;
 export const EU_NUTRITION_FLOOR = -200;
+
+export function nutritionShape(nutrition: number): number {
+    const t = (nutrition - EU_NUTRITION_LOW)
+        / (EU_NUTRITION_HIGH - EU_NUTRITION_LOW);
+    if (!(t > 0)) return 0;
+    if (t >= 1) return 1;
+    return t * t * (3 - 2 * t);
+}
+
+const NUTRITION_LN_AT_FULL = Math.log(nutritionShape(1));
+
 export const EU_NUTRITION_SCALE = EU_NUTRITION_ANCHOR_POINTS
-    / Math.log(nutritionBirthModifier(EU_NUTRITION_ANCHOR_LEVEL));
+    / (Math.log(nutritionShape(EU_NUTRITION_ANCHOR_LEVEL)) - NUTRITION_LN_AT_FULL);
 
 export function nutritionFortune(nutrition: number): number {
-    const m = nutritionBirthModifier(nutrition);
-    if (!(m > 0)) return EU_NUTRITION_FLOOR;
-    const points = EU_NUTRITION_SCALE * Math.log(m);
+    const s = nutritionShape(nutrition);
+    if (!(s > 0)) return EU_NUTRITION_FLOOR;
+    const points = EU_NUTRITION_SCALE * (Math.log(s) - NUTRITION_LN_AT_FULL);
     return points > EU_NUTRITION_FLOOR ? points : EU_NUTRITION_FLOOR;
 }
 
@@ -712,7 +727,7 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.Food, label: "Food", role: "derived", places: 1,
       note: "Nutrition, plus taste weighted by how well fed the clan was: what this year's eating was worth." },
     { id: EuNode.FoodNutrition, label: "Nutrition", role: "derived", places: 1,
-      note: "The clan's nutritional state as Fortune: nothing from 95% up, about -23 at 70%, -100 at 50%, and no worse than -200." },
+      note: "The clan's nutritional state as Fortune: nothing at 100%, about -29 at 70%, -100 at 50%, and no worse than -200." },
     { id: EuNode.FoodBalance, label: "Balance", role: "derived", places: 2, isRate: true,
       note: "How well the mix of foods covers what people need: 100% at 30% cereals, 90% at all fish, 70% at all cereal." },
     { id: EuNode.NutritionRaw, label: "Before the ceiling", role: "derived", places: 2, isRate: true,
