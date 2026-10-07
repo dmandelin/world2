@@ -85,7 +85,7 @@
 // the tree). All of them are in this file, which is the point.
 
 import { careComfort, careProvisionOf, careStress } from "../people/care";
-import { foodBalance, nutritionFromRaw } from "../people/nutrition";
+import { foodBalance, nutritionBirthModifier, nutritionFromRaw } from "../people/nutrition";
 
 // --- Tuning ---------------------------------------------------------------
 
@@ -113,27 +113,37 @@ export const EU_VITALITY_SCALE = 2000;
 //
 // Nutrition reads the clan's nutritional state -- how much it ate times how
 // well balanced it was, 1 being everything its people need; see
-// people/nutrition.ts -- as points of Fortune:
+// people/nutrition.ts -- as points of Fortune: the log of what that state
+// does for births, the birth rate multiplier m,
 //
-//     SCALE * (1 - e^(-RATE * (nutrition - 1)))
+//     SCALE * ln(m(nutrition))
 //
-// A saturating exponential: nothing at 1, rising toward +SCALE above it and
-// falling ever faster below. Nutrition itself tops out at 1.25, where this
-// comes to about +10; at 90% it is -9, at 80% -24, at 70% -49, at 50% -157.
-export const EU_NUTRITION_SCALE = 14;
-export const EU_NUTRITION_RATE = 5;
+// held no lower than EU_NUTRITION_FLOOR. m is 1 from 95% nutrition up, so
+// being well fed is nothing in Fortune and being short of it is a loss, the
+// more so the further short: -1 at 90%, -8 at 80%, -23 at 70%, -49 at 60%.
+// SCALE is set so that 50% nutrition is -100, which is -228 at 42% and
+// without limit as m goes to nothing at 40%, hence the floor, reached at
+// about 43%.
+export const EU_NUTRITION_ANCHOR_LEVEL = 0.5;
+export const EU_NUTRITION_ANCHOR_POINTS = -100;
+export const EU_NUTRITION_FLOOR = -200;
+export const EU_NUTRITION_SCALE = EU_NUTRITION_ANCHOR_POINTS
+    / Math.log(nutritionBirthModifier(EU_NUTRITION_ANCHOR_LEVEL));
 
 export function nutritionFortune(nutrition: number): number {
-    return EU_NUTRITION_SCALE * -Math.expm1(-EU_NUTRITION_RATE * (nutrition - 1));
+    const m = nutritionBirthModifier(nutrition);
+    if (!(m > 0)) return EU_NUTRITION_FLOOR;
+    const points = EU_NUTRITION_SCALE * Math.log(m);
+    return points > EU_NUTRITION_FLOOR ? points : EU_NUTRITION_FLOOR;
 }
 
 // The pleasures each kind of food brings, beyond nourishment. Gatherers turn
 // up honey and the like, worth a little in proportion to how much of the diet
 // they provide. Cereals make beer, worth rather more, but only so much beer is
 // any use.
-export const EU_HONEY_PER_SHARE = 5;
-export const EU_BEER_PER_SHARE = 20;
-export const EU_BEER_MAX = 10;
+export const EU_HONEY_PER_SHARE = 2.5;
+export const EU_BEER_PER_SHARE = 10;
+export const EU_BEER_MAX = 5;
 
 // --- Conversation ------------------------------------------------------------
 //
@@ -275,34 +285,27 @@ export const BLEND: EuCombiner = {
 // halves leave 0 flat, so taste counts at face value right around enough to
 // eat.
 //
-// Below 0, taste fades fast toward a floor -- a treat is still a treat, even
-// hungry -- along a bell curve:
+// Below 0, taste fades toward a floor -- a treat is still a treat, even
+// hungry -- along a power curve that levels off where it gets there:
 //
-//     beta = FLOOR + (1 - FLOOR) * e^(-(points / S)^2)
+//     u    = min(1, -points / EU_SAVOR_FLOOR_AT)
+//     beta = FLOOR + (1 - FLOOR) * (1 - u)^EXPONENT
 //
-// with S set so that beta is 80% at -10 points (about 91% nutrition). Then
-// 45% at -20, 22% at -35 (75% nutrition), and the 20% floor from there.
+// Fitted to about 75% at -10 points, 50% at -25, and the 10% floor from -50
+// down: 77% at -10, 47% at -25, 37% at -30, 21% at -40.
 //
-// Above 0 it rises as a parabola to 150% at the points the Nutrition term
-// takes at the 125% ceiling, about +10:
-//
-//     beta = 1 + 0.5 * (points / points@125%)^2
-export const EU_SAVOR_FLOOR = 0.2;
-export const EU_SAVOR_REF_POINTS = -10;
-export const EU_SAVOR_AT_REF = 0.8;
-export const EU_SAVOR_AT_HIGH = 1.5;
-export const EU_SAVOR_HIGH_POINTS = nutritionFortune(1.25);
-
-const SAVOR_FADE = Math.abs(EU_SAVOR_REF_POINTS) / Math.sqrt(Math.log(
-    (1 - EU_SAVOR_FLOOR) / (EU_SAVOR_AT_REF - EU_SAVOR_FLOOR)));
+// The Nutrition term never goes above 0, so a clan can be no better fed than
+// enough, where taste counts at face value.
+export const EU_SAVOR_FLOOR = 0.1;
+export const EU_SAVOR_FLOOR_AT = -50;
+export const EU_SAVOR_EXPONENT = 1.3;
 
 export function savorBeta(nutrition: number): number {
-    if (nutrition < 0) {
-        const t = nutrition / SAVOR_FADE;
-        return EU_SAVOR_FLOOR + (1 - EU_SAVOR_FLOOR) * Math.exp(-t * t);
-    }
-    const t = nutrition / EU_SAVOR_HIGH_POINTS;
-    return 1 + (EU_SAVOR_AT_HIGH - 1) * t * t;
+    if (!(nutrition < 0)) return 1;
+    const u = nutrition / EU_SAVOR_FLOOR_AT;
+    if (u >= 1) return EU_SAVOR_FLOOR;
+    return EU_SAVOR_FLOOR
+        + (1 - EU_SAVOR_FLOOR) * Math.pow(1 - u, EU_SAVOR_EXPONENT);
 }
 
 function savorPair(nutrition: number, taste: number): number {
@@ -709,7 +712,7 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.Food, label: "Food", role: "derived", places: 1,
       note: "Nutrition, plus taste weighted by how well fed the clan was: what this year's eating was worth." },
     { id: EuNode.FoodNutrition, label: "Nutrition", role: "derived", places: 1,
-      note: "The clan's nutritional state as Fortune: nothing at 100%, about -50 at 70%, up to about +10 at the 125% ceiling." },
+      note: "The clan's nutritional state as Fortune: nothing from 95% up, about -23 at 70%, -100 at 50%, and no worse than -200." },
     { id: EuNode.FoodBalance, label: "Balance", role: "derived", places: 2, isRate: true,
       note: "How well the mix of foods covers what people need: 100% at 30% cereals, 90% at all fish, 70% at all cereal." },
     { id: EuNode.NutritionRaw, label: "Before the ceiling", role: "derived", places: 2, isRate: true,

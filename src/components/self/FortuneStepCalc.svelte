@@ -8,7 +8,7 @@
         EudaimoniaReport,
         EU_BEER_MAX,
         EU_BEER_PER_SHARE,
-        EU_NUTRITION_RATE,
+        EU_NUTRITION_FLOOR,
         EU_NUTRITION_SCALE,
         EU_CONVERSATION_DIVERSITY_REF,
         EU_CONVERSATION_HALF_SHARE,
@@ -31,6 +31,7 @@
         BALANCE_AT_NO_CEREAL,
         NUTRITION_IDEAL_CEREAL_SHARE,
         NUTRITION_MAX,
+        nutritionBirthModifier,
     } from "../../model/people/nutrition";
     import { sociableTalkFactor } from "../../model/people/talkativeness";
 
@@ -99,18 +100,21 @@
             nutrition
         </div>
         <div class="line">
-            {EU_NUTRITION_SCALE} &times; (1 &minus; e<sup
-                >&minus;{EU_NUTRITION_RATE} &times; ({pctOf(
-                    get(EuNode.NutritionLevel),
-                )} &minus; 1)</sup
-            >) = <b>{n(get(EuNode.FoodNutrition))}</b>
+            {u(EU_NUTRITION_SCALE, 1)} &times; ln({u(
+                nutritionBirthModifier(get(EuNode.NutritionLevel)),
+                3,
+            )} of the full birth rate) = <b>{n(get(EuNode.FoodNutrition))}</b>
+            {#if get(EuNode.FoodNutrition) <= EU_NUTRITION_FLOOR}
+                <span class="cap">(floor)</span>
+            {/if}
         </div>
         <div class="note">
             Balance is 100% at {pctOf(NUTRITION_IDEAL_CEREAL_SHARE)} cereals,
             {pctOf(BALANCE_AT_NO_CEREAL)} at all fish and
             {pctOf(BALANCE_AT_ALL_CEREAL)} at all cereal. Past 100%, nutrition
-            runs toward a ceiling of {pctOf(NUTRITION_MAX)}. As Fortune, 100%
-            is nothing, 70% about &minus;50, and the ceiling about +10.
+            runs toward a ceiling of {pctOf(NUTRITION_MAX)}. As Fortune, 95%
+            and up is nothing, 70% about &minus;23, 50% &minus;100, and nothing
+            is worse than {n(EU_NUTRITION_FLOOR, 0)}.
         </div>
     {:else if node === EuNode.Honey}
         <div class="line">

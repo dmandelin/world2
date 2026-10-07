@@ -276,13 +276,14 @@ We can try to do this incrementally. For example:
 *   Start with basic idea of "don't let people you know starve"
 *   Check on utility and effects of food shortage in current
     model
-    *   Update effects of food shortage if needed
+    x   Update effects of food shortage if needed
         x   Update birth rate effects
         x   Update famine death rate
         x   Update other death rates
-    *   See if we can create some sort of utility function off of
+    x   See if we can create some sort of utility function off of
         this
-        *   Analyze marginal utilities of help exchanges
+        x   Update fortune effects
+    *   Analyze marginal utilities of help exchanges
 *   Verify basic exchanges, update as needed
 *   Flag when clans have real problems despite basic exchanges
 *   More carefully model when clans can't satisfy all aid requests
@@ -291,6 +292,7 @@ We can try to do this incrementally. For example:
 
 *   (P2) Productivity effects of malnutrition
     *   Probably should have them but might be hard to tune
+*   (P2) Revamp effects of bad nutrient mix
 
 *   Current effects of food consumption level:
 
