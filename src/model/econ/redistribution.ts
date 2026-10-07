@@ -16,7 +16,8 @@ import { foodBalance } from "../people/nutrition";
 // Giving. A clan gives to an asker as long as the asker has less than a
 // share of its own food per head after the gift: AID_RATIO_NO_INFORMATION if
 // it knows nothing of the asker, AID_RATIO_FULL_INFORMATION if it knows it
-// well, straight-line between. Knowing a clan well makes one readier to
+// well, rising with the square root of information between (see aidRatio).
+// Knowing a clan well makes one readier to
 // believe it is in need. So a donor gives
 //
 //     min(asked, (r * F_d/p_d - F_a/p_a) / (1/p_a + r/p_d))
@@ -56,10 +57,13 @@ const MAX_ROUNDS = 1000;
 
 const FOOD_GOODS: readonly TradeGood[] = [TradeGoods.Fish, TradeGoods.Cereals];
 
+// Read on the square root of information, so a little knowledge goes a long
+// way: at half information a clan is about 71% of the way to its full
+// readiness to give.
 export function aidRatio(information: number): number {
     return AID_RATIO_NO_INFORMATION
         + (AID_RATIO_FULL_INFORMATION - AID_RATIO_NO_INFORMATION)
-            * clamp(information, 0, 1);
+            * Math.sqrt(clamp(information, 0, 1));
 }
 
 export interface FoodAidBidRecord {
