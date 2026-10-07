@@ -23,7 +23,10 @@ import { foodBalance } from "../people/nutrition";
 //     min(asked, (r * F_d/p_d - F_a/p_a) / (1/p_a + r/p_d))
 //
 // which is the gift that brings the asker to exactly r times the donor, both
-// counted per head; or nothing, if the asker is already there. F is food on
+// counted per head; or nothing, if the asker is already there. Whatever that
+// comes to, a donor will always give food it has beyond a full ration for
+// each of its own people, F_d - p_d, so a clan with plenty never turns away
+// a hungry neighbor for being only a little worse off. F is food on
 // hand: what the clan is eating, plus what it has spare this year, plus what
 // it could take out of store. A donor gives first from spare production,
 // then from store (paying the usual cost of taking it out), and only then
@@ -403,13 +406,15 @@ function makeParty(clan: Clan): Party {
     };
 }
 
-// The most the donor will give before the asker would have r times its food
-// per head.
+// The most the donor will give: anything it has beyond a full ration for
+// each of its people, or, if more, as much as leaves the asker with r times
+// its food per head.
 function willingToGive(link: Link): number {
     const { asker, donor, ratio } = link;
+    const excess = donor.onHand - donor.pop;
     const gap = ratio * donor.onHand / donor.pop - asker.onHand / asker.pop;
-    if (!(gap > 0)) return 0;
-    return gap / (1 / asker.pop + ratio / donor.pop);
+    const share = gap > 0 ? gap / (1 / asker.pop + ratio / donor.pop) : 0;
+    return Math.max(0, excess, share);
 }
 
 function giveable(party: Party): number {
