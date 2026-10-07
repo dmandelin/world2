@@ -25,6 +25,9 @@
         stressColor,
         statBandClass,
         eudaimoniaBandClass,
+        foodSufficiencyBandClass,
+        foodProductionBandClass,
+        foodStockBandClass,
     } from "../../model/lib/format";
     import { safeDiv, sortedByKey, sumFun } from "../../model/lib/basics";
     import { populationAverage } from "../../model/lib/modelbasics";
@@ -792,10 +795,11 @@
             },
         ]);
 
-        // Group 4: Food
+        // Group 4: Food. Every figure is per head, as a share of a full
+        // year's ration.
         const fmt2 = (v: number) => {
             if (!v || Math.abs(v) < 0.005) return "";
-            return unsigned(v, 2);
+            return pct(v);
         };
 
         groups.push([
@@ -813,6 +817,7 @@
                 cellClass: "ra",
                 value: (c) => c.nutrition,
                 format: pct,
+                bandClass: foodSufficiencyBandClass,
                 tooltipSnippet: nutritionTooltip,
                 deltaValue: (c) => c.nutrition,
                 deltaFormat: pct,
@@ -821,9 +826,26 @@
                 topics: ["food", "food:detail", "welfare"],
             },
             {
-                label: "&nbsp;Produced",
+                label: "&nbsp;Consumption",
                 class: "actual",
                 cellClass: "ra",
+                value: (c) => (c.consumption ? c.consumption.perCapitaFood : 0),
+                format: fmt2,
+                bandClass: foodSufficiencyBandClass,
+                tooltipSnippet: foodTooltip,
+                settlementTooltipSnippet: settlementFoodTooltip,
+                deltaValue: (c) =>
+                    c.consumption ? c.consumption.perCapitaFood : 0,
+                deltaFormat: fmt2,
+                timelineKey: "food",
+                scaler: new DefaultScaler(),
+                topics: ["food", "food:detail", "welfare"],
+            },
+            {
+                label: "&nbsp;Production",
+                class: "actual",
+                cellClass: "ra",
+                bandClass: foodProductionBandClass,
                 value: (c) =>
                     c.distribution
                         ? c.distribution.totalFoodFromProduction /
@@ -913,21 +935,6 @@
                     fedPopulation(c),
                 format: fmt2,
                 topics: ["food:detail"],
-            },
-            {
-                label: "&nbsp;Consumed",
-                class: "actual",
-                cellClass: "ra",
-                value: (c) => (c.consumption ? c.consumption.perCapitaFood : 0),
-                format: fmt2,
-                tooltipSnippet: foodTooltip,
-                settlementTooltipSnippet: settlementFoodTooltip,
-                deltaValue: (c) =>
-                    c.consumption ? c.consumption.perCapitaFood : 0,
-                deltaFormat: fmt2,
-                timelineKey: "food",
-                scaler: new DefaultScaler(),
-                topics: ["food", "food:detail", "welfare"],
             },
             {
                 isBreak: true,
@@ -1040,6 +1047,7 @@
                 cellClass: "ra",
                 value: (c) => c.stock.perCapitaFoodStock(c.population),
                 format: fmt2,
+                bandClass: foodStockBandClass,
                 tooltipSnippet: foodStockTooltip,
                 settlementTooltipSnippet: settlementFoodStockTooltip,
                 deltaValue: (c) => c.stock.perCapitaFoodStock(c.population),

@@ -95,6 +95,36 @@ export function eudaimoniaBandClass(value: number): string {
         : `eu-band eu-band-n${-band}`;
 }
 
+// Bands for food per head, as a share of a full ration: ten points to a band.
+// Each returns `food-band` for the shape of the painted area, and a second
+// class for its colour; see app.css.
+
+// How well fed: nutrition and consumption. Green from 90% up, then yellow,
+// orange and red for each ten points short, deepening to magenta below 60%.
+export function foodSufficiencyBandClass(value: number): string {
+    if (!Number.isFinite(value)) return '';
+    const band = Math.floor(value * 10 + 1e-9);
+    const b = band >= 9 ? 9 : band < 4 ? 3 : band;
+    return `food-band food-band-${b}`;
+}
+
+// Food grown: the same up to a full ration, then aqua deepening to blue for
+// each ten points past it, out to twice a full ration.
+export function foodProductionBandClass(value: number): string {
+    if (!Number.isFinite(value)) return '';
+    if (value < 1) return foodSufficiencyBandClass(value);
+    const band = Math.floor((value - 1) * 10 + 1e-9) + 1;
+    return `food-band food-band-p${band > 10 ? 10 : band}`;
+}
+
+// Food in store: brown when there is none, through to green at a year's
+// rations, then on to blue at two years'.
+export function foodStockBandClass(value: number): string {
+    if (!Number.isFinite(value)) return '';
+    const band = Math.floor(Math.max(0, value) * 10 + 1e-9);
+    return `food-band food-band-s${band > 20 ? 20 : band}`;
+}
+
 export function grade(t: number) {
   switch (true) {
       case t > 87.5: return 'S';

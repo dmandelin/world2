@@ -142,3 +142,62 @@ td.eu-band {
 .eu-band-n8  { --eu-band: hsl(8, 62%, 63%); }
 .eu-band-n9  { --eu-band: hsl(7, 64%, 60%); }
 .eu-band-n10 { --eu-band: hsl(6, 66%, 57%); }
+
+/* Bands for food per head, as a share of a full ration, ten points to a band.
+ * Painted inside the same inset as the eudaimonia bands. These are stronger
+ * than the stat bands on purpose: going hungry should be hard to miss. */
+td.food-band {
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(
+        to right,
+        transparent 0 0.45em,
+        var(--food-band) 0.45em calc(100% - 0.45em),
+        transparent calc(100% - 0.45em));
+}
+
+/* How well fed: green at 90% and up, then yellow, orange, red, and magenta
+ * deepening below 60%. Band 3 covers everything under 40%. */
+.food-band-9 { --food-band: hsl(115, 42%, 72%); }
+.food-band-8 { --food-band: hsl(50, 58%, 79%); }
+.food-band-7 { --food-band: hsl(27, 58%, 75%); }
+.food-band-6 { --food-band: hsl(2, 75%, 64%); }
+.food-band-5 { --food-band: hsl(338, 45%, 72%); }
+.food-band-4 { --food-band: hsl(312, 38%, 67%); }
+.food-band-3 { --food-band: hsl(296, 40%, 60%); }
+
+/* Food grown past a full ration: aqua deepening to blue, out to 200%. */
+.food-band-p1  { --food-band: hsl(172, 50%, 76%); }
+.food-band-p2  { --food-band: hsl(177, 51%, 74%); }
+.food-band-p3  { --food-band: hsl(182, 52%, 72%); }
+.food-band-p4  { --food-band: hsl(188, 53%, 71%); }
+.food-band-p5  { --food-band: hsl(193, 54%, 69%); }
+.food-band-p6  { --food-band: hsl(199, 55%, 67%); }
+.food-band-p7  { --food-band: hsl(205, 56%, 66%); }
+.food-band-p8  { --food-band: hsl(210, 57%, 64%); }
+.food-band-p9  { --food-band: hsl(216, 58%, 62%); }
+.food-band-p10 { --food-band: hsl(222, 60%, 60%); }
+
+/* Food in store: brown when empty, to green at a year's rations, to blue at
+ * two years'. */
+.food-band-s0  { --food-band: hsl(26, 34%, 72%); }
+.food-band-s1  { --food-band: hsl(30, 33%, 74%); }
+.food-band-s2  { --food-band: hsl(36, 32%, 76%); }
+.food-band-s3  { --food-band: hsl(42, 31%, 77%); }
+.food-band-s4  { --food-band: hsl(50, 30%, 78%); }
+.food-band-s5  { --food-band: hsl(60, 28%, 78%); }
+.food-band-s6  { --food-band: hsl(72, 28%, 78%); }
+.food-band-s7  { --food-band: hsl(84, 29%, 77%); }
+.food-band-s8  { --food-band: hsl(96, 32%, 75%); }
+.food-band-s9  { --food-band: hsl(106, 36%, 73%); }
+.food-band-s10 { --food-band: hsl(115, 38%, 72%); }
+.food-band-s11 { --food-band: hsl(125, 38%, 71%); }
+.food-band-s12 { --food-band: hsl(136, 38%, 70%); }
+.food-band-s13 { --food-band: hsl(147, 38%, 69%); }
+.food-band-s14 { --food-band: hsl(158, 40%, 68%); }
+.food-band-s15 { --food-band: hsl(170, 42%, 67%); }
+.food-band-s16 { --food-band: hsl(182, 44%, 66%); }
+.food-band-s17 { --food-band: hsl(194, 46%, 65%); }
+.food-band-s18 { --food-band: hsl(205, 50%, 64%); }
+.food-band-s19 { --food-band: hsl(214, 54%, 63%); }
+.food-band-s20 { --food-band: hsl(222, 58%, 61%); }
