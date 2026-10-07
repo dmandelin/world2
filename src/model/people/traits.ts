@@ -6,7 +6,11 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // standard they need. See care.ts.
 // Talkativeness: how much a clan puts into conversation, whatever the
 // setting. See talkativenessFactor in conversation.ts.
-export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness'] as const;
+// Giving: how open-handed a clan is with food aid -- how much better off
+// than an asker it needs to be before it will share. See aidRatio in
+// redistribution.ts. Not to be confused with Generosity, which is what
+// other clans have come to think of it.
+export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness', 'giving'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -20,31 +24,20 @@ function randomTraitStat(sd: number = 12): number {
 // in how much they have to say. TALKATIVENESS_SD lives in talkativeness.ts,
 // since what the trait does to work is measured in it.
 
-// Giving: how generous a clan is, positive being more so. It once set how
-// much food a clan kept back before giving aid; the present aid model in
-// redistribution.ts does not read it.
-export const GIVING_MIN = -0.05;
-export const GIVING_MAX = 0.05;
-// Soft outer bound: drift can carry a clan past its starting range, but not
-// without limit.
-const GIVING_DRIFT_LIMIT = 0.15;
+// Giving is spread wider than most 0-100 traits: clans differ a good deal in
+// how open-handed they are.
+export const GIVING_SD = 15;
 
 // Aggression: this clan's own probability of playing hawk in a conflict
 // iteration (see Conflict.advance/iterate in conflict.ts).
 export const AGGRESSION_MIN = 0.15;
 export const AGGRESSION_MAX = 0.25;
 
-// Per-year drift stddev for Giving and Aggression, chosen so that after 75
-// years of independent yearly steps (a random walk), the accumulated drift
-// has a stddev of ~0.043 -- most of a starting half-range (0.05), enough
-// that a clan's disposition can shift substantially, or even flip sign,
-// over a few generations.
-const GIVING_DRIFT_STDDEV = 0.005;
+// Per-year drift stddev for Aggression, chosen so that after 75 years of
+// independent yearly steps (a random walk), the accumulated drift has a
+// stddev of ~0.043 -- most of a starting half-range (0.05), enough that a
+// clan's disposition can shift substantially over a few generations.
 const AGGRESSION_DRIFT_STDDEV = 0.005;
-
-function randomGiving(): number {
-    return GIVING_MIN + Math.random() * (GIVING_MAX - GIVING_MIN);
-}
 
 function randomAggression(): number {
     return AGGRESSION_MIN + Math.random() * (AGGRESSION_MAX - AGGRESSION_MIN);
@@ -126,7 +119,7 @@ const FESTIVAL_GIVING_DRIFT_STDDEV = 0.01;
 export const RIGIDITY_MIN = 0.2;
 export const RIGIDITY_MAX = 0.8;
 const RIGIDITY_DRIFT_STDDEV = 0.01;
-// Soft outer bound, as for Giving: drift can carry a clan past where it
+// Soft outer bound: drift can carry a clan past where it
 // started but not to the ends of the scale. A clan at a true 1 would never
 // give way on anything ever again, and over a long enough run a random walk
 // clamped at 1 would pile clans up there.
@@ -140,7 +133,6 @@ function randomInRange(min: number, max: number): number {
 export class ClanTraits {
     private numeric: Record<string, number>;
     bitmap: number;
-    private giving_: number;
     private aggression_: number;
     private pride_: number;
     private ditchingEffort_: number;
@@ -154,7 +146,6 @@ export class ClanTraits {
     constructor(
         numeric?: Partial<Record<NumericTrait, number>>,
         bitmap: number = 0,
-        giving?: number,
         aggression?: number,
         pride?: number,
         ditchingEffort?: number,
@@ -170,9 +161,9 @@ export class ClanTraits {
             intellect: numeric?.intellect ?? randomTraitStat(),
             nurture: numeric?.nurture ?? randomTraitStat(),
             talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
+            giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
         };
         this.bitmap = bitmap;
-        this.giving_ = giving ?? randomGiving();
         this.aggression_ = aggression ?? randomAggression();
         this.pride_ = pride ?? randomPride();
         this.ditchingEffort_ = ditchingEffort
@@ -230,8 +221,8 @@ export class ClanTraits {
         return this.ditchingAdmiration_;
     }
 
-    // Not clamped to the starting range: like Giving and Aggression, a clan's
-    // opinion of itself can drift past where it began.
+    // Not clamped to the starting range: like Aggression, a clan's opinion of
+    // itself can drift past where it began.
     get pride(): number {
         return this.pride_;
     }
@@ -241,11 +232,11 @@ export class ClanTraits {
     }
 
     get giving(): number {
-        return this.giving_;
+        return this.numeric['giving'] ?? 50;
     }
 
     set giving(val: number) {
-        this.giving_ = clamp(val, -GIVING_DRIFT_LIMIT, GIVING_DRIFT_LIMIT);
+        this.numeric['giving'] = clamp(Math.round(val), 0, 100);
     }
 
     // A share of the clans present, so it must stay in [0, 1].
@@ -320,7 +311,7 @@ export class ClanTraits {
 
     clone(): ClanTraits {
         return new ClanTraits(
-            { ...this.numeric }, this.bitmap, this.giving_, this.aggression_, this.pride_,
+            { ...this.numeric }, this.bitmap, this.aggression_, this.pride_,
             this.ditchingEffort_, this.ditchingExpectation_, this.ditchingAdmiration_,
             this.festivalGiving_, this.festivalExpectation_, this.festivalAdmiration_,
             this.rigidity_);
@@ -337,7 +328,6 @@ export class ClanTraits {
                 copy.setBoolean(i, !copy.hasBoolean(i));
             }
         }
-        copy.giving = copy.giving + normal(0, GIVING_DRIFT_STDDEV);
         copy.aggression = copy.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         copy.ditchingEffort = copy.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
         copy.festivalGiving = copy.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
@@ -357,7 +347,6 @@ export class ClanTraits {
             }
         }
 
-        this.giving = this.giving + normal(0, GIVING_DRIFT_STDDEV);
         this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         this.ditchingEffort = this.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
         this.festivalGiving = this.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);

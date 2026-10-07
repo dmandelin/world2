@@ -1287,14 +1287,17 @@
             },
             {
                 label: "Giving",
+                labelTooltip:
+                    "How open-handed the clan is with food aid. With a clan it knows well, 50 gives while the asker has under 95% of its own food per head, 35 under 70%, 65 under 100%, and 80 under 110%.",
                 class: "actual",
                 cellClass: "rap",
+                banded: true,
                 value: (c) => c.traits.giving,
-                format: (v) => signed(v, 3),
+                format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.giving,
-                deltaFormat: (v) => signed(v, 3),
+                deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitGiving",
-                scaler: new ZeroCenteredScaler(),
+                scaler: new DefaultScaler(),
                 topics: ["traits:detail"],
             },
             {

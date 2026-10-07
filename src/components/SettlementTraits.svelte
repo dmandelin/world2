@@ -29,7 +29,7 @@
             key: "giving",
             label: "Giving",
             get: (c) => c.traits.giving,
-            decimals: 3,
+            decimals: 0,
         },
         aggression: {
             key: "aggression",
