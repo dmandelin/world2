@@ -9,6 +9,7 @@ import { getMarriageDecisions } from "../relations/marriage";
 // nutrition, minimal shelter and no migration) and the global death-rate
 // multiplier are tunable, so read them from the shared knobs at call time.
 import { tuning } from "../tuning";
+import { famineDeathShare, nutritionBirthModifier, nutritionHazardModifier } from "./nutrition";
 
 // What care is worth to births and deaths reads care provided -- effort given
 // as well as how well it is done -- and lives in care.ts with the rest of what
@@ -59,26 +60,6 @@ export const DEATH_CAUSES = ['Disease', 'Hazards', 'Flood', 'Old Age', 'Starvati
 export const DISEASE_CAUSE_INDEX = 0;
 export const HAZARDS_CAUSE_INDEX = 1;
 
-// Starvation risk thresholds [safe, fatal] on per-capita food consumption
-// (1 = full subsistence). Below `safe` starvation risk climbs from 0; at or
-// below `fatal` it is certain. The youngest and oldest slices are more
-// vulnerable (higher thresholds) than the two middle slices.
-const STARVATION_THRESHOLDS = [
-    [0.8, 0.4], // slice 0 (youngest)
-    [0.6, 0.3], // slice 1
-    [0.6, 0.3], // slice 2
-    [1.0, 0.5], // slice 3 (oldest)
-];
-
-// Convex, monotonically decreasing starvation risk ratio in per-capita food
-// consumption: 0 with zero slope at `safe`, rising to 1 at `fatal` and staying
-// 1 below it. The squared ramp gives the required increasing-toward-0 derivative.
-function starvationRisk(consumption: number, safe: number, fatal: number): number {
-    if (consumption >= safe) return 0;
-    if (consumption <= fatal) return 1;
-    const t = (safe - consumption) / (safe - fatal);
-    return t * t;
-}
 
 // Cumulative probability of dying of disease across a full 20-year age slice.
 // Childhood (slice 0) risk scales with disease load between the min and max;
@@ -345,12 +326,10 @@ export class PopulationChangeBuilder {
         // Nutrition: how much the clan ate and how well balanced it was,
         // together. See nutrition.ts.
         const nutrition = this.clan.nutrition;
-        const nutritionBrModifier = clamp(nutrition, 0, 2);
+        const nutritionBrModifier = nutritionBirthModifier(nutrition);
         this.brModifiers.push(new PopulationChangeModifier(
             'Nutrition', nutrition, nutritionBrModifier));
-        const nutritionDrModifier = nutrition >= 1
-            ? 1 - clamp((nutrition - 1) / 5, 0, 0.2)
-            : 1 + clamp((1 - nutrition) / 2, 0, 0.5);
+        const nutritionDrModifier = nutritionHazardModifier(nutrition);
         this.drModifiers.push(new PopulationChangeModifier(
             'Nutrition', nutrition, nutritionDrModifier));
 
@@ -448,8 +427,10 @@ export class PopulationChangeBuilder {
         const floodRisk = this.floodLevel.damageFactor * FLOOD_BASE_DEATH_RATE * Y
                         + clan.floodDamage.extremeDeathRisk;
 
-        const consumption = Number.isFinite(clan.consumption.perCapitaFood)
-            ? clan.consumption.perCapitaFood : 1;
+        // A clan shares what food it has toward those who are most
+        // vulnerable, so famine falls alike on every age; see nutrition.ts.
+        const nutrition = clan.nutrition;
+        const famineRisk = famineDeathShare(nutrition);
 
         // Independent annual risk ratio per cause (in DEATH_CAUSES order) for a
         // given slice and sex mortality multiplier. Every cause is scaled by the
@@ -474,9 +455,7 @@ export class PopulationChangeBuilder {
             (i === 3 ? Y / SLICE_WIDTH : 0) * careBySlice[i]
                 * sexFactor * A,                                        // Old Age
             // No adjustment here because we want risk 1.0 at some point.
-            Math.min(1, starvationRisk(                                // Starvation
-                consumption, STARVATION_THRESHOLDS[i][0], STARVATION_THRESHOLDS[i][1]
-            ) * sexFactor),
+            famineRisk,                                                 // Starvation
         ];
 
         // ---- Step 2: draw the actual changes ----
@@ -577,7 +556,7 @@ export class PopulationChangeBuilder {
             this.drModifier,
             this.floodLevel.damageFactor + clan.floodDamage.extremeDeathRisk,
             1,
-            consumption,
+            nutrition,
         ];
         const deathItems = DEATH_CAUSES.map((name, c) => new PopulationChangeItem(
             name,

@@ -269,6 +269,62 @@ TODOs:
 *   Define the relations of reciprocity: neighbors, friends, family,
     "goodness"
 *   Define key changes from current model
+*   Understand how to measure the effects of all this
+
+We can try to do this incrementally. For example:
+
+*   Start with basic idea of "don't let people you know starve"
+*   Check on utility and effects of food shortage in current
+    model
+    *   Update effects of food shortage if needed
+        x   Update birth rate effects
+        x   Update famine death rate
+        x   Update other death rates
+    *   See if we can create some sort of utility function off of
+        this
+        *   Analyze marginal utilities of help exchanges
+*   Verify basic exchanges, update as needed
+*   Flag when clans have real problems despite basic exchanges
+*   More carefully model when clans can't satisfy all aid requests
+*   Give clans options to refuse to give
+*   Give clans options to over-ask (or under-ask)
+
+*   (P2) Productivity effects of malnutrition
+    *   Probably should have them but might be hard to tune
+
+*   Current effects of food consumption level:
+
+*   Improved model of food consumption effects:
+    *   First, some heuristics of long term-effects:
+        *   90% consumption: people are smaller but healthy
+        *   80% consumption: moderately reduced health, performance,
+            and fertility
+        *   60% consumption: disability and infertility, 
+            significantly increased death rate
+        *   40% consumption: death
+        *   low carbohydrates: moderately reduced anaerobic power
+        *   low protein: wasting and loss of immune function
+        *   very high protein: serious problems, death
+    *   The obvious effects for us are:
+        *   birth rate
+            *   apparently fine down to 90%, but declines to
+                perhaps 25% of normal at 60%
+        *   productivity
+            *   seems like it might follow a somewhat similar curve
+                to birth rate, but maybe declines faster
+        *   death rate (due to starvation, but also disease)
+            *   over a long time span, either you're starving or
+                you're not -- there's probably a cliff
+            *   however, other death rates could rise somewhat
+        *   health + size (fold into fortune for now?)
+            *   ideal at 100%, some impact at 90%
+    *   With the way productivity works, there is probably a
+        death spiral: 80% consumption means a loss of, say 20%
+        of labor capacity. If they can cut into leisure they
+        can make it, but otherwise, now they'll get only 64%
+        consumption and are in a world of hurt
+        *   Conclusion: Clans really need to ensure their food
+            supply or else they're in big trouble!
 
 ## Items
 
