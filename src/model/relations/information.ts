@@ -1741,12 +1741,6 @@ function fileHeardNews(world: World, hearer: Clan, item: NewsItem): void {
 // News into memory
 // ---------------------------------------------------------------------------
 
-// How big a thing has to be before a clan will still know of it next year.
-// Deliberately not the same threshold as being worth reporting to a reader:
-// plenty of news travels a settlement and is genuinely forgotten by everyone
-// within the year, which is what most of what happens amounts to.
-export const MEMORABLE_SALIENCE = 0.02;
-
 // How much a clan can carry at all, across everything it knows about
 // everyone. A bigger clan holds a little more, because there are more people
 // to hold it, but the sixth root makes that a weak effect: five times the
@@ -1778,27 +1772,25 @@ export function foldNewsIntoMemory(world: World): void {
         const self = world.perceptions.get(clan, clan);
         if (self) {
             for (const item of self.information.news.items) {
-                if (item.salience >= MEMORABLE_SALIENCE) {
-                    self.information.memory.add(item);
-                }
+                self.information.memory.add(item);
             }
         }
         for (const [, perceptions] of world.perceptions.getFor(clan)) {
             const information = perceptions.information;
             for (const item of information.news.items) {
-                if (item.salience >= MEMORABLE_SALIENCE) {
-                    information.memory.add(item);
-                }
+                information.memory.add(item);
             }
         }
         trimMemoryToCapacity(world, clan);
     }
 }
 
-// Hold a clan to what it can carry. The cap is on everything it knows, not on
-// what it knows about any one neighbor, so a year of open fighting with one
-// clan really does crowd out the small kindnesses of another -- which is the
-// point of having a cap at all.
+// Hold a clan to what it can carry. Everything from the turn just ended is
+// kept whatever there is of it: the year is fresh in mind, and nothing has yet
+// had to give way. The cap is on what is older than that, across everything
+// the clan knows about everyone, not on what it knows about any one neighbor,
+// so a year of open fighting with one clan really does crowd out the small
+// kindnesses of another -- which is the point of having a cap at all.
 //
 // What goes is whatever was the smallest thing, full stop, with no allowance
 // for how long ago it happened. A great occasion holds its place for as long
@@ -1813,13 +1805,20 @@ function trimMemoryToCapacity(world: World, clan: Clan): void {
     const capacity = Math.max(1, Math.round(memoryCapacity(clan.population)));
     const ledgers = ledgersOf(world, clan);
 
+    const recentSince = world.year.value - world.yearsPerTurn;
+    const isOlder = (item: NewsItem) => item.year <= recentSince;
+
     let total = 0;
-    for (const memory of ledgers) total += memory.entries.length;
+    for (const memory of ledgers) {
+        for (const item of memory.entries) if (isOlder(item)) ++total;
+    }
     if (total <= capacity) return;
 
     const saliences: number[] = [];
     for (const memory of ledgers) {
-        for (const item of memory.entries) saliences.push(item.relativeSalience);
+        for (const item of memory.entries) {
+            if (isOlder(item)) saliences.push(item.relativeSalience);
+        }
     }
     saliences.sort((a, b) => b - a);
     const cutoff = saliences[capacity - 1];
@@ -1830,6 +1829,7 @@ function trimMemoryToCapacity(world: World, clan: Clan): void {
     for (const sal of saliences) if (sal > cutoff) --roomAtCutoff;
     for (const memory of ledgers) {
         memory.keepOnly(item => {
+            if (!isOlder(item)) return true;
             if (item.relativeSalience > cutoff) return true;
             if (item.relativeSalience === cutoff && roomAtCutoff > 0) {
                 --roomAtCutoff;
