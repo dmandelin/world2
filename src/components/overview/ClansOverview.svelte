@@ -865,6 +865,31 @@
                 topics: ["food", "food:detail"],
             },
             {
+                label: "&nbsp;Food aid received",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    (c.consumption?.totalFoodAidReceived ?? 0) /
+                    fedPopulation(c),
+                format: fmt2,
+                bandClass: foodStockBandClass,
+                tooltipSnippet: aidTooltip,
+                topics: ["food"],
+            },
+            {
+                label: "&nbsp;Food aid given",
+                class: "actual",
+                cellClass: "ra",
+                value: (c) =>
+                    ((c.distribution?.totalFoodAidGiven ?? 0) +
+                        (c.stockOutflow?.totalFoodAidGiven ?? 0)) /
+                    fedPopulation(c),
+                format: fmt2,
+                bandClass: foodStockBandClass,
+                tooltipSnippet: aidTooltip,
+                topics: ["food"],
+            },
+            {
                 label: "&nbsp;&nbsp;Flood loss",
                 labelTooltip: "Standing crop taken by this year's floods.",
                 class: "actual",
