@@ -398,7 +398,7 @@ Other items:
 x   Add clan memory UI if needed
 *   Make sure food aid gets into clan memory
 *   Fix up other immediate issues
-*   Show Gini values
+x   Show Gini values
 *   Add in defectors
 
 *   Improved model of food consumption effects:

@@ -163,6 +163,10 @@
         settlementAgg?: "avg" | "geomean" | "sum" | "none";
         settlementTooltipSnippet?: Snippet<[ClanLastTurnSnapshots[], any]>;
 
+        // For rows with no clan values, only a figure for the settlement as a
+        // whole, worked out from all its clans at once.
+        settlementValue?: (clans: ClanDTO[]) => number;
+
         // For rows drawn by renderSnippet rather than a value function.
         settlementRenderSnippet?: Snippet<[ClanLastTurnSnapshots[]]>;
 
@@ -249,6 +253,24 @@
         return weight > 0 ? Math.exp(logSum / weight) : 1;
     }
 
+    // Gini coefficient of a per-head figure across a settlement's people, when
+    // every member of a clan has that clan's figure. Weighted by the people
+    // behind each figure; 0 is perfectly even and 1 is one person holding it
+    // all.
+    function weightedGini(items: { value: number; weight: number }[]): number {
+        let total = 0;
+        let weight = 0;
+        let sum = 0;
+        for (const a of items) {
+            total += a.value * a.weight;
+            weight += a.weight;
+            for (const b of items) {
+                sum += a.weight * b.weight * Math.abs(a.value - b.value);
+            }
+        }
+        return total > 0 ? sum / (2 * weight * total) : 0;
+    }
+
     function cellBandClass(row: RowDef, clan: ClanDTO): string {
         if (!row.value) return "";
         if (row.bandClass) return row.bandClass(row.value(clan));
@@ -263,6 +285,7 @@
     }
 
     function settlementValue(row: RowDef): number | undefined {
+        if (row.settlementValue) return row.settlementValue(settlementClans);
         if (row.settlementAgg === "none" || !row.value) return undefined;
         const value = (c: ClanDTO) => Number(row.value!(c)) || 0;
         switch (row.settlementAgg) {
@@ -802,6 +825,21 @@
             return pct(v);
         };
 
+        const consumptionPerHead = (c: ClanDTO) =>
+            c.consumption ? c.consumption.perCapitaFood : 0;
+        const productionPerHead = (c: ClanDTO) =>
+            c.distribution
+                ? c.distribution.totalFoodFromProduction / fedPopulation(c)
+                : 0;
+        const giniOf = (perHead: (c: ClanDTO) => number) => (clans: ClanDTO[]) =>
+            weightedGini(
+                clans.map((c) => ({
+                    value: perHead(c),
+                    weight: fedPopulation(c),
+                })),
+            );
+        const fmtGini = (v: number) => v.toFixed(2);
+
         groups.push([
             {
                 label: "Food",
@@ -842,6 +880,15 @@
                 topics: ["food", "food:detail", "welfare"],
             },
             {
+                label: "&emsp;&emsp;Gini",
+                labelTooltip: "Inequality of consumption across the settlement's people, taking everyone in a clan to have that clan's per-head figure. 0 is even; 1 is one person with everything.",
+                class: "actual",
+                cellClass: "ra",
+                settlementValue: giniOf(consumptionPerHead),
+                format: fmtGini,
+                topics: ["food", "food:detail", "welfare"],
+            },
+            {
                 label: "&nbsp;Production",
                 class: "actual",
                 cellClass: "ra",
@@ -862,6 +909,15 @@
                 deltaFormat: fmt2,
                 timelineKey: "foodProduced",
                 scaler: new DefaultScaler(),
+                topics: ["food", "food:detail"],
+            },
+            {
+                label: "&emsp;&emsp;Gini",
+                labelTooltip: "Inequality of production across the settlement's people, taking everyone in a clan to have that clan's per-head figure. 0 is even; 1 is one person with everything.",
+                class: "actual",
+                cellClass: "ra",
+                settlementValue: giniOf(productionPerHead),
+                format: fmtGini,
                 topics: ["food", "food:detail"],
             },
             {
