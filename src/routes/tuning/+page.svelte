@@ -49,6 +49,9 @@
         foodProduction: "#f59e0b",
         foodConsumption: "#ef4444",
         eudaimonia: "#7c2d12",
+        productionGini: "#ca8a04",
+        consumptionGini: "#dc2626",
+        giving: "#db2777",
     };
 
     // ---- run state ----

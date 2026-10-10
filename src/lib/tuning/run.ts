@@ -5,6 +5,8 @@
 // distribution from the first year rather than filling in run by run.
 
 import { sumFun, isPositive } from "../../model/lib/basics";
+import { weightedGini } from "../../model/lib/inequality";
+import type { Clan } from "../../model/people/people";
 import { eudaimoniaAverage } from "../../model/self/eudaimonia";
 import { loggingEnabled, setLoggingEnabled } from "../../model/lib/debug";
 import { applyTuning, readTuning, type TuningParams } from "../../model/tuning";
@@ -38,6 +40,34 @@ function yieldToEventLoop(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+// What a clan's members each have of the year's food, against the people it
+// was shared out to: the same per-head figures the clans overview reports.
+function fedPopulation(c: Clan): number {
+    return c.consumption.population || c.population || 1;
+}
+
+const productionPerHead = (c: Clan) =>
+    c.distribution.totalFoodFromProduction / fedPopulation(c);
+const consumptionPerHead = (c: Clan) => c.consumption.perCapitaFood;
+
+// Inequality within each settlement, averaged over settlements by their
+// people, as the overview's Gini rows read it for one settlement.
+function meanSettlementGini(world: World, perHead: (c: Clan) => number): number {
+    let total = 0;
+    let people = 0;
+    for (const settlement of world.allSettlements) {
+        const clans = settlement.clans.filter((c) => c.population > 0);
+        const population = sumFun(clans, (c) => c.population);
+        if (!isPositive(population)) continue;
+        const gini = weightedGini(
+            clans.map((c) => ({ value: perHead(c), weight: fedPopulation(c) })),
+        );
+        total += gini * population;
+        people += population;
+    }
+    return people > 0 ? total / people : 0;
+}
+
 function sample(world: World, key: MetricKey): number {
     switch (key) {
         case 'settlements':
@@ -63,6 +93,15 @@ function sample(world: World, key: MetricKey): number {
             const people = world.totalPopulation;
             if (!isPositive(people)) return 0;
             return sumFun(world.allClans, (c) => c.consumption.totalFood) / people;
+        }
+        case 'productionGini':
+            return meanSettlementGini(world, productionPerHead);
+        case 'consumptionGini':
+            return meanSettlementGini(world, consumptionPerHead);
+        case 'giving': {
+            const people = world.totalPopulation;
+            if (!isPositive(people)) return 0;
+            return sumFun(world.allClans, (c) => c.traits.giving * c.population) / people;
         }
         case 'eudaimonia':
             // Population-weighted average over every living clan, the same

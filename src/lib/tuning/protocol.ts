@@ -19,6 +19,9 @@ export const METRIC_KEYS = [
     'deathRate',
     'foodProduction',
     'foodConsumption',
+    'productionGini',
+    'consumptionGini',
+    'giving',
 ] as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[number];
@@ -43,6 +46,9 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'deathRate', label: 'Death rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
     { key: 'foodProduction', label: 'Food produced / capita', precision: 2 },
     { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2 },
+    { key: 'productionGini', label: 'Production Gini (within settlements)', precision: 3 },
+    { key: 'consumptionGini', label: 'Consumption Gini (within settlements)', precision: 3 },
+    { key: 'giving', label: 'Giving (average)', precision: 1 },
 ];
 
 // Metrics that are rates over the year just run. They are summarized only

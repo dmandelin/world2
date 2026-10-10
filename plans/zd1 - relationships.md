@@ -400,6 +400,11 @@ x   Add clan memory UI if needed
 *   Fix up other immediate issues
 x   Show Gini values
 *   Add in defectors
+    *   Currently low Giving clans are a form of defector. Apparently
+        over 300 years Giving declines from 50 to 40. 
+        *   Imitation learning might speed this up, but that's not
+            necessarily a priority
+        *   We should make sure marriage transmits these too.
 
 *   Improved model of food consumption effects:
     *   First, some heuristics of long term-effects:
