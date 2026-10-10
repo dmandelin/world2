@@ -44,6 +44,7 @@
         settlements: "#8b5cf6",
         clans: "#10b981",
         people: "#3b82f6",
+        settlementSize: "#0ea5e9",
         birthRate: "#0d9488",
         deathRate: "#9f1239",
         foodProduction: "#f59e0b",

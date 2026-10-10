@@ -76,6 +76,10 @@ function sample(world: World, key: MetricKey): number {
             return world.allClans.length;
         case 'people':
             return world.totalPopulation;
+        case 'settlementSize': {
+            const settlements = world.allSettlements.length;
+            return isPositive(settlements) ? world.totalPopulation / settlements : 0;
+        }
         case 'birthRate':
         case 'deathRate': {
             // Per thousand people alive at the start of the year, per year.

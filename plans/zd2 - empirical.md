@@ -13,3 +13,7 @@ What is not as we want it to be:
 *   We'd have to know why eudaimonia declined to know
     if that's correct or not
 
+## Average settlement size
+
+*   Adding graphs confirms that it craters.
+*   
