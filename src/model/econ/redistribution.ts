@@ -14,9 +14,11 @@ import { foodBalance } from "../people/nutrition";
 // conversation it has with each (strength times the other clan's people).
 //
 // Giving. A clan gives to an asker as long as the asker has less than a
-// share r of its own food per head after the gift, with r fixed at
-// AID_RATIO (0.9) for every donor and every asker: who is asking, and how well
-// the donor knows them, make no difference. So a donor gives
+// share r of its own food per head after the gift. r is set by the donor's
+// Giving trait alone (see aidRatio): who is asking, and how well the donor
+// knows them, make no difference. For an ordinary clan it is 0.95; the most
+// open-handed go past 1, giving until the asker is better off than they are.
+// So a donor gives
 //
 //     min(asked, (r * F_d/p_d - F_a/p_a) / (1/p_a + r/p_d))
 //
@@ -43,9 +45,20 @@ import { foodBalance } from "../people/nutrition";
 // donor from that asker's list, and the whole takes at most as many rounds
 // as the largest list, each costing one pass over the live asks.
 
-// The share of its own food per head a donor lets an asker reach: it gives
-// only to an asker with 90% or less of what it has itself.
-export const AID_RATIO = 0.9;
+// The giving ratio a clan holds to, by its Giving
+// trait, as [Giving, ratio] knots. It runs straight between knots and carries
+// on past the ends along the end segments, never below nothing. An ordinary
+// clan gives while the asker has under 95% of its own food per head; a
+// tight-fisted one only to an asker in real want; an open-handed one until
+// the asker is as well off as itself, and the most open-handed past that,
+// into want themselves.
+export const AID_RATIO_KNOTS: readonly (readonly [number, number])[] = [
+    [20, 0.4],
+    [35, 0.7],
+    [50, 0.95],
+    [65, 1.0],
+    [80, 1.1],
+];
 
 // What it costs to take food out of store, per unit taken out.
 const STOCK_RETRIEVAL_COST = 0.2;
@@ -58,6 +71,16 @@ const EPSILON = 1e-6;
 const MAX_ROUNDS = 1000;
 
 const FOOD_GOODS: readonly TradeGood[] = [TradeGoods.Fish, TradeGoods.Cereals];
+
+export function aidRatio(giving: number): number {
+    const knots = AID_RATIO_KNOTS;
+    const g = Number.isFinite(giving) ? giving : 50;
+    let i = 0;
+    while (i < knots.length - 2 && g > knots[i + 1][0]) ++i;
+    const [g0, r0] = knots[i];
+    const [g1, r1] = knots[i + 1];
+    return Math.max(0, r0 + (r1 - r0) * (g - g0) / (g1 - g0));
+}
 
 export interface FoodAidBidRecord {
     requesterUuid: string;
@@ -218,7 +241,7 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
                 .get(donor.clan, asker.clan)?.information.value ?? 0;
             const link: Link = {
                 asker, donor, weight, information,
-                ratio: AID_RATIO,
+                ratio: aidRatio(donor.clan.traits.giving),
                 rounds: 0, requested: 0, received: 0, refused: false,
             };
             links.push(link);

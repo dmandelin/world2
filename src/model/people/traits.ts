@@ -6,8 +6,9 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // standard they need. See care.ts.
 // Talkativeness: how much a clan puts into conversation, whatever the
 // setting. See talkativenessFactor in conversation.ts.
-// Giving: how open-handed a clan is. No longer consulted by food aid, which
-// gives at a fixed ratio (AID_RATIO in redistribution.ts). Not to be confused with Generosity, which is what
+// Giving: how open-handed a clan is with food aid -- how much better off
+// than an asker it needs to be before it will share. See aidRatio in
+// redistribution.ts. Not to be confused with Generosity, which is what
 // other clans have come to think of it.
 export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness', 'giving'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
