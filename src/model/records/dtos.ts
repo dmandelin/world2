@@ -669,6 +669,15 @@ export class WorldDTO {
         }
     }
 
+    // What this clan has taken in about other clans this turn, by the clan
+    // each ledger is about. The news stands until the next advance opens.
+    *newsFor(clan: ClanDTO): Iterable<[ClanDTO, readonly NewsItem[]]> {
+        for (const [other, perceptions] of this.perceptions.getFor(clan.uuid)) {
+            const otherClan = this.clanMap.get(other);
+            if (otherClan) yield [otherClan, perceptions.information.news.items];
+        }
+    }
+
     // Every ledger anyone keeps about this clan, by the clan keeping it. The
     // perceptions graph already indexes by object, so this doesn't scan.
     *memoriesRegarding(clan: ClanDTO): Iterable<[ClanDTO, Memory]> {

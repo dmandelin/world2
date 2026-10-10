@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ClanDTO, Impression, SettlementDTO } from "../model/records/dtos";
-    import type { NewsItem } from "../model/relations/information";
-    import { formatYear } from "../model/records/year";
+    import NewsTable, { type NewsRow } from "./information/NewsTable.svelte";
     import { sortedByKey } from "../model/lib/basics";
     import { pct, signed, unsigned } from "../model/lib/format";
     import { MAX_DIRECT_INFORMATION } from "../model/relations/information";
@@ -12,7 +11,6 @@
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
-    let now = $derived(world.yearValue);
 
     let subject: ClanDTO | undefined = $state(undefined);
     let object: ClanDTO | undefined = $state(undefined);
@@ -122,22 +120,11 @@
         }
     }
 
-    // A row of the listing. `knownBy` is empty except in the object-only view,
-    // where reports of one event by several clans are coalesced into one row.
-    type Row = {
-        entry: NewsItem;
-        about: ClanDTO | undefined;
-        knownBy: { clan: ClanDTO; entry: NewsItem }[];
-        // False once the occasion has run together with the rest into a
-        // general impression, and can no longer be recounted on its own.
-        recountable: boolean;
-    };
-
-    function byYearDesc(rows: Row[]): Row[] {
+    function byYearDesc(rows: NewsRow[]): NewsRow[] {
         return rows.sort((a, b) => b.entry.year - a.entry.year);
     }
 
-    let rows = $derived.by((): Row[] => {
+    let rows = $derived.by((): NewsRow[] => {
         // Working out which occasions a clan can still recount means sorting
         // its whole ledger, and the object view asks the same question once
         // per knower per event, so keep the answers for the pass.
@@ -164,7 +151,7 @@
         }
 
         if (subj) {
-            const out: Row[] = [];
+            const out: NewsRow[] = [];
             for (const [other, memory] of world.memoriesFor(subj)) {
                 const kept = recountable(subj, other);
                 for (const entry of memory.entries) {
@@ -201,11 +188,6 @@
 
     function clanName(uuid: string): string {
         return world.clanMap.get(uuid)?.name ?? "?";
-    }
-
-    function description(entry: NewsItem): string {
-        const target = entry.target ? ` → ${clanName(entry.target)}` : "";
-        return `${clanName(entry.actor)}${target}`;
     }
 
     // One line per report that came in this turn, for the Heard tooltip.
@@ -267,35 +249,6 @@
             `Running belief ${unsigned(o.value, 1)}, pulled toward the prior` +
             ` of ${o.def.prior} by less-than-full confidence.`
         );
-    }
-
-    function hopsLabel(hops: number): string {
-        if (hops === 0) return "firsthand";
-        return `${hops} link${hops === 1 ? "" : "s"}`;
-    }
-
-    function source(entry: NewsItem): string {
-        if (entry.hops === 0) return "firsthand";
-        return `${hopsLabel(entry.hops)}${entry.via ? ` (via ${clanName(entry.via)})` : ""}`;
-    }
-
-    // How the news is spread across the clans that have it, since the
-    // coalesced row stands for copies at different removes.
-    function sourceSpread(row: Row): string {
-        const byHops = new Map<number, number>();
-        for (const k of row.knownBy) {
-            byHops.set(k.entry.hops, (byHops.get(k.entry.hops) ?? 0) + 1);
-        }
-        return [...byHops]
-            .sort((a, b) => a[0] - b[0])
-            .map(([hops, n]) =>
-                hops === 0 ? `${n} firsthand` : `${n} at ${hopsLabel(hops)}`,
-            )
-            .join(", ");
-    }
-
-    function knowerLabel(k: { clan: ClanDTO; entry: NewsItem }): string {
-        return `${k.clan.name} (${hopsLabel(k.entry.hops)})`;
     }
 
     // Impressions to list, following the same subject/object selection as the
@@ -555,74 +508,12 @@
                 >({rows.length} event{rows.length === 1 ? "" : "s"})</span
             >
         </h4>
-        {#if rows.length === 0}
-            <p style="font-size: 0.9rem; color: #666;">Nothing remembered.</p>
-        {:else}
-            <div class="table-container">
-                <table class="events">
-                    <thead>
-                        <tr>
-                            <th>Year</th>
-                            <th>Age</th>
-                            <th>Kind</th>
-                            <th>Event</th>
-                            <th>Remembered as</th>
-                            {#if subj && !obj}<th>About</th>{/if}
-                            {#if obj && !subj}<th>Known by</th>{/if}
-                            <th
-                                class="num"
-                                title="What really happened. The clan itself has only the bands under Remembered as."
-                                >Amount</th
-                            >
-                            <th class="num">Weight</th>
-                            <th class="num">Salience</th>
-                            <th>Source</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each rows as row}
-                            {@const e = row.entry}
-                            <tr
-                                class={row.recountable ? "" : "forgotten"}
-                                title={row.recountable
-                                    ? ""
-                                    : "No longer recounted on its own: folded into the general impression."}
-                            >
-                                <td>{formatYear(e.year)}</td>
-                                <td>{now - e.year}</td>
-                                <td>{e.def.label}</td>
-                                <td>{description(e)}{e.explanation ? `: ${e.explanation}` : ""}</td>
-                                <td>{e.description}</td>
-                                {#if subj && !obj}
-                                    <td>{row.about?.name ?? "?"}</td>
-                                {/if}
-                                {#if obj && !subj}
-                                    <td
-                                        title={row.knownBy
-                                            .map(knowerLabel)
-                                            .join(", ")}
-                                    >
-                                        {row.knownBy.length}: {row.knownBy
-                                            .map((k) => k.clan.name)
-                                            .join(", ")}
-                                    </td>
-                                {/if}
-                                <td class="num">{unsigned(e.magnitude, 1)}</td>
-                                <td
-                                    class="num"
-                                    title="Decayed to {pct(e.freshness(now))} of the original impression"
-                                    >{unsigned(e.weight(now), 2)}</td
-                                >
-                                <td class="num">{unsigned(e.salience, 2)}</td>
-                                <td>
-                                    {obj && !subj ? sourceSpread(row) : source(e)}
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            </div>
-        {/if}
+        <NewsTable
+            {rows}
+            {world}
+            showAbout={!!subj && !obj}
+            showKnownBy={!!obj && !subj}
+        />
     {/if}
 </div>
 
@@ -701,11 +592,6 @@
     }
     .events .num {
         text-align: right;
-    }
-    /* Occasions that have run together into a general impression. */
-    .events tr.forgotten td {
-        color: #b3a78e;
-        font-style: italic;
     }
     /* Cells whose tooltip has the reports behind them. */
     .events .heard {

@@ -362,7 +362,7 @@ Other items:
 
 *   Fix bug with information being too low and apply results to food
     aid
-*   Add clan memory UI if needed
+x   Add clan memory UI if needed
 *   Make sure food aid gets into clan memory
 *   Fix up other immediate issues
 *   Show Gini values
