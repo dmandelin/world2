@@ -358,10 +358,43 @@ We can try to do this incrementally. For example:
                 makes any sense. Maybe start with obvious ones, test
                 different invaders, refine.
 
+    *   The "information too low issue"
+        *   In the original model above, clans were willing to give
+            to others less fortunate, with lower levels of information
+            meaning the fortune difference has to be bigger before
+            clans can see it. The immediate problem is that for no
+            particular reasons clans often have only 15% information
+            on each other, so they become less willing to give aid,
+            again for no particular reason.
+        *   Let's take a step back and see what information clans use
+            to make a donation decision:
+            *   Who are you? Clans need to know that you're either a
+                trusted partner, or a member of a community that can
+                be counted on.
+                *   We could initially let this be very lax to model
+                    cooperators!
+            *   Are you in need?
+                *   What does this look like? If a clan has been eating
+                    short rations, they're probably visibly thin, so
+                    essentially no background information is needed.
+                    *   Some clans could be looking out for fakes, but
+                        cooperators don't.
+                *   If clans are just a bit low on food, they will
+                    experience some hunger and want some extra food.
+                    This is the gray zone where alignment and information
+                    come more into play.
+            *   Are you a priority?
+                *   If multiple clans are asking for help, the donor
+                    might have to decide whom to prioritize
+
 Other items:
 
 *   Fix bug with information being too low and apply results to food
     aid
+    x   Set general threshold of 90% to get around for now
+    *   Add feature to detect when a clan is getting requests from
+        multiple other clans and can't satisfy them all
+    *   (P2) Decision factors for gray-zone requests
 x   Add clan memory UI if needed
 *   Make sure food aid gets into clan memory
 *   Fix up other immediate issues
