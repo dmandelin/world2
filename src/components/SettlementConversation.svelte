@@ -121,7 +121,6 @@
 
     // Connectedness: the strength of the conversation -- the share of the
     // column clan the row clan knows -- times the row clan's appeal for it.
-    // The same per-pair figure Fortune's Conversation Quality is built from.
     function connectednessCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
         if (rowClan.uuid === colClan.uuid) return 0;
         return conversationConnectednessOf(
@@ -710,8 +709,7 @@
         <div style="font-size: 0.85em; color: #666; margin-top: 0.35rem; font-style: italic;">
             How connected {subject.name} is to {object.name} through
             conversation: how much of {object.name} it knows, times how much
-            it wants to spend its time on them. Fortune's Conversation Quality averages
-            these by how many people each is.
+            it wants to spend its time on them.
         </div>
     </div>
 {/snippet}

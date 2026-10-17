@@ -11,7 +11,7 @@
         EU_NUTRITION_FLOOR,
         EU_NUTRITION_SCALE,
         nutritionShape,
-        EU_CONVERSATION_DIVERSITY_REF,
+        EU_CONVERSATION_APPEAL_ZERO,
         EU_CONVERSATION_EXCESS_SCALE,
         EU_CONVERSATION_QUALITY_SCALE,
         EU_CONVERSATION_QUANTITY_FLOOR,
@@ -168,24 +168,26 @@
             ).join(", ")}, straight between them.
         </div>
     {:else if node === EuNode.ConversationQuality}
-        <div class="line">
-            {u(get(EuNode.ConversationAppeal), 2)} appeal &times;
-            ({u(get(EuNode.ConversationAmount), 0)} known &divide;
-            {EU_CONVERSATION_DIVERSITY_REF})<sup>1/6</sup> =
-            {u(get(EuNode.ConversationAppeal), 2)} &times;
-            {u(get(EuNode.ConversationDiversity), 2)} =
-            {u(get(EuNode.ConversationQualityLevel), 2)}
-        </div>
-        <div class="line">
-            {EU_CONVERSATION_QUALITY_SCALE} &times; ({u(
-                get(EuNode.ConversationQualityLevel),
-                2,
-            )} &minus; 1) = <b>{n(get(EuNode.ConversationQuality))}</b>
-        </div>
+        {#if get(EuNode.ConversationAmount) > 0}
+            <div class="line">
+                {EU_CONVERSATION_QUALITY_SCALE} &times; log<sub>2</sub>({u(
+                    get(EuNode.ConversationAppeal),
+                    2,
+                )} appeal &divide; {EU_CONVERSATION_APPEAL_ZERO}) =
+                <b>{n(get(EuNode.ConversationQuality))}</b>
+            </div>
+        {:else}
+            <div class="line">
+                Nobody to talk to = <b>{n(get(EuNode.ConversationQuality))}</b>
+            </div>
+        {/if}
         <div class="note">
-            Appeal is how much the clan wants to spend its time on the clans it
-            talks with, averaged by how many of each it knows. Diversity is
-            how many people that is.
+            Each clan talked with is worth {EU_CONVERSATION_QUALITY_SCALE} per
+            doubling of the clan's appeal for it, from nothing at
+            {EU_CONVERSATION_APPEAL_ZERO}: +{EU_CONVERSATION_QUALITY_SCALE} at
+            an appeal of 1. Those are averaged, weighted by how many of each
+            clan's people are known; the appeal shown is the matching weighted
+            geometric mean.
         </div>
     {:else if node === EuNode.ConversationQuantity}
         {@const ratio = get(EuNode.ConversationRatio)}

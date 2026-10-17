@@ -46,8 +46,7 @@ import {
     EU_HONEY_PER_SHARE,
     EU_BEER_PER_SHARE,
     EU_BEER_MAX,
-    EU_CONVERSATION_QUALITY_SCALE,
-    conversationDiversity,
+    conversationAppealFortune,
     conversationQuantityFortune,
     conversationRatio,
     engageGamma,
@@ -100,8 +99,8 @@ function inlineFortune(prevFortune: number, x: FortuneInputs): number {
         careProvisionOf(x.careEffort, x.careSkill, x.talkativeness))
         + careStress(x.careShare);
     const amount = x.conversationAmount;
-    const convQuality = EU_CONVERSATION_QUALITY_SCALE
-        * (x.conversationAppeal * conversationDiversity(amount) - 1);
+    const convQuality = amount > 0
+        ? conversationAppealFortune(x.conversationAppeal) : 0;
     const conversation = convQuality
         + engageGamma(convQuality) * conversationQuantityFortune(
             conversationRatio(amount, x.conversationWanted));
@@ -147,9 +146,8 @@ function buildDetail(
     const stress = careStress(x.careShare);
     const care = comfort + stress;
     const amount = x.conversationAmount;
-    const diversity = conversationDiversity(amount);
-    const convQuality = EU_CONVERSATION_QUALITY_SCALE
-        * (x.conversationAppeal * diversity - 1);
+    const convQuality = amount > 0
+        ? conversationAppealFortune(x.conversationAppeal) : 0;
     const convQuantity = conversationQuantityFortune(
         conversationRatio(amount, x.conversationWanted));
     const conversation = convQuality + engageGamma(convQuality) * convQuantity;
@@ -187,8 +185,7 @@ function buildDetail(
     m.set("stress", new DetailItem("Stress", stress, "Cost of it"));
     m.set("care", new DetailItem("Care", care, "Added"));
     m.set("convQuantity", new DetailItem("Quantity", convQuantity, "People known"));
-    m.set("diversity", new DetailItem("Diversity", diversity, "People known"));
-    m.set("convQuality", new DetailItem("Quality", convQuality, "Appeal x diversity"));
+    m.set("convQuality", new DetailItem("Quality", convQuality, "Log of appeal"));
     m.set("conversation", new DetailItem("Conversation", conversation, "This year"));
     m.set("social", new DetailItem("Social", social, "This year"));
     m.set("signal", new DetailItem("Fortune signal", signal, "This year"));

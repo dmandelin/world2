@@ -889,8 +889,7 @@ export function conversationPayoff(clan: Clan | ClanDTO): number {
 
 // How connected one clan is to another through conversation: the strength
 // of it -- the share of the other clan it knows -- times its Conversation
-// Appeal for that clan. The Conversation panel shows this per pair, and Fortune reads
-// it through readConversationForFortune.
+// Appeal for that clan. The Conversation panel shows this per pair.
 export function conversationConnectednessOf(
     strength: number, subject: Clan | ClanDTO, partner: Clan | ClanDTO): number {
     return strength * appealOf(subject, partner);
@@ -916,24 +915,25 @@ export function averageConversationConnectedness<T extends Clan | ClanDTO>(
 // What Fortune reads of a clan's conversation this year, written into its
 // inputs: how many people outside the clan its people deal with, how many it
 // wanted to -- the supply of its conversation budget -- and its
-// Conversation Appeal for their clans averaged by how many of each it knows
-// -- the per-pair conversation connectedness, scaled by each partner's size and
-// divided by the acquaintance. A clan that talks with nobody reads neutral on
-// appeal, since there is nobody to find appealing or not; see eudaimonia.ts.
+// Conversation Appeal for their clans, as a geometric mean weighted by how
+// many of each clan's people it knows. Fortune reads appeal on a log scale,
+// so this is the mean that makes its Quality the weighted average of each
+// partner's. A clan that talks with nobody reads neutral on appeal, since
+// there is nobody to find appealing or not; see eudaimonia.ts.
 export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): void {
     let amount = 0;
-    let appeal = 0;
+    let logAppeal = 0;
     for (const [uuid, interactions] of clan.world.interactions.getFor(clan)) {
         const other = clan.world.clanFrom(uuid);
         if (!other) continue;
         for (const interaction of interactions) {
             if (!(interaction instanceof Conversation)) continue;
-            amount += interaction.strength * other.population;
-            appeal += conversationConnectednessOf(interaction.strength, clan, other)
-                * other.population;
+            const known = interaction.strength * other.population;
+            amount += known;
+            logAppeal += known * Math.log(appealOf(clan, other));
         }
     }
     inputs.conversationAmount = amount;
     inputs.conversationWanted = clan.conversationBudget.supply;
-    inputs.conversationAppeal = amount > 0 ? appeal / amount : 1;
+    inputs.conversationAppeal = amount > 0 ? Math.exp(logAppeal / amount) : 1;
 }

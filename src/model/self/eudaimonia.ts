@@ -30,7 +30,7 @@
 //           Comfort       how well looked after everyone was
 //           Stress        what the looking after cost those doing it
 //         Conversation
-//           Quality       how appealing and how varied its company was
+//           Quality       how appealing its company was
 //           Quantity      how near it came to as much as the clan wanted
 //
 // Each inner node combines its children, by default by adding them. The
@@ -169,22 +169,26 @@ export const EU_BEER_MAX = 5;
 // regularly, summed over every clan it converses with; see
 // relations/conversation.ts.
 //
-// Quality is the clan's Conversation Appeal for the clans it talks with --
-// how much it wants to spend its time on each, 1 being neutral; see appealOf
-// -- averaged by acquaintance, times a diversity factor for how many people
-// that is:
+// Quality reads the clan's Conversation Appeal for each clan it talks with --
+// how much it wants to spend its time on them, 1 being neutral; see appealOf
+// in relations/conversation.ts. Each partner is worth
 //
-//     quality = mean appeal * (acquaintance / 120)^(1/6)
+//     SCALE * log2(appeal / ZERO)
 //
-// As Fortune it is 100 points per unit from 1, so an appeal of 1.01 is +1.
-export const EU_CONVERSATION_DIVERSITY_REF = 120;
-export const EU_CONVERSATION_DIVERSITY_EXPONENT = 1 / 6;
-export const EU_CONVERSATION_QUALITY_SCALE = 100;
+// points of Fortune: nothing at an appeal of 0.5, +10 at 1, +20 at 2, and
+// -17 at the floor appeal of 0.15, so each doubling of appeal is worth the
+// same. Quality is that averaged over the partners, weighted by how many of
+// each one's people the clan knows. Since the log is taken per partner, that
+// is the same as taking it of the partners' weighted geometric mean appeal,
+// which is what the inputs carry. A clan that talks with nobody has no
+// company to judge and reads 0; Quantity is where having nobody counts.
+export const EU_CONVERSATION_APPEAL_ZERO = 0.5;
+export const EU_CONVERSATION_QUALITY_SCALE = 10;
 
-export function conversationDiversity(acquaintance: number): number {
-    if (!(acquaintance > 0)) return 0;
-    return Math.pow(acquaintance / EU_CONVERSATION_DIVERSITY_REF,
-        EU_CONVERSATION_DIVERSITY_EXPONENT);
+export function conversationAppealFortune(appeal: number): number {
+    if (!(appeal > 0)) return 0;
+    return EU_CONVERSATION_QUALITY_SCALE
+        * Math.log2(appeal / EU_CONVERSATION_APPEAL_ZERO);
 }
 
 // Quantity reads acquaintance against what the clan wanted: the acquaintance
@@ -437,8 +441,8 @@ export class FortuneInputs {
     // until the first is read: as much company as wanted.
     conversationAmount = 70;
     conversationWanted = 70;
-    // The clan's Conversation Appeal for those people's clans, averaged by
-    // acquaintance.
+    // The clan's Conversation Appeal for those people's clans: their
+    // geometric mean, weighted by how many of each clan's people it knows.
     conversationAppeal = 1;
 
     copyFrom(o: FortuneInputs): void {
@@ -519,8 +523,6 @@ export const EuNode = {
     Conversation: 34,
     ConversationQuality: 35,
     ConversationQuantity: 36,
-    ConversationDiversity: 39,
-    ConversationQualityLevel: 43,
     ConversationRatio: 44,
 
     // The Fortune subscore: the tree, averaged over the years
@@ -761,7 +763,7 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.ConversationWanted, label: "Wanted", role: "input", places: 0,
       note: "How many people the clan wanted to deal with: the acquaintance it put into conversation this year, matched or not." },
     { id: EuNode.ConversationAppeal, label: "Appeal", role: "input", places: 2,
-      note: "The clan's Conversation Appeal for the clans it talks with, averaged by acquaintance." },
+      note: "The clan's Conversation Appeal for the clans it talks with: their geometric mean, weighted by how many of each clan's people it knows." },
 
     { id: EuNode.Fortune, label: "Fortune", role: "result", places: 1,
       note: "Material and social fortune blended: a bad side drags the whole down." },
@@ -799,12 +801,8 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "What the looking after cost the people doing it: nothing at a fifth of the clan's effort, a little easier below that, and wearing fast above." },
     { id: EuNode.Conversation, label: "Conversation", role: "derived", places: 1,
       note: "Quality, plus quantity weighted by how good the company was." },
-    { id: EuNode.ConversationDiversity, label: "Diversity", role: "derived", places: 2, isRate: true,
-      note: `How many people the clan talks with, as (acquaintance / ${EU_CONVERSATION_DIVERSITY_REF})^(1/6).` },
-    { id: EuNode.ConversationQualityLevel, label: "Conversation quality", role: "derived", places: 2,
-      note: "Appeal times diversity, where 1 is ordinary company." },
     { id: EuNode.ConversationQuality, label: "Quality", role: "derived", places: 1,
-      note: `Conversation quality as Fortune: ${EU_CONVERSATION_QUALITY_SCALE} points per unit from 1.` },
+      note: `Each partner's appeal as Fortune, ${EU_CONVERSATION_QUALITY_SCALE} per doubling from ${EU_CONVERSATION_APPEAL_ZERO}, averaged by how many of its people the clan knows. 0 with nobody to talk to.` },
     { id: EuNode.ConversationQuantity, label: "Quantity", role: "derived", places: 1,
       note: `Acquaintance against what the clan wanted: nothing at 100%, -5 at 75%, -20 at half, and no worse than ${EU_CONVERSATION_QUANTITY_FLOOR}; -3 at 150% and -10 at twice.` },
     { id: EuNode.ConversationRatio, label: "Share of wanted", role: "derived", places: 2, isRate: true,
@@ -1031,9 +1029,8 @@ export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
 // it there was, counted for more the better it was.
 export function computeConversation(inputs: FortuneInputs, trace?: EuTrace): number {
     const amount = inputs.conversationAmount;
-    const diversity = conversationDiversity(amount);
-    const level = inputs.conversationAppeal * diversity;
-    const quality = EU_CONVERSATION_QUALITY_SCALE * (level - 1);
+    const quality = amount > 0
+        ? conversationAppealFortune(inputs.conversationAppeal) : 0;
     const ratio = conversationRatio(amount, inputs.conversationWanted);
     const quantity = conversationQuantityFortune(ratio);
     const conversation = combine2(EuNode.Conversation, quality, quantity);
@@ -1043,8 +1040,6 @@ export function computeConversation(inputs: FortuneInputs, trace?: EuTrace): num
         trace.put(EuNode.ConversationAppeal, inputs.conversationAppeal);
         trace.put(EuNode.ConversationWanted, inputs.conversationWanted);
         trace.put(EuNode.ConversationRatio, ratio);
-        trace.put(EuNode.ConversationDiversity, diversity);
-        trace.put(EuNode.ConversationQualityLevel, level);
         trace.put(EuNode.ConversationQuality, quality);
         trace.put(EuNode.ConversationQuantity, quantity);
         trace.put(EuNode.Conversation, conversation);
