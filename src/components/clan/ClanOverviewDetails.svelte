@@ -6,7 +6,7 @@
         alignmentStyle,
         conversationAmountStyle,
         conversationAppealStyle,
-        conversationValueStyle,
+        conversationConnectednessStyle,
     } from "../tables/cellColors";
     import AffinityCalc from "../relations/AffinityCalc.svelte";
     import EntityLink from "../state/EntityLink.svelte";
@@ -24,7 +24,7 @@
         AFFINITY_APPEAL_WEIGHT,
         APPEAL_FLOOR,
         appealOf,
-        conversationValueOf,
+        conversationConnectednessOf,
         getRelativeAttention,
         relativeAffinityOf,
     } from "../../model/relations/conversation";
@@ -57,10 +57,10 @@
         return sortedByKey(filtered, (c) => c.name);
     });
 
-    // What this clan's conversation with another is worth to it; see
-    // conversationValueOf.
-    function conversationValue(other: ClanDTO): number {
-        return conversationValueOf(
+    // How connected this clan is to another through conversation; see
+    // conversationConnectednessOf.
+    function conversationConnectedness(other: ClanDTO): number {
+        return conversationConnectednessOf(
             getRelativeAttention(clan, other), clan, other);
     }
 
@@ -142,10 +142,10 @@
                 {
                     data: "Conversation",
                     label: "Talk",
-                    valueFn: (other) => conversationValue(other),
+                    valueFn: (other) => conversationConnectedness(other),
                     formatFn: (v: number) => pct(v),
                     tooltip: conversationTooltip,
-                    cellStyleFn: (v: number) => conversationValueStyle(v),
+                    cellStyleFn: (v: number) => conversationConnectednessStyle(v),
                 },
                 {
                     data: "OurAlignment",
@@ -234,9 +234,9 @@
             = <strong>{pct(val)}</strong>
         </div>
         <div style="font-size: 0.85em; color: #666; margin-top: 0.35rem;">
-            How much {clan.name}'s conversation with {other.name} is worth to
-            it: how much of {other.name} it knows, times how much it wants to
-            spend its time on them.
+            How connected {clan.name} is to {other.name} through
+            conversation: how much of {other.name} it knows, times how much it
+            wants to spend its time on them.
         </div>
     </div>
 {/snippet}

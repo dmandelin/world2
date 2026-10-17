@@ -12,7 +12,7 @@
     import {
         conversationAmountStyle,
         conversationAppealStyle,
-        conversationValueStyle,
+        conversationConnectednessStyle,
     } from "./tables/cellColors";
     import type { Snippet } from "svelte";
     import Tooltip2 from "./Tooltip2.svelte";
@@ -34,8 +34,8 @@
         APPEAL_FLOOR,
         TALKATIVENESS_DOUBLING,
         getRelativeAttention,
-        conversationValueOf,
-        averageConversationValue,
+        conversationConnectednessOf,
+        averageConversationConnectedness,
         type ConversationSource,
         type ConversationItem,
     } from "../model/relations/conversation";
@@ -119,12 +119,12 @@
         return getRelativeAttention(rowClan, colClan) * colClan.population;
     }
 
-    // Value: the strength of the conversation -- the share of the column
-    // clan the row clan knows -- times the row clan's appeal for it. The same
-    // per-pair value Fortune's Conversation Quality is built from.
-    function valueCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
+    // Connectedness: the strength of the conversation -- the share of the
+    // column clan the row clan knows -- times the row clan's appeal for it.
+    // The same per-pair figure Fortune's Conversation Quality is built from.
+    function connectednessCellValue(rowClan: ClanDTO, colClan: ClanDTO): number {
         if (rowClan.uuid === colClan.uuid) return 0;
-        return conversationValueOf(
+        return conversationConnectednessOf(
             getRelativeAttention(rowClan, colClan), rowClan, colClan);
     }
 
@@ -244,31 +244,31 @@
         return total;
     }
 
-    // Value Averages: plain means over the other clans, since the cells are
+    // Connectedness Averages: plain means over the other clans, since the cells are
     // shares of different clans and do not add up to anything.
-    function rowValueAvg(rowClan: ClanDTO): number {
-        return averageConversationValue(rowClan, settlement.clans);
+    function rowConnectednessAvg(rowClan: ClanDTO): number {
+        return averageConversationConnectedness(rowClan, settlement.clans);
     }
 
-    function colValueAvg(colClan: ClanDTO): number {
+    function colConnectednessAvg(colClan: ClanDTO): number {
         let total = 0;
         let count = 0;
         for (const rowClan of settlement.clans) {
             if (rowClan.uuid !== colClan.uuid) {
-                total += valueCellValue(rowClan, colClan);
+                total += connectednessCellValue(rowClan, colClan);
                 ++count;
             }
         }
         return count > 0 ? total / count : 0;
     }
 
-    function grandValueAvg(): number {
+    function grandConnectednessAvg(): number {
         let total = 0;
         let count = 0;
         for (const rowClan of settlement.clans) {
             for (const colClan of settlement.clans) {
                 if (rowClan.uuid !== colClan.uuid) {
-                    total += valueCellValue(rowClan, colClan);
+                    total += connectednessCellValue(rowClan, colClan);
                     ++count;
                 }
             }
@@ -315,9 +315,9 @@
     // relationships table; see cellColors.ts.
     const amountStyle = conversationAmountStyle;
 
-    // Conversation value's colors are shared with the clan overview's
+    // Conversation connectedness's colors are shared with the clan overview's
     // relationships table; see cellColors.ts.
-    const valueStyle = conversationValueStyle;
+    const connectednessStyle = conversationConnectednessStyle;
 
     // Color only the clan-by-clan cells, not the totals, averages or the
     // blank diagonal.
@@ -477,13 +477,13 @@
         ), amountStyle);
     });
 
-    // Build Value table (Avg column & Avg row)
-    let valueTable = $derived.by(() => {
+    // Build Connectedness table (Avg column & Avg row)
+    let connectednessTable = $derived.by(() => {
         const initialCols = [
             {
                 label: "Avg",
                 valueFn: (row: any) =>
-                    isClanDTO(row) ? rowValueAvg(row) : grandValueAvg(),
+                    isClanDTO(row) ? rowConnectednessAvg(row) : grandConnectednessAvg(),
                 formatFn: (v: number) => pct(v),
                 class: "total-col",
             },
@@ -494,20 +494,20 @@
                 label: "Avg",
                 divider: true,
                 valueFn: (col: any) =>
-                    isClanDTO(col) ? colValueAvg(col) : grandValueAvg(),
+                    isClanDTO(col) ? colConnectednessAvg(col) : grandConnectednessAvg(),
                 formatFn: (v: number) => pct(v),
                 class: "total-row",
             },
         ];
 
         return colorClanCells(buildCrossTab(
-            valueCellValue,
+            connectednessCellValue,
             (v: number) => pct(v),
-            valueCellTooltip,
+            connectednessCellTooltip,
             false,
             initialCols,
             initialRows,
-        ), valueStyle);
+        ), connectednessStyle);
     });
 </script>
 
@@ -696,11 +696,11 @@
     </div>
 {/snippet}
 
-{#snippet valueCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
+{#snippet connectednessCellTooltip(value: number, subject: ClanDTO, object: ClanDTO)}
     {@const strength = getRelativeAttention(subject, object)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <div style="font-weight: bold; margin-bottom: 0.35rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.2rem;">
-            Conversation Value: {subject.name} &rarr; {object.name}
+            Conversation Connectedness: {subject.name} &rarr; {object.name}
         </div>
         <div>
             {pct(strength)} of {object.name} known
@@ -708,9 +708,9 @@
             = <strong>{pct(value)}</strong>
         </div>
         <div style="font-size: 0.85em; color: #666; margin-top: 0.35rem; font-style: italic;">
-            How much {subject.name}'s conversation with {object.name} is worth
-            to it: how much of {object.name} it knows, times how much it wants
-            to spend its time on them. Fortune's Conversation Quality averages
+            How connected {subject.name} is to {object.name} through
+            conversation: how much of {object.name} it knows, times how much
+            it wants to spend its time on them. Fortune's Conversation Quality averages
             these by how many people each is.
         </div>
     </div>
@@ -791,20 +791,20 @@
     </div>
 {/snippet}
 
-{#snippet valueSection()}
+{#snippet connectednessSection()}
     <div class="crosstab-section">
         <div class="section-header">
             <h3 class="section-title">
-                <span>Conversation Value</span>
+                <span>Conversation Connectedness</span>
                 <span class="info-badge">ℹ️</span>
                 <Tooltip2>
                     <div class="header-tooltip-box">
-                        What each clan's conversation with each other clan is worth to it: the share of the other clan it knows, times its appeal for them. The average row and column at top and left are plain means over the other clans.
+                        How connected each clan is to each other clan through conversation: the share of the other clan it knows, times its appeal for them. The average row and column at top and left are plain means over the other clans.
                     </div>
                 </Tooltip2>
             </h3>
         </div>
-        <TableView2 table={valueTable} />
+        <TableView2 table={connectednessTable} />
     </div>
 {/snippet}
 
@@ -813,7 +813,7 @@
         {@render offerSection()}
         {@render appealSection()}
         {@render amountSection()}
-        {@render valueSection()}
+        {@render connectednessSection()}
     </div>
 
     <div class="formulas-card">

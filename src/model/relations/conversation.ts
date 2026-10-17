@@ -869,26 +869,26 @@ export function conversationPayoff(clan: Clan | ClanDTO): number {
     return CONVERSATION_QOL_SCALE * total;
 }
 
-// What one clan's conversation with another is worth to it: the strength of
-// it -- the share of the other clan it knows -- times its Conversation Appeal
-// for that clan. The Conversation panel shows this per pair, and Fortune reads
+// How connected one clan is to another through conversation: the strength
+// of it -- the share of the other clan it knows -- times its Conversation
+// Appeal for that clan. The Conversation panel shows this per pair, and Fortune reads
 // it through readConversationForFortune.
-export function conversationValueOf(
+export function conversationConnectednessOf(
     strength: number, subject: Clan | ClanDTO, partner: Clan | ClanDTO): number {
     return strength * appealOf(subject, partner);
 }
 
-// A clan's conversation value averaged over the other clans of its
-// settlement: a plain mean, since the values are shares of different clans
+// A clan's conversation connectedness averaged over the other clans of its
+// settlement: a plain mean, since the figures are shares of different clans
 // and do not add up to anything. What the Conversation panel's Avg column and
 // the clans overview's Conversation row show.
-export function averageConversationValue<T extends Clan | ClanDTO>(
+export function averageConversationConnectedness<T extends Clan | ClanDTO>(
     subject: T, settlementClans: readonly T[]): number {
     let total = 0;
     let count = 0;
     for (const other of settlementClans) {
         if (other.uuid === subject.uuid) continue;
-        total += conversationValueOf(
+        total += conversationConnectednessOf(
             getRelativeAttention(subject, other), subject, other);
         ++count;
     }
@@ -898,7 +898,7 @@ export function averageConversationValue<T extends Clan | ClanDTO>(
 // What Fortune reads of a clan's conversation this year, written into its
 // inputs: how many people outside the clan its people deal with, and its
 // Conversation Appeal for their clans averaged by how many of each it knows
-// -- the per-pair conversation values, scaled by each partner's size and
+// -- the per-pair conversation connectedness, scaled by each partner's size and
 // divided by the acquaintance. A clan that talks with nobody reads neutral on
 // appeal, since there is nobody to find appealing or not; see eudaimonia.ts.
 export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): void {
@@ -910,7 +910,7 @@ export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): v
         for (const interaction of interactions) {
             if (!(interaction instanceof Conversation)) continue;
             amount += interaction.strength * other.population;
-            appeal += conversationValueOf(interaction.strength, clan, other)
+            appeal += conversationConnectednessOf(interaction.strength, clan, other)
                 * other.population;
         }
     }

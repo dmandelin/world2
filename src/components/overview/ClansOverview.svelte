@@ -44,8 +44,8 @@
     import { selectEntity } from "../state/uistate.svelte";
     import {
         appealOf,
-        averageConversationValue,
-        conversationValueOf,
+        averageConversationConnectedness,
+        conversationConnectednessOf,
         getRelativeAttention,
     } from "../../model/relations/conversation";
     import {
@@ -705,16 +705,16 @@
                 topics: ["perceptions:detail"],
             },
             {
-                // Conversation value averaged over the other clans here, as
+                // Conversation connectedness averaged over the other clans here, as
                 // the Conversation panel's Avg column shows it. The figure
                 // links to the clan's overview, which lists it partner by
                 // partner.
                 label: "Conversation",
                 class: "actual",
                 cellClass: "rap",
-                value: (c) => averageConversationValue(c, settlementClans),
+                value: (c) => averageConversationConnectedness(c, settlementClans),
                 format: pct,
-                renderValueSnippet: conversationValueRender,
+                renderValueSnippet: conversationConnectednessRender,
                 panelTab: "Conversation",
                 topics: ["perceptions"],
             },
@@ -3313,22 +3313,22 @@
     {/if}
 {/snippet}
 
-{#snippet conversationValueRender(cs: ClanLastTurnSnapshots)}
+{#snippet conversationConnectednessRender(cs: ClanLastTurnSnapshots)}
     {@const clan = cs.e}
     <Tooltip>
         <button
             type="button"
             class="value-link"
             onclick={() => selectEntity(clan)}
-            >{pct(averageConversationValue(clan, settlementClans))}</button
+            >{pct(averageConversationConnectedness(clan, settlementClans))}</button
         >
         <div slot="tooltip" style="text-align: left; color: initial;">
-            {@render conversationValueTooltip(clan)}
+            {@render conversationConnectednessTooltip(clan)}
         </div>
     </Tooltip>
 {/snippet}
 
-{#snippet conversationValueTooltip(clan: ClanDTO)}
+{#snippet conversationConnectednessTooltip(clan: ClanDTO)}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
         <div style="font-weight: bold; margin-bottom: 0.35rem;">
             Conversation: {clan.name}
@@ -3339,7 +3339,7 @@
                     <th style="text-align: left;">With</th>
                     <th>Known</th>
                     <th>Appeal</th>
-                    <th>Value</th>
+                    <th>Connectedness</th>
                 </tr>
             </thead>
             <tbody>
@@ -3349,19 +3349,19 @@
                         <td style="text-align: left; padding-right: 0.8em;">{other.name}</td>
                         <td style="padding: 0 0.4em;">{pct(strength)}</td>
                         <td style="padding: 0 0.4em;">&times;{appealOf(clan, other).toFixed(2)}</td>
-                        <td style="padding-left: 0.4em;"><b>{pct(conversationValueOf(strength, clan, other))}</b></td>
+                        <td style="padding-left: 0.4em;"><b>{pct(conversationConnectednessOf(strength, clan, other))}</b></td>
                     </tr>
                 {/each}
                 <tr style="text-align: right; border-top: 1px solid #ddd6c0;">
                     <td style="text-align: left;">Average</td>
                     <td></td>
                     <td></td>
-                    <td><b>{pct(averageConversationValue(clan, settlementClans))}</b></td>
+                    <td><b>{pct(averageConversationConnectedness(clan, settlementClans))}</b></td>
                 </tr>
             </tbody>
         </table>
         <div style="font-size: 0.85em; color: #6b7280; margin-top: 0.35rem; max-width: 22rem;">
-            Each partner's value is the share of that clan known times the
+            Each partner's connectedness is the share of that clan known times the
             appeal of its company; this is their plain average over the other
             clans here. Click through for the clan's partners everywhere.
         </div>

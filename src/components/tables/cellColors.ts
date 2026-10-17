@@ -29,19 +29,19 @@ export function conversationAmountStyle(value: number): string | undefined {
     return `background-color: ${CONVERSATION_AMOUNT_PALETTE[i]};`;
 }
 
-// Conversation value reads as how much good a clan got of it: pale at
+// Conversation connectedness reads as how much good a clan got of it: pale at
 // nothing, through a soft sage, to a deep green where the company was both
 // plentiful and wanted. Brackets of 10%, the last open-ended from 90%, which
 // is about where knowing nearly all of a clan one likes lands.
-const CONVERSATION_VALUE_PALETTE = [
+const CONVERSATION_CONNECTEDNESS_PALETTE = [
     "#f3f4ef", "#e8efdf", "#dbe8cc", "#cce0b8", "#bbd6a3",
     "#a8ca8e", "#93bc7b", "#7dad6b", "#679c5e", "#528a54",
 ];
 
-export function conversationValueStyle(value: number): string | undefined {
-    const i = Math.min(CONVERSATION_VALUE_PALETTE.length - 1,
+export function conversationConnectednessStyle(value: number): string | undefined {
+    const i = Math.min(CONVERSATION_CONNECTEDNESS_PALETTE.length - 1,
         Math.max(0, Math.floor(value * 10)));
-    return `background-color: ${CONVERSATION_VALUE_PALETTE[i]};`;
+    return `background-color: ${CONVERSATION_CONNECTEDNESS_PALETTE[i]};`;
 }
 
 // Affinity reads as kinship of spirit: pale below 0.4, where clans have
