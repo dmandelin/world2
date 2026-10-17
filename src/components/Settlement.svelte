@@ -11,8 +11,7 @@
     import TabbedView from "./TabbedView.svelte";
     import SettlementRelationships from "./SettlementRelationships.svelte";
     import SettlementConversation from "./SettlementConversation.svelte";
-    import SettlementRelationshipsGraph from "./SettlementRelationshipsGraph.svelte";
-    import SettlementRelationshipsGraph2 from "./SettlementRelationshipsGraph2.svelte";
+    import SettlementCliques from "./SettlementCliques.svelte";
     import SettlementMigrationDetails from "./overview/SettlementMigrationDetails.svelte";
     import SettlementComparison from "./overview/SettlementComparison.svelte";
     import SettlementProductivity from "./SettlementProductivity.svelte";
@@ -62,8 +61,7 @@
 
         { label: "Scatter Plot", icon: "📈", snippet: scatterPlotTab, group: "graphs" },
         { label: "Comparison", icon: "⚖️", snippet: comparisonTab, group: "graphs" },
-        { label: "Graph", icon: "🕸️", snippet: relationshipsGraphTab, group: "graphs" },
-        { label: "Graph2", icon: "🌐", snippet: relationshipsGraph2Tab, group: "graphs" },
+        { label: "Cliques", icon: "🕸️", snippet: cliquesTab, group: "graphs" },
     ];
 
     // A link elsewhere can ask for a particular panel -- the event feed's
@@ -175,12 +173,8 @@
     <SettlementMutualAid {settlement} />
 {/snippet}
 
-{#snippet relationshipsGraphTab()}
-    <SettlementRelationshipsGraph {settlement} />
-{/snippet}
-
-{#snippet relationshipsGraph2Tab()}
-    <SettlementRelationshipsGraph2 {settlement} />
+{#snippet cliquesTab()}
+    <SettlementCliques {settlement} />
 {/snippet}
 
 <TabbedView {tabs} orientation="vertical" bind:activeIndex />

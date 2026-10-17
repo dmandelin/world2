@@ -194,7 +194,7 @@ Next items:
     x   Rename conversation strength/value to connection level
         or something like that
     *   (P2) Consume some attention internally
-*   Review and update model and UIs to make sure welfare reflects
+x   Review and update model and UIs to make sure welfare reflects
     the ideas above.
 *   Review and update that clan matching behavior has a reasonable
     relationship to welfare functions.
