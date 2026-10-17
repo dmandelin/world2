@@ -45,7 +45,7 @@ export const INITIAL_POPULATION_RATIOS = [
     [0.0324, 0.0256],
 ];
 
-export const SLICE_WIDTH = 20;
+import { SLICE_WIDTH } from "./demography";
 
 // Per year by age tier.
 const BASE_DEATH_RATES = [0.0125, 0.0175, 0.025, 0.05];
