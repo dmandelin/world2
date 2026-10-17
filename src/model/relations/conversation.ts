@@ -504,6 +504,13 @@ export function relativeAffinityOf(subject: Clan | ClanDTO, object: Clan | ClanD
     return subject.world.perceptions.get(subject, object)?.affinity.relative ?? 0;
 }
 
+// Acquaintance a clan puts into a group setting over the year, whoever turns
+// out to be there to take it up.
+function groupSupply(clan: Clan, source: ConversationSource, scale: number): number {
+    return groupShare(clan, source) * source.intensity * scale
+        * talkativenessFactor(clan.traits.talkativeness);
+}
+
 // --- Allocation and matching -----------------------------------------------
 
 // One group setting in one settlement, with everyone taking part in it.
@@ -530,10 +537,8 @@ class Venue {
         this.people = venuePeople(source, participants);
         this.scale = venueScale(source, this.people);
         for (const c1 of participants) {
-            const share = groupShare(c1, source);
-            this.share.set(c1, share);
-            this.supply.set(c1, share * source.intensity * this.scale
-                * talkativenessFactor(c1.traits.talkativeness));
+            this.share.set(c1, groupShare(c1, source));
+            this.supply.set(c1, groupSupply(c1, source, this.scale));
 
             const w = new Map<Clan, number>();
             for (const c2 of participants) {
@@ -681,7 +686,20 @@ export function updateConversations(world: World): void {
         for (const source of GROUP_SOURCES) {
             const participants = settlement.clans.filter(
                 c => c.population > 0 && isPositive(groupShare(c, source)));
-            if (participants.length < 2) continue;
+            if (participants.length === 0) continue;
+            if (participants.length === 1) {
+                // Nobody else is there, but the clan spent the time and
+                // wanted the company all the same: all of it goes unused.
+                const [clan] = participants;
+                const budgetItem = new ConversationBudgetItem(
+                    source, groupShare(clan, source));
+                budgetItem.people = venuePeople(source, participants);
+                budgetItem.scale = venueScale(source, budgetItem.people);
+                budgetItem.supply = groupSupply(clan, source, budgetItem.scale);
+                budgetItem.talk = talkativenessFactor(clan.traits.talkativeness);
+                clan.conversationBudget.items.push(budgetItem);
+                continue;
+            }
 
             const venue = new Venue(source, participants);
             venue.allocate();
@@ -896,7 +914,8 @@ export function averageConversationConnectedness<T extends Clan | ClanDTO>(
 }
 
 // What Fortune reads of a clan's conversation this year, written into its
-// inputs: how many people outside the clan its people deal with, and its
+// inputs: how many people outside the clan its people deal with, how many it
+// wanted to -- the supply of its conversation budget -- and its
 // Conversation Appeal for their clans averaged by how many of each it knows
 // -- the per-pair conversation connectedness, scaled by each partner's size and
 // divided by the acquaintance. A clan that talks with nobody reads neutral on
@@ -915,5 +934,6 @@ export function readConversationForFortune(clan: Clan, inputs: FortuneInputs): v
         }
     }
     inputs.conversationAmount = amount;
+    inputs.conversationWanted = clan.conversationBudget.supply;
     inputs.conversationAppeal = amount > 0 ? appeal / amount : 1;
 }

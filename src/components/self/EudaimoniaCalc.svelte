@@ -132,7 +132,8 @@
                 >
                 <br />
                 <span
-                    ><b>{u(r.get(EuNode.ConversationAmount), 0)}</b> people known</span
+                    ><b>{u(r.get(EuNode.ConversationAmount), 0)}</b> of
+                    <b>{u(r.get(EuNode.ConversationWanted), 0)}</b> wanted people known</span
                 >
                 <span class="sep">·</span>
                 <span

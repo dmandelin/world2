@@ -49,6 +49,7 @@ import {
     EU_CONVERSATION_QUALITY_SCALE,
     conversationDiversity,
     conversationQuantityFortune,
+    conversationRatio,
     engageGamma,
     EU_BLEND_UP_SCALE,
     EU_BLEND_DOWN_SCALE,
@@ -102,7 +103,8 @@ function inlineFortune(prevFortune: number, x: FortuneInputs): number {
     const convQuality = EU_CONVERSATION_QUALITY_SCALE
         * (x.conversationAppeal * conversationDiversity(amount) - 1);
     const conversation = convQuality
-        + engageGamma(convQuality) * conversationQuantityFortune(amount);
+        + engageGamma(convQuality) * conversationQuantityFortune(
+            conversationRatio(amount, x.conversationWanted));
     const signal = blend2(food, blend2(care, conversation));
     return prevFortune + EU_FORTUNE_DECAY * (signal - prevFortune);
 }
@@ -148,7 +150,8 @@ function buildDetail(
     const diversity = conversationDiversity(amount);
     const convQuality = EU_CONVERSATION_QUALITY_SCALE
         * (x.conversationAppeal * diversity - 1);
-    const convQuantity = conversationQuantityFortune(amount);
+    const convQuantity = conversationQuantityFortune(
+        conversationRatio(amount, x.conversationWanted));
     const conversation = convQuality + engageGamma(convQuality) * convQuantity;
     const social = blend2(care, conversation);
     const signal = blend2(food, social);
@@ -209,6 +212,7 @@ const careEffort = new Float64Array(N_CASES);
 const careShare = new Float64Array(N_CASES);
 const careSkill = new Float64Array(N_CASES);
 const known = new Float64Array(N_CASES);
+const wanted = new Float64Array(N_CASES);
 const appeal = new Float64Array(N_CASES);
 
 // Fixed seed so runs compare to each other.
@@ -227,6 +231,7 @@ for (let i = 0; i < N_CASES; ++i) {
     careShare[i] = rnd() * 0.5;
     careSkill[i] = 20 + rnd() * 60;
     known[i] = rnd() * 200;
+    wanted[i] = 20 + rnd() * 140;
     appeal[i] = 0.5 + rnd();
 }
 
@@ -240,6 +245,7 @@ function fill(j: number): FortuneInputs {
     inputs.careShare = careShare[j];
     inputs.careSkill = careSkill[j];
     inputs.conversationAmount = known[j];
+    inputs.conversationWanted = wanted[j];
     inputs.conversationAppeal = appeal[j];
     return inputs;
 }

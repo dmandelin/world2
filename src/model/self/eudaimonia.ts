@@ -31,7 +31,7 @@
 //           Stress        what the looking after cost those doing it
 //         Conversation
 //           Quality       how appealing and how varied its company was
-//           Quantity      how much of it there was
+//           Quantity      how near it came to as much as the clan wanted
 //
 // Each inner node combines its children, by default by adding them. The
 // nodes where the parts are needs that make up for each other only so far --
@@ -187,34 +187,70 @@ export function conversationDiversity(acquaintance: number): number {
         EU_CONVERSATION_DIVERSITY_EXPONENT);
 }
 
-// Quantity reads acquaintance against a requirement every clan has alike.
-// Having nobody to talk to at all is -100, but a little goes a long way:
+// Quantity reads acquaintance against what the clan wanted: the acquaintance
+// it put into conversation this year, the supply of its conversation budget
+// (see relations/conversation.ts). That differs by clan -- with its
+// Talkativeness, and with how it spent its year -- and some of it, offered to
+// clans that would not match it, finds nobody. As a ratio, r = acquaintance /
+// wanted, 1 being exactly as much company as the clan wanted.
 //
-//     -100 * (1 - r^s)             below the requirement
-//     MAX * (1 - e^(-k (r - 1)))   above it
+// Short of it reads as Nutrition does, the log of a smoothstep s of r, here
+// from nothing at 0 to full at 1:
 //
-// with s set so that a tenth of the requirement is -50, which puts half of it
-// at about -19; and k set so that the two halves meet with the same slope,
-// rising slowly toward +10 past the requirement: +7.8 at 150%.
-export const EU_CONVERSATION_REQUIREMENT = 70;
-export const EU_CONVERSATION_QUANTITY_AT_NONE = -100;
-export const EU_CONVERSATION_HALF_SHARE = 0.1;
-export const EU_CONVERSATION_QUANTITY_MAX = 10;
+//     SHORT_SCALE * ln s(r)                below 1
+//
+// held no lower than EU_CONVERSATION_QUANTITY_FLOOR. So falling short is a
+// loss from the first step, the more so the further short, and SHORT_SCALE is
+// set so that half is -20: -1 at 90%, -5 at 75%, -54 at 25%, and the floor of
+// -100 at about 10%. Having nobody at all is the floor.
+//
+// More of it than the clan wanted is a loss too, for the time it costs and
+// the company it did not choose. That goes as the square of the log, so it is
+// gentle near enough and grows with each doubling:
+//
+//     EXCESS_SCALE * (ln r)^2              above 1
+//
+// with EXCESS_SCALE set so that twice what the clan wanted is -10: -3 at
+// 150%, -25 at three times, held at the same floor. Both halves leave 1 flat,
+// so a little either way barely registers.
+export const EU_CONVERSATION_SHORT_ANCHOR_LEVEL = 0.5;
+export const EU_CONVERSATION_SHORT_ANCHOR_POINTS = -20;
+export const EU_CONVERSATION_EXCESS_ANCHOR_LEVEL = 2;
+export const EU_CONVERSATION_EXCESS_ANCHOR_POINTS = -10;
+export const EU_CONVERSATION_QUANTITY_FLOOR = -100;
 
-const CONVERSATION_SHORT_EXPONENT =
-    Math.log(2) / Math.log(1 / EU_CONVERSATION_HALF_SHARE);
-const CONVERSATION_PLENTY_RATE =
-    -EU_CONVERSATION_QUANTITY_AT_NONE * CONVERSATION_SHORT_EXPONENT
-    / EU_CONVERSATION_QUANTITY_MAX;
+export function conversationShortShape(ratio: number): number {
+    if (!(ratio > 0)) return 0;
+    if (ratio >= 1) return 1;
+    return ratio * ratio * (3 - 2 * ratio);
+}
 
-export function conversationQuantityFortune(acquaintance: number): number {
-    const r = acquaintance > 0 ? acquaintance / EU_CONVERSATION_REQUIREMENT : 0;
-    if (r < 1) {
-        return EU_CONVERSATION_QUANTITY_AT_NONE
-            * (1 - Math.pow(r, CONVERSATION_SHORT_EXPONENT));
+export const EU_CONVERSATION_SHORT_SCALE = EU_CONVERSATION_SHORT_ANCHOR_POINTS
+    / Math.log(conversationShortShape(EU_CONVERSATION_SHORT_ANCHOR_LEVEL));
+
+const CONVERSATION_EXCESS_LN = Math.log(EU_CONVERSATION_EXCESS_ANCHOR_LEVEL);
+export const EU_CONVERSATION_EXCESS_SCALE = EU_CONVERSATION_EXCESS_ANCHOR_POINTS
+    / (CONVERSATION_EXCESS_LN * CONVERSATION_EXCESS_LN);
+
+// Acquaintance as a share of what the clan wanted. A clan that wanted none and
+// had none is exactly where it wanted to be; one that wanted none and had
+// some is as far over as can be.
+export function conversationRatio(acquaintance: number, wanted: number): number {
+    if (wanted > 0) return acquaintance > 0 ? acquaintance / wanted : 0;
+    return acquaintance > 0 ? Infinity : 1;
+}
+
+export function conversationQuantityFortune(ratio: number): number {
+    let points: number;
+    if (ratio < 1) {
+        const s = conversationShortShape(ratio);
+        points = s > 0 ? EU_CONVERSATION_SHORT_SCALE * Math.log(s) : -Infinity;
+    } else {
+        const l = Math.log(ratio);
+        points = EU_CONVERSATION_EXCESS_SCALE * l * l;
     }
-    return EU_CONVERSATION_QUANTITY_MAX
-        * -Math.expm1(-CONVERSATION_PLENTY_RATE * (r - 1));
+    return points > EU_CONVERSATION_QUANTITY_FLOOR
+        ? points : EU_CONVERSATION_QUANTITY_FLOOR;
 }
 
 // --- Combining -------------------------------------------------------------
@@ -396,8 +432,11 @@ export class FortuneInputs {
     talkativeness = 50;
     // Share of the clan's effort that went into care.
     careShare = 0.2;
-    // People outside the clan its people deal with regularly.
-    conversationAmount = EU_CONVERSATION_REQUIREMENT;
+    // People outside the clan its people deal with regularly, and how many
+    // it wanted to: the supply of its conversation budget. An ordinary year
+    // until the first is read: as much company as wanted.
+    conversationAmount = 70;
+    conversationWanted = 70;
     // The clan's Conversation Appeal for those people's clans, averaged by
     // acquaintance.
     conversationAppeal = 1;
@@ -411,6 +450,7 @@ export class FortuneInputs {
         this.talkativeness = o.talkativeness;
         this.careShare = o.careShare;
         this.conversationAmount = o.conversationAmount;
+        this.conversationWanted = o.conversationWanted;
         this.conversationAppeal = o.conversationAppeal;
     }
 
@@ -447,6 +487,7 @@ export const EuNode = {
     Talkativeness: 18,
     CareShare: 17,
     ConversationAmount: 15,
+    ConversationWanted: 19,
     ConversationAppeal: 16,
 
     // Fortune
@@ -480,6 +521,7 @@ export const EuNode = {
     ConversationQuantity: 36,
     ConversationDiversity: 39,
     ConversationQualityLevel: 43,
+    ConversationRatio: 44,
 
     // The Fortune subscore: the tree, averaged over the years
     PrevFortune: 40,
@@ -716,6 +758,8 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "Share of the clan's effort that went into looking after people." },
     { id: EuNode.ConversationAmount, label: "Acquaintance", role: "input", places: 0,
       note: "People outside the clan its people deal with regularly." },
+    { id: EuNode.ConversationWanted, label: "Wanted", role: "input", places: 0,
+      note: "How many people the clan wanted to deal with: the acquaintance it put into conversation this year, matched or not." },
     { id: EuNode.ConversationAppeal, label: "Appeal", role: "input", places: 2,
       note: "The clan's Conversation Appeal for the clans it talks with, averaged by acquaintance." },
 
@@ -762,7 +806,9 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.ConversationQuality, label: "Quality", role: "derived", places: 1,
       note: `Conversation quality as Fortune: ${EU_CONVERSATION_QUALITY_SCALE} points per unit from 1.` },
     { id: EuNode.ConversationQuantity, label: "Quantity", role: "derived", places: 1,
-      note: `Acquaintance against a requirement of ${EU_CONVERSATION_REQUIREMENT}: -100 with nobody, -50 at a tenth, rising slowly toward +${EU_CONVERSATION_QUANTITY_MAX} past it.` },
+      note: `Acquaintance against what the clan wanted: nothing at 100%, -5 at 75%, -20 at half, and no worse than ${EU_CONVERSATION_QUANTITY_FLOOR}; -3 at 150% and -10 at twice.` },
+    { id: EuNode.ConversationRatio, label: "Share of wanted", role: "derived", places: 2, isRate: true,
+      note: "Acquaintance as a share of what the clan wanted." },
 
     { id: EuNode.PrevFortune, label: "Fortune last year", role: "input", places: 1,
       note: "Where the Fortune subscore stood at the end of last year." },
@@ -988,12 +1034,15 @@ export function computeConversation(inputs: FortuneInputs, trace?: EuTrace): num
     const diversity = conversationDiversity(amount);
     const level = inputs.conversationAppeal * diversity;
     const quality = EU_CONVERSATION_QUALITY_SCALE * (level - 1);
-    const quantity = conversationQuantityFortune(amount);
+    const ratio = conversationRatio(amount, inputs.conversationWanted);
+    const quantity = conversationQuantityFortune(ratio);
     const conversation = combine2(EuNode.Conversation, quality, quantity);
 
     if (trace !== undefined) {
         trace.put(EuNode.ConversationAmount, amount);
         trace.put(EuNode.ConversationAppeal, inputs.conversationAppeal);
+        trace.put(EuNode.ConversationWanted, inputs.conversationWanted);
+        trace.put(EuNode.ConversationRatio, ratio);
         trace.put(EuNode.ConversationDiversity, diversity);
         trace.put(EuNode.ConversationQualityLevel, level);
         trace.put(EuNode.ConversationQuality, quality);

@@ -12,10 +12,11 @@
         EU_NUTRITION_SCALE,
         nutritionShape,
         EU_CONVERSATION_DIVERSITY_REF,
-        EU_CONVERSATION_HALF_SHARE,
+        EU_CONVERSATION_EXCESS_SCALE,
         EU_CONVERSATION_QUALITY_SCALE,
-        EU_CONVERSATION_QUANTITY_MAX,
-        EU_CONVERSATION_REQUIREMENT,
+        EU_CONVERSATION_QUANTITY_FLOOR,
+        EU_CONVERSATION_SHORT_SCALE,
+        conversationShortShape,
         EU_HONEY_PER_SHARE,
         FORTUNE_CHILDREN,
         combinerOf,
@@ -187,17 +188,35 @@
             how many people that is.
         </div>
     {:else if node === EuNode.ConversationQuantity}
+        {@const ratio = get(EuNode.ConversationRatio)}
         <div class="line">
             {u(get(EuNode.ConversationAmount), 0)} known &divide;
-            {EU_CONVERSATION_REQUIREMENT} required =
-            {pctOf(get(EuNode.ConversationAmount) / EU_CONVERSATION_REQUIREMENT)}
-            &rarr; <b>{n(get(EuNode.ConversationQuantity))}</b>
+            {u(get(EuNode.ConversationWanted), 0)} wanted =
+            {pctOf(ratio)}
+        </div>
+        <div class="line">
+            {#if ratio < 1}
+                {u(EU_CONVERSATION_SHORT_SCALE, 1)} &times; ln {u(
+                    conversationShortShape(ratio),
+                    3,
+                )}
+            {:else}
+                {u(EU_CONVERSATION_EXCESS_SCALE, 1)} &times; (ln {u(
+                    ratio,
+                    2,
+                )})<sup>2</sup>
+            {/if}
+            = <b>{n(get(EuNode.ConversationQuantity))}</b>
+            {#if get(EuNode.ConversationQuantity) <= EU_CONVERSATION_QUANTITY_FLOOR}
+                <span class="cap">(floor)</span>
+            {/if}
         </div>
         <div class="note">
-            &minus;100 with nobody to talk to, &minus;50 at
-            {pctOf(EU_CONVERSATION_HALF_SHARE)} of the requirement, about
-            &minus;19 at half, 0 at the requirement, and rising slowly toward
-            +{EU_CONVERSATION_QUANTITY_MAX} past it.
+            Wanted is the acquaintance the clan put into conversation this
+            year, whether or not anyone matched it. Nothing at 100%; short of
+            it, &minus;5 at 75% and &minus;20 at half; past it, &minus;3 at
+            150% and &minus;10 at twice. Nothing is worse than
+            {n(EU_CONVERSATION_QUANTITY_FLOOR, 0)}.
         </div>
     {/if}
 
