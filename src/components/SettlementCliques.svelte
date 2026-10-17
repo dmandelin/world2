@@ -24,6 +24,18 @@
     const MODES: Mode[] = ["Conversation", "Alignment", "Affinity"];
     let mode: Mode = $state("Conversation");
 
+    // Settlements run small, and within one the ties are much alike, so the
+    // groups often show only once the clans of other settlements that these
+    // clans know are counted in too.
+    type Scope = "Settlement" | "With neighbors";
+    const SCOPES: Scope[] = ["Settlement", "With neighbors"];
+    let scope: Scope = $state("Settlement");
+
+    function settlementNameOf(clan: ClanDTO): string {
+        return world.settlements.find((s) =>
+            s.clans.some((c) => c.uuid === clan.uuid))?.name ?? "elsewhere";
+    }
+
     const MODE_NOTES: Record<Mode, string> = {
         Conversation:
             "Conversation strength: the share of each other's people the two clans know.",
@@ -85,6 +97,8 @@
 
     interface Analysis {
         clans: ClanDTO[];
+        // Whether each clan is from another settlement.
+        outside: boolean[];
         w: number[][];
         max: number;
         // Clan index -> group id, groups numbered largest first.
@@ -100,10 +114,26 @@
     let analysis: Analysis = $derived.by(() => {
         // Read the mode here so a change of it reruns the analysis.
         void mode;
-        const clans = sortedByKey(
+        const local = sortedByKey(
             settlement.clans.filter((c) => c.population > 0),
             (c) => c.name,
         );
+        const localIds = new Set(local.map((c) => c.uuid));
+        const neighbors = new Map<string, ClanDTO>();
+        if (scope === "With neighbors") {
+            for (const clan of local) {
+                for (const [otherID] of world.perceptions.getFor(clan.uuid)) {
+                    if (localIds.has(otherID)) continue;
+                    const other = world.clanMap.get(otherID);
+                    if (other && other.population > 0) neighbors.set(otherID, other);
+                }
+            }
+        }
+        const clans = [
+            ...local,
+            ...sortedByKey([...neighbors.values()], (c) => c.name),
+        ];
+        const outside = clans.map((c) => !localIds.has(c.uuid));
         const n = clans.length;
         const w = clans.map((a, i) =>
             clans.map((b, j) => (i === j ? 0 : tie(a, b))),
@@ -154,6 +184,7 @@
 
         return {
             clans,
+            outside,
             w,
             max,
             groupOf,
@@ -177,9 +208,10 @@
 
     // --- Ring -------------------------------------------------------------
 
-    const RING_SIZE = 400;
+    const RING_SIZE = 440;
     const RING_C = RING_SIZE / 2;
-    const RING_R = 130;
+    // Room outside the ring for a long clan name.
+    const RING_R = RING_C - 88;
     const NODE_R = 7;
     // Ties weaker than this share of the strongest are left off the ring.
     const RING_MIN_SHARE = 0.08;
@@ -190,6 +222,8 @@
         y: number;
         lx: number;
         ly: number;
+        // Labels run outward along the radius, turned upright on the left.
+        rotate: number;
         anchor: "start" | "end";
     }
 
@@ -209,8 +243,9 @@
                 index,
                 x: RING_C + RING_R * cos,
                 y: RING_C + RING_R * sin,
-                lx: RING_C + (RING_R + 13) * cos,
-                ly: RING_C + (RING_R + 13) * sin + 3.5,
+                lx: RING_C + (RING_R + 12) * cos,
+                ly: RING_C + (RING_R + 12) * sin,
+                rotate: (angle * 180) / Math.PI + (cos >= 0 ? 0 : 180),
                 anchor: cos >= 0 ? "start" : "end",
             });
             ++slot;
@@ -327,6 +362,7 @@
         hoveredClan = i;
         showTip(event, [
             `${clans[i].name} — group ${groupOf[i] + 1}`,
+            ...(analysis.outside[i] ? [`Of ${settlementNameOf(clans[i])}`] : []),
             `${total > 0 ? pct(inside / total) : "—"} of its ties inside the group`,
             ...(max > 0 && strongest.length
                 ? [`Strongest: ${strongest.join(", ")}`]
@@ -361,6 +397,16 @@
                     class="mode-btn"
                     class:active={mode === m}
                     onclick={() => (mode = m)}>{m}</button
+                >
+            {/each}
+        </div>
+        <div class="modes">
+            {#each SCOPES as sc}
+                <button
+                    type="button"
+                    class="mode-btn"
+                    class:active={scope === sc}
+                    onclick={() => (scope = sc)}>{sc}</button
                 >
             {/each}
         </div>
@@ -460,15 +506,22 @@
                                 cx={node.x}
                                 cy={node.y}
                                 r={NODE_R}
-                                fill={groupColor(analysis.groupOf[node.index])}
-                                stroke="#ffffff"
-                                stroke-width="2"
+                                fill={analysis.outside[node.index]
+                                    ? "#ffffff"
+                                    : groupColor(analysis.groupOf[node.index])}
+                                stroke={analysis.outside[node.index]
+                                    ? groupColor(analysis.groupOf[node.index])
+                                    : "#ffffff"}
+                                stroke-width={analysis.outside[node.index] ? 2.5 : 2}
                             />
                             <text
                                 x={node.lx}
                                 y={node.ly}
+                                dy="3.5"
+                                transform="rotate({node.rotate} {node.lx} {node.ly})"
                                 text-anchor={node.anchor}
                                 class="ring-label"
+                                class:outside={analysis.outside[node.index]}
                                 class:faded={hoveredClan !== null &&
                                     hoveredClan !== node.index &&
                                     analysis.w[hoveredClan][node.index] <
@@ -480,7 +533,8 @@
                 </svg>
                 <div class="caption-note">
                     Ties inside a group in its color, across groups in gray;
-                    thicker is stronger. Ties under {pct(RING_MIN_SHARE)} of the
+                    thicker is stronger. Hollow, italic clans are from other
+                    settlements. Ties under {pct(RING_MIN_SHARE)} of the
                     strongest are left off.
                 </div>
             </figure>
@@ -509,7 +563,9 @@
                             x={LABEL_W - 4}
                             y={STRIP + 2 + r * cell + cell / 2 + 3.5}
                             text-anchor="end"
-                            class="matrix-label">{analysis.clans[i].name}</text
+                            class="matrix-label"
+                            class:outside={analysis.outside[i]}
+                            >{analysis.clans[i].name}</text
                         >
                         <rect
                             x={LABEL_W}
@@ -588,7 +644,12 @@
                             <span class="swatch" style="background: {groupColor(g.id)};"></span>
                             {g.id + 1}
                         </td>
-                        <td>{g.members.map((i) => analysis.clans[i].name).join(", ")}</td>
+                        <td>
+                            {#each g.members as i, k (i)}{k > 0 ? ", " : ""}<span
+                                    class:outside={analysis.outside[i]}
+                                    >{analysis.clans[i].name}</span
+                                >{/each}
+                        </td>
                         <td class="num">{pct(g.insularity)}</td>
                     </tr>
                 {/each}
@@ -735,6 +796,11 @@
         fill: #1f2328;
     }
 
+    .ring-label.outside,
+    .matrix-label.outside {
+        font-style: italic;
+    }
+
     .ring-label.faded {
         fill: #b5b4ae;
     }
@@ -783,6 +849,10 @@
     .groups td {
         padding: 0.25rem 0.8rem 0.25rem 0;
         vertical-align: top;
+    }
+
+    .groups .outside {
+        font-style: italic;
     }
 
     .groups .num {
