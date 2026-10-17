@@ -93,12 +93,12 @@ export function talkativenessFactor(talkativeness: number): number {
 
 // Acquaintance a whole year in each setting is worth, at scale 1. Set so that
 // at the start, with clans living in the settlement 30% of the year, an
-// average clan's supply of about 90 comes roughly 40% from festivals, 30%
+// average clan's supply of about 60 comes roughly 40% from festivals, 30%
 // from the settlement, 20% from help and 10% from ditching.
-export const SETTLEMENT_INTENSITY = 90;
-export const DITCHING_INTENSITY = 150;
-export const FESTIVALS_INTENSITY = 360;
-export const HELP_INTENSITY = 190;
+export const SETTLEMENT_INTENSITY = 60;
+export const DITCHING_INTENSITY = 100;
+export const FESTIVALS_INTENSITY = 240;
+export const HELP_INTENSITY = 125;
 
 // Settings where a whole group takes part together, and a clan can choose
 // whom within the group to spend its time with.
@@ -158,21 +158,21 @@ export class TieSources {
     static readonly Marriage: ConversationSource = {
         name: 'Marriage',
         sortKey: 5,
-        intensity: 8,
+        intensity: 5,
         note: 'Visits between a clan and the clan its people married into',
     };
 
     static readonly Kin: ConversationSource = {
         name: 'Kin',
         sortKey: 6,
-        intensity: 8,
+        intensity: 5,
         note: 'Visits between a clan and the clan it split from',
     };
 
     static readonly Friendship: ConversationSource = {
         name: 'Friendship',
         sortKey: 7,
-        intensity: 8,
+        intensity: 5,
         note: 'Visits between clans that count each other friends',
     };
 }
