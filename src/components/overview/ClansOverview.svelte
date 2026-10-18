@@ -41,13 +41,6 @@
     import SkillDelta from "../SkillDelta.svelte";
     import TableView2 from "../tables/TableView2.svelte";
     import Tooltip from "../Tooltip.svelte";
-    import { selectEntity } from "../state/uistate.svelte";
-    import {
-        appealOf,
-        averageConversationConnectedness,
-        conversationConnectednessOf,
-        getRelativeAttention,
-    } from "../../model/relations/conversation";
     import {
         getClanLastTurnSnapshots,
         SettlementDTO,
@@ -645,20 +638,6 @@
                 topics: ["perceptions:detail"],
             },
             {
-                label: "QoL",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => c.qol.value,
-                format: signed,
-                tooltipSnippet: qolTooltip,
-                settlementTooltipSnippet: settlementQolTooltip,
-                deltaValue: (c) => c.qol.value,
-                deltaFormat: signed,
-                timelineKey: "qol",
-                scaler: new ZeroCenteredScaler(),
-                topics: ["welfare"],
-            },
-            {
                 label: "Favor",
                 class: "actual",
                 cellClass: "rap",
@@ -727,20 +706,6 @@
                 renderValueSnippet: eventsRender,
                 settlementRenderSnippet: settlementEventsRender,
                 topics: ["perceptions:detail"],
-            },
-            {
-                // Conversation connectedness averaged over the other clans here, as
-                // the Conversation panel's Avg column shows it. The figure
-                // links to the clan's overview, which lists it partner by
-                // partner.
-                label: "Conversation",
-                class: "actual",
-                cellClass: "rap",
-                value: (c) => averageConversationConnectedness(c, settlementClans),
-                format: pct,
-                renderValueSnippet: conversationConnectednessRender,
-                panelTab: "Conversation",
-                topics: ["perceptions"],
             },
             {
                 label: "Mutual Aid",
@@ -1958,27 +1923,6 @@
         );
     }
 
-    function clanQolTooltipTable(clan: ClanDTO) {
-        return new FilteredIterableTable(
-            clan.qol.m.values(),
-            (item) => item.name,
-            (_) => true,
-            [
-                {
-                    data: "Value",
-                    label: "Value",
-                    valueFn: (item) => item.value,
-                    formatFn: signedFormat(),
-                },
-                {
-                    data: "Explanation",
-                    label: "",
-                    valueFn: (item) => item.explanation,
-                },
-            ],
-        );
-    }
-
     // The clan's own breakdown can carry items the neighbors' does not --
     // Pride in place of Random, a single Self item for Favor -- so the row set
     // is the union, in rater order with the self-only items after.
@@ -2827,10 +2771,6 @@
     />
 {/snippet}
 
-{#snippet settlementQolTooltip(css: ClanLastTurnSnapshots[])}
-    <TableView2 table={mergedClanTable(css, clanQolTooltipTable, [0])} />
-{/snippet}
-
 {#snippet settlementFavorTooltip(css: ClanLastTurnSnapshots[])}
     <TableView2
         table={mergedClanTable(
@@ -3068,10 +3008,6 @@
 
 {#snippet eudaimoniaTooltip(cs: ClanLastTurnSnapshots)}
     <EudaimoniaSubscores eudaimonia={cs.e.eudaimonia} />
-{/snippet}
-
-{#snippet qolTooltip(cs: ClanLastTurnSnapshots)}
-    <TableView2 table={clanQolTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
 {#snippet foodProducedTooltip(cs: ClanLastTurnSnapshots)}
@@ -3353,61 +3289,6 @@
             ).toFixed(1)}
         </div>
     {/if}
-{/snippet}
-
-{#snippet conversationConnectednessRender(cs: ClanLastTurnSnapshots)}
-    {@const clan = cs.e}
-    <Tooltip>
-        <button
-            type="button"
-            class="value-link"
-            onclick={() => selectEntity(clan)}
-            >{pct(averageConversationConnectedness(clan, settlementClans))}</button
-        >
-        <div slot="tooltip" style="text-align: left; color: initial;">
-            {@render conversationConnectednessTooltip(clan)}
-        </div>
-    </Tooltip>
-{/snippet}
-
-{#snippet conversationConnectednessTooltip(clan: ClanDTO)}
-    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 260px;">
-        <div style="font-weight: bold; margin-bottom: 0.35rem;">
-            Conversation: {clan.name}
-        </div>
-        <table style="border-collapse: collapse; font-size: 0.9em;">
-            <thead>
-                <tr style="text-align: right; color: #6b7280;">
-                    <th style="text-align: left;">With</th>
-                    <th>Known</th>
-                    <th>Appeal</th>
-                    <th>Connectedness</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each settlementClans.filter((o) => o.uuid !== clan.uuid) as other (other.uuid)}
-                    {@const strength = getRelativeAttention(clan, other)}
-                    <tr style="text-align: right;">
-                        <td style="text-align: left; padding-right: 0.8em;">{other.name}</td>
-                        <td style="padding: 0 0.4em;">{pct(strength)}</td>
-                        <td style="padding: 0 0.4em;">&times;{appealOf(clan, other).toFixed(2)}</td>
-                        <td style="padding-left: 0.4em;"><b>{pct(conversationConnectednessOf(strength, clan, other))}</b></td>
-                    </tr>
-                {/each}
-                <tr style="text-align: right; border-top: 1px solid #ddd6c0;">
-                    <td style="text-align: left;">Average</td>
-                    <td></td>
-                    <td></td>
-                    <td><b>{pct(averageConversationConnectedness(clan, settlementClans))}</b></td>
-                </tr>
-            </tbody>
-        </table>
-        <div style="font-size: 0.85em; color: #6b7280; margin-top: 0.35rem; max-width: 22rem;">
-            Each partner's connectedness is the share of that clan known times the
-            appeal of its company; this is their plain average over the other
-            clans here. Click through for the clan's partners everywhere.
-        </div>
-    </div>
 {/snippet}
 
 {#snippet supportRatioValueRender(cs: ClanLastTurnSnapshots)}

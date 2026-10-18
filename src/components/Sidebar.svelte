@@ -58,15 +58,8 @@
 </div>
 
 <style>
+    /* Placed by the page's right rail, which also keeps it in view. */
     .sidebar {
-        position: fixed;
-        /* Level with the map and the folder tab, which start at the body inset. */
-        top: 8px;
-        /* Clear of the main panel's clay border, which the instrument panel
-           below the buttons otherwise sits right on top of. */
-        right: 1.75em;
-        background-color: transparent;
-        z-index: 100;
         display: flex;
         flex-direction: column;
         align-items: flex-end;

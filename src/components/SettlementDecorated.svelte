@@ -8,13 +8,8 @@
     import FloodPictogram from "./widgets/FloodPictogram.svelte";
     import SettlementTellArt from "./overview/SettlementTellArt.svelte";
     import SettlementVitals from "./overview/SettlementVitals.svelte";
-    import EntityLink from "./state/EntityLink.svelte";
 
-    let {
-        settlement,
-        onSelect,
-    }: { settlement: SettlementDTO; onSelect: (uuid: string) => void } =
-        $props();
+    let { settlement }: { settlement: SettlementDTO } = $props();
 
     // Alerts don't record a settlement, so match on the settlement itself plus
     // the clans living in it.
@@ -26,73 +21,52 @@
     );
 </script>
 
-<div id="top">
-    <div class="folder-body clay-edge">
-        <div class="header-row">
-            <div class="main-col">
-                <div class="icon-col">
-                    <SettlementTellArt {settlement} />
-                    <FloodPictogram floodLevel={settlement.floodLevel} />
-                    <DitchGauge {settlement} />
-                    {#if settlement.extremeFloods.length}
-                        <div class="flood-icons">
-                            {#each settlement.extremeFloods as flood, i (i)}
-                                <ExtremeFloodIcon {flood} />
-                            {/each}
-                        </div>
-                    {/if}
-                </div>
-                <div class="name-col">
-                    <div class="name-row">
-                        <h1 style="white-space: nowrap;">
-                        {settlement.name} |
-                        <img
-                            src="stat-population-256.png"
-                            alt="Population"
-                            width="40"
-                            height="40"
-                            style="padding-bottom: 4px;"
-                        />{settlement.population}
-                        </h1>
-                        <div class="header-alerts">
-                            <AlertBadges
-                                world={settlement.world}
-                                orientation="horizontal"
-                                filter={isLocalAlert}
-                            />
-                        </div>
-                    </div>
-                    <SettlementVitals {settlement} />
-                </div>
+<!-- The portrait heads the tab rail and the name heads the panel, so each
+     column starts right under its own header instead of both waiting on the
+     taller one. -->
+{#snippet portrait()}
+    <div class="icon-col">
+        <SettlementTellArt {settlement} />
+        <FloodPictogram floodLevel={settlement.floodLevel} />
+        <DitchGauge {settlement} />
+        {#if settlement.extremeFloods.length}
+            <div class="flood-icons">
+                {#each settlement.extremeFloods as flood, i (i)}
+                    <ExtremeFloodIcon {flood} />
+                {/each}
             </div>
-            <div class="region-panel clay-edge">
-                <div class="cluster-info">
-                    <EntityLink entity={settlement.cluster} /> Region ·
-                    <img
-                        src="stat-population-256.png"
-                        alt="Population"
-                        width="16"
-                        height="16"
-                        style="padding-bottom: 2px;"
-                    />{settlement.cluster.population}
-                </div>
-                <div class="settlement-buttons">
-                    {#each settlement.cluster.settlements as s (s.uuid)}
-                        <button
-                            type="button"
-                            class="clay-edge"
-                            class:active={s.uuid === settlement.uuid}
-                            onclick={() => onSelect(s.uuid)}
-                        >
-                            <span class="settlement-name">{s.name}</span>
-                            <span class="pop">{s.population}</span>
-                        </button>
-                    {/each}
-                </div>
+        {/if}
+    </div>
+{/snippet}
+
+{#snippet nameplate()}
+    <div class="name-col">
+        <div class="name-row">
+            <h1 style="white-space: nowrap;">
+            {settlement.name} |
+            <img
+                src="stat-population-256.png"
+                alt="Population"
+                width="40"
+                height="40"
+                style="padding-bottom: 4px;"
+            />{settlement.population}
+            </h1>
+            <div class="header-alerts">
+                <AlertBadges
+                    world={settlement.world}
+                    orientation="horizontal"
+                    filter={isLocalAlert}
+                />
             </div>
         </div>
+        <SettlementVitals {settlement} />
+    </div>
+{/snippet}
 
-        <Settlement {settlement} />
+<div id="top">
+    <div class="folder-body clay-edge">
+        <Settlement {settlement} railHead={portrait} contentHead={nameplate} />
     </div>
 </div>
 
@@ -104,24 +78,6 @@
 
     h1 {
         margin: 0;
-    }
-
-    .header-row {
-        display: flex;
-        gap: var(--clay-gap);
-        align-items: flex-start;
-        margin-bottom: var(--clay-pad);
-    }
-
-    /* The settlement name/icon block, beside the region panel. Both sit
-       directly inside .folder-body's padding, no border of its own. */
-    .main-col {
-        flex: 1;
-        min-width: 0;
-        align-self: stretch;
-        display: flex;
-        align-items: flex-start;
-        gap: 0.5rem;
     }
 
     /* Single owner of the gutter around all tab content, so every panel opens
@@ -152,6 +108,7 @@
 
     .name-col {
         min-width: 0;
+        margin-bottom: var(--clay-pad);
     }
 
     /* Badges sit past the population count, centred on it. */
@@ -173,74 +130,6 @@
            the text's optical centre, divided by the zoom since that scales
            this offset as well. */
         top: calc(-1.5px / var(--shrink));
-    }
-
-    .region-panel {
-        flex: 0 0 auto;
-        width: 296px;
-        /* Clear the fixed sidebar (150px wide, 1em from the right, against a
-           body inset 8px) and leave one standard gap beside it. */
-        margin-right: calc(158px + var(--clay-gap));
-        padding: var(--clay-pad);
-        background-color: #f3edd8;
-    }
-
-    .cluster-info {
-        font-variant: small-caps;
-        letter-spacing: 0.03em;
-        font-weight: bold;
-        color: #5a4d20;
-        margin-bottom: 0.5rem;
-    }
-
-    .settlement-buttons {
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: 0.2rem;
-        max-height: calc(2 * 2.4rem + 0.2rem);
-        overflow-y: auto;
-    }
-
-    .settlement-buttons button {
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        min-width: 0;
-        height: 2.4rem;
-        padding: 0.15rem 0.1rem;
-        background-color: #fffaf0;
-        color: #2c250d;
-        font-size: 0.72rem;
-        line-height: 1.15;
-        text-align: center;
-        cursor: pointer;
-        overflow: hidden;
-    }
-
-    .settlement-buttons button:hover {
-        background-color: #fff2d6;
-    }
-
-    .settlement-buttons button.active {
-        background-color: #e8d9a8;
-        border-color: #62531d;
-        font-weight: bold;
-    }
-
-    .settlement-buttons .settlement-name {
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .settlement-buttons .pop {
-        font-size: 0.6rem;
-        font-weight: normal;
-        color: dimgray;
     }
 
     img {

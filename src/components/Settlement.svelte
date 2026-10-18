@@ -30,7 +30,7 @@
     import SettlementWaters from "./SettlementWaters.svelte";
     import SettlementHistory from "./SettlementHistory.svelte";
 
-    let { settlement } = $props();
+    let { settlement, railHead, contentHead } = $props();
 
     // Grouped: the settlement itself, then everything about how clans relate
     // to each other, then the relationship graphs.
@@ -177,4 +177,10 @@
     <SettlementCliques {settlement} />
 {/snippet}
 
-<TabbedView {tabs} orientation="vertical" bind:activeIndex />
+<TabbedView
+    {tabs}
+    orientation="vertical"
+    bind:activeIndex
+    {railHead}
+    {contentHead}
+/>

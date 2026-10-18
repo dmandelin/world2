@@ -15,12 +15,18 @@
     tabs,
     orientation = 'horizontal',
     activeIndex = $bindable(0),
+    railHead,
+    contentHead,
   }: {
     tabs: Tab[],
     orientation?: 'horizontal' | 'vertical',
     // Which panel is open. Bindable so an owner can open one from outside,
     // as the event feed's links do.
     activeIndex?: number,
+    // Optional headers atop each column, so an owner's banner can share the
+    // rows rather than push both columns down to its tallest part.
+    railHead?: Snippet,
+    contentHead?: Snippet,
   } = $props();
 
   function selectTab(index: number) {
@@ -41,6 +47,9 @@
 
 <div class="tabbed" class:vertical={orientation === 'vertical'}>
   <div class="tab-headers">
+    {#if railHead}
+      <div class="rail-head">{@render railHead()}</div>
+    {/if}
     {#each tabs as tab, i}
       {@const startsGroup = i > 0 && tabs[i - 1].group !== tab.group}
       {#if startsGroup}
@@ -60,6 +69,7 @@
   </div>
 
   <div class="tab-content">
+    {@render contentHead?.()}
     <!-- With pictorial buttons the label isn't visible anywhere else, so the
          panel names itself. Text tabs already show it, so they don't. -->
     {#if tabs[activeIndex].icon}
@@ -97,6 +107,11 @@
   grid-template-columns: repeat(2, min-content);
   gap: 0.1rem;
   margin-bottom: 0;
+}
+.tabbed.vertical .rail-head {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-bottom: 0.6rem;
 }
 .tabbed.vertical .tab-content {
   flex: 1;
