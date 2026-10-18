@@ -3,6 +3,7 @@ import { type ClanSkill, type SkillDef } from './skills';
 import { moveToward } from '../lib/modelbasics';
 import { chooseWeighted, stochasticRound, sumFun } from '../lib/basics';
 import { careLearningFactor } from './care';
+import { AGE_LIMIT, FEMALE, MALE, MaritalStatus } from './demography';
 
 // About skill changes
 //
@@ -11,7 +12,10 @@ import { careLearningFactor } from './care';
 //
 // - Tradition: Previous practice is continued and handed down,
 //       with error. This depends on the skill being practiced
-//       enough.
+//       enough. What is handed down is not only the clan's own: its
+//       mothers came from other clans and bring their ways with them,
+//       and people tend to keep to whichever way they see working best.
+//       See traditionTarget.
 // - Environmental change: Changes in the environment may reset
 //       the skill value. For example, local ecology knowledge
 //       resets on a move.
@@ -96,6 +100,77 @@ import { careLearningFactor } from './care';
 // a trait that's pure advantage unless we want it continuously
 // increasing during the simulation.
 
+// How fast a clan's practice moves toward its tradition target. In a
+// generation (20 years) about half the clan is replaced by new people, who
+// learn toward the target, so a generation closes half of the gap.
+const TRADITION_GENERATION_YEARS = 20;
+const TRADITION_SHARE_PER_GENERATION = 0.5;
+
+// How hard the tradition target leans toward the best teachers: the power
+// of the mean taken. 1 is the plain average and infinity the best of them.
+// Teachers at 50 and 70 in a 3:1 ratio average 55; power 2, the quadratic
+// mean, gives 55.7, and 4 gives 57.2.
+const TRADITION_POWER = 4;
+
+// One kind of teacher a clan's children learn from, for one skill.
+export class TraditionSource {
+    constructor(
+        readonly label: string,
+        readonly people: number,
+        readonly skill: number,
+    ) { }
+}
+
+// Who a clan's children learn a skill from, and what each knows: the
+// fathers, who are of the clan; the elders, counted with the clan, however
+// they came to it; and the mothers, of the clans the last generation's
+// wives came from, shared out by how many came from each. A skill tied to
+// the place is known only to mothers from the same settlement; the others
+// count at the clan's own level, having nothing of this place to teach.
+export function traditionSources(clan: Clan, skillDef: SkillDef): TraditionSource[] {
+    const own = clan.skills.v(skillDef);
+    const d = clan.demography;
+    const fathers = d.count({ sex: MALE, ages: [0, 55], status: MaritalStatus.Married });
+    const mothers = d.count({ sex: FEMALE, ages: [0, 55], status: MaritalStatus.Married });
+    const elders = d.count({ ages: [55, AGE_LIMIT] });
+
+    const sources = [
+        new TraditionSource('Fathers', fathers, own),
+        new TraditionSource('Elders', elders, own),
+    ];
+    const wives = clan.world.lastMarriageDecisions?.recentByHusband.counts.get(clan);
+    let total = 0;
+    for (const [wifeClan, count] of wives ?? []) if (wifeClan !== clan) total += count;
+    if (total === 0) {
+        sources.push(new TraditionSource('Mothers', mothers, own));
+        return sources;
+    }
+    for (const [wifeClan, count] of wives!) {
+        if (wifeClan === clan || count <= 0) continue;
+        const knows = !skillDef.resetsOnMove || wifeClan.settlement === clan.settlement;
+        sources.push(new TraditionSource(
+            `Mothers from ${wifeClan.name}`,
+            mothers * count / total,
+            knows ? wifeClan.skills.v(skillDef) : own));
+    }
+    return sources;
+}
+
+// What the clan's children grow up doing, all their teachers taken
+// together. A power mean weighted by people, rather than the plain mean:
+// people weigh up the ways they see and lean toward the better ones, but
+// one able newcomer doesn't remake everything. Undefined when there is no
+// one to learn from.
+export function traditionTarget(sources: readonly TraditionSource[]): number | undefined {
+    let people = 0;
+    let powers = 0;
+    for (const s of sources) {
+        people += s.people;
+        powers += s.people * Math.pow(Math.max(0, s.skill), TRADITION_POWER);
+    }
+    return people > 0 ? Math.pow(powers / people, 1 / TRADITION_POWER) : undefined;
+}
+
 export class ClanSkillChange {
     // Effort as a percentage of overall effort.
     readonly focus: number;
@@ -115,6 +190,10 @@ export class ClanSkillChange {
 
     readonly items: ClanSkillChangeItem[] = [];
     readonly imitationTargetItems: readonly ImitationTargetItem[] = [];
+
+    // Who the clan's children learned from this year, and what that came to.
+    readonly traditionSources: readonly TraditionSource[];
+    readonly traditionTarget: number | undefined;
 
     constructor(
         readonly elapsedYears: number,
@@ -152,6 +231,21 @@ export class ClanSkillChange {
         const expectedDeltaFromError = -adjustedLossFactor * this.initialValue;
         const deltaFromError = stochasticRound(expectedDeltaFromError);
         this.items.push(new ClanSkillChangeItem('Error', deltaFromError, expectedDeltaFromError));
+
+        // What is handed down: the children grow up toward the tradition
+        // target, so the clan's practice moves that way as they replace
+        // their elders.
+        this.traditionSources = traditionSources(clan, skillDef);
+        this.traditionTarget = traditionTarget(this.traditionSources);
+        if (this.traditionTarget !== undefined) {
+            const share = 1 - Math.pow(1 - TRADITION_SHARE_PER_GENERATION,
+                this.elapsedYears / TRADITION_GENERATION_YEARS);
+            const expectedDeltaFromTradition = share * (this.traditionTarget - this.initialValue);
+            this.items.push(new ClanSkillChangeItem(
+                'Tradition',
+                stochasticRound(expectedDeltaFromTradition),
+                expectedDeltaFromTradition));
+        }
 
         // Focus influences learning rate.
         this.focus = skillDef.getEffort(clan) / Math.max(1, clan.production.effort());

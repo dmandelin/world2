@@ -11,7 +11,7 @@
     import type { ClanDTO } from "../model/records/dtos";
     import type { SkillDef } from "../model/people/skills";
     import { ClanSkillChangeItem } from "../model/people/skillchange";
-    import type { ImitationTargetItem } from "../model/people/skillchange";
+    import type { ImitationTargetItem, TraditionSource } from "../model/people/skillchange";
 
     let { clan, skill }: { clan: ClanDTO; skill: SkillDef } = $props();
     let clanSkill = $derived(clan.skills.get(skill)!);
@@ -77,6 +77,30 @@
         return table;
     });
 
+    // Who the children learned from, and what each knows.
+    let traditionTable = $derived.by(() => {
+        const change = clanSkill.lastChange;
+        if (!change || change.traditionSources.length === 0) return undefined;
+        return new IterableTable<TraditionSource, [number, number]>(
+            change.traditionSources.filter((s) => s.people > 0),
+            (s) => s.label,
+            [
+                {
+                    data: "People",
+                    label: "People",
+                    valueFn: (s) => s.people,
+                    formatFn: (v) => v.toFixed(1),
+                },
+                {
+                    data: "Skill",
+                    label: "Skill",
+                    valueFn: (s) => s.skill,
+                    formatFn: (v) => v.toFixed(),
+                },
+            ],
+        );
+    });
+
     let changeSourcesTable = $derived.by(() => {
         if (!clanSkill.lastChange) return undefined;
         const items = clanSkill.lastChange.items;
@@ -129,8 +153,16 @@
                 <br />
                 <b>{pct(clanSkill.lastChange.careFactor)}</b> upbringing factor ({pct(clanSkill.lastChange.careProvision)} care provided)
             </p>
-            <h4>Imitation Sources</h4>
-            {#if imitationTable}
+            {#if traditionTable && clanSkill.lastChange.traditionTarget !== undefined}
+                <h4>Tradition: {clanSkill.lastChange.traditionTarget.toFixed(1)}</h4>
+                <p style="margin: 0 0 4px;">
+                    What the children learn from: their teachers' skill,
+                    averaged so as to lean toward the best of it.
+                </p>
+                <TableView2 table={traditionTable} />
+            {/if}
+            {#if imitationTable && imitationTable.rows.length > 0}
+                <h4>Imitation Sources</h4>
                 <TableView2 table={imitationTable} />
             {/if}
             <h4>Skill Changes</h4>
