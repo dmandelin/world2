@@ -15,6 +15,7 @@ import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
 import type { MigrationCalc, NewSettlementDecisionReport, PlannedSettlement } from "../people/migration";
+import { AGE_LIMIT, MaritalStatus } from "../people/demography";
 import {
     betrothalRecord, marriageCountsOf, servicePartners,
     type BetrothalRecord, type MarriageCounts, type MarriageDecisions, type ServicePartner,
@@ -112,6 +113,10 @@ export class ClanDTO {
     // The same by marital status: [slice][sex][status].
     slicesByStatus: number[][][];
     marriageCounts: MarriageCounts;
+    // People by stage of life: children under 20, married and unmarried
+    // adults under 55 (the unmarried counting the betrothed and widowed),
+    // and elders of 55 and up. They add up to the clan.
+    lifeStages: { children: number, married: number, unmarried: number, elders: number };
 
     // This year's bride service: men of this clan away working for their
     // brides' clans, and men of other clans working here.
@@ -188,6 +193,14 @@ export class ClanDTO {
         this.slices = clan.slices;
         this.slicesByStatus = clan.demography.slicesByStatus;
         this.marriageCounts = marriageCountsOf(clan.demography);
+        const adults = clan.demography.count({ ages: [20, 55] });
+        const married = clan.demography.count({ ages: [20, 55], status: MaritalStatus.Married });
+        this.lifeStages = {
+            children: clan.demography.count({ ages: [0, 20] }),
+            married,
+            unmarried: adults - married,
+            elders: clan.demography.count({ ages: [55, AGE_LIMIT] }),
+        };
 
         this.brideServiceOut = servicePartners(clan.brideServiceOut);
         this.brideServiceIn = servicePartners(clan.brideServiceIn);
