@@ -8,17 +8,21 @@
     import { pct, signed, unsigned } from "../model/lib/format";
     import { sortedByKey } from "../model/lib/basics";
     import TableView2 from "./tables/TableView2.svelte";
+    import { formatYear } from "../model/records/year";
     import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
     import {
-        getMarriageDecisions,
+        BRIDE_SERVICE_YEARS,
+        type BetrothalRecord,
         type MarriageDecisions,
+        type PairingCounts,
     } from "../model/relations/marriage";
     import type { Snippet } from "svelte";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
     let world = $derived(settlement.world);
 
-    let marriageOption: "Interest" | "Recent" | "Legacy" = $state("Interest");
+    let marriageOption: "Interest" | "Market" | "Service" | "Recent" | "Legacy" =
+        $state("Interest");
 
     function isClanInSettlement(clan: ClanDTO): boolean {
         return settlement.clans.some((c) => c.uuid === clan.uuid);
@@ -89,41 +93,89 @@
         return totalPop > 0 ? weightedSum / totalPop : null;
     }
 
-    function getPairingCount(
-        decisions: MarriageDecisions | undefined,
-        c1: ClanDTO,
-        c2: ClanDTO,
+    // Count for a clan pair in a PairingCounts, matching clans by uuid, as
+    // the counts hold the live clans and the table holds snapshots.
+    function pairCount(
+        counts: PairingCounts,
+        subject: { uuid: string },
+        object: { uuid: string },
     ): number {
-        if (!decisions) return 0;
-        for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
-            if (hClan.uuid === c1.uuid) {
-                for (const [wClan, count] of map.entries()) {
-                    if (wClan.uuid === c2.uuid) {
-                        return count;
-                    }
-                }
+        for (const [s, map] of counts.counts.entries()) {
+            if (s.uuid !== subject.uuid) continue;
+            for (const [o, count] of map.entries()) {
+                if (o.uuid === object.uuid) return count;
             }
         }
         return 0;
     }
 
+    // Betrothals of the last generation between the two clans, either way.
+    function getPairingCount(
+        decisions: MarriageDecisions | undefined,
+        c1: ClanDTO,
+        c2: ClanDTO,
+    ): number {
+        return decisions ? pairCount(decisions.recent, c1, c2) : 0;
+    }
+
+    // The same, of husbands from the one clan to wives from the other.
     function getDirectionalMarriageCount(
         decisions: MarriageDecisions | undefined,
         husbandClan: ClanDTO,
         wifeClan: ClanDTO,
     ): number {
-        if (!decisions) return 0;
-        for (const wifeSet of decisions.potentialWives) {
-            if (wifeSet.clan.uuid === wifeClan.uuid) {
-                for (const [hClan, count] of wifeSet.marriedTo.entries()) {
-                    if (hClan.uuid === husbandClan.uuid) {
-                        return count;
-                    }
-                }
-            }
-        }
-        return 0;
+        return decisions
+            ? pairCount(decisions.recentByHusband, husbandClan, wifeClan)
+            : 0;
     }
+
+    // ---- This year's market ----
+
+    // Where a clan's promises went this year, as "2 Eagle, 1 Jasper".
+    function promisedTo(marriedTo: ReadonlyMap<{ name: string }, number>): string {
+        return sortedByKey([...marriedTo], ([c]) => c.name)
+            .map(([c, n]) => `${n} ${c.name}`)
+            .join(", ");
+    }
+
+    let marketRows = $derived.by(() => {
+        const decisions = getDecisions();
+        if (!decisions) return [];
+        return sortedByKey(settlement.clans, (c) => c.name).map((clan) => {
+            const wives = decisions.wivesOf(clan);
+            const husbands = decisions.husbandsOf(clan);
+            let bridesOut = 0;
+            let bridesIn = 0;
+            for (const [h, w, n] of decisions.completed.entries()) {
+                if (w.uuid === clan.uuid) bridesOut += n;
+                if (h.uuid === clan.uuid) bridesIn += n;
+            }
+            return {
+                clan,
+                women: wives?.count ?? 0,
+                womenPromised: wives?.taken ?? 0,
+                womenTo: wives ? promisedTo(wives.marriedTo) : "",
+                men: husbands?.count ?? 0,
+                menPromised: husbands?.taken ?? 0,
+                menTo: husbands ? promisedTo(husbands.marriedTo) : "",
+                bridesOut,
+                bridesIn,
+            };
+        });
+    });
+
+    // ---- Bride service ----
+
+    let serviceBetrothals = $derived.by(() => {
+        const here = new Set(settlement.clans.map((c) => c.uuid));
+        return sortedByKey(
+            world.betrothals.filter(
+                (b: BetrothalRecord) =>
+                    here.has(b.husbandClan.uuid) || here.has(b.wifeClan.uuid),
+            ),
+            (b: BetrothalRecord) => `${b.wifeClan.name} ${b.husbandClan.name}`,
+        );
+    });
 
     function totalRecentMarriagesForClan(
         clan: ClanDTO,
@@ -455,7 +507,7 @@
                 • Marriages with {colClan.name} husbands: {colToRowMarriages}
             </li>
             <li>
-                • Total Marriages Last Turn: <strong>{totalMarriages}</strong>
+                • Total in the last 20 years: <strong>{totalMarriages}</strong>
             </li>
             <li>
                 • % of {colClan.name}'s Marriages:
@@ -616,6 +668,16 @@
             >
             <button
                 type="button"
+                class="stress-btn {marriageOption === 'Market' ? 'active' : ''}"
+                onclick={() => (marriageOption = "Market")}>Market</button
+            >
+            <button
+                type="button"
+                class="stress-btn {marriageOption === 'Service' ? 'active' : ''}"
+                onclick={() => (marriageOption = "Service")}>Service</button
+            >
+            <button
+                type="button"
                 class="stress-btn {marriageOption === 'Recent' ? 'active' : ''}"
                 onclick={() => (marriageOption = "Recent")}>Recent</button
             >
@@ -634,19 +696,131 @@
         </p>
     {:else if marriageOption === "Recent"}
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-            Shows the % of last turn's marriages that each column clan engaged
-            in with each row clan.
+            Shows the % of the last 20 years' betrothals that each column clan
+            made with each row clan.
         </p>
-    {:else}
+    {:else if marriageOption === "Legacy"}
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
             Shows the % related by marriage between clans based on historical
             marriages.
         </p>
     {/if}
 
-    <div class="table-container">
-        <TableView2 table={marriageTable} />
-    </div>
+    {#if marriageOption === "Market"}
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+            This year's marriage market. Women may marry from 18 and men from
+            20, until 45; the widowed may marry again. Each match is a
+            betrothal: the man lives and works {BRIDE_SERVICE_YEARS} years
+            with his bride's clan, then they marry and she joins his.
+        </p>
+        <div class="table-container">
+            <table class="market">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Clan</th>
+                        <th colspan="3">Women</th>
+                        <th colspan="3">Men</th>
+                        <th colspan="2">Married this year</th>
+                    </tr>
+                    <tr>
+                        <th title="Unmarried or widowed women 18-44">Looking</th>
+                        <th>Promised</th>
+                        <th>To men of</th>
+                        <th title="Unmarried or widowed men 20-44">Looking</th>
+                        <th>Promised</th>
+                        <th>To women of</th>
+                        <th title="Daughters who married out this year">Brides out</th>
+                        <th title="Wives who married in this year">Brides in</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each marketRows as r}
+                        <tr>
+                            <td>{r.clan.name}</td>
+                            <td class="num">{r.women}</td>
+                            <td class="num">{r.womenPromised}</td>
+                            <td>{r.womenTo}</td>
+                            <td class="num">{r.men}</td>
+                            <td class="num">{r.menPromised}</td>
+                            <td>{r.menTo}</td>
+                            <td class="num">{r.bridesOut || ""}</td>
+                            <td class="num">{r.bridesIn || ""}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {:else if marriageOption === "Service"}
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+            Bride service this year. For {BRIDE_SERVICE_YEARS} years a
+            betrothed man lives with his bride's clan, eats with it and gives
+            it his whole year's work, while still counted a member of his
+            own.
+        </p>
+        <div class="table-container">
+            <table class="market">
+                <thead>
+                    <tr>
+                        <th>Clan</th>
+                        <th title="Men of this clan away working for their brides' clans">Men away</th>
+                        <th title="Men of other clans working for this one">Men here</th>
+                        <th title="Workers this year: own adults, plus the men here; the men away are still counted, their year set aside for the service">Workers</th>
+                        <th title="People fed this year: own people, less the men away, plus the men here">Fed</th>
+                        <th title="Men here less men away">Net</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each sortedByKey(settlement.clans, (c) => c.name) as clan}
+                        <tr>
+                            <td>{clan.name}</td>
+                            <td class="num">{clan.brideServiceGiven || ""}</td>
+                            <td class="num">{clan.brideServiceReceived || ""}</td>
+                            <td class="num">{unsigned(clan.workers)}</td>
+                            <td class="num">{unsigned(clan.consumption.population)}</td>
+                            <td class="num">{clan.brideServiceReceived - clan.brideServiceGiven
+                                ? signed(clan.brideServiceReceived - clan.brideServiceGiven, 0)
+                                : ""}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+        <h4 style="margin: 1rem 0 0.5rem;">Betrothals in service</h4>
+        {#if serviceBetrothals.length === 0}
+            <p style="font-size: 0.9rem; color: #666;">None.</p>
+        {:else}
+            <div class="table-container">
+                <table class="market">
+                    <thead>
+                        <tr>
+                            <th>Men of</th>
+                            <th>Serving</th>
+                            <th>Couples</th>
+                            <th>Since</th>
+                            <th>Years served</th>
+                            <th>Years left</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each serviceBetrothals as b}
+                            <tr>
+                                <td>{b.husbandClan.name}</td>
+                                <td>{b.wifeClan.name}</td>
+                                <td class="num">{b.count}</td>
+                                <td class="num">{formatYear(b.year)}</td>
+                                <td class="num">{b.yearsServed}</td>
+                                <td class="num">{b.yearsLeft}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+        {/if}
+    {:else}
+        <div class="table-container">
+            <TableView2 table={marriageTable} />
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -676,6 +850,19 @@
         font-weight: bold;
         background-color: #fff;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .market {
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .market th,
+    .market td {
+        padding: 0.2rem 0.6rem;
+        border-bottom: 1px solid #e2d9c8;
+        text-align: left;
+    }
+    .market td.num {
+        text-align: right;
     }
     .table-container {
         overflow-x: auto;

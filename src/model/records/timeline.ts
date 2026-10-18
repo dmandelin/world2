@@ -38,6 +38,7 @@ export class Timeline<T> {
 import { SkillDefs, Processes } from "../econ/econdefs";
 import { Activities } from "../decisions/effort";
 import { MarriageConnection } from "../relations/connection";
+import { FEMALE, MaritalStatus } from "../people/demography";
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from "../relations/mutualaid";
 
 export class ClanTimePoint {
@@ -62,6 +63,16 @@ export class ClanTimePoint {
     readonly favorAverage: number;
     readonly avgWeddingAppeal: number;
     readonly avgPartnerAppeal: number;
+    // Marriage: % of women 20-39 married, % of people 30-44 never married,
+    // betrothals made this year (by its men and by its women), brides who
+    // married in this year, and bride service in and out.
+    readonly marriedWomenShare: number;
+    readonly neverMarriedAt30: number;
+    readonly betrothalsMade: number;
+    readonly bridesMarriedIn: number;
+    readonly brideServiceGiven: number;
+    readonly brideServiceReceived: number;
+    readonly activityBrideService: number;
     readonly foodProduced: number;
     readonly foodTransferred: number;
     readonly food: number;
@@ -142,7 +153,7 @@ export class ClanTimePoint {
             for (const other of world.allClans) {
                 if (other.uuid === clan.uuid) continue;
                 let count = 0;
-                for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
+                for (const [hClan, map] of decisions.recent.counts.entries()) {
                     if (hClan.uuid === clan.uuid) {
                         for (const [wClan, cnt] of map.entries()) {
                             if (wClan.uuid === other.uuid) {
@@ -162,6 +173,24 @@ export class ClanTimePoint {
         } else {
             this.avgWeddingAppeal = 0;
         }
+
+        const d = clan.demography;
+        this.marriedWomenShare = 100 * safeDiv(
+            d.count({ sex: FEMALE, ages: [20, 40], status: MaritalStatus.Married }),
+            d.count({ sex: FEMALE, ages: [20, 40] }));
+        this.neverMarriedAt30 = 100 * safeDiv(
+            d.count({ ages: [30, 45], status: MaritalStatus.Unmarried }),
+            d.count({ ages: [30, 45] }));
+        this.betrothalsMade = (decisions?.wivesOf(clan)?.taken ?? 0)
+            + (decisions?.husbandsOf(clan)?.taken ?? 0);
+        let bridesIn = 0;
+        if (decisions) {
+            for (const [h, , n] of decisions.completed.entries()) if (h === clan) bridesIn += n;
+        }
+        this.bridesMarriedIn = bridesIn;
+        this.brideServiceGiven = clan.brideServiceGiven;
+        this.brideServiceReceived = clan.brideServiceReceived;
+        this.activityBrideService = clan.effortAllocation.get(Activities.BrideService) * 100;
 
         let partnerWeightedSum = 0;
         let partnerTotalWeight = 0;

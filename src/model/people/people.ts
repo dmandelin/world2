@@ -1,6 +1,6 @@
 import { Annals } from "../annals";
 import { log } from "../lib/debug";
-import { clamp, randInt, remove, sumFun } from "../lib/basics";
+import { clamp, randInt, remove, sum, sumFun } from "../lib/basics";
 import { ClanSkills } from "./clanskills";
 import { membershipChanged } from "./membership";
 import { Activities, EffortAllocation } from "../decisions/effort";
@@ -12,6 +12,7 @@ import { HousingDecision } from "../decisions/housingdecision";
 import { HousingTypes } from "../econ/housing";
 import { initialDemography, PopulationChange, PopulationChangeBuilder } from "./population";
 import { Demography, sliceAges } from "./demography";
+import { breakBetrothals, transferBetrothals } from "../relations/marriage";
 import { MigrationCalc } from "./migration";
 import { normal } from "../lib/distributions";
 import { Operation, ProductionReport } from "../econ/operation";
@@ -187,6 +188,12 @@ export class Clan implements TradePartner {
 
     effortAllocation: EffortAllocation;
     helpAllocation: HelpAllocation = new HelpAllocation();
+
+    // This year's bride service: men of this clan working for the clans of
+    // the women they are promised to, and men of other clans working for
+    // this one, by the other clan. Reckoned each year in marriage.ts.
+    brideServiceOut: Map<Clan, number> = new Map();
+    brideServiceIn: Map<Clan, number> = new Map();
     operations: Operation[] = [];
 
     readonly tradeRelationships = new Set<TradeRelationship>();
@@ -287,8 +294,29 @@ export class Clan implements TradePartner {
         return this.population - this.children;
     }
 
+    // The year's work: the clan's own adults, and the men of other clans
+    // here on bride service. Its own men away on bride service are counted
+    // here, and their year set aside for it in the effort allocation. They
+    // eat where they work; see fedPopulation.
     get effort(): number {
-        return this.adults;
+        return this.adults + this.brideServiceReceived;
+    }
+
+    // Men of this clan away working for their brides' clans this year.
+    get brideServiceGiven(): number {
+        return sum(this.brideServiceOut.values());
+    }
+
+    // Men of other clans working for this one this year.
+    get brideServiceReceived(): number {
+        return sum(this.brideServiceIn.values());
+    }
+
+    // The people the clan feeds this year. A man on bride service lives and
+    // eats with his bride's clan as well as working for it, so he is fed
+    // there rather than at home.
+    get fedPopulation(): number {
+        return Math.max(0, this.population - this.brideServiceGiven + this.brideServiceReceived);
     }
 
     get workers(): number {
@@ -498,6 +526,7 @@ export class Clan implements TradePartner {
             this.floodDamage.deaths = -(this.lastPopulationChange.items
                 .find(i => i.name === 'Flood')?.actual ?? 0);
             this.demography = this.lastPopulationChange.newDemography;
+            breakBetrothals(this.world, this, this.lastPopulationChange.betrothedDeaths);
         }
     }
 
@@ -560,6 +589,7 @@ export class Clan implements TradePartner {
 
         const origSize = this.population;
         this.demography.merge(other.demography);
+        transferBetrothals(this.world, other, this);
 
         for (const key of NUMERIC_TRAITS) {
             const val = Math.round(

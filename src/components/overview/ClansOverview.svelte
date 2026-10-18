@@ -72,10 +72,7 @@
         connectionsOf,
         MarriageConnection,
     } from "../../model/relations/connection";
-    import {
-        getMarriageDecisions,
-        type MarriageDecisions,
-    } from "../../model/relations/marriage";
+    import { type MarriageDecisions } from "../../model/relations/marriage";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import type { Opinion } from "../../model/relations/opinion";
     import { ALL_RITUAL_TYPES, type RitualEvent } from "../../model/rituals";
@@ -195,6 +192,31 @@
                 if (!total[i]) total[i] = slice.map(() => 0);
                 slice.forEach((v, j) => (total[i][j] += v));
             });
+        }
+        return total;
+    });
+
+    // The same by marital status, and the marriage figures added up.
+    let settlementSlicesByStatus = $derived.by(() => {
+        const total: number[][][] = [];
+        for (const clan of settlementClans) {
+            clan.slicesByStatus.forEach((bySex, i) => {
+                if (!total[i]) total[i] = bySex.map((s) => s.map(() => 0));
+                bySex.forEach((byStatus, g) =>
+                    byStatus.forEach((v, st) => (total[i][g][st] += v)));
+            });
+        }
+        return total;
+    });
+    let settlementMarriageCounts = $derived.by(() => {
+        const total = {
+            eligibleWomen: 0, eligibleMen: 0, betrothedWomen: 0,
+            betrothedMen: 0, marriedCouples: 0, widowed: 0,
+        };
+        for (const clan of settlementClans) {
+            for (const key of Object.keys(total) as (keyof typeof total)[]) {
+                total[key] += clan.marriageCounts[key];
+            }
         }
         return total;
     });
@@ -408,12 +430,14 @@
         );
     }
 
+    // Betrothals of the last generation between the two clans.
     function getPairingCount(
-        decisions: MarriageDecisions,
+        decisions: MarriageDecisions | undefined,
         c1: ClanDTO,
         c2: ClanDTO,
     ): number {
-        for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
+        if (!decisions) return 0;
+        for (const [hClan, map] of decisions.recent.counts.entries()) {
             if (hClan.uuid === c1.uuid) {
                 for (const [wClan, count] of map.entries()) {
                     if (wClan.uuid === c2.uuid) {
@@ -2717,6 +2741,19 @@
     <PopulationPyramid clan={cs.e} />
     <hr />
     <div>Workers: {unsigned(cs.e.workers)}</div>
+    {#if cs.e.brideServiceReceived > 0 || cs.e.brideServiceGiven > 0}
+        <div style="font-size: 0.9em; padding-left: 1em;">
+            <div>Own adults: {unsigned(cs.e.workers - cs.e.brideServiceReceived)}</div>
+            {#each cs.e.brideServiceIn as p}
+                <div>+{p.count} on bride service from {p.name}</div>
+            {/each}
+            {#each cs.e.brideServiceOut as p}
+                <div>&minus;{p.count} away on bride service with {p.name}</div>
+            {/each}
+        </div>
+        <div>Fed this year: {unsigned(cs.e.consumption.population)}
+            <span style="font-size: 0.9em;">(men on bride service eat where they serve)</span></div>
+    {/if}
     <div>
         Population Per Worker: {safeDiv(cs.e.population, cs.e.workers).toFixed(
             1,
@@ -2726,7 +2763,12 @@
 
 {#snippet settlementPeopleTooltip(css: ClanLastTurnSnapshots[])}
     <PopulationPyramid
-        clan={{ slices: settlementSlices, population: settlementPopulation }}
+        clan={{
+            slices: settlementSlices,
+            population: settlementPopulation,
+            slicesByStatus: settlementSlicesByStatus,
+            marriageCounts: settlementMarriageCounts,
+        }}
     />
     <hr />
     <div>Workers: {unsigned(settlementWorkers)}</div>
@@ -3240,13 +3282,13 @@
 {#snippet avgWeddingAppealTooltip(cs: ClanLastTurnSnapshots)}
     {@const world = settlement.world}
     {@const clan = cs.e}
-    {@const decisions =
-        world.lastMarriageDecisions ?? getMarriageDecisions(world as any)}
+    {@const decisions = world.lastMarriageDecisions}
     <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
         <strong>Avg Wedding Appeal:</strong>
         <p style="margin: 0.25rem 0;">
-            Average marriage appeal of {clan.name} toward its marriage partners last
-            turn, weighted by the number of marriages with each partner.
+            Average marriage appeal of {clan.name} toward the clans it has made
+            betrothals with in the last 20 years, weighted by the number of
+            betrothals with each.
         </p>
         <ul
             style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"

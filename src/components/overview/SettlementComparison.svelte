@@ -6,12 +6,17 @@
     let { settlement }: { settlement: SettlementDTO } = $props();
 
     const metrics: { key: keyof ClanTimePoint; label: string }[] = [
+        { key: "activityBrideService", label: "Activity: Bride Service" },
         { key: "activityCare", label: "Activity: Care" },
         { key: "activityHelp", label: "Activity: Help" },
         { key: "activityLeisure", label: "Activity: Leisure" },
         { key: "activityProduction", label: "Activity: Production" },
         { key: "avgPartnerAppeal", label: "Avg Partner Appeal" },
         { key: "avgWeddingAppeal", label: "Avg Wedding Appeal" },
+        { key: "betrothalsMade", label: "Betrothals Made" },
+        { key: "bridesMarriedIn", label: "Brides Married In" },
+        { key: "brideServiceGiven", label: "Bride Service Given" },
+        { key: "brideServiceReceived", label: "Bride Service Received" },
         { key: "brModifier", label: "Birth Rate Modifier" },
         { key: "careProvision", label: "Care Provided" },
         { key: "drModifier", label: "Death Rate Modifier" },
@@ -22,6 +27,8 @@
         { key: "foodStorage", label: "Food Storage" },
         { key: "appeal", label: "Happiness" },
         { key: "subsistenceAppeal", label: "Material Welfare" },
+        { key: "marriedWomenShare", label: "Married Women 20-39 %" },
+        { key: "neverMarriedAt30", label: "Never Married 30-44 %" },
         { key: "population", label: "Population" },
         { key: "averagePrestige", label: "Prestige" },
         { key: "processAgriculture", label: "Process: Agriculture" },

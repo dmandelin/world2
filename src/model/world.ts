@@ -11,7 +11,7 @@ import { economicResult } from "./econ/economy";
 import { rollFishingLuck, rollHarvestLuck } from "./econ/productivity";
 import { Distribution, StockOutflow, Consumption } from "./econ/flows";
 import { QualityOfLife } from "./econ/qol";
-import { marry, MarriageDecisions } from "./relations/marriage";
+import { marry, type Betrothal, MarriageDecisions, type PairingCounts } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
@@ -107,6 +107,14 @@ export class World implements NoteTaker {
     previousEndOfTurnSnapshot_: WorldDTO | undefined;
 
     lastMarriageDecisions?: MarriageDecisions;
+    // Betrothals still working off their bride service.
+    betrothals: Betrothal[] = [];
+    // The last generation of betrothals, a year to an entry, by husband's
+    // clan -> wife's clan.
+    marriageHistory: PairingCounts[] = [];
+    // Each clan's prestige in the eyes of the clans its recent brides came
+    // from. See marriage.ts.
+    brideAppeal: Map<Clan, number> = new Map();
     lastFoodRedistribution?: FoodRedistributionResult;
     lastFoodGifts?: FoodGiftsResult;
 
@@ -640,7 +648,7 @@ export class World implements NoteTaker {
 
         // Step 1 & 2: Arrange consumption (first from production up to target food/capita, then from stock)
         for (const clan of allClans) {
-            let targetAdditionalFood = Math.max(0, clan.population - clan.consumption.totalFood);
+            let targetAdditionalFood = Math.max(0, clan.fedPopulation - clan.consumption.totalFood);
 
             // Consume out of production not yet distributed elsewhere
             // (Fish first, Cereals second).

@@ -2,9 +2,9 @@ import type { Clan } from "./people";
 import { DiseaseLoadCalc } from "../environment/pathogens";
 import { assert, clamp, productFun, sum, sumFun, isPositive } from "../lib/basics";
 import { spct } from "../lib/format";
-import { getLocalPrestige, getPrestige } from "../relations/prestige";
+import { getLocalPrestige } from "../relations/prestige";
 import { zScore } from "../lib/modelbasics";
-import { getMarriageDecisions } from "../relations/marriage";
+import { BRIDE_MIN_AGE, GROOM_MIN_AGE, settleInitialMarriages } from "../relations/marriage";
 // Base birth rate (per childbearing-age woman per year, with standard
 // nutrition, minimal shelter and no migration) and the global death-rate
 // multiplier are tunable, so read them from the shared knobs at call time.
@@ -46,7 +46,7 @@ export const INITIAL_POPULATION_RATIOS = [
 ];
 
 import {
-    AGE_LIMIT, Demography, FEMALE, MaritalStatus, SEXES, SLICE_COUNT, SLICE_WIDTH,
+    AGE_LIMIT, Demography, FEMALE, MALE, MaritalStatus, SEXES, SLICE_COUNT, SLICE_WIDTH,
     type Sex, sliceAgeWeights, sliceAges, sliceOf,
 } from "./demography";
 
@@ -68,7 +68,9 @@ export function initialDemography(size: number): Demography {
         ++slices[0][Math.floor(Math.random() * 2)];
         ++error;
     }
-    return Demography.fromSlices(slices);
+    const d = Demography.fromSlices(slices);
+    settleInitialMarriages(d);
+    return d;
 }
 
 // The share of a standard population, the one clans start with, at each age,
@@ -112,6 +114,10 @@ export const DEATH_CAUSES = ['Disease', 'Hazards', 'Flood', 'Old Age', 'Starvati
 export const DISEASE_CAUSE_INDEX = 0;
 export const HAZARDS_CAUSE_INDEX = 1;
 const OLD_AGE_CAUSE_INDEX = 3;
+
+// How much older a husband is than his wife, as near as the counts can say
+// who was married to whom: the difference in the ages they may marry from.
+const SPOUSE_AGE_GAP = GROOM_MIN_AGE - BRIDE_MIN_AGE;
 
 // A death from illness or mishap, kept so that a rite can spare it.
 interface IllnessDeath {
@@ -166,6 +172,7 @@ function drawDeathsByCause(n: number, deathRates: number[]): number[] {
 function applyRitualDeathAdjustment(
     adjustment: number,
     illnessDeaths: IllnessDeath[],
+    dead: Demography,
     survivors: Demography,
     actualDeaths: number[],
 ): void {
@@ -174,13 +181,14 @@ function applyRitualDeathAdjustment(
         const pick = Math.floor(Math.random() * illnessDeaths.length);
         const [spared] = illnessDeaths.splice(pick, 1);
         --actualDeaths[spared.cause];
+        dead.remove(spared.sex, spared.age, spared.status, 1);
         survivors.add(spared.sex, spared.age, spared.status, 1);
     }
 
     for (let n = adjustment; n > 0; --n) {
         // Whoever it takes is anyone among the living, alike.
         if (survivors.total === 0) break;
-        survivors.take(1);
+        dead.merge(survivors.take(1));
         ++actualDeaths[DISEASE_CAUSE_INDEX];
     }
 }
@@ -228,20 +236,10 @@ export class PopulationChangeModifier {
     ) { }
 }
 
+// The prestige of the clan in the eyes of the clans its recent brides came
+// from; see marriage.ts.
 function getAvgAppealToBrides(clan: Clan): number {
-    const decisions = clan.world.lastMarriageDecisions ?? getMarriageDecisions(clan.world);
-    let weightedSum = 0;
-    let totalBrides = 0;
-    for (const wifeSet of decisions.potentialWives) {
-        const brideClan = wifeSet.clan;
-        const bridesToThisClan = wifeSet.marriedTo.get(clan) ?? 0;
-        if (bridesToThisClan > 0) {
-            const appeal = getPrestige(brideClan, clan);
-            weightedSum += bridesToThisClan * appeal;
-            totalBrides += bridesToThisClan;
-        }
-    }
-    return totalBrides > 0 ? weightedSum / totalBrides : 0;
+    return clan.world.brideAppeal.get(clan) ?? 0;
 }
 
 export class PopulationChange {
@@ -261,6 +259,9 @@ export class PopulationChange {
         readonly brModifier: number,
         readonly drModifiers: PopulationChangeModifier[],
         readonly drModifier: number,
+        // Of those who died, how many were betrothed, women first: each
+        // death ends a betrothal, which marriage.ts sees to.
+        readonly betrothedDeaths: readonly number[] = [0, 0],
     ) {
         this.previousSize = clan.population;
         let [births, deaths] = [0, 0];
@@ -458,9 +459,10 @@ export class PopulationChangeBuilder {
 
         // ---- Step 1: expected rates ----
 
-        // Birth rate uses exactly the 20-40 slice (index 1) women, not an average.
+        // Births come of the married women of the 20-40 slice.
         const perWomanBirthRate = this.brModifier * tuning.baseBirthRate * Y;
-        const childbearingWomen = clan.demography.count({ sex: FEMALE, ages: sliceAges(1) });
+        const childbearingWomen = clan.demography.count(
+            { sex: FEMALE, ages: sliceAges(1), status: MaritalStatus.Married });
         const expectedBirths = childbearingWomen * perWomanBirthRate;
 
         // Per-slice annual disease risk ratios, derived from the cumulative
@@ -560,6 +562,10 @@ export class PopulationChangeBuilder {
         // reach back and spare a particular one of them.
         const illnessDeaths: IllnessDeath[] = [];
 
+        // Everyone who dies this year. Drawn in full before anyone is taken
+        // out, so that a widow made by one of the deaths doesn't face the
+        // year's risks a second time.
+        const dead = new Demography();
         next.forEach((sex, age, status, count) => {
             const counts = drawDeathsByCause(count, ratesByAge[age][sex]);
             let died = 0;
@@ -572,8 +578,9 @@ export class PopulationChangeBuilder {
                 }
                 died += counts[c];
             }
-            next.remove(sex, age, status, died);
+            if (died > 0) dead.add(sex, age, status, died);
         });
+        next.subtract(dead);
 
         // ---- Step 2b: what the year's rituals settled ----
         //
@@ -581,7 +588,7 @@ export class PopulationChangeBuilder {
         // and the stake is one life. Applied to the drawn deaths rather than
         // to the rates, so the life saved or lost is a particular one.
         applyRitualDeathAdjustment(
-            clan.pendingDeathAdjustment, illnessDeaths, next, actualDeaths);
+            clan.pendingDeathAdjustment, illnessDeaths, dead, next, actualDeaths);
 
         // ---- Step 3: aging ----
 
@@ -589,8 +596,31 @@ export class PopulationChangeBuilder {
         // would reach AGE_LIMIT has died of old age, though by then its
         // rising risk has taken nearly everyone already.
         for (let y = 0; y < Y; ++y) {
-            actualDeaths[OLD_AGE_CAUSE_INDEX] += next.ageOneYear().total;
+            const aged = next.ageOneYear();
+            actualDeaths[OLD_AGE_CAUSE_INDEX] += aged.total;
+            dead.merge(aged);
         }
+
+        // ---- Step 4: what the deaths leave behind ----
+
+        // A married person's death widows their spouse, who is in the clan
+        // too, and of about the age a spouse would be. A betrothed person's
+        // death ends the betrothal, which reaches into another clan; that
+        // is left to marriage.ts, once the year's change is made.
+        const betrothedDeaths = [0, 0];
+        dead.forEach((sex, age, status, count) => {
+            if (status === MaritalStatus.Married) {
+                const spouse: Sex = sex === FEMALE ? MALE : FEMALE;
+                const spouseAge = age + (sex === FEMALE ? SPOUSE_AGE_GAP : -SPOUSE_AGE_GAP);
+                for (let k = 0; k < count; ++k) {
+                    next.changeStatusNearAge(
+                        spouse, Math.max(0, Math.min(AGE_LIMIT - 1, spouseAge)),
+                        MaritalStatus.Married, MaritalStatus.Widowed);
+                }
+            } else if (status === MaritalStatus.Betrothed) {
+                betrothedDeaths[sex] += count;
+            }
+        });
 
         // ---- Assemble items ----
         const rate = (v: number) => prevSize > 0 ? v / prevSize : 0;
@@ -633,6 +663,7 @@ export class PopulationChangeBuilder {
             this.brModifier,
             this.drModifiers,
             this.drModifier,
+            betrothedDeaths,
         );
     }
 

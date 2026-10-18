@@ -358,14 +358,15 @@ export class Consumption extends GoodFlows {
     readonly fromGifts: DirectFlowRecord[] = [];
 
     // The people this food was for: the clan as it stood when the year's
-    // food was shared out. Every per-head figure is against this, not the
-    // clan's population later in the year, after births and deaths, which
-    // would make a growing clan look worse fed than it was.
+    // food was shared out, with the men on bride service fed where they
+    // serve (see Clan.fedPopulation). Every per-head figure is against this,
+    // not the clan's population later in the year, after births and deaths,
+    // which would make a growing clan look worse fed than it was.
     readonly population: number;
 
     constructor(clan: Clan) {
         super(clan);
-        this.population = clan.population;
+        this.population = clan.fedPopulation;
     }
 
     addProduction(good: TradeGood, amount: number): void {

@@ -218,23 +218,28 @@ export class EffortAllocation {
     // share of care, then have the rest be production, keeping back the rest
     // the clan needs.
     private reserve(careShare: number) {
-        const fCare = Math.min(1, careShare);
+        // Men away on bride service are gone for the year, whatever else
+        // the clan would have had them do.
+        const fService = this.clan.effort > 0
+            ? Math.min(1, this.clan.brideServiceGiven / this.clan.effort) : 0;
+        const fCare = Math.min(1 - fService, careShare);
         const fHelp = this.clan.helpAllocation.total;
         // The settlement's festivals are nobody's choice: they are what the
         // year is, and the clan arranges the rest of its work around them.
         const fFestivals = Math.min(
-            Math.max(0, 1 - fCare - fHelp),
+            Math.max(0, 1 - fService - fCare - fHelp),
             this.clan.festivalWillingness);
         const fLeisure = Math.max(
             EffortAllocation.MIN_REST_SHARE, this.get(Activities.Leisure));
         // Work on the ditches is nobody's assignment either: each clan gives
         // what it is willing to give, and the year is arranged around that.
         const fDitching = Math.min(
-            Math.max(0, 1 - fCare - fHelp - fLeisure - fFestivals),
+            Math.max(0, 1 - fService - fCare - fHelp - fLeisure - fFestivals),
             this.clan.ditchingWillingness);
-        const reserved = fCare + fHelp + fLeisure + fDitching + fFestivals;
+        const reserved = fService + fCare + fHelp + fLeisure + fDitching + fFestivals;
         const fProduction = Math.max(0, 1 - reserved);
 
+        this.m_.set(Activities.BrideService, fService);
         this.m_.set(Activities.Care, fCare);
         this.m_.set(Activities.Help, fHelp);
         this.m_.set(Activities.Leisure, fLeisure);
@@ -312,7 +317,8 @@ function expectedNutrition(clan: Clan, allocation: EffortAllocation): number {
     const cereals = er.production.forGood(TradeGoods.Cereals);
     const total = fish + cereals;
     if (!(total > 0)) return 0;
-    const eaten = total / clan.population - clan.perCapitaFestivalSacrifice;
+    if (!(clan.fedPopulation > 0)) return 0;
+    const eaten = total / clan.fedPopulation - clan.perCapitaFestivalSacrifice;
     return nutritionOf(eaten, cereals / total);
 }
 
@@ -360,6 +366,13 @@ export class Activities {
         sortKey: 6,
         shortName: 'F',
         color: '#d946ef',
+    };
+    // Working for the clan of a bride, before the marriage.
+    static readonly BrideService: Activity = {
+        name: 'Bride service',
+        sortKey: 7,
+        shortName: 'B',
+        color: '#a16207',
     };
 }
 

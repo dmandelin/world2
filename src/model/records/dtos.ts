@@ -15,7 +15,10 @@ import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
 import type { MigrationCalc, NewSettlementDecisionReport, PlannedSettlement } from "../people/migration";
-import type { MarriageDecisions } from "../relations/marriage";
+import {
+    betrothalRecord, marriageCountsOf, servicePartners,
+    type BetrothalRecord, type MarriageCounts, type MarriageDecisions, type ServicePartner,
+} from "../relations/marriage";
 import type { Note } from "../records/notifications";
 import type { Alert, AlertKindId } from "../records/alerts";
 import type { BreakpointHit, BreakpointId } from "../records/breakpoints";
@@ -106,6 +109,16 @@ export class ClanDTO {
     tradeRelationships: TradeRelationshipsDTO[];
     rites: Rites;
     slices: number[][];
+    // The same by marital status: [slice][sex][status].
+    slicesByStatus: number[][][];
+    marriageCounts: MarriageCounts;
+
+    // This year's bride service: men of this clan away working for their
+    // brides' clans, and men of other clans working here.
+    brideServiceOut: ServicePartner[];
+    brideServiceIn: ServicePartner[];
+    brideServiceGiven: number;
+    brideServiceReceived: number;
 
     effort: number;
     production: ProductionReport;
@@ -173,6 +186,13 @@ export class ClanDTO {
         this.rites = clan.rites.clone();
         this.migrationPlan = clan.migrationPlan;
         this.slices = clan.slices;
+        this.slicesByStatus = clan.demography.slicesByStatus;
+        this.marriageCounts = marriageCountsOf(clan.demography);
+
+        this.brideServiceOut = servicePartners(clan.brideServiceOut);
+        this.brideServiceIn = servicePartners(clan.brideServiceIn);
+        this.brideServiceGiven = clan.brideServiceGiven;
+        this.brideServiceReceived = clan.brideServiceReceived;
 
         this.effort = clan.effort;
         this.production = clan.production;
@@ -491,6 +511,8 @@ export class WorldDTO {
     readonly clusters: ClusterDTO[];
     readonly plannedSettlements: PlannedSettlementDTO[];
     readonly lastMarriageDecisions?: MarriageDecisions;
+    // Betrothals working off their bride service, as of this snapshot.
+    readonly betrothals: BetrothalRecord[];
     readonly lastFoodRedistribution?: FoodRedistributionResult;
     readonly lastFoodGifts?: FoodGiftsResult;
     readonly rituals: RitualEvent[];
@@ -515,6 +537,7 @@ export class WorldDTO {
         this.year = this.world.year.toString();
         this.yearValue = this.world.year.value;
         this.lastMarriageDecisions = world.lastMarriageDecisions;
+        this.betrothals = world.betrothals.map(betrothalRecord);
         this.lastFoodRedistribution = world.lastFoodRedistribution;
         this.lastFoodGifts = world.lastFoodGifts;
         this.rituals = [...world.rituals];

@@ -49,13 +49,21 @@ export const FEMALE: Sex = 0;
 export const MALE: Sex = 1;
 export const SEXES: readonly Sex[] = [FEMALE, MALE];
 
+// Betrothed: promised in marriage, while the man works off his bride
+// service with her clan. Each still belongs to their own clan until it is
+// done, though the man lives and eats with hers meanwhile.
 export enum MaritalStatus {
     Unmarried,
+    Betrothed,
     Married,
     Widowed,
 }
 export const MARITAL_STATUSES: readonly MaritalStatus[] = [
-    MaritalStatus.Unmarried, MaritalStatus.Married, MaritalStatus.Widowed,
+    MaritalStatus.Unmarried, MaritalStatus.Betrothed, MaritalStatus.Married,
+    MaritalStatus.Widowed,
+];
+export const MARITAL_STATUS_NAMES: readonly string[] = [
+    'Unmarried', 'Betrothed', 'Married', 'Widowed',
 ];
 const STATUS_COUNT = MARITAL_STATUSES.length;
 
@@ -189,6 +197,33 @@ export class Demography {
         this.add(sex, age, to, n);
     }
 
+    // Change the status of one person of the given sex and status, as near
+    // the given age as there is one, as when a spouse is widowed. Ties go to
+    // the younger. Returns whether there was anyone to change.
+    changeStatusNearAge(sex: Sex, age: number, from: MaritalStatus, to: MaritalStatus): boolean {
+        const base = cellIndex(sex, from, 0);
+        for (let d = 0; d < AGE_LIMIT; ++d) {
+            for (const a of d === 0 ? [age] : [age - d, age + d]) {
+                if (a >= 0 && a < AGE_LIMIT && this.counts[base + a] > 0) {
+                    this.changeStatus(sex, a, from, to, 1);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Add a group of people, all of them taking the given status, as brides
+    // do on marrying in.
+    mergeAs(other: Demography, status: MaritalStatus): void {
+        other.forEach((sex, age, _status, count) => this.add(sex, age, status, count));
+    }
+
+    // Take a group of people out, who must all be here.
+    subtract(other: Demography): void {
+        other.forEach((sex, age, status, count) => this.remove(sex, age, status, count));
+    }
+
     count(filter: PeopleFilter = {}): number {
         let n = 0;
         this.forEachMatchingCell(filter, i => { n += this.counts[i]; });
@@ -201,6 +236,17 @@ export class Demography {
         const slices: number[][] = [];
         for (let i = 0; i < SLICE_COUNT; ++i) slices.push([0, 0]);
         this.forEach((sex, age, _status, count) => { slices[sliceOf(age)][sex] += count; });
+        return slices;
+    }
+
+    // The same, with each count broken down by marital status:
+    // [slice][sex][status].
+    get slicesByStatus(): number[][][] {
+        const slices: number[][][] = [];
+        for (let i = 0; i < SLICE_COUNT; ++i) {
+            slices.push(SEXES.map(() => MARITAL_STATUSES.map(() => 0)));
+        }
+        this.forEach((sex, age, status, count) => { slices[sliceOf(age)][sex][status] += count; });
         return slices;
     }
 
@@ -303,12 +349,14 @@ export class Demography {
 
     // Take about `fraction` of everyone, as a cross-section, for a new clan.
     // Married men and women go in equal numbers when they are equal here, so
-    // that couples are not parted.
+    // that couples are not parted. The betrothed all stay: their promises
+    // are with the clan as it was.
     split(fraction: number): Demography {
         assert(fraction >= 0 && fraction <= 1, `Split fraction ${fraction} is outside 0-1.`);
         const split = new Demography();
         const marriedRoll = Math.random();
         for (const status of MARITAL_STATUSES) {
+            if (status === MaritalStatus.Betrothed) continue;
             for (const sex of SEXES) {
                 const filter = { sex, status };
                 const roll = status === MaritalStatus.Married ? marriedRoll : Math.random();

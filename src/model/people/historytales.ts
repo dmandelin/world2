@@ -20,6 +20,8 @@ import type {
     FloodMemory,
     FortuneMemory,
     HistoryTimeframe,
+    MarriageMemory,
+    MarriageTie,
     OriginMemory,
 } from "./history";
 
@@ -56,6 +58,8 @@ export function historyItemTitle(item: AnyHistoryItem): string {
             }
         case "fortune":
             return `${item.polarity === "best" ? "Best" : "Worst"} year ${TITLE_PERIOD[item.headline]}`;
+        case "marriage":
+            return "Weddings";
     }
 }
 
@@ -68,6 +72,41 @@ export function tellHistoryItem(
         case "origin": return tellOrigin(item, timeframe, clanName);
         case "flood": return tellFlood(item, timeframe);
         case "fortune": return tellFortune(item, timeframe);
+        case "marriage": return tellMarriages(item, timeframe);
+    }
+}
+
+// --- Marriages ----------------------------------------------------------------
+
+// "the Eagle and the Jasper", or "two of the Eagle and one of the Jasper".
+function tieList(ties: readonly MarriageTie[], counted: boolean): string {
+    const parts = ties.map(t => counted ? `${count(t.count)} of the ${t.otherName}` : `the ${t.otherName}`);
+    if (parts.length <= 1) return parts.join("");
+    return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
+function tellMarriages(m: MarriageMemory, tf: HistoryTimeframe): string {
+    const wives = m.wivesFrom.length > 0;
+    const daughters = m.daughtersTo.length > 0;
+    switch (tf) {
+        case "recent": {
+            const said: string[] = [];
+            if (wives) {
+                said.push(`${cap(count(m.wives))} ${m.wives === 1 ? "wife" : "wives"} came to us from ${tieList(m.wivesFrom, m.wivesFrom.length > 1)}, their husbands' service to their families done.`);
+            }
+            if (daughters) {
+                said.push(`${cap(count(m.daughters))} of our daughters went to marry among ${tieList(m.daughtersTo, m.daughtersTo.length > 1)}, after their men had worked their years for us.`);
+            }
+            return said.join(" ");
+        }
+        default: {
+            // Grandparents' weddings: who married whom is remembered, and
+            // the feasting has grown in the telling.
+            const said: string[] = [];
+            if (wives) said.push(`brides came to us from ${tieList(m.wivesFrom, false)}`);
+            if (daughters) said.push(`our daughters went to ${tieList(m.daughtersTo, false)}`);
+            return `That was the year ${said.join(", and ")}, and the wedding feasts went on until the beer ran out.`;
+        }
     }
 }
 

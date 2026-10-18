@@ -144,7 +144,7 @@ export function newHistoryEventId(): number {
     return nextHistoryEventId++;
 }
 
-export type HistoryItemKind = "origin" | "flood" | "fortune";
+export type HistoryItemKind = "origin" | "flood" | "fortune" | "marriage";
 
 export abstract class HistoryItem {
     abstract readonly kind: HistoryItemKind;
@@ -271,7 +271,43 @@ export class FortuneMemory extends HistoryItem {
     }
 }
 
-export type AnyHistoryItem = OriginMemory | FloodMemory | FortuneMemory;
+// Another clan a year's marriages joined this one to, by the name it had then.
+export type MarriageTie = {
+    otherName: string;
+    otherUuid: string;
+    count: number;
+};
+
+// A year's marriages: the wives who came in, and the daughters who went out
+// to marry. One to a year, however many clans were in it. Marriages are the
+// ordinary run of things, so they are remembered for a lifetime and then let
+// go; the tie between the clans is what lasts.
+export class MarriageMemory extends HistoryItem {
+    readonly kind = "marriage" as const;
+
+    constructor(
+        eventId: number,
+        year: number,
+        when: number,
+        readonly wivesFrom: readonly MarriageTie[],
+        readonly daughtersTo: readonly MarriageTie[],
+    ) {
+        super(eventId, year, when);
+    }
+
+    get wives(): number {
+        return this.wivesFrom.reduce((n, t) => n + t.count, 0);
+    }
+
+    get daughters(): number {
+        return this.daughtersTo.reduce((n, t) => n + t.count, 0);
+    }
+}
+
+// How long a year's marriages are remembered: living memory.
+export const MARRIAGE_MEMORY_YEARS = 80;
+
+export type AnyHistoryItem = OriginMemory | FloodMemory | FortuneMemory | MarriageMemory;
 
 // Names one event across every clan that remembers it, where an item is one
 // clan's copy. The same year's Fortune could in principle be one clan's best
@@ -282,7 +318,7 @@ export function historyEventKey(item: AnyHistoryItem): string {
         : `${item.kind}:${item.eventId}`;
 }
 
-const KIND_ORDER: Record<HistoryItemKind, number> = { origin: 0, flood: 1, fortune: 2 };
+const KIND_ORDER: Record<HistoryItemKind, number> = { origin: 0, flood: 1, fortune: 2, marriage: 3 };
 
 // Oldest first; what happened before anyone was counting leads.
 export function compareHistoryItems(a: AnyHistoryItem, b: AnyHistoryItem): number {
@@ -418,6 +454,10 @@ export class History {
         this.items_.push(memory);
     }
 
+    recordMarriages(memory: MarriageMemory): void {
+        this.items_.push(memory);
+    }
+
     // Take in the year's Fortune, and bring the best and worst years up to
     // date for every period.
     recordFortune(year: number, fortune: number, snapshot: Eudaimonia): void {
@@ -441,6 +481,8 @@ export class History {
     // Bring what the clan knows of when things happened up to the given year.
     age(now: number): void {
         this.asOf_ = now;
+        this.items_ = this.items_.filter(i =>
+            i.kind !== "marriage" || now - (i.year ?? now) < MARRIAGE_MEMORY_YEARS);
         for (const item of this.items_) {
             if (item.year !== undefined) item.blur(whenLevelForAge(Math.max(0, now - item.year)));
         }

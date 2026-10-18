@@ -1,14 +1,17 @@
 <script lang="ts">
     import type { ClanDTO, WorldDTO } from "../../model/records/dtos";
-    import { getMarriageDecisions, type MarriageDecisions } from "../../model/relations/marriage";
+    import { BRIDE_SERVICE_YEARS, type MarriageDecisions } from "../../model/relations/marriage";
+    import { formatYear } from "../../model/records/year";
     import { populationAverage, weightedAverage } from "../../model/lib/modelbasics";
     import { signed } from "../../model/lib/format";
     import EntityLink from "../state/EntityLink.svelte";
 
     let { clan }: { clan: ClanDTO } = $props();
 
-    function getPairingCount(decisions: MarriageDecisions, c1: ClanDTO, c2: ClanDTO): number {
-        for (const [hClan, map] of decisions.pairingCounts.counts.entries()) {
+    // Betrothals of husbands of c1 to wives of c2 in the last generation.
+    function getPairingCount(decisions: MarriageDecisions | undefined, c1: ClanDTO, c2: ClanDTO): number {
+        if (!decisions) return 0;
+        for (const [hClan, map] of decisions.recentByHusband.counts.entries()) {
             if (hClan.uuid === c1.uuid) {
                 for (const [wClan, count] of map.entries()) {
                     if (wClan.uuid === c2.uuid) {
@@ -31,7 +34,7 @@
 
     let partnerData = $derived.by(() => {
         const world = clan.world;
-        const decisions = world.lastMarriageDecisions ?? getMarriageDecisions(world as any);
+        const decisions = world.lastMarriageDecisions;
         const allClans = Array.from(world.clanMap.values());
         
         const partnerList: {
@@ -61,6 +64,23 @@
         return partnerList;
     });
 
+    // This clan's betrothals still in service, either side.
+    let betrothals = $derived(clan.world.betrothals.filter(b =>
+        b.husbandClan.uuid === clan.uuid || b.wifeClan.uuid === clan.uuid));
+
+    // Marriages made this year, as service ended.
+    let completedThisYear = $derived.by(() => {
+        const decisions = clan.world.lastMarriageDecisions;
+        const rows: { husbandClan: string, wifeClan: string, count: number }[] = [];
+        if (!decisions) return rows;
+        for (const [h, w, count] of decisions.completed.entries()) {
+            if (h.uuid === clan.uuid || w.uuid === clan.uuid) {
+                rows.push({ husbandClan: h.name, wifeClan: w.name, count });
+            }
+        }
+        return rows;
+    });
+
     let summaryData = $derived.by(() => {
         if (partnerData.length === 0) return null;
         const validTheirAppealToUs = partnerData.filter(p => p.theirAppealToUs !== null);
@@ -85,9 +105,59 @@
 </script>
 
 <div class="recent-marriages-container">
+    <h3>Betrothals in Service</h3>
+    {#if betrothals.length === 0}
+        <p class="no-data">{clan.name} has no betrothals in service.</p>
+    {:else}
+        <table class="marriage-details-table" style="margin-bottom: 1rem;">
+            <thead>
+                <tr>
+                    <th class="row-header-th">Betrothal</th>
+                    <th>Couples</th>
+                    <th>Since</th>
+                    <th>Years left</th>
+                    <th>Labor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each betrothals as b}
+                    {@const ours = b.husbandClan.uuid === clan.uuid}
+                    <tr>
+                        <td class="row-label">
+                            {#if ours}
+                                Men of {clan.name} to women of {b.wifeClan.name}
+                            {:else}
+                                Women of {clan.name} to men of {b.husbandClan.name}
+                            {/if}
+                        </td>
+                        <td class="value-td">{b.count}</td>
+                        <td class="value-td">{formatYear(b.year)}</td>
+                        <td class="value-td">{b.yearsLeft}</td>
+                        <td class="value-td">
+                            {ours ? `${b.count} away` : `${b.count} here`}
+                        </td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+        <p class="no-data" style="font-size: 0.85rem;">
+            A betrothed man lives, eats and works {BRIDE_SERVICE_YEARS} years
+            with his bride's clan; then they marry and she joins his.
+        </p>
+    {/if}
+
+    {#if completedThisYear.length > 0}
+        <h3>Married This Year</h3>
+        <ul style="margin: 0 0 1rem; padding-left: 1.2rem;">
+            {#each completedThisYear as c}
+                <li>{c.count} of {c.wifeClan}'s daughters married into {c.husbandClan}</li>
+            {/each}
+        </ul>
+    {/if}
+
     <h3>Recent Marriages</h3>
     {#if partnerData.length === 0}
-        <p class="no-data">No marriages were conducted by {clan.name} last turn.</p>
+        <p class="no-data">{clan.name} has made no betrothals in the last 20 years.</p>
     {:else}
         <table class="marriage-details-table">
             <thead>
@@ -99,7 +169,7 @@
                             {#if p.clan.settlement?.uuid !== clan.settlement?.uuid}
                                 <span class="out-of-settlement-star">*</span>
                             {/if}
-                            <div class="marriage-count">({p.marriages} marriage{p.marriages > 1 ? 's' : ''})</div>
+                            <div class="marriage-count">({p.marriages} betrothal{p.marriages > 1 ? 's' : ''}, 20 yrs)</div>
                         </th>
                     {/each}
                     <th class="summary-th">Pop-weighted Avg</th>

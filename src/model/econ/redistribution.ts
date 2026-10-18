@@ -348,7 +348,9 @@ export function redistributeFood(allClans: Clan[]): FoodRedistributionResult {
 }
 
 function makeParty(clan: Clan): Party {
-    const pop = clan.population;
+    // Per-head figures need someone to be per; a clan with every member
+    // away on bride service falls back on its own count.
+    const pop = clan.fedPopulation > 0 ? clan.fedPopulation : clan.population;
     const sources: Source[] = [];
     let spare = 0;
 

@@ -235,6 +235,15 @@
                     <dd>{item.population}</dd>
                     <dt>Ditch helped</dt>
                     <dd>{item.ditchHelped ? "yes" : "no"}</dd>
+                {:else if item.kind === "marriage"}
+                    <dt>Wives from</dt>
+                    <dd>
+                        {item.wivesFrom.map((t) => `${t.count} ${t.otherName}`).join(", ") || "none"}
+                    </dd>
+                    <dt>Daughters to</dt>
+                    <dd>
+                        {item.daughtersTo.map((t) => `${t.count} ${t.otherName}`).join(", ") || "none"}
+                    </dd>
                 {:else if item.kind === "fortune"}
                     <dt>Fortune</dt>
                     <dd>
@@ -307,6 +316,11 @@
     .chip-flood {
         color: #1f5a85;
         background: #e1edf7;
+    }
+
+    .chip-marriage {
+        color: #8a5a00;
+        background: #f7ecd2;
     }
 
     .chip-best {
