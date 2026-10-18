@@ -597,9 +597,6 @@ export class Clan implements TradePartner {
                 (origSize + other.population));
             this.traits.set(key, val);
         }
-        this.traits.aggression =
-            (this.traits.aggression * origSize + other.traits.aggression * other.population) /
-            (origSize + other.population);
 
         // TODO - Handle relationships
 

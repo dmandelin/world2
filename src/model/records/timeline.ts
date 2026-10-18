@@ -234,7 +234,7 @@ export class ClanTimePoint {
         this.traitNurture = clan.traits?.nurture ?? 50;
         this.traitTalkativeness = clan.traits?.talkativeness ?? 50;
         this.traitGiving = clan.traits?.giving ?? 0;
-        this.traitAggression = clan.traits?.aggression ?? 0.2;
+        this.traitAggression = clan.traits?.aggression ?? 50;
 
         this.activityLeisure = clan.effortAllocation.get(Activities.Leisure) * 100;
         this.activityCare = clan.effortAllocation.get(Activities.Care) * 100;

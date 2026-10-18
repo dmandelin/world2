@@ -10,14 +10,16 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // than an asker it needs to be before it will share. See aidRatio in
 // redistribution.ts. Not to be confused with Generosity, which is what
 // other clans have come to think of it.
-export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness', 'giving'] as const;
+// Aggression: how readily a clan reaches for force in a quarrel. See
+// hawkProbability in conflict.ts.
+export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness', 'giving', 'aggression'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
 
 // The traits handed down from parents: the ones that drift from year to
 // year, and that children take partly from their mothers' clans.
-const CONTINUOUS_INHERITED_TRAITS = ['aggression', 'ditchingEffort', 'festivalGiving', 'rigidity'] as const;
+const CONTINUOUS_INHERITED_TRAITS = ['ditchingEffort', 'festivalGiving', 'rigidity'] as const;
 export const INHERITED_TRAITS = [...NUMERIC_TRAITS, ...CONTINUOUS_INHERITED_TRAITS] as const;
 export type InheritedTrait = typeof INHERITED_TRAITS[number];
 
@@ -39,21 +41,6 @@ function randomTraitStat(sd: number = 12): number {
 // Giving is spread wider than most 0-100 traits: clans differ a good deal in
 // how open-handed they are.
 export const GIVING_SD = 15;
-
-// Aggression: this clan's own probability of playing hawk in a conflict
-// iteration (see Conflict.advance/iterate in conflict.ts).
-export const AGGRESSION_MIN = 0.15;
-export const AGGRESSION_MAX = 0.25;
-
-// Per-year drift stddev for Aggression, chosen so that after 75 years of
-// independent yearly steps (a random walk), the accumulated drift has a
-// stddev of ~0.043 -- most of a starting half-range (0.05), enough that a
-// clan's disposition can shift substantially over a few generations.
-const AGGRESSION_DRIFT_STDDEV = 0.005;
-
-function randomAggression(): number {
-    return AGGRESSION_MIN + Math.random() * (AGGRESSION_MAX - AGGRESSION_MIN);
-}
 
 // Pride: how much better than the plain facts a clan thinks of itself, in
 // points of self-respect. Skewed positive, because most clans flatter
@@ -145,7 +132,6 @@ function randomInRange(min: number, max: number): number {
 export class ClanTraits {
     private numeric: Record<string, number>;
     bitmap: number;
-    private aggression_: number;
     private pride_: number;
     private ditchingEffort_: number;
     private ditchingExpectation_: number;
@@ -161,7 +147,6 @@ export class ClanTraits {
     constructor(
         numeric?: Partial<Record<NumericTrait, number>>,
         bitmap: number = 0,
-        aggression?: number,
         pride?: number,
         ditchingEffort?: number,
         ditchingExpectation?: number,
@@ -177,9 +162,9 @@ export class ClanTraits {
             nurture: numeric?.nurture ?? randomTraitStat(),
             talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
             giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
+            aggression: numeric?.aggression ?? randomTraitStat(),
         };
         this.bitmap = bitmap;
-        this.aggression_ = aggression ?? randomAggression();
         this.pride_ = pride ?? randomPride();
         this.ditchingEffort_ = ditchingEffort
             ?? randomInRange(DITCHING_EFFORT_MIN, DITCHING_EFFORT_MAX);
@@ -236,8 +221,8 @@ export class ClanTraits {
         return this.ditchingAdmiration_;
     }
 
-    // Not clamped to the starting range: like Aggression, a clan's opinion of
-    // itself can drift past where it began.
+    // Not clamped to the starting range: a clan's opinion of itself can
+    // drift past where it began.
     get pride(): number {
         return this.pride_;
     }
@@ -263,13 +248,12 @@ export class ClanTraits {
         this.rigidity_ = clamp(val, RIGIDITY_DRIFT_MIN, RIGIDITY_DRIFT_MAX);
     }
 
-    // A probability, so it must stay in [0, 1].
     get aggression(): number {
-        return this.aggression_;
+        return this.numeric['aggression'] ?? 50;
     }
 
     set aggression(val: number) {
-        this.aggression_ = clamp(val, 0, 1);
+        this.numeric['aggression'] = clamp(Math.round(val), 0, 100);
     }
 
     get piety(): number {
@@ -326,7 +310,7 @@ export class ClanTraits {
 
     clone(): ClanTraits {
         const c = new ClanTraits(
-            { ...this.numeric }, this.bitmap, this.aggression_, this.pride_,
+            { ...this.numeric }, this.bitmap, this.pride_,
             this.ditchingEffort_, this.ditchingExpectation_, this.ditchingAdmiration_,
             this.festivalGiving_, this.festivalExpectation_, this.festivalAdmiration_,
             this.rigidity_);
@@ -336,7 +320,6 @@ export class ClanTraits {
 
     inheritedValue(trait: InheritedTrait): number {
         switch (trait) {
-            case 'aggression': return this.aggression;
             case 'ditchingEffort': return this.ditchingEffort;
             case 'festivalGiving': return this.festivalGiving;
             case 'rigidity': return this.rigidity;
@@ -381,7 +364,6 @@ export class ClanTraits {
                 copy.setBoolean(i, !copy.hasBoolean(i));
             }
         }
-        copy.aggression = copy.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
         copy.ditchingEffort = copy.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
         copy.festivalGiving = copy.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
         copy.rigidity = copy.rigidity + normal(0, RIGIDITY_DRIFT_STDDEV);
@@ -410,7 +392,6 @@ export class ClanTraits {
                 const current = this.get(key);
                 this.set(key, current + stochasticRound(toward(current, t => t.get(key)) - current));
             }
-            this.aggression = toward(this.aggression, t => t.aggression);
             this.ditchingEffort = toward(this.ditchingEffort, t => t.ditchingEffort);
             this.festivalGiving = toward(this.festivalGiving, t => t.festivalGiving);
             this.rigidity = toward(this.rigidity, t => t.rigidity);
@@ -430,7 +411,6 @@ export class ClanTraits {
                 }
             }
 
-            this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
             this.ditchingEffort = this.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
             this.festivalGiving = this.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
             this.rigidity = this.rigidity + normal(0, RIGIDITY_DRIFT_STDDEV);

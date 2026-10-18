@@ -1428,13 +1428,16 @@
             },
             {
                 label: "Aggression",
+                labelTooltip:
+                    "How readily the clan reaches for force in a quarrel: 50 plays hawk 20% of the time, 62 23%, 38 17%.",
                 class: "actual",
                 cellClass: "rap",
+                banded: true,
                 value: (c) => c.traits.aggression,
-                format: (v) => v.toFixed(3),
+                format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.aggression,
                 deltaBreakdown: (c) => c.traits.yearChanges("aggression"),
-                deltaFormat: (v) => signed(v, 3),
+                deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitAggression",
                 scaler: new DefaultScaler(),
                 topics: ["traits:detail"],

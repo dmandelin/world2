@@ -93,9 +93,6 @@ export const CLAN_FIELDS: readonly FieldSpec<Clan>[] = [
         name: `trait.${trait}`,
         get: c => c.traits.get(trait),
     })),
-    // Aggression isn't a 0-100 trait, so it's not part of NUMERIC_TRAITS,
-    // but it lives in the same place conceptually.
-    { name: 'trait.aggression', get: c => c.traits.aggression },
 
     // How other clans see this one.
     { name: 'respectFromOthers', get: c => averageToward(c, p => p.respect.value) },

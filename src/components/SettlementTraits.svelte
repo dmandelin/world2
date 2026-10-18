@@ -35,7 +35,7 @@
             key: "aggression",
             label: "Aggression",
             get: (c) => c.traits.aggression,
-            decimals: 3,
+            decimals: 0,
         },
     };
 
