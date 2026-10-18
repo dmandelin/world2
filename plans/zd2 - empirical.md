@@ -217,3 +217,6 @@ Then:
 Next:
 
 *   Implement revised conflict model for fissioning.
+
+*   Somewhere in here we need bonuses for elders and key services
+    provided by them
