@@ -469,6 +469,9 @@ export class World implements NoteTaker {
 
         // Advance for cross-cluster events.
         this.conflicts.advance();
+        // A new year for what moves the clans' traits, which marriage is the
+        // first to do.
+        for (const clan of this.allClans) clan.traits.beginYear();
         marry(this);
         migrate(this);
         // Clans that moved have new neighbors now, not at next turn's

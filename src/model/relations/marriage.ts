@@ -4,6 +4,7 @@ import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
 import { getPrestige } from "./prestige";
 import { MarriageMemory, newHistoryEventId, type MarriageTie } from "../people/history";
+import type { ClanTraits } from "../people/traits";
 import {
     Demography, FEMALE, MALE, MaritalStatus, type PeopleFilter, type Sex,
 } from "../people/demography";
@@ -50,6 +51,16 @@ const MAX_ROUNDS = 20;
 
 // How long the marriages of the recent past count as recent: a generation.
 export const RECENT_MARRIAGE_YEARS = 20;
+
+// Children take after both parents, by birth or by upbringing, and a clan's
+// mothers come from the clans its wives came from. In a generation about
+// half a clan is replaced by people formed half by their fathers, of the
+// clan, and half by their mothers, of the clans it married into: so a
+// generation moves the clan's inherited traits a quarter of the way toward
+// its wives' clans. This is that, a year at a time.
+export const MATERNAL_TRAITS_PER_GENERATION = 0.25;
+const MATERNAL_TRAITS_PER_YEAR =
+    1 - Math.pow(1 - MATERNAL_TRAITS_PER_GENERATION, 1 / RECENT_MARRIAGE_YEARS);
 
 // What is left of the tie of a marriage after a year. Halves in 20 years,
 // so that with no new marriages it has stopped counting within 3-6
@@ -166,6 +177,7 @@ export function marry(world: World): void {
     betroth(world, decisions);
     rememberMarriages(world, decisions, completed);
     world.lastMarriageDecisions = decisions;
+    inheritFromMothers(world, decisions);
 
     startServiceYear(world);
 }
@@ -440,6 +452,22 @@ function rememberMarriages(
         for (const [wifeClan, count] of brides) weighted += count * getPrestige(wifeClan, clan);
         world.brideAppeal.set(clan, weighted / total);
     }
+}
+
+// Each clan's inherited traits move toward those of the clans its wives of
+// the last generation came from, weighted by how many came from each. Every
+// clan moves toward the others as they stood at the start of the year.
+function inheritFromMothers(world: World, decisions: MarriageDecisions): void {
+    const moves: [Clan, { traits: ClanTraits, weight: number }[]][] = [];
+    for (const clan of world.allClans) {
+        const wives = decisions.recentByHusband.counts.get(clan);
+        if (!wives) continue;
+        const mix = [...wives]
+            .filter(([wifeClan, count]) => wifeClan !== clan && count > 0)
+            .map(([wifeClan, count]) => ({ traits: wifeClan.traits.clone(), weight: count }));
+        if (mix.length > 0) moves.push([clan, mix]);
+    }
+    for (const [clan, mix] of moves) clan.traits.blendToward(mix, MATERNAL_TRAITS_PER_YEAR);
 }
 
 // Who the world's first clans have married, as they stand when it begins:

@@ -1,4 +1,4 @@
-import { clamp } from "../lib/basics";
+import { clamp, stochasticRound } from "../lib/basics";
 import { normal, poisson } from "../lib/distributions";
 import { TALKATIVENESS_SD } from "./talkativeness";
 
@@ -14,6 +14,18 @@ export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness',
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
+
+// The traits handed down from parents: the ones that drift from year to
+// year, and that children take partly from their mothers' clans.
+const CONTINUOUS_INHERITED_TRAITS = ['aggression', 'ditchingEffort', 'festivalGiving', 'rigidity'] as const;
+export const INHERITED_TRAITS = [...NUMERIC_TRAITS, ...CONTINUOUS_INHERITED_TRAITS] as const;
+export type InheritedTrait = typeof INHERITED_TRAITS[number];
+
+// What moves the inherited traits, as the year's changes are reported.
+export const TraitChangeCauses = {
+    Drift: 'Drift',
+    Mothers: "Mothers' clans",
+} as const;
 export type BooleanTrait = string;
 
 function randomTraitStat(sd: number = 12): number {
@@ -142,6 +154,9 @@ export class ClanTraits {
     private festivalExpectation_: number;
     private festivalAdmiration_: number;
     private rigidity_: number;
+
+    // What moved each inherited trait this year: trait -> cause -> change.
+    private yearChanges_ = new Map<InheritedTrait, Map<string, number>>();
 
     constructor(
         numeric?: Partial<Record<NumericTrait, number>>,
@@ -310,11 +325,49 @@ export class ClanTraits {
     }
 
     clone(): ClanTraits {
-        return new ClanTraits(
+        const c = new ClanTraits(
             { ...this.numeric }, this.bitmap, this.aggression_, this.pride_,
             this.ditchingEffort_, this.ditchingExpectation_, this.ditchingAdmiration_,
             this.festivalGiving_, this.festivalExpectation_, this.festivalAdmiration_,
             this.rigidity_);
+        for (const [trait, causes] of this.yearChanges_) c.yearChanges_.set(trait, new Map(causes));
+        return c;
+    }
+
+    inheritedValue(trait: InheritedTrait): number {
+        switch (trait) {
+            case 'aggression': return this.aggression;
+            case 'ditchingEffort': return this.ditchingEffort;
+            case 'festivalGiving': return this.festivalGiving;
+            case 'rigidity': return this.rigidity;
+            default: return this.get(trait);
+        }
+    }
+
+    // What moved a trait this year, cause by cause; they add up to the
+    // year's change.
+    yearChanges(trait: InheritedTrait): [string, number][] {
+        return [...(this.yearChanges_.get(trait) ?? [])];
+    }
+
+    // A new year, with nothing yet to report.
+    beginYear(): void {
+        this.yearChanges_ = new Map();
+    }
+
+    // Run a change, and put what it did to each inherited trait down to the
+    // given cause. Measured after clamping and rounding, so it is what
+    // actually happened.
+    private tracked(cause: string, change: () => void): void {
+        const before = INHERITED_TRAITS.map(t => this.inheritedValue(t));
+        change();
+        INHERITED_TRAITS.forEach((trait, i) => {
+            const delta = this.inheritedValue(trait) - before[i];
+            if (delta === 0) return;
+            let causes = this.yearChanges_.get(trait);
+            if (!causes) this.yearChanges_.set(trait, causes = new Map());
+            causes.set(cause, (causes.get(cause) ?? 0) + delta);
+        });
     }
 
     cloneWithSplitBump(): ClanTraits {
@@ -335,21 +388,52 @@ export class ClanTraits {
         return copy;
     }
 
-    mutate(): void {
-        for (const key of NUMERIC_TRAITS) {
-            const change = poisson(1.5) - poisson(1.5);
-            this.set(key, this.get(key) + change);
-        }
+    // Move `share` of the way toward a weighted mix of other clans' traits,
+    // as the children of mothers from those clans grow up. Only the traits
+    // handed down from parents, which are the ones mutate() drifts. The
+    // whole-number traits move by a whole number, rounded at random so that
+    // small pulls still add up over the years.
+    blendToward(mix: readonly { traits: ClanTraits, weight: number }[], share: number): void {
+        let total = 0;
+        for (const m of mix) total += m.weight;
+        if (!(total > 0) || !(share > 0)) return;
+        const target = (f: (t: ClanTraits) => number) => {
+            let sum = 0;
+            for (const m of mix) sum += m.weight * f(m.traits);
+            return sum / total;
+        };
+        const toward = (current: number, f: (t: ClanTraits) => number) =>
+            current + share * (target(f) - current);
 
-        for (let i = 0; i < BOOLEAN_TRAITS.length; i++) {
-            if (Math.random() < 0.005) {
-                this.setBoolean(i, !this.hasBoolean(i));
+        this.tracked(TraitChangeCauses.Mothers, () => {
+            for (const key of NUMERIC_TRAITS) {
+                const current = this.get(key);
+                this.set(key, current + stochasticRound(toward(current, t => t.get(key)) - current));
             }
-        }
+            this.aggression = toward(this.aggression, t => t.aggression);
+            this.ditchingEffort = toward(this.ditchingEffort, t => t.ditchingEffort);
+            this.festivalGiving = toward(this.festivalGiving, t => t.festivalGiving);
+            this.rigidity = toward(this.rigidity, t => t.rigidity);
+        });
+    }
 
-        this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
-        this.ditchingEffort = this.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
-        this.festivalGiving = this.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
-        this.rigidity = this.rigidity + normal(0, RIGIDITY_DRIFT_STDDEV);
+    mutate(): void {
+        this.tracked(TraitChangeCauses.Drift, () => {
+            for (const key of NUMERIC_TRAITS) {
+                const change = poisson(1.5) - poisson(1.5);
+                this.set(key, this.get(key) + change);
+            }
+
+            for (let i = 0; i < BOOLEAN_TRAITS.length; i++) {
+                if (Math.random() < 0.005) {
+                    this.setBoolean(i, !this.hasBoolean(i));
+                }
+            }
+
+            this.aggression = this.aggression + normal(0, AGGRESSION_DRIFT_STDDEV);
+            this.ditchingEffort = this.ditchingEffort + normal(0, DITCHING_EFFORT_DRIFT_STDDEV);
+            this.festivalGiving = this.festivalGiving + normal(0, FESTIVAL_GIVING_DRIFT_STDDEV);
+            this.rigidity = this.rigidity + normal(0, RIGIDITY_DRIFT_STDDEV);
+        });
     }
 }

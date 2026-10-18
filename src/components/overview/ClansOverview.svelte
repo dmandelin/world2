@@ -164,6 +164,9 @@
         // Delta definition
         deltaValue?: (c: ClanDTO) => number;
         deltaFormat?: (v: number) => string;
+        // What made up the year's change, cause by cause, for the delta's
+        // tooltip.
+        deltaBreakdown?: (c: ClanDTO) => [string, number][];
         customDeltaSnippet?: Snippet<[ClanLastTurnSnapshots, any]>;
         customDeltaContext?: any;
 
@@ -1355,6 +1358,7 @@
                 value: (c) => c.traits.piety,
                 format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.piety,
+                deltaBreakdown: (c) => c.traits.yearChanges("piety"),
                 deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitPiety",
                 scaler: new DefaultScaler(),
@@ -1368,6 +1372,7 @@
                 value: (c) => c.traits.intellect,
                 format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.intellect,
+                deltaBreakdown: (c) => c.traits.yearChanges("intellect"),
                 deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitIntellect",
                 scaler: new DefaultScaler(),
@@ -1383,6 +1388,7 @@
                 value: (c) => c.traits.nurture,
                 format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.nurture,
+                deltaBreakdown: (c) => c.traits.yearChanges("nurture"),
                 deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitNurture",
                 scaler: new DefaultScaler(),
@@ -1398,6 +1404,7 @@
                 value: (c) => c.traits.talkativeness,
                 format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.talkativeness,
+                deltaBreakdown: (c) => c.traits.yearChanges("talkativeness"),
                 deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitTalkativeness",
                 scaler: new DefaultScaler(),
@@ -1413,6 +1420,7 @@
                 value: (c) => c.traits.giving,
                 format: (v) => v.toFixed(0),
                 deltaValue: (c) => c.traits.giving,
+                deltaBreakdown: (c) => c.traits.yearChanges("giving"),
                 deltaFormat: (v) => v.toFixed(0),
                 timelineKey: "traitGiving",
                 scaler: new DefaultScaler(),
@@ -1425,6 +1433,7 @@
                 value: (c) => c.traits.aggression,
                 format: (v) => v.toFixed(3),
                 deltaValue: (c) => c.traits.aggression,
+                deltaBreakdown: (c) => c.traits.yearChanges("aggression"),
                 deltaFormat: (v) => signed(v, 3),
                 timelineKey: "traitAggression",
                 scaler: new DefaultScaler(),
@@ -2566,6 +2575,7 @@
     timelineKey?: keyof ClanTimePoint,
     scaler?: YAxisScaler,
     title?: string,
+    breakdown?: (c: ClanDTO) => [string, number][],
 )}
     {@const delta = cs.p ? valueFunc(cs.e) - valueFunc(cs.p) : 0}
     <td
@@ -2594,6 +2604,19 @@
                 {/if}
                 &rarr;
                 {fmt(valueFunc(cs.e))}
+                {#if cs.p && breakdown}
+                    {@const causes = breakdown(cs.e)}
+                    <table style="margin-top: 4px; border-collapse: collapse;"><tbody>
+                        {#each causes as [cause, value]}
+                            <tr>
+                                <td style="padding-right: 1em;">{cause}</td>
+                                <td style="text-align: right;">{tsigned(value, fmt)}</td>
+                            </tr>
+                        {:else}
+                            <tr><td style="color: #6b7280;">No change this year</td></tr>
+                        {/each}
+                    </tbody></table>
+                {/if}
                 {#if timelineKey && scaler && title}
                     <hr
                         style="margin: 8px 0; border: none; border-top: 1px solid #eee;"
@@ -3549,6 +3572,7 @@
                                                         "",
                                                     )
                                                     .trim(),
+                                                row.deltaBreakdown,
                                             )}
                                         {:else}
                                             <td></td>
