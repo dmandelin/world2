@@ -10,7 +10,8 @@ import { HappinessCalc } from "./happiness";
 import { HelpAllocation } from "../decisions/helpalloc";
 import { HousingDecision } from "../decisions/housingdecision";
 import { HousingTypes } from "../econ/housing";
-import { INITIAL_POPULATION_RATIOS, PopulationChange, PopulationChangeBuilder } from "./population";
+import { initialDemography, PopulationChange, PopulationChangeBuilder } from "./population";
+import { Demography, sliceAges } from "./demography";
 import { MigrationCalc } from "./migration";
 import { normal } from "../lib/distributions";
 import { Operation, ProductionReport } from "../econ/operation";
@@ -64,6 +65,10 @@ export interface GoodsReceiver {
 
 export class Clan implements TradePartner {
     readonly uuid = crypto.randomUUID();
+
+    // The clan's people. First among the fields, since some of the others
+    // read the population as they are set up; the constructor fills it in.
+    demography = new Demography();
 
     // Year the clan came into being, for "years in existence" reporting.
     readonly foundedYear: Year;
@@ -212,8 +217,11 @@ export class Clan implements TradePartner {
         readonly annals: Annals,
         public name: string,
         public color: string,
-        public population: number,
+        // How many people a new clan starts with, or the very people, for
+        // one split off from another.
+        people: number | Demography,
     ) {
+        this.demography = typeof people === 'number' ? initialDemography(people) : people;
         this.foundedYear = world.year.clone();
         // A clan split off from another replaces this with its parent's.
         this.history = History.founding(world.year.value);
@@ -224,27 +232,6 @@ export class Clan implements TradePartner {
         this.settlement_.clans.push(this);
         membershipChanged();
         this.previousSettlement_ = settlement;
-
-        for (let i = 0; i < 4; ++i) {
-            this.slices[i][0] = Math.round(INITIAL_POPULATION_RATIOS[i][0] * population);
-            this.slices[i][1] = Math.round(INITIAL_POPULATION_RATIOS[i][1] * population);
-        }
-
-        // It's annoying but important to get the total exactly right, because
-        // cadet clans will be initialized with the specific population split
-        // off from the senior clan.
-        let error = this.slicesTotal - this.population;
-        const initError = error;
-        while (error > 0) {
-            let gix = Math.floor(Math.random() * 2);
-            --this.slices[0][gix];
-            --error;
-        }
-        while (error < 0) {
-            let gix = Math.floor(Math.random() * 2);
-            ++this.slices[0][gix];
-            ++error;
-        }
 
         this.operations = [
             new Operation(this, Processes.Fishing),
@@ -288,8 +275,12 @@ export class Clan implements TradePartner {
         return this.settlement.clans;
     }
 
+    get population(): number {
+        return this.demography.total;
+    }
+
     get children(): number {
-        return this.slices[0][0] + this.slices[0][1];
+        return this.demography.count({ ages: sliceAges(0) });
     }
 
     get adults(): number {
@@ -493,15 +484,10 @@ export class Clan implements TradePartner {
         return this.population / (this.settlement?.population ?? this.population);
     }
 
-    readonly slices: number[][] = [
-        [0, 0], // Children, girls first (0-18)
-        [0, 0], // Adults (18-35)
-        [0, 0], // Seniors (35-55)
-        [0, 0], // Elders (55+)
-    ];
-
-    get slicesTotal(): number {
-        return this.slices.reduce((acc, slice) => acc + slice[0] + slice[1], 0);
+    // Head counts by 20-year slice, girls first: 0-19, 20-39, 40-59, 60 and
+    // up. A fresh copy each time, so changing it changes nothing.
+    get slices(): number[][] {
+        return this.demography.slices;
     }
 
     advancePopulation(noEffect: boolean = false, yearsElapsed: number = this.world.yearsPerTick) {
@@ -511,11 +497,7 @@ export class Clan implements TradePartner {
             // them, so each can report what it cost.
             this.floodDamage.deaths = -(this.lastPopulationChange.items
                 .find(i => i.name === 'Flood')?.actual ?? 0);
-            for (let i = 0; i < this.slices.length; ++i) {
-                this.slices[i][0] = this.lastPopulationChange.newSlices[i][0];
-                this.slices[i][1] = this.lastPopulationChange.newSlices[i][1];
-            }
-            this.population = this.slicesTotal;
+            this.demography = this.lastPopulationChange.newDemography;
         }
     }
 
@@ -577,12 +559,7 @@ export class Clan implements TradePartner {
         }
 
         const origSize = this.population;
-        this.population += other.population;
-
-        for (let i = 0; i < this.slices.length; ++i) {
-            this.slices[i][0] += other.slices[i][0];
-            this.slices[i][1] += other.slices[i][1];
-        }
+        this.demography.merge(other.demography);
 
         for (const key of NUMERIC_TRAITS) {
             const val = Math.round(
@@ -607,23 +584,16 @@ export class Clan implements TradePartner {
 
     split(): Clan {
         const fraction = 0.3 + 0.15 * (Math.random() + Math.random());
-        const newSize = Math.round(this.population * fraction);
 
         const name = randomClanName(this.world.allClans.map(clan => clan.name));
         const color = randomClanColor(this.world.allClans.map(clan => clan.color));
-        const newClan = new Clan(this.world, this.settlement, this.annals, name, color, newSize);
+        const newClan = new Clan(this.world, this.settlement, this.annals, name, color,
+            this.demography.split(fraction));
         newClan.traits = this.traits.cloneWithSplitBump();
         newClan.skills = this.skills.cloneFor(newClan);
         newClan.effortAllocation = new EffortAllocation(
             newClan, this.effortAllocation.m, this.effortAllocation.pm,
             this.effortAllocation.carePlan);
-        for (let i = 0; i < this.slices.length; ++i) {
-            newClan.slices[i][0] = Math.round(this.slices[i][0] * fraction);
-            newClan.slices[i][1] = Math.round(this.slices[i][1] * fraction);
-            this.slices[i][0] -= newClan.slices[i][0];
-            this.slices[i][1] -= newClan.slices[i][1];
-            this.population -= newClan.slices[i][0] + newClan.slices[i][1];
-        }
 
         this.world.connections.getOrCreate(
             this,

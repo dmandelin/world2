@@ -4,6 +4,10 @@ import type { World } from "../world";
 import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
 import { getPrestige } from "./prestige";
+import { type Demography, FEMALE, sliceAges } from "../people/demography";
+
+// The women who can marry: those 20 through 39.
+const BRIDES = { sex: FEMALE, ages: sliceAges(1) } as const;
 
 export class MarriageDecisions {
     constructor(
@@ -24,7 +28,7 @@ class ClanMarriageState {
     provisionalMarriages: Map<Clan, number> = new Map();
 
     constructor(readonly clan: Clan) {
-        const count = clan.slices[1][0];
+        const count = clan.demography.count(BRIDES);
         this.unmatchedHusbands = count;
         this.unmatchedWives = count;
     }
@@ -143,7 +147,7 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
     const potentialWives: PotentialPartnerSet[] = [];
 
     for (const [clan, state] of states.entries()) {
-        const initialCount = clan.slices[1][0];
+        const initialCount = clan.demography.count(BRIDES);
         const wifeSet = new PotentialPartnerSet(clan, initialCount);
 
         for (const [husbandClan, hState] of states.entries()) {
@@ -196,15 +200,16 @@ export function applyMarriageDecisions(world: World, decisions: MarriageDecision
     }
 
     // Move wives to their husbands' clans. We do the moves last so that population
-    // counts are fixed during the computations above.
+    // counts are fixed during the computations above. Every bride leaves home
+    // before any arrives, so that none is taken from the clan she just
+    // married into and married off again.
+    const moves: [Clan, Demography][] = [];
     for (const wifeSet of potentialWives) {
         for (const [husbandClan, count] of wifeSet.marriedTo) {
-            wifeSet.clan.slices[1][0] -= count;
-            wifeSet.clan.population -= count;
-            husbandClan.slices[1][0] += count;
-            husbandClan.population += count;
+            moves.push([husbandClan, wifeSet.clan.demography.take(count, BRIDES)]);
         }
     }
+    for (const [husbandClan, brides] of moves) husbandClan.demography.merge(brides);
 }
 
 export class PotentialPartnerSet {

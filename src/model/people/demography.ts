@@ -20,6 +20,29 @@ export const AGE_LIMIT = 100;
 export const SLICE_WIDTH = 20;
 export const SLICE_COUNT = 4;
 
+export function sliceOf(age: number): number {
+    return Math.min(Math.floor(age / SLICE_WIDTH), SLICE_COUNT - 1);
+}
+
+// The ages a slice covers, half-open.
+export function sliceAges(slice: number): [number, number] {
+    const from = slice * SLICE_WIDTH;
+    return [from, slice === SLICE_COUNT - 1 ? AGE_LIMIT : from + SLICE_WIDTH];
+}
+
+// How a slice's people are taken to be spread over its ages, where only
+// the slice's head count is known, one weight per age from its first. The
+// younger slices are spread evenly; the oldest thins out by about 8% a year,
+// roughly what it loses to death.
+export function sliceAgeWeights(slice: number): number[] {
+    const [from, to] = sliceAges(slice);
+    const weights: number[] = [];
+    for (let age = from; age < to; ++age) {
+        weights.push(slice === SLICE_COUNT - 1 ? Math.pow(0.92, age - from) : 1);
+    }
+    return weights;
+}
+
 // Female first, as in the slices.
 export type Sex = 0 | 1;
 export const FEMALE: Sex = 0;
@@ -114,20 +137,15 @@ export class Demography {
     private total_ = 0;
 
     // A clan's starting people from head counts by 20-year slice, as in
-    // INITIAL_POPULATION_RATIOS. Within the younger slices people are spread
-    // evenly over the years; the oldest slice thins out by about 8% a year,
-    // what it loses to death now. Everyone starts unmarried.
+    // INITIAL_POPULATION_RATIOS, spread over ages as sliceAgeWeights says.
+    // Everyone starts unmarried.
     static fromSlices(slices: readonly (readonly number[])[]): Demography {
         assert(slices.length === SLICE_COUNT,
             `Expected ${SLICE_COUNT} slices, got ${slices.length}.`);
         const d = new Demography();
         for (let i = 0; i < SLICE_COUNT; ++i) {
-            const from = i * SLICE_WIDTH;
-            const to = i === SLICE_COUNT - 1 ? AGE_LIMIT : from + SLICE_WIDTH;
-            const weights: number[] = [];
-            for (let age = from; age < to; ++age) {
-                weights.push(i === SLICE_COUNT - 1 ? Math.pow(0.92, age - from) : 1);
-            }
+            const [from] = sliceAges(i);
+            const weights = sliceAgeWeights(i);
             for (const sex of SEXES) {
                 const shares = systematicAllocation(slices[i][sex], weights);
                 for (let k = 0; k < shares.length; ++k) {
@@ -182,9 +200,7 @@ export class Demography {
     get slices(): number[][] {
         const slices: number[][] = [];
         for (let i = 0; i < SLICE_COUNT; ++i) slices.push([0, 0]);
-        this.forEach((sex, age, _status, count) => {
-            slices[Math.min(Math.floor(age / SLICE_WIDTH), SLICE_COUNT - 1)][sex] += count;
-        });
+        this.forEach((sex, age, _status, count) => { slices[sliceOf(age)][sex] += count; });
         return slices;
     }
 

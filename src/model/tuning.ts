@@ -35,7 +35,8 @@ export const TUNING_PARAM_SPECS: readonly TuningParamSpec[] = [
 ];
 
 export const DEFAULT_TUNING: Readonly<TuningParams> = {
-    baseBirthRate: 0.20,
+    // Aimed at about threefold growth in the first 500 years.
+    baseBirthRate: 0.18,
     deathRateAdjustmentFactor: 0.88,
     // Scaled up with the process defaults, for the same reason: festival
     // time has been taken out of production and the rest has to cover it.
