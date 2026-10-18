@@ -199,6 +199,14 @@ x   Review and update model and UIs to make sure welfare reflects
 *   Review and update that clan matching behavior has a reasonable
     relationship to welfare functions.
 
+x   Update marriage model
+    *   Have more desirable partners appear
+*   Collect and analyze stats on marriage success -- are clans having
+    differential success? Are any clans not getting what they need
+    but could do something about it?
+    *   Idea is to get a clearer notion of how marriage appeal plays
+        out in practice, trying to make sure it matters.
+
 Then:
 
 *   Add UI to find out if any clans are experiencing relationship
