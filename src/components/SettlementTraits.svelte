@@ -3,7 +3,7 @@
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
-    type AxisKey = "generosity" | "bellicosity" | "giving" | "aggression";
+    type AxisKey = "generosity" | "bellicosity" | "giving" | "peaceableness";
 
     interface AxisDef {
         key: AxisKey;
@@ -31,10 +31,10 @@
             get: (c) => c.traits.giving,
             decimals: 0,
         },
-        aggression: {
-            key: "aggression",
-            label: "Aggression",
-            get: (c) => c.traits.aggression,
+        peaceableness: {
+            key: "peaceableness",
+            label: "Peaceableness",
+            get: (c) => c.traits.peaceableness,
             decimals: 0,
         },
     };
@@ -43,9 +43,9 @@
 
     const QUICK_SELECTS: { label: string; x: AxisKey; y: AxisKey }[] = [
         { label: "Generosity / Bellicosity", x: "generosity", y: "bellicosity" },
-        { label: "Giving / Aggression", x: "giving", y: "aggression" },
+        { label: "Giving / Peaceableness", x: "giving", y: "peaceableness" },
         { label: "Giving / Generosity", x: "giving", y: "generosity" },
-        { label: "Aggression / Bellicosity", x: "aggression", y: "bellicosity" },
+        { label: "Peaceableness / Bellicosity", x: "peaceableness", y: "bellicosity" },
     ];
 
     let xKey = $state<AxisKey>("generosity");
@@ -122,7 +122,7 @@
     <p style="font-size: 0.9rem; color: #666; margin: 0 0 1rem 0;">
         Each dot is a clan, plotted by the two stats below: Generosity and
         Bellicosity are what other clans have come to think of it; Giving and
-        Aggression are its own dispositions.
+        Peaceableness are its own dispositions.
     </p>
 
     <div class="controls">

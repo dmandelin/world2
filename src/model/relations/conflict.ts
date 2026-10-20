@@ -11,13 +11,13 @@ import { clamp } from "../lib/basics";
 const ITERATIONS_PER_TURN = 5;
 
 // A clan's probability of playing hawk in a conflict iteration, from its
-// Aggression trait: 20% at 50, and 3 points more or less per standard
-// deviation (12) of the trait, so 23% at 62, 17% at 38, 8% at 0, 33% at 100.
+// Peaceableness trait: 20% at 50, and 3 points less or more per standard
+// deviation (12) of the trait, so 17% at 62, 23% at 38, 33% at 0, 8% at 100.
 const HAWK_PROBABILITY_AT_50 = 0.2;
 const HAWK_PROBABILITY_PER_POINT = 0.0025;
 
-export function hawkProbability(aggression: number): number {
-    return clamp(HAWK_PROBABILITY_AT_50 + HAWK_PROBABILITY_PER_POINT * (aggression - 50), 0, 1);
+export function hawkProbability(peaceableness: number): number {
+    return clamp(HAWK_PROBABILITY_AT_50 - HAWK_PROBABILITY_PER_POINT * (peaceableness - 50), 0, 1);
 }
 
 // Wrapper around ConflictGraph adding higher-level behaviors.
@@ -55,8 +55,8 @@ export class Conflicts {
                     if (c1 > c2) continue;
                     const conflict = this.g.getOrCreate(c1.uuid, c2.uuid);
                     conflict.advance(
-                        hawkProbability(c1.traits.aggression),
-                        hawkProbability(c2.traits.aggression));
+                        hawkProbability(c1.traits.peaceableness),
+                        hawkProbability(c2.traits.peaceableness));
                     // Both sides remember who reached for force.
                     recordConflict(
                         c1, c2, conflict.hawkCountBy(c1), ITERATIONS_PER_TURN);
@@ -189,11 +189,11 @@ export class Conflict {
     }
 
     // `c1HawkProbability`/`c2HawkProbability` are each clan's probability
-    // of playing hawk in an iteration, from its Aggression trait.
+    // of playing hawk in an iteration, from its Peaceableness trait.
     advance(c1HawkProbability: number, c2HawkProbability: number) {
         // Model conflicts between the two clans for a turn as
         // an iterated hawk-dove game. Each side's strategy is a simple
-        // per-clan probability of hawk (from their Aggression trait).
+        // per-clan probability of hawk (from their Peaceableness trait).
 
         for (const rr of this.results) {
             for (const r of rr) {

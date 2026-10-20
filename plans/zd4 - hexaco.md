@@ -120,7 +120,7 @@ Items:
     x   Piety
     x   Nurture
     *   Giving
-    *   Aggression
+    x   Aggression
 *   Can also morph existing traits instead of moving
 *   Update perceptions as needed (anything new relevant?)
     *   Giving

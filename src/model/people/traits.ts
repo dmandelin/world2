@@ -10,14 +10,14 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // than an asker it needs to be before it will share. See aidRatio in
 // redistribution.ts. Not to be confused with Generosity, which is what
 // other clans have come to think of it.
-// Aggression: how readily a clan reaches for force in a quarrel. See
+// Peaceableness: how readily a clan holds back from force in a quarrel. See
 // hawkProbability in conflict.ts.
 // Diligence: how hard a clan is willing to work, for a full belly, to be out
 // early in the scramble for land, and a little in looking after its people.
 // See nutritionTarget in people.ts, landPickEagerness in land.ts and
 // desiredCareRatio in care.ts. Not to be confused with the Diligence
 // observation, which is what other clans have seen of its ditch work.
-export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'tenderness', 'talkativeness', 'giving', 'aggression', 'diligence'] as const;
+export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'tenderness', 'talkativeness', 'giving', 'peaceableness', 'diligence'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -168,7 +168,7 @@ export class ClanTraits {
             talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
             diligence: numeric?.diligence ?? randomTraitStat(),
             giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
-            aggression: numeric?.aggression ?? randomTraitStat(),
+            peaceableness: numeric?.peaceableness ?? randomTraitStat(),
         };
         this.bitmap = bitmap;
         this.pride_ = pride ?? randomPride();
@@ -254,12 +254,12 @@ export class ClanTraits {
         this.rigidity_ = clamp(val, RIGIDITY_DRIFT_MIN, RIGIDITY_DRIFT_MAX);
     }
 
-    get aggression(): number {
-        return this.numeric['aggression'] ?? 50;
+    get peaceableness(): number {
+        return this.numeric['peaceableness'] ?? 50;
     }
 
-    set aggression(val: number) {
-        this.numeric['aggression'] = clamp(Math.round(val), 0, 100);
+    set peaceableness(val: number) {
+        this.numeric['peaceableness'] = clamp(Math.round(val), 0, 100);
     }
 
     get righteousness(): number {
