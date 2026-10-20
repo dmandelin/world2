@@ -12,6 +12,7 @@ import { loggingEnabled, setLoggingEnabled } from "../../model/lib/debug";
 import { applyTuning, readTuning, type TuningParams } from "../../model/tuning";
 import { World } from "../../model/world";
 import {
+    isTraitMetric,
     METRIC_KEYS,
     summarize,
     YEARLY_RATE_METRICS,
@@ -69,6 +70,11 @@ function meanSettlementGini(world: World, perHead: (c: Clan) => number): number 
 }
 
 function sample(world: World, key: MetricKey): number {
+    if (isTraitMetric(key)) {
+        const people = world.totalPopulation;
+        if (!isPositive(people)) return 0;
+        return sumFun(world.allClans, (c) => c.traits.get(key) * c.population) / people;
+    }
     switch (key) {
         case 'settlements':
             return world.allSettlements.length;
@@ -102,11 +108,6 @@ function sample(world: World, key: MetricKey): number {
             return meanSettlementGini(world, productionPerHead);
         case 'consumptionGini':
             return meanSettlementGini(world, consumptionPerHead);
-        case 'giving': {
-            const people = world.totalPopulation;
-            if (!isPositive(people)) return 0;
-            return sumFun(world.allClans, (c) => c.traits.giving * c.population) / people;
-        }
         case 'eudaimonia':
             // Population-weighted average over every living clan, the same
             // rollup the settlement column shows.

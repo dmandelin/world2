@@ -52,6 +52,12 @@
         eudaimonia: "#7c2d12",
         productionGini: "#ca8a04",
         consumptionGini: "#dc2626",
+        righteousness: "#4f46e5",
+        tenderness: "#e11d48",
+        sociability: "#0891b2",
+        peaceableness: "#16a34a",
+        diligence: "#b45309",
+        intellect: "#7c3aed",
         giving: "#db2777",
     };
 

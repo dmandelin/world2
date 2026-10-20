@@ -2,6 +2,7 @@
 // tuning worker.
 
 import type { TuningParams } from "../../model/tuning";
+import { NUMERIC_TRAITS, type NumericTrait } from "../../model/people/traits";
 
 export type BatchConfig = {
     runs: number;
@@ -22,7 +23,8 @@ export const METRIC_KEYS = [
     'foodConsumption',
     'productionGini',
     'consumptionGini',
-    'giving',
+    // Each trait's population-weighted average, under the trait's own name.
+    ...NUMERIC_TRAITS,
 ] as const;
 
 export type MetricKey = (typeof METRIC_KEYS)[number];
@@ -50,8 +52,18 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2 },
     { key: 'productionGini', label: 'Production Gini (within settlements)', precision: 3 },
     { key: 'consumptionGini', label: 'Consumption Gini (within settlements)', precision: 3 },
-    { key: 'giving', label: 'Giving (average)', precision: 1 },
+    ...NUMERIC_TRAITS.map((trait): MetricSpec => ({
+        key: trait,
+        label: `${trait[0].toUpperCase()}${trait.slice(1)} (average)`,
+        precision: 1,
+    })),
 ];
+
+const TRAIT_METRICS: ReadonlySet<MetricKey> = new Set<MetricKey>(NUMERIC_TRAITS);
+
+export function isTraitMetric(key: MetricKey): key is NumericTrait {
+    return TRAIT_METRICS.has(key);
+}
 
 // Metrics that are rates over the year just run. They are summarized only
 // over the runs that actually advanced that year: a run that has died out
