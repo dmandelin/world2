@@ -1442,6 +1442,22 @@
                 scaler: new DefaultScaler(),
                 topics: ["traits:detail"],
             },
+            {
+                label: "Diligence",
+                labelTooltip:
+                    "How hard the clan is willing to work. It aims for 100% nutrition at 50, about 121% at 80 and 81% at 20, and the diligent are out early in the scramble for land.",
+                class: "actual",
+                cellClass: "rap",
+                banded: true,
+                value: (c) => c.traits.diligence,
+                format: (v) => v.toFixed(0),
+                deltaValue: (c) => c.traits.diligence,
+                deltaBreakdown: (c) => c.traits.yearChanges("diligence"),
+                deltaFormat: (v) => v.toFixed(0),
+                timelineKey: "traitDiligence",
+                scaler: new DefaultScaler(),
+                topics: ["traits:detail"],
+            },
         ]);
 
         return groups;

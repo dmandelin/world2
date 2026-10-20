@@ -158,10 +158,10 @@ function statFactor(value: number): number {
 }
 
 // How much readier than its bare size a clan is to be out in the fields
-// early: the pious rise for it, the quick-witted see the year coming, and
+// early: the diligent rise for it, the quick-witted see the year coming, and
 // the ones who know the crop and the ground know which corner to make for.
 export function landPickEagerness(clan: Clan): number {
-    return statFactor(clan.traits.piety)
+    return statFactor(clan.traits.diligence)
         * statFactor(clan.traits.intellect)
         * statFactor(clan.skills.v(SkillDefs.Agriculture))
         * statFactor(clan.skills.v(SkillDefs.LocalEcology));

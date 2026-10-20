@@ -35,7 +35,7 @@
         Nobody owns the alluvium. Every spring it is open again, and the
         families go out to it <strong>first come, first served</strong>: the
         draw for who is next is weighted by how many people a clan still has
-        to send and by how ready it is to be out early — piety, wits, farming,
+        to send and by how ready it is to be out early — diligence, wits, farming,
         and knowing the ground. Whoever is drawn works {plotsPerRound(
             land.totalPlots,
         )} plots' worth down from the best land still unclaimed, and then the

@@ -98,6 +98,7 @@ export class ClanTimePoint {
     readonly traitTalkativeness: number;
     readonly traitGiving: number;
     readonly traitAggression: number;
+    readonly traitDiligence: number;
 
     readonly activityLeisure: number;
     readonly activityCare: number;
@@ -235,6 +236,7 @@ export class ClanTimePoint {
         this.traitTalkativeness = clan.traits?.talkativeness ?? 50;
         this.traitGiving = clan.traits?.giving ?? 0;
         this.traitAggression = clan.traits?.aggression ?? 50;
+        this.traitDiligence = clan.traits?.diligence ?? 50;
 
         this.activityLeisure = clan.effortAllocation.get(Activities.Leisure) * 100;
         this.activityCare = clan.effortAllocation.get(Activities.Care) * 100;

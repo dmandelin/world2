@@ -12,7 +12,11 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // other clans have come to think of it.
 // Aggression: how readily a clan reaches for force in a quarrel. See
 // hawkProbability in conflict.ts.
-export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness', 'giving', 'aggression'] as const;
+// Diligence: how hard a clan is willing to work, both for a full belly and to
+// be out early in the scramble for land. See nutritionTarget in people.ts and
+// landPickEagerness in land.ts. Not to be confused with the Diligence
+// observation, which is what other clans have seen of its ditch work.
+export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness', 'giving', 'aggression', 'diligence'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -161,6 +165,7 @@ export class ClanTraits {
             intellect: numeric?.intellect ?? randomTraitStat(),
             nurture: numeric?.nurture ?? randomTraitStat(),
             talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
+            diligence: numeric?.diligence ?? randomTraitStat(),
             giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
             aggression: numeric?.aggression ?? randomTraitStat(),
         };
@@ -286,6 +291,14 @@ export class ClanTraits {
 
     set talkativeness(val: number) {
         this.numeric['talkativeness'] = clamp(Math.round(val), 0, 100);
+    }
+
+    get diligence(): number {
+        return this.numeric['diligence'] ?? 50;
+    }
+
+    set diligence(val: number) {
+        this.numeric['diligence'] = clamp(Math.round(val), 0, 100);
     }
 
     get(trait: string): number {

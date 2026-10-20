@@ -117,4 +117,18 @@ Items:
     *   Emotionality
     *   Altruism subscore
 *   Move effects of overlapping traits onto new traits
+    *   Piety
+    *   Nurture
+    *   Giving
+    *   Aggression
+*   Can also morph existing traits instead of moving
 *   Update perceptions as needed (anything new relevant?)
+    *   Giving
+    *   Belligerence
+*   Pick up any effects that we took out
+    *   Piety
+        x   Add Diligence trait to pick up these
+            x   Food targets - s/b C, maybe others
+            x   Speed of getting land - s/b C, maybe opp of this
+        *   Reputation
+*   Update norms/evaluations

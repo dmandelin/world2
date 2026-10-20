@@ -531,16 +531,15 @@ export class Clan implements TradePartner {
     }
 
     // The nutrition the clan plans its work to reach, if it ate everything it
-    // grew. Pious clans aim higher, as they always have: the old food target
-    // of 1.2x per 15 Piety above 50 (0.9x per 15 below), read as rations of
-    // a perfectly balanced diet and taken through nutrition's diminishing
-    // returns. So an ordinary clan aims at 100%, one at 80 Piety at about
-    // 121%, one at 20 at about 81%.
+    // grew. Diligent clans aim higher: 1.2x per 15 Diligence above 50 (0.9x
+    // per 15 below), read as rations of a perfectly balanced diet and taken
+    // through nutrition's diminishing returns. So an ordinary clan aims at
+    // 100%, one at 80 Diligence at about 121%, one at 20 at about 81%.
     get nutritionTarget(): number {
-        const piety = this.traits.piety;
-        const rations = piety >= 50
-            ? Math.max(0.1, Math.pow(1.2, (piety - 50) / 15))
-            : Math.max(0.1, Math.pow(0.9, (50 - piety) / 15));
+        const diligence = this.traits.diligence;
+        const rations = diligence >= 50
+            ? Math.max(0.1, Math.pow(1.2, (diligence - 50) / 15))
+            : Math.max(0.1, Math.pow(0.9, (50 - diligence) / 15));
         return nutritionFromRaw(rations);
     }
 
