@@ -2,8 +2,8 @@ import { clamp, stochasticRound } from "../lib/basics";
 import { normal, poisson } from "../lib/distributions";
 import { TALKATIVENESS_SD } from "./talkativeness";
 
-// Nurture: how much care a clan wants to give its children, against the
-// standard they need. See care.ts.
+// Tenderness: how much a clan wants to look after its people, the most of
+// what decides the care it gives. See desiredCareRatio in care.ts.
 // Talkativeness: how much a clan puts into conversation, whatever the
 // setting. See talkativenessFactor in conversation.ts.
 // Giving: how open-handed a clan is with food aid -- how much better off
@@ -12,11 +12,12 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // other clans have come to think of it.
 // Aggression: how readily a clan reaches for force in a quarrel. See
 // hawkProbability in conflict.ts.
-// Diligence: how hard a clan is willing to work, both for a full belly and to
-// be out early in the scramble for land. See nutritionTarget in people.ts and
-// landPickEagerness in land.ts. Not to be confused with the Diligence
+// Diligence: how hard a clan is willing to work, for a full belly, to be out
+// early in the scramble for land, and a little in looking after its people.
+// See nutritionTarget in people.ts, landPickEagerness in land.ts and
+// desiredCareRatio in care.ts. Not to be confused with the Diligence
 // observation, which is what other clans have seen of its ditch work.
-export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'nurture', 'talkativeness', 'giving', 'aggression', 'diligence'] as const;
+export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'tenderness', 'talkativeness', 'giving', 'aggression', 'diligence'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -163,7 +164,7 @@ export class ClanTraits {
         this.numeric = {
             righteousness: numeric?.righteousness ?? randomTraitStat(),
             intellect: numeric?.intellect ?? randomTraitStat(),
-            nurture: numeric?.nurture ?? randomTraitStat(),
+            tenderness: numeric?.tenderness ?? randomTraitStat(),
             talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
             diligence: numeric?.diligence ?? randomTraitStat(),
             giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
@@ -277,12 +278,12 @@ export class ClanTraits {
         this.numeric['intellect'] = clamp(Math.round(val), 0, 100);
     }
 
-    get nurture(): number {
-        return this.numeric['nurture'] ?? 50;
+    get tenderness(): number {
+        return this.numeric['tenderness'] ?? 50;
     }
 
-    set nurture(val: number) {
-        this.numeric['nurture'] = clamp(Math.round(val), 0, 100);
+    set tenderness(val: number) {
+        this.numeric['tenderness'] = clamp(Math.round(val), 0, 100);
     }
 
     get talkativeness(): number {

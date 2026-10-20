@@ -49,14 +49,14 @@
             label: "Effort",
             rows: [
                 {
-                    label: "Nurture",
-                    note: "How much care the clan wants to give its children. 50 gives the standard, 65 gives 110% of it.",
-                    value: (c) => c.traits.nurture,
+                    label: "Tenderness",
+                    note: "How much the clan wants to look after its people. 50 gives the standard, 65 gives 106% of it, before Diligence and Talkativeness.",
+                    value: (c) => c.traits.tenderness,
                     format: whole,
                 },
                 {
                     label: "Wants to give",
-                    note: `Care effort Nurture asked for when the year was planned, against the standard, held between ${pct(CARE_EFFORT_MIN)} and ${pct(CARE_EFFORT_MAX)}.`,
+                    note: `Care effort Tenderness, Diligence and Talkativeness asked for when the year was planned, against the standard, held between ${pct(CARE_EFFORT_MIN)} and ${pct(CARE_EFFORT_MAX)}.`,
                     value: (c) => plan(c).wanted,
                     format: pct,
                     sense: 1,
@@ -224,9 +224,9 @@
 <div class="care-container">
     <h3>Care</h3>
     <div class="blurb">
-        Each clan gives the care its Nurture asks for, unless it expects to go
-        short of food, and its skill decides how much of what the children need
-        actually gets done.
+        Each clan gives the care its Tenderness, Diligence and Talkativeness ask
+        for, unless it expects to go short of food, and its skill decides how
+        much of what the children need actually gets done.
     </div>
 
     {#if clans.length === 0}

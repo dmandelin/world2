@@ -1379,18 +1379,18 @@
                 topics: ["traits:detail"],
             },
             {
-                label: "Nurture",
+                label: "Tenderness",
                 labelTooltip:
-                    "How much care the clan wants to give its children: 50 gives the standard, 65 gives 110% of it.",
+                    "How much the clan wants to look after its people: 50 gives the standard care, 65 gives 106% of it. Diligence and Talkativeness add a little more.",
                 class: "actual",
                 cellClass: "rap",
                 banded: true,
-                value: (c) => c.traits.nurture,
+                value: (c) => c.traits.tenderness,
                 format: (v) => v.toFixed(0),
-                deltaValue: (c) => c.traits.nurture,
-                deltaBreakdown: (c) => c.traits.yearChanges("nurture"),
+                deltaValue: (c) => c.traits.tenderness,
+                deltaBreakdown: (c) => c.traits.yearChanges("tenderness"),
                 deltaFormat: (v) => v.toFixed(0),
-                timelineKey: "traitNurture",
+                timelineKey: "traitTenderness",
                 scaler: new DefaultScaler(),
                 topics: ["traits:detail"],
             },
@@ -1445,7 +1445,7 @@
             {
                 label: "Diligence",
                 labelTooltip:
-                    "How hard the clan is willing to work. It aims for 100% nutrition at 50, about 121% at 80 and 81% at 20, and the diligent are out early in the scramble for land.",
+                    "How hard the clan is willing to work. It aims for 100% nutrition at 50, about 121% at 80 and 81% at 20, and the diligent are out early in the scramble for land and give a little more care.",
                 class: "actual",
                 cellClass: "rap",
                 banded: true,

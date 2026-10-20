@@ -15,7 +15,7 @@ import type { Tagged } from "../econ/tagged";
 // children need. Kept as decided, so later drift in the clan's disposition
 // doesn't rewrite what it chose.
 export type CarePlan = {
-    // What its Nurture asked for.
+    // What its traits asked for.
     readonly wanted: number;
     // What it actually gave.
     readonly given: number;
@@ -179,7 +179,9 @@ export class EffortAllocation {
         // in which case it gives as much as still lets it expect enough, and
         // however short it is, never less than the minimum.
         const standard = careStandardShare(this.clan);
-        const wanted = desiredCareRatio(this.clan.traits.nurture);
+        const traits = this.clan.traits;
+        const wanted = desiredCareRatio(
+            traits.tenderness, traits.diligence, traits.talkativeness);
         this.reserve(standard * wanted);
         const foodOutlook = this.expectedFoodShare();
         let careRatio = wanted;

@@ -114,11 +114,11 @@ Items:
 *   Add new traits
     x   (Righteousness) Honesty
     *   Agreeableness
-    *   Emotionality
+    x   Emotionality
     *   Altruism subscore
 *   Move effects of overlapping traits onto new traits
     x   Piety
-    *   Nurture
+    x   Nurture
     *   Giving
     *   Aggression
 *   Can also morph existing traits instead of moving
@@ -131,4 +131,8 @@ Items:
             x   Food targets - s/b C, maybe others
             x   Speed of getting land - s/b C, maybe opp of this
         *   Reputation
+*   Add in any effects we need
+    x   Diligence -> care target
+*   Other bits
+    *   Rename Talkativeness
 *   Update norms/evaluations

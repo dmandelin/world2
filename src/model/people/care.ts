@@ -28,10 +28,19 @@ export const CARE_EFFORT_PER_CHILD = 0.25;
 export const CARE_EFFORT_MIN = 0.5;
 export const CARE_EFFORT_MAX = 1.5;
 
-// Both Nurture and Care skill are worth this factor per 15 points from 50, so
-// a clan at 65 in each gives 110% of the standard and gets 110% out of it:
-// 121% provided.
+// Care skill is worth this factor per 15 points from 50 on what a unit of
+// care effort gets done.
 export const CARE_FACTOR_PER_15 = 1.1;
+
+// How much care a clan wants to give is down to three traits, each worth its
+// factor per 15 points from 50, compounding. Tenderness counts for the most:
+// it is wanting to look after people. Diligence is being willing to put in
+// the work, and Talkativeness counts for a little, since the talkative are
+// glad of the company. So a clan at 65 Tenderness alone wants to give 106% of
+// the standard, and one at 65 in all three about 110%.
+export const CARE_TENDERNESS_FACTOR_PER_15 = 1.06;
+export const CARE_DILIGENCE_FACTOR_PER_15 = 1.03;
+export const CARE_TALKATIVENESS_FACTOR_PER_15 = 1.01;
 
 // Share of its nutrition target a clan must expect to meet before it will give
 // the care it wants to. Short of that, it takes effort from care for the
@@ -45,9 +54,12 @@ export function careStandardShare(clan: Clan): number {
 }
 
 // How much care a clan wants to give, against the standard.
-export function desiredCareRatio(nurture: number): number {
+export function desiredCareRatio(
+    tenderness: number, diligence: number, talkativeness: number): number {
     return clamp(
-        Math.pow(CARE_FACTOR_PER_15, (nurture - 50) / 15),
+        Math.pow(CARE_TENDERNESS_FACTOR_PER_15, (tenderness - 50) / 15)
+            * Math.pow(CARE_DILIGENCE_FACTOR_PER_15, (diligence - 50) / 15)
+            * Math.pow(CARE_TALKATIVENESS_FACTOR_PER_15, (talkativeness - 50) / 15),
         CARE_EFFORT_MIN, CARE_EFFORT_MAX);
 }
 
