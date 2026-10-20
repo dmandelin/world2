@@ -133,7 +133,7 @@ export class Alignment {
             AlignmentItem.forFestivalGiving(subject, object, informationValue),
             AlignmentItem.forGifts(subject, object),
             AlignmentItem.forGenerosity(subject, object),
-            AlignmentItem.forPiety(subject, object),
+            AlignmentItem.forRighteousness(subject, object),
             AlignmentItem.forSociability(subject, object),
             AlignmentItem.forBellicosity(subject, object),
             AlignmentItem.forConflict(subject, object),
@@ -201,8 +201,8 @@ export const FESTIVAL_ALIGNMENT_WEIGHT = 0.886;
 // Per point of believed generosity, which is a running average of what the
 // neighbor gives away in a year, in hundredths of a ration per head.
 export const GENEROSITY_WEIGHT = 0.01508;
-// Per point of believed piety away from the middling 50.
-export const PIETY_WEIGHT = 0.0024;
+// Per point of believed righteousness away from the middling 50.
+export const RIGHTEOUSNESS_WEIGHT = 0.0024;
 // Per point of effort on the ditches past what this clan expected. Scaled by
 // each clan's own admiration for digging, which is a disposition.
 export const DITCHING_ADMIRATION_WEIGHT = 0.728;
@@ -406,14 +406,14 @@ export class AlignmentItem<P = unknown> {
         );
     }
 
-    static forPiety(subject: Clan, object: Clan): AlignmentItem {
-        const estimate = observedEstimate(subject, object, ObservationDefs.Piety);
+    static forRighteousness(subject: Clan, object: Clan): AlignmentItem {
+        const estimate = observedEstimate(subject, object, ObservationDefs.Righteousness);
         return new AlignmentItem(
-            'Piety',
+            'Righteousness',
             'reputation',
             estimate - 50,
-            PIETY_WEIGHT,
-            pietyText
+            RIGHTEOUSNESS_WEIGHT,
+            righteousnessText
         );
     }
 
@@ -496,8 +496,8 @@ const generosityText = (i: AlignmentItem) =>
     `Generosity estimate ${i.baseValue.toFixed(1)}`;
 const giftsText = (i: AlignmentItem) =>
     `${i.baseValue.toFixed(1)} given to us, standing`;
-const pietyText = (i: AlignmentItem) =>
-    `Piety estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
+const righteousnessText = (i: AlignmentItem) =>
+    `Righteousness estimate ${(i.baseValue + 50).toFixed(0)} vs 50`;
 const sociabilityText = (d: { relativeAttention: number, upbringing: number }) =>
     `Attention ${pct(d.relativeAttention)}, upbringing x${d.upbringing.toFixed(2)}`;
 const bellicosityText = (i: AlignmentItem) =>

@@ -16,7 +16,7 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // be out early in the scramble for land. See nutritionTarget in people.ts and
 // landPickEagerness in land.ts. Not to be confused with the Diligence
 // observation, which is what other clans have seen of its ditch work.
-export const NUMERIC_TRAITS = ['piety', 'intellect', 'nurture', 'talkativeness', 'giving', 'aggression', 'diligence'] as const;
+export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'nurture', 'talkativeness', 'giving', 'aggression', 'diligence'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -161,7 +161,7 @@ export class ClanTraits {
         rigidity?: number,
     ) {
         this.numeric = {
-            piety: numeric?.piety ?? randomTraitStat(),
+            righteousness: numeric?.righteousness ?? randomTraitStat(),
             intellect: numeric?.intellect ?? randomTraitStat(),
             nurture: numeric?.nurture ?? randomTraitStat(),
             talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
@@ -261,12 +261,12 @@ export class ClanTraits {
         this.numeric['aggression'] = clamp(Math.round(val), 0, 100);
     }
 
-    get piety(): number {
-        return this.numeric['piety'] ?? 50;
+    get righteousness(): number {
+        return this.numeric['righteousness'] ?? 50;
     }
 
-    set piety(val: number) {
-        this.numeric['piety'] = clamp(Math.round(val), 0, 100);
+    set righteousness(val: number) {
+        this.numeric['righteousness'] = clamp(Math.round(val), 0, 100);
     }
 
     get intellect(): number {

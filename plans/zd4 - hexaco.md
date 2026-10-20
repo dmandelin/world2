@@ -112,12 +112,12 @@ We also need somewhat setting appropriate skin names:
 Items:
 
 *   Add new traits
-    *   Honesty
+    x   (Righteousness) Honesty
     *   Agreeableness
     *   Emotionality
     *   Altruism subscore
 *   Move effects of overlapping traits onto new traits
-    *   Piety
+    x   Piety
     *   Nurture
     *   Giving
     *   Aggression

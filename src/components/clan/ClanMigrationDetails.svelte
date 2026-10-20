@@ -87,7 +87,7 @@
         <!-- Compact Tooltip Layout -->
         <div class="compact-section compact-traits">
             <strong>Traits:</strong>
-            <span class="compact-trait">Piety ({clan.traits?.piety ?? 50})</span>,
+            <span class="compact-trait">Righteousness ({clan.traits?.righteousness ?? 50})</span>,
             <span class="compact-trait">Intellect ({clan.traits?.intellect ?? 50})</span>
         </div>
 
@@ -138,7 +138,7 @@
         <div class="traits-header">
             <span class="traits-title">Clan Traits:</span>
             <div class="traits-list">
-                <span class="trait-badge">Piety: {clan.traits?.piety ?? 50}</span>
+                <span class="trait-badge">Righteousness: {clan.traits?.righteousness ?? 50}</span>
                 <span class="trait-badge">Intellect: {clan.traits?.intellect ?? 50}</span>
             </div>
         </div>

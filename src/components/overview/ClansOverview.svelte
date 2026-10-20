@@ -1351,16 +1351,16 @@
         // Group 8: Traits
         groups.push([
             {
-                label: "Piety",
+                label: "Righteousness",
                 class: "actual",
                 cellClass: "rap",
                 banded: true,
-                value: (c) => c.traits.piety,
+                value: (c) => c.traits.righteousness,
                 format: (v) => v.toFixed(0),
-                deltaValue: (c) => c.traits.piety,
-                deltaBreakdown: (c) => c.traits.yearChanges("piety"),
+                deltaValue: (c) => c.traits.righteousness,
+                deltaBreakdown: (c) => c.traits.yearChanges("righteousness"),
                 deltaFormat: (v) => v.toFixed(0),
-                timelineKey: "traitPiety",
+                timelineKey: "traitRighteousness",
                 scaler: new DefaultScaler(),
                 topics: ["traits:detail"],
             },
@@ -2019,7 +2019,7 @@
     // Shown when no clan has an opinion with items yet, so the breakdown still
     // has rows.
     const HOLINESS_ITEM_LABELS = [
-        "Piety",
+        "Righteousness",
         "Ritual Skill",
         "Generosity",
         "Material QoL",
@@ -2188,7 +2188,7 @@
         const itemLabels = withSelfItemLabels(
             sampleA
                 ? sampleA.items.map((i) => i.label)
-                : ["Gifts", "Generosity", "Piety", "Sociability", "Conflict"],
+                : ["Gifts", "Generosity", "Righteousness", "Sociability", "Conflict"],
             toward(clan, clan)?.items,
         );
 

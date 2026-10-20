@@ -577,7 +577,7 @@ export class Memory {
 // mean of what has actually been seen, and because the mean is over a count
 // that starts near zero, the first year seen already carries most of the
 // estimate and later years refine it. That is the difference between judging
-// how devout someone is and judging how freely they give: you cannot see
+// how righteous someone is and judging how freely they give: you cannot see
 // generosity, you can only tot up what they did.
 export type ObservationMode = 'impression' | 'average';
 
@@ -689,7 +689,7 @@ export class ObservationDef {
     }
 
     // A blurred value as it would actually be perceived: nobody reads a clan's
-    // piety as 121, however poor a look they got.
+    // righteousness as 121, however poor a look they got.
     perceivable(value: number): number {
         return clamp(value, this.min, this.max);
     }
@@ -735,7 +735,7 @@ export class ObservationDef {
     }
 }
 
-// Only piety so far. Population, skills, and QoL follow the same shape and
+// Only righteousness so far. Population, skills, and QoL follow the same shape and
 // get added as each is moved over to observations.
 // A kindness done to you weighs a little more than the same kindness done to
 // someone else. Only a little: what a clan gives away is what makes it
@@ -891,23 +891,24 @@ export function diligenceSeen(clan: Clan): number {
 }
 
 export const ObservationDefs = {
-    Piety: new ObservationDef('piety', 'Piety', (_, clan) => clan.traits.piety, {
+    Righteousness: new ObservationDef('righteousness', 'Righteousness', (_, clan) => clan.traits.righteousness, {
         mode: 'impression',
-        truthFn: clan => clan.traits.piety,
+        truthFn: clan => clan.traits.righteousness,
         prior: 50,
-        // A year of close acquaintance places a clan's piety to within about
+        // A year of close acquaintance places a clan's righteousness to within about
         // 15, and averaging those years settles at about 5.
         lookStdev: 15,
         lookWeight: 0.2,
-        // Below a fifth of one's attention a clan's devotions go unremarked,
+        // Below a fifth of one's attention a clan's conduct goes unremarked,
         // unless they are conspicuous enough to be impossible to miss.
         attentionThreshold: 0.2,
         conspicuousAbove: 80,
-        // People take a lively interest in their neighbors' devotions, so even
-        // unremarkable piety comes up about as often as the neighbor does.
+        // People take a lively interest in their neighbors' conduct, so even
+        // unremarkable righteousness comes up about as often as the neighbor
+        // does.
         // Qualities that matter less locally will want less than this.
         chatter: 1,
-        // The notably devout or notably slack get talked about on their own
+        // The notably upright or notably wayward get talked about on their own
         // account.
         notableDeviation: 15,
         staleHalfLife: 30,
@@ -1135,7 +1136,7 @@ export class Observation {
     // The estimate to actually act on.
     //
     // An impression is pulled back toward the prior by however unsure we are,
-    // since a vague sense of someone's piety should not be acted on as though
+    // since a vague sense of someone's righteousness should not be acted on as though
     // it were certain. An average needs no such correction: it starts at the
     // prior and the prior's weight is already carried inside the running mean,
     // so shrinking it again would anchor it twice and undo the fast start.

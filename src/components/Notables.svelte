@@ -4,14 +4,14 @@
 
     let biggestSettlement = $state(world.allSettlements[0]);
     let biggestClan = $state(world.allClans[0]);
-    let mostPiousClan = $state(world.allClans[0]);
+    let mostRighteousClan = $state(world.allClans[0]);
     let mostIntellectualClan = $state(world.allClans[0]);
 
     function update() {
         try {
             biggestSettlement = world.allSettlements.reduce((a, b) => a.population > b.population ? a : b);
             biggestClan = world.allClans.reduce((a, b) => a.population > b.population ? a : b);
-            mostPiousClan = world.allClans.reduce((a, b) => a.traits.piety > b.traits.piety ? a : b);
+            mostRighteousClan = world.allClans.reduce((a, b) => a.traits.righteousness > b.traits.righteousness ? a : b);
             mostIntellectualClan = world.allClans.reduce((a, b) => a.traits.intellect > b.traits.intellect ? a : b);
         } catch (e) {
             console.error(e);
@@ -54,9 +54,9 @@
                 <td>{biggestClan.population} people</td>
             </tr>
             <tr>
-                <th>Most Pious Clan</th>
-                <td>{mostPiousClan.name} of {mostPiousClan.settlement?.name}</td>
-                <td>{mostPiousClan.traits.piety} piety</td>
+                <th>Most Righteous Clan</th>
+                <td>{mostRighteousClan.name} of {mostRighteousClan.settlement?.name}</td>
+                <td>{mostRighteousClan.traits.righteousness} righteousness</td>
             </tr>
             <tr>
                 <th>Most Intellectual Clan</th>

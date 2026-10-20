@@ -19,7 +19,7 @@ import { explain, type Explainer } from "../lib/explain";
 //
 // It draws on the same evidence as Respect and Alignment, but only the
 // part of it that reads as favor from above: a clan that gives freely,
-// keeps up its devotions, and prospers looks blessed. Perceived piety
+// lives rightly, and prospers looks blessed. Perceived righteousness
 // weighs much more heavily here than it does for general respect or
 // alignment, and ritual skill, which barely registers in the average of
 // skills Respect uses, is a major component on its own.
@@ -127,7 +127,7 @@ export class Holiness implements Opinion {
     updateFor(subject: Clan, object: Clan, informationValue: number = 1): void {
         this.informationValue_ = informationValue;
 
-        // Piety and Generosity come from tracked observations, which already
+        // Righteousness and Generosity come from tracked observations, which already
         // account for how much the subject has seen; the rest are read off the
         // object's true values and discounted the way Respect does it, linearly
         // for trait-like stats and by the square root for QoL.
@@ -140,7 +140,7 @@ export class Holiness implements Opinion {
         this.ritualChangeCredit_.decayTo(year);
 
         this.items_ = [
-            HolinessItem.forPiety(subject, object),
+            HolinessItem.forRighteousness(subject, object),
             HolinessItem.forRitualSkill(subject, object, infoScale),
             HolinessItem.forGenerosity(subject, object),
             HolinessItem.forMaterialQoL(subject, object, qolInfoScale),
@@ -203,16 +203,16 @@ export class HolinessItem<P = unknown> implements OpinionItem {
     // Matches Respect: QoL below this baseline is "minimal" and grants nothing.
     static readonly QOL_BASELINE = -10;
 
-    // The largest component by far. Alignment weighs piety only as a deviation
+    // The largest component by far. Alignment weighs righteousness only as a deviation
     // from the middling 50, and Respect not at all; here it's the whole point,
     // so the estimate counts in full.
-    static forPiety(subject: Clan, object: Clan): HolinessItem {
-        const estimate = observedEstimate(subject, object, ObservationDefs.Piety);
+    static forRighteousness(subject: Clan, object: Clan): HolinessItem {
+        const estimate = observedEstimate(subject, object, ObservationDefs.Righteousness);
         return new HolinessItem(
-            'Piety',
+            'Righteousness',
             estimate,
             0.4,
-            pietyText
+            righteousnessText
         );
     }
 
@@ -231,7 +231,7 @@ export class HolinessItem<P = unknown> implements OpinionItem {
         );
     }
 
-    // Open-handedness reads as piety made visible.
+    // Open-handedness reads as righteousness made visible.
     static forGenerosity(subject: Clan, object: Clan): HolinessItem {
         const estimate = observedEstimate(subject, object, ObservationDefs.Generosity);
         return new HolinessItem(
@@ -293,8 +293,8 @@ export class HolinessItem<P = unknown> implements OpinionItem {
 }
 
 // Written once at load; each takes what it needs as an argument.
-const pietyText = (i: HolinessItem) =>
-    `Piety estimate ${i.baseValue.toFixed(0)}`;
+const righteousnessText = (i: HolinessItem) =>
+    `Righteousness estimate ${i.baseValue.toFixed(0)}`;
 const generosityText = (i: HolinessItem) =>
     `Generosity estimate ${i.baseValue.toFixed(1)}`;
 const scoredText = (

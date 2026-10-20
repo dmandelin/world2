@@ -54,7 +54,7 @@ export class Respect implements Opinion {
         this.informationValue_ = informationValue;
 
         // None of these stats are read off tracked observations yet (only
-        // Piety, Generosity, and Bellicosity have made that move so far), so
+        // Righteousness, Generosity, and Bellicosity have made that move so far), so
         // for now we read the object's true values and simply discount them
         // by how well the subject actually knows the object: linearly for
         // trait-like stats, and by the square root for QoL, which degrades

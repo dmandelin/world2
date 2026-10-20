@@ -25,10 +25,10 @@ import { getHoliness } from "./relations/holiness";
 
 // Officiating draws on three things, of which knowing what you are doing
 // counts for the most: the words are long, the order matters, and a clan that
-// can hold all of it in its head is worth two that are merely devout.
+// can hold all of it in its head is worth two that are merely righteous.
 export const RITUAL_STAT_WEIGHTS: readonly { label: string, weight: number, value: (clan: Clan) => number }[] = [
     { label: 'Intellect', weight: 2, value: clan => clan.traits.intellect },
-    { label: 'Piety', weight: 1, value: clan => clan.traits.piety },
+    { label: 'Righteousness', weight: 1, value: clan => clan.traits.righteousness },
     { label: 'Ritual Skill', weight: 1, value: clan => clan.skills.v(SkillDefs.Ritual) },
 ];
 

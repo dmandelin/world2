@@ -48,7 +48,7 @@ export function signedFormat(places: number = 0): (n: number) => string {
 }
 
 // Stats that run 0 to 100 and centre on 50 -- every skill, and the traits
-// like piety and intellect -- read much faster with a band of colour behind
+// like righteousness and intellect -- read much faster with a band of colour behind
 // them than as bare numbers in a wall of other bare numbers. Five bands,
 // twenty points each: the middle one is the ordinary run of things, and the
 // outer ones are the notably poor and the notably good.

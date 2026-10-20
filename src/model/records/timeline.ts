@@ -92,7 +92,7 @@ export class ClanTimePoint {
     readonly skillCraft: number;
     readonly skillCare: number;
 
-    readonly traitPiety: number;
+    readonly traitRighteousness: number;
     readonly traitIntellect: number;
     readonly traitNurture: number;
     readonly traitTalkativeness: number;
@@ -230,7 +230,7 @@ export class ClanTimePoint {
         this.skillCraft = clan.skills.v(SkillDefs.Craft);
         this.skillCare = clan.skills.v(SkillDefs.Care);
 
-        this.traitPiety = clan.traits?.piety ?? 50;
+        this.traitRighteousness = clan.traits?.righteousness ?? 50;
         this.traitIntellect = clan.traits?.intellect ?? 50;
         this.traitNurture = clan.traits?.nurture ?? 50;
         this.traitTalkativeness = clan.traits?.talkativeness ?? 50;

@@ -115,7 +115,7 @@
                 <td class="ra">{clan.size}</td>
                 <td class="ra">{clan.lastSizeChange}</td>
                 <td>{clan.giftStrategy}</td>
-                <td class="ra">{wg(clan.traits.piety)}</td>
+                <td class="ra">{wg(clan.traits.righteousness)}</td>
                 <td class="ra">{wg(clan.traits.intellect)}</td>
                 <td class="ra">{wg(clan.productionAbility)}</td>
                 <td class="ra">{wg(clan.income)}</td>
