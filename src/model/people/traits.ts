@@ -6,10 +6,6 @@ import { SOCIABILITY_SD } from "./sociability";
 // what decides the care it gives. See desiredCareRatio in care.ts.
 // Sociability: how much a clan puts into conversation, whatever the
 // setting. See conversationSociabilityFactor in conversation.ts.
-// Giving: how open-handed a clan is with food aid -- how much better off
-// than an asker it needs to be before it will share. See aidRatio in
-// redistribution.ts. Not to be confused with Generosity, which is what
-// other clans have come to think of it.
 // Peaceableness: how readily a clan holds back from force in a quarrel. See
 // hawkProbability in conflict.ts.
 // Diligence: how hard a clan is willing to work, for a full belly, to be out
@@ -17,7 +13,11 @@ import { SOCIABILITY_SD } from "./sociability";
 // See nutritionTarget in people.ts, landPickEagerness in land.ts and
 // desiredCareRatio in care.ts. Not to be confused with the Diligence
 // observation, which is what other clans have seen of its ditch work.
-export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'tenderness', 'sociability', 'giving', 'peaceableness', 'diligence'] as const;
+// Giving: how open-handed a clan is with food aid -- how much better off
+// than an asker it needs to be before it will share. See aidRatio in
+// redistribution.ts. Not to be confused with Generosity, which is what
+// other clans have come to think of it.
+export const NUMERIC_TRAITS = ['righteousness', 'tenderness', 'sociability', 'peaceableness', 'diligence', 'intellect', 'giving'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -163,12 +163,12 @@ export class ClanTraits {
     ) {
         this.numeric = {
             righteousness: numeric?.righteousness ?? randomTraitStat(),
-            intellect: numeric?.intellect ?? randomTraitStat(),
             tenderness: numeric?.tenderness ?? randomTraitStat(),
             sociability: numeric?.sociability ?? randomTraitStat(SOCIABILITY_SD),
-            diligence: numeric?.diligence ?? randomTraitStat(),
-            giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
             peaceableness: numeric?.peaceableness ?? randomTraitStat(),
+            diligence: numeric?.diligence ?? randomTraitStat(),
+            intellect: numeric?.intellect ?? randomTraitStat(),
+            giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
         };
         this.bitmap = bitmap;
         this.pride_ = pride ?? randomPride();
@@ -237,14 +237,6 @@ export class ClanTraits {
         this.pride_ = clamp(val, 3 * PRIDE_MIN, 3 * PRIDE_MAX);
     }
 
-    get giving(): number {
-        return this.numeric['giving'] ?? 50;
-    }
-
-    set giving(val: number) {
-        this.numeric['giving'] = clamp(Math.round(val), 0, 100);
-    }
-
     // A share of the clans present, so it must stay in [0, 1].
     get rigidity(): number {
         return this.rigidity_;
@@ -254,28 +246,12 @@ export class ClanTraits {
         this.rigidity_ = clamp(val, RIGIDITY_DRIFT_MIN, RIGIDITY_DRIFT_MAX);
     }
 
-    get peaceableness(): number {
-        return this.numeric['peaceableness'] ?? 50;
-    }
-
-    set peaceableness(val: number) {
-        this.numeric['peaceableness'] = clamp(Math.round(val), 0, 100);
-    }
-
     get righteousness(): number {
         return this.numeric['righteousness'] ?? 50;
     }
 
     set righteousness(val: number) {
         this.numeric['righteousness'] = clamp(Math.round(val), 0, 100);
-    }
-
-    get intellect(): number {
-        return this.numeric['intellect'] ?? 50;
-    }
-
-    set intellect(val: number) {
-        this.numeric['intellect'] = clamp(Math.round(val), 0, 100);
     }
 
     get tenderness(): number {
@@ -294,12 +270,36 @@ export class ClanTraits {
         this.numeric['sociability'] = clamp(Math.round(val), 0, 100);
     }
 
+    get peaceableness(): number {
+        return this.numeric['peaceableness'] ?? 50;
+    }
+
+    set peaceableness(val: number) {
+        this.numeric['peaceableness'] = clamp(Math.round(val), 0, 100);
+    }
+
     get diligence(): number {
         return this.numeric['diligence'] ?? 50;
     }
 
     set diligence(val: number) {
         this.numeric['diligence'] = clamp(Math.round(val), 0, 100);
+    }
+
+    get intellect(): number {
+        return this.numeric['intellect'] ?? 50;
+    }
+
+    set intellect(val: number) {
+        this.numeric['intellect'] = clamp(Math.round(val), 0, 100);
+    }
+
+    get giving(): number {
+        return this.numeric['giving'] ?? 50;
+    }
+
+    set giving(val: number) {
+        this.numeric['giving'] = clamp(Math.round(val), 0, 100);
     }
 
     get(trait: string): number {

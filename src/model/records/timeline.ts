@@ -93,12 +93,12 @@ export class ClanTimePoint {
     readonly skillCare: number;
 
     readonly traitRighteousness: number;
-    readonly traitIntellect: number;
     readonly traitTenderness: number;
     readonly traitSociability: number;
-    readonly traitGiving: number;
     readonly traitPeaceableness: number;
     readonly traitDiligence: number;
+    readonly traitIntellect: number;
+    readonly traitGiving: number;
 
     readonly activityLeisure: number;
     readonly activityCare: number;
@@ -231,12 +231,12 @@ export class ClanTimePoint {
         this.skillCare = clan.skills.v(SkillDefs.Care);
 
         this.traitRighteousness = clan.traits?.righteousness ?? 50;
-        this.traitIntellect = clan.traits?.intellect ?? 50;
         this.traitTenderness = clan.traits?.tenderness ?? 50;
         this.traitSociability = clan.traits?.sociability ?? 50;
-        this.traitGiving = clan.traits?.giving ?? 0;
         this.traitPeaceableness = clan.traits?.peaceableness ?? 50;
         this.traitDiligence = clan.traits?.diligence ?? 50;
+        this.traitIntellect = clan.traits?.intellect ?? 50;
+        this.traitGiving = clan.traits?.giving ?? 0;
 
         this.activityLeisure = clan.effortAllocation.get(Activities.Leisure) * 100;
         this.activityCare = clan.effortAllocation.get(Activities.Care) * 100;
