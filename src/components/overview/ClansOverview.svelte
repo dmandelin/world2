@@ -1381,7 +1381,7 @@
             {
                 label: "Tenderness",
                 labelTooltip:
-                    "How much the clan wants to look after its people: 50 gives the standard care, 65 gives 106% of it. Diligence and Talkativeness add a little more.",
+                    "How much the clan wants to look after its people: 50 gives the standard care, 65 gives 106% of it. Diligence and Sociability add a little more.",
                 class: "actual",
                 cellClass: "rap",
                 banded: true,
@@ -1395,18 +1395,18 @@
                 topics: ["traits:detail"],
             },
             {
-                label: "Talkativeness",
+                label: "Sociability",
                 labelTooltip:
                     "How much the clan puts into conversation in every setting: 50 is ordinary, 80 offers twice as much, 20 half.",
                 class: "actual",
                 cellClass: "rap",
                 banded: true,
-                value: (c) => c.traits.talkativeness,
+                value: (c) => c.traits.sociability,
                 format: (v) => v.toFixed(0),
-                deltaValue: (c) => c.traits.talkativeness,
-                deltaBreakdown: (c) => c.traits.yearChanges("talkativeness"),
+                deltaValue: (c) => c.traits.sociability,
+                deltaBreakdown: (c) => c.traits.yearChanges("sociability"),
                 deltaFormat: (v) => v.toFixed(0),
-                timelineKey: "traitTalkativeness",
+                timelineKey: "traitSociability",
                 scaler: new DefaultScaler(),
                 topics: ["traits:detail"],
             },

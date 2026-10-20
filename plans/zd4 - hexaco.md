@@ -111,17 +111,17 @@ We also need somewhat setting appropriate skin names:
 
 Items:
 
-*   Add new traits
+x   Add new traits
     x   (Righteousness) Honesty
-    *   Agreeableness
+    x   Agreeableness
     x   Emotionality
-    *   Altruism subscore
-*   Move effects of overlapping traits onto new traits
+    x   Altruism subscore
+x   Move effects of overlapping traits onto new traits
     x   Piety
     x   Nurture
-    *   Giving
+    x   Giving
     x   Aggression
-*   Can also morph existing traits instead of moving
+x   Can also morph existing traits instead of moving
 *   Update perceptions as needed (anything new relevant?)
     *   Giving
     *   Belligerence
@@ -134,5 +134,10 @@ Items:
 *   Add in any effects we need
     x   Diligence -> care target
 *   Other bits
-    *   Rename Talkativeness
+    x   Rename Talkativeness
 *   Update norms/evaluations
+*   Beauty
+*   Ability tilt
+*   Nomad
+*   Systematizer
+*   Weird

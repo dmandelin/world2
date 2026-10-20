@@ -96,7 +96,7 @@ function inlineFortune(prevFortune: number, x: FortuneInputs): number {
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
     const food = nutrition + savorBeta(nutrition) * (honey + beer);
     const care = careComfort(
-        careProvisionOf(x.careEffort, x.careSkill, x.talkativeness))
+        careProvisionOf(x.careEffort, x.careSkill))
         + careStress(x.careShare);
     const amount = x.conversationAmount;
     const convQuality = amount > 0
@@ -141,7 +141,7 @@ function buildDetail(
     const beer = beerRaw > EU_BEER_MAX ? EU_BEER_MAX : beerRaw;
     const taste = honey + beer;
     const food = nutrition + savorBeta(nutrition) * taste;
-    const provision = careProvisionOf(x.careEffort, x.careSkill, x.talkativeness);
+    const provision = careProvisionOf(x.careEffort, x.careSkill);
     const comfort = careComfort(provision);
     const stress = careStress(x.careShare);
     const care = comfort + stress;

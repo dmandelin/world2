@@ -181,7 +181,7 @@ export class EffortAllocation {
         const standard = careStandardShare(this.clan);
         const traits = this.clan.traits;
         const wanted = desiredCareRatio(
-            traits.tenderness, traits.diligence, traits.talkativeness);
+            traits.tenderness, traits.diligence, traits.sociability);
         this.reserve(standard * wanted);
         const foodOutlook = this.expectedFoodShare();
         let careRatio = wanted;

@@ -19,7 +19,6 @@
     } from "../model/people/care";
     import { eudaimoniaAverage } from "../model/self/eudaimonia";
     import { signed } from "../model/lib/format";
-    import { sociableTalkFactor } from "../model/people/talkativeness";
 
     let { settlement }: { settlement: SettlementDTO } = $props();
 
@@ -50,13 +49,13 @@
             rows: [
                 {
                     label: "Tenderness",
-                    note: "How much the clan wants to look after its people. 50 gives the standard, 65 gives 106% of it, before Diligence and Talkativeness.",
+                    note: "How much the clan wants to look after its people. 50 gives the standard, 65 gives 106% of it, before Diligence and Sociability.",
                     value: (c) => c.traits.tenderness,
                     format: whole,
                 },
                 {
                     label: "Wants to give",
-                    note: `Care effort Tenderness, Diligence and Talkativeness asked for when the year was planned, against the standard, held between ${pct(CARE_EFFORT_MIN)} and ${pct(CARE_EFFORT_MAX)}.`,
+                    note: `Care effort Tenderness, Diligence and Sociability asked for when the year was planned, against the standard, held between ${pct(CARE_EFFORT_MIN)} and ${pct(CARE_EFFORT_MAX)}.`,
                     value: (c) => plan(c).wanted,
                     format: pct,
                     sense: 1,
@@ -120,16 +119,8 @@
                     mid: 1,
                 },
                 {
-                    label: "Talkativeness factor",
-                    note: "Looking after people goes a little better for a clan that likes to talk: 105% per 15 points of Talkativeness above 50.",
-                    value: (c) => sociableTalkFactor(c.traits.talkativeness),
-                    format: times,
-                    sense: 1,
-                    mid: 1,
-                },
-                {
                     label: "Care provided",
-                    note: "Effort given times the skill and Talkativeness factors: how much of what the children need was actually done.",
+                    note: "Effort given times the skill factor: how much of what the children need was actually done.",
                     value: (c) => c.careProvision,
                     format: pct,
                     sense: 1,
@@ -224,7 +215,7 @@
 <div class="care-container">
     <h3>Care</h3>
     <div class="blurb">
-        Each clan gives the care its Tenderness, Diligence and Talkativeness ask
+        Each clan gives the care its Tenderness, Diligence and Sociability ask
         for, unless it expects to go short of food, and its skill decides how
         much of what the children need actually gets done.
     </div>

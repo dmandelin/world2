@@ -194,7 +194,7 @@ export function conversationAppealFortune(appeal: number): number {
 // Quantity reads acquaintance against what the clan wanted: the acquaintance
 // it put into conversation this year, the supply of its conversation budget
 // (see relations/conversation.ts). That differs by clan -- with its
-// Talkativeness, and with how it spent its year -- and some of it, offered to
+// Sociability, and with how it spent its year -- and some of it, offered to
 // clans that would not match it, finds nobody. As a ratio, r = acquaintance /
 // wanted, 1 being exactly as much company as the clan wanted.
 //
@@ -432,8 +432,6 @@ export class FortuneInputs {
     careEffort = 1;
     // The clan's Care skill.
     careSkill = 50;
-    // The clan's Talkativeness, which helps care along a little.
-    talkativeness = 50;
     // Share of the clan's effort that went into care.
     careShare = 0.2;
     // People outside the clan its people deal with regularly, and how many
@@ -451,7 +449,6 @@ export class FortuneInputs {
         this.cerealShare = o.cerealShare;
         this.careEffort = o.careEffort;
         this.careSkill = o.careSkill;
-        this.talkativeness = o.talkativeness;
         this.careShare = o.careShare;
         this.conversationAmount = o.conversationAmount;
         this.conversationWanted = o.conversationWanted;
@@ -488,7 +485,6 @@ export const EuNode = {
     CerealShare: 12,
     CareEffort: 13,
     CareSkillLevel: 14,
-    Talkativeness: 18,
     CareShare: 17,
     ConversationAmount: 15,
     ConversationWanted: 19,
@@ -754,8 +750,6 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "Care effort given, as a share of what the clan's children need." },
     { id: EuNode.CareSkillLevel, label: "Care skill", role: "input", places: 0,
       note: "The clan's skill at looking after people." },
-    { id: EuNode.Talkativeness, label: "Talkativeness", role: "input", places: 0,
-      note: "How much the clan likes to talk, which helps its care along a little." },
     { id: EuNode.CareShare, label: "Care share", role: "input", places: 0, isRate: true,
       note: "Share of the clan's effort that went into looking after people." },
     { id: EuNode.ConversationAmount, label: "Acquaintance", role: "input", places: 0,
@@ -794,7 +788,7 @@ export const EU_NODES: readonly EuNodeDef[] = [
     { id: EuNode.Care, label: "Care", role: "derived", places: 1,
       note: "How well looked after everyone was, and what it cost those doing it, added." },
     { id: EuNode.CareProvision, label: "Care provided", role: "derived", places: 2, isRate: true,
-      note: "Care effort against the standard, times what the clan's skill and Talkativeness made of it." },
+      note: "Care effort against the standard, times what the clan's skill made of it." },
     { id: EuNode.CareComfort, label: "Comfort", role: "derived", places: 1,
       note: "How well looked after everyone was: care provided, at 50 a doubling from the standard." },
     { id: EuNode.CareStress, label: "Stress", role: "derived", places: 1,
@@ -1005,8 +999,7 @@ function traceFood(
 // Fortune > Social > Care: how well looked after everyone was, and what it
 // cost the people doing it. See care.ts.
 export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
-    const provision = careProvisionOf(
-        inputs.careEffort, inputs.careSkill, inputs.talkativeness);
+    const provision = careProvisionOf(inputs.careEffort, inputs.careSkill);
     const comfort = careComfort(provision);
     const stress = careStress(inputs.careShare);
     const care = combine2(EuNode.Care, comfort, stress);
@@ -1014,7 +1007,6 @@ export function computeCare(inputs: FortuneInputs, trace?: EuTrace): number {
     if (trace !== undefined) {
         trace.put(EuNode.CareEffort, inputs.careEffort);
         trace.put(EuNode.CareSkillLevel, inputs.careSkill);
-        trace.put(EuNode.Talkativeness, inputs.talkativeness);
         trace.put(EuNode.CareShare, inputs.careShare);
         trace.put(EuNode.CareProvision, provision);
         trace.put(EuNode.CareComfort, comfort);

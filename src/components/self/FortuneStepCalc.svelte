@@ -34,7 +34,6 @@
         NUTRITION_IDEAL_CEREAL_SHARE,
         NUTRITION_MAX,
     } from "../../model/people/nutrition";
-    import { sociableTalkFactor } from "../../model/people/talkativeness";
 
     let {
         report,
@@ -143,9 +142,7 @@
         <div class="line">
             {pctOf(get(EuNode.CareEffort))} effort &times; {pctOf(
                 careSkillFactor(get(EuNode.CareSkillLevel)),
-            )} at skill {u(get(EuNode.CareSkillLevel), 0)} &times; {pctOf(
-                sociableTalkFactor(get(EuNode.Talkativeness)),
-            )} at talkativeness {u(get(EuNode.Talkativeness), 0)} =
+            )} at skill {u(get(EuNode.CareSkillLevel), 0)} =
             {pctOf(get(EuNode.CareProvision))} provided
         </div>
         <div class="line">

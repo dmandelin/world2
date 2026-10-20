@@ -3,7 +3,7 @@ import { normal } from './lib/distributions';
 import { ces } from './lib/modelbasics';
 import { TradeGoods, type TradeGood } from './trade';
 import type { Clan } from './people/people';
-import { sociableTalkFactor } from './people/talkativeness';
+import { festivalSociabilityFactor } from './people/sociability';
 import type { Settlement } from './people/settlement';
 
 // The settlement's own festivals: the round of gatherings the whole village
@@ -491,10 +491,10 @@ export class FestivalOperation {
 export class FestivalContribution {
     readonly timeRatio: number;
     readonly foodRatio: number;
-    // What the clan's Talkativeness makes of its time: festival work is
-    // mostly people, and goes a little better for a clan that likes to talk.
-    // See talkativeness.ts. Its labor at that is the effective labor.
-    readonly talkFactor: number;
+    // What the clan's Sociability makes of its time: festival work is
+    // mostly people, and goes better for a sociable clan.
+    // See sociability.ts. Its labor at that is the effective labor.
+    readonly sociabilityFactor: number;
     readonly effectiveLabor: number;
 
     constructor(
@@ -523,8 +523,8 @@ export class FestivalContribution {
         // This clan's level at the skill the aspect is done with.
         readonly skill: number,
     ) {
-        this.talkFactor = sociableTalkFactor(clan.traits.talkativeness);
-        this.effectiveLabor = labor * this.talkFactor;
+        this.sociabilityFactor = festivalSociabilityFactor(clan.traits.sociability);
+        this.effectiveLabor = labor * this.sociabilityFactor;
         this.timeRatio = safeDiv(this.effectiveLabor, standardLabor, 0);
         this.foodRatio = safeDiv(food, standardFood, 0);
     }
@@ -553,7 +553,7 @@ export class FestivalAspectCalc {
 
     // Worker-turns and food laid on across the settlement, against what the
     // notional standard asks of it. Effective labor is worker-turns as each
-    // clan's Talkativeness makes of them, which is what the time ratio reads.
+    // clan's Sociability makes of them, which is what the time ratio reads.
     readonly labor: number;
     readonly effectiveLabor: number;
     readonly standardLabor: number;

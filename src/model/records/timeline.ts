@@ -95,7 +95,7 @@ export class ClanTimePoint {
     readonly traitRighteousness: number;
     readonly traitIntellect: number;
     readonly traitTenderness: number;
-    readonly traitTalkativeness: number;
+    readonly traitSociability: number;
     readonly traitGiving: number;
     readonly traitPeaceableness: number;
     readonly traitDiligence: number;
@@ -233,7 +233,7 @@ export class ClanTimePoint {
         this.traitRighteousness = clan.traits?.righteousness ?? 50;
         this.traitIntellect = clan.traits?.intellect ?? 50;
         this.traitTenderness = clan.traits?.tenderness ?? 50;
-        this.traitTalkativeness = clan.traits?.talkativeness ?? 50;
+        this.traitSociability = clan.traits?.sociability ?? 50;
         this.traitGiving = clan.traits?.giving ?? 0;
         this.traitPeaceableness = clan.traits?.peaceableness ?? 50;
         this.traitDiligence = clan.traits?.diligence ?? 50;

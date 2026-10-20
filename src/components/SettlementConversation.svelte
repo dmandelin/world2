@@ -32,7 +32,7 @@
         HISTORY_STEP,
         AFFINITY_APPEAL_WEIGHT,
         APPEAL_FLOOR,
-        TALKATIVENESS_DOUBLING,
+        SOCIABILITY_DOUBLING,
         getRelativeAttention,
         conversationConnectednessOf,
         averageConversationConnectedness,
@@ -518,10 +518,10 @@
         <div class="supply-tip">
             <div class="supply-tip-title">Acquaintance Supply: {row.name}</div>
             <div class="supply-tip-formula">
-                Supply = Time Share × Intensity × Scale × Talkativeness, where
+                Supply = Time Share × Intensity × Scale × Sociability, where
                 Scale = (People / Base Size)<sup>exponent</sup> and
-                Talkativeness = 2<sup>(T − 50) / {TALKATIVENESS_DOUBLING}</sup>
-                (T = {row.traits.talkativeness})
+                Sociability = 2<sup>(T − 50) / {SOCIABILITY_DOUBLING}</sup>
+                (T = {row.traits.sociability})
             </div>
             <table>
                 <thead>
@@ -557,7 +557,7 @@
                     {/each}
                     <tr class="supply-tip-total">
                         <td colspan="7">Total</td>
-                        <td title="What Talkativeness came to overall: total supply against what it would have been at 50.">
+                        <td title="What Sociability came to overall: total supply against what it would have been at 50.">
                             ×{unsigned(base > 0 ? value / base : 1, 2)}
                             ({signed(value - base, 0)})
                         </td>
@@ -823,10 +823,10 @@
                 <div class="box-title">🏛️ Group Activities (Settlement, Ditching, Festivals) &amp; Help</div>
                 <div class="formula-content">
                     <div class="formula-line">
-                        <strong>Acquaintance Supply:</strong> <code>Time Share × Intensity × Scale × Talkativeness</code>
+                        <strong>Acquaintance Supply:</strong> <code>Time Share × Intensity × Scale × Sociability</code>
                     </div>
                     <div class="formula-line">
-                        <strong>Talkativeness:</strong> <code>× 2<sup>(T − 50) / {TALKATIVENESS_DOUBLING}</sup></code> on every offer, ties included
+                        <strong>Sociability:</strong> <code>× 2<sup>(T − 50) / {SOCIABILITY_DOUBLING}</sup></code> on every offer, ties included
                     </div>
                     <div class="formula-line">
                         <strong>Scale:</strong> <code>(People / Base Size)<sup>exponent</sup></code>, 1 for help

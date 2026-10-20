@@ -1,6 +1,5 @@
 import { clamp } from "../lib/basics";
 import type { Clan } from "./people";
-import { sociableTalkFactor } from "./talkativeness";
 
 // Care: looking after the people who can't look after themselves -- feeding
 // the small, nursing the sick, keeping the old warm and the young out of the
@@ -35,12 +34,12 @@ export const CARE_FACTOR_PER_15 = 1.1;
 // How much care a clan wants to give is down to three traits, each worth its
 // factor per 15 points from 50, compounding. Tenderness counts for the most:
 // it is wanting to look after people. Diligence is being willing to put in
-// the work, and Talkativeness counts for a little, since the talkative are
+// the work, and Sociability counts for a little, since the sociable are
 // glad of the company. So a clan at 65 Tenderness alone wants to give 106% of
 // the standard, and one at 65 in all three about 110%.
 export const CARE_TENDERNESS_FACTOR_PER_15 = 1.06;
 export const CARE_DILIGENCE_FACTOR_PER_15 = 1.03;
-export const CARE_TALKATIVENESS_FACTOR_PER_15 = 1.01;
+export const CARE_SOCIABILITY_FACTOR_PER_15 = 1.01;
 
 // Share of its nutrition target a clan must expect to meet before it will give
 // the care it wants to. Short of that, it takes effort from care for the
@@ -55,11 +54,11 @@ export function careStandardShare(clan: Clan): number {
 
 // How much care a clan wants to give, against the standard.
 export function desiredCareRatio(
-    tenderness: number, diligence: number, talkativeness: number): number {
+    tenderness: number, diligence: number, sociability: number): number {
     return clamp(
         Math.pow(CARE_TENDERNESS_FACTOR_PER_15, (tenderness - 50) / 15)
             * Math.pow(CARE_DILIGENCE_FACTOR_PER_15, (diligence - 50) / 15)
-            * Math.pow(CARE_TALKATIVENESS_FACTOR_PER_15, (talkativeness - 50) / 15),
+            * Math.pow(CARE_SOCIABILITY_FACTOR_PER_15, (sociability - 50) / 15),
         CARE_EFFORT_MIN, CARE_EFFORT_MAX);
 }
 
@@ -69,12 +68,9 @@ export function careSkillFactor(skill: number): number {
 }
 
 // Care provided, against what the children need: the effort given against
-// the standard, times what the clan's skill makes of it, times what its
-// Talkativeness does -- looking after people goes a little better for a clan
-// that likes to talk. See talkativeness.ts.
-export function careProvisionOf(
-    effortRatio: number, skill: number, talkativeness: number): number {
-    return effortRatio * careSkillFactor(skill) * sociableTalkFactor(talkativeness);
+// the standard, times what the clan's skill makes of it.
+export function careProvisionOf(effortRatio: number, skill: number): number {
+    return effortRatio * careSkillFactor(skill);
 }
 
 // Held inside this range before any effect is read off it, so a clan with

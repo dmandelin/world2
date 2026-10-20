@@ -1,11 +1,11 @@
 import { clamp, stochasticRound } from "../lib/basics";
 import { normal, poisson } from "../lib/distributions";
-import { TALKATIVENESS_SD } from "./talkativeness";
+import { SOCIABILITY_SD } from "./sociability";
 
 // Tenderness: how much a clan wants to look after its people, the most of
 // what decides the care it gives. See desiredCareRatio in care.ts.
-// Talkativeness: how much a clan puts into conversation, whatever the
-// setting. See talkativenessFactor in conversation.ts.
+// Sociability: how much a clan puts into conversation, whatever the
+// setting. See conversationSociabilityFactor in conversation.ts.
 // Giving: how open-handed a clan is with food aid -- how much better off
 // than an asker it needs to be before it will share. See aidRatio in
 // redistribution.ts. Not to be confused with Generosity, which is what
@@ -17,7 +17,7 @@ import { TALKATIVENESS_SD } from "./talkativeness";
 // See nutritionTarget in people.ts, landPickEagerness in land.ts and
 // desiredCareRatio in care.ts. Not to be confused with the Diligence
 // observation, which is what other clans have seen of its ditch work.
-export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'tenderness', 'talkativeness', 'giving', 'peaceableness', 'diligence'] as const;
+export const NUMERIC_TRAITS = ['righteousness', 'intellect', 'tenderness', 'sociability', 'giving', 'peaceableness', 'diligence'] as const;
 export type NumericTrait = typeof NUMERIC_TRAITS[number];
 
 export const BOOLEAN_TRAITS = [] as const;
@@ -39,8 +39,8 @@ function randomTraitStat(sd: number = 12): number {
     return clamp(Math.round(normal(50, sd)), 0, 100);
 }
 
-// Talkativeness is wider than the other 0-100 traits: clans differ a good deal
-// in how much they have to say. TALKATIVENESS_SD lives in talkativeness.ts,
+// Sociability is wider than the other 0-100 traits: clans differ a good deal
+// in how much they have to say. SOCIABILITY_SD lives in sociability.ts,
 // since what the trait does to work is measured in it.
 
 // Giving is spread wider than most 0-100 traits: clans differ a good deal in
@@ -165,7 +165,7 @@ export class ClanTraits {
             righteousness: numeric?.righteousness ?? randomTraitStat(),
             intellect: numeric?.intellect ?? randomTraitStat(),
             tenderness: numeric?.tenderness ?? randomTraitStat(),
-            talkativeness: numeric?.talkativeness ?? randomTraitStat(TALKATIVENESS_SD),
+            sociability: numeric?.sociability ?? randomTraitStat(SOCIABILITY_SD),
             diligence: numeric?.diligence ?? randomTraitStat(),
             giving: numeric?.giving ?? randomTraitStat(GIVING_SD),
             peaceableness: numeric?.peaceableness ?? randomTraitStat(),
@@ -286,12 +286,12 @@ export class ClanTraits {
         this.numeric['tenderness'] = clamp(Math.round(val), 0, 100);
     }
 
-    get talkativeness(): number {
-        return this.numeric['talkativeness'] ?? 50;
+    get sociability(): number {
+        return this.numeric['sociability'] ?? 50;
     }
 
-    set talkativeness(val: number) {
-        this.numeric['talkativeness'] = clamp(Math.round(val), 0, 100);
+    set sociability(val: number) {
+        this.numeric['sociability'] = clamp(Math.round(val), 0, 100);
     }
 
     get diligence(): number {

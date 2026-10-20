@@ -79,16 +79,16 @@ export function venueScale(source: ConversationSource, people: number): number {
     return (people / source.baseSize) ** source.scaleExponent;
 }
 
-// Talkativeness: every offer a clan makes is multiplied by
+// Sociability: every offer a clan makes is multiplied by
 //
-//     2 ^ ((talkativeness - 50) / TALKATIVENESS_DOUBLING)
+//     2 ^ ((sociability - 50) / SOCIABILITY_DOUBLING)
 //
 // so an ordinary clan at 50 offers what the setting yields, one at 80 twice
 // that, and one at 20 half.
-export const TALKATIVENESS_DOUBLING = 30;
+export const SOCIABILITY_DOUBLING = 30;
 
-export function talkativenessFactor(talkativeness: number): number {
-    return 2 ** ((talkativeness - 50) / TALKATIVENESS_DOUBLING);
+export function conversationSociabilityFactor(sociability: number): number {
+    return 2 ** ((sociability - 50) / SOCIABILITY_DOUBLING);
 }
 
 // Acquaintance a whole year in each setting is worth, at scale 1. Set so that
@@ -298,7 +298,7 @@ export class ConversationBudgetItem {
     // Group settings only; a tie is 1 and has no gathering.
     people: number | undefined;
     scale: number = 1;
-    // What the clan's Talkativeness multiplied it by.
+    // What the clan's Sociability multiplied it by.
     talk: number = 1;
 
     constructor(
@@ -508,7 +508,7 @@ export function relativeAffinityOf(subject: Clan | ClanDTO, object: Clan | ClanD
 // out to be there to take it up.
 function groupSupply(clan: Clan, source: ConversationSource, scale: number): number {
     return groupShare(clan, source) * source.intensity * scale
-        * talkativenessFactor(clan.traits.talkativeness);
+        * conversationSociabilityFactor(clan.traits.sociability);
 }
 
 // --- Allocation and matching -----------------------------------------------
@@ -696,7 +696,7 @@ export function updateConversations(world: World): void {
                 budgetItem.people = venuePeople(source, participants);
                 budgetItem.scale = venueScale(source, budgetItem.people);
                 budgetItem.supply = groupSupply(clan, source, budgetItem.scale);
-                budgetItem.talk = talkativenessFactor(clan.traits.talkativeness);
+                budgetItem.talk = conversationSociabilityFactor(clan.traits.sociability);
                 clan.conversationBudget.items.push(budgetItem);
                 continue;
             }
@@ -710,7 +710,7 @@ export function updateConversations(world: World): void {
                 budgetItem.supply = venue.supply.get(c1) ?? 0;
                 budgetItem.people = venue.people;
                 budgetItem.scale = venue.scale;
-                budgetItem.talk = talkativenessFactor(c1.traits.talkativeness);
+                budgetItem.talk = conversationSociabilityFactor(c1.traits.sociability);
                 c1.conversationBudget.items.push(budgetItem);
             }
 
@@ -745,7 +745,7 @@ export function updateConversations(world: World): void {
         let item = clan.conversationBudget.item(source);
         if (!item) {
             item = new ConversationBudgetItem(source, 0);
-            item.talk = talkativenessFactor(clan.traits.talkativeness);
+            item.talk = conversationSociabilityFactor(clan.traits.sociability);
             clan.conversationBudget.items.push(item);
         }
         return item;
@@ -760,9 +760,9 @@ export function updateConversations(world: World): void {
         const popMod1 = c1.population > 0 ? Math.sqrt(c1.population / 20) : 0;
         const popMod2 = c2.population > 0 ? Math.sqrt(c2.population / 20) : 0;
         const supply1 = share1 * source.intensity * reach * popMod1
-            * talkativenessFactor(c1.traits.talkativeness);
+            * conversationSociabilityFactor(c1.traits.sociability);
         const supply2 = share2 * source.intensity * reach * popMod2
-            * talkativenessFactor(c2.traits.talkativeness);
+            * conversationSociabilityFactor(c2.traits.sociability);
 
         const item1 = tieBudget(c1, source, share1);
         const item2 = tieBudget(c2, source, share2);
@@ -787,9 +787,9 @@ export function updateConversations(world: World): void {
     const addHelp = (c1: Clan, c2: Clan, share1: number, share2: number) => {
         const source = TieSources.Help;
         const supply1 = share1 * source.intensity
-            * talkativenessFactor(c1.traits.talkativeness);
+            * conversationSociabilityFactor(c1.traits.sociability);
         const supply2 = share2 * source.intensity
-            * talkativenessFactor(c2.traits.talkativeness);
+            * conversationSociabilityFactor(c2.traits.sociability);
         const offered1to2 = supply1 / c2.population;
         const offered2to1 = supply2 / c1.population;
         const strength = Math.min(offered1to2, offered2to1, MAX_STRENGTH);

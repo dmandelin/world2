@@ -7,7 +7,7 @@ import type { Process } from './process';
 import type { SkillDef } from '../people/skills';
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from '../relations/mutualaid';
 import { explain, type Explainer } from '../lib/explain';
-import { toilTalkFactor } from '../people/talkativeness';
+import { toilSociabilityFactor } from '../people/sociability';
 
 // Map of process to skills that affect productivity and the weight of that
 // skill. Built lazily on first use rather than at module-evaluation time: a
@@ -78,7 +78,7 @@ export class Productivity {
             ...ProductivityItem.fromSkills(clan, process),
             ...ProductivityItem.fromLand(clan, process),
             ...ProductivityItem.fromHelp(clan, process),
-            ProductivityItem.fromTalkativeness(clan),
+            ProductivityItem.fromSociability(clan),
             ...ProductivityItem.fromEnvironment(clan, process, outlook),
         ];
 
@@ -99,8 +99,8 @@ const helpText = (d: { relativeHelp: number }) =>
 const ditchText = (d: { rating: number, flood: number }) =>
     `ditch ${d.rating.toFixed(0)} vs flood ${d.flood.toFixed(0)}`;
 const averageText = (i: ProductivityItem) => `${pct(i.value)} of average`;
-const talkText = (d: { talkativeness: number }) =>
-    `Talkativeness ${d.talkativeness.toFixed(0)}: talk gets in the way of toil`;
+const talkText = (d: { sociability: number }) =>
+    `Sociability ${d.sociability.toFixed(0)}: talk gets in the way of toil`;
 const stocksText = (d: { flood: string }) => `${d.flood} flood last year`;
 const landText = (d: { description: string }) =>
     `${d.description}; the farming base is the yield on ordinary land`;
@@ -163,14 +163,14 @@ export class ProductivityItem<P = unknown> {
     }
 
     // Toil -- the nets, the fields, the ditches -- goes slower for a clan
-    // that would rather be talking. See talkativeness.ts.
-    static fromTalkativeness(clan: Clan): ProductivityItem {
-        const talkativeness = clan.traits.talkativeness;
+    // that would rather be talking. See sociability.ts.
+    static fromSociability(clan: Clan): ProductivityItem {
+        const sociability = clan.traits.sociability;
         return new ProductivityItem(
-            'Talkativeness',
-            toilTalkFactor(talkativeness),
+            'Sociability',
+            toilSociabilityFactor(sociability),
             talkText,
-            { talkativeness },
+            { sociability },
         );
     }
 
