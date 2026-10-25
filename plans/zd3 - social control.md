@@ -114,3 +114,54 @@ think about tuning the current model rather that replacing.
 Next things to think about:
 
 *   Try tuning current model to get desired splitting behavior
+
+## Next thoughts
+
+*   Existing model
+    *   Conflict-based upper limits to village size
+        *   One issue is that conflict amount is per-clan,
+            so splitting depends on #clans not people
+        *   Another immediate issue is that it's on
+            social QoL rather that some fortune parameter,
+            but we could immediately fix that by porting
+            it over
+    *   Economic limits to village size
+        *   Currently, it seems productivity isn't that much
+            correlated with village size
+            *   Recall the general question of whether productivity
+                is equal in cities of different sizes, or larger in
+                larger cities -- it seems that there can be some
+                disagreement on this. (Notionally, equilibrium logic
+                suggests equal, but increasing returns to scale
+                exist.)
+
+*   Why settlements could avoid social limits and grow
+    *   Disputes handled by certain people rather than involving
+        the entire settlement
+        *   Easier to sync
+        *   Cheaper
+    *   Leadership disputes moved into structured systems rather
+        than potentially arbitrary conflicts
+    *   Avoidance: Some people won't like each other and prefer
+        not to associate. They could do so, in a large settlement
+    *   Capital investment: More to leave behind
+
+Given the early significance of monuments, capital investment may
+have been one of the initial key anchors; perhaps that then created
+the demand for more scalable politics.
+
+Given that the immediate need is really to get these villages splitting
+as believed to have happened, maybe the right approach is to define
+curves for how different fortune components depend on size, tune those
+so that they can generate about the right amount of splitting, then
+massage the model to roughly fit those curves (e.g., in some cases
+different parts of the curve might be in different parts of the model.)
+For now we could leave the economic side be and focus on conflict and
+association as the factors that balance.
+
+Items:
+
+*   Define and tune a simpler abstract model
+*   Change conflict intensity to depend on clan sizes
+*   Move to fortune model and update splitting code
+*   Tune so that villages split around 150-300
