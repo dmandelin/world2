@@ -161,7 +161,88 @@ association as the factors that balance.
 
 Items:
 
-*   Define and tune a simpler abstract model
-*   Change conflict intensity to depend on clan sizes
-*   Move to fortune model and update splitting code
-*   Tune so that villages split around 150-300
+*   Study simpler, more abstract models and ideas
+    *   I concluded that we shouldn't try to balance costs and benefits
+        by scale, because:
+        *   Results come out right only with fine tuning that doesn't
+            have any particular reason to exist
+        *   Once urbanism starts, there aren't huge difficulties scaling
+    *   A better concept seems to be coordination failure.
+        *   More agents means harder to sync on decisions generally
+        *   There may also be more decisions to make as there is more
+            resource contention, etc.
+    *   We can initially have clans coordinate over fairly abstract
+        things (notionally, disagreements over sorcery accusations,
+        rituals, and land use)
+        *   Here's a concept:
+            *   Clans have their own preferences on issues based on
+                whatever factors
+            *   They're somewhat willing to give up part of their
+                own preferences for another clan's *other than for
+                reasons of coordination*:
+                *   Wanting to help kin
+                *   Wanting to help good neighbors
+                *   These may depend on reciprocity!
+            *   They make an initial choice based on that "inclusive
+                preference"
+                *   This may be applied recursively - give some
+                    limited time for choices to spread
+                *   If they now match, all good
+            *   Otherwise, inclusive preferences differ
+                *   This is where one side could decide to leave
+                *   Otherwise it's some sort of detriment to 
+                    everyone
+                    *   And the sides remember who was on their side
+                        and not
+                    *   Clans may adjust affinity based on this (depends
+                        on clan choice, type of issue, etc)
+                        *   Thus, next time inclusive preferences are
+                            likelier to be polarized along those lines
+                            (though certainly not necessarily)
+
+*   Idea for moving forward:
+    *   Start with relatively abstract model layered on top of
+        existing simulation
+    *   Introduce "village decision" concept
+        *   Every now and then a decision appears
+            *   At some point we'll have specific decisions of different
+                kinds
+            *   We can start with an abstract decision or some exemplar,
+                such as new ritual or collective farming practices
+        *   The possible choices will differently affect different clans
+            *   With specific decisions, that will be based on clan
+                traits
+            *   With abstract decisions, it can be more random but can
+                have some correlation with kinship or affinity
+        *   Clans have an initial "clan preference"
+        *   Clans then form their "inclusive preference" by averaging
+            in some of the preferences of others:
+            *   +for clans they intrinsically like, e.g., kin
+            *   +for clans they reciprocally support, e.g., good neighbors
+            *   -for clans they are opposed to
+            *   This may be applied in multiple steps but there's a limit
+                to communication and convergence capacity
+        *   If inclusive preferences match: done, apply decision
+        *   Otherwise, clans now choose whether to play hawk, dove, or exit:
+            *   If any clans exit, they leave to a new village
+            *   If all remaining clans play dove, they amicably choose via 
+                some procedure
+                *   good memories
+                *   +affinity
+            *   If hawks are all on one side, they get their choice
+                *   memories
+                *   -affinity of doves to hawks
+            *   If hawks are on both sides, they pay a conflict cost and
+                effects are applied either from a conflictually chosen
+                option or a worse payoff from failure to choose!
+                *   memories
+                *   -affinity hawks toward opponent hawks and allied doves
+                *   -affinity doves toward opponent hawks
+                *   +affinity all toward allied hawks
+        *   This should be able to drive fission:
+            *   Inclusive preferences become harder to sync with scale
+            *   If everyone plays dove all the time, they can be invaded
+                by hawks (always some nonzero number)
+            *   If there are nonzero hawk plays, then there is some cost
+                to nonsynchronization of inclusive preferences thus giving
+                a reason to exit
