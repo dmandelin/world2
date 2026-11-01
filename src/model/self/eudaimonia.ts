@@ -19,24 +19,27 @@
 // Fortune is how a year went, and it is a tree:
 //
 //     Fortune
-//       Material
-//         Food
-//           Nutrition     enough to eat, and balanced enough to nourish
-//           Taste
-//             Honey       the pleasures of a gathered diet
-//             Beer        the pleasures of a cereal one
-//       Social
-//         Care
-//           Comfort       how well looked after everyone was
-//           Stress        what the looking after cost those doing it
-//         Conversation
-//           Quality       how appealing its company was
-//           Quantity      how near it came to as much as the clan wanted
+//       Wellbeing
+//         Material
+//           Food
+//             Nutrition     enough to eat, and balanced enough to nourish
+//             Taste
+//               Honey       the pleasures of a gathered diet
+//               Beer        the pleasures of a cereal one
+//         Social
+//           Care
+//             Comfort       how well looked after everyone was
+//             Stress        what the looking after cost those doing it
+//           Conversation
+//             Quality       how appealing its company was
+//             Quantity      how near it came to as much as the clan wanted
+//       Decisions           how the village's decisions have gone for it
 //
 // Each inner node combines its children, by default by adding them. The
 // nodes where the parts are needs that make up for each other only so far --
-// those with quantity and quality under them, Social, and Fortune itself --
-// BLEND them instead, which lets a bad part drag the whole down. Food SAVORs
+// those with quantity and quality under them, Social, and Wellbeing -- BLEND
+// them instead, which lets a bad part drag the whole down. Decisions is
+// added on top of Wellbeing as it stands. Food SAVORs
 // its taste, counting it for more the better fed the clan is, and
 // Conversation ENGAGEs its quantity, counting it for more the better the
 // company. See "Combining" below. The year's Fortune, shown on its own, is the tree as it
@@ -442,6 +445,9 @@ export class FortuneInputs {
     // The clan's Conversation Appeal for those people's clans: their
     // geometric mean, weighted by how many of each clan's people it knows.
     conversationAppeal = 1;
+    // How the village's decisions have gone for the clan, faded to this
+    // year, in points of Fortune. See decision.ts.
+    decisions = 0;
 
     copyFrom(o: FortuneInputs): void {
         this.foodRatio = o.foodRatio;
@@ -453,6 +459,7 @@ export class FortuneInputs {
         this.conversationAmount = o.conversationAmount;
         this.conversationWanted = o.conversationWanted;
         this.conversationAppeal = o.conversationAppeal;
+        this.decisions = o.decisions;
     }
 
     clone(): FortuneInputs {
@@ -492,6 +499,8 @@ export const EuNode = {
 
     // Fortune
     Fortune: 20,
+    Wellbeing: 39,
+    Decisions: 45,
 
     //   Material
     Material: 21,
@@ -546,48 +555,54 @@ export interface FortuneTreeNode {
 
 export const FORTUNE_TREE: FortuneTreeNode = {
     node: EuNode.Fortune,
-    combine: BLEND,
     children: [
         {
-            node: EuNode.Material,
+            node: EuNode.Wellbeing,
+            combine: BLEND,
             children: [
                 {
-                    node: EuNode.Food,
-                    combine: SAVOR,
+                    node: EuNode.Material,
                     children: [
-                        { node: EuNode.FoodNutrition },
                         {
-                            node: EuNode.FoodTaste,
+                            node: EuNode.Food,
+                            combine: SAVOR,
                             children: [
-                                { node: EuNode.Honey },
-                                { node: EuNode.Beer },
+                                { node: EuNode.FoodNutrition },
+                                {
+                                    node: EuNode.FoodTaste,
+                                    children: [
+                                        { node: EuNode.Honey },
+                                        { node: EuNode.Beer },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    node: EuNode.Social,
+                    combine: BLEND,
+                    children: [
+                        {
+                            node: EuNode.Care,
+                            children: [
+                                { node: EuNode.CareComfort },
+                                { node: EuNode.CareStress },
+                            ],
+                        },
+                        {
+                            node: EuNode.Conversation,
+                            combine: ENGAGE,
+                            children: [
+                                { node: EuNode.ConversationQuality },
+                                { node: EuNode.ConversationQuantity },
                             ],
                         },
                     ],
                 },
             ],
         },
-        {
-            node: EuNode.Social,
-            combine: BLEND,
-            children: [
-                {
-                    node: EuNode.Care,
-                    children: [
-                        { node: EuNode.CareComfort },
-                        { node: EuNode.CareStress },
-                    ],
-                },
-                {
-                    node: EuNode.Conversation,
-                    combine: ENGAGE,
-                    children: [
-                        { node: EuNode.ConversationQuality },
-                        { node: EuNode.ConversationQuantity },
-                    ],
-                },
-            ],
-        },
+        { node: EuNode.Decisions },
     ],
 };
 
@@ -760,7 +775,11 @@ export const EU_NODES: readonly EuNodeDef[] = [
       note: "The clan's Conversation Appeal for the clans it talks with: their geometric mean, weighted by how many of each clan's people it knows." },
 
     { id: EuNode.Fortune, label: "Fortune", role: "result", places: 1,
+      note: "Wellbeing, plus what the village's decisions are doing for the clan." },
+    { id: EuNode.Wellbeing, label: "Wellbeing", role: "derived", places: 1,
       note: "Material and social fortune blended: a bad side drags the whole down." },
+    { id: EuNode.Decisions, label: "Decisions", role: "derived", places: 1,
+      note: "Favorability of the village's decisions for the clan, each halved every 20 years, added up." },
 
     { id: EuNode.Material, label: "Material", role: "derived", places: 1,
       note: "What the year was worth in things: for now, only food." },
@@ -1050,11 +1069,16 @@ export function computeFortune(inputs: FortuneInputs, trace?: EuTrace): number {
     const conversation = computeConversation(inputs, trace);
     const social = combine2(EuNode.Social, care, conversation);
 
-    const fortune = combine2(EuNode.Fortune, material, social);
+    const wellbeing = combine2(EuNode.Wellbeing, material, social);
+    const decisions = inputs.decisions;
+
+    const fortune = combine2(EuNode.Fortune, wellbeing, decisions);
 
     if (trace !== undefined) {
         trace.put(EuNode.Material, material);
         trace.put(EuNode.Social, social);
+        trace.put(EuNode.Wellbeing, wellbeing);
+        trace.put(EuNode.Decisions, decisions);
         trace.put(EuNode.Fortune, fortune);
     }
 

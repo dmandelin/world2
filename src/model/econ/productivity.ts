@@ -8,6 +8,7 @@ import type { SkillDef } from '../people/skills';
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from '../relations/mutualaid';
 import { explain, type Explainer } from '../lib/explain';
 import { toilSociabilityFactor } from '../people/sociability';
+import { decisionProductivityModifier } from '../decision';
 
 // Map of process to skills that affect productivity and the weight of that
 // skill. Built lazily on first use rather than at module-evaluation time: a
@@ -79,6 +80,7 @@ export class Productivity {
             ...ProductivityItem.fromLand(clan, process),
             ...ProductivityItem.fromHelp(clan, process),
             ProductivityItem.fromSociability(clan),
+            ...ProductivityItem.fromDecisions(clan, process),
             ...ProductivityItem.fromEnvironment(clan, process, outlook),
         ];
 
@@ -102,6 +104,8 @@ const averageText = (i: ProductivityItem) => `${pct(i.value)} of average`;
 const talkText = (d: { sociability: number }) =>
     `Sociability ${d.sociability.toFixed(0)}: talk gets in the way of toil`;
 const stocksText = (d: { flood: string }) => `${d.flood} flood last year`;
+const decisionsText = (d: { favorability: number }) =>
+    `favorability ${d.favorability.toFixed(1)} from the village's decisions`;
 const landText = (d: { description: string }) =>
     `${d.description}; the farming base is the yield on ordinary land`;
 
@@ -171,6 +175,19 @@ export class ProductivityItem<P = unknown> {
             toilSociabilityFactor(sociability),
             talkText,
             { sociability },
+        );
+    }
+
+    // How the village's decisions have gone for the clan lately, on its
+    // fields and its nets. Known in advance, so planning reckons with it too.
+    static *fromDecisions(clan: Clan, process: Process) {
+        if (process !== Processes.Agriculture && process !== Processes.Fishing) return;
+        const favorability = clan.decisionFavorability;
+        yield new ProductivityItem(
+            'Decisions',
+            decisionProductivityModifier(favorability),
+            decisionsText,
+            { favorability },
         );
     }
 

@@ -258,6 +258,8 @@
                     {/each}
                     <dt>Consensus</dt>
                     <dd>{item.consensus ? "yes" : "no"}</dd>
+                    <dt>Favorability</dt>
+                    <dd>{signed(item.favorability)}</dd>
                 {:else if item.kind === "fortune"}
                     <dt>Fortune</dt>
                     <dd>

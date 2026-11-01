@@ -34,6 +34,7 @@
         NUTRITION_IDEAL_CEREAL_SHARE,
         NUTRITION_MAX,
     } from "../../model/people/nutrition";
+    import { DECISION_EFFECT_HALF_LIFE } from "../../model/decision";
 
     let {
         report,
@@ -216,6 +217,16 @@
             it, &minus;5 at 75% and &minus;20 at half; past it, &minus;3 at
             150% and &minus;10 at twice. Nothing is worse than
             {n(EU_CONVERSATION_QUANTITY_FLOOR, 0)}.
+        </div>
+    {:else if node === EuNode.Decisions}
+        <div class="line">
+            Favorability of the village's decisions =
+            <b>{n(get(EuNode.Decisions))}</b>
+        </div>
+        <div class="note">
+            Each decision draws a Favorability for every clan in the village,
+            which is added straight into Fortune and halved every
+            {DECISION_EFFECT_HALF_LIFE} years.
         </div>
     {/if}
 

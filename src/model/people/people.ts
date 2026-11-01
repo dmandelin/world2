@@ -40,6 +40,7 @@ import {
     readConversationForFortune,
 } from "../relations/conversation";
 import { History, newHistoryEventId } from "./history";
+import { DecisionEffects } from "../decision";
 import { randomClanName } from "./names";
 export { randomClanName };
 
@@ -203,6 +204,10 @@ export class Clan implements TradePartner {
 
     // What the clan remembers of its own past. See history.ts.
     history: History;
+
+    // What the village's decisions are still doing to the clan. See
+    // decision.ts.
+    decisionEffects = new DecisionEffects();
 
     production: ProductionReport = new ProductionReport([]);
     distribution: Distribution;
@@ -383,6 +388,13 @@ export class Clan implements TradePartner {
             - sumFun(this.ritualEvents, e => e.stressTransfer);
     }
 
+    // How well the village's decisions have gone for the clan, faded to this
+    // year: what they are worth to its Fortune, and what its birth rate and
+    // its farming and fishing read.
+    get decisionFavorability(): number {
+        return this.decisionEffects.favorability(this.world.year.value);
+    }
+
     updateStress() {
         this.stress.update(this);
     }
@@ -403,6 +415,7 @@ export class Clan implements TradePartner {
         inputs.careSkill = this.careSkill;
         inputs.careShare = this.effortAllocation.get(Activities.Care);
         readConversationForFortune(this, inputs);
+        inputs.decisions = this.decisionFavorability;
         this.eudaimonia.update(
             change.births,
             change.deaths,
@@ -635,6 +648,7 @@ export class Clan implements TradePartner {
         newClan.history = this.history.clone();
         this.history.foundBySplit(splitEventId, splitYear, 'senior', newClan);
         newClan.history.foundBySplit(splitEventId, splitYear, 'cadet', this);
+        newClan.decisionEffects = this.decisionEffects.clone();
         // TODO - Inherit the rest of the relationships from the parent clan.
 
         // Plan for the new clan, since it didn't get a chance to during the main

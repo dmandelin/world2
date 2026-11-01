@@ -37,6 +37,7 @@ export function careQolEffect(care: number): number {
         / (CARE_SKILL_TOP - CARE_SKILL_BASE);
 }
 import { feastBirthRateModifier, feastDeathRateModifier, festivalAppeal } from "../festivals";
+import { decisionBirthRateModifier } from "../decision";
 
 export const INITIAL_POPULATION_RATIOS = [
     [0.2157, 0.2337],
@@ -433,6 +434,11 @@ export class PopulationChangeBuilder {
             'Care', provision, careBirthRateModifier(provision)));
         this.drModifiers.push(new PopulationChangeModifier(
             'Care', provision, careDeathRateModifier(provision, 1)));
+
+        // How the village's decisions have gone for the clan lately.
+        const favorability = this.clan.decisionFavorability;
+        this.brModifiers.push(new PopulationChangeModifier(
+            'Decisions', favorability, decisionBirthRateModifier(favorability)));
 
         const intellect = this.clan.traits?.intellect ?? 50;
         const foresightBrModifier = Math.pow(0.9, (intellect - 50) / 15);

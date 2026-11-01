@@ -1,7 +1,15 @@
 <script lang="ts">
-    import type { SettlementDTO } from "../model/records/dtos";
-    import { DECISION_CHANCE, type Decision } from "../model/decision";
-    import { pct } from "../model/lib/format";
+    import type { ClanDTO, SettlementDTO } from "../model/records/dtos";
+    import {
+        DECISION_CHANCE,
+        DECISION_EFFECT_HALF_LIFE,
+        DECISION_FAVORABILITY_SD,
+        decisionBirthRateModifier,
+        decisionProductivityModifier,
+        type Decision,
+        type DecisionVote,
+    } from "../model/decision";
+    import { pct, signed } from "../model/lib/format";
     import { formatYear } from "../model/records/year";
     import EntityLink from "./state/EntityLink.svelte";
 
@@ -16,11 +24,17 @@
 
     // The clan as it was named when it voted, which still reads right after
     // it has split or gone.
-    const voter = (v: Decision["votes"][number]) => ({
+    const voter = (v: DecisionVote) => ({
         uuid: v.clan.uuid,
         name: v.clanName,
     });
+
+    const factor = (x: number) => "×" + x.toFixed(3);
 </script>
+
+{#snippet favor(x: number)}
+    <span class="favor" class:good={x > 0} class:bad={x < 0}>{signed(x, 1)}</span>
+{/snippet}
 
 {#snippet sides(decision: Decision)}
     {#each decision.choices as choice, i (choice)}
@@ -30,7 +44,9 @@
         {#if votes.length}
             {#each votes as v, j (v.clan.uuid)}<EntityLink
                     entity={voter(v)}
-                />{j < votes.length - 1 ? ", " : ""}{/each}
+                /> {@render favor(v.favorability)}{j < votes.length - 1
+                    ? ", "
+                    : ""}{/each}
         {:else}
             <span class="muted">nobody</span>
         {/if}
@@ -42,7 +58,14 @@
         Now and then the clans of a village have something to settle together:
         one answer that all of them will have to live with. In any year there
         is a {pct(DECISION_CHANCE)} chance of one coming up. For now every clan
-        picks between the choices at random, and nothing comes of the result.
+        picks between the choices at random.
+    </p>
+    <p class="lede">
+        How it goes for each clan is as random as the picks: a Favorability,
+        drawn around zero with a spread of {DECISION_FAVORABILITY_SD}. It is
+        added straight into the clan's Fortune, moves its birth rate by a
+        two-hundredth of itself and its farming and fishing by a hundredth, and
+        fades by half every {DECISION_EFFECT_HALF_LIFE} years.
     </p>
 
     <h3>This year</h3>
@@ -64,7 +87,10 @@
                     {#if votes.length}
                         <ul>
                             {#each votes as v (v.clan.uuid)}
-                                <li><EntityLink entity={voter(v)} /></li>
+                                <li>
+                                    <EntityLink entity={voter(v)} />
+                                    {@render favor(v.favorability)}
+                                </li>
                             {/each}
                         </ul>
                     {:else}
@@ -76,6 +102,29 @@
     {:else}
         <p class="muted">Nothing for the village to decide this year.</p>
     {/if}
+
+    <h3>What decisions are doing now</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Clan</th>
+                <th class="num" title="Every decision's Favorability for the clan, faded to this year, added up. Goes straight into Fortune.">Favorability</th>
+                <th class="num">Birth rate</th>
+                <th class="num">Farming &amp; fishing</th>
+            </tr>
+        </thead>
+        <tbody>
+            {#each settlement.clans as clan (clan.uuid)}
+                {@const f = (clan as ClanDTO).decisionFavorability}
+                <tr>
+                    <td><EntityLink entity={clan} /></td>
+                    <td class="num">{@render favor(f)}</td>
+                    <td class="num">{factor(decisionBirthRateModifier(f))}</td>
+                    <td class="num">{factor(decisionProductivityModifier(f))}</td>
+                </tr>
+            {/each}
+        </tbody>
+    </table>
 
     <h3>Past decisions</h3>
     {#if past.length}
@@ -205,6 +254,28 @@
     td.num {
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
+    }
+
+    .favor {
+        font-size: 0.8em;
+        font-variant-numeric: tabular-nums;
+        color: #8a7f60;
+    }
+
+    .favor.good {
+        color: #2f7d5b;
+    }
+
+    .favor.bad {
+        color: #9b2c2c;
+    }
+
+    th.num {
+        text-align: right;
+    }
+
+    td.num {
+        text-align: right;
     }
 
     .choice {

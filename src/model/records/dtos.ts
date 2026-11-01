@@ -137,6 +137,8 @@ export class ClanDTO {
     eudaimonia: Eudaimonia;
     // What the clan remembers of its past, as of this snapshot.
     history: History;
+    // How the village's decisions have gone for the clan, faded to this year.
+    decisionFavorability: number;
 
     // What this clan put into the settlement's ditches this year.
     ditchingEffortShare: number;
@@ -218,6 +220,7 @@ export class ClanDTO {
         this.qol = clan.qol;
         this.eudaimonia = clan.eudaimonia.clone();
         this.history = clan.history.clone();
+        this.decisionFavorability = clan.decisionFavorability;
 
         this.ditchingEffortShare = clan.ditchingEffortShare;
         this.ditchingLabor = clan.ditchingLabor;
