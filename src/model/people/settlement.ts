@@ -27,6 +27,7 @@ import {
 import { getAlignment } from "../relations/alignment";
 import type { NewSettlementDecisionReport } from "./migration";
 import type { RitualChangeEvent } from "../ritualchange";
+import type { Decision } from "../decision";
 import type { UUID } from "../records/basicdata";
 
 export class Settlement {
@@ -76,6 +77,9 @@ export class Settlement {
     ritualRoster: Map<UUID, string> | undefined = undefined;
     // Every time the question of how to hold the festival has come open.
     readonly ritualChanges: RitualChangeEvent[] = [];
+
+    // Every question the village has had to settle together, oldest first.
+    readonly decisions: Decision[] = [];
 
     readonly timeline = new Timeline<SettlementTimePoint>();
 
@@ -241,6 +245,11 @@ export class Settlement {
     // ever has.
     get lastRitualChange(): RitualChangeEvent | undefined {
         return this.ritualChanges[this.ritualChanges.length - 1];
+    }
+
+    // The last thing the village had to decide, if it ever has.
+    get lastDecision(): Decision | undefined {
+        return this.decisions[this.decisions.length - 1];
     }
 
     growTell(previousEffectiveResidentPopulation: number) {

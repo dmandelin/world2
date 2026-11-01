@@ -30,6 +30,7 @@ import { PerceptionsGraph, updatePerceptions } from "./relations/perceptions";
 import { updateAffinities } from "./relations/affinity";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
 import { planRitualChanges, settleRitualChanges, type RitualChangeEvent } from "./ritualchange";
+import { planDecisions, type Decision } from "./decision";
 import { settleFestivalEconomy } from "./festivals";
 import { clearNews, foldNewsIntoMemory, forgetStaleMemories, propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { RecentNews } from "./records/recentnews";
@@ -124,6 +125,9 @@ export class World implements NoteTaker {
     // Settlements where the question of how to hold the festival came open
     // during this turn's planning, used to raise alerts.
     lastRitualChanges: RitualChangeEvent[] = [];
+
+    // Villages that had something to decide in this turn's planning.
+    lastDecisions: Decision[] = [];
 
     // Occasions that cut a multi-year run short, and what cut the last one.
     // See records/breakpoints.ts.
@@ -436,6 +440,8 @@ export class World implements NoteTaker {
         // it belongs here with the other decisions; on a priming turn this
         // only takes down who is keeping the festival.
         planRitualChanges(this, priming);
+        // Whatever else the village has to settle together this year.
+        planDecisions(this, priming);
         for (const clan of this.allClans) {
             clan.planMaintenance();
             clan.planHousing();

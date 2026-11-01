@@ -244,6 +244,20 @@
                     <dd>
                         {item.daughtersTo.map((t) => `${t.count} ${t.otherName}`).join(", ") || "none"}
                     </dd>
+                {:else if item.kind === "decision"}
+                    <dt>Village</dt>
+                    <dd>{item.settlementName}</dd>
+                    <dt>Chose</dt>
+                    <dd>
+                        {item.ownChoice}
+                        <span class="muted">of {item.choices.join(" / ")}</span>
+                    </dd>
+                    {#each item.others as side (side.choice)}
+                        <dt>Others for {side.choice}</dt>
+                        <dd>{side.clanNames.join(", ") || "none"}</dd>
+                    {/each}
+                    <dt>Consensus</dt>
+                    <dd>{item.consensus ? "yes" : "no"}</dd>
                 {:else if item.kind === "fortune"}
                     <dt>Fortune</dt>
                     <dd>
@@ -321,6 +335,11 @@
     .chip-marriage {
         color: #8a5a00;
         background: #f7ecd2;
+    }
+
+    .chip-decision {
+        color: #4a5a2a;
+        background: #ebefdc;
     }
 
     .chip-best {

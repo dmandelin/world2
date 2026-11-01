@@ -37,6 +37,7 @@
 import type { Eudaimonia } from "../self/eudaimonia";
 import type { ExtremeFlood } from "../environment/flood";
 import type { World } from "../world";
+import type { Decision } from "../decision";
 import { dice, isPositive } from "../lib/basics";
 import { randomAncestorPair } from "./names";
 
@@ -144,7 +145,7 @@ export function newHistoryEventId(): number {
     return nextHistoryEventId++;
 }
 
-export type HistoryItemKind = "origin" | "flood" | "fortune" | "marriage";
+export type HistoryItemKind = "origin" | "flood" | "fortune" | "marriage" | "decision";
 
 export abstract class HistoryItem {
     abstract readonly kind: HistoryItemKind;
@@ -307,7 +308,50 @@ export class MarriageMemory extends HistoryItem {
 // How long a year's marriages are remembered: living memory.
 export const MARRIAGE_MEMORY_YEARS = 80;
 
-export type AnyHistoryItem = OriginMemory | FloodMemory | FortuneMemory | MarriageMemory;
+// The other clans that picked one choice in a village decision, by the names
+// they had at the time.
+export type DecisionSide = {
+    choice: string;
+    clanNames: readonly string[];
+};
+
+// A question the clan's village had to settle together, and where the clan
+// stood on it.
+export class DecisionMemory extends HistoryItem {
+    readonly kind = "decision" as const;
+
+    constructor(
+        eventId: number,
+        year: number,
+        when: number,
+        readonly settlementName: string,
+        readonly choices: readonly string[],
+        readonly ownChoice: string,
+        // Everyone else, one entry per choice, in the order of the choices.
+        readonly others: readonly DecisionSide[],
+        readonly consensus: boolean,
+    ) {
+        super(eventId, year, when);
+    }
+
+    // The clans that picked the same as this one, and those that did not.
+    get allies(): readonly string[] {
+        return this.others.find(s => s.choice === this.ownChoice)?.clanNames ?? [];
+    }
+
+    get opponents(): readonly string[] {
+        return this.others
+            .filter(s => s.choice !== this.ownChoice)
+            .flatMap(s => s.clanNames);
+    }
+}
+
+// Village decisions are ordinary business, remembered for a lifetime like a
+// year's weddings and then let go.
+export const DECISION_MEMORY_YEARS = 80;
+
+export type AnyHistoryItem =
+    OriginMemory | FloodMemory | FortuneMemory | MarriageMemory | DecisionMemory;
 
 // Names one event across every clan that remembers it, where an item is one
 // clan's copy. The same year's Fortune could in principle be one clan's best
@@ -318,7 +362,7 @@ export function historyEventKey(item: AnyHistoryItem): string {
         : `${item.kind}:${item.eventId}`;
 }
 
-const KIND_ORDER: Record<HistoryItemKind, number> = { origin: 0, flood: 1, fortune: 2, marriage: 3 };
+const KIND_ORDER: Record<HistoryItemKind, number> = { origin: 0, flood: 1, fortune: 2, marriage: 3, decision: 4 };
 
 // Oldest first; what happened before anyone was counting leads.
 export function compareHistoryItems(a: AnyHistoryItem, b: AnyHistoryItem): number {
@@ -458,6 +502,10 @@ export class History {
         this.items_.push(memory);
     }
 
+    recordDecision(memory: DecisionMemory): void {
+        this.items_.push(memory);
+    }
+
     // Take in the year's Fortune, and bring the best and worst years up to
     // date for every period.
     recordFortune(year: number, fortune: number, snapshot: Eudaimonia): void {
@@ -481,8 +529,12 @@ export class History {
     // Bring what the clan knows of when things happened up to the given year.
     age(now: number): void {
         this.asOf_ = now;
-        this.items_ = this.items_.filter(i =>
-            i.kind !== "marriage" || now - (i.year ?? now) < MARRIAGE_MEMORY_YEARS);
+        this.items_ = this.items_.filter(i => {
+            const age = now - (i.year ?? now);
+            if (i.kind === "marriage") return age < MARRIAGE_MEMORY_YEARS;
+            if (i.kind === "decision") return age < DECISION_MEMORY_YEARS;
+            return true;
+        });
         for (const item of this.items_) {
             if (item.year !== undefined) item.blur(whenLevelForAge(Math.max(0, now - item.year)));
         }
@@ -600,6 +652,11 @@ export function updateHistories(world: World): void {
     const floodIds = new Map<ExtremeFlood, number>(
         world.extremeFloods.map(f => [f, newHistoryEventId()]));
 
+    // Every clan that took part in a decision shares the one event.
+    for (const decision of world.lastDecisions) {
+        recordDecision(decision, now);
+    }
+
     for (const clan of world.allClans) {
         const history = clan.history;
         const damage = clan.floodDamage;
@@ -625,5 +682,22 @@ export function updateHistories(world: World): void {
         }
 
         history.age(now);
+    }
+}
+
+// Give every clan that took part in a decision its own memory of it.
+function recordDecision(decision: Decision, now: number): void {
+    const eventId = newHistoryEventId();
+    for (const vote of decision.votes) {
+        const others = decision.choices.map(choice => ({
+            choice,
+            clanNames: decision.votesFor(choice)
+                .filter(v => v !== vote)
+                .map(v => v.clanName),
+        }));
+        vote.clan.history.recordDecision(new DecisionMemory(
+            eventId, decision.year, whenLevelForAge(Math.max(0, now - decision.year)),
+            decision.settlement.name, decision.choices, vote.choice,
+            others, decision.consensus));
     }
 }

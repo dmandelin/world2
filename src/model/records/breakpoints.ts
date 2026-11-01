@@ -23,7 +23,8 @@ export type BreakpointId =
     | 'flood20'
     | 'flood100'
     | 'ritualchange'
-    | 'dwindling';
+    | 'dwindling'
+    | 'decision';
 
 export interface BreakpointDef {
     readonly id: BreakpointId;
@@ -106,6 +107,20 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
                 ? `${names(fallen)} down to ${fallen[0].population}`
                 : undefined;
         },
+    },
+    {
+        id: 'decision',
+        icon: '✋',
+        label: 'Village decision',
+        description: 'The clans of a village had something to decide together.',
+        defaultOn: true,
+        // Decisions are taken in the year's planning and kept on the world
+        // until the next year's planning, so stopping here leaves the year's
+        // decisions on screen: in the alert, the event feed and the
+        // settlement's Decisions panel.
+        hit: world => world.lastDecisions.length
+            ? `decision at ` + names(world.lastDecisions.map(d => d.settlement))
+            : undefined,
     },
 ];
 

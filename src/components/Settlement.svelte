@@ -29,6 +29,7 @@
     import SettlementFestivals from "./SettlementFestivals.svelte";
     import SettlementWaters from "./SettlementWaters.svelte";
     import SettlementHistory from "./SettlementHistory.svelte";
+    import SettlementDecisions from "./SettlementDecisions.svelte";
 
     let { settlement, railHead, contentHead } = $props();
 
@@ -52,6 +53,7 @@
         { label: "Festivals", icon: "🎉", snippet: festivalsTab, group: "settlement" },
         { label: "The Waters", icon: "🌊", snippet: watersTab, group: "settlement" },
 
+        { label: "Decisions", icon: "✋", snippet: decisionsTab, group: "relations" },
         { label: "Relationships", icon: "🤝", snippet: relationshipsTab, group: "relations" },
         { label: "Conversation", icon: "💬", snippet: conversationTab, group: "relations" },
         { label: "Marriages", icon: "💍", snippet: marriagesTab, group: "relations" },
@@ -171,6 +173,10 @@
 
 {#snippet mutualAidTab()}
     <SettlementMutualAid {settlement} />
+{/snippet}
+
+{#snippet decisionsTab()}
+    <SettlementDecisions {settlement} />
 {/snippet}
 
 {#snippet cliquesTab()}

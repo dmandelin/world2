@@ -34,6 +34,7 @@ import type { Rites } from "../rites";
 import type { RitualEvent } from "../rituals";
 import type { ConversationBudget } from "../relations/conversation";
 import type { RitualChangeEvent } from "../ritualchange";
+import type { Decision } from "../decision";
 import type { Settlement } from "../people/settlement";
 import type { SettlementCluster } from "../people/cluster";
 import type { SettlementTimePoint, TimePoint, Timeline } from "../records/timeline";
@@ -363,6 +364,10 @@ export class SettlementDTO {
     // whether it came open in this turn's planning.
     readonly ritualChanges: readonly RitualChangeEvent[];
     readonly ritualChangeThisTurn: RitualChangeEvent | undefined;
+    // Everything the village has had to decide, and what it is deciding in
+    // this turn's planning, if anything.
+    readonly decisions: readonly Decision[];
+    readonly decisionThisTurn: Decision | undefined;
 
     readonly timeline: Timeline<SettlementTimePoint>;
 
@@ -398,6 +403,9 @@ export class SettlementDTO {
         this.ritualChanges = [...settlement.ritualChanges];
         this.ritualChangeThisTurn = settlement.world.lastRitualChanges
             .find(e => e.settlement === settlement);
+        this.decisions = [...settlement.decisions];
+        this.decisionThisTurn = settlement.world.lastDecisions
+            .find(d => d.settlement === settlement);
 
         this.timeline = settlement.timeline;
     }

@@ -25,6 +25,7 @@ export type AlertKindId =
     | 'strife'
     | 'foundation'
     | 'ritualchange'
+    | 'decision'
     | 'flood20'
     | 'flood100'
     | 'flood500';
@@ -73,6 +74,12 @@ export const ALERT_KINDS: Record<AlertKindId, AlertKindDef> = {
         icon: '🎉',
         color: '#975a16',
         description: 'The clans must settle again how the festival is held.',
+    },
+    decision: {
+        title: 'Village Decision',
+        icon: '✋',
+        color: '#4a5a2a',
+        description: 'The clans of a village have something to decide together.',
     },
     // One badge per severity of extreme flood, so a once-in-a-lifetime
     // flood does not look like a once-in-five-centuries one.
@@ -261,6 +268,16 @@ export function updateWorldAlerts(world: World): void {
             id: change.settlement.uuid,
             entity: change.settlement,
             detail: change.detail,
+        });
+    }
+
+    // Settlements with something to decide in this turn's planning.
+    for (const decision of world.lastDecisions) {
+        world.addAlert({
+            kind: 'decision',
+            id: decision.settlement.uuid,
+            entity: decision.settlement,
+            detail: decision.detail,
         });
     }
 }

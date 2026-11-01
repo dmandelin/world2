@@ -17,6 +17,7 @@
 import { EuNode } from "../self/eudaimonia";
 import type {
     AnyHistoryItem,
+    DecisionMemory,
     FloodMemory,
     FortuneMemory,
     HistoryTimeframe,
@@ -60,6 +61,8 @@ export function historyItemTitle(item: AnyHistoryItem): string {
             return `${item.polarity === "best" ? "Best" : "Worst"} year ${TITLE_PERIOD[item.headline]}`;
         case "marriage":
             return "Weddings";
+        case "decision":
+            return item.consensus ? "Of one mind" : "A divided village";
     }
 }
 
@@ -73,6 +76,35 @@ export function tellHistoryItem(
         case "flood": return tellFlood(item, timeframe);
         case "fortune": return tellFortune(item, timeframe);
         case "marriage": return tellMarriages(item, timeframe);
+        case "decision": return tellDecision(item, timeframe);
+    }
+}
+
+// --- Decisions ----------------------------------------------------------------
+
+// "the Eagle", "the Eagle and the Jasper", "the Eagle, the Jasper and the Heron".
+function nameList(names: readonly string[]): string {
+    const parts = names.map(n => `the ${n}`);
+    if (parts.length <= 1) return parts.join("");
+    return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
+function tellDecision(m: DecisionMemory, tf: HistoryTimeframe): string {
+    const question = `${m.choices.slice(0, -1).join(", ")} or ${m.choices[m.choices.length - 1]}`;
+    const allies = m.allies.length ? `, with ${nameList(m.allies)}` : "";
+    switch (tf) {
+        case "recent":
+            if (m.consensus) {
+                return m.allies.length
+                    ? `The clans of ${m.settlementName} had to choose: ${question}. We and ${nameList(m.allies)} were all for ${m.ownChoice}, and so it was ${m.ownChoice}.`
+                    : `There was a choice to be made at ${m.settlementName}: ${question}. There was nobody but us to make it, and we chose ${m.ownChoice}.`;
+            }
+            return `The clans of ${m.settlementName} had to choose: ${question}. We were for ${m.ownChoice}${allies}, but ${nameList(m.opponents)} would not have it, and the village was not of one mind.`;
+        default:
+            // The question itself fades; who stood with whom is what lasts.
+            return m.consensus
+                ? `In those days the clans of ${m.settlementName} were of one mind, and when a thing had to be decided they decided it together.`
+                : `There was a time the clans of ${m.settlementName} could not agree. We held for ${m.ownChoice}${allies}, against ${nameList(m.opponents)}.`;
     }
 }
 

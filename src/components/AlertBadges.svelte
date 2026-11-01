@@ -56,6 +56,7 @@
     // occasion land in the same place.
     const ALERT_TABS: Partial<Record<AlertKindId, string>> = {
         ritualchange: 'Festivals',
+        decision: 'Decisions',
         flood20: 'The Waters',
         flood100: 'The Waters',
         flood500: 'The Waters',
