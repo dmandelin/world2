@@ -143,6 +143,44 @@ td.eu-band {
 .eu-band-n9  { --eu-band: hsl(7, 64%, 60%); }
 .eu-band-n10 { --eu-band: hsl(6, 66%, 57%); }
 
+/* Single-colour ramps for stats where more is simply more, rather than
+ * better or worse: painted inside the same inset as the bands above, deeper
+ * for more, and left unpainted for none. */
+td.tint-band {
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-image: linear-gradient(
+        to right,
+        transparent 0 0.45em,
+        var(--tint-band) 0.45em calc(100% - 0.45em),
+        transparent calc(100% - 0.45em));
+}
+
+/* Residence: sun-dried mud brick, from a first tenth of the year at home to
+ * all of it. Duller and yellower than the clay of the bad bands, so being
+ * settled does not read as something going wrong. */
+.residence-band-1  { --tint-band: hsl(38, 30%, 91%); }
+.residence-band-2  { --tint-band: hsl(37, 31%, 88%); }
+.residence-band-3  { --tint-band: hsl(36, 32%, 85%); }
+.residence-band-4  { --tint-band: hsl(35, 33%, 82%); }
+.residence-band-5  { --tint-band: hsl(34, 34%, 79%); }
+.residence-band-6  { --tint-band: hsl(33, 35%, 76%); }
+.residence-band-7  { --tint-band: hsl(32, 36%, 73%); }
+.residence-band-8  { --tint-band: hsl(31, 37%, 70%); }
+.residence-band-9  { --tint-band: hsl(30, 38%, 67%); }
+.residence-band-10 { --tint-band: hsl(29, 40%, 64%); }
+
+/* Prestige: lapis lazuli, the stone of standing in the land, five points to a
+ * band and deepening toward the true blue of the stone. */
+.prestige-band-1 { --tint-band: hsl(222, 60%, 93%); }
+.prestige-band-2 { --tint-band: hsl(223, 61%, 89%); }
+.prestige-band-3 { --tint-band: hsl(224, 62%, 85%); }
+.prestige-band-4 { --tint-band: hsl(225, 63%, 81%); }
+.prestige-band-5 { --tint-band: hsl(226, 64%, 77%); }
+.prestige-band-6 { --tint-band: hsl(227, 65%, 73%); }
+.prestige-band-7 { --tint-band: hsl(228, 66%, 69%); }
+.prestige-band-8 { --tint-band: hsl(229, 68%, 65%); }
+
 /* Bands for food per head, as a share of a full ration, ten points to a band.
  * Painted inside the same inset as the eudaimonia bands. These are stronger
  * than the stat bands on purpose: going hungry should be hard to miss. */

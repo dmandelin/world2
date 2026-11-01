@@ -95,6 +95,36 @@ export function eudaimoniaBandClass(value: number): string {
         : `eu-band eu-band-n${-band}`;
 }
 
+// The eudaimonia bands, for any other stat where one side of a neutral value
+// is good and the other bad. `perBand` is how much of the stat one band
+// stands for; the neutral band is half that either side of zero.
+export function goodBadBandClass(value: number, perBand: number): string {
+    return eudaimoniaBandClass(value * EU_BAND_WIDTH / perBand);
+}
+
+// How much of the year a clan spends at home in the settlement: a mud-brick
+// ramp, deepening with every tenth of the year, and nothing at all for a clan
+// that is never there.
+export function residenceBandClass(fraction: number): string {
+    if (!Number.isFinite(fraction)) return '';
+    const band = Math.floor(fraction * 10 + 1e-9);
+    if (band <= 0) return '';
+    return `tint-band residence-band-${band > 10 ? 10 : band}`;
+}
+
+// Prestige: lapis, deepening with every five points. Prestige below nothing
+// much is left unpainted -- the absence is the point.
+export const PRESTIGE_BAND_WIDTH = 5;
+export const PRESTIGE_BAND_MAX = 8;
+
+export function prestigeBandClass(value: number): string {
+    if (!Number.isFinite(value)) return '';
+    const band = Math.floor(
+        (value + PRESTIGE_BAND_WIDTH / 2) / PRESTIGE_BAND_WIDTH);
+    if (band <= 0) return '';
+    return `tint-band prestige-band-${band > PRESTIGE_BAND_MAX ? PRESTIGE_BAND_MAX : band}`;
+}
+
 // Bands for food per head, as a share of a full ration: ten points to a band.
 // Each returns `food-band` for the shape of the painted area, and a second
 // class for its colour; see app.css.
