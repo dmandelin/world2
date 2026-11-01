@@ -259,7 +259,7 @@ export class ClanDTO {
     }
 
     // Population-weighted prestige other clans grant this one (alignment *
-    // respect). Scaled by 100 for display, matching the Favor/alignment scale.
+    // respect). Scaled by 100 for display, matching the Sympathy/alignment scale.
     get prestigeAverage(): number {
         return 100 * getLocalPrestige(this);
     }
@@ -285,7 +285,7 @@ export class ClanDTO {
     }
 
     // Population-weighted average of what other clans make of some quality
-    // of this one. Unlike Favor and Respect these are impressions built from
+    // of this one. Unlike Sympathy and Respect these are impressions built from
     // deeds, so clans that have seen little contribute something close to the
     // prior rather than nothing at all.
     impressionAverage(def: ObservationDef): number {
@@ -322,9 +322,9 @@ export class ClanDTO {
     }
 
     // Population-weighted alignment other clans feel toward this one: how
-    // well liked/supported the clan is ("Favor"). Alignment is in [-1, 1];
+    // well liked/supported the clan is ("Sympathy"). Alignment is in [-1, 1];
     // scaled by 100 for a readable integer stat.
-    get favorAverage(): number {
+    get sympathyAverage(): number {
         const otherClans = this.settlement.clans.filter(c => c.uuid !== this.uuid);
         if (otherClans.length === 0) return 0;
         return 100 * populationAverage(

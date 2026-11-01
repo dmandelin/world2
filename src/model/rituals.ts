@@ -217,10 +217,10 @@ export const RitualTypes = {
         newsInformationExponent: 0.25,
         askGiftFraction: 0.02,
         askStressTransfer: 0.5,
-        // Alignment runs -1 to 1 and is shown as Favor x100. These are the
+        // Alignment runs -1 to 1 and is shown as Sympathy x100. These are the
         // marks a single rite leaves; because they stand and fade at the same
         // 25-year half-life as the holiness credit, a standing arrangement
-        // between two clans settles around +8 Favor from the asker and +3
+        // between two clans settles around +8 Sympathy from the asker and +3
         // back, which is a strong tie without crowding out everything else
         // alignment weighs.
         alignmentBoostAsker: 0.015,

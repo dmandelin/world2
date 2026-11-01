@@ -81,9 +81,9 @@
                     </td>
                 </tr>
                 <tr>
-                    <th>Favor</th>
+                    <th>Sympathy</th>
                     <td>
-                        {signed(100 * event.def.alignmentBoostAsker, 1)} Favor from
+                        {signed(100 * event.def.alignmentBoostAsker, 1)} Sympathy from
                         {event.beneficiary.name}, {signed(
                             100 * event.def.alignmentBoostOfficiant,
                             1,

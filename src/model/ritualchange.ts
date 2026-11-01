@@ -139,7 +139,7 @@ export type RitualRole = 'initiator' | 'supporter' | 'opponent';
 
 // How far above its feeling for the rest of the settlement a clan has to hold
 // the initiators before it is three times as likely to back them as not.
-// Alignment runs -1 to 1 and is shown as Favor x100, so this is a fifth of
+// Alignment runs -1 to 1 and is shown as Sympathy x100, so this is a fifth of
 // the scale, and about one standard deviation of the differences that
 // actually come up between the clans of a settlement.
 export const SUPPORT_ALIGNMENT_SWING = 0.2;

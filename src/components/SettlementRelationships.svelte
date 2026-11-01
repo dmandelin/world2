@@ -540,7 +540,7 @@
         <thead>
             <tr>
                 <th>Clan</th>
-                <th class="num">Favor</th>
+                <th class="num">Sympathy</th>
                 <th class="num">Respect</th>
                 <th class="num">Holiness</th>
                 <th class="num">Prestige</th>
@@ -554,10 +554,10 @@
             {#each sortedByKey(settlement.clans, (c) => c.name) as clan}
                 {@const respect = world.respectToward(clan, clan)}
                 {@const holiness = world.holinessToward(clan, clan)}
-                {@const favor = world.alignmentToward(clan, clan)}
+                {@const sympathy = world.alignmentToward(clan, clan)}
                 <tr>
                     <td>{clan.name}</td>
-                    <td class="num">{signed(100 * (favor?.value ?? 0), 0)}</td>
+                    <td class="num">{signed(100 * (sympathy?.value ?? 0), 0)}</td>
                     <td class="num">
                         {#if respect}
                             <Tooltip>
@@ -610,7 +610,7 @@
     </table>
     <div class="caption">
         A clan knows its own doings exactly and is entirely on its own side, so
-        Favor is always +100 and information is complete. Pride is what it adds
+        Sympathy is always +100 and information is complete. Pride is what it adds
         to the plain facts about itself.
     </div>
 {/snippet}

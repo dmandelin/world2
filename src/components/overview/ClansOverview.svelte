@@ -465,7 +465,7 @@
         return item ? item.value : 0;
     }
 
-    // Accessor for directed alignment ("Favor") between two clans.
+    // Accessor for directed alignment ("Sympathy") between two clans.
     type AlignmentToward = (
         observer: ClanDTO,
         target: ClanDTO,
@@ -667,6 +667,21 @@
                 topics: ["demographics", "welfare"],
             },
             {
+                label: "Favor",
+                labelTooltip:
+                    "How the village's decisions have gone for the clan: every decision's Favorability, each halved every 20 years, added up. Goes straight into Fortune, and moves the birth rate and farming and fishing.",
+                class: "actual",
+                cellClass: "rap",
+                panelTab: "Decisions",
+                value: (c) => c.decisionFavorability,
+                format: (v) => signed(v, 1),
+                deltaValue: (c) => c.decisionFavorability,
+                deltaFormat: (v) => signed(v, 1),
+                timelineKey: "favor",
+                scaler: new ZeroCenteredAutoScaler(10),
+                topics: ["welfare"],
+            },
+            {
                 label: "Generosity",
                 class: "actual",
                 cellClass: "rap",
@@ -691,16 +706,16 @@
                 topics: ["perceptions:detail"],
             },
             {
-                label: "Favor",
+                label: "Sympathy",
                 class: "actual",
                 cellClass: "rap",
-                value: (c) => c.favorAverage,
+                value: (c) => c.sympathyAverage,
                 format: (v) => signed(v, 0),
-                tooltipSnippet: favorTooltip,
-                settlementTooltipSnippet: settlementFavorTooltip,
-                deltaValue: (c) => c.favorAverage,
+                tooltipSnippet: sympathyTooltip,
+                settlementTooltipSnippet: settlementSympathyTooltip,
+                deltaValue: (c) => c.sympathyAverage,
                 deltaFormat: (v) => signed(v, 0),
-                timelineKey: "favorAverage",
+                timelineKey: "sympathyAverage",
                 scaler: new ZeroCenteredScaler(),
                 topics: ["perceptions"],
             },
@@ -2002,7 +2017,7 @@
     }
 
     // The clan's own breakdown can carry items the neighbors' does not --
-    // Pride in place of Random, a single Self item for Favor -- so the row set
+    // Pride in place of Random, a single Self item for Sympathy -- so the row set
     // is the union, in rater order with the self-only items after.
     function withSelfItemLabels(
         labels: string[],
@@ -2169,9 +2184,9 @@
         };
     }
 
-    // Favor breakdown: alignment is in [-1, 1] but the Favor stat is shown
+    // Sympathy breakdown: alignment is in [-1, 1] but the Sympathy stat is shown
     // scaled by 100, so scale every value here to match.
-    function clanFavorTooltipTable(
+    function clanSympathyTooltipTable(
         clan: ClanDTO,
         toward: AlignmentToward,
         valueLabel: string,
@@ -2666,18 +2681,18 @@
     <TableView2 table={clanHappinessTooltipTable(cs.e)}></TableView2>
 {/snippet}
 
-{#snippet favorTooltip(cs: ClanLastTurnSnapshots)}
+{#snippet sympathyTooltip(cs: ClanLastTurnSnapshots)}
     <TableView2
-        table={clanFavorTooltipTable(
+        table={clanSympathyTooltipTable(
             cs.e,
             (observer, target) => cs.e.world.alignmentToward(observer, target),
-            "Favor",
+            "Sympathy",
         )}
     ></TableView2>
     <div
         style="font-size: 0.85em; margin-top: 0.35rem; color: #666; font-style: italic;"
     >
-        Retention ratio: 90% (Smoothed Favor = 10% Current Judgments + 90%
+        Retention ratio: 90% (Smoothed Sympathy = 10% Current Judgments + 90%
         Previous Value).
     </div>
 {/snippet}
@@ -2863,16 +2878,16 @@
     />
 {/snippet}
 
-{#snippet settlementFavorTooltip(css: ClanLastTurnSnapshots[])}
+{#snippet settlementSympathyTooltip(css: ClanLastTurnSnapshots[])}
     <TableView2
         table={mergedClanTable(
             css,
             (clan) =>
-                clanFavorTooltipTable(
+                clanSympathyTooltipTable(
                     clan,
                     (observer, target) =>
                         clan.world.alignmentToward(observer, target),
-                    "Favor",
+                    "Sympathy",
                 ),
             [0],
         )}

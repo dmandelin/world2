@@ -117,6 +117,12 @@ function sample(world: World, key: MetricKey): number {
                     weight: c.population,
                 })),
             );
+        case 'favor': {
+            // How the villages' decisions have gone for the average person.
+            const people = world.totalPopulation;
+            if (!isPositive(people)) return 0;
+            return sumFun(world.allClans, (c) => c.decisionFavorability * c.population) / people;
+        }
     }
 }
 

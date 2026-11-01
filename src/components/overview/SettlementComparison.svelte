@@ -20,7 +20,7 @@
         { key: "brModifier", label: "Birth Rate Modifier" },
         { key: "careProvision", label: "Care Provided" },
         { key: "drModifier", label: "Death Rate Modifier" },
-        { key: "favorAverage", label: "Favor" },
+        { key: "favor", label: "Favor" },
         { key: "foodProduced", label: "Food Produced" },
         { key: "foodTransferred", label: "Food Transferred" },
         { key: "food", label: "Food Consumed" },
@@ -45,6 +45,7 @@
         { key: "skillCare", label: "Skill: Care" },
         { key: "socialAppeal", label: "Social Welfare" },
         { key: "stress", label: "Stress" },
+        { key: "sympathyAverage", label: "Sympathy" },
         { key: "supportRatio", label: "Support Ratio" },
         { key: "workers", label: "Workers" },
     ];

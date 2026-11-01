@@ -50,6 +50,7 @@
         foodProduction: "#f59e0b",
         foodConsumption: "#ef4444",
         eudaimonia: "#7c2d12",
+        favor: "#4a5a2a",
         productionGini: "#ca8a04",
         consumptionGini: "#dc2626",
         righteousness: "#4f46e5",

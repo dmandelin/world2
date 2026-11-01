@@ -82,8 +82,8 @@
         opponent: "Against",
     };
 
-    // Alignment runs -1 to 1 and is shown throughout as Favor x100.
-    function favor(alignment: number | undefined): string {
+    // Alignment runs -1 to 1 and is shown throughout as Sympathy x100.
+    function sympathy(alignment: number | undefined): string {
         return alignment === undefined ? "—" : signed(100 * alignment, 0);
     }
 
@@ -548,7 +548,7 @@
                 aspect: "Feast",
                 label: "Alignment",
                 value: signed(100 * FEAST_ALIGNMENT_MAX * fa, 1),
-                note: "Favor every clan here grants every other, for having "
+                note: "Sympathy every clan here grants every other, for having "
                     + "danced at the same fires",
             },
             {
@@ -713,8 +713,8 @@
                 <tr>
                     <th>Clan</th>
                     <th class="rap" title="How far a clan can be outnumbered before it gives way, as a share of the clans present.">Rigidity</th>
-                    <th class="rap">Favor to initiator</th>
-                    <th class="rap">Favor to the rest</th>
+                    <th class="rap">Sympathy to initiator</th>
+                    <th class="rap">Sympathy to the rest</th>
                     <th class="rap">Difference</th>
                     <th class="rap">Chance for</th>
                     <th title="What the clan wanted. This never changes.">Wanted</th>
@@ -740,9 +740,9 @@
                         <td class="rap" title={rigidityNote(stance)}
                             >{stance.rigidity.toFixed(2)}</td
                         >
-                        <td class="rap">{favor(stance.alignmentToInitiators)}</td>
-                        <td class="rap">{favor(stance.alignmentToOthers)}</td>
-                        <td class="rap">{favor(stance.difference)}</td>
+                        <td class="rap">{sympathy(stance.alignmentToInitiators)}</td>
+                        <td class="rap">{sympathy(stance.alignmentToOthers)}</td>
+                        <td class="rap">{sympathy(stance.difference)}</td>
                         <td class="rap"
                             >{stance.supportChance === undefined
                                 ? "—"

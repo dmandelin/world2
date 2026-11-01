@@ -513,7 +513,7 @@ const festivalGivingText = (
     `brought ${pct(d.seen)} of the standard vs ${pct(d.expected)} expected`
         + `, seen at ${pct(d.information)}`;
 const ritualHelpText = (d: { value: number, since: number | undefined }) =>
-    `${signed(100 * d.value, 1)} Favor standing, last rite `
+    `${signed(100 * d.value, 1)} Sympathy standing, last rite `
         + `${d.since === 0 ? 'this year' : `${d.since} y ago`}`;
 
 export function getAlignment(subject: Clan | ClanDTO, object: Clan | ClanDTO): number {

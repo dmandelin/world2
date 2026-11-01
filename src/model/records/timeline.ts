@@ -56,11 +56,13 @@ export class ClanTimePoint {
     readonly fortune: number;
     readonly eudaimoniaFortune: number;
     readonly eudaimoniaDelta: number;
+    // How the village's decisions have gone for the clan, faded to now.
+    readonly favor: number;
     readonly stress: number;
     readonly residenceFraction: number;
     readonly respectAverage: number;
     readonly holinessAverage: number;
-    readonly favorAverage: number;
+    readonly sympathyAverage: number;
     readonly avgWeddingAppeal: number;
     readonly avgPartnerAppeal: number;
     // Marriage: % of women 20-39 married, % of people 30-44 never married,
@@ -123,6 +125,7 @@ export class ClanTimePoint {
         this.fortune = clan.eudaimonia.fortune;
         this.eudaimoniaFortune = clan.eudaimonia.fortuneSubscore;
         this.eudaimoniaDelta = clan.eudaimonia.delta;
+        this.favor = clan.decisionFavorability;
         this.stress = clan.stress.value;
         this.residenceFraction = clan.residenceLevel.fractionInSettlement;
         
@@ -130,7 +133,7 @@ export class ClanTimePoint {
         if (otherClans.length === 0) {
             this.respectAverage = 0;
             this.holinessAverage = 0;
-            this.favorAverage = 0;
+            this.sympathyAverage = 0;
         } else {
             this.respectAverage = populationAverage(
                 otherClans,
@@ -140,7 +143,7 @@ export class ClanTimePoint {
                 otherClans,
                 c => clan.world.perceptions.get(c.uuid, clan.uuid)?.holiness?.value ?? 0
             );
-            this.favorAverage = 100 * populationAverage(
+            this.sympathyAverage = 100 * populationAverage(
                 otherClans,
                 c => clan.world.perceptions.get(c.uuid, clan.uuid)?.alignment?.value ?? 0
             );
