@@ -35,7 +35,10 @@ export const TraitChangeCauses = {
 } as const;
 export type BooleanTrait = string;
 
-function randomTraitStat(sd: number = 12): number {
+// The usual spread of a 0-100 trait across clans.
+export const TRAIT_SD = 12;
+
+function randomTraitStat(sd: number = TRAIT_SD): number {
     return clamp(Math.round(normal(50, sd)), 0, 100);
 }
 

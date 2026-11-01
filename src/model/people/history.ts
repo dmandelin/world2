@@ -332,6 +332,8 @@ export class DecisionMemory extends HistoryItem {
         readonly consensus: boolean,
         // How well it went for the clan, in points of Fortune, before fading.
         readonly favorability: number,
+        // What would actually have been better for it.
+        readonly bestChoice: string,
     ) {
         super(eventId, year, when);
     }
@@ -700,6 +702,7 @@ function recordDecision(decision: Decision, now: number): void {
         vote.clan.history.recordDecision(new DecisionMemory(
             eventId, decision.year, whenLevelForAge(Math.max(0, now - decision.year)),
             decision.settlement.name, decision.choices, vote.choice,
-            others, decision.consensus, vote.favorability));
+            others, decision.consensus, decision.appliedFavorability(vote),
+            vote.bestChoice));
     }
 }

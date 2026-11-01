@@ -260,6 +260,15 @@
                     <dd>{item.consensus ? "yes" : "no"}</dd>
                     <dt>Favorability</dt>
                     <dd>{signed(item.favorability)}</dd>
+                    <dt>Better choice</dt>
+                    <dd>
+                        {item.bestChoice}
+                        <span class="muted"
+                            >{item.bestChoice === item.ownChoice
+                                ? "picked right"
+                                : "picked wrong"}</span
+                        >
+                    </dd>
                 {:else if item.kind === "fortune"}
                     <dt>Fortune</dt>
                     <dd>

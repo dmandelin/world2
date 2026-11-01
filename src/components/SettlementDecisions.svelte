@@ -3,6 +3,7 @@
     import {
         DECISION_CHANCE,
         DECISION_EFFECT_HALF_LIFE,
+        DECISION_ESTIMATE_SD,
         DECISION_FAVORABILITY_SD,
         decisionBirthRateModifier,
         decisionProductivityModifier,
@@ -44,28 +45,100 @@
         {#if votes.length}
             {#each votes as v, j (v.clan.uuid)}<EntityLink
                     entity={voter(v)}
-                /> {@render favor(v.favorability)}{j < votes.length - 1
-                    ? ", "
-                    : ""}{/each}
+                />{#if !v.gotItRight}<span
+                        class="miss"
+                        title="{v.bestChoice} would have been better for it"
+                        >✗</span
+                    >{/if}{j < votes.length - 1 ? ", " : ""}{/each}
         {:else}
             <span class="muted">nobody</span>
         {/if}
     {/each}
 {/snippet}
 
+<!-- Every clan's view of one decision: what each choice would actually do
+     for it (the better one shaded), what it estimated (the one it picked
+     marked), and whether it picked the better one. -->
+{#snippet voteTable(decision: Decision)}
+    <table class="votes">
+        <thead>
+            <tr>
+                <th>Clan</th>
+                <th
+                    class="num"
+                    title="The clan's intellect when it decided. Cleverer clans estimate more closely."
+                    >Intellect</th
+                >
+                <th
+                    class="num"
+                    title="The spread of the clan's estimates around the true Favorability."
+                    >Est. error</th
+                >
+                {#each decision.choices as choice (choice)}
+                    <th class="choice-col">{choice}</th>
+                {/each}
+                <th
+                    title="Whether the clan picked the choice that is actually better for it."
+                    >Right?</th
+                >
+                <th
+                    class="num"
+                    title="The Favorability the clan gets: the agreed choice's, or the worse of the two if the village could not agree."
+                    >Gets</th
+                >
+            </tr>
+        </thead>
+        <tbody>
+            {#each decision.votes as v (v.clan.uuid)}
+                <tr>
+                    <td><EntityLink entity={voter(v)} /></td>
+                    <td class="num">{v.intellect}</td>
+                    <td class="num">±{v.estimateSD.toFixed(1)}</td>
+                    {#each decision.choices as choice (choice)}
+                        <td
+                            class="choice-cell"
+                            class:best={choice === v.bestChoice}
+                            class:picked={choice === v.choice}
+                        >
+                            <span class="hand"
+                                >{choice === v.choice ? "✋" : ""}</span
+                            >
+                            {@render favor(v.favorabilityOf(choice))}
+                            <span class="est"
+                                >est {signed(v.estimateOf(choice), 1)}</span
+                            >
+                        </td>
+                    {/each}
+                    <td class="verdict" class:right={v.gotItRight}>
+                        {v.gotItRight ? "✓" : "✗"}
+                    </td>
+                    <td class="num">
+                        {@render favor(decision.appliedFavorability(v))}
+                    </td>
+                </tr>
+            {/each}
+        </tbody>
+    </table>
+{/snippet}
+
 <div class="decisions">
     <p class="lede">
         Now and then the clans of a village have something to settle together:
         one answer that all of them will have to live with. In any year there
-        is a {pct(DECISION_CHANCE)} chance of one coming up. For now every clan
-        picks between the choices at random.
+        is a {pct(DECISION_CHANCE)} chance of one coming up.
     </p>
     <p class="lede">
-        How it goes for each clan is as random as the picks: a Favorability,
-        drawn around zero with a spread of {DECISION_FAVORABILITY_SD}. It is
-        added straight into the clan's Fortune, moves its birth rate by a
-        two-hundredth of itself and its farming and fishing by a hundredth, and
-        fades by half every {DECISION_EFFECT_HALF_LIFE} years.
+        Each choice has a Favorability for each clan, how well it would go for
+        that clan, drawn around zero with a spread of
+        {DECISION_FAVORABILITY_SD}. A clan only has an estimate of each, off by
+        a spread of {DECISION_ESTIMATE_SD} at ordinary intellect, half that for
+        every step of cleverness above it and twice that for every step below,
+        and picks whichever looks better. If every clan picks the same, every
+        clan gets that choice's Favorability; if not, the village has failed to
+        decide, and every clan gets the worse of the two for it. That is added
+        straight into its Fortune, moves its birth rate by a two-hundredth of itself and its
+        farming and fishing by a hundredth, and fades by half every
+        {DECISION_EFFECT_HALF_LIFE} years.
     </p>
 
     <h3>This year</h3>
@@ -75,30 +148,15 @@
             {current.tallyLabel}:
             <span class="outcome" class:consensus={current.consensus}
                 >{current.outcomeLabel.toLowerCase()}</span
-            >.
+            >. {current.rightCount} of {current.votes.length} picked what was
+            better for them.
         </p>
-        <div class="columns">
-            {#each current.choices as choice (choice)}
-                {@const votes = current.votesFor(choice)}
-                <div class="column" class:won={current.result === choice}>
-                    <div class="column-head">
-                        {choice} <span class="count">{votes.length}</span>
-                    </div>
-                    {#if votes.length}
-                        <ul>
-                            {#each votes as v (v.clan.uuid)}
-                                <li>
-                                    <EntityLink entity={voter(v)} />
-                                    {@render favor(v.favorability)}
-                                </li>
-                            {/each}
-                        </ul>
-                    {:else}
-                        <div class="muted">nobody</div>
-                    {/if}
-                </div>
-            {/each}
-        </div>
+        {@render voteTable(current)}
+        <p class="caption">
+            Shaded: the choice that is actually better for the clan. ✋: the one
+            it picked, going by its estimates. Gets: the agreed choice's
+            Favorability, or with no agreement the worse of the two.
+        </p>
     {:else}
         <p class="muted">Nothing for the village to decide this year.</p>
     {/if}
@@ -135,6 +193,7 @@
                     <th>Question</th>
                     <th>Tally</th>
                     <th>Outcome</th>
+                    <th title="Clans that picked what was better for them.">Right</th>
                     <th>Who chose what</th>
                 </tr>
             </thead>
@@ -147,7 +206,13 @@
                         <td class="outcome" class:consensus={d.consensus}
                             >{d.outcomeLabel}</td
                         >
-                        <td>{@render sides(d)}</td>
+                        <td class="num">{d.rightCount}/{d.votes.length}</td>
+                        <td>
+                            <details>
+                                <summary>{@render sides(d)}</summary>
+                                {@render voteTable(d)}
+                            </details>
+                        </td>
                     </tr>
                 {/each}
             </tbody>
@@ -194,41 +259,68 @@
         color: #2f7d5b;
     }
 
-    .columns {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
+    .caption {
+        margin: 0.3rem 0 0;
+        font-size: 0.85rem;
+        color: #6b5f3a;
+        max-width: 44rem;
     }
 
-    .column {
-        min-width: 10rem;
-        padding: 0.3rem 0.6rem;
-        border: 1px solid #ded3ae;
-        border-radius: 4px;
-        font-size: 0.9rem;
+    .votes th.choice-col {
+        text-align: center;
     }
 
-    .column.won {
-        border-color: #2f7d5b;
-    }
-
-    .column-head {
-        font-weight: 600;
-        color: #62531d;
-        border-bottom: 1px solid #ded3ae;
-        margin-bottom: 0.2rem;
-    }
-
-    .count {
-        float: right;
+    .votes td.choice-cell {
+        white-space: nowrap;
+        text-align: right;
         font-variant-numeric: tabular-nums;
+        border-left: 1px dotted #ded3ae;
+    }
+
+    /* The choice that is actually better for the clan. */
+    .votes td.choice-cell.best {
+        background-color: #e3f0df;
+    }
+
+    /* The one it picked. */
+    .votes td.choice-cell.picked {
+        box-shadow: inset 0 0 0 2px #62531d;
+    }
+
+    .hand {
+        display: inline-block;
+        width: 1.2em;
+        text-align: left;
+    }
+
+    .est {
+        margin-left: 0.3rem;
+        font-size: 0.75em;
         color: #8a7f60;
     }
 
-    .column ul {
-        margin: 0;
-        padding: 0;
-        list-style: none;
+    .verdict {
+        font-weight: 600;
+        color: #9b2c2c;
+        white-space: nowrap;
+    }
+
+    .verdict.right {
+        color: #2f7d5b;
+    }
+
+    .miss {
+        color: #9b2c2c;
+        font-size: 0.8em;
+        margin-left: 0.1rem;
+    }
+
+    details summary {
+        cursor: pointer;
+    }
+
+    details .votes {
+        margin: 0.3rem 0 0.4rem;
     }
 
     table {
