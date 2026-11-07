@@ -7,6 +7,7 @@
         precision = 0,
         color = "#3b82f6",
         yRange,
+        yCenter,
     }: {
         title: string;
         points: Summary[];
@@ -14,6 +15,9 @@
         color?: string;
         // A fixed y axis. Unset, the axis fits the data.
         yRange?: readonly [number, number];
+        // A value to keep on the axis's midline: the axis still fits the
+        // data, but evenly either side of this.
+        yCenter?: number;
     } = $props();
 
     // Fixed drawing space; CSS scales the whole thing, so text stays in
@@ -49,13 +53,21 @@
 
     let yDomain = $derived.by<[number, number]>(() => {
         if (yRange) return [yRange[0], yRange[1]];
-        if (!shown.length) return [0, 1];
         let lo = Infinity;
         let hi = -Infinity;
         for (const p of shown) {
             if (p.min < lo) lo = p.min;
             if (p.max > hi) hi = p.max;
         }
+        if (yCenter !== undefined) {
+            // Reach far enough either way to take in the data on both sides.
+            const reach = Number.isFinite(lo) && Number.isFinite(hi)
+                ? Math.max(hi - yCenter, yCenter - lo) * 1.08
+                : 0;
+            const half = reach > 1e-9 ? reach : Math.abs(yCenter) * 0.1 || 0.5;
+            return [yCenter - half, yCenter + half];
+        }
+        if (!shown.length) return [0, 1];
         if (!Number.isFinite(lo) || !Number.isFinite(hi)) return [0, 1];
         if (hi - lo < 1e-9) {
             const pad = Math.max(Math.abs(hi) * 0.1, 0.5);

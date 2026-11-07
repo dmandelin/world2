@@ -288,6 +288,7 @@
                 precision={spec.precision}
                 color={CHART_COLORS[spec.key]}
                 yRange={spec.yRange}
+                yCenter={spec.yCenter}
             />
         {/each}
     </section>

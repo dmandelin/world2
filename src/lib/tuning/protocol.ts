@@ -43,6 +43,9 @@ export type MetricSpec = {
     // A fixed y axis, for charts that read best on a set scale. Anything
     // outside it runs off the edge of the plot. Unset, the axis fits the data.
     readonly yRange?: readonly [number, number];
+    // A value kept on the axis's midline, for figures read against a
+    // standard: multipliers and shares of a full ration, against 1.
+    readonly yCenter?: number;
 };
 
 // In the order the charts are laid out, which keeps the birth and death rates,
@@ -57,10 +60,10 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'birthRate', label: 'Birth rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
     { key: 'deathRate', label: 'Death rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
     { key: 'netChange', label: 'Net change (per 1000 / year)', precision: 1, yRange: [-25, 25] },
-    { key: 'brModifier', label: 'Birth rate modifier (geometric mean)', precision: 2 },
-    { key: 'drModifier', label: 'Death rate modifier (geometric mean)', precision: 2 },
-    { key: 'foodProduction', label: 'Food produced / capita', precision: 2 },
-    { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2 },
+    { key: 'brModifier', label: 'Birth rate modifier (geometric mean)', precision: 2, yCenter: 1 },
+    { key: 'drModifier', label: 'Death rate modifier (geometric mean)', precision: 2, yCenter: 1 },
+    { key: 'foodProduction', label: 'Food produced / capita', precision: 2, yCenter: 1 },
+    { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2, yCenter: 1 },
     { key: 'productionGini', label: 'Production Gini (within settlements)', precision: 3 },
     { key: 'consumptionGini', label: 'Consumption Gini (within settlements)', precision: 3 },
     ...NUMERIC_TRAITS.map((trait): MetricSpec => ({
