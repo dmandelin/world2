@@ -44,7 +44,8 @@ export type MetricSpec = {
     // outside it runs off the edge of the plot. Unset, the axis fits the data.
     readonly yRange?: readonly [number, number];
     // A value kept on the axis's midline, for figures read against a
-    // standard: multipliers and shares of a full ration, against 1.
+    // standard: multipliers and shares of a full ration against 1, and
+    // figures that run either side of nothing against 0.
     readonly yCenter?: number;
 };
 
@@ -55,8 +56,8 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'clans', label: 'Clans', precision: 0 },
     { key: 'people', label: 'People', precision: 0 },
     { key: 'settlementSize', label: 'Average settlement size (people)', precision: 0 },
-    { key: 'eudaimonia', label: 'Eudaimonia', precision: 1 },
-    { key: 'favor', label: 'Favor (average)', precision: 1 },
+    { key: 'eudaimonia', label: 'Eudaimonia', precision: 1, yCenter: 0 },
+    { key: 'favor', label: 'Favor (average)', precision: 1, yCenter: 0 },
     { key: 'birthRate', label: 'Birth rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
     { key: 'deathRate', label: 'Death rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
     { key: 'netChange', label: 'Net change (per 1000 / year)', precision: 1, yRange: [-25, 25] },
@@ -66,10 +67,13 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2, yCenter: 1 },
     { key: 'productionGini', label: 'Production Gini (within settlements)', precision: 3 },
     { key: 'consumptionGini', label: 'Consumption Gini (within settlements)', precision: 3 },
+    // Averages stay well inside the traits' 0-100 scale, so 20-80 shows
+    // them, with 50 -- an ordinary clan -- on the midline.
     ...NUMERIC_TRAITS.map((trait): MetricSpec => ({
         key: trait,
         label: `${trait[0].toUpperCase()}${trait.slice(1)} (average)`,
         precision: 1,
+        yRange: [20, 80],
     })),
 ];
 
