@@ -1,4 +1,5 @@
 import { DWINDLING_POPULATION } from "./alerts";
+import type { NoteEntity } from "./notifications";
 import type { World } from "../world";
 
 // Stopping a long run when something happens.
@@ -33,9 +34,21 @@ export interface BreakpointDef {
     readonly label: string;
     readonly description: string;
     readonly defaultOn: boolean;
-    // What happened, in a few words, or undefined if it did not happen.
-    readonly hit: (world: World) => string | undefined;
+    // What happened, or undefined if it did not happen.
+    readonly hit: (world: World) => BreakpointOccasion | undefined;
 }
+
+// What a breakpoint found: a few words on it, and where to go to see it --
+// the entity it happened to, and the settlement panel it is written up in,
+// where there is one.
+export interface BreakpointOccasion {
+    readonly what: string;
+    readonly entity?: NoteEntity;
+    readonly tab?: string;
+}
+
+const entityOf = (e: { uuid: string; name: string }): NoteEntity =>
+    ({ uuid: e.uuid, name: e.name });
 
 function names(items: readonly { name: string }[]): string {
     return items.map(i => i.name).join(', ');
@@ -49,7 +62,10 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
         description: 'A new village was founded.',
         defaultOn: false,
         hit: world => world.lastFoundations.length
-            ? `founded ${names(world.lastFoundations.map(f => f.settlement))}`
+            ? {
+                what: `founded ${names(world.lastFoundations.map(f => f.settlement))}`,
+                entity: entityOf(world.lastFoundations[0].settlement),
+            }
             : undefined,
     },
     {
@@ -62,7 +78,13 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
             const floods = world.extremeFloods.filter(
                 f => f.kind.key === 'flood20' && f.clansAffected > 0);
             return floods.length
-                ? `20-year flood, ${floods[0].areaName}` : undefined;
+                ? {
+                    what: `20-year flood, ${floods[0].areaName}`,
+                    entity: floods[0].impacts[0]
+                        && entityOf(floods[0].impacts[0].clan.settlement),
+                    tab: 'The Waters',
+                }
+                : undefined;
         },
     },
     {
@@ -70,12 +92,18 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
         icon: '🏚️',
         label: '100-year flood or worse',
         description: 'The rivers broke out over half the land or more.',
-        defaultOn: true,
+        defaultOn: false,
         hit: world => {
             const floods = world.extremeFloods.filter(
                 f => f.kind.key !== 'flood20' && f.clansAffected > 0);
             return floods.length
-                ? `${floods[0].kind.name}, ${floods[0].areaName}` : undefined;
+                ? {
+                    what: `${floods[0].kind.name}, ${floods[0].areaName}`,
+                    entity: floods[0].impacts[0]
+                        && entityOf(floods[0].impacts[0].clan.settlement),
+                    tab: 'The Waters',
+                }
+                : undefined;
         },
     },
     {
@@ -83,10 +111,14 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
         icon: '🎉',
         label: 'Festival in question',
         description: 'A settlement must settle again how its festival is held.',
-        defaultOn: true,
+        defaultOn: false,
         hit: world => world.lastRitualChanges.length
-            ? `festival in question at `
-                + names(world.lastRitualChanges.map(c => c.settlement))
+            ? {
+                what: `festival in question at `
+                    + names(world.lastRitualChanges.map(c => c.settlement)),
+                entity: entityOf(world.lastRitualChanges[0].settlement),
+                tab: 'Festivals',
+            }
             : undefined,
     },
     {
@@ -104,7 +136,10 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
                 && c.population - c.lastPopulationChange.change
                     >= DWINDLING_POPULATION);
             return fallen.length
-                ? `${names(fallen)} down to ${fallen[0].population}`
+                ? {
+                    what: `${names(fallen)} down to ${fallen[0].population}`,
+                    entity: entityOf(fallen[0]),
+                }
                 : undefined;
         },
     },
@@ -119,7 +154,12 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
         // decisions on screen: in the alert, the event feed and the
         // settlement's Decisions panel.
         hit: world => world.lastDecisions.length
-            ? `decision at ` + names(world.lastDecisions.map(d => d.settlement))
+            ? {
+                what: `decision at `
+                    + names(world.lastDecisions.map(d => d.settlement)),
+                entity: entityOf(world.lastDecisions[0].settlement),
+                tab: 'Decisions',
+            }
             : undefined,
     },
 ];
@@ -137,6 +177,10 @@ export interface BreakpointHit {
     readonly icon: string;
     readonly year: string;
     readonly what: string;
+    // Where to go to see it, if anywhere. Where several places had one, the
+    // first.
+    readonly entity?: NoteEntity;
+    readonly tab?: string;
 }
 
 // The first armed breakpoint that fired this year, if any. First in the order
@@ -153,9 +197,9 @@ export function checkBreakpoints(
 ): BreakpointHit | undefined {
     for (const def of BREAKPOINTS) {
         if (!armed.has(def.id)) continue;
-        const what = def.hit(world);
-        if (what === undefined) continue;
-        return { id: def.id, icon: def.icon, year, what };
+        const occasion = def.hit(world);
+        if (occasion === undefined) continue;
+        return { id: def.id, icon: def.icon, year, ...occasion };
     }
     return undefined;
 }

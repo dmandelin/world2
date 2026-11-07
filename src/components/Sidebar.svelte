@@ -4,6 +4,7 @@
         armedBreakpoints,
         breakpointState,
         runControls,
+        selectEntity,
         toggleBreakpoint,
     } from "./state/uistate.svelte";
 
@@ -12,6 +13,12 @@
     function advance(years?: number) {
         world.advanceFromPlanningView(
             years, armedBreakpoints(), runControls.preventMigrations);
+        // A run stopped for a decision goes straight to it, since that is
+        // what it stopped to show.
+        const hit = world.lastBreak;
+        if (hit?.id === "decision" && hit.entity) {
+            selectEntity(hit.entity, hit.tab);
+        }
     }
 
     // Only meaningful after a run that could have been cut short.
@@ -43,7 +50,18 @@
         </div>
         <!-- Only there when it has something to say: an empty display is
              just a dark band under the lamps. -->
-        {#if lastBreak}
+        {#if lastBreak?.entity}
+            <!-- Takes you to where it happened, and to the panel it is
+                 written up in. -->
+            {@const entity = lastBreak.entity}
+            <button
+                class="readout link"
+                title="{lastBreak.year} · {lastBreak.what} -- click to see it"
+                onclick={() => selectEntity(entity, lastBreak.tab)}
+            >
+                {lastBreak.year} · {lastBreak.what}
+            </button>
+        {:else if lastBreak}
             <div class="readout" title="{lastBreak.year} · {lastBreak.what}">
                 {lastBreak.year} · {lastBreak.what}
             </div>
@@ -167,6 +185,19 @@
         line-clamp: 2;
         overflow: hidden;
         overflow-wrap: break-word;
+    }
+
+    /* The same readout, as something to click. */
+    .readout.link {
+        width: 100%;
+        margin: 0;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .readout.link:hover {
+        color: #f0d77a;
+        text-decoration: underline;
     }
 
     .run-control {
