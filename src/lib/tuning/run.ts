@@ -190,6 +190,7 @@ export async function runTuningBatch(
                 headless: true,
             });
             world.initialize();
+            world.migrationsPrevented = !config.allowMigrations;
             worlds.push(world);
             alive.push(true);
             callbacks.onSetupProgress?.(i + 1, config.runs);

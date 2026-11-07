@@ -9,6 +9,9 @@ export type BatchConfig = {
     settlementCount: number;
     clansPerSettlement: number;
     years: number;
+    // Whether clans may actually move. Off, they still weigh up leaving, but
+    // none go, as with the main view's No migrations switch.
+    allowMigrations: boolean;
 };
 
 export const METRIC_KEYS = [

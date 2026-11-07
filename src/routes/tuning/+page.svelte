@@ -24,12 +24,13 @@
         settlementCount: 3,
         clansPerSettlement: 5,
         years: 150,
+        allowMigrations: false,
     });
 
     let params = $state<TuningParams>({ ...DEFAULT_TUNING });
 
     const CONFIG_FIELDS: {
-        key: keyof BatchConfig;
+        key: Exclude<keyof BatchConfig, "allowMigrations">;
         label: string;
         min: number;
         max: number;
@@ -241,6 +242,17 @@
                     />
                 </label>
             {/each}
+            <label class="field check">
+                <span class="label">Migrations</span>
+                <span class="check-row">
+                    <input
+                        type="checkbox"
+                        bind:checked={config.allowMigrations}
+                        disabled={active}
+                    />
+                    Allow
+                </span>
+            </label>
         </div>
 
         <div class="controls">
@@ -388,6 +400,18 @@
         background-color: #fffdf6;
         color: inherit;
         font: inherit;
+    }
+
+    .field.check input {
+        width: auto;
+        margin: 0;
+    }
+
+    .check-row {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 1.6rem;
     }
 
     .field input:disabled {
