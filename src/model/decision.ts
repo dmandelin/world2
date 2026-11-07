@@ -1,6 +1,8 @@
-import { sumFun } from "./lib/basics";
+import { isPositive, sumFun } from "./lib/basics";
 import { normal } from "./lib/distributions";
 import { TRAIT_SD } from "./people/traits";
+import { getAlignment } from "./relations/alignment";
+import { getRelativeAttention } from "./relations/conversation";
 import type { Clan } from "./people/people";
 import type { Settlement } from "./people/settlement";
 import type { World } from "./world";
@@ -15,8 +17,15 @@ import type { World } from "./world";
 // For now a decision is always between two choices. Each choice has a
 // Favorability for each clan: how well it would go for that clan, drawn at
 // random. No clan knows its Favorabilities exactly, only an estimate of each,
-// off by an error that is smaller the cleverer the clan. It picks whichever
-// its estimates say is better.
+// off by an error that is smaller the cleverer the clan.
+//
+// Nor does a clan care only about itself. What it weighs is its Inclusive
+// Favorability for each choice: its own estimate averaged with the estimates
+// of the clans it talks with -- what they have told it -- each weighted by how
+// much it feels for them. This is what the clan directly cares about, on a
+// felt level; backing a neighbor for what it might get back is another thing,
+// still to come. The clan picks whichever choice its Inclusive Favorability
+// says is better.
 //
 // If every clan picked the same, that is what the village does, and every
 // clan gets that choice's Favorability for it. If not, the village has failed
@@ -62,6 +71,71 @@ export const DECISION_PRODUCTIVITY_SCALE = 100;
 // nets to nothing or less.
 export const DECISION_PRODUCTIVITY_FLOOR = 0.1;
 
+// --- Caring about the others -------------------------------------------------
+//
+// How much a clan weighs another clan's interests against its own:
+//
+//     weight = care(righteousness) * feeling * conversation
+//
+// care is how far the clan holds others' interests as its own at all: nothing
+// at or below SELFISH righteousness, as much as its own at or above EVEN, in a
+// straight line between. A clan of ordinary righteousness weighs a neighbor it
+// feels fully for and knows well at half itself.
+//
+// feeling is its alignment toward the other, -1 to 1, made more of by a
+// tender clan and less by a hard one -- doubled for every standard deviation
+// of tenderness above the middle, halved for every one below -- and kept
+// within -1 to 1. A clan it is set against weighs negatively: what is good for
+// them counts against a choice.
+//
+// conversation is how much of the other clan it knows, 0 to 1. A clan it
+// never talks with has told it nothing, and is not weighed at all.
+//
+// Inclusive Favorability is then the clan's own estimate and the others',
+// weighted so:
+//
+//     inclusive = (own + sum(weight * theirs)) / (1 + sum(|weight|))
+//
+// so it stays on the scale of a single Favorability, and a clan that cares
+// for no one weighs exactly its own.
+export const INCLUSIVE_RIGHTEOUSNESS_SELFISH = 20;
+export const INCLUSIVE_RIGHTEOUSNESS_EVEN = 80;
+
+export function inclusiveCare(righteousness: number): number {
+    const t = (righteousness - INCLUSIVE_RIGHTEOUSNESS_SELFISH)
+        / (INCLUSIVE_RIGHTEOUSNESS_EVEN - INCLUSIVE_RIGHTEOUSNESS_SELFISH);
+    return t <= 0 ? 0 : t >= 1 ? 1 : t;
+}
+
+export const INCLUSIVE_TENDERNESS_BASELINE = 50;
+
+export function inclusiveTendernessFactor(tenderness: number): number {
+    return Math.pow(2, (tenderness - INCLUSIVE_TENDERNESS_BASELINE) / TRAIT_SD);
+}
+
+export function inclusiveFeeling(alignment: number, tenderness: number): number {
+    const f = alignment * inclusiveTendernessFactor(tenderness);
+    return f < -1 ? -1 : f > 1 ? 1 : f;
+}
+
+// One other clan, as one clan weighed it.
+export class InclusiveWeight {
+    readonly clanName: string;
+
+    constructor(
+        readonly clan: Clan,
+        // Alignment toward it, and what tenderness made of that.
+        readonly alignment: number,
+        readonly feeling: number,
+        // How much of it the clan knows, 0 to 1.
+        readonly conversation: number,
+        // The weight its estimates got: care * feeling * conversation.
+        readonly weight: number,
+    ) {
+        this.clanName = clan.name;
+    }
+}
+
 function argmax(xs: readonly number[]): number {
     let best = 0;
     for (let i = 1; i < xs.length; ++i) if (xs[i] > xs[best]) best = i;
@@ -72,8 +146,10 @@ function argmax(xs: readonly number[]): number {
 // reads right once the clan has split, moved away or died out.
 export class DecisionVote {
     readonly clanName: string;
-    // What it picked: whichever its estimates said was better.
+    // What it picked: whichever its Inclusive Favorability said was better.
     readonly choice: string;
+    // What it would have picked caring only for itself.
+    readonly ownChoice: string;
     // What would actually have been better for it.
     readonly bestChoice: string;
 
@@ -85,13 +161,21 @@ export class DecisionVote {
         readonly favorabilities: readonly number[],
         // What the clan made of each.
         readonly estimates: readonly number[],
-        // Its intellect as it stood that year, and the spread of its
-        // estimates that gave. Kept because the trait drifts.
+        // Its own estimates averaged with the others', as it weighed them.
+        readonly inclusiveEstimates: readonly number[],
+        // Every other clan it gave any weight to.
+        readonly weights: readonly InclusiveWeight[],
+        // Its traits as they stood that year, and what they came to. Kept
+        // because the traits drift.
         readonly intellect: number,
         readonly estimateSD: number,
+        readonly righteousness: number,
+        readonly tenderness: number,
+        readonly care: number,
     ) {
         this.clanName = clan.name;
-        this.choice = choices[argmax(estimates)];
+        this.choice = choices[argmax(inclusiveEstimates)];
+        this.ownChoice = choices[argmax(estimates)];
         this.bestChoice = choices[argmax(favorabilities)];
     }
 
@@ -103,25 +187,79 @@ export class DecisionVote {
         return this.estimates[this.choices.indexOf(choice)];
     }
 
+    inclusiveEstimateOf(choice: string): number {
+        return this.inclusiveEstimates[this.choices.indexOf(choice)];
+    }
+
     // The worse of the choices for it, which is what it gets when the village
     // cannot agree.
     get worstFavorability(): number {
         return Math.min(...this.favorabilities);
     }
 
+    // Picked what was actually better for itself.
     get gotItRight(): boolean {
         return this.choice === this.bestChoice;
     }
+
+    // Picked other than its own estimates said, for the others' sake.
+    get swayed(): boolean {
+        return this.choice !== this.ownChoice;
+    }
+
+    // How much the others counted, all together, against its own 1.
+    get totalWeight(): number {
+        return sumFun(this.weights, w => Math.abs(w.weight));
+    }
 }
 
-// Draw a clan's Favorabilities for a decision, and its estimates of them, and
-// let it pick.
-export function castVote(clan: Clan, choices: DecisionChoices): DecisionVote {
+// A clan's Favorabilities for a decision and its own estimates of them,
+// before it has heard from anyone.
+type Assessment = {
+    clan: Clan;
+    favorabilities: number[];
+    estimates: number[];
+    intellect: number;
+    sd: number;
+};
+
+function assess(clan: Clan, choices: DecisionChoices): Assessment {
     const intellect = clan.traits.intellect;
     const sd = decisionEstimateSD(intellect);
     const favorabilities = choices.map(() => normal(0, DECISION_FAVORABILITY_SD));
     const estimates = favorabilities.map(f => f + normal(0, sd));
-    return new DecisionVote(clan, choices, favorabilities, estimates, intellect, sd);
+    return { clan, favorabilities, estimates, intellect, sd };
+}
+
+// Every clan's Favorabilities and estimates are drawn first; then each weighs
+// in what the others told it and picks.
+export function castVotes(clans: readonly Clan[], choices: DecisionChoices): DecisionVote[] {
+    const assessments = clans.map(c => assess(c, choices));
+    return assessments.map(a => {
+        const righteousness = a.clan.traits.righteousness;
+        const tenderness = a.clan.traits.tenderness;
+        const care = inclusiveCare(righteousness);
+        const weights: InclusiveWeight[] = [];
+        const sums = [...a.estimates];
+        let total = 1;
+        for (const other of assessments) {
+            if (other === a) continue;
+            const conversation = getRelativeAttention(a.clan, other.clan);
+            if (!isPositive(conversation) || !isPositive(care)) continue;
+            const alignment = getAlignment(a.clan, other.clan);
+            const feeling = inclusiveFeeling(alignment, tenderness);
+            const weight = care * feeling * conversation;
+            if (weight === 0) continue;
+            weights.push(new InclusiveWeight(
+                other.clan, alignment, feeling, conversation, weight));
+            other.estimates.forEach((e, i) => sums[i] += weight * e);
+            total += Math.abs(weight);
+        }
+        return new DecisionVote(
+            a.clan, choices, a.favorabilities, a.estimates,
+            sums.map(s => s / total), weights,
+            a.intellect, a.sd, righteousness, tenderness, care);
+    });
 }
 
 export class Decision {
@@ -269,7 +407,7 @@ export function planDecisions(world: World, priming: boolean = false): void {
         const choices = DEFAULT_DECISION_CHOICES;
         const decision = new Decision(
             settlement, world.year.value, choices,
-            clans.map(clan => castVote(clan, choices)));
+            castVotes(clans, choices));
         // Felt from this year on, at full strength this year.
         for (const vote of decision.votes) {
             vote.clan.decisionEffects.add(
