@@ -20,6 +20,9 @@ export const METRIC_KEYS = [
     'favor',
     'birthRate',
     'deathRate',
+    'netChange',
+    'brModifier',
+    'drModifier',
     'foodProduction',
     'foodConsumption',
     'productionGini',
@@ -39,8 +42,8 @@ export type MetricSpec = {
     readonly yRange?: readonly [number, number];
 };
 
-// In the order the charts are laid out, which keeps the birth and death rates
-// side by side.
+// In the order the charts are laid out, which keeps the birth and death rates,
+// their difference, and the modifiers behind them together.
 export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'settlements', label: 'Settlements', precision: 0 },
     { key: 'clans', label: 'Clans', precision: 0 },
@@ -50,6 +53,9 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     { key: 'favor', label: 'Favor (average)', precision: 1 },
     { key: 'birthRate', label: 'Birth rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
     { key: 'deathRate', label: 'Death rate (per 1000 / year)', precision: 1, yRange: [0, 50] },
+    { key: 'netChange', label: 'Net change (per 1000 / year)', precision: 1, yRange: [-25, 25] },
+    { key: 'brModifier', label: 'Birth rate modifier (geometric mean)', precision: 2 },
+    { key: 'drModifier', label: 'Death rate modifier (geometric mean)', precision: 2 },
     { key: 'foodProduction', label: 'Food produced / capita', precision: 2 },
     { key: 'foodConsumption', label: 'Food consumed / capita', precision: 2 },
     { key: 'productionGini', label: 'Production Gini (within settlements)', precision: 3 },
@@ -75,6 +81,9 @@ export function isTraitMetric(key: MetricKey): key is NumericTrait {
 export const YEARLY_RATE_METRICS: ReadonlySet<MetricKey> = new Set<MetricKey>([
     'birthRate',
     'deathRate',
+    'netChange',
+    'brModifier',
+    'drModifier',
 ]);
 
 // One metric's distribution across the runs at a single year.

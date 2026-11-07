@@ -51,6 +51,21 @@ const productionPerHead = (c: Clan) =>
     c.distribution.totalFoodFromProduction / fedPopulation(c);
 const consumptionPerHead = (c: Clan) => c.consumption.perCapitaFood;
 
+// A multiplier on a clan's rates, as the clans overview rolls it up for a
+// settlement: geometric, so that x2 and x0.5 average to x1, and weighted by
+// people.
+function populationGeomean(world: World, modifier: (c: Clan) => number): number {
+    let logSum = 0;
+    let people = 0;
+    for (const c of world.allClans) {
+        const m = modifier(c);
+        if (!isPositive(c.population) || !isPositive(m)) continue;
+        logSum += Math.log(m) * c.population;
+        people += c.population;
+    }
+    return people > 0 ? Math.exp(logSum / people) : 1;
+}
+
 // Inequality within each settlement, averaged over settlements by their
 // people, as the overview's Gini rows read it for one settlement.
 function meanSettlementGini(world: World, perHead: (c: Clan) => number): number {
@@ -87,13 +102,20 @@ function sample(world: World, key: MetricKey): number {
             return isPositive(settlements) ? world.totalPopulation / settlements : 0;
         }
         case 'birthRate':
-        case 'deathRate': {
+        case 'deathRate':
+        case 'netChange': {
             // Per thousand people alive at the start of the year, per year.
             const v = world.lastYearVitals;
             if (!isPositive(v.population) || !isPositive(v.years)) return 0;
-            const count = key === 'birthRate' ? v.births : v.deaths;
+            const count = key === 'birthRate' ? v.births
+                : key === 'deathRate' ? v.deaths
+                : v.births - v.deaths;
             return 1000 * count / v.population / v.years;
         }
+        case 'brModifier':
+            return populationGeomean(world, (c) => c.lastPopulationChange.brModifier);
+        case 'drModifier':
+            return populationGeomean(world, (c) => c.lastPopulationChange.drModifier);
         case 'foodProduction': {
             const people = world.totalPopulation;
             if (!isPositive(people)) return 0;
