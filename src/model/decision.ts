@@ -24,8 +24,17 @@ import type { World } from "./world";
 // of the clans it talks with -- what they have told it -- each weighted by how
 // much it feels for them. This is what the clan directly cares about, on a
 // felt level; backing a neighbor for what it might get back is another thing,
-// still to come. The clan picks whichever choice its Inclusive Favorability
-// says is better.
+// still to come.
+//
+// Last, the clan reckons with what the others are going for, because a
+// choice nobody else makes gets it nothing. Its Coordinated Favorability for
+// a choice is what it would actually get, as it weighs everyone, by making
+// that choice when every other clan goes the way its Inclusive Favorability
+// points: the choice's Inclusive Favorability if every other clan is for it
+// too, and otherwise what failing to agree is worth -- every clan's worst,
+// weighed the same way. The clan picks whichever choice its Coordinated
+// Favorability says is better. When the two are the same, which is when the
+// village fails to agree either way, it goes by its Inclusive Favorability.
 //
 // If every clan picked the same, that is what the village does, and every
 // clan gets that choice's Favorability for it. If not, the village has failed
@@ -146,8 +155,13 @@ function argmax(xs: readonly number[]): number {
 // reads right once the clan has split, moved away or died out.
 export class DecisionVote {
     readonly clanName: string;
-    // What it picked: whichever its Inclusive Favorability said was better.
+    // What it picked: whichever its Coordinated Favorability said was
+    // better, or its Inclusive Favorability if that could not tell them apart.
     readonly choice: string;
+    // What it would have picked going by its Inclusive Favorability alone:
+    // what it was for before it reckoned with the others' picks, and what
+    // the others reckon it is going for.
+    readonly inclusiveChoice: string;
     // What it would have picked caring only for itself.
     readonly ownChoice: string;
     // What would actually have been better for it.
@@ -163,6 +177,10 @@ export class DecisionVote {
         readonly estimates: readonly number[],
         // Its own estimates averaged with the others', as it weighed them.
         readonly inclusiveEstimates: readonly number[],
+        // What it would get from each, given the others' picks.
+        readonly coordinatedEstimates: readonly number[],
+        // What failing to agree is worth to it, weighed the same way.
+        readonly failureEstimate: number,
         // Every other clan it gave any weight to.
         readonly weights: readonly InclusiveWeight[],
         // Its traits as they stood that year, and what they came to. Kept
@@ -174,7 +192,16 @@ export class DecisionVote {
         readonly care: number,
     ) {
         this.clanName = clan.name;
-        this.choice = choices[argmax(inclusiveEstimates)];
+        this.inclusiveChoice = choices[argmax(inclusiveEstimates)];
+        // Coordinated first, Inclusive to break a tie.
+        let best = 0;
+        for (let i = 1; i < choices.length; ++i) {
+            const dc = coordinatedEstimates[i] - coordinatedEstimates[best];
+            if (dc > 0 || (dc === 0 && inclusiveEstimates[i] > inclusiveEstimates[best])) {
+                best = i;
+            }
+        }
+        this.choice = choices[best];
         this.ownChoice = choices[argmax(estimates)];
         this.bestChoice = choices[argmax(favorabilities)];
     }
@@ -189,6 +216,22 @@ export class DecisionVote {
 
     inclusiveEstimateOf(choice: string): number {
         return this.inclusiveEstimates[this.choices.indexOf(choice)];
+    }
+
+    coordinatedEstimateOf(choice: string): number {
+        return this.coordinatedEstimates[this.choices.indexOf(choice)];
+    }
+
+    // Its own estimate of the worse of the choices for it: what it reckons
+    // it would get if the village failed to agree.
+    get worstEstimate(): number {
+        return Math.min(...this.estimates);
+    }
+
+    // Whether its Coordinated Favorability could not tell the choices apart,
+    // so that it went by its Inclusive Favorability.
+    get coordinationTied(): boolean {
+        return this.coordinatedEstimates.every(c => c === this.coordinatedEstimates[0]);
     }
 
     // The worse of the choices for it, which is what it gets when the village
@@ -231,34 +274,73 @@ function assess(clan: Clan, choices: DecisionChoices): Assessment {
     return { clan, favorabilities, estimates, intellect, sd };
 }
 
-// Every clan's Favorabilities and estimates are drawn first; then each weighs
-// in what the others told it and picks.
+// A clan's estimates with everyone's weighed in, and what it is therefore for.
+type Inclusion = {
+    assessment: Assessment;
+    righteousness: number;
+    tenderness: number;
+    care: number;
+    weights: InclusiveWeight[];
+    total: number;
+    inclusive: number[];
+    inclusiveChoice: string;
+};
+
+function include(
+    a: Assessment,
+    assessments: readonly Assessment[],
+    choices: DecisionChoices,
+): Inclusion {
+    const righteousness = a.clan.traits.righteousness;
+    const tenderness = a.clan.traits.tenderness;
+    const care = inclusiveCare(righteousness);
+    const weights: InclusiveWeight[] = [];
+    const sums = [...a.estimates];
+    let total = 1;
+    for (const other of assessments) {
+        if (other === a) continue;
+        const conversation = getRelativeAttention(a.clan, other.clan);
+        if (!isPositive(conversation) || !isPositive(care)) continue;
+        const alignment = getAlignment(a.clan, other.clan);
+        const feeling = inclusiveFeeling(alignment, tenderness);
+        const weight = care * feeling * conversation;
+        if (weight === 0) continue;
+        weights.push(new InclusiveWeight(
+            other.clan, alignment, feeling, conversation, weight));
+        other.estimates.forEach((e, i) => sums[i] += weight * e);
+        total += Math.abs(weight);
+    }
+    const inclusive = sums.map(s => s / total);
+    return {
+        assessment: a, righteousness, tenderness, care, weights, total,
+        inclusive, inclusiveChoice: choices[argmax(inclusive)],
+    };
+}
+
+// Every clan's Favorabilities and estimates are drawn first. Then each weighs
+// in what the others told it, which settles what it is for; then each
+// reckons with what the others are for, and picks.
 export function castVotes(clans: readonly Clan[], choices: DecisionChoices): DecisionVote[] {
     const assessments = clans.map(c => assess(c, choices));
-    return assessments.map(a => {
-        const righteousness = a.clan.traits.righteousness;
-        const tenderness = a.clan.traits.tenderness;
-        const care = inclusiveCare(righteousness);
-        const weights: InclusiveWeight[] = [];
-        const sums = [...a.estimates];
-        let total = 1;
-        for (const other of assessments) {
-            if (other === a) continue;
-            const conversation = getRelativeAttention(a.clan, other.clan);
-            if (!isPositive(conversation) || !isPositive(care)) continue;
-            const alignment = getAlignment(a.clan, other.clan);
-            const feeling = inclusiveFeeling(alignment, tenderness);
-            const weight = care * feeling * conversation;
-            if (weight === 0) continue;
-            weights.push(new InclusiveWeight(
-                other.clan, alignment, feeling, conversation, weight));
-            other.estimates.forEach((e, i) => sums[i] += weight * e);
-            total += Math.abs(weight);
+    const inclusions = assessments.map(a => include(a, assessments, choices));
+    const byClan = new Map(assessments.map(a => [a.clan, a]));
+    return inclusions.map(inc => {
+        const a = inc.assessment;
+        // Failing to agree leaves every clan its worst, and the clan weighs
+        // that as it weighs everything else.
+        let failure = Math.min(...a.estimates);
+        for (const w of inc.weights) {
+            failure += w.weight * Math.min(...byClan.get(w.clan)!.estimates);
         }
+        failure /= inc.total;
+        const coordinated = choices.map((choice, i) =>
+            inclusions.every(o => o === inc || o.inclusiveChoice === choice)
+                ? inc.inclusive[i]
+                : failure);
         return new DecisionVote(
             a.clan, choices, a.favorabilities, a.estimates,
-            sums.map(s => s / total), weights,
-            a.intellect, a.sd, righteousness, tenderness, care);
+            inc.inclusive, coordinated, failure, inc.weights,
+            a.intellect, a.sd, inc.righteousness, inc.tenderness, inc.care);
     });
 }
 

@@ -54,17 +54,20 @@
     </Tooltip>
 {/snippet}
 
-<!-- One figure per choice, side by side, with the higher one shaded, and
-     its working in a tooltip where there is any. -->
+<!-- One figure per choice, side by side, with the higher one shaded --
+     or the one given, where that is not simply the higher -- and its working
+     in a tooltip where there is any. -->
 {#snippet pair(
     decision: Decision,
     v: DecisionVote,
     of: (c: string) => number,
     tip?: Snippet<[Decision, DecisionVote, string]>,
+    shaded?: string,
+    rule: boolean = false,
 )}
-    {@const best = higher(v, of)}
+    {@const best = shaded ?? higher(v, of)}
     {#each v.choices as choice, i (choice)}
-        <td class="pair" class:best={choice === best}>
+        <td class="pair" class:rule={rule && i === 0} class:best={choice === best}>
             {#if tip}
                 <Tooltip>
                     {@render favor(of(choice))}
@@ -138,6 +141,64 @@
         </tbody>
     </table>
     <p class="note">Weights are from the Others column. A negative weight counts what is good for that clan against the choice.</p>
+{/snippet}
+
+<!-- What the clan would get from a choice, given the others' picks. -->
+{#snippet coordinatedTip(d: Decision, v: DecisionVote, choice: string)}
+    {@const others = d.votes.filter((o) => o !== v)}
+    {@const against = others.filter((o) => o.inclusiveChoice !== choice)}
+    <div class="head">{v.clanName}'s Coordinated Favorability of {choice}</div>
+    {#if against.length === 0}
+        <p class="note">
+            {others.length ? `Every other clan is for ${choice}` : "There is no other clan"},
+            so {choice} means agreement, and is worth its Inclusive Favorability:
+            {signed(v.inclusiveEstimateOf(choice), 1)}.
+        </p>
+    {:else}
+        <p class="note">
+            {against.map((o) => o.clanName).join(", ")}
+            {against.length === 1 ? "is" : "are"} for
+            {against.map((o) => o.inclusiveChoice).filter((c, i, a) => a.indexOf(c) === i).join(", ")},
+            so {choice} means failing to agree, and every clan gets its worst:
+        </p>
+        <table class="spaced">
+            <thead>
+                <tr><th>Clan</th><th class="n">Weight</th><th class="n">Worst est.</th><th class="n">Weighted</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{v.clanName} <span class="dim">(itself)</span></td>
+                    <td class="n">1.00</td>
+                    <td class="n">{signed(v.worstEstimate, 1)}</td>
+                    <td class="n">{signed(v.worstEstimate, 1)}</td>
+                </tr>
+                {#each v.weights as w (w.clan.uuid)}
+                    {@const worst = d.voteOf(w.clan)?.worstEstimate ?? 0}
+                    <tr>
+                        <td>{w.clanName}</td>
+                        <td class="n">{signed(w.weight, 2)}</td>
+                        <td class="n">{signed(worst, 1)}</td>
+                        <td class="n">{signed(w.weight * worst, 1)}</td>
+                    </tr>
+                {/each}
+                <tr class="total">
+                    <td colspan="3">Sum</td>
+                    <td class="n">{signed(v.failureEstimate * (1 + v.totalWeight), 1)}</td>
+                </tr>
+                <tr>
+                    <td colspan="3">÷ total weight (1 + {v.totalWeight.toFixed(2)})</td>
+                    <td class="n">{(1 + v.totalWeight).toFixed(2)}</td>
+                </tr>
+                <tr class="total">
+                    <td colspan="3">Failing to agree</td>
+                    <td class="n">{signed(v.failureEstimate, 1)}</td>
+                </tr>
+            </tbody>
+        </table>
+    {/if}
+    {#if v.coordinationTied}
+        <p class="note">Both choices come to the same, so it went by its Inclusive Favorability: {v.choice}.</p>
+    {/if}
 {/snippet}
 
 <!-- How the estimate error came out of intellect. -->
@@ -268,16 +329,19 @@
                     {@render header("Tender", "What tenderness makes of the clan's Sympathy for others when weighing their interests.")}
                 </th>
                 <th colspan="2" class="group">
-                    {@render header("Inclusive", "Inclusive Favorability: the clan's own estimate averaged with what the clans it talks with told it, as it weighs them. It picks the higher.")}
+                    {@render header("Inclusive", "Inclusive Favorability: the clan's own estimate averaged with what the clans it talks with told it, as it weighs them. This is what it is for.")}
+                </th>
+                <th colspan="2" class="group rule">
+                    {@render header("Coordinated", "What the clan would actually get from each choice, as it weighs everyone, given what the others are for: the Inclusive Favorability if every other clan is for it too, and otherwise the value of failing to agree. It picks the shaded one: the higher, or by Inclusive Favorability when they are the same.")}
                 </th>
                 <th rowspan="2" class="num rule">
                     {@render header("Gets", "The Favorability the clan gets: the agreed choice's, or the worse of the two if the village could not agree.")}
                 </th>
             </tr>
             <tr>
-                {#each [0, 1, 2] as g (g)}
-                    {#each decision.choices as choice (choice)}
-                        <th class="sub">{choice}</th>
+                {#each [0, 1, 2, 3] as g (g)}
+                    {#each decision.choices as choice, i (choice)}
+                        <th class="sub" class:rule={g === 3 && i === 0}>{choice}</th>
                     {/each}
                 {/each}
             </tr>
@@ -307,6 +371,7 @@
                         </Tooltip>
                     </td>
                     {@render pair(decision, v, (c) => v.inclusiveEstimateOf(c), inclusiveTip)}
+                    {@render pair(decision, v, (c) => v.coordinatedEstimateOf(c), coordinatedTip, v.choice, true)}
                     <td class="num rule">
                         <Tooltip>
                             {@render favor(decision.appliedFavorability(v))}
