@@ -2,7 +2,13 @@
     import RunChart from "../../components/tuning/RunChart.svelte";
     import { startBatch, type BatchHandle } from "../../lib/tuning/client";
     import {
+        METRIC_KEYS,
         METRIC_SPECS,
+        VITALS_SPECS,
+        isBirthModifierMetric,
+        isDeathCauseMetric,
+        isDeathModifierMetric,
+        type MetricSpec,
         type BatchConfig,
         type BatchPhase,
         type MetricKey,
@@ -41,7 +47,15 @@
         { key: "years", label: "Turns (years)", min: 1, max: 5000 },
     ];
 
-    const CHART_COLORS: Record<MetricKey, string> = {
+    // The births and deaths taken apart each draw in their family's colour.
+    function colorFor(key: MetricKey): string {
+        if (isDeathCauseMetric(key)) return "#9f1239";
+        if (isBirthModifierMetric(key)) return "#0d9488";
+        if (isDeathModifierMetric(key)) return "#e11d48";
+        return CHART_COLORS[key];
+    }
+
+    const CHART_COLORS: Record<string, string> = {
         settlements: "#8b5cf6",
         clans: "#10b981",
         people: "#3b82f6",
@@ -79,6 +93,10 @@
     let onWorker = $state(true);
     let error = $state<string | undefined>(undefined);
 
+    // Which charts are showing: the overview, or the births and deaths taken
+    // apart. The batch runs on either way.
+    let view = $state<"main" | "vitals">("main");
+
     // A year picked by clicking any chart, marked on all of them.
     let pickedYear = $state<number | undefined>(undefined);
 
@@ -87,7 +105,7 @@
 
     function emptySeries(): Record<MetricKey, Summary[]> {
         const out = {} as Record<MetricKey, Summary[]>;
-        for (const spec of METRIC_SPECS) out[spec.key] = [];
+        for (const key of METRIC_KEYS) out[key] = [];
         return out;
     }
 
@@ -100,11 +118,11 @@
         if (!frames.length) return;
         // One push per metric per batch of frames. Appending in place keeps
         // this linear in the frames arriving rather than in history so far.
-        for (const spec of METRIC_SPECS) {
+        for (const key of METRIC_KEYS) {
             // A summary over no runs has nothing to plot -- the birth and
             // death rates before the first year has run, for one.
-            series[spec.key].push(
-                ...frames.map((f) => f.summaries[spec.key]).filter((s) => s.count > 0),
+            series[key].push(
+                ...frames.map((f) => f.summaries[key]).filter((s) => s.count > 0),
             );
         }
     }
@@ -196,9 +214,25 @@
     <header>
         <a class="chip" href="/" title="Kalam -- The Land">𒌦</a>
         <a class="chip wide" href="/sessions">← Sessions</a>
-        <h1>𒁄 Tuning</h1>
+        {#if view === "main"}
+            <h1>𒁄 Tuning</h1>
+        {:else}
+            <nav class="crumbs" aria-label="Breadcrumb">
+                <h1>
+                    <button class="crumb" onclick={() => (view = "main")}
+                        >𒁄 Tuning</button
+                    >
+                    <span class="crumb-sep">›</span>
+                    Births &amp; deaths
+                </h1>
+                <button class="back" onclick={() => (view = "main")}
+                    >← Back to tuning</button
+                >
+            </nav>
+        {/if}
     </header>
 
+    {#if view === "main"}
     <section class="panel">
         <div class="panel-head">
             <h2>Tuning parameters</h2>
@@ -284,18 +318,30 @@
             <p class="error">{error}</p>
         {/if}
     </section>
+    {:else}
+        <p class="vitals-status">
+            {statusText}
+        </p>
+    {/if}
 
     <section class="charts">
-        {#each METRIC_SPECS as spec}
+        {#each view === "main" ? METRIC_SPECS : VITALS_SPECS as spec (spec.key)}
             <RunChart
                 title={spec.label}
                 points={series[spec.key]}
                 precision={spec.precision}
-                color={CHART_COLORS[spec.key]}
+                color={colorFor(spec.key)}
                 yRange={spec.yRange}
                 yCenter={spec.yCenter}
                 {pickedYear}
                 onpick={(year) => (pickedYear = year)}
+                action={view === "main" && spec.key === "netChange"
+                    ? {
+                          label: "Births & deaths ›",
+                          title: "The birth and death rates taken apart: deaths by cause, and every modifier on each rate",
+                          onclick: () => (view = "vitals"),
+                      }
+                    : undefined}
             />
         {/each}
     </section>
@@ -510,6 +556,44 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 0.75rem;
+    }
+
+    .crumbs {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+    }
+
+    .crumb {
+        all: unset;
+        cursor: pointer;
+        color: #b30000;
+    }
+
+    .crumb:hover {
+        text-decoration: underline;
+    }
+
+    .crumb-sep {
+        margin: 0 0.3rem;
+        color: #a08c5a;
+    }
+
+    .back {
+        font: inherit;
+        font-size: 0.8rem;
+        padding: 0.1rem 0.5rem;
+        color: #62531d;
+        background-color: #f3edd8;
+        border: 1px solid #c9be92;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .vitals-status {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #62531d;
     }
 
     .legend-note {

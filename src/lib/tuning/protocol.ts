@@ -3,6 +3,13 @@
 
 import type { TuningParams } from "../../model/tuning";
 import { NUMERIC_TRAITS, type NumericTrait } from "../../model/people/traits";
+import {
+    BIRTH_RATE_MODIFIER_SOURCES,
+    DEATH_CAUSES,
+    DEATH_RATE_MODIFIER_SOURCES,
+    type BirthRateModifierSource,
+    type DeathRateModifierSource,
+} from "../../model/people/population";
 
 export type BatchConfig = {
     runs: number;
@@ -14,7 +21,7 @@ export type BatchConfig = {
     allowMigrations: boolean;
 };
 
-export const METRIC_KEYS = [
+const BASE_METRIC_KEYS = [
     'settlements',
     'clans',
     'people',
@@ -35,7 +42,53 @@ export const METRIC_KEYS = [
     ...NUMERIC_TRAITS,
 ] as const;
 
-export type MetricKey = (typeof METRIC_KEYS)[number];
+// The birth and death rates taken apart: deaths by cause, and the modifiers
+// on each rate one by one, each under a prefixed name.
+type DeathCause = (typeof DEATH_CAUSES)[number];
+export type DeathCauseMetric = `death:${DeathCause}`;
+export type BirthModifierMetric = `br:${BirthRateModifierSource}`;
+export type DeathModifierMetric = `dr:${DeathRateModifierSource}`;
+
+export const DEATH_CAUSE_METRICS: readonly DeathCauseMetric[] =
+    DEATH_CAUSES.map(c => `death:${c}` as const);
+export const BIRTH_MODIFIER_METRICS: readonly BirthModifierMetric[] =
+    BIRTH_RATE_MODIFIER_SOURCES.map(s => `br:${s}` as const);
+export const DEATH_MODIFIER_METRICS: readonly DeathModifierMetric[] =
+    DEATH_RATE_MODIFIER_SOURCES.map(s => `dr:${s}` as const);
+
+export type MetricKey =
+    | (typeof BASE_METRIC_KEYS)[number]
+    | DeathCauseMetric
+    | BirthModifierMetric
+    | DeathModifierMetric;
+
+export const METRIC_KEYS: readonly MetricKey[] = [
+    ...BASE_METRIC_KEYS,
+    ...DEATH_CAUSE_METRICS,
+    ...BIRTH_MODIFIER_METRICS,
+    ...DEATH_MODIFIER_METRICS,
+];
+
+export function isDeathCauseMetric(key: MetricKey): key is DeathCauseMetric {
+    return key.startsWith('death:');
+}
+
+export function isBirthModifierMetric(key: MetricKey): key is BirthModifierMetric {
+    return key.startsWith('br:');
+}
+
+export function isDeathModifierMetric(key: MetricKey): key is DeathModifierMetric {
+    return key.startsWith('dr:');
+}
+
+// The part of a prefixed metric's name after the prefix: the cause or the
+// modifier's source.
+export function metricPart(key: DeathCauseMetric): DeathCause;
+export function metricPart(key: BirthModifierMetric): BirthRateModifierSource;
+export function metricPart(key: DeathModifierMetric): DeathRateModifierSource;
+export function metricPart(key: string): string {
+    return key.slice(key.indexOf(':') + 1);
+}
 
 export type MetricSpec = {
     readonly key: MetricKey;
@@ -79,6 +132,37 @@ export const METRIC_SPECS: readonly MetricSpec[] = [
     })),
 ];
 
+const specFor = (key: MetricKey): MetricSpec =>
+    METRIC_SPECS.find(s => s.key === key)!;
+
+// The births and deaths view: what makes up the birth and death rates, each
+// part on its own chart. Reached from the Net change chart.
+export const VITALS_SPECS: readonly MetricSpec[] = [
+    specFor('netChange'),
+    specFor('childbearingWomen'),
+    specFor('birthRate'),
+    specFor('deathRate'),
+    ...DEATH_CAUSE_METRICS.map((key): MetricSpec => ({
+        key,
+        label: `Deaths: ${metricPart(key)} (per 1000 / year)`,
+        precision: 1,
+    })),
+    specFor('brModifier'),
+    ...BIRTH_MODIFIER_METRICS.map((key): MetricSpec => ({
+        key,
+        label: `Birth rate modifier: ${metricPart(key)}`,
+        precision: 3,
+        yCenter: 1,
+    })),
+    specFor('drModifier'),
+    ...DEATH_MODIFIER_METRICS.map((key): MetricSpec => ({
+        key,
+        label: `Death rate modifier: ${metricPart(key)}`,
+        precision: 3,
+        yCenter: 1,
+    })),
+];
+
 const TRAIT_METRICS: ReadonlySet<MetricKey> = new Set<MetricKey>(NUMERIC_TRAITS);
 
 export function isTraitMetric(key: MetricKey): key is NumericTrait {
@@ -96,6 +180,9 @@ export const YEARLY_RATE_METRICS: ReadonlySet<MetricKey> = new Set<MetricKey>([
     'netChange',
     'brModifier',
     'drModifier',
+    ...DEATH_CAUSE_METRICS,
+    ...BIRTH_MODIFIER_METRICS,
+    ...DEATH_MODIFIER_METRICS,
 ]);
 
 // One metric's distribution across the runs at a single year.

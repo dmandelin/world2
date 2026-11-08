@@ -13,7 +13,11 @@ import { loggingEnabled, setLoggingEnabled } from "../../model/lib/debug";
 import { applyTuning, readTuning, type TuningParams } from "../../model/tuning";
 import { World } from "../../model/world";
 import {
+    isBirthModifierMetric,
+    isDeathCauseMetric,
+    isDeathModifierMetric,
     isTraitMetric,
+    metricPart,
     METRIC_KEYS,
     summarize,
     YEARLY_RATE_METRICS,
@@ -67,6 +71,26 @@ function populationGeomean(world: World, modifier: (c: Clan) => number): number 
     return people > 0 ? Math.exp(logSum / people) : 1;
 }
 
+// Deaths from one cause, per thousand people alive at the start of the year,
+// per year. The year's deaths by cause are read off the clans still standing,
+// whose shares split the world's whole tally -- which also counts the clans
+// that died out, and are gone from the list.
+function deathCauseRate(world: World, cause: string): number {
+    const v = world.lastYearVitals;
+    if (!isPositive(v.population) || !isPositive(v.years)) return 0;
+    let byCause = 0;
+    let all = 0;
+    for (const c of world.allClans) {
+        for (const item of c.lastPopulationChange.items) {
+            if (item.name === 'Births') continue;
+            all -= item.actual;
+            if (item.name === cause) byCause -= item.actual;
+        }
+    }
+    if (!isPositive(all)) return 0;
+    return 1000 * v.deaths * (byCause / all) / v.population / v.years;
+}
+
 // Inequality within each settlement, averaged over settlements by their
 // people, as the overview's Gini rows read it for one settlement.
 function meanSettlementGini(world: World, perHead: (c: Clan) => number): number {
@@ -86,6 +110,17 @@ function meanSettlementGini(world: World, perHead: (c: Clan) => number): number 
 }
 
 function sample(world: World, key: MetricKey): number {
+    if (isDeathCauseMetric(key)) return deathCauseRate(world, metricPart(key));
+    if (isBirthModifierMetric(key)) {
+        const source = metricPart(key);
+        return populationGeomean(world, (c) =>
+            c.lastPopulationChange.brModifiers.find((m) => m.source === source)?.value ?? 1);
+    }
+    if (isDeathModifierMetric(key)) {
+        const source = metricPart(key);
+        return populationGeomean(world, (c) =>
+            c.lastPopulationChange.drModifiers.find((m) => m.source === source)?.value ?? 1);
+    }
     if (isTraitMetric(key)) {
         const people = world.totalPopulation;
         if (!isPositive(people)) return 0;

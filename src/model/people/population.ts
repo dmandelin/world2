@@ -229,9 +229,24 @@ export class PopulationChangeItem {
     }
 }
 
-export class PopulationChangeModifier {
+// Everything that moves a clan's birth rate, and everything that moves its
+// death rate, by name. The builder below can only push modifiers named here,
+// so anything that lists them by name -- the tuning charts, for one -- stays
+// in step with it.
+export const BIRTH_RATE_MODIFIER_SOURCES = [
+    'Nutrition', 'Shelter', 'Marriage Appeal', 'Settlement', 'Prestige',
+    'Society', 'Festivals', 'Care', 'Decisions', 'Foresight',
+] as const;
+export type BirthRateModifierSource = (typeof BIRTH_RATE_MODIFIER_SOURCES)[number];
+
+export const DEATH_RATE_MODIFIER_SOURCES = [
+    'Nutrition', 'Prestige', 'Society', 'Festivals', 'Care', 'Foresight',
+] as const;
+export type DeathRateModifierSource = (typeof DEATH_RATE_MODIFIER_SOURCES)[number];
+
+export class PopulationChangeModifier<S extends string = string> {
     constructor(
-        readonly source: string,
+        readonly source: S,
         readonly inputValue: string | number,
         readonly value: number,
     ) { }
@@ -364,8 +379,8 @@ export class PopulationChange {
 }
 
 export class PopulationChangeBuilder {
-    readonly brModifiers: PopulationChangeModifier[] = [];
-    readonly drModifiers: PopulationChangeModifier[] = [];
+    readonly brModifiers: PopulationChangeModifier<BirthRateModifierSource>[] = [];
+    readonly drModifiers: PopulationChangeModifier<DeathRateModifierSource>[] = [];
 
     readonly brModifier: number;
     readonly drModifier: number;

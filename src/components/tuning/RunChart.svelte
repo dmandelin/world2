@@ -10,6 +10,7 @@
         yCenter,
         pickedYear,
         onpick,
+        action,
     }: {
         title: string;
         points: Summary[];
@@ -25,6 +26,8 @@
         // Called with the year clicked on this chart, or undefined to clear
         // the pick when the year already picked is clicked again.
         onpick?: (year: number | undefined) => void;
+        // A button in the chart's upper right, for going on to more detail.
+        action?: { label: string; title?: string; onclick: () => void };
     } = $props();
 
     // Fixed drawing space; CSS scales the whole thing, so text stays in
@@ -162,6 +165,11 @@
 </script>
 
 <figure class="chart">
+    {#if action}
+        <button class="action" title={action.title} onclick={action.onclick}
+            >{action.label}</button
+        >
+    {/if}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
     <svg
         viewBox="0 0 {W} {H}"
@@ -275,6 +283,7 @@
 
 <style>
     .chart {
+        position: relative;
         margin: 0;
         border: 1px solid #d3c4ad;
         border-radius: 4px;
@@ -315,6 +324,24 @@
 
     .series.mean {
         stroke-width: 2;
+    }
+
+    .action {
+        position: absolute;
+        top: 0.3rem;
+        right: 0.35rem;
+        padding: 0 0.4rem;
+        font: inherit;
+        font-size: 0.7rem;
+        color: #62531d;
+        background-color: #f3edd8;
+        border: 1px solid #c9be92;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .action:hover {
+        background-color: #e9dfbd;
     }
 
     .pickable {
