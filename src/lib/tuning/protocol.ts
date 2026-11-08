@@ -138,6 +138,7 @@ const specFor = (key: MetricKey): MetricSpec =>
 // The births and deaths view: what makes up the birth and death rates, each
 // part on its own chart. Reached from the Net change chart.
 export const VITALS_SPECS: readonly MetricSpec[] = [
+    specFor('people'),
     specFor('netChange'),
     specFor('childbearingWomen'),
     specFor('birthRate'),
