@@ -8,6 +8,7 @@ import { sumFun, isPositive } from "../../model/lib/basics";
 import { weightedGini } from "../../model/lib/inequality";
 import type { Clan } from "../../model/people/people";
 import { eudaimoniaAverage } from "../../model/self/eudaimonia";
+import { FEMALE, sliceAges } from "../../model/people/demography";
 import { loggingEnabled, setLoggingEnabled } from "../../model/lib/debug";
 import { applyTuning, readTuning, type TuningParams } from "../../model/tuning";
 import { World } from "../../model/world";
@@ -111,6 +112,15 @@ function sample(world: World, key: MetricKey): number {
                 : key === 'deathRate' ? v.deaths
                 : v.births - v.deaths;
             return 1000 * count / v.population / v.years;
+        }
+        case 'childbearingWomen': {
+            // Women of the ages births come of, married or not, as a share
+            // of everyone.
+            const people = world.totalPopulation;
+            if (!isPositive(people)) return 0;
+            const ages = sliceAges(1);
+            return 100 * sumFun(world.allClans,
+                (c) => c.demography.count({ sex: FEMALE, ages })) / people;
         }
         case 'brModifier':
             return populationGeomean(world, (c) => c.lastPopulationChange.brModifier);

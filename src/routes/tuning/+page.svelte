@@ -49,6 +49,7 @@
         birthRate: "#0d9488",
         deathRate: "#9f1239",
         netChange: "#475569",
+        childbearingWomen: "#be185d",
         brModifier: "#14b8a6",
         drModifier: "#e11d48",
         foodProduction: "#f59e0b",
