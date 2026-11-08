@@ -147,6 +147,9 @@ export const VITALS_SPECS: readonly MetricSpec[] = [
         key,
         label: `Deaths: ${metricPart(key)} (per 1000 / year)`,
         precision: 1,
+        // On the birth and death rates' own scale, so causes compare at a
+        // glance with each other and with the whole.
+        yRange: [0, 50],
     })),
     specFor('brModifier'),
     ...BIRTH_MODIFIER_METRICS.map((key): MetricSpec => ({
