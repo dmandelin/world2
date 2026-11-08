@@ -31,6 +31,7 @@ import { updateAffinities } from "./relations/affinity";
 import { runRituals, settleRitualEconomy, type RitualEvent } from "./rituals";
 import { planRitualChanges, settleRitualChanges, type RitualChangeEvent } from "./ritualchange";
 import { planDecisions, type Decision } from "./decision";
+import { planMerges, type MergeEvent } from "./people/merging";
 import { settleFestivalEconomy } from "./festivals";
 import { clearNews, foldNewsIntoMemory, forgetStaleMemories, propagateNews, seedInformationLevels, seedObservations, updateInformationLevels, updateObservations } from "./relations/information";
 import { RecentNews } from "./records/recentnews";
@@ -128,6 +129,9 @@ export class World implements NoteTaker {
 
     // Villages that had something to decide in this turn's planning.
     lastDecisions: Decision[] = [];
+
+    // Small clans that asked to be taken in this turn, and where they went.
+    lastMerges: MergeEvent[] = [];
 
     // Occasions that cut a multi-year run short, and what cut the last one.
     // See records/breakpoints.ts.
@@ -408,9 +412,8 @@ export class World implements NoteTaker {
             for (const clan of [...this.allClans]) clan.splitIfNeeded();
             log("Did splits")
         }
-        // TODO - Bring back
-        //this.clans.merge();
-        //this.clans.prune();
+        // Clans too small to carry on alone ask to be taken in.
+        planMerges(this, priming);
 
         this.planConnections();
         updateConversations(this);

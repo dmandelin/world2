@@ -23,6 +23,7 @@ import type {
     HistoryTimeframe,
     MarriageMemory,
     MarriageTie,
+    MergeMemory,
     OriginMemory,
 } from "./history";
 
@@ -63,6 +64,8 @@ export function historyItemTitle(item: AnyHistoryItem): string {
             return "Weddings";
         case "decision":
             return item.consensus ? "Of one mind" : "A divided village";
+        case "merge":
+            return `The ${item.joinerName} came to us`;
     }
 }
 
@@ -77,6 +80,29 @@ export function tellHistoryItem(
         case "fortune": return tellFortune(item, timeframe);
         case "marriage": return tellMarriages(item, timeframe);
         case "decision": return tellDecision(item, timeframe);
+        case "merge": return tellMerge(item, timeframe, clanName);
+    }
+}
+
+// --- Clans taken in -------------------------------------------------------------
+
+function tellMerge(m: MergeMemory, tf: HistoryTimeframe, clanName: string): string {
+    const J = m.joinerName;
+    const name = m.tookName
+        ? ` Their name has stood beside ours since: we are the ${clanName}.`
+        : "";
+    switch (tf) {
+        case "recent":
+            return `The ${J} had grown too few to keep a hearth of their own, with only ${count(m.joinerSize)} of them left, and they asked to come in with us at ${m.settlementName}. We took them in, and they are ours now.${name}`;
+        case "living":
+            return `In our grandparents' day the ${J} were dwindling, and they came to us at ${m.settlementName} and asked to be taken in. We made room at our hearths, and their grandchildren are ours.${name}`;
+        case "family":
+            return `Long ago the ${J} came to us, few and hungry, and we made them our own. Some say they brought us luck, and some say they brought us their quarrels.${name}`;
+        case "ancient":
+            return pick(m, [
+                `In the old days the ${J} wandered, too few to stand alone, until our ancestors took them in at their fire. So the ${J} are in us still.`,
+                `Once there were two peoples, us and the ${J}. When the ${J} grew few, they came to our hearth, and since then there has been one.`,
+            ]);
     }
 }
 

@@ -450,6 +450,24 @@ export class DecisionEffects {
             e => Math.abs(e.at(year)) >= DECISION_EFFECT_FORGOTTEN);
     }
 
+    // For one clan taking in another: each side's effects, counting for as
+    // much as its people do, since Favorability is per head.
+    static blend(
+        a: DecisionEffects, aWeight: number,
+        b: DecisionEffects, bWeight: number,
+    ): DecisionEffects {
+        const total = aWeight + bWeight;
+        if (!(total > 0)) return a.clone();
+        const c = new DecisionEffects();
+        for (const [effects, weight] of [[a, aWeight], [b, bWeight]] as const) {
+            for (const e of effects.effects_) {
+                c.effects_.push(new DecisionEffect(
+                    e.decision, e.favorability * weight / total));
+            }
+        }
+        return c;
+    }
+
     // For a clan that splits: both halves lived through the same decisions.
     // The effects themselves never change, so they can be shared.
     clone(): DecisionEffects {

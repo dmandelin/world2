@@ -25,6 +25,7 @@ export type BreakpointId =
     | 'flood100'
     | 'ritualchange'
     | 'dwindling'
+    | 'merge'
     | 'decision';
 
 export interface BreakpointDef {
@@ -139,6 +140,23 @@ export const BREAKPOINTS: readonly BreakpointDef[] = [
                 ? {
                     what: `${names(fallen)} down to ${fallen[0].population}`,
                     entity: entityOf(fallen[0]),
+                }
+                : undefined;
+        },
+    },
+    {
+        id: 'merge',
+        icon: '🤝',
+        label: 'Clans joined',
+        description: 'A clan too small to carry on alone was taken in by another.',
+        defaultOn: false,
+        hit: world => {
+            const joined = world.lastMerges.filter(m => m.host);
+            return joined.length
+                ? {
+                    what: joined.map(m => `${m.clanName} into ${m.host!.name}`)
+                        .join(', '),
+                    entity: entityOf(joined[0].host!),
                 }
                 : undefined;
         },

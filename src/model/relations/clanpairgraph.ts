@@ -61,6 +61,14 @@ export class ClanPairGraph<V> {
     }
 
     // The value on this edge, adding it if the edge is new.
+    // Forget a clan altogether: every pair it is in.
+    deleteAll(c: HasOrIsUUID): void {
+        const u = uuidOf(c);
+        for (const other of [...(this.adj_.get(u)?.keys() ?? [])]) {
+            this.delete(u, other);
+        }
+    }
+
     getOrSet(c1: HasOrIsUUID, c2: HasOrIsUUID, make: () => V): V {
         let value = this.get(c1, c2);
         if (value === undefined) {

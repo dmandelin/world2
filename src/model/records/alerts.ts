@@ -26,6 +26,7 @@ export type AlertKindId =
     | 'foundation'
     | 'ritualchange'
     | 'decision'
+    | 'merge'
     | 'flood20'
     | 'flood100'
     | 'flood500';
@@ -80,6 +81,12 @@ export const ALERT_KINDS: Record<AlertKindId, AlertKindDef> = {
         icon: '✋',
         color: '#4a5a2a',
         description: 'The clans of a village have something to decide together.',
+    },
+    merge: {
+        title: 'Clans Joined',
+        icon: '🤝',
+        color: '#5b3a7a',
+        description: 'A clan too small to carry on alone was taken in by another.',
     },
     // One badge per severity of extreme flood, so a once-in-a-lifetime
     // flood does not look like a once-in-five-centuries one.
@@ -268,6 +275,18 @@ export function updateWorldAlerts(world: World): void {
             id: change.settlement.uuid,
             entity: change.settlement,
             detail: change.detail,
+        });
+    }
+
+    // Small clans taken in by a neighbor this turn.
+    for (const merge of world.lastMerges) {
+        if (!merge.host) continue;
+        world.addAlert({
+            kind: 'merge',
+            id: `merge:${merge.clan.uuid}`,
+            entity: merge.host,
+            label: `${merge.clanName} into ${merge.host.name}`,
+            detail: `at ${merge.settlement.name}; ${merge.detail}`,
         });
     }
 

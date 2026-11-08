@@ -39,6 +39,7 @@
           case '🌊': return { icon: '🌊', color: '#2b6cb0', tag: 'Flood', tab: 'The Waters' };
           case '🎉': return { icon: '🎉', color: '#975a16', tag: 'Ritual', tab: 'Festivals' };
           case '✋': return { icon: '✋', color: '#4a5a2a', tag: 'Decision', tab: 'Decisions' };
+          case '🤝': return { icon: '🤝', color: '#5b3a7a', tag: 'Merge' };
           default: return { icon: '📝', color: '#718096', tag: 'Event' };
       }
   }

@@ -269,6 +269,20 @@
                                 : "picked wrong"}</span
                         >
                     </dd>
+                {:else if item.kind === "merge"}
+                    <dt>Took in</dt>
+                    <dd>
+                        {item.joinerName}
+                        <span class="muted">{item.joinerSize} people</span>
+                    </dd>
+                    <dt>Clan size before</dt>
+                    <dd>{item.hostSize}</dd>
+                    <dt>Village</dt>
+                    <dd>{item.settlementName}</dd>
+                    <dt>Took their name</dt>
+                    <dd>
+                        {item.tookName ? `yes, was ${item.formerName}` : "no"}
+                    </dd>
                 {:else if item.kind === "fortune"}
                     <dt>Fortune</dt>
                     <dd>
@@ -346,6 +360,11 @@
     .chip-marriage {
         color: #8a5a00;
         background: #f7ecd2;
+    }
+
+    .chip-merge {
+        color: #5b3a7a;
+        background: #ece4f3;
     }
 
     .chip-decision {

@@ -39,7 +39,7 @@ import {
     ConversationBudget,
     readConversationForFortune,
 } from "../relations/conversation";
-import { History, newHistoryEventId } from "./history";
+import { History, MergeMemory, WhenLevels, newHistoryEventId } from "./history";
 import { DecisionEffects } from "../decision";
 import { randomClanName } from "./names";
 export { randomClanName };
@@ -64,6 +64,10 @@ export interface GoodsReceiver {
 
     accept(source: string, good: TradeGood, amount: number): void;
 }
+
+// The most names a clan carries from the clans it has taken in, its own
+// included.
+const MAX_CLAN_NAME_PARTS = 3;
 
 export class Clan implements TradePartner {
     readonly uuid = crypto.randomUUID();
@@ -591,25 +595,77 @@ export class Clan implements TradePartner {
         this.seniority = 0;
     }
 
+    // Take another clan in: its people, its promises, its stores, and its
+    // ways, which count for as much as its people do. See merging.ts.
     absorb(other: Clan) {
+        // A clan that brings in half again its own people takes their name
+        // alongside its own -- up to three names, past which the newest
+        // comers are known by the old ones.
+        const formerName = this.name;
         if (other.population >= this.population * 0.5) {
-            this.name = `${this.name}-${other.name}`;
+            this.name = [...this.name.split('-'), ...other.name.split('-')]
+                .slice(0, MAX_CLAN_NAME_PARTS).join('-');
         }
 
         const origSize = this.population;
+        const otherSize = other.population;
+        const total = origSize + otherSize;
+        const blend = (mine: number, theirs: number) =>
+            total > 0 ? (mine * origSize + theirs * otherSize) / total : mine;
+
         this.demography.merge(other.demography);
         transferBetrothals(this.world, other, this);
 
         for (const key of NUMERIC_TRAITS) {
-            const val = Math.round(
-                (this.traits.get(key) * origSize + other.traits.get(key) * other.population) /
-                (origSize + other.population));
-            this.traits.set(key, val);
+            this.traits.set(key, Math.round(
+                blend(this.traits.get(key), other.traits.get(key))));
         }
+        this.traits.ditchingEffort = blend(
+            this.traits.ditchingEffort, other.traits.ditchingEffort);
+        this.traits.festivalGiving = blend(
+            this.traits.festivalGiving, other.traits.festivalGiving);
+        this.traits.rigidity = blend(this.traits.rigidity, other.traits.rigidity);
+        this.traits.pride = blend(this.traits.pride, other.traits.pride);
+
+        for (const [skillDef, skill] of this.skills) {
+            const theirs = other.skills.get(skillDef);
+            if (theirs) skill.value_ = blend(skill.value, theirs.value);
+        }
+
+        // What it had laid by comes with it.
+        for (const item of other.stock.items) {
+            this.stock.getItem(item.good).amount += item.amount;
+        }
+
+        // How life has been going, and what the village's decisions are
+        // still doing, are per head, so they average.
+        this.eudaimonia.life = blend(this.eudaimonia.life, other.eudaimonia.life);
+        this.eudaimonia.fortuneSubscore = blend(
+            this.eudaimonia.fortuneSubscore, other.eudaimonia.fortuneSubscore);
+        this.decisionEffects = DecisionEffects.blend(
+            this.decisionEffects, origSize, other.decisionEffects, otherSize);
 
         // TODO - Handle relationships
 
-        this.annals.log(`Clan ${other.name} (${other.population}) joined into clan ${this.name} (${this.population})`, this.settlement);
+        this.annals.log(`Clan ${other.name} (${otherSize}) joined into clan ${this.name} (${this.population})`, this.settlement);
+
+        const year = this.world.year.value;
+        this.history.recordMerge(new MergeMemory(
+            newHistoryEventId(), year, WhenLevels.ThisYear,
+            other.name, otherSize, origSize, this.settlement.name,
+            this.name !== formerName ? formerName : undefined));
+
+        // Nothing is left of the other clan. It has to be emptied as well as
+        // dropped from its settlement: its ties to its neighbors outlast it,
+        // and anything reckoned over those -- food gifts, for one -- passes
+        // over a clan with nobody in it, but would go on giving to one that
+        // still seemed to have people.
+        other.demography = new Demography();
+        other.stock = new Stock();
+        // Nor is it anyone's kin, in-law, neighbor or partner in talk any
+        // longer: those ties were its people's, and its people are ours now.
+        this.world.connections.deleteAll(other);
+        this.world.interactions.deleteAll(other);
     }
 
     splitIfNeeded() {

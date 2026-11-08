@@ -145,7 +145,7 @@ export function newHistoryEventId(): number {
     return nextHistoryEventId++;
 }
 
-export type HistoryItemKind = "origin" | "flood" | "fortune" | "marriage" | "decision";
+export type HistoryItemKind = "origin" | "flood" | "fortune" | "marriage" | "decision" | "merge";
 
 export abstract class HistoryItem {
     abstract readonly kind: HistoryItemKind;
@@ -354,8 +354,35 @@ export class DecisionMemory extends HistoryItem {
 // year's weddings and then let go.
 export const DECISION_MEMORY_YEARS = 80;
 
+// A clan too few to go on alone that this one took in. Kept for good: those
+// people and their children are part of the clan now.
+export class MergeMemory extends HistoryItem {
+    readonly kind = "merge" as const;
+
+    constructor(
+        eventId: number,
+        year: number,
+        when: number,
+        // The clan taken in, and how many of them there were.
+        readonly joinerName: string,
+        readonly joinerSize: number,
+        // How many of this clan there were before.
+        readonly hostSize: number,
+        readonly settlementName: string,
+        // What this clan was called before it took their name too, if it did.
+        readonly formerName?: string,
+    ) {
+        super(eventId, year, when);
+    }
+
+    get tookName(): boolean {
+        return this.formerName !== undefined;
+    }
+}
+
 export type AnyHistoryItem =
-    OriginMemory | FloodMemory | FortuneMemory | MarriageMemory | DecisionMemory;
+    OriginMemory | FloodMemory | FortuneMemory | MarriageMemory | DecisionMemory
+    | MergeMemory;
 
 // Names one event across every clan that remembers it, where an item is one
 // clan's copy. The same year's Fortune could in principle be one clan's best
@@ -366,7 +393,7 @@ export function historyEventKey(item: AnyHistoryItem): string {
         : `${item.kind}:${item.eventId}`;
 }
 
-const KIND_ORDER: Record<HistoryItemKind, number> = { origin: 0, flood: 1, fortune: 2, marriage: 3, decision: 4 };
+const KIND_ORDER: Record<HistoryItemKind, number> = { origin: 0, flood: 1, fortune: 2, marriage: 3, decision: 4, merge: 5 };
 
 // Oldest first; what happened before anyone was counting leads.
 export function compareHistoryItems(a: AnyHistoryItem, b: AnyHistoryItem): number {
@@ -507,6 +534,10 @@ export class History {
     }
 
     recordDecision(memory: DecisionMemory): void {
+        this.items_.push(memory);
+    }
+
+    recordMerge(memory: MergeMemory): void {
         this.items_.push(memory);
     }
 
