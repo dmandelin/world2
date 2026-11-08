@@ -8,6 +8,8 @@
         color = "#3b82f6",
         yRange,
         yCenter,
+        pickedYear,
+        onpick,
     }: {
         title: string;
         points: Summary[];
@@ -18,6 +20,11 @@
         // A value to keep on the axis's midline: the axis still fits the
         // data, but evenly either side of this.
         yCenter?: number;
+        // A year picked on any chart, marked on this one too.
+        pickedYear?: number;
+        // Called with the year clicked on this chart, or undefined to clear
+        // the pick when the year already picked is clicked again.
+        onpick?: (year: number | undefined) => void;
     } = $props();
 
     // Fixed drawing space; CSS scales the whole thing, so text stays in
@@ -125,10 +132,45 @@
     });
 
     let latest = $derived(shown.length ? shown[shown.length - 1] : undefined);
+
+    // The summary nearest a year, from every point rather than the thinned
+    // ones drawn, so a pick reads the year itself.
+    function nearest(year: number): Summary | undefined {
+        let best: Summary | undefined;
+        for (const p of points) {
+            if (!best || Math.abs(p.year - year) < Math.abs(best.year - year)) best = p;
+        }
+        return best;
+    }
+
+    let picked = $derived(
+        pickedYear === undefined ? undefined : nearest(pickedYear),
+    );
+
+    let svg: SVGSVGElement | undefined = $state();
+
+    // A click picks the year under it, snapped to one there is data for.
+    function pick(event: MouseEvent) {
+        if (!onpick || !svg || !points.length) return;
+        const rect = svg.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * W;
+        const [lo, hi] = xDomain;
+        const t = Math.min(1, Math.max(0, (x - PAD.left) / gw));
+        const year = nearest(lo + t * (hi - lo))?.year;
+        onpick(year === pickedYear ? undefined : year);
+    }
 </script>
 
 <figure class="chart">
-    <svg viewBox="0 0 {W} {H}" role="img" aria-label={title}>
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+    <svg
+        viewBox="0 0 {W} {H}"
+        role="img"
+        aria-label={title}
+        bind:this={svg}
+        onclick={pick}
+        class:pickable={!!onpick}
+    >
         <text x={W / 2} y="14" class="title" text-anchor="middle">{title}</text>
 
         <!-- plot frame and horizontal gridlines -->
@@ -185,6 +227,13 @@
                     />
                 {/if}
                 <path d={line((p) => p.mean)} class="series mean" stroke={color} />
+                {#if picked}
+                    {@const px = xp(picked.year)}
+                    {@const py = yp(picked.mean)}
+                    <line x1={px} y1={PAD.top} x2={px} y2={PAD.top + gh} class="pick" />
+                    <line x1={PAD.left} y1={py} x2={PAD.left + gw} y2={py} class="pick" />
+                    <circle cx={px} cy={py} r="2.5" fill={color} class="pick-dot" />
+                {/if}
             </svg>
         {/if}
 
@@ -201,7 +250,16 @@
     </svg>
 
     <figcaption>
-        {#if latest}
+        {#if picked}
+            <span class="picked-year">year {picked.year}</span>
+            <span class="value">{fmt(picked.mean)}</span>
+            <span class="range">
+                {fmt(picked.min)}–{fmt(picked.max)}
+            </span>
+            {#if showQuartiles}
+                <span class="range">med {fmt(picked.median)}</span>
+            {/if}
+        {:else if latest}
             <span class="value">{fmt(latest.mean)}</span>
             <span class="range">
                 {fmt(latest.min)}–{fmt(latest.max)}
@@ -257,6 +315,29 @@
 
     .series.mean {
         stroke-width: 2;
+    }
+
+    .pickable {
+        cursor: crosshair;
+    }
+
+    .pick {
+        stroke: #2c250d;
+        stroke-width: 1;
+        stroke-dasharray: 2 2;
+        opacity: 0.7;
+    }
+
+    .pick-dot {
+        stroke: #fffdf6;
+        stroke-width: 1;
+    }
+
+    .picked-year {
+        color: #2c250d;
+        background-color: #efe7c8;
+        border-radius: 2px;
+        padding: 0 0.25rem;
     }
 
     figcaption {

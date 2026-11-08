@@ -79,6 +79,9 @@
     let onWorker = $state(true);
     let error = $state<string | undefined>(undefined);
 
+    // A year picked by clicking any chart, marked on all of them.
+    let pickedYear = $state<number | undefined>(undefined);
+
     // Per-metric time series, appended to as frames arrive.
     let series = $state<Record<MetricKey, Summary[]>>(emptySeries());
 
@@ -110,6 +113,7 @@
         if (active) return;
         error = undefined;
         series = emptySeries();
+        pickedYear = undefined;
         yearsDone = 0;
         yearsTotal = config.years;
         liveRuns = config.runs;
@@ -290,6 +294,8 @@
                 color={CHART_COLORS[spec.key]}
                 yRange={spec.yRange}
                 yCenter={spec.yCenter}
+                {pickedYear}
+                onpick={(year) => (pickedYear = year)}
             />
         {/each}
     </section>
