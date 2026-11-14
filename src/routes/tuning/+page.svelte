@@ -1,5 +1,10 @@
 <script lang="ts">
     import RunChart from "../../components/tuning/RunChart.svelte";
+    import {
+        SMOOTHING_OPTIONS,
+        smoothSummaries,
+        type Smoothing,
+    } from "../../lib/tuning/smoothing";
     import { startBatch, type BatchHandle } from "../../lib/tuning/client";
     import {
         METRIC_KEYS,
@@ -96,6 +101,10 @@
     // Which charts are showing: the overview, or the births and deaths taken
     // apart. The batch runs on either way.
     let view = $state<"main" | "vitals">("main");
+
+    // How much the charts are smoothed: not at all, over a window of years,
+    // or over the whole run. Only the drawing; the series stay as run.
+    let smoothing = $state<Smoothing>(0);
 
     // A year picked by clicking any chart, marked on all of them.
     let pickedYear = $state<number | undefined>(undefined);
@@ -324,11 +333,28 @@
         </p>
     {/if}
 
+    <div class="smoothing" role="group" aria-label="Smoothing">
+        <span class="smoothing-label">Smoothing</span>
+        {#each SMOOTHING_OPTIONS as option (option.value)}
+            <button
+                class="smoothing-option"
+                class:chosen={smoothing === option.value}
+                aria-pressed={smoothing === option.value}
+                title={option.value === 0
+                    ? "Each year as it came out"
+                    : option.value === "all"
+                      ? "Averaged over the whole run: every chart a level line"
+                      : `Each year averaged with those within ${option.value / 2} years either side`}
+                onclick={() => (smoothing = option.value)}>{option.label}</button
+            >
+        {/each}
+    </div>
+
     <section class="charts">
         {#each view === "main" ? METRIC_SPECS : VITALS_SPECS as spec (spec.key)}
             <RunChart
                 title={spec.label}
-                points={series[spec.key]}
+                points={smoothSummaries(series[spec.key], smoothing)}
                 precision={spec.precision}
                 color={colorFor(spec.key)}
                 yRange={spec.yRange}
@@ -594,6 +620,38 @@
         margin: 0;
         font-size: 0.8rem;
         color: #62531d;
+    }
+
+    .smoothing {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .smoothing-label {
+        margin-right: 0.35rem;
+        color: #62531d;
+    }
+
+    .smoothing-option {
+        font: inherit;
+        padding: 0.1rem 0.5rem;
+        color: #62531d;
+        background-color: #fffdf6;
+        border: 1px solid #c9be92;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .smoothing-option:hover {
+        background-color: #f3edd8;
+    }
+
+    .smoothing-option.chosen {
+        color: #fffdf6;
+        background-color: #62531d;
+        border-color: #62531d;
     }
 
     .legend-note {
