@@ -13,6 +13,10 @@ export class HelpAllocation {
         this.m.clear();
     }
 
+    delete(clan: Clan) {
+        this.m.delete(clan);
+    }
+
     get(clan: Clan): number {
         return this.m.get(clan) ?? 0;
     }

@@ -208,6 +208,16 @@ export class DirectedClanPairGraph<V> {
         this.in_.get(o)?.delete(s);
     }
 
+    // Forget a clan altogether: everything it held about others, and
+    // everything others held about it.
+    deleteAll(c: HasOrIsUUID): void {
+        const u = uuidOf(c);
+        for (const object of this.out_.get(u)?.keys() ?? []) this.in_.get(object)?.delete(u);
+        for (const subject of this.in_.get(u)?.keys() ?? []) this.out_.get(subject)?.delete(u);
+        this.out_.delete(u);
+        this.in_.delete(u);
+    }
+
     // Everything this clan holds about others.
     getFor(subject: HasOrIsUUID): Iterable<[UUID, V]> {
         return this.out_.get(uuidOf(subject))?.entries() ?? NO_NEIGHBORS;

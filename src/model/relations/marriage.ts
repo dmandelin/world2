@@ -108,6 +108,12 @@ export class PairingCounts {
         m.set(object, (m.get(object) ?? 0) + count);
     }
 
+    // A clan that is gone is matched with no one.
+    forget(clan: Clan): void {
+        this.counts.delete(clan);
+        for (const m of this.counts.values()) m.delete(clan);
+    }
+
     *entries(): Iterable<[Clan, Clan, number]> {
         for (const [subject, m] of this.counts) {
             for (const [object, count] of m) yield [subject, object, count];
@@ -369,6 +375,18 @@ export function breakBetrothals(world: World, clan: Clan, deaths: readonly numbe
                 releaseBetrothed(b.wifeClan, FEMALE, 1);
             }
         }
+    }
+    removeAll(world.betrothals, b => b.count === 0);
+}
+
+// A clan that is gone keeps no promises: everyone promised to one of its
+// people goes back to being unmarried.
+export function dropBetrothals(world: World, clan: Clan): void {
+    for (const b of world.betrothals) {
+        if (b.husbandClan === clan) releaseBetrothed(b.wifeClan, FEMALE, b.count);
+        else if (b.wifeClan === clan) releaseBetrothed(b.husbandClan, MALE, b.count);
+        else continue;
+        b.count = 0;
     }
     removeAll(world.betrothals, b => b.count === 0);
 }

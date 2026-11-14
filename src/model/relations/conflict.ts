@@ -67,6 +67,11 @@ export class Conflicts {
         }
     }
 
+    // A clan that is gone has no quarrels left.
+    forget(c: HasOrIsUUID): void {
+        this.g.deleteAll(c);
+    }
+
     // Remove everything where `fn` returns true. Collected first, since
     // removing an edge drops the map the walk is standing on.
     prune(fn: (c1: Clan, c2: Clan, conflict: Conflict) => boolean): void {

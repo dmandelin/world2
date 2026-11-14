@@ -662,10 +662,8 @@ export class Clan implements TradePartner {
         // still seemed to have people.
         other.demography = new Demography();
         other.stock = new Stock();
-        // Nor is it anyone's kin, in-law, neighbor or partner in talk any
-        // longer: those ties were its people's, and its people are ours now.
-        this.world.connections.deleteAll(other);
-        this.world.interactions.deleteAll(other);
+        // Taking it out of the world is the caller's to do, with
+        // World.removeClan, once the taking in is done.
     }
 
     splitIfNeeded() {

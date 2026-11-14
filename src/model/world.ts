@@ -11,7 +11,7 @@ import { economicResult } from "./econ/economy";
 import { rollFishingLuck, rollHarvestLuck } from "./econ/productivity";
 import { Distribution, StockOutflow, Consumption } from "./econ/flows";
 import { QualityOfLife } from "./econ/qol";
-import { marry, type Betrothal, MarriageDecisions, type PairingCounts } from "./relations/marriage";
+import { dropBetrothals, marry, type Betrothal, MarriageDecisions, type PairingCounts } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
@@ -570,9 +570,9 @@ export class World implements NoteTaker {
                 }
                 // Reads the year's births and deaths, so it follows them.
                 for (const clan of settlement.clans) clan.updateEudaimonia();
-                const before = settlement.clans.length;
-                removeAll(settlement.clans, c => c.population === 0);
-                if (settlement.clans.length !== before) membershipChanged();
+                for (const clan of settlement.clans.filter(c => c.population === 0)) {
+                    this.removeClan(clan);
+                }
 
                 // Tell height.
                 settlement.growTell(sizeBefore);
@@ -781,6 +781,43 @@ export class World implements NoteTaker {
         this.addNote('$vr$', `Year ${this.year.toString()} begins.`);
     }
 
+
+    // A clan is gone: died out, or taken in by another. Take it out of
+    // everything that holds the clans of the world as they now are -- its
+    // settlement, the clan map, its ties, dealings, quarrels and what others
+    // make of it, its promises of marriage, its trade -- so nothing goes on
+    // counting it in a sum over neighbors or sending it gifts or help.
+    //
+    // What happened in the past keeps it: the histories and annals, the
+    // timelines, the decisions and merges it took part in, and the news and
+    // memories others hold of things it did all still name it.
+    removeClan(clan: Clan): void {
+        const clans = clan.settlement?.clans;
+        if (clans) removeAll(clans, c => c === clan);
+
+        this.clanMap.delete(clan.uuid);
+        this.connections.deleteAll(clan);
+        this.interactions.deleteAll(clan);
+        this.conflicts.forget(clan);
+        this.perceptions.deleteAll(clan);
+
+        dropBetrothals(this, clan);
+        for (const pairings of this.marriageHistory) pairings.forget(clan);
+        this.brideAppeal.delete(clan);
+
+        for (const other of this.allClans) {
+            other.brideServiceOut.delete(clan);
+            other.brideServiceIn.delete(clan);
+            other.helpAllocation.delete(clan);
+        }
+
+        for (const relationship of clan.tradeRelationships) {
+            relationship.partner(clan).tradeRelationships.delete(relationship);
+        }
+        clan.tradeRelationships.clear();
+
+        membershipChanged();
+    }
 
     planConnections() {
         // Make everyone a neighbor of everyone else in the same settlement.

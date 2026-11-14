@@ -107,6 +107,12 @@ export class PerceptionsGraph extends DirectedClanPairGraph<Perceptions> {
         this.setEdge(subject, object, perceptions);
     }
 
+    // Forget a clan altogether, its view of itself included.
+    override deleteAll(c: HasOrIsUUID): void {
+        super.deleteAll(c);
+        this.self_.delete(uuidOf(c));
+    }
+
     // Drop self-views belonging to clans that no longer exist.
     keepSelfOnly(clanIDs: Set<UUID>) {
         for (const id of [...this.self_.keys()]) {

@@ -2,7 +2,6 @@ import { normal } from "../lib/distributions";
 import { getAlignment } from "../relations/alignment";
 import { getRelativeAttention } from "../relations/conversation";
 import { inclusiveFeeling } from "../decision";
-import { membershipChanged } from "./membership";
 import { TRAIT_SD } from "./traits";
 import { SOCIABILITY_SD } from "./sociability";
 import type { Clan } from "./people";
@@ -158,7 +157,6 @@ export function planMerges(world: World, priming: boolean = false): void {
     // A clan already taken in, or already taking another in, sits the rest
     // of the year out.
     const involved = new Set<Clan>();
-    let changed = false;
     for (const settlement of world.allSettlements) {
         for (const clan of [...settlement.clans]) {
             if (involved.has(clan)) continue;
@@ -190,10 +188,9 @@ export function planMerges(world: World, priming: boolean = false): void {
             if (!host) continue;
 
             host.absorb(clan);
-            settlement.clans.splice(settlement.clans.indexOf(clan), 1);
+            world.removeClan(clan);
             involved.add(clan);
             involved.add(host);
-            changed = true;
             world.addNote(
                 MERGE_NOTE_LABEL,
                 `The ${clan.name} joined {0} at {1}`,
@@ -205,5 +202,4 @@ export function planMerges(world: World, priming: boolean = false): void {
             );
         }
     }
-    if (changed) membershipChanged();
 }
