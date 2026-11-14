@@ -16,3 +16,15 @@ Things to try:
 *   Smooth the graphs
 *   Understand in more detail why birth rate doesn't
     seem to keep up with death rate in the long term
+
+After that, to try to firm up the model further, it
+does appear that marriage opportunities (quantity and
+quality) and food insurance relationships are typically
+major motivators, so it would make sense to try to
+confirm that clans have enough actions and get enough
+results out of them.
+
+We also need to somewhat prioritize replacing the
+"residence fertility bonus" with an early-weaning
+model. Mainly because it doesn't make a ton of sense
+in its current form.
