@@ -103,6 +103,16 @@ export class Settlement {
         this.previousFloodLevel_ = cluster.floodLevel;
         this.floodRating_ = cluster.floodLevel.randomRating();
 
+        // A daughter village keeps the ways of the one it came from: its
+        // founders know no other way of holding the ditches or the festival.
+        // What it has built -- the ditches themselves, the tell -- stays
+        // behind.
+        if (parent) {
+            this.ditchingMethod = parent.ditchingMethod;
+            this.ritualStructure = parent.ritualStructure;
+            this.ritualLeadership = parent.ritualLeadership;
+        }
+
         cluster.settlements.push(this);
         membershipChanged();
         if (this.parent) {
