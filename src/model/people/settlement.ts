@@ -25,7 +25,7 @@ import {
     SettlementLandAllocation,
 } from "../econ/land";
 import { getAlignment } from "../relations/alignment";
-import type { NewSettlementDecisionReport } from "./migration";
+import type { FoundingDecision } from "./migration";
 import type { RitualChangeEvent } from "../ritualchange";
 import type { Decision } from "../decision";
 import type { UUID } from "../records/basicdata";
@@ -41,7 +41,9 @@ export class Settlement {
     refoundedAfterRiverShift = false;
 
     readonly localTradeGoods = new Set<TradeGood>();
-    newSettlementDecisionReport: NewSettlementDecisionReport | undefined = undefined;
+    // This year's question of whether some of its clans go off to found a
+    // village of their own. See migration.ts.
+    foundingDecision: FoundingDecision | undefined = undefined;
 
     // The fields. `land` is the stretch of alluvium the settlement sits on,
     // redrawn whenever the river moves; `landAllocation` is who took up

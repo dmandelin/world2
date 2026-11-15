@@ -1,39 +1,279 @@
-import { sumFun } from "../lib/basics";
-import { Clan } from "./people";
+import { dice, sumFun } from "../lib/basics";
+import type { Clan } from "./people";
 import { randomHamletName } from "./names";
-import { eloSuccessProbability } from "../lib/modelbasics";
 import { Settlement } from "./settlement";
 import { SettlementCluster } from "./cluster";
 import { getAlignment } from "../relations/alignment";
+import { TRAIT_SD } from "./traits";
+import { DecisionEffects } from "../decision";
 import type { World } from "../world";
-import { normal } from "../lib/distributions";
 
-class NewSettlementMigrationTarget {
-    get name(): string { return 'New settlement'; }
-    get population(): number { return 0; }
-    get cluster(): SettlementCluster | undefined { return undefined; }
+// Going off to found a new village.
+//
+// Every year, in every village, each clan weighs up how appealing it would
+// be to go off with some of the others and found a village of their own.
+// The appeal is a sum of four things:
+//
+//   - the size of the new village, as log(people / a reference size): a
+//     handful of clans can make a go of it where one alone cannot;
+//   - the change in Favor from leaving: whatever the village's past
+//     decisions are doing to the clan, for good or ill, it leaves behind,
+//     and starts again at 0;
+//   - how well it gets on with the people who would be going, as its
+//     average alignment toward them;
+//   - a small random value of its own, rolled once a year.
+//
+// One clan can't know what the others will do, so the village feels its way
+// there over a few rounds. In the first, each clan supposes a third of the
+// village would go, and goes by how it gets on with the village as a whole;
+// after that it looks at who said they were interested last round. Clans say
+// they're interested when the appeal is above 0, but no more than
+// FOUNDING_MAX_SHARE of them, those keenest to go. Everyone gets a bonus in
+// the early rounds that falls away round by round and is gone in the last,
+// so that clans can show an interest before they know who else might.
+// Whoever is still interested in the last round goes. A round in which
+// nobody is interested ends it there, and nobody goes.
+
+// The constant part of the appeal: where leaving starts from before any of
+// the rest is counted.
+export const FOUNDING_BASE = -7;
+// Per unit of log(people in the new village / the reference size). Measured
+// from a reference rather than from one person, so that what personality
+// does to the weight moves the appeal of a village bigger or smaller than
+// that, and not the appeal of leaving at all.
+export const FOUNDING_POPULATION_COEFFICIENT = 4;
+export const FOUNDING_REFERENCE_POPULATION = 60;
+// Per point of Favor gained by leaving it behind.
+export const FOUNDING_FAVOR_COEFFICIENT = 0.15;
+// Per unit of average alignment toward the people going.
+export const FOUNDING_ALIGNMENT_COEFFICIENT = 3;
+// The random value is (d6 - d6) times this: -5 to +5 at most, and most
+// often near 0.
+export const FOUNDING_RANDOM_SCALE = 0.4;
+
+// The early rounds' bonus, and how it falls away.
+export const FOUNDING_ROUND_BONUS = 2;
+export const FOUNDING_ROUND_BONUS_DECAY = 0.5;
+// Rounds in all; the last has no bonus.
+export const FOUNDING_ROUNDS = 5;
+
+// How many of the clans will say they're interested at most in any round.
+export const FOUNDING_MAX_SHARE = 0.45;
+// Fewer than this many clans still interested at the end, and nobody goes.
+// Without it, a village small enough that only one clan may be interested
+// tends to see-saw: one clan is keen, the next round another is keen to go
+// with it while the first, picturing itself alone, is not, and whichever
+// holds the last round goes off by itself.
+export const FOUNDING_MIN_CLANS = 2;
+// In the first round, what share of the village a clan supposes would go.
+export const FOUNDING_FIRST_ROUND_SHARE = 1 / 3;
+
+// How personality moves the weights: each is a factor per standard
+// deviation of the trait from 50.
+export const FOUNDING_INTELLECT_RANDOM = 0.7;
+export const FOUNDING_INTELLECT_POPULATION = 0.85;
+export const FOUNDING_SOCIABILITY_POPULATION = 1.25;
+export const FOUNDING_TENDERNESS_FAVOR = 1.25;
+export const FOUNDING_TENDERNESS_ALIGNMENT = 1.25;
+export const FOUNDING_PEACEABLENESS_FAVOR = 0.8;
+
+function perSD(factor: number, trait: number): number {
+    return Math.pow(factor, (trait - 50) / TRAIT_SD);
 }
 
-export const NewSettlement = new NewSettlementMigrationTarget();
-
-export type MigrationTarget = Settlement | NewSettlementMigrationTarget;
-
-export class NewSettlementDecisionReportItem {
-    constructor(
-        readonly clanName: string,
-        readonly stayPutAppeal: number,
-        readonly movingAppeals: number[],
-        readonly isTopChoice: boolean[]
-    ) { }
+export function foundingRoundBonus(round: number): number {
+    return round >= FOUNDING_ROUNDS - 1
+        ? 0
+        : FOUNDING_ROUND_BONUS * Math.pow(FOUNDING_ROUND_BONUS_DECAY, round);
 }
 
-export class NewSettlementDecisionReport {
-    readonly items: Record<string, NewSettlementDecisionReportItem> = {};
+// What a clan's personality makes of each part of the appeal.
+export class FoundingWeights {
+    readonly intellect: number;
+    readonly sociability: number;
+    readonly tenderness: number;
+    readonly peaceableness: number;
+
+    readonly randomFactor: number;
+    readonly population: number;
+    readonly favor: number;
+    readonly alignment: number;
+
+    constructor(clan: Clan) {
+        const t = clan.traits;
+        this.intellect = t.intellect;
+        this.sociability = t.sociability;
+        this.tenderness = t.tenderness;
+        this.peaceableness = t.peaceableness;
+
+        this.randomFactor = perSD(FOUNDING_INTELLECT_RANDOM, this.intellect);
+        this.population = FOUNDING_POPULATION_COEFFICIENT
+            * perSD(FOUNDING_INTELLECT_POPULATION, this.intellect)
+            * perSD(FOUNDING_SOCIABILITY_POPULATION, this.sociability);
+        this.favor = FOUNDING_FAVOR_COEFFICIENT
+            * perSD(FOUNDING_TENDERNESS_FAVOR, this.tenderness)
+            * perSD(FOUNDING_PEACEABLENESS_FAVOR, this.peaceableness);
+        this.alignment = FOUNDING_ALIGNMENT_COEFFICIENT
+            * perSD(FOUNDING_TENDERNESS_ALIGNMENT, this.tenderness);
+    }
+}
+
+// One clan's appeal in one round, part by part.
+export class FoundingAppeal {
+    readonly populationTerm: number;
+    readonly favorTerm: number;
+    readonly alignmentTerm: number;
+    readonly value: number;
+    // Said it was interested: the appeal was above 0 and it was among the
+    // keenest.
+    interested = false;
+    // The appeal was above 0, but too many were keener.
+    crowdedOut = false;
 
     constructor(
-        readonly settlementName: string,
-        readonly roundsRun: number
-    ) { }
+        readonly round: number,
+        weights: FoundingWeights,
+        // The people it supposes would make up the new village.
+        readonly expectedPopulation: number,
+        readonly favorChange: number,
+        // Average alignment toward the people going, and who they are
+        // supposed to be: the whole village, or those interested last round.
+        readonly alignment: number,
+        readonly alignmentBasis: 'village' | 'interested',
+        readonly random: number,
+        readonly bonus: number,
+    ) {
+        this.populationTerm = weights.population
+            * Math.log(Math.max(1, expectedPopulation) / FOUNDING_REFERENCE_POPULATION);
+        this.favorTerm = weights.favor * favorChange;
+        this.alignmentTerm = weights.alignment * alignment;
+        this.value = FOUNDING_BASE + this.populationTerm + this.favorTerm
+            + this.alignmentTerm + random + bonus;
+    }
+}
+
+// One clan's part in the year's question.
+export class FoundingVote {
+    readonly clanName: string;
+    readonly population: number;
+    readonly weights: FoundingWeights;
+    // The year's roll, before and after intellect.
+    readonly roll: number;
+    readonly random: number;
+    // Favor now, and so what leaving would change it by.
+    readonly favor: number;
+    readonly rounds: FoundingAppeal[] = [];
+    // Going, or would have gone with migration turned off.
+    goes = false;
+    prevented = false;
+
+    constructor(readonly clan: Clan) {
+        this.clanName = clan.name;
+        this.population = clan.population;
+        this.weights = new FoundingWeights(clan);
+        this.roll = dice(1, 6, 0) - dice(1, 6, 0);
+        this.random = this.roll * FOUNDING_RANDOM_SCALE * this.weights.randomFactor;
+        this.favor = clan.decisionFavorability;
+    }
+
+    get favorChange(): number {
+        return -this.favor;
+    }
+
+    get final(): FoundingAppeal | undefined {
+        return this.rounds[this.rounds.length - 1];
+    }
+
+    get everInterested(): boolean {
+        return this.rounds.some(r => r.interested);
+    }
+}
+
+// A village's question for the year: who, if anyone, goes off to found a
+// new one.
+export class FoundingDecision {
+    readonly year: number;
+    readonly settlementName: string;
+    readonly votes: FoundingVote[];
+    // Who said they were interested in each round, and how many people that
+    // came to.
+    readonly interested: Clan[][] = [];
+    readonly interestedPeople: number[] = [];
+    readonly maxInterested: number;
+    founders: Clan[] = [];
+    prevented = false;
+
+    constructor(readonly settlement: Settlement) {
+        this.year = settlement.world.year.value;
+        this.settlementName = settlement.name;
+        this.votes = settlement.clans.map(c => new FoundingVote(c));
+        this.maxInterested = Math.floor(FOUNDING_MAX_SHARE * this.votes.length);
+        this.run();
+    }
+
+    voteOf(clan: Clan): FoundingVote | undefined {
+        return this.votes.find(v => v.clan === clan);
+    }
+
+    private run() {
+        const villagePopulation = this.settlement.population;
+        let last: Clan[] = [];
+        for (let round = 0; round < FOUNDING_ROUNDS; ++round) {
+            const bonus = foundingRoundBonus(round);
+            const appeals = this.votes.map(v => {
+                let expectedPopulation: number;
+                let alignment: number;
+                let basis: 'village' | 'interested';
+                if (round === 0) {
+                    expectedPopulation = villagePopulation * FOUNDING_FIRST_ROUND_SHARE;
+                    alignment = averageAlignment(v.clan, this.settlement.clans);
+                    basis = 'village';
+                } else {
+                    // The ones interested last round, and itself.
+                    const going = last.includes(v.clan) ? last : [...last, v.clan];
+                    expectedPopulation = sumFun(going, c => c.population);
+                    alignment = averageAlignment(v.clan, going);
+                    basis = 'interested';
+                }
+                const appeal = new FoundingAppeal(
+                    round, v.weights, expectedPopulation, v.favorChange,
+                    alignment, basis, v.random, bonus);
+                v.rounds.push(appeal);
+                return { v, appeal };
+            });
+
+            const keen = appeals
+                .filter(a => a.appeal.value > 0)
+                .sort((a, b) => b.appeal.value - a.appeal.value);
+            keen.forEach((a, i) => {
+                if (i < this.maxInterested) a.appeal.interested = true;
+                else a.appeal.crowdedOut = true;
+            });
+            last = keen.slice(0, this.maxInterested).map(a => a.v.clan);
+            this.interested.push(last);
+            this.interestedPeople.push(sumFun(last, c => c.population));
+            // Nobody interested, and there is nothing more to talk about.
+            if (last.length === 0) break;
+        }
+
+        this.founders = last.length >= FOUNDING_MIN_CLANS ? last : [];
+        const world = this.settlement.world;
+        this.prevented = this.founders.length > 0 && world.migrationsPrevented;
+        for (const v of this.votes) {
+            const going = this.founders.includes(v.clan);
+            v.goes = going && !this.prevented;
+            v.prevented = going && this.prevented;
+        }
+    }
+}
+
+// Population-weighted, over the other clans: how it gets on with the
+// people, rather than with the clans as clans.
+function averageAlignment(clan: Clan, among: readonly Clan[]): number {
+    const others = among.filter(c => c !== clan);
+    const total = sumFun(others, c => c.population);
+    if (!(total > 0)) return 0;
+    return sumFun(others, c => c.population * getAlignment(clan, c)) / total;
 }
 
 export class PlannedSettlement {
@@ -47,288 +287,22 @@ export class PlannedSettlement {
     ) { }
 }
 
-export class MigrationCalc {
-    wantToMove: boolean = false;
-    wantToMoveReason: string = '';
-
-    othersLeftFirst: boolean = false;
-
-    targets: Map<MigrationTarget, CandidateMigrationCalc> = new Map();
-    best: CandidateMigrationCalc | undefined;
-    willMigrate: boolean = false;
-    // Agreed to leave, but migration is turned off for this run.
-    prevented: boolean = false;
-
-    constructor(readonly clan: Clan, dummy: boolean = false) {
-        if (dummy) return;
-
-        this.trigger();
-        this.filter();
-    }
-
-    private trigger() {
-        // TODO - make clans that just split want to move more often.
-        // TODO - trigger on local capital/resource scarcity
-        const scale = 10 / Math.log10(9);
-        const pMove = eloSuccessProbability(-10, this.clan.qol.valueFrom('social'), scale);
-        if (Math.random() < pMove) {
-            this.wantToMove = true;
-            this.wantToMoveReason = 'Social QoL';
-        }
-    }
-
-    private filter() {
-        for (const target of this.clan.settlement.cluster.settlements) {
-            this.targets.set(target, new CandidateMigrationCalc(this.clan, target));
-        }
-        this.targets.set(NewSettlement, new CandidateMigrationCalc(this.clan, NewSettlement));
-    }
-
-    get targetsTable(): string[][] {
-        const header = ['Target', 'Value'];
-        const rows = Array.from(this.targets.entries()).map(([target, calc]) => [
-            target.name,
-            calc.value.toFixed(1)
-        ]);
-        return [header, ...rows];
-    }
-
-    get bestTargetTable(): string[][] {
-        return [];
-    }
-}
-
-export class CandidateMigrationCalc {
-    isEligible: boolean = true;
-    isIneligibleReason: string = '';
-
-    readonly items: CandidateMigrationCalcItem[];
-    readonly value: number;
-    selectionProbability: number = 0;
-
-    constructor(
-        readonly clan: Clan,
-        readonly target: MigrationTarget,
-        readonly isPlanning: boolean = false,
-    ) {
-        if (target !== clan.settlement
-            && target !== NewSettlement &&
-            !(target as Settlement).clans.some(c => getAlignment(c, clan) > 0.1)) {
-            this.isEligible = false;
-            this.isIneligibleReason = `No place for newcomers in ${target.name}`;
-        }
-
-        this.items = [
-            this.inertia(),
-            this.fromLandAvailability(),
-            this.fromSocialQoL(),
-            this.random(),
-        ];
-        this.value = sumFun(this.items, item => item.value);
-    }
-
-    private inertia(): CandidateMigrationCalcItem {
-        const moveType = this.moveType();
-        if (moveType === 'home') {
-            return { name: 'Inertia', reason: 'Home', value: 2 };
-        }
-        if (moveType === 'new') {
-            return { name: 'Inertia', reason: 'New', value: -5 };
-        }
-        if (moveType === 'local') {
-            return { name: 'Inertia', reason: 'Local', value: -2 };
-        }
-        if (moveType === 'distant') {
-            return { name: 'Inertia', reason: 'Distant', value: -5 };
-        }
-
-        throw new Error(`Unknown move type ${moveType}`);
-    }
-
-    private moveType(): 'home' | 'new' | 'local' | 'distant' {
-        switch (true) {
-            case this.target === this.clan.settlement:
-                return 'home';
-            case this.target === NewSettlement:
-                return 'new';
-            case this.target.cluster === this.clan.settlement.cluster:
-                return 'local';
-            default:
-                return 'distant';
-        }
-    }
-
-    private fromLandAvailability(): CandidateMigrationCalcItem {
-        const farmingFraction = this.clan.effortAllocation.farmingRatio();
-        if (farmingFraction === 0) {
-            return { name: 'Land', reason: 'Not farming', value: 0 };
-        }
-
-        const targetLandRatio = 1; // TODO - remove when bringing back
-        const landRatio = 1; // TODO - remove when bringing back
-
-        return {
-            name: 'Land',
-            reason: 'Farming land',
-            value: (targetLandRatio - landRatio) * farmingFraction * 50,
-        }
-    }
-
-    private fromSocialQoL(): CandidateMigrationCalcItem {
-        const value = this.target === this.clan.settlement ? this.clan.qol.valueFrom('social') : 0;
-        return { name: 'Social QoL', reason: 'Social QoL', value };
-    }
-
-    private random(): CandidateMigrationCalcItem {
-        return { name: 'Random', reason: 'Random variation', value: normal(0, 2) };
-    }
-}
-
-type CandidateMigrationCalcItem = {
-    name: string;
-    value: number;
-    reason: string;
-};
-
-function getCompanyValue(n: number): number {
-    if (n <= 1) return -30;
-    if (n === 2) return -15;
-    return Math.min(5, n - 3);
-}
-
 export function planMigration(world: World) {
     world.plannedSettlements = [];
-    // 1. First call assessMigration on every clan in every settlement.
-    for (const clan of world.allClans) {
-        clan.assessMigration();
-    }
-
-    // 2. Agreement process per settlement
     for (const settlement of world.allSettlements) {
-        const clans = settlement.clans;
-        if (clans.length === 0) continue;
-
-        // Max appeal of other targets for each clan (excluding NewSettlement)
-        const maxOtherAppeals = new Map<Clan, number>();
-        const stayPutAppeals = new Map<Clan, number>();
-
-        for (const clan of clans) {
-            const plan = clan.migrationPlan!;
-            const stayPutCandidate = plan.targets.get(clan.settlement);
-            stayPutAppeals.set(clan, stayPutCandidate ? stayPutCandidate.value : 0);
-
-            let maxOther = -Infinity;
-            for (const [target, candidate] of plan.targets.entries()) {
-                if (target !== NewSettlement) {
-                    const val = candidate.isEligible ? candidate.value : -Infinity;
-                    if (val > maxOther) {
-                        maxOther = val;
-                    }
-                }
-            }
-            maxOtherAppeals.set(clan, maxOther);
+        if (settlement.clans.length === 0) {
+            settlement.foundingDecision = undefined;
+            continue;
         }
+        const decision = new FoundingDecision(settlement);
+        settlement.foundingDecision = decision;
+        for (const v of decision.votes) v.clan.foundingVote = v;
 
-        // We run a series of rounds
-        const movingAppeals = new Map<Clan, number[]>();
-        const isTopChoice = new Map<Clan, boolean[]>();
-
-        for (const clan of clans) {
-            const plan = clan.migrationPlan!;
-            const initialNewVal = plan.targets.get(NewSettlement)?.value ?? 0;
-            movingAppeals.set(clan, [initialNewVal]);
-
-            const maxOther = maxOtherAppeals.get(clan) ?? -Infinity;
-            isTopChoice.set(clan, [initialNewVal > maxOther]);
-        }
-
-        let roundsRun = 0;
-        const maxRounds = 50;
-
-        while (roundsRun < maxRounds) {
-            // Clans with moving as top choice in the previous round and wantToMove is true
-            const prevChoices = clans.filter(clan => {
-                const choices = isTopChoice.get(clan)!;
-                return choices[choices.length - 1] && clan.migrationPlan!.wantToMove;
-            });
-            const prevCount = prevChoices.length;
-
-            // Company value based on prevCount
-            const company = getCompanyValue(prevCount);
-
-            // Compute effective appeal for each clan in this round
-            const currentTopChoices: Clan[] = [];
-            for (const clan of clans) {
-                const initialNewVal = movingAppeals.get(clan)![0];
-                const randVal = normal(0, 2);
-                const roundVal = initialNewVal + randVal + company;
-
-                movingAppeals.get(clan)!.push(roundVal);
-
-                const maxOther = maxOtherAppeals.get(clan) ?? -Infinity;
-                const top = roundVal > maxOther;
-                isTopChoice.get(clan)!.push(top);
-
-                if (top && clan.migrationPlan!.wantToMove) {
-                    currentTopChoices.push(clan);
-                }
-            }
-
-            roundsRun++;
-
-            // Termination condition
-            const allPrevStillWant = prevChoices.every(c => currentTopChoices.includes(c));
-            const noneWant = currentTopChoices.length === 0;
-
-            if (allPrevStillWant || noneWant) {
-                break;
-            }
-        }
-
-        // TODO - later consider the alignment and capability of other clans in this process.
-
-        // Create the report
-        const report = new NewSettlementDecisionReport(settlement.name, roundsRun);
-        for (const clan of clans) {
-            const item = new NewSettlementDecisionReportItem(
-                clan.name,
-                stayPutAppeals.get(clan) ?? 0,
-                movingAppeals.get(clan) ?? [],
-                isTopChoice.get(clan) ?? []
-            );
-            report.items[clan.uuid] = item;
-        }
-        settlement.newSettlementDecisionReport = report;
-
-        // Record the decisions
-        const finalTopChoices = clans.filter(clan => {
-            const choices = isTopChoice.get(clan)!;
-            return choices[choices.length - 1] && clan.migrationPlan!.wantToMove;
-        });
-
-        // With migration turned off the negotiation still runs, so the
-        // pressure to leave shows up in the reports; it just goes nowhere.
-        const agreedToMigrate = finalTopChoices.length > 0;
-        const willMigrate = agreedToMigrate && !world.migrationsPrevented;
-
-        for (const clan of clans) {
-            const plan = clan.migrationPlan!;
-            plan.prevented = agreedToMigrate && !willMigrate
-                && finalTopChoices.includes(clan);
-            if (willMigrate && finalTopChoices.includes(clan)) {
-                plan.willMigrate = true;
-                plan.best = plan.targets.get(NewSettlement);
-            } else {
-                plan.willMigrate = false;
-                plan.best = plan.targets.get(clan.settlement);
-            }
-        }
-
-        if (willMigrate) {
-            const newSettlementName = randomHamletName();
+        if (decision.founders.length && !decision.prevented) {
             const [x, y] = settlement.cluster.placer_.placeFor();
-            const planned = new PlannedSettlement(newSettlementName, x, y, settlement.cluster, settlement, finalTopChoices);
-            world.plannedSettlements.push(planned);
+            world.plannedSettlements.push(new PlannedSettlement(
+                randomHamletName(), x, y, settlement.cluster, settlement,
+                [...decision.founders]));
         }
     }
 }
@@ -336,41 +310,24 @@ export function planMigration(world: World) {
 export function migrate(world: World) {
     for (const clan of world.allClans) {
         clan.previousSettlement_ = clan.settlement;
-        const plan = clan.migrationPlan;
-        if (plan && plan.willMigrate && plan.best) {
-            const target = plan.best.target;
-            if (target !== NewSettlement) {
-                // Individual migration to an existing settlement (fallback/just in case)
-                const actualTarget = target as Settlement;
-                clan.moveTo(actualTarget);
-                world.addNote(
-                    '↔',
-                    `{0} moved from {1} to {2}`,
-                    undefined,
-                    [
-                        { uuid: clan.uuid, name: clan.name },
-                        { uuid: clan.previousSettlement.uuid, name: clan.previousSettlement.name },
-                        { uuid: actualTarget.uuid, name: actualTarget.name },
-                    ],
-                );
-            }
-        }
     }
 
-    // Execute group new-settlement migrations from planned settlements
     world.lastFoundations = [];
     for (const planned of world.plannedSettlements) {
-        if (planned.clans.length === 0) continue;
+        // Clans can die out or be taken in between planning and going.
+        const clans = planned.clans.filter(c => c.population > 0 && c.settlement === planned.parent);
+        if (clans.length === 0) continue;
 
-        // Instantiate the actual settlement at the pre-chosen coords
         const newSettlement = new Settlement(world, planned.name, planned.x, planned.y, planned.cluster, planned.parent);
-
-        for (const clan of planned.clans) {
+        for (const clan of clans) {
             clan.moveTo(newSettlement);
+            // A fresh start: what the old village's decisions were doing to
+            // it stays behind with the old village.
+            clan.decisionEffects = new DecisionEffects();
         }
-        world.lastFoundations.push({ settlement: newSettlement, clans: [...planned.clans] });
+        world.lastFoundations.push({ settlement: newSettlement, clans: [...clans] });
 
-        const clanNames = planned.clans.map(c => c.name).join(', ');
+        const clanNames = clans.map(c => c.name).join(', ');
         world.addNote(
             '✨',
             `Founded {0} from {1}`,
@@ -382,6 +339,5 @@ export function migrate(world: World) {
         );
     }
 
-    // Clear planned settlements after execution
     world.plannedSettlements = [];
 }

@@ -35,7 +35,7 @@
         settlementCount: 3,
         clansPerSettlement: 5,
         years: 150,
-        allowMigrations: false,
+        allowMigrations: true,
     });
 
     let params = $state<TuningParams>({ ...DEFAULT_TUNING });

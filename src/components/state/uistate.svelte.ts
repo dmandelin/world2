@@ -119,9 +119,8 @@ export function armedBreakpoints(): Set<BreakpointId> {
 // --- Run controls ----------------------------------------------------------
 //
 // Switches that do change what happens, handed to the world with each
-// advance. Off by default in the model; on by default here, where they are
-// for studying the prototype.
+// advance. Off by default, in the model and here alike.
 
 export const runControls = $state({
-    preventMigrations: true,
+    preventMigrations: false,
 });

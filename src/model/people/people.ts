@@ -13,7 +13,7 @@ import { HousingTypes } from "../econ/housing";
 import { initialDemography, PopulationChange, PopulationChangeBuilder } from "./population";
 import { Demography, sliceAges } from "./demography";
 import { breakBetrothals, transferBetrothals } from "../relations/marriage";
-import { MigrationCalc } from "./migration";
+import type { FoundingVote } from "./migration";
 import { normal } from "../lib/distributions";
 import { Operation, ProductionReport } from "../econ/operation";
 import { Processes, SkillDefs } from "../econ/econdefs";
@@ -95,7 +95,9 @@ export class Clan implements TradePartner {
 
     traits = new ClanTraits();
 
-    migrationPlan_: MigrationCalc = new MigrationCalc(this, true);
+    // Its part in this year's question of founding a new village, if its
+    // village had one. See migration.ts.
+    foundingVote: FoundingVote | undefined = undefined;
     previousSettlement_: Settlement;
 
     readonly rites: Rites; // TODO - remove if not used
@@ -443,19 +445,6 @@ export class Clan implements TradePartner {
         return this.happiness.appeal;
     }
 
-    get migrationPlan(): MigrationCalc | undefined {
-        return this.migrationPlan_;
-    }
-
-    get isMigrating(): boolean {
-        return this.migrationPlan !== undefined
-            && this.migrationPlan_.willMigrate;
-    }
-
-    assessMigration() {
-        this.migrationPlan_ = new MigrationCalc(this);
-    }
-
     advanceSeniority() {
         // People can remember back only so far.
         if (this.seniority < 4) {
@@ -710,7 +699,6 @@ export class Clan implements TradePartner {
         // at the start of production during the advance phase.
         newClan.planMaintenance();
         newClan.planHousing();
-        newClan.assessMigration();
 
         this.annals.log(`Clan ${newClan.name} (${newClan.population}) split off from clan ${this.name} (${this.population})`, this.settlement);
 

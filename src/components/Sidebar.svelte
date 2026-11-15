@@ -69,7 +69,7 @@
     </div>
 
     <label class="run-control clay-edge"
-        title="Clans still decide whether they want to leave, but nobody goes.">
+        title="Clans still decide whether to go off and found a new village, but nobody goes.">
         <input type="checkbox" bind:checked={runControls.preventMigrations} />
         No migrations
     </label>

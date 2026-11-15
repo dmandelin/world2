@@ -35,8 +35,10 @@ export const TUNING_PARAM_SPECS: readonly TuningParamSpec[] = [
 ];
 
 export const DEFAULT_TUNING: Readonly<TuningParams> = {
-    // Aimed at about threefold growth in the first 500 years.
-    baseBirthRate: 0.18,
+    // Aimed at about threefold growth in the first 500 years, with new
+    // villages founded: three villages become about nine to eleven. Touchy:
+    // 0.165 gives about seven and 0.18 about fifteen.
+    baseBirthRate: 0.17,
     deathRateAdjustmentFactor: 0.88,
     // Scaled up with the process defaults, for the same reason: festival
     // time has been taken out of production and the rest has to cover it.

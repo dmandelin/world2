@@ -5,18 +5,20 @@
 
     let { clan } : { clan: ClanDTO } = $props();
 
+    // Going; interested in some round of this year's question; or neither.
     let icon = $derived.by(() => {
-        return clan.migrationPlan?.willMigrate
+        const vote = clan.foundingVote;
+        return vote?.goes
             ? 'migrate-yes-256.png'
-            : clan.migrationPlan?.wantToMove
+            : vote?.everInterested
             ? 'migrate-want-256.png'
             : 'migrate-no-256.png';
     });
 
     let alt = $derived.by(() => {
-        return clan.migrationPlan?.willMigrate
-            ? 'This clan will migrate'
-            : 'This clan will not migrate';
+        return clan.foundingVote?.goes
+            ? 'This clan is going off to found a new village'
+            : 'This clan is staying';
     });
 </script>
 
@@ -32,10 +34,9 @@
 
     <div id="icon">
         <Tooltip>
-            <img width="24" height="24" src={icon} alt={alt} />    
+            <img width="24" height="24" src={icon} alt={alt} />
             <div slot="tooltip" class="ttt">
                 <ClanMigrationDetails {clan} compact={true} />
             </div>
         </Tooltip>
     </div>
-

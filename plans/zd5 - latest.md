@@ -13,6 +13,8 @@ that's not even that bad.
 
 Things to try:
 
+*   Make breakpoint panel options sticky across sessions
+
 *   Note: It would make sense to give clans more ways
     not to starve, but there is not that much starvation,
     so we are probably ready to look at fission
@@ -24,19 +26,38 @@ Things to try:
             code
         *   Add new code based entirely on something related
             to decisions penalty
-            *   Get an assessment of how moving out will
+            x   Get an assessment of how moving out will
                 impact: what factors will tend to change and
                 in what ways? How do interactions change?
-            *   Perhaps give clans a threshold for how much
+            x   Perhaps give clans a threshold for how much
                 decision disfavor they're willing to take
-            *   And then also a threshold for how many clans
+            x   And then also a threshold for how many clans
                 or people they think they need to successfully
                 form a new community
             *   (Add option to clans to split to move if needed)
-            *   Then execute moves
-            *   Then tune for ~3 villages after 500 years
+            x   Then execute moves
+            x   Then tune for ~3 villages after 500 years
+            *   Also at some point:
+                *   Move costs
+                    *   Factor variable costs into move decisions.
+                        Higher diligence means more willing to pay.
+                    *   This is probably pretty important - falsely
+                        assuming this to be 0 probably causes
+                        villages to spread out too fast - also check
+                        on how this influences farmland and what
+                        they're "buying" here and for how much
+                *   Consider if we do need a mobility trait,
+                    possibly just as a way to not have everyone
+                    try to move at once
+                *   Intellect => bonuses adapting to move
+                *   Clans influencing each other or parts of each
+                    other to move
+            *   Make sure tuning coefficients and model features
+                are sensible.
         *   Make sure migrations are recorded as clan
             memory (and so could influence later decisions)
+            *   Also have some notion whether the migration
+                turned out well
             *   Then at some point make them influence
                 later decisions
 

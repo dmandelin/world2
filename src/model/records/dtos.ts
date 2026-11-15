@@ -14,7 +14,7 @@ import type { Festivals, RitualLeadership, RitualStructure } from "../festivals"
 import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
-import type { MigrationCalc, NewSettlementDecisionReport, PlannedSettlement } from "../people/migration";
+import type { FoundingDecision, FoundingVote, PlannedSettlement } from "../people/migration";
 import { AGE_LIMIT, MaritalStatus } from "../people/demography";
 import {
     betrothalRecord, marriageCountsOf, servicePartners,
@@ -149,7 +149,7 @@ export class ClanDTO {
     effortAllocation: EffortAllocation;
     workers: number;
     seniority: number;
-    migrationPlan: MigrationCalc | undefined;
+    foundingVote: FoundingVote | undefined;
     lastPopulationChange: PopulationChange;
     nutritionTarget: number;
     perCapitaFestivalSacrifice: number;
@@ -192,7 +192,7 @@ export class ClanDTO {
         this.residenceLevel = clan.residenceLevel.clone();
 
         this.rites = clan.rites.clone();
-        this.migrationPlan = clan.migrationPlan;
+        this.foundingVote = clan.foundingVote;
         this.slices = clan.slices;
         this.slicesByStatus = clan.demography.slicesByStatus;
         this.marriageCounts = marriageCountsOf(clan.demography);
@@ -362,7 +362,7 @@ export class SettlementDTO {
     readonly floodLevel: FloodLevel;
     readonly floodRating: number;
     readonly refoundedAfterRiverShift: boolean;
-    readonly newSettlementDecisionReport: NewSettlementDecisionReport | undefined;
+    readonly foundingDecision: FoundingDecision | undefined;
     // Every time the question of how to hold the festival has come open, and
     // whether it came open in this turn's planning.
     readonly ritualChanges: readonly RitualChangeEvent[];
@@ -402,7 +402,7 @@ export class SettlementDTO {
         this.floodLevel = settlement.floodLevel;
         this.floodRating = settlement.floodRating;
         this.refoundedAfterRiverShift = settlement.refoundedAfterRiverShift;
-        this.newSettlementDecisionReport = settlement.newSettlementDecisionReport;
+        this.foundingDecision = settlement.foundingDecision;
         this.ritualChanges = [...settlement.ritualChanges];
         this.ritualChangeThisTurn = settlement.world.lastRitualChanges
             .find(e => e.settlement === settlement);
