@@ -114,9 +114,6 @@ export class World implements NoteTaker {
     // The last generation of betrothals, a year to an entry, by husband's
     // clan -> wife's clan.
     marriageHistory: PairingCounts[] = [];
-    // Each clan's prestige in the eyes of the clans its recent brides came
-    // from. See marriage.ts.
-    brideAppeal: Map<Clan, number> = new Map();
     lastFoodRedistribution?: FoodRedistributionResult;
     lastFoodGifts?: FoodGiftsResult;
 
@@ -803,7 +800,6 @@ export class World implements NoteTaker {
 
         dropBetrothals(this, clan);
         for (const pairings of this.marriageHistory) pairings.forget(clan);
-        this.brideAppeal.delete(clan);
 
         for (const other of this.allClans) {
             other.brideServiceOut.delete(clan);

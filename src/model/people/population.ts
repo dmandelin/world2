@@ -3,7 +3,6 @@ import { DiseaseLoadCalc } from "../environment/pathogens";
 import { assert, clamp, productFun, sum, sumFun, isPositive } from "../lib/basics";
 import { spct } from "../lib/format";
 import { getLocalPrestige } from "../relations/prestige";
-import { zScore } from "../lib/modelbasics";
 import { BRIDE_MIN_AGE, GROOM_MIN_AGE, settleInitialMarriages } from "../relations/marriage";
 // Base birth rate (per childbearing-age woman per year, with standard
 // nutrition, minimal shelter and no migration) and the global death-rate
@@ -234,7 +233,7 @@ export class PopulationChangeItem {
 // so anything that lists them by name -- the tuning charts, for one -- stays
 // in step with it.
 export const BIRTH_RATE_MODIFIER_SOURCES = [
-    'Nutrition', 'Shelter', 'Marriage Appeal', 'Settlement', 'Prestige',
+    'Nutrition', 'Shelter', 'Settlement', 'Prestige',
     'Society', 'Festivals', 'Care', 'Decisions', 'Foresight',
 ] as const;
 export type BirthRateModifierSource = (typeof BIRTH_RATE_MODIFIER_SOURCES)[number];
@@ -250,12 +249,6 @@ export class PopulationChangeModifier<S extends string = string> {
         readonly inputValue: string | number,
         readonly value: number,
     ) { }
-}
-
-// The prestige of the clan in the eyes of the clans its recent brides came
-// from; see marriage.ts.
-function getAvgAppealToBrides(clan: Clan): number {
-    return clan.world.brideAppeal.get(clan) ?? 0;
 }
 
 export class PopulationChange {
@@ -403,12 +396,9 @@ export class PopulationChangeBuilder {
         this.brModifiers.push(new PopulationChangeModifier(
             'Shelter', this.clan.housing.name, shelterModifier));
 
-        const allBrideAppeals = this.clan.world.allClans.map(c => getAvgAppealToBrides(c));
-        const clanBrideAppeal = getAvgAppealToBrides(this.clan);
-        const brideAppealZScore = zScore(clanBrideAppeal, allBrideAppeals);
-        const marriageAppealBrModifier = clamp(1 + 0.1 * brideAppealZScore, 0.67, 1.5);
-        this.brModifiers.push(new PopulationChangeModifier(
-            'Marriage Appeal', clanBrideAppeal, marriageAppealBrModifier));
+        // Marriage appeal has no modifier of its own: an appealing clan
+        // finds wives sooner and more surely, and so has more married women
+        // to bear its children, which is already where births come from.
 
         const resFrac = this.clan.residenceFraction;
         const mobilityBrModifier = clamp(1 + 0.5 * resFrac, 1, 1.5);

@@ -1,4 +1,4 @@
-import { chooseWeighted, isPositive, removeAll, sortedByKey, sum } from "../lib/basics";
+import { chooseWeighted, isPositive, removeAll, sortedByKey } from "../lib/basics";
 import type { World } from "../world";
 import type { Clan } from "../people/people";
 import { MarriageConnection } from "./connection";
@@ -541,8 +541,7 @@ function strengthenMarriageTies(world: World, completed: PairingCounts): void {
 }
 
 // Keep the last generation of betrothals, for what the recent marriages
-// between clans were, and for the appeal of the clans a clan's brides come
-// from.
+// between clans were.
 function rememberMarriages(
     world: World, decisions: MarriageDecisions, completed: PairingCounts,
 ): void {
@@ -565,19 +564,6 @@ function rememberMarriages(
     }
     for (const [husbandClan, wifeClan, count] of completed.entries()) {
         decisions.completed.addOneWay(husbandClan, wifeClan, count);
-    }
-
-    // The prestige of each clan in the eyes of the clans its recent brides
-    // came from.
-    world.brideAppeal = new Map();
-    for (const clan of world.allClans) {
-        const brides = decisions.recentByHusband.counts.get(clan);
-        if (!brides) continue;
-        const total = sum(brides.values());
-        if (total === 0) continue;
-        let weighted = 0;
-        for (const [wifeClan, count] of brides) weighted += count * getPrestige(wifeClan, clan);
-        world.brideAppeal.set(clan, weighted / total);
     }
 }
 
