@@ -33,6 +33,48 @@ export const GROOM_MIN_AGE = 20;
 export const MARRIAGE_MAX_AGE = 45;
 // Years a man works for his bride's clan before they marry.
 export const BRIDE_SERVICE_YEARS = 2;
+// The most years older than her husband a wife may be.
+export const MAX_WIFE_SENIORITY = 2;
+
+// The man and woman of one match, by their ages when they were promised.
+export type AgePair = readonly [husbandAge: number, wifeAge: number];
+
+// Every one of a clan's people who match a filter, by age, oldest first.
+function agesOf(d: Demography, filter: PeopleFilter): number[] {
+    const [from, to] = filter.ages ?? [0, 0];
+    const ages: number[] = [];
+    for (let age = to - 1; age >= from; --age) {
+        const n = d.count({ ...filter, ages: [age, age + 1] });
+        for (let k = 0; k < n; ++k) ages.push(age);
+    }
+    return ages;
+}
+
+// Pair as many of one clan's men with another clan's women as their ages
+// allow: each man, oldest first, with the oldest woman no more than
+// MAX_WIFE_SENIORITY years older than he is. Those who have waited longest
+// still go first, as far as the rule lets them. Taking the oldest woman a
+// man can have leaves the younger women for the younger men, who could not
+// have had the older ones, so no other pairing makes more matches. Removes
+// those matched from both lists.
+function pairByAge(men: number[], women: number[]): AgePair[] {
+    const pairs: AgePair[] = [];
+    for (let i = 0; i < men.length;) {
+        const m = men[i];
+        const j = women.findIndex(w => w <= m + MAX_WIFE_SENIORITY);
+        if (j < 0) { ++i; continue; }
+        pairs.push([m, women[j]]);
+        men.splice(i, 1);
+        women.splice(j, 1);
+    }
+    return pairs;
+}
+
+// Whether any of these men could have any of these women.
+function anyPairs(men: readonly number[], women: readonly number[]): boolean {
+    return men.length > 0 && women.length > 0
+        && women[women.length - 1] <= men[0] + MAX_WIFE_SENIORITY;
+}
 
 // Those on the market: unmarried, or widowed and young enough to marry again.
 const SEEKING = [MaritalStatus.Unmarried, MaritalStatus.Widowed] as const;
@@ -78,6 +120,9 @@ export class Betrothal {
         public wifeClan: Clan,
         public count: number,
         readonly year: number,
+        // Who was promised to whom, by their ages at the time, so that the
+        // same pairs marry when the service is done.
+        public pairs: AgePair[] = [],
     ) { }
 
     get yearsLeft(): number {
@@ -125,14 +170,27 @@ export class PairingCounts {
 // were looking, and where they were promised.
 export class PotentialPartnerSet {
     marriedTo: Map<Clan, number> = new Map();
+    // The pairs made with each clan, by age. Kept on the women's side.
+    agePairs: Map<Clan, AgePair[]> = new Map();
     taken = 0;
 
-    constructor(readonly clan: Clan, readonly count: number) {
+    constructor(
+        readonly clan: Clan,
+        readonly count: number,
+        // The ages of those still unpromised, oldest first.
+        readonly ages: number[] = [],
+    ) {
     }
 
     addMarriage(clan: Clan, count: number = 1) {
         this.marriedTo.set(clan, (this.marriedTo.get(clan) ?? 0) + count);
         this.taken += count;
+    }
+
+    addPairs(clan: Clan, pairs: readonly AgePair[]) {
+        const list = this.agePairs.get(clan);
+        if (list) list.push(...pairs);
+        else this.agePairs.set(clan, [...pairs]);
     }
 
     get available() { return this.count - this.taken; }
@@ -193,7 +251,10 @@ export function marry(world: World): void {
 // each round, clans with unmatched men propose to the clans they find most
 // appealing that still have women to promise, and each of those takes the
 // most appealing offers it has, up to the women it has. No one marries
-// within their own clan.
+// within their own clan, and no wife is more than MAX_WIFE_SENIORITY years
+// older than her husband: a clan only proposes where one of its men could
+// have one of the women, and an offer is worth as many pairs as the ages
+// allow.
 //
 // Changes nothing: what it decides is carried out by betroth().
 export function getMarriageDecisions(world: World): MarriageDecisions {
@@ -201,8 +262,10 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
     const husbands = new Map<Clan, PotentialPartnerSet>();
     const wives = new Map<Clan, PotentialPartnerSet>();
     for (const clan of clans) {
-        husbands.set(clan, new PotentialPartnerSet(clan, clan.demography.count(ELIGIBLE_MEN)));
-        wives.set(clan, new PotentialPartnerSet(clan, clan.demography.count(ELIGIBLE_WOMEN)));
+        const men = agesOf(clan.demography, ELIGIBLE_MEN);
+        const women = agesOf(clan.demography, ELIGIBLE_WOMEN);
+        husbands.set(clan, new PotentialPartnerSet(clan, men.length, men));
+        wives.set(clan, new PotentialPartnerSet(clan, women.length, women));
     }
 
     // Each clan's ranking of the others as wife-givers, worked out once
@@ -229,10 +292,11 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
         const proposals = new Map<Clan, Clan[]>();
         for (const [husbandClan, ranking] of rankings) {
             if (husbands.get(husbandClan)!.available <= 0) continue;
+            const men = husbands.get(husbandClan)!.ages;
             let made = 0;
             for (const wifeClan of ranking) {
                 if (made === PROPOSALS_PER_ROUND) break;
-                if (wives.get(wifeClan)!.available <= 0) continue;
+                if (!anyPairs(men, wives.get(wifeClan)!.ages)) continue;
                 let list = proposals.get(wifeClan);
                 if (!list) proposals.set(wifeClan, list = []);
                 list.push(husbandClan);
@@ -247,9 +311,11 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
             for (const husbandClan of sortedByKey(proposers, h => -appealTo(wifeClan, h))) {
                 if (!isPositive(wifeSet.available)) break;
                 const husbandSet = husbands.get(husbandClan)!;
-                const count = Math.min(husbandSet.available, wifeSet.available);
+                const pairs = pairByAge(husbandSet.ages, wifeSet.ages);
+                const count = pairs.length;
                 if (count <= 0) continue;
                 wifeSet.addMarriage(husbandClan, count);
+                wifeSet.addPairs(husbandClan, pairs);
                 husbandSet.addMarriage(wifeClan, count);
                 pairingCounts.add(husbandClan, wifeClan, count);
                 matched += count;
@@ -262,20 +328,21 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
         [...wives.values()], [...husbands.values()], pairingCounts);
 }
 
-// Promise the matched people to each other: those who have waited longest
-// first, on both sides.
+// Promise the matched people to each other: the very ones paired.
 function betroth(world: World, decisions: MarriageDecisions): void {
     for (const wifeSet of decisions.potentialWives) {
         const wifeClan = wifeSet.clan;
-        for (const [husbandClan, count] of wifeSet.marriedTo) {
-            wifeClan.demography.mergeAs(
-                wifeClan.demography.take(count, ELIGIBLE_WOMEN, 'oldest'),
-                MaritalStatus.Betrothed);
-            husbandClan.demography.mergeAs(
-                husbandClan.demography.take(count, ELIGIBLE_MEN, 'oldest'),
-                MaritalStatus.Betrothed);
-            world.betrothals.push(
-                new Betrothal(husbandClan, wifeClan, count, world.year.value));
+        for (const [husbandClan, pairs] of wifeSet.agePairs) {
+            for (const [h, w] of pairs) {
+                wifeClan.demography.mergeAs(
+                    wifeClan.demography.take(1, { ...ELIGIBLE_WOMEN, ages: [w, w + 1] }),
+                    MaritalStatus.Betrothed);
+                husbandClan.demography.mergeAs(
+                    husbandClan.demography.take(1, { ...ELIGIBLE_MEN, ages: [h, h + 1] }),
+                    MaritalStatus.Betrothed);
+            }
+            world.betrothals.push(new Betrothal(
+                husbandClan, wifeClan, pairs.length, world.year.value, [...pairs]));
         }
     }
 }
@@ -305,23 +372,32 @@ function completeBetrothals(world: World): PairingCounts {
     for (const b of world.betrothals) {
         if (b.yearsServed < BRIDE_SERVICE_YEARS) continue;
         const { husbandClan, wifeClan } = b;
-        const n = Math.min(
-            b.count,
-            wifeClan.demography.count(BETROTHED_WOMEN),
-            husbandClan.demography.count(BETROTHED_MEN));
-        if (n > 0) {
-            husbandClan.demography.mergeAs(
-                wifeClan.demography.take(n, BETROTHED_WOMEN, 'oldest'),
-                MaritalStatus.Married);
-            husbandClan.demography.mergeAs(
-                husbandClan.demography.take(n, BETROTHED_MEN, 'oldest'),
-                MaritalStatus.Married);
-            completed.addOneWay(husbandClan, wifeClan, n);
+        // Each pair marries: the man and woman of the ages promised, older
+        // now by the years served. Should one of them not be there to find
+        // -- a death that broke a different pair than the one it was in --
+        // the nearest in age stands in, as long as the rule still holds.
+        let n = 0;
+        let freed = 0;
+        for (const [h0, w0] of b.pairs) {
+            const h = takeBetrothedNear(husbandClan, MALE, h0 + b.yearsServed, Infinity);
+            if (h === undefined) continue;
+            const w = takeBetrothedNear(
+                wifeClan, FEMALE, w0 + b.yearsServed, h + MAX_WIFE_SENIORITY);
+            if (w === undefined) {
+                // No bride for him after all: he is free again.
+                husbandClan.demography.add(MALE, h, MaritalStatus.Unmarried, 1);
+                ++freed;
+                continue;
+            }
+            husbandClan.demography.add(MALE, h, MaritalStatus.Married, 1);
+            husbandClan.demography.add(FEMALE, w, MaritalStatus.Married, 1);
+            ++n;
         }
+        if (n > 0) completed.addOneWay(husbandClan, wifeClan, n);
         // Anyone left over lost their partner without the betrothal hearing
         // of it; they are free again.
         releaseBetrothed(wifeClan, FEMALE, b.count - n);
-        releaseBetrothed(husbandClan, MALE, b.count - n);
+        releaseBetrothed(husbandClan, MALE, b.count - n - freed);
         b.count = 0;
     }
     removeAll(world.betrothals, b => b.count === 0);
@@ -349,6 +425,25 @@ function rememberWeddings(world: World, completed: PairingCounts): void {
     }
 }
 
+// Take one of a clan's betrothed of a sex out of its people, as near the
+// given age as there is one, and no older than `maxAge`. Returns their age,
+// or undefined if there is no one to take.
+function takeBetrothedNear(
+    clan: Clan, sex: Sex, age: number, maxAge: number,
+): number | undefined {
+    const d = clan.demography;
+    const filter = sex === FEMALE ? BETROTHED_WOMEN : BETROTHED_MEN;
+    let best: number | undefined;
+    d.forEach((s, a, status, count) => {
+        if (s !== sex || status !== MaritalStatus.Betrothed || count <= 0) return;
+        if (a > maxAge) return;
+        if (best === undefined || Math.abs(a - age) < Math.abs(best - age)) best = a;
+    });
+    if (best === undefined) return undefined;
+    d.take(1, { ...filter, ages: [best, best + 1] });
+    return best;
+}
+
 // Up to n of a clan's betrothed of the given sex go back to being unmarried.
 function releaseBetrothed(clan: Clan, sex: Sex, n: number): void {
     const filter = sex === FEMALE ? BETROTHED_WOMEN : BETROTHED_MEN;
@@ -357,6 +452,17 @@ function releaseBetrothed(clan: Clan, sex: Sex, n: number): void {
         clan.demography.mergeAs(
             clan.demography.take(k, filter, 'random'), MaritalStatus.Unmarried);
     }
+}
+
+// One of a clan's betrothed of the given sex, as near the given age as there
+// is one, goes back to being unmarried.
+function releaseBetrothedNear(clan: Clan, sex: Sex, age: number | undefined): void {
+    if (age === undefined) {
+        releaseBetrothed(clan, sex, 1);
+        return;
+    }
+    const found = takeBetrothedNear(clan, sex, age, Infinity);
+    if (found !== undefined) clan.demography.add(sex, found, MaritalStatus.Unmarried, 1);
 }
 
 // People of a clan who died while betrothed, by sex. Each death ends one of
@@ -369,10 +475,13 @@ export function breakBetrothals(world: World, clan: Clan, deaths: readonly numbe
             if (own.length === 0) break;
             const b = chooseWeighted(own, b => b.count);
             --b.count;
+            // Which pair the dead one was in is not known, only the side;
+            // one of the betrothal's pairs is let go.
+            const [pair] = b.pairs.splice(Math.floor(Math.random() * b.pairs.length), 1);
             if (sex === FEMALE) {
-                releaseBetrothed(b.husbandClan, MALE, 1);
+                releaseBetrothedNear(b.husbandClan, MALE, pair && pair[0] + b.yearsServed);
             } else {
-                releaseBetrothed(b.wifeClan, FEMALE, 1);
+                releaseBetrothedNear(b.wifeClan, FEMALE, pair && pair[1] + b.yearsServed);
             }
         }
     }
