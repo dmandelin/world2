@@ -129,9 +129,201 @@ does appear that marriage opportunities (quantity and
 quality) and food insurance relationships are typically
 major motivators, so it would make sense to try to
 confirm that clans have enough actions and get enough
-results out of them.
+results out of them. "Supernormal stimuli" probably
+closely follow.
 
 We also need to somewhat prioritize replacing the
 "residence fertility bonus" with an early-weaning
 model. Mainly because it doesn't make a ton of sense
 in its current form.
+
+More on further stuff, occasioned by reading various
+papers:
+
+*   The dual model of prestige and dominance apparently
+    goes back well before the origin of humanity
+    *   The prototype of prestige leadership is someone
+        moving to new forage location A (perhaps because
+        they scouted it earlier or heard news) and then
+        others following
+        *   This often has relatively high influence by
+            women
+        *   Prestige leaders beyond information also may
+            provide:
+            *   Coordination (based on persuasion)
+                *   Including diplomacy
+            *   Punishment (based on coalition assembled)
+            *   Voluntary services (snowdrift game)
+        *   Prestige leaders may receive:
+            *   Deference in conversation
+            *   Accepting their decisions/advice
+                *   This typically ends up somewhat to the
+                    advantage of the leader, although not
+                    for certain!
+            *   Preference as mates and partners
+            *   Assistance
+            *   Gifts
+    *   Dominant leaders are based on ability to punish
+        *   They tend to achieve lower levels of cooperation,
+            but the cooperation is perhaps more robust, and
+            can be sustained even with very weak collaborative
+            capabilities
+            *   May provide same services as prestige leaders,
+                but probably to a lower extent, except for
+                dispute resolution and punishment, which they
+                probably do more
+        *   Tends to be male-dominated
+        *   Tends to claim more for self
+        *   May be preferred if fighting external parties or
+            facing resource shortage
+    *   TODO - Look through the model components we are firming
+        up and see how these would apply
+        *   Marriage choices
+        *   Food sharing partner choices
+        *   Conflicts
+*   Group size
+    *   Various sources have it that cooperativeness generally
+        goes down with size, due to less frequent/reliable
+        rewarding/punishing, and less common knowledge and
+        other commonality.
+    *   We might be able to model that emergently, or apply as
+        abstract modifiers if needed
+    *   Roughly, for #agents:
+        *   2-5: Can be all highly aligned
+        *   8+: Hard to be all aligned all the time; divisions
+                start, but simple cooperation can still be strong
+        *   ~30: 50% cooperative
+        *   50+: 20% cooperative or less
+    *   It does also appear that we can pretty much take it as
+        empirical fact that people invest their time and attention
+        to different levels, with expanding circles of kinship/
+        friendship
+*   Identity and Status
+    *   A recent paper, "Evolutionary foundations of social
+        identity", by Li, Grueneisen, and Tomasello, ties
+        together a lot of related ideas. (The following
+        discussion also includes ideas from some other
+        papers and thinking.)
+    *   They describe a boosting from joint agency (could be
+        dyads, but I think they mean any co-present group) to
+        collective agency (including a notional group and thus
+        involving reputation)
+    *   Key competencies boosted are:
+        *   Social self-regulation (following through on joint
+            commitments or to collective norms)
+        *   Prosociality (helping partners or preferentially
+            helping non-personally-known group members)
+        *   Common ground (personal or cultural knowledge to
+            create affinity and legibility)
+        *   Moral emotion (personal or collective guilt to
+            repair after violations and mistakes)
+    *   A key point here is that for this collective cooperation
+        to work, there needs to be a visible collective identity
+        *   (Ties back to ideas of how generosity has to be
+            directed at the generous (ish - the math is subtler) 
+            to be sustainable)
+        *   Kinship and phenotype can be used, but are ultimately
+            very limiting in applicability and scale!
+        *   Cultural markers can travel much further, but note
+            that they can also mutate as they travel, to the
+            extent of creating separate identities
+    *   Side note 1: Varying levels of strict reciprocity can be
+        enough to sustain cooperation. In general it's at least
+        necessary to require everyone to cooperate with those
+        in good standing and allow everyone to punish violators.
+        But also:
+        *   Requiring punishing violators (and not helping them)
+            sustains cooperation even better
+        *   Alternatively, withholding cooperation from anyone
+            who interacts with violators at all (rather than
+            allowing punishment) can also sustain cooperation
+    *   Side note 2: Gifts provide a way to reward/punish.
+        Consider that there could be a baseline of gift exchange
+        but clans withhold from defectors. That is enough to
+        sustain cooperation (for the gift exchange anyway,
+        assuming it generated value, which I think it currently
+        doesn't).
+    *   Now, is this identity binary? I think not. For example,
+        someone entering a store or interacting with police
+        wanting to put out the identity "honest citizen" might
+        be easily successful, easily unsuccessful, or somewhere
+        in the middle.
+        *   This brings up the idea of differential status, as
+            in how trustworthy we are, or how much we belong.
+        *   Note that this is similar to prestige. We should
+            consider prestige a little differently, as it's the
+            community-formed judgment of whom is most worth paying
+            attention to, and will center on a few people even in
+            a big community; this is more the raw material of
+            respect ratings
+        *   It seems that once wealth and/or conflict come into
+            play, there is also some dominance or power component,
+            though wealth could be part of both
+        *   Like elite roles, basic identity can be ascribed or
+            achieved to varying levels (tying kinship - identity -
+            cooperation)
+    *   We can apply differential identity in a continuous or
+        discrete way. We've been modeling impressions continuously;
+        it would clearly make sense to have discrete ranks when
+        the people involved have them, but with circles of kinship
+        and friendship perhaps it makes sense in less formal systems
+        as well.
+        *   There is also the idea of multilevel identity. This is
+            related to the notion that clans might separately track
+            "who is a good person (in society/settlement)" and 
+            "who is good to me".
+            *   "Who is a good person" implies some corporate identity
+                in the settlement/society
+    *   Let's consider that clans might choose to reward/punish
+        the "good" in a similar way as prestige leaders:
+        *   Accepting their decisions/advice
+            *   Dyadically if aligned/helping/teaching
+            *   In village decisions
+        *   Preference as mates and partners
+            *   Relationship appeal
+        *   Assistance
+            *   Preference/more willingness for mutual help
+            *   Help putting on ritual, investment, or special project
+        *   Gifts
+            *   Regular gifts: more or less than usual
+            *   Food aid and emergency assistance: bare minimum vs
+                full restoration
+        *   Deference in conversation
+            *   This has been lurking at the edges for some time -
+                it's a nebulous issue but seems significant
+            *   Consider personal experiences and observations:
+                *   Deferring: Some stress/mental load from correctly
+                    deferring, ceding influence over agenda, micro
+                    decisions: +stress, -influence, -utility in terms
+                    of individual needs (affecting productivity,
+                    health) and preferences (tastes)
+                *   Being deferred to: Depending on culture or
+                    preferences may not even be desired, but there's
+                    probably some form of mild deference that generally
+                    works. -stress if culturally/personally desired,
+                    +influence, +utility from preferences
+                *   Mutual deference: Both still need to take some
+                    mental load. Influence and preferences can play
+                    out in different ways. If very cautious, neither
+                    might get anything. If efficient they can take
+                    turns and get a good compromise
+                *   No deference: No mental load for deferring, but
+                    conflict ensues
+            *   The above seems to describe a sort of hawk-dove game
+                where:
+                *   The stake is "getting your way" for things that
+                    *may* typically be relatively low-value
+                *   Playing dove has a further cost in correctly
+                    deferring
+                    *   We should probably allow for errors too,
+                        where they fail to defer
+*   Putting it all together
+    *   One good thing is that all the above is generally consonant
+        with the model so far
+    *   Suggests a framework about being evaluated for various
+        relationships and identities
+    *   Then match up the existing models to the rewards and punishments
+        listed above
+    *   At that point, we would apparently have both a functioning
+        reputation system and a set of potentially competing identities
+        
