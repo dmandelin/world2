@@ -13,16 +13,16 @@ that's not even that bad.
 
 Things to try:
 
-*   Make breakpoint panel options sticky across sessions
+x   Make breakpoint panel options sticky across sessions
 
 *   Note: It would make sense to give clans more ways
     not to starve, but there is not that much starvation,
     so we are probably ready to look at fission
-    *   Decisions seem to reduce birth rate enough to
+    x   Decisions seem to reduce birth rate enough to
         cap population. So, this would be a reason to
         move out.
     *   Idea:
-        *   Completely remove current migration decision
+        x   Completely remove current migration decision
             code
         *   Add new code based entirely on something related
             to decisions penalty
@@ -70,16 +70,16 @@ Things to try:
     *   Compare to ideas about >7 decision-making agents causing
         breakdown
 
-*   Empirical tuning search
-*   Smooth the graphs
+x   Empirical tuning search
+x   Smooth the graphs
 *   Understand in more detail why birth rate doesn't
     seem to keep up with death rate in the long term
-    *   So far:
-        *   Fixed a bug causing excessive conflict impact
-        *   Age-matched spouses to avoid young husbands
+    x   So far:
+        x   Fixed a bug causing excessive conflict impact
+        x   Age-matched spouses to avoid young husbands
             marrying widows almost out of childbearing
             age
-        *   We have a redundant marriage appeal modifier
+        x   We have a redundant marriage appeal modifier
             to birth rate
     *   Things noticed now:
         *   A small amount of starvation - give clans
