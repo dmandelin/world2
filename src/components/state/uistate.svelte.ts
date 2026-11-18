@@ -98,14 +98,51 @@ export function uuidOf(uuidable: Uuidable): string | undefined {
     return typeof uuidable === 'string' ? uuidable : uuidable?.uuid;
 }
 
+// --- Sticky settings -------------------------------------------------------
+//
+// Settings of the viewer's that are kept in local storage. Each is a flat
+// record of booleans; only the keys the defaults still have are read back,
+// so a setting added since takes its default and one since removed is
+// dropped.
+
+function loadSticky<T extends Record<string, boolean>>(
+    key: string, defaults: T,
+): T {
+    const state: Record<string, boolean> = { ...defaults };
+    try {
+        const raw = localStorage.getItem(key);
+        const saved = raw ? JSON.parse(raw) : undefined;
+        if (saved && typeof saved === 'object') {
+            for (const k of Object.keys(defaults)) {
+                if (typeof saved[k] === 'boolean') state[k] = saved[k];
+            }
+        }
+    } catch {
+        // No storage (as on the server), or something unreadable in it:
+        // the defaults stand.
+    }
+    return state as T;
+}
+
+function saveSticky(key: string, state: object): void {
+    try {
+        localStorage.setItem(key, JSON.stringify(state));
+    } catch {
+        // Not being able to remember them is no reason to stop.
+    }
+}
+
 // --- Breakpoints -----------------------------------------------------------
 //
 // Which occasions cut a multi-year advance short. Kept here rather than on
 // the world because it is a setting of the viewer's, not of the simulation:
 // it changes what you get to look at, not what happens.
+//
+// Being the viewer's, it is kept in local storage and carries over from one
+// session to the next (see Sticky settings above).
 
 export const breakpointState: Record<BreakpointId, boolean> =
-    $state(defaultBreakpoints());
+    $state(loadSticky('world2.breakpoints', defaultBreakpoints()));
 
 export function toggleBreakpoint(id: BreakpointId): void {
     breakpointState[id] = !breakpointState[id];
@@ -119,8 +156,15 @@ export function armedBreakpoints(): Set<BreakpointId> {
 // --- Run controls ----------------------------------------------------------
 //
 // Switches that do change what happens, handed to the world with each
-// advance. Off by default, in the model and here alike.
+// advance. Off by default, in the model and here alike. Kept from one session
+// to the next like the breakpoints.
 
-export const runControls = $state({
+export const runControls = $state(loadSticky('world2.runControls', {
     preventMigrations: false,
+}));
+
+// Write each back whenever it changes. Effects only run in the browser.
+$effect.root(() => {
+    $effect(() => saveSticky('world2.breakpoints', breakpointState));
+    $effect(() => saveSticky('world2.runControls', runControls));
 });
