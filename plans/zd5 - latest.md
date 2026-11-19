@@ -132,6 +132,28 @@ confirm that clans have enough actions and get enough
 results out of them. "Supernormal stimuli" probably
 closely follow.
 
+*   Marriage appeal
+    x   Apparently it does have a substantial effect,
+        but because clans drift and mix it doesn't
+        necessarily have a huge impact on their very-
+        long-term fortunes, which is probably about
+        right at this point!
+        *   Durable, keepable improvements such as
+            infrastructure and culture could change
+            this
+    *   Clans don't have a way to raise their appeal
+        yet, so we need to add some (they're also not
+        looking at or trying to improve their appeal,
+        which is of course ridiculous!)
+    *   Also, we should make some singles more appealing
+        than others within clans, partly so the most 
+        appealing clan doesn't get all the first marriages,
+        partly to create competition for especially
+        appealing individuals
+    *   Skills and traits are mixed on marriage, but
+        we need to add knowledge and also decisions/
+        policies
+
 We also need to somewhat prioritize replacing the
 "residence fertility bonus" with an early-weaning
 model. Mainly because it doesn't make a ton of sense
