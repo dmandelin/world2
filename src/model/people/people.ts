@@ -12,7 +12,7 @@ import { HousingDecision } from "../decisions/housingdecision";
 import { HousingTypes } from "../econ/housing";
 import { initialDemography, PopulationChange, PopulationChangeBuilder } from "./population";
 import { Demography, sliceAges } from "./demography";
-import { breakBetrothals, transferBetrothals } from "../relations/marriage";
+import { breakBetrothals, ClanMarriageRecord, transferBetrothals } from "../relations/marriage";
 import type { FoundingVote } from "./migration";
 import { normal } from "../lib/distributions";
 import { Operation, ProductionReport } from "../econ/operation";
@@ -94,6 +94,9 @@ export class Clan implements TradePartner {
     skills = new ClanSkills(this);
 
     traits = new ClanTraits();
+
+    // How its recent matches have gone. See marriage.ts.
+    marriageRecord = new ClanMarriageRecord();
 
     // Its part in this year's question of founding a new village, if its
     // village had one. See migration.ts.
@@ -604,6 +607,7 @@ export class Clan implements TradePartner {
 
         this.demography.merge(other.demography);
         transferBetrothals(this.world, other, this);
+        this.marriageRecord.absorb(other.marriageRecord);
 
         for (const key of NUMERIC_TRAITS) {
             this.traits.set(key, Math.round(
@@ -669,6 +673,8 @@ export class Clan implements TradePartner {
         const newClan = new Clan(this.world, this.settlement, this.annals, name, color,
             this.demography.split(fraction));
         newClan.traits = this.traits.cloneWithSplitBump();
+        // Both halves have the same marriage history behind them.
+        newClan.marriageRecord = this.marriageRecord.clone();
         newClan.skills = this.skills.cloneFor(newClan);
         newClan.effortAllocation = new EffortAllocation(
             newClan, this.effortAllocation.m, this.effortAllocation.pm,

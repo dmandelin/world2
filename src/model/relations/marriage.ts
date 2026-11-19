@@ -94,6 +94,86 @@ const MAX_ROUNDS = 20;
 // How long the marriages of the recent past count as recent: a generation.
 export const RECENT_MARRIAGE_YEARS = 20;
 
+// How long a clan's matches keep counting toward the averages kept of them:
+// half as much after ten years, so they follow how things are going now
+// rather than how they went a lifetime ago.
+const MARRIAGE_RECORD_HALF_LIFE = 10;
+
+// An average of things that happen now and then, each counting for less as
+// the years pass. Undefined until there has been something to average.
+export class FadingAverage {
+    private sum_ = 0;
+    private weight_ = 0;
+
+    constructor(readonly halfLife: number) { }
+
+    get value(): number | undefined {
+        return this.weight_ > 1e-9 ? this.sum_ / this.weight_ : undefined;
+    }
+
+    add(value: number, weight: number = 1): void {
+        this.sum_ += value * weight;
+        this.weight_ += weight;
+    }
+
+    fade(years: number = 1): void {
+        const kept = Math.pow(0.5, years / this.halfLife);
+        this.sum_ *= kept;
+        this.weight_ *= kept;
+    }
+
+    // Count another's history as this one's too, as when two clans join.
+    absorb(other: FadingAverage): void {
+        this.sum_ += other.sum_;
+        this.weight_ += other.weight_;
+    }
+
+    clone(): FadingAverage {
+        const c = new FadingAverage(this.halfLife);
+        c.sum_ = this.sum_;
+        c.weight_ = this.weight_;
+        return c;
+    }
+}
+
+// How a clan has been doing on the marriage market lately: how old its
+// people were when first promised, men and women apart, and how appealing it
+// found the clans it was matched with, as it saw them at the time. Both
+// sides of a match count: the clans its men took wives from, and the clans
+// its daughters were promised into.
+export class ClanMarriageRecord {
+    // By sex: FEMALE, MALE.
+    readonly firstMatchAge: readonly [FadingAverage, FadingAverage];
+    readonly partnerAppeal: FadingAverage;
+
+    constructor(
+        firstMatchAge?: readonly [FadingAverage, FadingAverage],
+        partnerAppeal?: FadingAverage,
+    ) {
+        this.firstMatchAge = firstMatchAge ?? [
+            new FadingAverage(MARRIAGE_RECORD_HALF_LIFE),
+            new FadingAverage(MARRIAGE_RECORD_HALF_LIFE),
+        ];
+        this.partnerAppeal = partnerAppeal ?? new FadingAverage(MARRIAGE_RECORD_HALF_LIFE);
+    }
+
+    fade(): void {
+        for (const a of this.firstMatchAge) a.fade();
+        this.partnerAppeal.fade();
+    }
+
+    absorb(other: ClanMarriageRecord): void {
+        this.firstMatchAge.forEach((a, sex) => a.absorb(other.firstMatchAge[sex]));
+        this.partnerAppeal.absorb(other.partnerAppeal);
+    }
+
+    clone(): ClanMarriageRecord {
+        return new ClanMarriageRecord(
+            [this.firstMatchAge[FEMALE].clone(), this.firstMatchAge[MALE].clone()],
+            this.partnerAppeal.clone());
+    }
+}
+
 // Children take after both parents, by birth or by upbringing, and a clan's
 // mothers come from the clans its wives came from. In a generation about
 // half a clan is replaced by people formed half by their fathers, of the
@@ -237,6 +317,7 @@ export function marry(world: World): void {
     decayMarriageTies(world);
     strengthenMarriageTies(world, completed);
 
+    for (const clan of world.allClans) clan.marriageRecord.fade();
     const decisions = getMarriageDecisions(world);
     betroth(world, decisions);
     rememberMarriages(world, decisions, completed);
@@ -328,19 +409,29 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
         [...wives.values()], [...husbands.values()], pairingCounts);
 }
 
-// Promise the matched people to each other: the very ones paired.
+// Promise the matched people to each other: the very ones paired. Each clan
+// notes the match in its marriage record: the age of anyone of its own never
+// promised before, and how it rates the clan it is matched with.
 function betroth(world: World, decisions: MarriageDecisions): void {
+    // Whoever is taken goes into the record if they had never married.
+    const promise = (clan: Clan, sex: Sex, filter: PeopleFilter, age: number) => {
+        const taken = clan.demography.take(1, { ...filter, ages: [age, age + 1] });
+        if (taken.count({ status: MaritalStatus.Unmarried }) > 0) {
+            clan.marriageRecord.firstMatchAge[sex].add(age);
+        }
+        clan.demography.mergeAs(taken, MaritalStatus.Betrothed);
+    };
     for (const wifeSet of decisions.potentialWives) {
         const wifeClan = wifeSet.clan;
         for (const [husbandClan, pairs] of wifeSet.agePairs) {
             for (const [h, w] of pairs) {
-                wifeClan.demography.mergeAs(
-                    wifeClan.demography.take(1, { ...ELIGIBLE_WOMEN, ages: [w, w + 1] }),
-                    MaritalStatus.Betrothed);
-                husbandClan.demography.mergeAs(
-                    husbandClan.demography.take(1, { ...ELIGIBLE_MEN, ages: [h, h + 1] }),
-                    MaritalStatus.Betrothed);
+                promise(wifeClan, FEMALE, ELIGIBLE_WOMEN, w);
+                promise(husbandClan, MALE, ELIGIBLE_MEN, h);
             }
+            husbandClan.marriageRecord.partnerAppeal.add(
+                getMarriageAppeal(husbandClan, wifeClan), pairs.length);
+            wifeClan.marriageRecord.partnerAppeal.add(
+                getMarriageAppeal(wifeClan, husbandClan), pairs.length);
             world.betrothals.push(new Betrothal(
                 husbandClan, wifeClan, pairs.length, world.year.value, [...pairs]));
         }

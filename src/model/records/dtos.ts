@@ -15,7 +15,7 @@ import type { HappinessCalc } from "../people/happiness";
 import type { Housing } from "../econ/housing";
 import type { HousingDecision } from "../decisions/housingdecision";
 import type { FoundingDecision, FoundingVote, PlannedSettlement } from "../people/migration";
-import { AGE_LIMIT, MaritalStatus } from "../people/demography";
+import { AGE_LIMIT, FEMALE, MALE, MaritalStatus } from "../people/demography";
 import {
     betrothalRecord, marriageCountsOf, servicePartners,
     type BetrothalRecord, type MarriageCounts, type MarriageDecisions, type ServicePartner,
@@ -118,6 +118,14 @@ export class ClanDTO {
     // adults under 55 (the unmarried counting the betrothed and widowed),
     // and elders of 55 and up. They add up to the clan.
     lifeStages: { children: number, married: number, unmarried: number, elders: number };
+    // People of 20 to 39 by sex ([FEMALE, MALE]) and marital status, for the
+    // share of them married.
+    youngAdultsByStatus: { total: number, married: number, betrothed: number }[];
+    // The marriage record's averages, as they stand: age when first
+    // promised, by sex ([FEMALE, MALE]), and the appeal of the clans matched
+    // with, on the x100 scale of prestige. Undefined with nothing to average.
+    firstMatchAge: (number | undefined)[];
+    partnerAppeal: number | undefined;
 
     // This year's bride service: men of this clan away working for their
     // brides' clans, and men of other clans working here.
@@ -204,6 +212,14 @@ export class ClanDTO {
             unmarried: adults - married,
             elders: clan.demography.count({ ages: [55, AGE_LIMIT] }),
         };
+        this.youngAdultsByStatus = [FEMALE, MALE].map(sex => ({
+            total: clan.demography.count({ sex, ages: [20, 40] }),
+            married: clan.demography.count({ sex, ages: [20, 40], status: MaritalStatus.Married }),
+            betrothed: clan.demography.count({ sex, ages: [20, 40], status: MaritalStatus.Betrothed }),
+        }));
+        this.firstMatchAge = clan.marriageRecord.firstMatchAge.map(a => a.value);
+        const appeal = clan.marriageRecord.partnerAppeal.value;
+        this.partnerAppeal = appeal === undefined ? undefined : 100 * appeal;
 
         this.brideServiceOut = servicePartners(clan.brideServiceOut);
         this.brideServiceIn = servicePartners(clan.brideServiceIn);
@@ -256,6 +272,14 @@ export class ClanDTO {
 
     get previousPopulation(): number {
         return this.lastPopulationChange.previousSize;
+    }
+
+    // Share of the clan's people of 20 to 39 who are married. Men away on
+    // bride service are betrothed, not yet married.
+    get marriedShare(): number {
+        const total = this.youngAdultsByStatus[FEMALE].total + this.youngAdultsByStatus[MALE].total;
+        const married = this.youngAdultsByStatus[FEMALE].married + this.youngAdultsByStatus[MALE].married;
+        return total > 0 ? married / total : 0;
     }
 
     // Population-weighted prestige other clans grant this one (alignment *

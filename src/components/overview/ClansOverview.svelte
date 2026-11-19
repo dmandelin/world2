@@ -69,6 +69,7 @@
         MarriageConnection,
     } from "../../model/relations/connection";
     import { type MarriageDecisions } from "../../model/relations/marriage";
+    import { FEMALE, MALE } from "../../model/people/demography";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import type { Opinion } from "../../model/relations/opinion";
     import { ALL_RITUAL_TYPES, type RitualEvent } from "../../model/rituals";
@@ -159,7 +160,7 @@
 
         // For rows with no clan values, only a figure for the settlement as a
         // whole, worked out from all its clans at once.
-        settlementValue?: (clans: ClanDTO[]) => number;
+        settlementValue?: (clans: ClanDTO[]) => number | undefined;
 
         // For rows drawn by renderSnippet rather than a value function.
         settlementRenderSnippet?: Snippet<[ClanLastTurnSnapshots[]]>;
@@ -273,6 +274,31 @@
             weight += item.weight;
         }
         return weight > 0 ? Math.exp(logSum / weight) : 1;
+    }
+
+    // Population-weighted average over the clans that have a value at all,
+    // for figures a clan may not have yet (a clan none of whose people have
+    // been matched has no marriage record to average).
+    function definedPopulationAverage(
+        clans: ClanDTO[],
+        value: (c: ClanDTO) => number | undefined,
+    ): number | undefined {
+        let sum = 0;
+        let weight = 0;
+        for (const c of clans) {
+            const v = value(c);
+            if (v === undefined || !Number.isFinite(v)) continue;
+            sum += v * c.population;
+            weight += c.population;
+        }
+        return weight > 0 ? sum / weight : undefined;
+    }
+
+    // Formats a figure a clan may not have, showing a dash where it doesn't.
+    function orDash(
+        fmt: (v: number) => string,
+    ): (v: number | undefined) => string {
+        return (v) => (v === undefined || !Number.isFinite(v) ? "-" : fmt(v));
     }
 
     function cellBandClass(row: RowDef, clan: ClanDTO): string {
@@ -544,6 +570,71 @@
                 settlementAgg: "sum",
                 deltaValue: (c) => c.lifeStages.elders,
                 deltaFormat: (v) => signed(v, 0),
+                topics: ["demographics"],
+            },
+            {
+                label: "Married %",
+                labelTooltip:
+                    "Share of the clan's people of 20 to 39 who are married. Men on bride service are betrothed, not yet married.",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.marriedShare,
+                format: pct,
+                tooltipSnippet: marriedShareTooltip,
+                deltaValue: (c) => c.marriedShare,
+                deltaFormat: pct,
+                timelineKey: "marriedShare",
+                scaler: new DefaultScaler(),
+                topics: ["demographics"],
+            },
+            {
+                label: "1st marriage age, men",
+                labelTooltip:
+                    "Average age at which the clan's men were first promised in marriage, recent matches counting most (half as much after 10 years). The wedding follows two years of bride service.",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.firstMatchAge[MALE],
+                format: orDash((v) => v.toFixed(1)),
+                settlementValue: (clans) =>
+                    definedPopulationAverage(clans, (c) => c.firstMatchAge[MALE]),
+                deltaValue: (c) => c.firstMatchAge[MALE] ?? NaN,
+                deltaFormat: (v) => v.toFixed(1),
+                timelineKey: "firstMatchAgeMen",
+                scaler: new DefaultScaler(),
+                topics: ["demographics"],
+            },
+            {
+                label: "1st marriage age, women",
+                labelTooltip:
+                    "Average age at which the clan's daughters were first promised in marriage, recent matches counting most (half as much after 10 years). They marry and move to their husbands' clans two years later.",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.firstMatchAge[FEMALE],
+                format: orDash((v) => v.toFixed(1)),
+                settlementValue: (clans) =>
+                    definedPopulationAverage(clans, (c) => c.firstMatchAge[FEMALE]),
+                deltaValue: (c) => c.firstMatchAge[FEMALE] ?? NaN,
+                deltaFormat: (v) => v.toFixed(1),
+                timelineKey: "firstMatchAgeWomen",
+                scaler: new DefaultScaler(),
+                topics: ["demographics"],
+            },
+            {
+                label: "Partner appeal",
+                labelTooltip:
+                    "How appealing the clan found the clans it was matched with, as it saw them when matched: those its men took wives from and those its daughters were promised into, by number of matches, recent ones counting most (half as much after 10 years). Same scale as Prestige.",
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.partnerAppeal,
+                format: orDash((v) => signed(v, 0)),
+                bandClass: prestigeBandClass,
+                tooltipSnippet: partnerAppealTooltip,
+                settlementValue: (clans) =>
+                    definedPopulationAverage(clans, (c) => c.partnerAppeal),
+                deltaValue: (c) => c.partnerAppeal ?? NaN,
+                deltaFormat: (v) => signed(v, 1),
+                timelineKey: "partnerAppeal",
+                scaler: new ZeroCenteredAutoScaler(20),
                 topics: ["demographics"],
             },
             {
@@ -2623,6 +2714,9 @@
     breakdown?: (c: ClanDTO) => [string, number][],
 )}
     {@const delta = cs.p ? valueFunc(cs.e) - valueFunc(cs.p) : 0}
+    {@const known = Number.isFinite(delta)}
+    {@const before = cs.p ? valueFunc(cs.p) : NaN}
+    {@const after = valueFunc(cs.e)}
     <td
         class={delta >= 0
             ? "delta-positive"
@@ -2633,7 +2727,7 @@
                 : ""}
     >
         <Tooltip>
-            {#if cs.p}
+            {#if cs.p && known}
                 {tsigned(delta, fmt)}
             {:else}
                 -
@@ -2642,13 +2736,9 @@
                 slot="tooltip"
                 style="text-align: left; color: initial; min-width: 250px;"
             >
-                {#if cs.p}
-                    {fmt(valueFunc(cs.p))}
-                {:else}
-                    ?
-                {/if}
+                {Number.isFinite(before) ? fmt(before) : "?"}
                 &rarr;
-                {fmt(valueFunc(cs.e))}
+                {Number.isFinite(after) ? fmt(after) : "?"}
                 {#if cs.p && breakdown}
                     {@const causes = breakdown(cs.e)}
                     <table style="margin-top: 4px; border-collapse: collapse;"><tbody>
@@ -3330,6 +3420,71 @@
         >
             Curve: 0.6 if no help, 1.0 if exactly met, maxes out around 1.3.
         </div>
+    </div>
+{/snippet}
+
+{#snippet marriedShareTooltip(cs: ClanLastTurnSnapshots)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 220px;">
+        <strong>People of 20 to 39</strong>
+        <table style="margin-top: 4px; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th style="text-align: right; padding-left: 1em;">Married</th>
+                    <th style="text-align: right; padding-left: 1em;">Betrothed</th>
+                    <th style="text-align: right; padding-left: 1em;">All</th>
+                    <th style="text-align: right; padding-left: 1em;">Married %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each [{ label: "Men", sex: MALE }, { label: "Women", sex: FEMALE }] as row}
+                    {@const g = cs.e.youngAdultsByStatus[row.sex]}
+                    <tr>
+                        <td>{row.label}</td>
+                        <td style="text-align: right;">{g.married}</td>
+                        <td style="text-align: right;">{g.betrothed}</td>
+                        <td style="text-align: right;">{g.total}</td>
+                        <td style="text-align: right;">
+                            {g.total > 0 ? pct(g.married / g.total) : "-"}
+                        </td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    </div>
+{/snippet}
+
+{#snippet partnerAppealTooltip(cs: ClanLastTurnSnapshots)}
+    {@const world = settlement.world}
+    {@const clan = cs.e}
+    {@const decisions = world.lastMarriageDecisions}
+    {@const partners = Array.from(world.clanMap.values())
+        .filter((other) => other.uuid !== clan.uuid)
+        .map((other) => ({ other, count: getPairingCount(decisions, clan, other) }))
+        .filter((p) => p.count > 0)}
+    <div style="font-size: 0.9em; padding: 0.25rem; min-width: 250px;">
+        <strong>
+            Partner appeal: {orDash((v) => signed(v, 0))(clan.partnerAppeal)}
+        </strong>
+        <p style="margin: 0.25rem 0;">
+            How appealing {clan.name} found the clans it was matched with, as it
+            saw them when matched, recent matches counting most.
+        </p>
+        <p style="margin: 0.25rem 0;">
+            Matches of the last 20 years, and how {clan.name} sees each now:
+        </p>
+        <ul
+            style="margin: 0.25rem 0; padding-left: 1.2rem; list-style-type: none;"
+        >
+            {#each partners as { other, count }}
+                <li>
+                    • {other.name}: {count} match{count > 1 ? "es" : ""}
+                    (appeal now {signed(world.prestigeToward(clan, other), 0)})
+                </li>
+            {:else}
+                <li>None</li>
+            {/each}
+        </ul>
     </div>
 {/snippet}
 

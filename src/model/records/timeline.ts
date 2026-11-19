@@ -38,7 +38,7 @@ export class Timeline<T> {
 import { SkillDefs, Processes } from "../econ/econdefs";
 import { Activities } from "../decisions/effort";
 import { MarriageConnection } from "../relations/connection";
-import { FEMALE, MaritalStatus } from "../people/demography";
+import { FEMALE, MALE, MaritalStatus } from "../people/demography";
 import { getHelpReceivedValueFromMutualAid, getHelpProductivityModifier, clanHelpDemand } from "../relations/mutualaid";
 
 export class ClanTimePoint {
@@ -70,6 +70,12 @@ export class ClanTimePoint {
     // married in this year, and bride service in and out.
     readonly marriedWomenShare: number;
     readonly neverMarriedAt30: number;
+    // % of people 20-39 married; the marriage record's average age at first
+    // promise, men and women; and the appeal (x100) of the clans matched with.
+    readonly marriedShare: number;
+    readonly firstMatchAgeMen: number | undefined;
+    readonly firstMatchAgeWomen: number | undefined;
+    readonly partnerAppeal: number | undefined;
     readonly betrothalsMade: number;
     readonly bridesMarriedIn: number;
     readonly brideServiceGiven: number;
@@ -185,6 +191,13 @@ export class ClanTimePoint {
         this.neverMarriedAt30 = 100 * safeDiv(
             d.count({ ages: [30, 45], status: MaritalStatus.Unmarried }),
             d.count({ ages: [30, 45] }));
+        this.marriedShare = 100 * safeDiv(
+            d.count({ ages: [20, 40], status: MaritalStatus.Married }),
+            d.count({ ages: [20, 40] }));
+        this.firstMatchAgeMen = clan.marriageRecord.firstMatchAge[MALE].value;
+        this.firstMatchAgeWomen = clan.marriageRecord.firstMatchAge[FEMALE].value;
+        const partnerAppeal = clan.marriageRecord.partnerAppeal.value;
+        this.partnerAppeal = partnerAppeal === undefined ? undefined : 100 * partnerAppeal;
         this.betrothalsMade = (decisions?.wivesOf(clan)?.taken ?? 0)
             + (decisions?.husbandsOf(clan)?.taken ?? 0);
         let bridesIn = 0;
