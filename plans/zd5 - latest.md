@@ -15,6 +15,20 @@ Things to try:
 
 x   Make breakpoint panel options sticky across sessions
 
+*   Actions to raise marriage appeal
+    *   Gifts to a specific clan (need to understand exactly
+        what counts and how)
+    *   More conversation/time together with a specific clan
+    *   Reputation for generosity
+    *   Other items
+        *   Mutual aid offers
+        *   Ritual standing, successful changes
+        *   Avoid conflict
+        *   More effort toward communal projects
+        *   Producing more food (which automatically means
+            more gifts for now and tends to mean more aid)
+        *   Advertisings
+
 *   Note: It would make sense to give clans more ways
     not to starve, but there is not that much starvation,
     so we are probably ready to look at fission
@@ -348,4 +362,3 @@ papers:
         listed above
     *   At that point, we would apparently have both a functioning
         reputation system and a set of potentially competing identities
-        
