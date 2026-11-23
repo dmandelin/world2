@@ -5,6 +5,11 @@ derivatives and what to make of it; (2) what clans can currently
 decide or do; (3) a short list of behaviors clans could use to raise
 their appeal, with enough to start on but no model details settled.
 
+`ze1 - marriage appeal inputs.md` goes one level deeper, to the inputs
+of the alignment and respect items. It includes a randomized
+trait-shock experiment giving total effects, and some of its findings
+bear on §3 below.
+
 Typical values come from `scratch/sample_appeal.ts` (4 runs x 200
 years, all directed clan pairs that know each other, sampled every 25
 years from year 50: 1376 same-settlement pairs and 376 cross-settlement
