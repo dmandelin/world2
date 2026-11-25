@@ -11,7 +11,7 @@ import { economicResult } from "./econ/economy";
 import { rollFishingLuck, rollHarvestLuck } from "./econ/productivity";
 import { Distribution, StockOutflow, Consumption } from "./econ/flows";
 import { QualityOfLife } from "./econ/qol";
-import { dropBetrothals, marry, type Betrothal, MarriageDecisions, type PairingCounts } from "./relations/marriage";
+import { dropBetrothals, marry, type Betrothal, MarriageDecisions, type MarriageOffer, type PairingCounts } from "./relations/marriage";
 import { MILES_PER_UNIT, SettlementCluster } from "./people/cluster";
 import { migrate, planMigration, PlannedSettlement } from "./people/migration";
 import { Note, type NoteEntity, type NoteTaker } from "./records/notifications";
@@ -114,6 +114,9 @@ export class World implements NoteTaker {
     // The last generation of betrothals, a year to an entry, by husband's
     // clan -> wife's clan.
     marriageHistory: PairingCounts[] = [];
+    // Offers of marriage of the last RECENT_OFFER_YEARS years, oldest first.
+    // Replaced each year rather than added to, so snapshots can share it.
+    recentMarriageOffers: readonly MarriageOffer[] = [];
     lastFoodRedistribution?: FoodRedistributionResult;
     lastFoodGifts?: FoodGiftsResult;
 

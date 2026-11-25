@@ -17,8 +17,9 @@ import type { HousingDecision } from "../decisions/housingdecision";
 import type { FoundingDecision, FoundingVote, PlannedSettlement } from "../people/migration";
 import { AGE_LIMIT, FEMALE, MALE, MaritalStatus } from "../people/demography";
 import {
-    betrothalRecord, marriageCountsOf, servicePartners,
-    type BetrothalRecord, type MarriageCounts, type MarriageDecisions, type ServicePartner,
+    betrothalRecord, eligibleAgesOf, marriageCountsOf, servicePartners,
+    type BetrothalRecord, type MarriageCounts, type MarriageDecisions, type MarriageOffer,
+    type ServicePartner,
 } from "../relations/marriage";
 import type { Note } from "../records/notifications";
 import type { Alert, AlertKindId } from "../records/alerts";
@@ -114,6 +115,9 @@ export class ClanDTO {
     // The same by marital status: [slice][sex][status].
     slicesByStatus: number[][][];
     marriageCounts: MarriageCounts;
+    // The ages of those free to be matched (unmarried or widowed, of age and
+    // under the limit), youngest first, by sex ([FEMALE, MALE]).
+    eligibleAges: [number[], number[]];
     // People by stage of life: children under 20, married and unmarried
     // adults under 55 (the unmarried counting the betrothed and widowed),
     // and elders of 55 and up. They add up to the clan.
@@ -126,6 +130,9 @@ export class ClanDTO {
     // with, on the x100 scale of prestige. Undefined with nothing to average.
     firstMatchAge: (number | undefined)[];
     partnerAppeal: number | undefined;
+    // Share (0-1) of the clan's men's offers of marriage that were accepted,
+    // recent offers counting most. Undefined until it has made one.
+    offerAcceptance: number | undefined;
 
     // This year's bride service: men of this clan away working for their
     // brides' clans, and men of other clans working here.
@@ -204,6 +211,7 @@ export class ClanDTO {
         this.slices = clan.slices;
         this.slicesByStatus = clan.demography.slicesByStatus;
         this.marriageCounts = marriageCountsOf(clan.demography);
+        this.eligibleAges = eligibleAgesOf(clan.demography);
         const adults = clan.demography.count({ ages: [20, 55] });
         const married = clan.demography.count({ ages: [20, 55], status: MaritalStatus.Married });
         this.lifeStages = {
@@ -220,6 +228,7 @@ export class ClanDTO {
         this.firstMatchAge = clan.marriageRecord.firstMatchAge.map(a => a.value);
         const appeal = clan.marriageRecord.partnerAppeal.value;
         this.partnerAppeal = appeal === undefined ? undefined : 100 * appeal;
+        this.offerAcceptance = clan.marriageRecord.offerAcceptance.value;
 
         this.brideServiceOut = servicePartners(clan.brideServiceOut);
         this.brideServiceIn = servicePartners(clan.brideServiceIn);
@@ -559,6 +568,8 @@ export class WorldDTO {
     readonly clusters: ClusterDTO[];
     readonly plannedSettlements: PlannedSettlementDTO[];
     readonly lastMarriageDecisions?: MarriageDecisions;
+    // Offers of marriage of the last few years, oldest first.
+    readonly recentMarriageOffers: readonly MarriageOffer[];
     // Betrothals working off their bride service, as of this snapshot.
     readonly betrothals: BetrothalRecord[];
     readonly lastFoodRedistribution?: FoodRedistributionResult;
@@ -585,6 +596,7 @@ export class WorldDTO {
         this.year = this.world.year.toString();
         this.yearValue = this.world.year.value;
         this.lastMarriageDecisions = world.lastMarriageDecisions;
+        this.recentMarriageOffers = world.recentMarriageOffers;
         this.betrothals = world.betrothals.map(betrothalRecord);
         this.lastFoodRedistribution = world.lastFoodRedistribution;
         this.lastFoodGifts = world.lastFoodGifts;

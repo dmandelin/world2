@@ -25,6 +25,8 @@ export const uiPrimaryState = $state({
     // written up. Cleared as soon as the view honors it, so it opens the
     // panel once rather than pinning the view to it.
     requestedSettlementTab: undefined as string|undefined,
+    // The same for the clan view: a panel of it something has asked to show.
+    requestedClanTab: undefined as string|undefined,
 });
 
 // Exported readonly UI state.
@@ -33,6 +35,7 @@ const _uiState = $derived(({
     selectedClan: _worldState?.clanMap ? [..._worldState.clanMap.values()].find(c => c.uuid === uiPrimaryState.selectedClanUUID) : undefined,
     selectedCluster: _worldState?.clusters?.find(cl => cl.uuid === uiPrimaryState.selectedClusterUUID),
     requestedSettlementTab: uiPrimaryState.requestedSettlementTab,
+    requestedClanTab: uiPrimaryState.requestedClanTab,
 }));
 export function uiState() {
     return _uiState;
@@ -78,6 +81,18 @@ export function requestSettlementTab(tab: string): void {
 // for, so the request does not stand and override the next click.
 export function clearRequestedSettlementTab(): void {
     uiPrimaryState.requestedSettlementTab = undefined;
+}
+
+// Open a clan's view at one of its panels, as a stat in the clans overview
+// does when it has somewhere fuller to be read about.
+export function selectClanTab(uuidable: Uuidable, tab: string): void {
+    selectEntity(uuidable);
+    uiPrimaryState.requestedClanTab = tab;
+}
+
+// Called by the clan view once it has opened the panel asked for.
+export function clearRequestedClanTab(): void {
+    uiPrimaryState.requestedClanTab = undefined;
 }
 
 // Select a clan in the UI.

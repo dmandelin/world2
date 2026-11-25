@@ -76,6 +76,8 @@ export class ClanTimePoint {
     readonly firstMatchAgeMen: number | undefined;
     readonly firstMatchAgeWomen: number | undefined;
     readonly partnerAppeal: number | undefined;
+    // % of the clan's offers of marriage accepted, recent ones counting most.
+    readonly offerAcceptance: number | undefined;
     readonly betrothalsMade: number;
     readonly bridesMarriedIn: number;
     readonly brideServiceGiven: number;
@@ -198,6 +200,8 @@ export class ClanTimePoint {
         this.firstMatchAgeWomen = clan.marriageRecord.firstMatchAge[FEMALE].value;
         const partnerAppeal = clan.marriageRecord.partnerAppeal.value;
         this.partnerAppeal = partnerAppeal === undefined ? undefined : 100 * partnerAppeal;
+        const offerAcceptance = clan.marriageRecord.offerAcceptance.value;
+        this.offerAcceptance = offerAcceptance === undefined ? undefined : 100 * offerAcceptance;
         this.betrothalsMade = (decisions?.wivesOf(clan)?.taken ?? 0)
             + (decisions?.husbandsOf(clan)?.taken ?? 0);
         let bridesIn = 0;

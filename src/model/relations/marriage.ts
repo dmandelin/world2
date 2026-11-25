@@ -99,6 +99,46 @@ export const RECENT_MARRIAGE_YEARS = 20;
 // rather than how they went a lifetime ago.
 const MARRIAGE_RECORD_HALF_LIFE = 10;
 
+// How long the offers of the recent past are kept, for showing who asked
+// whom and how it went.
+export const RECENT_OFFER_YEARS = 5;
+
+// How long a clan's offers keep counting toward the share of them accepted:
+// half as much after five years, shorter than the other marriage averages
+// since this one is for spotting a clan that is having trouble now.
+export const OFFER_ACCEPTANCE_HALF_LIFE = 5;
+
+// How an offer of marriage turned out.
+//   accepted: the wife's clan promised some of its women to the man's.
+//   full: the wife's clan had promised all its women before reaching it.
+//   ages: the wife's clan had women left, but none an age its men could have.
+//   withdrawn: the men's clan had promised all its men elsewhere that round
+//     before the offer came up, so it was no longer looking. Not counted
+//     either way in a clan's share accepted.
+export type MarriageOfferOutcome = 'accepted' | 'full' | 'ages' | 'withdrawn';
+
+// One clan's offer for another's women, in one round of a year's matching.
+export interface MarriageOffer {
+    readonly year: number;
+    // The round of matching, from 1.
+    readonly round: number;
+    // The clan whose men made the offer, and the clan of the women.
+    readonly husbandClan: Clan;
+    readonly wifeClan: Clan;
+    // Marriage appeal (x1, as prestige) of each side in the other's eyes:
+    // what drew the men's clan to ask, and what the wife's clan made of the
+    // asking.
+    readonly appealOfWifeClan: number;
+    readonly appealOfHusbandClan: number;
+    // Where the offer stood among those the wife's clan had that round,
+    // best first, from 1, and how many there were.
+    readonly suitorRank: number;
+    readonly suitors: number;
+    // Matches made by it: none unless accepted.
+    readonly matches: number;
+    readonly outcome: MarriageOfferOutcome;
+}
+
 // An average of things that happen now and then, each counting for less as
 // the years pass. Undefined until there has been something to average.
 export class FadingAverage {
@@ -140,37 +180,44 @@ export class FadingAverage {
 // people were when first promised, men and women apart, and how appealing it
 // found the clans it was matched with, as it saw them at the time. Both
 // sides of a match count: the clans its men took wives from, and the clans
-// its daughters were promised into.
+// its daughters were promised into. Also the share of its men's offers that
+// were accepted, each offer counting once.
 export class ClanMarriageRecord {
     // By sex: FEMALE, MALE.
     readonly firstMatchAge: readonly [FadingAverage, FadingAverage];
     readonly partnerAppeal: FadingAverage;
+    readonly offerAcceptance: FadingAverage;
 
     constructor(
         firstMatchAge?: readonly [FadingAverage, FadingAverage],
         partnerAppeal?: FadingAverage,
+        offerAcceptance?: FadingAverage,
     ) {
         this.firstMatchAge = firstMatchAge ?? [
             new FadingAverage(MARRIAGE_RECORD_HALF_LIFE),
             new FadingAverage(MARRIAGE_RECORD_HALF_LIFE),
         ];
         this.partnerAppeal = partnerAppeal ?? new FadingAverage(MARRIAGE_RECORD_HALF_LIFE);
+        this.offerAcceptance = offerAcceptance ?? new FadingAverage(OFFER_ACCEPTANCE_HALF_LIFE);
     }
 
     fade(): void {
         for (const a of this.firstMatchAge) a.fade();
         this.partnerAppeal.fade();
+        this.offerAcceptance.fade();
     }
 
     absorb(other: ClanMarriageRecord): void {
         this.firstMatchAge.forEach((a, sex) => a.absorb(other.firstMatchAge[sex]));
         this.partnerAppeal.absorb(other.partnerAppeal);
+        this.offerAcceptance.absorb(other.offerAcceptance);
     }
 
     clone(): ClanMarriageRecord {
         return new ClanMarriageRecord(
             [this.firstMatchAge[FEMALE].clone(), this.firstMatchAge[MALE].clone()],
-            this.partnerAppeal.clone());
+            this.partnerAppeal.clone(),
+            this.offerAcceptance.clone());
     }
 }
 
@@ -294,6 +341,8 @@ export class MarriageDecisions {
         // Marriages made this year, as betrothals came to the end of their
         // service, by husband's clan -> wife's clan.
         readonly completed: PairingCounts = new PairingCounts(),
+        // Every offer made this year, round by round.
+        readonly offers: MarriageOffer[] = [],
     ) { }
 
     wivesOf(clan: { uuid: string }): PotentialPartnerSet | undefined {
@@ -321,6 +370,7 @@ export function marry(world: World): void {
     const decisions = getMarriageDecisions(world);
     betroth(world, decisions);
     rememberMarriages(world, decisions, completed);
+    rememberOffers(world, decisions);
     world.lastMarriageDecisions = decisions;
     inheritFromMothers(world, decisions);
 
@@ -369,6 +419,8 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
     };
 
     const pairingCounts = new PairingCounts();
+    const offers: MarriageOffer[] = [];
+    const year = world.year.value;
     for (let round = 0; round < MAX_ROUNDS; ++round) {
         const proposals = new Map<Clan, Clan[]>();
         for (const [husbandClan, ranking] of rankings) {
@@ -389,11 +441,26 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
         let matched = 0;
         for (const [wifeClan, proposers] of proposals) {
             const wifeSet = wives.get(wifeClan)!;
-            for (const husbandClan of sortedByKey(proposers, h => -appealTo(wifeClan, h))) {
-                if (!isPositive(wifeSet.available)) break;
+            const ranked = sortedByKey(proposers, h => -appealTo(wifeClan, h));
+            for (let i = 0; i < ranked.length; ++i) {
+                const husbandClan = ranked[i];
                 const husbandSet = husbands.get(husbandClan)!;
-                const pairs = pairByAge(husbandSet.ages, wifeSet.ages);
+                // Once the wife's clan has promised all its women, the rest
+                // of its suitors go without; they are still noted.
+                const pairs = isPositive(wifeSet.available)
+                    ? pairByAge(husbandSet.ages, wifeSet.ages) : [];
                 const count = pairs.length;
+                offers.push({
+                    year, round: round + 1, husbandClan, wifeClan,
+                    appealOfWifeClan: getMarriageAppeal(husbandClan, wifeClan),
+                    appealOfHusbandClan: appealTo(wifeClan, husbandClan),
+                    suitorRank: i + 1, suitors: ranked.length,
+                    matches: count,
+                    outcome: count > 0 ? 'accepted'
+                        : husbandSet.ages.length === 0 ? 'withdrawn'
+                        : !isPositive(wifeSet.available) ? 'full'
+                        : 'ages',
+                });
                 if (count <= 0) continue;
                 wifeSet.addMarriage(husbandClan, count);
                 wifeSet.addPairs(husbandClan, pairs);
@@ -406,7 +473,23 @@ export function getMarriageDecisions(world: World): MarriageDecisions {
     }
 
     return new MarriageDecisions(
-        [...wives.values()], [...husbands.values()], pairingCounts);
+        [...wives.values()], [...husbands.values()], pairingCounts,
+        undefined, undefined, undefined, offers);
+}
+
+// Each clan notes how its men's offers went, for the share accepted, and
+// the world keeps the last few years of offers for display. The list is
+// replaced rather than added to, so snapshots can share it.
+function rememberOffers(world: World, decisions: MarriageDecisions): void {
+    for (const offer of decisions.offers) {
+        if (offer.outcome === 'withdrawn') continue;
+        offer.husbandClan.marriageRecord.offerAcceptance.add(offer.outcome === 'accepted' ? 1 : 0);
+    }
+    const since = world.year.value - RECENT_OFFER_YEARS;
+    world.recentMarriageOffers = [
+        ...world.recentMarriageOffers.filter(o => o.year > since),
+        ...decisions.offers,
+    ];
 }
 
 // Promise the matched people to each other: the very ones paired. Each clan
@@ -691,6 +774,15 @@ export function settleInitialMarriages(d: Demography): void {
     for (const filter of widowFilters) {
         d.mergeAs(d.take(d.count(filter), filter), MaritalStatus.Widowed);
     }
+}
+
+// The ages of a clan's people free to be matched, youngest first, by sex
+// ([FEMALE, MALE]), for display.
+export function eligibleAgesOf(d: Demography): [number[], number[]] {
+    return [
+        agesOf(d, ELIGIBLE_WOMEN).reverse(),
+        agesOf(d, ELIGIBLE_MEN).reverse(),
+    ];
 }
 
 // Where a group of people stand as to marriage, for display.

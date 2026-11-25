@@ -61,14 +61,18 @@
     import RankBadge from "../RankBadge.svelte";
     import EudaimoniaSubscores from "../self/EudaimoniaSubscores.svelte";
     import EudaimoniaCalc from "../self/EudaimoniaCalc.svelte";
-    import { requestSettlementTab } from "../state/uistate.svelte";
+    import { requestSettlementTab, selectClanTab } from "../state/uistate.svelte";
     import { rankBadges } from "../rankbadge";
     import { get } from "svelte/store";
     import {
         connectionsOf,
         MarriageConnection,
     } from "../../model/relations/connection";
-    import { type MarriageDecisions } from "../../model/relations/marriage";
+    import {
+        OFFER_ACCEPTANCE_HALF_LIFE,
+        RECENT_OFFER_YEARS,
+        type MarriageDecisions,
+    } from "../../model/relations/marriage";
     import { FEMALE, MALE } from "../../model/people/demography";
     import ClanMigrationIcon from "../ClanMigrationIcon.svelte";
     import type { Opinion } from "../../model/relations/opinion";
@@ -299,6 +303,38 @@
         fmt: (v: number) => string,
     ): (v: number | undefined) => string {
         return (v) => (v === undefined || !Number.isFinite(v) ? "-" : fmt(v));
+    }
+
+    // Offers accepted: green above a typical share, red below, a band to
+    // every five points. Most offers are turned down -- a clan asks several
+    // of its favorites a round, round after round -- and once things settle
+    // most clans have a fifth or so of theirs accepted.
+    const TYPICAL_OFFER_ACCEPTANCE = 0.2;
+    function offerAcceptanceBandClass(v: number | undefined): string {
+        if (v === undefined || !Number.isFinite(v)) return "";
+        return goodBadBandClass(v - TYPICAL_OFFER_ACCEPTANCE, 0.05);
+    }
+
+    // A clan's offers of the last few years, made by its men, for the
+    // offers-accepted tooltip.
+    function recentOffersMade(clan: ClanDTO) {
+        const made = settlement.world.recentMarriageOffers.filter(
+            (o) => o.husbandClan.uuid === clan.uuid && o.outcome !== "withdrawn",
+        );
+        return {
+            made: made.length,
+            accepted: made.filter((o) => o.outcome === "accepted").length,
+            byClan: (() => {
+                const m = new Map<string, { name: string; made: number; accepted: number }>();
+                for (const o of made) {
+                    let e = m.get(o.wifeClan.uuid);
+                    if (!e) m.set(o.wifeClan.uuid, e = { name: o.wifeClan.name, made: 0, accepted: 0 });
+                    ++e.made;
+                    if (o.outcome === "accepted") ++e.accepted;
+                }
+                return sortedByKey([...m.values()], (e) => -e.made);
+            })(),
+        };
     }
 
     function cellBandClass(row: RowDef, clan: ClanDTO): string {
@@ -635,6 +671,23 @@
                 deltaFormat: (v) => signed(v, 1),
                 timelineKey: "partnerAppeal",
                 scaler: new ZeroCenteredAutoScaler(20),
+                topics: ["demographics"],
+            },
+            {
+                label: "Offers accepted",
+                labelTooltip: `Share of the clan's offers of marriage, made for its men, that the other clan accepted, recent offers counting most (half as much after ${OFFER_ACCEPTANCE_HALF_LIFE} years). Offers withdrawn because the clan's men were all matched elsewhere first don't count. Click a cell for the clan's recent offers.`,
+                class: "actual",
+                cellClass: "rap",
+                value: (c) => c.offerAcceptance,
+                format: orDash((v) => pct(v)),
+                bandClass: offerAcceptanceBandClass,
+                renderValueSnippet: offerAcceptanceCell,
+                settlementValue: (clans) =>
+                    definedPopulationAverage(clans, (c) => c.offerAcceptance),
+                deltaValue: (c) => c.offerAcceptance ?? NaN,
+                deltaFormat: (v) => pct(v),
+                timelineKey: "offerAcceptance",
+                scaler: new DefaultScaler(),
                 topics: ["demographics"],
             },
             {
@@ -3575,6 +3628,55 @@
     {:else}
         -
     {/if}
+{/snippet}
+
+{#snippet offerAcceptanceCell(cs: ClanLastTurnSnapshots)}
+    {@const recent = recentOffersMade(cs.e)}
+    <Tooltip>
+        <button
+            type="button"
+            class="value-link"
+            onclick={() => selectClanTab(cs.e, "Marriage Offers")}
+        >
+            {orDash((v) => pct(v))(cs.e.offerAcceptance)}
+        </button>
+        <div
+            slot="tooltip"
+            style="text-align: left; color: initial; font-size: 0.9em; padding: 0.25rem; min-width: 250px;"
+        >
+            <strong>
+                Offers accepted: {orDash((v) => pct(v))(cs.e.offerAcceptance)}
+            </strong>
+            <p style="margin: 0.25rem 0;">
+                Recent offers counting most. In the last {RECENT_OFFER_YEARS} years,
+                {cs.e.name}'s men made {recent.made} offer{recent.made === 1 ? "" : "s"},
+                {recent.accepted} accepted.
+            </p>
+            {#if recent.byClan.length > 0}
+                <table style="border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">To</th>
+                            <th style="text-align: right; padding-left: 1em;">Made</th>
+                            <th style="text-align: right; padding-left: 1em;">Accepted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each recent.byClan as e}
+                            <tr>
+                                <td>{e.name}</td>
+                                <td style="text-align: right;">{e.made}</td>
+                                <td style="text-align: right;">{e.accepted}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            {/if}
+            <p style="margin: 0.25rem 0; color: #718096;">
+                Click for the clan's recent offers, made and received.
+            </p>
+        </div>
+    </Tooltip>
 {/snippet}
 
 {#snippet processProductivityTooltip(

@@ -5,8 +5,10 @@
     import ClanOverviewDetails from './ClanOverviewDetails.svelte';
     import ClanRecentMarriages from './ClanRecentMarriages.svelte';
     import ClanMarriageAppeal from './ClanMarriageAppeal.svelte';
+    import ClanMarriageOffers from './ClanMarriageOffers.svelte';
     import ClanNews from './ClanNews.svelte';
     import ClanHistory from '../history/ClanHistory.svelte';
+    import { clearRequestedClanTab, uiState } from '../state/uistate.svelte';
 
     let { clan }: { clan: ClanDTO } = $props();
 
@@ -16,8 +18,20 @@
         { label: "History", snippet: historyTab },
         { label: "Marriage Appeal", snippet: marriageAppealTab },
         { label: "Recent Marriages", snippet: recentMarriagesTab },
+        { label: "Marriage Offers", snippet: marriageOffersTab },
         { label: "Migration", snippet: migrationTab },
     ];
+
+    // A link elsewhere can ask for a particular panel, as the clans
+    // overview's offers-accepted cells do. Honored once and then cleared.
+    let activeIndex = $state(0);
+    $effect(() => {
+        const wanted = uiState().requestedClanTab;
+        if (!wanted) return;
+        const i = tabs.findIndex((t) => t.label === wanted);
+        if (i >= 0) activeIndex = i;
+        clearRequestedClanTab();
+    });
 </script>
 
 {#snippet overviewTab()}
@@ -40,6 +54,10 @@
     <ClanRecentMarriages clan={clan} />
 {/snippet}
 
+{#snippet marriageOffersTab()}
+    <ClanMarriageOffers clan={clan} />
+{/snippet}
+
 {#snippet migrationTab()}
     <ClanMigrationDetails clan={clan} />
 {/snippet}
@@ -47,4 +65,4 @@
 <style>
 </style>
 
-<TabbedView tabs={tabs} /> 
+<TabbedView tabs={tabs} bind:activeIndex />
