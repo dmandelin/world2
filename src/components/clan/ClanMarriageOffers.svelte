@@ -310,29 +310,38 @@
                             <th title="The other clan's rating of this clan as a marriage partner (this clan's prestige in its eyes), at the time of the offer. Same scale as Prestige.">How they rate us</th>
                             <th title="Where this clan's offer ranked among all the offers the other clan had that round, by how the other clan rated each suitor.">Our place</th>
                             <th class="la">Outcome</th>
+                            <th class="la" title="The grooms' clans the other clan accepted that round, best-rated first: how it rated each (same scale as How they rate us), and the matches each got.">They took<br /><span class="note">rating, matches</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         {#each y.made as o, i}
                             {@const newRound = i > 0 && y.made[i - 1].round !== o.round}
+                            {@const chosen = chosenWith(o)}
                             <tr class="{rowClass(o)} {newRound ? 'round-start' : ''}">
                                 <td>{o.round}</td>
                                 <td class="la"><EntityLink entity={o.wifeClan} /></td>
                                 <td>{appeal(o.appealOfWifeClan)}</td>
                                 <td>{appeal(o.appealOfHusbandClan)}</td>
                                 <td>{o.suitorRank} of {o.suitors}</td>
-                                <td class="la">
+                                <td class="la wrap">
                                     {#if o.outcome === "accepted"}
                                         <strong>Chosen</strong>: {matches(o.matches)}
                                     {:else if o.outcome === "withdrawn"}
                                         {declinedReason(o)}
                                     {:else}
-                                        {@const chosen = chosenWith(o)}
-                                        <strong>Not chosen</strong> ({declinedReason(o)}){#if chosen.length > 0}:
-                                            they took
-                                            {#each chosen as c, i}{#if i > 0}, {/if}<EntityLink entity={c.husbandClan} /> ({c.matches}){/each}
-                                        {/if}
+                                        <strong>Not chosen</strong> ({declinedReason(o)})
                                     {/if}
+                                </td>
+                                <td class="la took">
+                                    {#each chosen as c}
+                                        {@const us = c.husbandClan.uuid === clan.uuid}
+                                        <div class:us>
+                                            <EntityLink entity={c.husbandClan} />
+                                            {appeal(c.appealOfHusbandClan)}, {c.matches}
+                                        </div>
+                                    {:else}
+                                        <span class="note">nobody</span>
+                                    {/each}
                                 </td>
                             </tr>
                         {/each}
@@ -477,6 +486,8 @@
         background: #fff;
         padding: 0.4rem 0.75rem 0.6rem;
         max-width: 900px;
+        /* Narrow panes scroll the tables rather than spill out of the box. */
+        overflow-x: auto;
     }
 
     summary {
@@ -515,6 +526,20 @@
 
     .offers-table .la {
         text-align: left;
+    }
+
+    .offers-table td.wrap {
+        white-space: normal;
+        min-width: 9rem;
+    }
+
+    .offers-table td.la.took {
+        min-width: 10rem;
+        white-space: nowrap;
+    }
+
+    .offers-table td.took div.us {
+        font-weight: 700;
     }
 
     /* The outcome says the most, so it gets the room. */
